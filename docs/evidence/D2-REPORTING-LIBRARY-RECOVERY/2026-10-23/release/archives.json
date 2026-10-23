@@ -231,6 +231,55 @@
       "sha256": "85f17a0d0b64efadbf47a0c5ccc16f6e20c4a0a4db190c0d1135c3d05a8e8cd7",
       "uncompressedBytes": 22809,
       "uncompressedSha256": "c0036f41a5fb790e6910854c3c843b41e852ea85a6757a0e3ef22e4a486001c1"
+    },
+    {
+      "file": "push-attempt-3-zero-type-errors-cas-refusal.txt.gz",
+      "bytes": 4482,
+      "sha256": "90a034640189a4620fdd20d3ee4f9d2318edd31129d32781486e056eabbbda6f",
+      "uncompressedBytes": 14092,
+      "uncompressedSha256": "044c7a31b9f236ef27ef05c73b52bab37362c1e4ed7f13ba6c53dbf443ba0675"
+    },
+    {
+      "file": "final-chooser-reconciled-build.txt.gz",
+      "bytes": 4729,
+      "sha256": "03a4956de2571acf8b00b7a8783722ee12119b5acf29c68266887397b7903b87",
+      "uncompressedBytes": 16493,
+      "uncompressedSha256": "f4751276881bd1a5743a8fa70b96b93d09feb7e31bd8e562819a3b118d38f8f4"
+    },
+    {
+      "file": "final-chooser-reconciled-build-command.json.gz",
+      "bytes": 297,
+      "sha256": "7bcd1b55a458e3f243c11e8f1e5456b0bb849093a8cc1e63d6b6b62aae6f0188",
+      "uncompressedBytes": 404,
+      "uncompressedSha256": "4b22cf77e04a336d61fddd45c4487aa286c75bc84cee8bd52cee447d80f319ca"
+    },
+    {
+      "file": "final-chooser-reconciled-build-source-before.json.gz",
+      "bytes": 522798,
+      "sha256": "871f3393e3db9d5cac7714fce26426af8cbd6340fe06c3895778aa10cbfab8de",
+      "uncompressedBytes": 1353644,
+      "uncompressedSha256": "112cb033702e2e1f1cb8cc7e77140ff10f0aa7751e63a5a3b5f18310389e4c39"
+    },
+    {
+      "file": "final-chooser-reconciled-build-source-after.json.gz",
+      "bytes": 522798,
+      "sha256": "871f3393e3db9d5cac7714fce26426af8cbd6340fe06c3895778aa10cbfab8de",
+      "uncompressedBytes": 1353644,
+      "uncompressedSha256": "112cb033702e2e1f1cb8cc7e77140ff10f0aa7751e63a5a3b5f18310389e4c39"
+    },
+    {
+      "file": "reporting-chooser-review.json.gz",
+      "bytes": 629,
+      "sha256": "11c285b703b2b2c60076e0bd4b866cc22f523cf1e25f144b19dd5760ff5c4896",
+      "uncompressedBytes": 1212,
+      "uncompressedSha256": "ba0389aace9f684c2af73c8bcd9fcd5498f77fd8c0b00d5a92729daf78bdcfd1"
+    },
+    {
+      "file": "reporting-chooser-merge.txt.gz",
+      "bytes": 1659,
+      "sha256": "868290e65bee4cdcd799b6d674eb1a06c590f87c968dc43b98497cb029273fca",
+      "uncompressedBytes": 14608,
+      "uncompressedSha256": "599c510b42aeac84aae18169ad084e6f2c9a494311f2b7e055382e44ccbe7731"
     }
   ]
 }

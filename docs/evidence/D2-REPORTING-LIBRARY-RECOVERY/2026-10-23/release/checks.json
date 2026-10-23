@@ -21,7 +21,7 @@
     "finishedAt": "2026-10-23T20:24:30.242326+00:00"
   },
   "earlierSelectedBuildFiles": 10286,
-  "finalCanonicalBase": "9392d896a7ffd7c89c2327d8a9b0dd748e998cf6",
+  "finalCanonicalBase": "728e7b9844b29df47b272682969df30f77a0d5b1",
   "typeOnlyBuiltAssetsComparison": {
     "observedAt": "2026-10-23T20:33:28.334328+00:00",
     "beforeAssets": 288,
@@ -80,7 +80,16 @@
     "finishedAt": "2026-10-23T20:44:06.484726+00:00"
   },
   "postWorkflowSelectedFiles": 10296,
-  "build": {
+  "postAssemblySearch": {
+    "passed": 71,
+    "files": 3,
+    "vitestSeconds": 27.15,
+    "sourcePins": 18,
+    "preservedHashesStable": 11,
+    "packet": "../client/post-assembly-search/README.md"
+  },
+  "normalGateZeroTypeErrors": "zero-type-errors-cas-refusal.json",
+  "postAssemblyBuild": {
     "argv": [
       "npm",
       "run",
@@ -96,14 +105,31 @@
     "elapsedSeconds": 23.602,
     "finishedAt": "2026-10-23T20:54:41.887713+00:00"
   },
-  "selectedBuildFiles": 10298,
-  "postAssemblySearch": {
-    "passed": 71,
-    "files": 3,
-    "vitestSeconds": 27.15,
-    "sourcePins": 18,
-    "preservedHashesStable": 11,
-    "packet": "../client/post-assembly-search/README.md"
+  "postAssemblySelectedFiles": 10298,
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T21:03:07.134505+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 24.766,
+    "finishedAt": "2026-10-23T21:03:31.901087+00:00"
   },
-  "normalGateZeroTypeErrors": "zero-type-errors-cas-refusal.json"
+  "selectedBuildFiles": 10300,
+  "postLegalChooser": {
+    "passed": 367,
+    "files": 35,
+    "vitestSeconds": 71.87,
+    "sourcePins": 55,
+    "sourceStable": true,
+    "packet": "../client/post-legal-chooser/README.md"
+  },
+  "secondNormalGateZeroTypeErrors": "second-zero-type-errors-cas-refusal.json"
 }

@@ -46,3 +46,5 @@ The separate [shared API compatibility phase](post-api-merge/README.md) records 
 The later [workflow discovery reconciliation](post-discovery/README.md) records a bounded 115/4 pass after canonical workflow discovery/navigation merged. It makes no implementation changes and retains its own before/after shared-registry, Shell, API and reporting pins.
 
 The separate [incoming Authoring template-search compatibility phase](post-assembly-search/README.md) records a 71/3 pass after preserving newer canonical Authoring work. It confirms unchanged reporting/shared source hashes and does not repeat or pool the earlier reporting results.
+
+The later [Reporting legal chooser reconciliation](post-legal-chooser/README.md) records a separate 367/35 pass across the current reporting/API suites after preserving canonical chooser ownership/paging work. Its own source pins include the shared legal picker and company session helpers.
