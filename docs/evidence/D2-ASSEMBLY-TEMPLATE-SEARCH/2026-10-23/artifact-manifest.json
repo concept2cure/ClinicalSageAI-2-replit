@@ -1,9 +1,9 @@
 {
-  "scope": "Final merged qualification before normal direct publication; excludes this manifest itself. Accepted push/source Git verification follows in a documentation-only commit.",
+  "scope": "Final accepted-publication evidence, raw receipts and actual Git-object verification. Excludes this manifest itself. The documentation-only follow-up push/final clean-sync check are intentionally not recursively recorded.",
   "files": {
     "README.md": {
-      "sha256": "68ca353390eceda8edddfb093403b15deea25a32546de00f2303a93a4342e195",
-      "bytes": 6086
+      "sha256": "5840c47b095f1dfacb817aed869d0442ce7f1e094842122e6116d4fa469cbe19",
+      "bytes": 7084
     },
     "canonical-audit-repo-health-ceiling.json": {
       "sha256": "12f14fb09b6249d58cd0a9c4ffca230094601bf29d615c24ee52242bf36045e5",
@@ -117,9 +117,25 @@
       "sha256": "4f2d6374ae31a868a077d699758c528ea4ec9bbc0f4134b48088c76addd4fe24",
       "bytes": 1121
     },
+    "implementation-push.json": {
+      "sha256": "04f43f520fe90977d81e42d1e8b6b7ef3dcf495453def2960c6ddb64a17b34f3",
+      "bytes": 30997
+    },
+    "implementation-push.log.gz": {
+      "sha256": "f8cca62cae41b03428a47a1619def179fceeac3ccb3d60a7baf80e916a8e8234",
+      "bytes": 4400
+    },
     "independent-review.json": {
       "sha256": "840b644a921b52c4175f63da3c31fbef7f6b2222165c921757e3c8ca0b296ae6",
       "bytes": 2305
+    },
+    "integration-commit.json": {
+      "sha256": "7802717d5944254019380d77ea46590fac8ff82a97b68bcfde65c5c006321bc1",
+      "bytes": 31042
+    },
+    "integration-commit.log.gz": {
+      "sha256": "968c5d2e6586050163a1e2b65ac1215ef6e4ad46e0b2efa6a7a3639ceba46a1f",
+      "bytes": 522
     },
     "picker-green-source-freeze.json": {
       "sha256": "e5e32b5c9812fff7efed18d23f8f36d8b178feb2689964904bcc10bf7eded9df",
@@ -221,13 +237,25 @@
       "sha256": "a0a77c052f6b9e137d7449e06d3051d95bcf55923cb4263c2f03cbeece9a01a0",
       "bytes": 8516
     },
+    "publication-verification-fetch.json": {
+      "sha256": "ac1e8cfd68b2e8e96ea419b3a2cf72f8b69502e5ccb06f62ac01c03bf88ec2f7",
+      "bytes": 30991
+    },
+    "publication-verification-fetch.log.gz": {
+      "sha256": "912622cc564a006c997ef32d6424bc48bb495574d6afbf6aeed3b9d9224d3c0b",
+      "bytes": 112
+    },
+    "publication.json": {
+      "sha256": "242955167e6ee786a06f0c9404d0e2cfd382ececa4dc68eb926b2deef14a4182",
+      "bytes": 1561
+    },
     "qualification-commands.json": {
       "sha256": "9a8a9a5fc26c0f5d3e37a8a5c1f1536eccb3021b45f568b274ed042927ddaa18",
       "bytes": 2189
     },
     "qualification.json": {
-      "sha256": "db9236966ed1757eb49f5d85961ce0922076c227b249336ab7d02fbf9e8a517f",
-      "bytes": 4673
+      "sha256": "42df1ef74c0b9e96f24ae089f3ffa46243250263f69260e30f62e5847594349c",
+      "bytes": 4781
     },
     "qualified-audit-repo-health-ceiling.json": {
       "sha256": "0ff3dacd5c0bca9f8bb78af531d6d15d3dc96f65328ef5de6ec07263f5692a26",
@@ -340,6 +368,10 @@
     "source-freeze.json": {
       "sha256": "b4c4cd2533834329795e26e56596002e2d62fa664cb815df33afd363ea28a067",
       "bytes": 8365
+    },
+    "source-git-verification.json": {
+      "sha256": "148d4d0dda29e45083ea4d1a2b9cf494c0bc35261f6a6f6a77fccb4b432d3f44",
+      "bytes": 16140
     },
     "worker/README.md": {
       "sha256": "3c2d56576370e15831c1cafdf68d99aa43f0ac12c31542f724cd1fbd1c09bf19",

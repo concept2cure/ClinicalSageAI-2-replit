@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-23T20:48:58.267839+00:00",
+  "branch": "concept2cure-v2",
+  "publishedCodeCommit": "a2a34279f0d5a1cd098cc1d2fc2e7e37d9451d9b",
+  "freshFetchedRemote": "a2a34279f0d5a1cd098cc1d2fc2e7e37d9451d9b",
+  "accepted": true,
+  "normalPushReceipt": "implementation-push.json",
+  "normalPushReceiptSha256": "04f43f520fe90977d81e42d1e8b6b7ef3dcf495453def2960c6ddb64a17b34f3",
+  "rawGzipSha256": "f8cca62cae41b03428a47a1619def179fceeac3ccb3d60a7baf80e916a8e8234",
+  "typeScriptErrors": 0,
+  "tscExitCode": 0,
+  "allMandatoryHooksPassed": true,
+  "sourceFreeze": "canonical-source-freeze.json",
+  "verifiedInputs": 117,
+  "verifiedAbsentInputs": [
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx"
+  ],
+  "sourceVerification": "source-git-verification.json",
+  "humanCases": 95,
+  "humanStatus": "All Not run",
+  "humanGuide": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+  "humanGuideSha256": "3ce7d6343916ce11803c2f1f5e25e4666279a20a2e90b0ec0b2c0424cc0e5d63",
+  "prCreated": false,
+  "alternateBranchCreated": false,
+  "forcePush": false,
+  "hookBypass": false,
+  "dependencyOrBaselineChanges": false,
+  "deployment": false,
+  "liveProviderOrAgencyCalls": false,
+  "scope": "Searchable loaded-template discovery in the existing document/section build controls; preserves exact choice, preview, source and candidate state.",
+  "evidenceFollowup": "Actual publication record and receipt follow in a normal documentation-only canonical commit. The final remote/status check is read-only to avoid recursive evidence commits."
+}
