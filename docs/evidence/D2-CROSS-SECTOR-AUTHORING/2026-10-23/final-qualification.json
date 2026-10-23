@@ -1,0 +1,191 @@
+{
+  "qualifiedAt": "2026-10-23T18:03:22.304662+00:00",
+  "canonicalBase": "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+  "scope": "Four existing shared planning outlines in the one editor; manual source assembly and saved oversight preserved. Not universal document, regional readiness or human acceptance qualification.",
+  "checks": [
+    {
+      "receipt": "release-merged-regressions.json",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  38 passed (38)",
+        "Tests  1093 passed (1093)",
+        "Duration  281.31s (transform 11.52s, setup 1.04s, import 31.30s, tests 239.23s, environment 4.68s)"
+      ],
+      "sourceFreeze": "release-source-freeze.json",
+      "rawGzipSha256": "3815073a545a7a4b8bb02c38a41084532f925f9f927236f124e9a77693f99c53"
+    },
+    {
+      "receipt": "post-sync-regressions.json",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  15 passed (15)",
+        "Tests  197 passed (197)",
+        "Duration  67.11s (transform 10.74s, setup 399ms, import 26.20s, tests 37.03s, environment 1.25s)"
+      ],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "2dc6ccec426dd6fae3b56d4c1456c3e99cf15215d0e48e545ad3667d6e549d6b"
+    },
+    {
+      "receipt": "release-changed-file-lint.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "release-source-freeze.json",
+      "rawGzipSha256": "83f84819b9a650214381d506bf57bed2c7f4a57a6621d2f94a5fa88537c1f8db"
+    },
+    {
+      "receipt": "publication-warning-ratchet.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "01491461a8d6bc48600ab5e2f91003d09f745f6973f9b2d36a875facb5f988df"
+    },
+    {
+      "receipt": "publication-typecheck.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    },
+    {
+      "receipt": "publication-build.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "9984c9229fb215d52fc5461a9ce8b1038aa8a7d36827d44cb5d7122d12f42f82"
+    },
+    {
+      "receipt": "publication-gate-single-native-canvas.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0"
+    },
+    {
+      "receipt": "publication-gate-canvas-path.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b"
+    },
+    {
+      "receipt": "publication-gate-check-editor-integrity.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "2141c4ee17206d8e6a08fc56a32cee321159cb4be7cabc58e5e19e61adc5b0bd"
+    },
+    {
+      "receipt": "publication-gate-design-system.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16"
+    },
+    {
+      "receipt": "publication-gate-token-cascade.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "cc310265ddc138f9ba8cb27f192981f46c4a313f61494d7c52bf968f1ecc8f03"
+    },
+    {
+      "receipt": "publication-gate-token-contrast.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "7d333575781f3e54e19532554f0141775d0a0468b28d2e2f4f19725291ce86e7"
+    },
+    {
+      "receipt": "publication-gate-check-phantom-tokens.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "1eb90f201e0b292f588261ba9be5a03840c59e96c9c1498793a157788d045f25"
+    },
+    {
+      "receipt": "publication-gate-gateway-bypass.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "069f5061bfb08b4b26e5f693a3accd235de0de30d709817a7fe49c35c56488ce"
+    },
+    {
+      "receipt": "publication-gate-sql-interpolation.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "e2864ed4e9f07655113290982e0d67c18c12d37415e8db165d81d86577a79df7"
+    },
+    {
+      "receipt": "publication-gate-migration-set-order.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "0893de38d9bcbff37c3fd2772998a7750ca84587268f6719828cc6974e96844c"
+    },
+    {
+      "receipt": "publication-gate-migration-guard-order.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "25a98c9259eb4143115d7b87c8cee1ab893d538001b350975b1854aafc66d069"
+    },
+    {
+      "receipt": "publication-gate-migration-reachability.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "d1f0659c8a6f9409891977a0370ed4564fe318fd075ce40b20bc60c08f7180cb"
+    },
+    {
+      "receipt": "publication-gate-migration-deploy-path.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "073b0f29852b97b9570820a0773234e3770c0a0ff76891b9f7e510afeb1575a4"
+    },
+    {
+      "receipt": "publication-gate-migration-drop-safety.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "7fdce1e58e01ffa5a7e518a77c01aaf6fc8c2466db7653d15cda6377a5e623f8"
+    },
+    {
+      "receipt": "publication-gate-migration-prefix-collisions.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "4d08ff99c8f7670b884b5c44d4527ac03eb47f03977b2f1ad02b9f19e73b47ca"
+    },
+    {
+      "receipt": "publication-gate-repo-health.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "bd705f255a728cc1f1bfe42c5770a066d69ef9d0e3d78ac95af9c9a0e6b7b735"
+    }
+  ],
+  "currentPublicationInputCount": 122,
+  "currentPublicationInputDrift": [],
+  "lint": {
+    "ownedFiles": 16,
+    "errors": 0,
+    "warnings": 1,
+    "warningGrowth": 0,
+    "existingWarning": "shared/regulatory/global-document-registry.ts max-lines, 1 to 1"
+  },
+  "humanTesting": {
+    "guide": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+    "cases": 70,
+    "notRun": 70,
+    "sha256": "3511346c198773bfa2a5cc6cf97453848f9f6329c22dbbe2ae3170aeadec0934"
+  },
+  "counting": "38-suite 1093-pass pre-sync cohort and reviewed 15-suite 197-pass post-sync cohort are overlapping scopes. Do not sum them as unique cases. Worker and focused proofs also overlap.",
+  "limits": [
+    "No human acceptance or live-provider proof",
+    "PGlite/mocked boundary seams do not qualify native PostgreSQL RLS/concurrency",
+    "No agency transmission or deployment",
+    "Sector-specific GLP/GCP/GMP outline review, new-document source-selection continuity and historical re-filing remain separate gaps"
+  ]
+}

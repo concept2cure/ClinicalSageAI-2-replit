@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-23T18:27:15.899421+00:00",
+  "interruption": "Sessionpoll and source-status tool calls briefly rejected: No usable execution environment is available",
+  "recoveredRuntime": {
+    "specRevision": "145",
+    "currentObservations": true,
+    "connectivity": "connected",
+    "observedPhase": "running",
+    "networkPolicy": "unrestricted/enforced",
+    "failure": null,
+    "credentialBindingCounts": {
+      "secrets": 0,
+      "runtimeVariables": 0,
+      "outboundIdentities": 0
+    }
+  },
+  "originalPushSession": 97847,
+  "originalSessionStillRunning": true,
+  "noPushOrCompilerRestart": true,
+  "selectedSourceAndTestHashesMatched": 92,
+  "finalRuntimeResultsStillPresent": {
+    "passedTests": 517,
+    "files": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  "note": "This is a transient tool-access interruption, not a claim that code publication or the remaining compiler gate had completed."
+}

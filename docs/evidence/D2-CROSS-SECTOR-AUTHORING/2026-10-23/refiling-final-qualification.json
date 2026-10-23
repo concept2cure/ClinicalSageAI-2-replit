@@ -1,0 +1,163 @@
+{
+  "qualifiedAt": "2026-10-23T18:15:39.668032+00:00",
+  "sourceFreeze": "refiling-source-freeze.json",
+  "pinnedInputs": 131,
+  "checks": [
+    {
+      "receipt": "refiling-combined-regressions.json",
+      "testSummary": [
+        "Test Files  9 passed (9)",
+        "Tests  212 passed (212)",
+        "Duration  42.63s (transform 6.85s, setup 291ms, import 12.47s, tests 27.72s, environment 831ms)"
+      ],
+      "exitCode": 0,
+      "rawGzipSha256": "a0deaa6605dad4c8fa8291490a980452044e10b9e1aa59bd61c9a2a59d4df2c5"
+    },
+    {
+      "receipt": "refiling-typecheck.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    },
+    {
+      "receipt": "refiling-build.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "c7334edc4025e9e326416b7c19f4e4f2d9ace04cb4145d5c7d7bb5630bb5b85d"
+    },
+    {
+      "receipt": "refiling-gate-single-native-canvas.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0"
+    },
+    {
+      "receipt": "refiling-gate-canvas-path.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b"
+    },
+    {
+      "receipt": "refiling-gate-check-editor-integrity.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "2141c4ee17206d8e6a08fc56a32cee321159cb4be7cabc58e5e19e61adc5b0bd"
+    },
+    {
+      "receipt": "refiling-gate-design-system.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16"
+    },
+    {
+      "receipt": "refiling-gate-token-cascade.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "cc310265ddc138f9ba8cb27f192981f46c4a313f61494d7c52bf968f1ecc8f03"
+    },
+    {
+      "receipt": "refiling-gate-token-contrast.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "7d333575781f3e54e19532554f0141775d0a0468b28d2e2f4f19725291ce86e7"
+    },
+    {
+      "receipt": "refiling-gate-check-phantom-tokens.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "1eb90f201e0b292f588261ba9be5a03840c59e96c9c1498793a157788d045f25"
+    },
+    {
+      "receipt": "refiling-gate-gateway-bypass.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "069f5061bfb08b4b26e5f693a3accd235de0de30d709817a7fe49c35c56488ce"
+    },
+    {
+      "receipt": "refiling-gate-sql-interpolation.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "e2864ed4e9f07655113290982e0d67c18c12d37415e8db165d81d86577a79df7"
+    },
+    {
+      "receipt": "refiling-gate-migration-set-order.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "0893de38d9bcbff37c3fd2772998a7750ca84587268f6719828cc6974e96844c"
+    },
+    {
+      "receipt": "refiling-gate-migration-guard-order.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "25a98c9259eb4143115d7b87c8cee1ab893d538001b350975b1854aafc66d069"
+    },
+    {
+      "receipt": "refiling-gate-migration-reachability.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "d1f0659c8a6f9409891977a0370ed4564fe318fd075ce40b20bc60c08f7180cb"
+    },
+    {
+      "receipt": "refiling-gate-migration-deploy-path.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "073b0f29852b97b9570820a0773234e3770c0a0ff76891b9f7e510afeb1575a4"
+    },
+    {
+      "receipt": "refiling-gate-migration-drop-safety.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "7fdce1e58e01ffa5a7e518a77c01aaf6fc8c2466db7653d15cda6377a5e623f8"
+    },
+    {
+      "receipt": "refiling-gate-migration-prefix-collisions.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "4d08ff99c8f7670b884b5c44d4527ac03eb47f03977b2f1ad02b9f19e73b47ca"
+    },
+    {
+      "receipt": "refiling-gate-repo-health.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "dc82ff8d543ff81b6c99b7529c7ff3c87701430be987cff81229509e6e82a09a"
+    },
+    {
+      "receipt": "refiling-gate-surface-text-ramp.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465"
+    },
+    {
+      "receipt": "refiling-gate-shell-css-collisions.json",
+      "testSummary": [],
+      "exitCode": 0,
+      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a"
+    }
+  ],
+  "scope": "Final combined versioned-refiling integration. Original38-suite1093pass and15-suite197pass epochs remain retained and overlap; this nine-suite212pass cohort is not added as a unique-case total.",
+  "humanTesting": {
+    "checkedAt": "2026-10-23T18:11:26.838618+00:00",
+    "guide": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+    "cases": 75,
+    "notRun": 75,
+    "sharedPlanningCases": [
+      73,
+      74,
+      75
+    ],
+    "refilingCases": [
+      68,
+      69,
+      70,
+      71,
+      72
+    ],
+    "guideSha256": "4ae3ed9f097bfff6fbc41b30271c3ee9fdf167a7613f99ce293804cfd5782372",
+    "retainedPriorQualificationArtifactCount": 129,
+    "priorArtifactDrift": [],
+    "supersedes": "The70-case guide count in the original qualification is historical; this merged75-case check is current. No human acceptance is claimed."
+  },
+  "planningSource": "All16 ownedTS paths, including six production paths, unchanged from implementation3a57ddb4. Independent review has no blocker.",
+  "typecheckBaseline": 0,
+  "baselineChanges": []
+}

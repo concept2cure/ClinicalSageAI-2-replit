@@ -25,7 +25,48 @@ interface AssemblyFixture {
 
 export function registerAssemblyFilingCases(fixture: AssemblyFixture): void {
   registerBoundCases(fixture);
+  registerSharedPlanningCases(fixture);
   registerReviewCase(fixture);
+}
+
+function registerSharedPlanningCases(fixture: AssemblyFixture): void {
+  const { query, documentId, clearStatements, getStatements, preview, commit, plan, stored, evidenceCounts, captured } = fixture;
+  describe('shared planning sources use the existing assembly without acquiring filing authority', () => {
+    it.each(['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'])('assembles %s with retained source intent and parent identity', async registryId => {
+      await query('UPDATE authoring_documents SET module=NULL WHERE id=$1', [documentId()]);
+      const original = await stored();
+      const parent = (await query('SELECT template_id,provenance FROM authoring_documents WHERE id=$1', [documentId()])).rows[0];
+      const sources = [await captured()];
+      const templateId = builtinAuthoringTemplateId(`registry:${registryId}`);
+      const planned = await plan({ templateId, sources });
+      expect(planned.draftRegion).toBeNull();
+      expect(planned.rows).toHaveLength(5);
+      expect(planned.rows.every(row => row.disposition === 'append' && row.content === '' && !row.aiDraftable)).toBe(true);
+      expect(planned.sources?.fingerprint).toMatch(/^[a-f0-9]{64}$/);
+      const built = await commit(planned, { templateId, sources });
+      expect(built.status, JSON.stringify(built.body)).toBe(200);
+      const saved = await stored();
+      expect(saved).toHaveLength(6);
+      expect(saved).toContainEqual(original[0]);
+      expect((await query('SELECT template_id,provenance FROM authoring_documents WHERE id=$1', [documentId()])).rows[0]).toEqual(parent);
+      const receipts = (await query("SELECT metadata->'assembly'->'sources' AS sources FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='ASSEMBLY_SOURCES'", [documentId()])).rows;
+      expect(receipts).toEqual([{ sources: planned.sources }]);
+    });
+
+    it.each([['ind', 'fda'], ['mdl', 'hc']])('refuses an internal outline on a bound %s/%s filing before sources or writes', async (docType, agency) => {
+      const filing = 'planning_scope_' + randomUUID();
+      await query('INSERT INTO c2c_documents(id,org_id,project_id,doc_type,agency) VALUES($1,$2,$3,$4,$5)', [filing, ORG, PROGRAM, docType, agency]);
+      await query('UPDATE authoring_documents SET module=NULL,c2c_document_id=$1 WHERE id=$2', [filing, documentId()]);
+      const sources = [await captured()];
+      const before = await stored(); const evidence = await evidenceCounts();
+      const args = { templateId: builtinAuthoringTemplateId('registry:RI_STRATEGY'), sources };
+      clearStatements();
+      expect((await preview(args)).body.error).toBe('ASSEMBLY_FILING_SCOPE_MISMATCH');
+      expect((await commit({ fingerprint: 'a'.repeat(64) }, args)).body.error).toBe('ASSEMBLY_FILING_SCOPE_MISMATCH');
+      expect(getStatements().some(sql => /FROM cre_evidence_sources\b|^\s*(INSERT|UPDATE|DELETE)\b/i.test(sql))).toBe(false);
+      expect(await stored()).toEqual(before); expect(await evidenceCounts()).toEqual(evidence);
+    });
+  });
 }
 
 function registerBoundCases(fixture: AssemblyFixture): void {
@@ -94,10 +135,10 @@ function registerBoundCases(fixture: AssemblyFixture): void {
 function registerReviewCase(fixture: AssemblyFixture): void {
   const { query, documentId, commit, plan, stored, evidenceCounts } = fixture;
   describe('actual regional assembly receipts consumed by whole-document oversight', () => {
-    it('reviews every exact Canadian section source and limit after HTTP assembly into a blank no-parent document', async () => {
+    it.each(['CA_MDL', 'RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'])('reviews every exact %s section source and limit after HTTP assembly into a blank no-parent document', async registryId => {
       await query('DELETE FROM authoring_sections WHERE doc_id=$1', [documentId()]);
       await query('UPDATE authoring_documents SET module=NULL WHERE id=$1', [documentId()]);
-      const templateId = builtinAuthoringTemplateId('registry:CA_MDL');
+      const templateId = builtinAuthoringTemplateId(`registry:${registryId}`);
       const template = (await getBuiltinAuthoringTemplate(templateId))!;
       const planned = await plan({ templateId });
       const built = await commit(planned, { templateId });
@@ -137,7 +178,7 @@ function registerReviewCase(fixture: AssemblyFixture): void {
       expect(items).toHaveLength(first.pagination.total);
       for (const section of before) {
         expect(items).toContainEqual(expect.objectContaining({ kind: 'template-source', sectionId: section.id, templateId,
-          source: expect.objectContaining({ id: templateId, entryId: 'registry:CA_MDL', aiDraftable: false }),
+          source: expect.objectContaining({ id: templateId, entryId: `registry:${registryId}`, aiDraftable: false }),
           limitationCount: template.limitations.length }));
         for (const text of template.limitations) expect(items).toContainEqual(expect.objectContaining({
           kind: 'template-reference', sectionId: section.id, templateId, authority: 'recorded', field: 'limitations', text,

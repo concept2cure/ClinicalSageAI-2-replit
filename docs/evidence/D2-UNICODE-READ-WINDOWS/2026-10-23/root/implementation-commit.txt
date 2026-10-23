@@ -1,0 +1,29 @@
+[concept2cure-v2 fc1899262] Keep AnA Unicode read windows and receipt spans exact
+ 15 files changed, 1941 insertions(+), 14 deletions(-)
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/qualification-source-manifest.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/final-command.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/final-exit.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/final.results.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/final.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/implementation-reviews.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/incoming-history.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-final.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-final.raw.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/lint-final.stderr.txt
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/qualification.json
+ create mode 100644 docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/retained-ancestors.json
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/document-catalog-tools.ts (692 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3401 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete

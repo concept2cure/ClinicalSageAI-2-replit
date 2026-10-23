@@ -1,0 +1,34 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-windows.test.ts"
+  ],
+  "exit": 0,
+  "errors": 0,
+  "warnings": 0,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+      "messages": []
+    }
+  ]
+}

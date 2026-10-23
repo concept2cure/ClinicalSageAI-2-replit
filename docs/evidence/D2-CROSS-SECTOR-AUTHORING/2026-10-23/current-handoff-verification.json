@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-23T18:11:26.838618+00:00",
+  "guide": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+  "cases": 75,
+  "notRun": 75,
+  "sharedPlanningCases": [
+    73,
+    74,
+    75
+  ],
+  "refilingCases": [
+    68,
+    69,
+    70,
+    71,
+    72
+  ],
+  "guideSha256": "4ae3ed9f097bfff6fbc41b30271c3ee9fdf167a7613f99ce293804cfd5782372",
+  "retainedPriorQualificationArtifactCount": 129,
+  "priorArtifactDrift": [],
+  "supersedes": "The70-case guide count in the original qualification is historical; this merged75-case check is current. No human acceptance is claimed."
+}

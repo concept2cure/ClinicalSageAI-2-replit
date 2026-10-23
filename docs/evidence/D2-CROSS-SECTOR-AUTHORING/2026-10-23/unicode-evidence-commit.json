@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-10-23T18:19:52.092760+00:00",
+  "argv": [
+    "git",
+    "commit",
+    "-m",
+    "Qualify editor sources with Unicode Vault chunk boundaries"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.225,
+  "head": "30c982cd6b212b0702d5a105bbaf91e4d274a1fc",
+  "rawOutput": "unicode-evidence-commit.log.gz",
+  "rawGzipSha256": "dda155457ad1f32079229b470f4b383ff1ad9f5157b336a30fad8027a0a39cc3",
+  "hooks": "Normal configured hooks; no force, bypass, amend or PR"
+}

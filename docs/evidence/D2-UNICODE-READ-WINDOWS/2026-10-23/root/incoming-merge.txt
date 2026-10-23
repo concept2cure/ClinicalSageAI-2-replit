@@ -1,0 +1,440 @@
+Merge made by the 'ort' strategy.
+ .../v2/__tests__/authoringTemplateSearch.test.tsx  |   23 +-
+ .../__tests__/projectFilesAssemblyFlow.test.tsx    |    8 +-
+ .../__tests__/workbenchAssemblyBuild.test.tsx      |   11 +-
+ docs/design/CROSS_SECTOR_AUTHORING_2026-10-23.md   |  161 +
+ .../D2-CROSS-SECTOR-AUTHORING/2026-10-23/README.md |  169 ++
+ .../2026-10-23/canonical-catchup.json              |    6 +
+ .../2026-10-23/changed-file-lint.json              |  169 ++
+ .../2026-10-23/changed-file-lint.log.gz            |  Bin 0 -> 29149 bytes
+ .../2026-10-23/changed-lint-files.json             |   20 +
+ .../2026-10-23/composed-green.json                 |  164 ++
+ .../2026-10-23/composed-green.log.gz               |  Bin 0 -> 5191 bytes
+ .../2026-10-23/composed-qualified-green.json       |  164 ++
+ .../2026-10-23/composed-qualified-green.log.gz     |  Bin 0 -> 4428 bytes
+ .../2026-10-23/current-handoff-verification.json   |   22 +
+ .../2026-10-23/final-document-review.md            |   62 +
+ .../2026-10-23/final-qualification.json            |  191 ++
+ .../2026-10-23/http-red-freeze.json                |   14 +
+ .../2026-10-23/http-red.json                       |   49 +
+ .../2026-10-23/http-red.log.gz                     |  Bin 0 -> 1905 bytes
+ .../2026-10-23/implementation-commit.json          |   16 +
+ .../2026-10-23/implementation-commit.log.gz        |  Bin 0 -> 1486 bytes
+ .../2026-10-23/implementation-push.json            |   17 +
+ .../2026-10-23/implementation-push.log.gz          |  Bin 0 -> 4567 bytes
+ .../2026-10-23/incoming-review.md                  |  124 +
+ .../2026-10-23/independent-review.md               |   25 +
+ .../2026-10-23/integration-evidence-commit.json    |   12 +
+ .../2026-10-23/integration-evidence-commit.log.gz  |  Bin 0 -> 742 bytes
+ .../2026-10-23/merged-regressions.json             |  198 ++
+ .../2026-10-23/merged-regressions.log.gz           |  Bin 0 -> 84054 bytes
+ .../2026-10-23/post-sync-regressions.json          |  285 ++
+ .../2026-10-23/post-sync-regressions.log.gz        |  Bin 0 -> 14220 bytes
+ .../2026-10-23/post-sync-selection.json            |   20 +
+ .../2026-10-23/preparation/README.md               |   62 +
+ .../2026-10-23/preparation/direct-ri-red.json      |   34 +
+ .../2026-10-23/preparation/direct-ri-red.log.gz    |  Bin 0 -> 1040 bytes
+ .../2026-10-23/preparation/final-green.json        |   37 +
+ .../2026-10-23/preparation/final-green.log.gz      |  Bin 0 -> 4388 bytes
+ .../2026-10-23/preparation/final-lint.json         |   34 +
+ .../2026-10-23/preparation/final-lint.log.gz       |  Bin 0 -> 20 bytes
+ .../2026-10-23/preparation/freeze.json             |   23 +
+ .../2026-10-23/preparation/green.json              |   36 +
+ .../2026-10-23/preparation/green.log.gz            |  Bin 0 -> 2514 bytes
+ .../2026-10-23/preparation/lint.json               |   34 +
+ .../2026-10-23/preparation/lint.log.gz             |  Bin 0 -> 221 bytes
+ .../2026-10-23/preparation/run.py                  |   23 +
+ .../2026-10-23/preparation/ui-fixture/README.md    |   34 +
+ .../2026-10-23/preparation/ui-fixture/freeze.json  |    9 +
+ .../2026-10-23/preparation/ui-fixture/green.json   |   28 +
+ .../2026-10-23/preparation/ui-fixture/green.log.gz |  Bin 0 -> 931 bytes
+ .../ui-fixture/initial-failure-reference.json      |    9 +
+ .../2026-10-23/preparation/ui-fixture/lint.json    |   25 +
+ .../2026-10-23/preparation/ui-fixture/lint.log.gz  |  Bin 0 -> 20 bytes
+ .../2026-10-23/preparation/ui-fixture/run.py       |   23 +
+ .../2026-10-23/prepublication-fetch.json           |    7 +
+ .../2026-10-23/publication-build.json              |  266 ++
+ .../2026-10-23/publication-build.log.gz            |  Bin 0 -> 4663 bytes
+ .../2026-10-23/publication-gate-canvas-path.json   |  266 ++
+ .../2026-10-23/publication-gate-canvas-path.log.gz |  Bin 0 -> 215 bytes
+ .../publication-gate-check-editor-integrity.json   |  266 ++
+ .../publication-gate-check-editor-integrity.log.gz |  Bin 0 -> 332 bytes
+ .../publication-gate-check-phantom-tokens.json     |  266 ++
+ .../publication-gate-check-phantom-tokens.log.gz   |  Bin 0 -> 159 bytes
+ .../2026-10-23/publication-gate-design-system.json |  266 ++
+ .../publication-gate-design-system.log.gz          |  Bin 0 -> 173 bytes
+ .../publication-gate-gateway-bypass.json           |  266 ++
+ .../publication-gate-gateway-bypass.log.gz         |  Bin 0 -> 149 bytes
+ .../publication-gate-migration-deploy-path.json    |  266 ++
+ .../publication-gate-migration-deploy-path.log.gz  |  Bin 0 -> 155 bytes
+ .../publication-gate-migration-drop-safety.json    |  266 ++
+ .../publication-gate-migration-drop-safety.log.gz  |  Bin 0 -> 269 bytes
+ .../publication-gate-migration-guard-order.json    |  266 ++
+ .../publication-gate-migration-guard-order.log.gz  |  Bin 0 -> 160 bytes
+ ...blication-gate-migration-prefix-collisions.json |  266 ++
+ ...ication-gate-migration-prefix-collisions.log.gz |  Bin 0 -> 159 bytes
+ .../publication-gate-migration-reachability.json   |  266 ++
+ .../publication-gate-migration-reachability.log.gz |  Bin 0 -> 203 bytes
+ .../publication-gate-migration-set-order.json      |  266 ++
+ .../publication-gate-migration-set-order.log.gz    |  Bin 0 -> 177 bytes
+ .../2026-10-23/publication-gate-repo-health.json   |  274 ++
+ .../2026-10-23/publication-gate-repo-health.log.gz |  Bin 0 -> 234 bytes
+ .../publication-gate-single-native-canvas.json     |  266 ++
+ .../publication-gate-single-native-canvas.log.gz   |  Bin 0 -> 139 bytes
+ .../publication-gate-sql-interpolation.json        |  266 ++
+ .../publication-gate-sql-interpolation.log.gz      |  Bin 0 -> 674 bytes
+ .../2026-10-23/publication-gate-token-cascade.json |  266 ++
+ .../publication-gate-token-cascade.log.gz          |  Bin 0 -> 802 bytes
+ .../publication-gate-token-contrast.json           |  266 ++
+ .../publication-gate-token-contrast.log.gz         |  Bin 0 -> 217 bytes
+ .../2026-10-23/publication-source-freeze.json      |  128 +
+ .../2026-10-23/publication-sync.json               |  167 ++
+ .../2026-10-23/publication-sync.log.gz             |  Bin 0 -> 2743 bytes
+ .../2026-10-23/publication-typecheck.json          |  266 ++
+ .../2026-10-23/publication-typecheck.log.gz        |  Bin 0 -> 146 bytes
+ .../2026-10-23/publication-warning-ratchet.json    |  268 ++
+ .../2026-10-23/publication-warning-ratchet.log.gz  |  Bin 0 -> 170 bytes
+ .../qualification-artifact-manifest.json           |  135 +
+ .../2026-10-23/qualification-commands.json         |  157 +
+ .../2026-10-23/qualification-fetch.json            |   10 +
+ .../2026-10-23/qualification-sync.json             |   12 +
+ .../2026-10-23/qualified-source-freeze.json        |   73 +
+ .../2026-10-23/qualified-warning-ratchet.json      |  158 +
+ .../2026-10-23/qualified-warning-ratchet.log.gz    |  Bin 0 -> 169 bytes
+ .../2026-10-23/refiling-build.json                 |  284 ++
+ .../2026-10-23/refiling-build.log.gz               |  Bin 0 -> 4654 bytes
+ .../2026-10-23/refiling-combined-regressions.json  |  297 ++
+ .../refiling-combined-regressions.log.gz           |  Bin 0 -> 15078 bytes
+ .../2026-10-23/refiling-final-qualification.json   |  163 ++
+ .../2026-10-23/refiling-gate-canvas-path.json      |  284 ++
+ .../2026-10-23/refiling-gate-canvas-path.log.gz    |  Bin 0 -> 215 bytes
+ .../refiling-gate-check-editor-integrity.json      |  284 ++
+ .../refiling-gate-check-editor-integrity.log.gz    |  Bin 0 -> 332 bytes
+ .../refiling-gate-check-phantom-tokens.json        |  284 ++
+ .../refiling-gate-check-phantom-tokens.log.gz      |  Bin 0 -> 159 bytes
+ .../2026-10-23/refiling-gate-design-system.json    |  284 ++
+ .../2026-10-23/refiling-gate-design-system.log.gz  |  Bin 0 -> 173 bytes
+ .../2026-10-23/refiling-gate-gateway-bypass.json   |  284 ++
+ .../2026-10-23/refiling-gate-gateway-bypass.log.gz |  Bin 0 -> 149 bytes
+ .../refiling-gate-migration-deploy-path.json       |  284 ++
+ .../refiling-gate-migration-deploy-path.log.gz     |  Bin 0 -> 155 bytes
+ .../refiling-gate-migration-drop-safety.json       |  284 ++
+ .../refiling-gate-migration-drop-safety.log.gz     |  Bin 0 -> 269 bytes
+ .../refiling-gate-migration-guard-order.json       |  284 ++
+ .../refiling-gate-migration-guard-order.log.gz     |  Bin 0 -> 160 bytes
+ .../refiling-gate-migration-prefix-collisions.json |  284 ++
+ ...efiling-gate-migration-prefix-collisions.log.gz |  Bin 0 -> 159 bytes
+ .../refiling-gate-migration-reachability.json      |  284 ++
+ .../refiling-gate-migration-reachability.log.gz    |  Bin 0 -> 203 bytes
+ .../refiling-gate-migration-set-order.json         |  284 ++
+ .../refiling-gate-migration-set-order.log.gz       |  Bin 0 -> 177 bytes
+ .../2026-10-23/refiling-gate-repo-health.json      |  292 ++
+ .../2026-10-23/refiling-gate-repo-health.log.gz    |  Bin 0 -> 239 bytes
+ .../refiling-gate-shell-css-collisions.json        |  284 ++
+ .../refiling-gate-shell-css-collisions.log.gz      |  Bin 0 -> 190 bytes
+ .../refiling-gate-single-native-canvas.json        |  284 ++
+ .../refiling-gate-single-native-canvas.log.gz      |  Bin 0 -> 139 bytes
+ .../refiling-gate-sql-interpolation.json           |  284 ++
+ .../refiling-gate-sql-interpolation.log.gz         |  Bin 0 -> 674 bytes
+ .../refiling-gate-surface-text-ramp.json           |  284 ++
+ .../refiling-gate-surface-text-ramp.log.gz         |  Bin 0 -> 157 bytes
+ .../2026-10-23/refiling-gate-token-cascade.json    |  284 ++
+ .../2026-10-23/refiling-gate-token-cascade.log.gz  |  Bin 0 -> 802 bytes
+ .../2026-10-23/refiling-gate-token-contrast.json   |  284 ++
+ .../2026-10-23/refiling-gate-token-contrast.log.gz |  Bin 0 -> 217 bytes
+ .../2026-10-23/refiling-incoming-review.md         |  134 +
+ .../refiling-qualification-commands.json           |  173 ++
+ .../2026-10-23/refiling-regression-selection.json  |   14 +
+ .../2026-10-23/refiling-repo-health-report.json    | 3083 ++++++++++++++++++++
+ .../2026-10-23/refiling-source-freeze.json         |  137 +
+ .../2026-10-23/refiling-typecheck.json             |  284 ++
+ .../2026-10-23/refiling-typecheck.log.gz           |  Bin 0 -> 146 bytes
+ .../2026-10-23/regression-selection.draft.json     |   42 +
+ .../2026-10-23/regression-selection.json           |   43 +
+ .../2026-10-23/release-changed-file-lint.json      |  179 ++
+ .../2026-10-23/release-changed-file-lint.log.gz    |  Bin 0 -> 29236 bytes
+ .../2026-10-23/release-fetch.json                  |  158 +
+ .../2026-10-23/release-merged-regressions.json     |  204 ++
+ .../2026-10-23/release-merged-regressions.log.gz   |  Bin 0 -> 71575 bytes
+ .../2026-10-23/release-source-freeze.json          |   76 +
+ .../2026-10-23/release-warning-ratchet.json        |  164 ++
+ .../2026-10-23/release-warning-ratchet.log.gz      |  Bin 0 -> 170 bytes
+ .../2026-10-23/repo-health-report.json             | 3083 ++++++++++++++++++++
+ .../2026-10-23/retry-2-fetch.json                  |  291 ++
+ .../2026-10-23/retry-2-merge-finish.log.gz         |  Bin 0 -> 591 bytes
+ .../2026-10-23/retry-2-merge-start.log.gz          |  Bin 0 -> 174 bytes
+ .../2026-10-23/retry-2-merge.json                  |   22 +
+ .../2026-10-23/retry-3-fetch.json                  |   15 +
+ .../2026-10-23/retry-3-merge.json                  |   13 +
+ .../2026-10-23/retry-3-merge.log.gz                |  Bin 0 -> 358 bytes
+ .../2026-10-23/retry-3-prepush-fetch.json          |    5 +
+ .../2026-10-23/retry-fetch.json                    |   16 +
+ .../2026-10-23/retry-merge.json                    |   15 +
+ .../2026-10-23/retry-merge.log.gz                  |  Bin 0 -> 324 bytes
+ .../2026-10-23/retry-push.json                     |   15 +
+ .../2026-10-23/retry-push.log.gz                   |  Bin 0 -> 4469 bytes
+ .../2026-10-23/run-check.py                        |   54 +
+ .../2026-10-23/source-freeze.json                  |   73 +
+ .../2026-10-23/source/README.md                    |   64 +
+ .../2026-10-23/source/baseline-lint-input.json     |   11 +
+ .../2026-10-23/source/baseline-registry-lint.json  |   44 +
+ .../source/baseline-registry-lint.log.gz           |  Bin 0 -> 28823 bytes
+ .../2026-10-23/source/freeze.json                  |   22 +
+ .../2026-10-23/source/freeze.sha256                |    1 +
+ .../2026-10-23/source/green.json                   |   48 +
+ .../2026-10-23/source/green.log.gz                 |  Bin 0 -> 3765 bytes
+ .../2026-10-23/source/lint-summary.json            |    7 +
+ .../2026-10-23/source/lint.json                    |   46 +
+ .../2026-10-23/source/lint.log.gz                  |  Bin 0 -> 29029 bytes
+ .../2026-10-23/source/qualified-green.json         |   56 +
+ .../2026-10-23/source/qualified-green.log.gz       |  Bin 0 -> 3785 bytes
+ .../2026-10-23/source/red.json                     |   45 +
+ .../2026-10-23/source/red.log.gz                   |  Bin 0 -> 1067 bytes
+ .../2026-10-23/source/run.py                       |   46 +
+ .../2026-10-23/ui-fixtures/README.md               |   41 +
+ .../2026-10-23/ui-fixtures/focused-green.json      |   51 +
+ .../2026-10-23/ui-fixtures/focused-green.log.gz    |  Bin 0 -> 1898 bytes
+ .../2026-10-23/ui-fixtures/freeze.json             |   22 +
+ .../2026-10-23/ui-fixtures/lint.json               |   48 +
+ .../2026-10-23/ui-fixtures/lint.log.gz             |  Bin 0 -> 20 bytes
+ .../ui-fixtures/retained-red-reference.json        |   28 +
+ .../2026-10-23/ui-fixtures/run.py                  |   23 +
+ .../2026-10-23/unicode-build.json                  |  302 ++
+ .../2026-10-23/unicode-build.log.gz                |  Bin 0 -> 4654 bytes
+ .../2026-10-23/unicode-final-qualification.json    |   23 +
+ .../2026-10-23/unicode-incoming-review.md          |   69 +
+ .../2026-10-23/unicode-merge.json                  |   14 +
+ .../2026-10-23/unicode-merge.log.gz                |  Bin 0 -> 1207 bytes
+ .../2026-10-23/unicode-regression-selection.json   |   14 +
+ .../2026-10-23/unicode-source-freeze.json          |  146 +
+ .../2026-10-23/unicode-source-regressions.json     |  315 ++
+ .../2026-10-23/unicode-source-regressions.log.gz   |  Bin 0 -> 5134 bytes
+ .../2026-10-23/warning-ratchet.json                |  158 +
+ .../2026-10-23/warning-ratchet.log.gz              |  Bin 0 -> 170 bytes
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    5 +
+ .../__tests__/_authoring-assembly-filing-cases.ts  |   47 +-
+ .../routes/__tests__/_template-editor-fixture.ts   |    8 +-
+ ...iotechTemplateEditor.pglite.integration.test.ts |   12 +
+ .../shared-planning-template-preparation.test.ts   |  116 +
+ server/services/ana/builtin-template-reference.ts  |    6 +-
+ .../__tests__/builtin-authoring-templates.test.ts  |    4 +-
+ ...ross-sector-builtin-authoring-templates.test.ts |   76 +
+ .../authoring/builtin-authoring-templates.ts       |   15 +-
+ .../__tests__/document-template-library.test.ts    |    6 +-
+ .../services/market-specs/document-preparation.ts  |   22 +-
+ .../market-specs/document-template-library.ts      |    6 +-
+ .../market-specs/shared-planning-preparation.ts    |   62 +
+ shared/regulatory/global-document-registry.ts      |    7 +
+ 226 files changed, 24412 insertions(+), 33 deletions(-)
+ create mode 100644 docs/design/CROSS_SECTOR_AUTHORING_2026-10-23.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-catchup.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/changed-file-lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/changed-file-lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/changed-lint-files.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/composed-green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/composed-green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/composed-qualified-green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/composed-qualified-green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/current-handoff-verification.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/final-document-review.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/final-qualification.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/http-red-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/http-red.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/http-red.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/implementation-commit.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/implementation-commit.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/implementation-push.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/implementation-push.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/incoming-review.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/independent-review.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/integration-evidence-commit.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/integration-evidence-commit.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/merged-regressions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/merged-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/post-sync-regressions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/post-sync-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/post-sync-selection.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/README.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/direct-ri-red.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/direct-ri-red.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/final-green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/final-green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/final-lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/final-lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/run.py
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/README.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/initial-failure-reference.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/preparation/ui-fixture/run.py
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/prepublication-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-build.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-build.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-canvas-path.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-check-editor-integrity.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-check-phantom-tokens.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-design-system.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-design-system.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-deploy-path.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-drop-safety.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-guard-order.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-prefix-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-reachability.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-reachability.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-set-order.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-migration-set-order.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-repo-health.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-token-cascade.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-token-contrast.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-gate-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-sync.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-sync.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-typecheck.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualification-artifact-manifest.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualification-commands.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualification-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualification-sync.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualified-source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualified-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/qualified-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-build.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-build.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-combined-regressions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-combined-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-final-qualification.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-canvas-path.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-check-editor-integrity.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-check-phantom-tokens.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-design-system.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-design-system.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-deploy-path.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-drop-safety.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-guard-order.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-prefix-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-reachability.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-reachability.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-set-order.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-migration-set-order.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-repo-health.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-token-cascade.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-token-contrast.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-gate-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-incoming-review.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-qualification-commands.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-regression-selection.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-repo-health-report.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-typecheck.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/refiling-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/regression-selection.draft.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/regression-selection.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-changed-file-lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-changed-file-lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-merged-regressions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-merged-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/release-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/repo-health-report.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-2-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-2-merge-finish.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-2-merge-start.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-2-merge.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-3-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-3-merge.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-3-merge.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-3-prepush-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-merge.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-merge.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-push.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/retry-push.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/run-check.py
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/README.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/baseline-lint-input.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/baseline-registry-lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/baseline-registry-lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/freeze.sha256
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/lint-summary.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/qualified-green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/qualified-green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/red.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/red.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/source/run.py
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/README.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/focused-green.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/focused-green.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/lint.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/lint.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/retained-red-reference.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/ui-fixtures/run.py
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-build.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-build.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-final-qualification.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-incoming-review.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-merge.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-merge.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-regression-selection.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-source-freeze.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-source-regressions.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-source-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/warning-ratchet.log.gz
+ create mode 100644 server/services/ana/__tests__/shared-planning-template-preparation.test.ts
+ create mode 100644 server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts
+ create mode 100644 server/services/market-specs/shared-planning-preparation.ts

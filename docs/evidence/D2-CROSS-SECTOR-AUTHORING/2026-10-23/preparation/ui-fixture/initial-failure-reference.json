@@ -1,0 +1,9 @@
+{
+  "rawOutput": "../../merged-regressions.log.gz",
+  "rawGzipSha256": "1817a597b64d6c7007d7545fc4d168d1e3ba7108ef1202d4b99423a9d4238539",
+  "sourceBefore": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "dfda3a9665a67522811b072b146c7079266842394898a9ed1db4e863fc6ffd30"
+  },
+  "observedFailure": "All25searchcasescannotopenNewdocumentbecausefixturehasnosigned-in actor/token. Guardreason: signed-in account or organization changed.",
+  "classification": "Fixture drift after canonical creation-owner admission tightened; no production or rule change."
+}
