@@ -1,0 +1,15 @@
+{
+  "stale_passage_inventory": "CLEAR: same-statement snapshots, per-payload checks, available-context fingerprint, existing fences, bounded dense hashing, coherent fixtures",
+  "stale_passage_revalidation": "CLEAR: strict NULL/malformed distinction, scoped identity first, duplicate payload checks, same-statement bounded dense hash, unchanged other corpora",
+  "testFilesFrozen": 4,
+  "productionFilesChanged": [
+    "server/services/advancedRAGPipeline.ts"
+  ],
+  "existingFixtureOnlyChanges": [
+    "server/services/__tests__/rag-actor-programme-scope.test.ts",
+    "server/services/__tests__/rag-disposition-revalidation.test.ts",
+    "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+    "server/services/__tests__/rag-generation-request.test.ts"
+  ],
+  "finalSqlHelperReview": "CLEAR by stale_passage_revalidation: unchanged SQL template and mapping; helper removes new length warning without suppression or baseline changes"
+}

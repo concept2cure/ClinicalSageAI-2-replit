@@ -222,11 +222,19 @@ export interface MemoryScope {
   category?: string;
 }
 
+type VaultPassageSnapshot = {
+  extractedTextSha256: string | null;
+  charStart: number | null;
+  charEnd: number | null;
+};
+
 export interface RetrievedDocument {
   id: string;
   documentId?: string;
   programId?: string;
   contentHash?: string;
+  /** Internal same-statement extraction/chunk snapshot; not an exact-span reference. */
+  vaultPassageSnapshot?: VaultPassageSnapshot;
   chunkId?: string;
   content: string;
   title: string;
@@ -307,6 +315,7 @@ type VaultChunkRow = {
   similarity: number;
   /** Stored index vector in pgvector text form ('[a,b,...]'); only selected when needEmbeddings. */
   embedding?: unknown;
+  vaultPassageSnapshot?: VaultPassageSnapshot;
 };
 
 /** Corpus selection threaded through the strategy methods to searchInitial. */
@@ -396,6 +405,16 @@ function vaultNumber(value: unknown): number {
 function nullableVaultNumber(value: unknown): number | null {
   return value === null ? null : vaultNumber(value);
 }
+function readVaultPassageSnapshot(row: Record<string, unknown>): VaultPassageSnapshot {
+  const hash = row.extracted_text_sha256;
+  if (hash !== null && (typeof hash !== 'string' || !/^[0-9a-f]{64}$/.test(hash))) return invalidVaultRow();
+  const coordinate = (value: unknown): number | null => {
+    if (value === null) return null;
+    if (typeof value !== 'number' || !Number.isSafeInteger(value)) return invalidVaultRow();
+    return value;
+  };
+  return { extractedTextSha256: hash, charStart: coordinate(row.char_start), charEnd: coordinate(row.char_end) };
+}
 /** These are the columns selected by the one canonical Vault reader. */
 function readVaultChunkRow(row: Record<string, unknown>): VaultChunkRow {
   return {
@@ -408,16 +427,40 @@ function readVaultChunkRow(row: Record<string, unknown>): VaultChunkRow {
     chunk_index: nullableVaultNumber(row.chunk_index), similarity: vaultNumber(row.similarity),
     // Preserve the existing parser's undefined/invalid-vector fallback for MMR.
     embedding: row.embedding,
+    vaultPassageSnapshot: readVaultPassageSnapshot(row),
   };
 }
-function readVaultCandidateRow(row: Record<string, unknown>): {
-  id: string; document_id: string; program_id?: string; content_hash?: string; title: string; original_file_available: boolean;
-} {
+type VaultCandidateRow = {
+  id: string; document_id: string; program_id?: string; content_hash?: string;
+  title: string; original_file_available: boolean;
+  content: string | null; snapshot: VaultPassageSnapshot; inExtraction: boolean | null;
+};
+function readVaultCandidateRow(row: Record<string, unknown>): VaultCandidateRow {
   if (typeof row.original_file_available !== 'boolean') return invalidVaultRow();
+  const snapshot = readVaultPassageSnapshot(row);
+  const inExtraction = row.chunk_in_extraction;
+  if (inExtraction !== null && typeof inExtraction !== 'boolean') return invalidVaultRow();
+  if ((snapshot.extractedTextSha256 === null) !== (inExtraction === null)) return invalidVaultRow();
   return { id: vaultText(row.id), document_id: vaultText(row.document_id),
     program_id: row.program_id == null ? undefined : vaultText(row.program_id),
     content_hash: row.content_hash == null ? undefined : vaultText(row.content_hash),
-    title: vaultText(row.title), original_file_available: row.original_file_available };
+    title: vaultText(row.title), original_file_available: row.original_file_available,
+    content: nullableVaultText(row.chunk_text), snapshot, inExtraction };
+}
+
+/** Membership preserves legacy hit-only reads; only passage-context-span proves exact offsets. */
+function currentVaultPassage(doc: RetrievedDocument, row: VaultCandidateRow): boolean {
+  if (!row.content || doc.content !== row.content || row.inExtraction === false) return false;
+  const pinned = doc.vaultPassageSnapshot;
+  if (pinned) {
+    if (pinned.extractedTextSha256 !== row.snapshot.extractedTextSha256 ||
+        pinned.charStart !== row.snapshot.charStart || pinned.charEnd !== row.snapshot.charEnd) return false;
+  } else if (doc.expandedContent || doc.compressedContent) {
+    // Never invent the derivation basis of previously expanded/compressed text.
+    return false;
+  }
+  return doc.passageContext?.status !== 'available' ||
+    doc.passageContext.reference.extractedTextSha256 === row.snapshot.extractedTextSha256;
 }
 /**
  * A vault hit with its verified surrounding span (passage-context-span.ts).
@@ -501,6 +544,58 @@ function buildLocator(row: VaultChunkRow): string | undefined {
   return undefined;
 }
 
+/** Canonical dense Vault statement: hash only the materialized, limited candidates. */
+// tenant-isolation-safe: scoped binds the organization UUID at $4 before ranking.
+function vaultDensePassageSql(denseFilter: string, embeddingCol: string): string {
+  return `
+        WITH scoped AS MATERIALIZED (
+          SELECT
+            c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
+            c.chunk_index, c.char_start, c.char_end, c.embedding, d.program_id, d.content_hash,
+            COALESCE(d.document_title, d.file_name, '') ||
+              CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+              ELSE ' [original file unavailable; retained extracted data]' END AS title
+          FROM vault.document_chunks c
+          JOIN vault.documents d ON d.id = c.document_id
+          WHERE c.embedding IS NOT NULL${denseFilter}
+            AND d.deleted_at IS NULL
+            AND ${vaultDataEligibleSql('d')}
+            AND NOT ${supersededSql('d')}
+            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
+            -- Explicit tenant predicate. A document with a NULL organization_id is
+            -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
+            -- and this predicate excludes it, which is the intended refusal: an
+            -- orphan document belongs to no tenant and is returned to none.
+            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
+        ), ranked AS MATERIALIZED (
+        SELECT
+          s.id AS chunk_id,
+          s.document_id AS document_id,
+          s.program_id::text AS program_id, s.content_hash,
+          s.title AS title,
+          s.chunk_text AS content,
+          s.page_number AS page_number,
+          s.section_title AS section_title,
+          s.chunk_index AS chunk_index,
+          s.char_start, s.char_end,
+          ${embeddingCol.replace('c.embedding', 's.embedding')}
+          1 - (s.embedding <=> $1::vector) AS similarity
+        FROM scoped s
+        -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+        -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+        -- from the integer literal, and a float threshold like 0.65 then
+        -- fails with 22P02 before the query ever runs.
+        WHERE (s.embedding <=> $1::vector) < 1 - $2::float8
+        ORDER BY s.embedding <=> $1::vector
+        LIMIT $3
+        )
+        SELECT ranked.*,
+               encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256
+          FROM ranked JOIN vault.documents d ON d.id = ranked.document_id
+         ORDER BY ranked.similarity DESC
+      `;
+}
+
 /** One vault chunk row as a retrieved passage. */
 function vaultChunkToDoc(row: VaultChunkRow, withEmbedding?: boolean): RetrievedDocument {
   return {
@@ -509,6 +604,7 @@ function vaultChunkToDoc(row: VaultChunkRow, withEmbedding?: boolean): Retrieved
     documentId: row.document_id,
     programId: row.program_id,
     contentHash: row.content_hash,
+    vaultPassageSnapshot: row.vaultPassageSnapshot,
     content: row.content || '',
     title: row.title || 'Untitled',
     atomType: 'vault_chunk',
@@ -907,7 +1003,7 @@ export class AdvancedRAGPipeline {
     documents: RetrievedDocument[], options: RetrievalOptions,
   ): Promise<RetrievedDocument[]> {
     const vaultRead = await this.admitVaultRead(options);
-    const eligible = new Map<string, { documentId?: string; available: boolean; title: string }>();
+    const eligible = new Map<string, { documentId?: string; available: boolean; title: string; vault?: VaultCandidateRow }>();
     const uuid = candidateOrganizationUuid(options);
     await this.validateRetrievalTenant(options, vaultRead);
     const groups = ['vault_chunk', 'rag_chunk', 'project_atom'] as const;
@@ -916,12 +1012,17 @@ export class AdvancedRAGPipeline {
       if (!candidates.length) continue;
       const ids = [...new Set(candidates.map(d => d.chunkId ?? d.id))];
       let rows: Array<{ id: string; document_id?: string; program_id?: string; content_hash?: string; original_file_available: boolean; title: string }>;
+      let vaultRows: VaultCandidateRow[] | undefined;
       if (type === 'vault_chunk') {
         if (!isTenantUuid(uuid)) continue;
         const params: unknown[] = [ids, uuid];
         const filter = buildDocFilterClause(options.filters, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
-        rows = await this.withVaultReadExecutor(uuid, vaultRead, options.sourceReadScope, async client => (await client.query(
+        vaultRows = await this.withVaultReadExecutor(uuid, vaultRead, options.sourceReadScope, async client => (await client.query(
           `SELECT c.id::text AS id, d.id::text AS document_id, d.program_id::text AS program_id, d.content_hash,
+                  c.chunk_text, c.char_start, c.char_end,
+                  encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256,
+                  CASE WHEN d.extracted_text IS NULL THEN NULL
+                    ELSE COALESCE(strpos(d.extracted_text, c.chunk_text) > 0, FALSE) END AS chunk_in_extraction,
                   COALESCE(d.document_title, d.file_name, '') AS title,
                   ${vaultBinaryAvailableSql('d')} AS original_file_available
              FROM vault.document_chunks c JOIN vault.documents d ON d.id = c.document_id
@@ -932,6 +1033,7 @@ export class AdvancedRAGPipeline {
               AND ${vaultDataEligibleSql('d')} AND NOT ${supersededSql('d')}`,
           params,
         )).rows.map(readVaultCandidateRow));
+        rows = vaultRows;
       } else if (type === 'rag_chunk') {
         // A missing tenant key means explicitly public guidance, never all orgs.
         ({ rows } = await this.pool.query(
@@ -964,6 +1066,7 @@ export class AdvancedRAGPipeline {
         eligible.set(`${type}:${row.id}`, {
           documentId: row.document_id, available: row.original_file_available === true,
           title: String(row.title ?? ''),
+          vault: vaultRows?.find(candidate => candidate.id === row.id),
         });
       }
     }
@@ -972,7 +1075,9 @@ export class AdvancedRAGPipeline {
       if (doc.atomType === 'client_memory' || doc.atomType === 'project_memory') return [doc];
       const row = eligible.get(`${doc.atomType}:${doc.chunkId ?? doc.id}`);
       if (!row || (doc.documentId && row.documentId !== doc.documentId)) return [];
-      return [{ ...doc, originalFileAvailable: row.available, title:
+      if (row.vault && !currentVaultPassage(doc, row.vault)) return [];
+      return [{ ...doc, ...(row.vault ? { vaultPassageSnapshot: row.vault.snapshot } : {}),
+        originalFileAvailable: row.available, title:
         (row.title || 'Untitled') + (row.available ? '' : ' [original file unavailable; retained extracted data]') }];
     });
   }
@@ -1402,6 +1507,8 @@ export class AdvancedRAGPipeline {
         c.page_number AS page_number,
         c.section_title AS section_title,
         c.chunk_index AS chunk_index,
+        c.char_start, c.char_end,
+        encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256,
         ${withVectors ? 'c.embedding::text AS embedding,' : ''}
         ${args.keyless
           ? "ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1), 32)::float8"
@@ -1517,49 +1624,8 @@ export class AdvancedRAGPipeline {
       const savepoint = await optionalVaultSavepoint(client);
       try {
         const { rows } = await client.query(
-        `
-        WITH scoped AS MATERIALIZED (
-          SELECT
-            c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
-            c.chunk_index, c.embedding, d.program_id, d.content_hash,
-            COALESCE(d.document_title, d.file_name, '') ||
-              CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
-              ELSE ' [original file unavailable; retained extracted data]' END AS title
-          FROM vault.document_chunks c
-          JOIN vault.documents d ON d.id = c.document_id
-          WHERE c.embedding IS NOT NULL${denseFilter}
-            AND d.deleted_at IS NULL
-            AND ${vaultDataEligibleSql('d')}
-            AND NOT ${supersededSql('d')}
-            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
-            -- Explicit tenant predicate. A document with a NULL organization_id is
-            -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
-            -- and this predicate excludes it, which is the intended refusal: an
-            -- orphan document belongs to no tenant and is returned to none.
-            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
-        )
-        SELECT
-          s.id AS chunk_id,
-          s.document_id AS document_id,
-          s.program_id::text AS program_id, s.content_hash,
-          s.title AS title,
-          s.chunk_text AS content,
-          s.page_number AS page_number,
-          s.section_title AS section_title,
-          s.chunk_index AS chunk_index,
-          ${embeddingCol.replace('c.embedding', 's.embedding')}
-          1 - (s.embedding <=> $1::vector) AS similarity
-        FROM scoped s
-        -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
-        -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
-        -- from the integer literal, and a float threshold like 0.65 then
-        -- fails with 22P02 before the query ever runs.
-        WHERE (s.embedding <=> $1::vector) < 1 - $2::float8
-        ORDER BY s.embedding <=> $1::vector
-        LIMIT $3
-      `,
-        denseParams
-      );
+          vaultDensePassageSql(denseFilter, embeddingCol), denseParams,
+        );
         denseRows = rows.map(readVaultChunkRow);
         if (savepoint) await client.query('RELEASE SAVEPOINT vault_dense_search');
       } catch (error) {

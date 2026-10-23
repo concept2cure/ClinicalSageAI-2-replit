@@ -28,6 +28,8 @@ function harness(documents: RetrievedDocument[]) {
     return { rows: documents.filter(d => ids.includes(d.id) && !withdrawn.has(d.id)).map(d => ({
       id: d.id, document_id: d.documentId, title: `Source ${d.id}`,
       original_file_available: !retained.has(d.id),
+      chunk_text: d.content, char_start: null, char_end: null,
+      extracted_text_sha256: null, chunk_in_extraction: null,
     })) };
   });
   const score = vi.fn(async (_question: string, candidates: Array<{ content: string }>) => ({
@@ -149,7 +151,9 @@ describe('batched candidate checks bind their actual corpus identities', () => {
     const h = harness(sources);
     const lookup = h.query.getMockImplementation()!;
     h.query.mockImplementation(async (sql, params) => sql.includes('FROM vault.document_chunks')
-      ? { rows: [{ id: 'vault', document_id: 'wrong-document', title: 'Wrong source', original_file_available: true }] }
+      ? { rows: [{ id: 'vault', document_id: 'wrong-document', title: 'Wrong source', original_file_available: true,
+        chunk_text: sources[0].content, char_start: null, char_end: null,
+        extracted_text_sha256: null, chunk_in_extraction: null }] }
       : lookup(sql, params));
     const result = await h.instance.revalidateCandidates(sources, {
       ...options, artifactScope: { projectId: 17, organizationUuid: ORG }, organizationId: 42,
