@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-23T15:33:27Z",
+  "baseCommit": "6bb302bedf1aeaeed005df3188e668d315b35ee5",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx": "acbd753a94f1fb51fc2fec36b50e354f1184a1e98d103a0121433e1af7dad198",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx": "1902a44afd029bf03b2134ccf278de55e37885dbb7d1b002b05a443e4380199d",
+    "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx": "a3fcd9b4277fc9dc611c05429e768fc987c03e8508c6b72e9a65a3b0112be0ba",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "bf721715007ca12a9fbd0b3e3c5b78dad99d496c57c842dbcf79f448af960396",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "server/routes/c2c/__tests__/project-intake-class.test.ts": "151fb6b77a46c71259a5d08ecf382075c55613593af0a6a89a11c8ed8c6d2190",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts": "37977deea9bd23572c03025cdb5cc751e1bb511a214531dcc043081bcdcb6d05",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "server/services/ana/tool-authorization.register.json": "7da272972a2c1e26ee3730e54f1114ab259449234efe150dd06f730d0df7b54e",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+    "server/services/c2c/__tests__/add-project-market.pglite.test.ts": "400a41b6ae659ba767d29457614a0ebe80da67e310946c05f465a06f2e2db228",
+    "server/services/c2c/add-project-market.ts": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "f455bf4d010a80d0e3f5526ae25a8199e08e0289f0155c1b4dd974cec93a5595",
+    "server/services/ectd/assemble-from-core.ts": "e29501ca970b9971b9b296f5d5a67c3880c94c496a4602444cd8ff0dd79c4c7c",
+    "server/services/ectd/core-to-packager.ts": "08b6468ea7a9f090b336591a9e852e24cd4e4f6c1a4fe776edbbb80825b95f13",
+    "server/services/ectd/leaf-source-resolver.ts": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9",
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "shared/constants/domain/__tests__/product-types.test.ts": "d6795dcbff29fcf9a78527adf732f7c9a8affb932e607f30df56715779196c95",
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b"
+  }
+}

@@ -122,6 +122,15 @@ async function marketState() {
 }
 
 describe('add a market (F22)', () => {
+  it.each(['510k', 'pma', 'de_novo', 'ide', 'mdr', 'ivdr', 'cer', 'device', 'ivd'])(
+    'refuses a known %s home pathway with an inconsistent medicinal product before any write', async (programType) => {
+      await jdb.pool.query('UPDATE regulatory_programs SET program_type=$1 WHERE id=$2', [programType, NDA]);
+      const before = await marketState();
+      await expect(add(NDA, 'EMA', 'maa')).rejects.toMatchObject({ status: 422, code: 'DEVICE_PROGRAM' });
+      expect(writes).toEqual([]);
+      expect(await marketState()).toEqual(before);
+    },
+  );
   it.each(REGIONAL_DEVICE_APPLICATION_CLASSES)('refuses $docType as a medicinal added market before any write', async regional => {
     expect(await count('SELECT count(*) AS n FROM c2c_rule_packs WHERE doc_type=$1 AND agency=$2', [regional.docType, regional.packAgency])).toBe(1);
     const before = await marketState();

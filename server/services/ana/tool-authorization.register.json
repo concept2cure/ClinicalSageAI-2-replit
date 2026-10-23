@@ -2480,7 +2480,12 @@
   "create_ha_interaction": {
    "class": "confirm",
    "writes": "INSERT ha_interactions + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_ha_interaction')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_ha_interaction')",
+   "present": {
+    "verb": "record",
+    "object": "an agency interaction",
+    "source": "project"
+   }
   },
   "create_iacuc_protocol": {
    "class": "confirm",

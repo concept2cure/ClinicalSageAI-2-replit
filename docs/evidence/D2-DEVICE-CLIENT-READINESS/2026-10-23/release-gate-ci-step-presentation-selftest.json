@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:step-presentation:selftest"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 2.428,
+  "output": "release-gate-ci-step-presentation-selftest.log.gz",
+  "outputSha256": "d2e16fda9839566e96992efc14a90f1d1bdb444ca9b2895e8193c78e6c0dfdd0",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}

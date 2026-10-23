@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.568,
+  "output": "canonical-gate-ci-class-vocabulary.log.gz",
+  "outputSha256": "ed7be00715f13ce13a011ada30bc865018a5057c583b07f041c84ce597eeeabf",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 12.938,
+  "output": "merged-build.log.gz",
+  "outputSha256": "8076e9e939cdcc8ea47eeb3aa3dd98c9cc7b12aa989241b6cde9cd43cff2abf7",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}

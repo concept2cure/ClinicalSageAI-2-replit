@@ -16,9 +16,10 @@ import {
   type ReadinessFinding,
   type RuleView,
 } from './programSequence';
-import { MarketsBody, NotSequencedState, VerdictDetail, marketAccessibleName, marketName, marketTarget, marketVerdict, marketsForbidden, openSubmissionCenter } from './ProjectMarkets';
+import { MarketsBody, NotSequencedState, VerdictDetail, marketAccessibleName, marketName, marketTarget, marketVerdict, marketsForbidden, openSubmissionCenter, regionalPreparationReason } from './ProjectMarkets';
 import { findingAct, type FindingAct } from './readinessFindingActs';
 import { filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
+import { regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import '../styles/project-home-v2.css';
 
 /* ════ Submission Readiness — the open project's markets, each with its own
@@ -311,6 +312,8 @@ function anaSummary(state: ListState, label: string, markets: ProgramMarket[], p
     case 'reading': return 'Submission readiness, still reading the project and its markets.';
     case 'project-failed': return 'Submission readiness could not read the open project, so whether it has markets is not stated.';
     case 'not-sequenced': {
+      const regionalApplication = regionalDeviceApplicationClassOf(programType);
+      if (regionalApplication) return `Submission readiness for ${p}: ${regionalPreparationReason(regionalApplication)} There is no submission sequence to gate.`;
       const documentClass = filingDocumentClassOf(programType);
       return `Submission readiness: the open project (${p}) is ${documentClass ? filingTypeInSentence(documentClass.docType, true) : 'a filing document class'}, authored here and not built as a sequence, so there is no sequence to gate.`;
     }
@@ -333,6 +336,7 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   );
   const programType = program.data?.program_type ?? null;
   const documentClass = filingDocumentClassOf(programType);
+  const regionalApplication = regionalDeviceApplicationClassOf(programType);
   /* The markets are read beside the project, from the first render, so the
      list is "loading" until it has answered. Started only once the project
      was read, it rendered one commit of "No market for this project yet"
@@ -342,7 +346,7 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   const label = program.data?.name || program.data?.code || shell?.title || programId || 'the open project';
   const available = useSurfaceAvailable();
   const center = available('submission-center');
-  const state = listStateOf(programId, program, Boolean(documentClass), markets);
+  const state = listStateOf(programId, program, Boolean(documentClass || regionalApplication), markets);
 
   const anaContext = useMemo(
     () => ({
@@ -352,13 +356,13 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
         ...(programId ? { programId, program: label } : {}),
         markets: state === 'listed' ? markets.markets.map(marketFacts) : [],
       },
-      availableActions: [
+      availableActions: regionalApplication ? ['Explain the document preparation limit and required human review'] : [
         'Explain why a market is not cleared to dispatch',
         'Explain what each blocker requires before it clears',
         'Explain what the external validator adds to this gate',
       ],
     }),
-    [state, label, markets.markets, programId, programType],
+    [state, label, markets.markets, programId, programType, regionalApplication],
   );
   usePublishSurfaceContext('dispatch-readiness', anaContext);
 
@@ -366,10 +370,10 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   const head = (
     <div className="dr2-head">
       <div className="dr2-eyebrow">
-        <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
+        <span className="dr2-kicker">{regionalApplication ? 'AnA · document preparation' : 'AnA · dispatch gate · proven, not generated'}</span>
       </div>
-      <h1 className="dr2-title">Cleared to dispatch?</h1>
-      {programId && <div className="dr2-sub">{label} · each market&apos;s latest sequence, as the server gates it</div>}
+      <h1 className="dr2-title">{regionalApplication ? 'Submission readiness' : 'Cleared to dispatch?'}</h1>
+      {programId && <div className="dr2-sub">{label} · {regionalApplication ? 'document preparation only' : <>each market&apos;s latest sequence, as the server gates it</>}</div>}
     </div>
   );
 
@@ -387,8 +391,8 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
     );
   } else if (!program.data) {
     body = <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Reading this project…</div>;
-  } else if (documentClass) {
-    body = <NotSequencedState documentClass={documentClass} />;
+  } else if (documentClass || regionalApplication) {
+    body = <NotSequencedState documentClass={documentClass} regionalApplication={regionalApplication} />;
   } else {
     body = (
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
@@ -401,14 +405,14 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
     <div className="dr2">
       {head}
       {body}
-      <div className="dr2-foot">
+      {!regionalApplication && <div className="dr2-foot">
         <PedigreeBadge level="deterministic_registry" />
         <span className="dr2-foot-note">
           Every gate input is computed from server state — a client cannot pass{' '}
           <span className="mono">validationErrors:0</span> to talk the gate down. The AI dispatch-QC task advises; this gate{' '}
           <b>enforces</b>. Freeze, dispatch and transmit each stay behind a Part 11 e-signature, on the sequence&apos;s Dispatch tab.
         </span>
-      </div>
+      </div>}
     </div>
   );
 }

@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   productTypeForFilingType,
+  deviceProductTypesForFilingType,
   workstreamForFilingType,
   workstreamSqlCase,
   isDeviceFamily,
@@ -21,6 +22,37 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   PRODUCT_TYPES,
 } from '../product-types.js';
+
+describe('exact device filing identities and bounded human refinements', () => {
+  it.each([
+    ['pma', 'US_CDX_PMA', 'cdx'], ['pma', ' cdx_pma ', 'cdx'],
+    ['510k', 'US_CDX_510K', 'cdx'], ['ivdr', 'cdx_ivdr_d', 'cdx'],
+    ['device', 'us_samd_presub', 'samd'], ['ivd', 'US_COMPLEMENTARY_DX', 'ivd'],
+  ])('%s / %s names %s independently of lane', (type, filing, product) => {
+    for (const lane of ['medtech', 'diagnostics', 'biotech']) {
+      expect(productTypeForFilingType(type, lane, filing)).toBe(product);
+      expect(deviceProductTypesForFilingType(type, filing)).toEqual([product]);
+    }
+  });
+  it('uses existing regional limits and keeps generic pathways refinable', () => {
+    expect(deviceProductTypesForFilingType('mdl', 'hc_mdl')).toEqual(['device', 'samd']);
+    expect(deviceProductTypesForFilingType('ivd_approval', 'pmda_ivd')).toEqual(['ivd', 'cdx']);
+    expect(deviceProductTypesForFilingType('mdr', 'eu_mdr_techdoc')).toEqual(['device', 'samd']);
+    expect(deviceProductTypesForFilingType('pma', 'us_pma_ivd')).toEqual(['ivd', 'cdx']);
+    expect(deviceProductTypesForFilingType('510k', 'US_510K')).toEqual(DEVICE_FAMILY_PRODUCT_TYPES);
+    expect(productTypeForFilingType('510k', 'diagnostics', 'US_510K')).toBe('ivd');
+  });
+  it('reports a contradictory exact pathway without inventing a default', () => {
+    expect(deviceProductTypesForFilingType('510k', 'cdx_pma')).toEqual([]);
+    expect(productTypeForFilingType('510k', 'diagnostics', 'cdx_pma')).toBeNull();
+    expect(deviceProductTypesForFilingType('ind', 'us_ind')).toBeNull();
+  });
+  it('refuses an unresolved stated device filing while preserving omission', () => {
+    expect(deviceProductTypesForFilingType('pma', 'us_cdx_typo')).toEqual([]);
+    expect(productTypeForFilingType('pma', 'diagnostics', 'us_cdx_typo')).toBeNull();
+    expect(productTypeForFilingType('pma', 'diagnostics')).toBe('ivd');
+  });
+});
 
 describe('regional device application product identity', () => {
   it.each([

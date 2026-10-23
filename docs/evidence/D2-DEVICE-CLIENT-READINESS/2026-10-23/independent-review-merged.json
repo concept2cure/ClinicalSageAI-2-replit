@@ -1,0 +1,72 @@
+{
+  "workstream": "W1 / D2",
+  "reviewedAt": "2026-10-23T15:35:31.145321+00:00",
+  "baseCommit": "6bb302bedf1aeaeed005df3188e668d315b35ee5",
+  "reviewType": "Read-only interaction review after canonical authoring/Vault derivation catch-up",
+  "verdict": "No merge interaction blocker identified in the reviewed scope",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": [],
+  "productionSourceSha256": {
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "bf721715007ca12a9fbd0b3e3c5b78dad99d496c57c842dbcf79f448af960396",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "server/services/ana/tool-authorization.register.json": "7da272972a2c1e26ee3730e54f1114ab259449234efe150dd06f730d0df7b54e",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+    "server/services/c2c/add-project-market.ts": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49",
+    "server/services/ectd/assemble-from-core.ts": "e29501ca970b9971b9b296f5d5a67c3880c94c496a4602444cd8ff0dd79c4c7c",
+    "server/services/ectd/core-to-packager.ts": "08b6468ea7a9f090b336591a9e852e24cd4e4f6c1a4fe776edbbb80825b95f13",
+    "server/services/ectd/leaf-source-resolver.ts": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b"
+  },
+  "incomingSourceCommit": "8e050baf6",
+  "incomingScope": "Six production services and four regression files: retained Authoring-to-Vault receipt, eCTD governance derivation and unambiguous Vault check-in hints. No source overlap with device identity/actions changes.",
+  "findings": [
+    "New filing receipts record the existing saved authoring version and section digest. The export log reuses that same digest; no product family, filing type, approval or transport decision is derived from it.",
+    "Receipt lookup scopes tenant and exact Vault UUID, verifies source/project/artifact/payload and canonical chain/seal status, and preserves not-recorded/unverified/unavailable/no-key distinctions. It reads retained records rather than current editable text.",
+    "Vault leaf staging retains native UUID, organization scope, provider byte/hash/PDF checks and the existing approval/current-version transmit gate. Added derivation uses the actual Vault source program and remains separate from alias identity and approval.",
+    "Governance manifest distinguishes retained-input artifact SHA-256 from normalized shipped leaf bytes; no receipt claims the shipped leaf hash or authorizes transmission.",
+    "Current-version conflict hints require exactly one scoped live head; an ambiguous chain provides no guessed head. This does not widen allowed device subtype or market actions.",
+    "Device/CDx/SaMD intake validation, known-device added-market refusals and exact regional preparation-only UI remain unchanged in the merged tree.",
+    "Human guide keeps incoming cases 59\u201361 and device cases 62\u201367, with 67 unique sequential case IDs, both continuation links and no conflict markers."
+  ],
+  "humanGuide": {
+    "path": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+    "sha256": "a63047c6481058e6905b772cf4d12ea1eaf2c1f3ad9a9e326292c15261996e47",
+    "uniqueCases": 67,
+    "humanCasesRunByReviewer": 0
+  },
+  "evidenceInspected": {
+    "mergedIntegration": {
+      "report": "merged-integration-tests.json",
+      "files": 39,
+      "totalTests": 918,
+      "passedTests": 917,
+      "failedTests": 0,
+      "success": true,
+      "otherResults": [
+        {
+          "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+          "status": "todo",
+          "test": "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today"
+        }
+      ]
+    },
+    "staticGates": {
+      "report": "merged-static-gates.json",
+      "checks": 16,
+      "allPassed": true
+    },
+    "whitespace": "git diff --check passed",
+    "rootFinalChecks": "Merged TypeScript/build qualification is being performed by root; no outcome is inferred here."
+  },
+  "limits": [
+    "Review is scoped to merge interactions and listed production sources; it is not full incoming-subsystem validation or complete product certification.",
+    "Incoming integration retains an explicit TODO: re-filing an edited document does not yet supersede the Vault version a live leaf pins. 918 total tests must not be reported as 918 passed.",
+    "No human UAT, native concurrency/performance qualification, full fresh deployment, expert legal/form adequacy, qualified live-model drafting or agency acceptance is established by this review."
+  ]
+}

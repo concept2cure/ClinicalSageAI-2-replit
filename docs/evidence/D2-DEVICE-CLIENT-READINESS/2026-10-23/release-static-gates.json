@@ -1,0 +1,226 @@
+[
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.266,
+    "output": "release-gate-ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:class-vocabulary"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.547,
+    "output": "release-gate-ci-class-vocabulary.log.gz",
+    "outputSha256": "910610a3814d167556272f7ecb7f1157fab211daf159110f31e1631a03333a9c",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:filing-exit-agreement"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.369,
+    "output": "release-gate-ci-filing-exit-agreement.log.gz",
+    "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:internals-in-copy"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.516,
+    "output": "release-gate-ci-internals-in-copy.log.gz",
+    "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "check:catalog-copy"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.095,
+    "output": "release-gate-check-catalog-copy.log.gz",
+    "outputSha256": "9ff7d517539ba44770f1e0cb48f6ad0fc211e46dd902cf7f7a26661bc44a9a93",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:step-presentation"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.72,
+    "output": "release-gate-ci-step-presentation.log.gz",
+    "outputSha256": "2860391ac7f888ea0f14a999fd568cbb309f422c110b4169d699e47ca270596b",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:step-presentation:selftest"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.428,
+    "output": "release-gate-ci-step-presentation-selftest.log.gz",
+    "outputSha256": "d2e16fda9839566e96992efc14a90f1d1bdb444ca9b2895e8193c78e6c0dfdd0",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:empty-state-honesty"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.692,
+    "output": "release-gate-ci-empty-state-honesty.log.gz",
+    "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:action-overclaim"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.378,
+    "output": "release-gate-ci-action-overclaim.log.gz",
+    "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:success-before-ok"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.378,
+    "output": "release-gate-ci-success-before-ok.log.gz",
+    "outputSha256": "868edda81f70fdb076a6143fcd0fe0c17efac6e466889eeef65f2f5f00b1d1be",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.213,
+    "output": "release-gate-ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.157,
+    "output": "release-gate-ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.163,
+    "output": "release-gate-ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.389,
+    "output": "release-gate-ci-surface-text-ramp.log.gz",
+    "outputSha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:check-shell-css-collisions"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.292,
+    "output": "release-gate-ci-check-shell-css-collisions.log.gz",
+    "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "audit:repo-health:ceiling"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.84,
+    "output": "release-gate-audit-repo-health-ceiling.log.gz",
+    "outputSha256": "07f1a9225ca11016a398cb9fef87ef4efea03724e0a627bf88b8d81921f7c2a8",
+    "sourceFreeze": "source-freeze-release.json",
+    "sourceDrift": []
+  }
+]

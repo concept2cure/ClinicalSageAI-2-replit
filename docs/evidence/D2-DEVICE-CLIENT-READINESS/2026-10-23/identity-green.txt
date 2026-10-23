@@ -1,0 +1,270 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > mdl preserves its filing family across arrival lanes 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > shonin preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ninsho preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > todokede preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_licence preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_approval preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > jp_cdx preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > retains HDE diagnostic refinement without refining device-only regional filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd resolves to an IVD 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > resolves the EU technical files that used to fall through to a drug 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > does not guess at a filing type it has never seen 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > normalises casing and separators the store actually holds 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics_ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > reads a 510(k) started from the Diagnostics lane as an IVD 510(k) 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > cannot make a device filing medicinal, whatever the lane says 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > leaves medicinal filings alone 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats companion diagnostics as IVDs 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats software as a medical device as a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > keeps medicinal products out of the device family 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > is null-safe and case-insensitive 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > lists exactly the four device-family classes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > carries the six classes, each with a label and a regulatory reference 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > recognises its own members and nothing else 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every device and IVD instrument in MDX 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets the medicinal lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > returns null rather than guessing for an unknown filing type 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a filing document class by its product class, and only once that is stated 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > generates SQL that agrees with the function, member for member 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > product descriptions preserve conditional diagnostic classification > does not assign an EU risk class from the companion-diagnostic label 0ms
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-23T15:08:58.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-23T15:08:58.942Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T15:08:58.942Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts
+{
+  "timestamp": "2026-10-23T15:08:58.942Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'cdx_pma' before writes 15ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'US_CDX_510K' before writes 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses contradictory named filing 'US_PMA' before writes 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'cdx' identity for 'US_CDX_PMA' 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'cdx' identity for 'US_CDX_510K' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > persists the compatible 'samd' identity for 'US_510K' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > does not use a class-specific EU identity for an FDA application, even with an unconfirmed class 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' refuses contradictory declared class 'I' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iia' refuses contradictory declared class 'IIb' 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_a' refuses contradictory declared class 'D' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' refuses contradictory declared class 'B' 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Is' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Im' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_i' retains compatible or unconfirmed class 'Ir' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'C' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_ivdr_class_cd' retains compatible or unconfirmed class 'D' 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > 'eu_mdr_class_iii' retains compatible or unconfirmed class null 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > mdr records euMdrClass without polluting the FDA class 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > ivdr records euIvdrClass without polluting the FDA class 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > no stated EU class persists neither a regional nor US class 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid MDR class before a program insert 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses invalid class shape before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVDR class on MDR before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses two different regional classes before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA class on an EU filing before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA predicate on an EU filing before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses FDA-specific flags on an EU filing before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses IVD product on MDR before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses conflicting selected registry type before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a different MDR document class before a program insert 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses an EU classification on an FDA project 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts > EU classes use the existing regional programme columns at initialization > refuses a non-IVD product type for IVDR even when no class was stated 1ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 184ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 110ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 108ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 59ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 81ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 89ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 85ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 290ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 147ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 121ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 148ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 113ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 109ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 110ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 187ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 112ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 117ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 116ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 111ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 108ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 106ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 103ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 102ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 99ms
+stdout | server/routes/c2c/__tests__/project-intake-class.test.ts
+{
+  "timestamp": "2026-10-23T15:09:04.162Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T15:09:04.163Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-intake-class.test.ts
+{
+  "timestamp": "2026-10-23T15:09:04.163Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-intake-class.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-intake-class.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-intake-class.test.ts
+{
+  "timestamp": "2026-10-23T15:09:04.225Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > an sBLA is a biologic without being asked, and cannot be recorded as a drug 2ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > an NDA/BLA Prior Approval Supplement fixes nothing: the person states it 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > a filing id only fixes a class for the class it belongs to 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > the question names the filing in a sentence a person reads 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > hde fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > shonin fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ninsho fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > todokede fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > jp_cdx fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > shonin refuses a contradictory cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ninsho refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > todokede refuses a contradictory cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence refuses a contradictory device product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval refuses a contradictory samd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > jp_cdx refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl permits its compatible samd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence permits its compatible cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval permits its compatible cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > hde permits its compatible ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > pma / US_CDX_PMA defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > pma / cdx_pma defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > 510k / us_cdx_510k defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > ivdr / cdx_ivdr_d defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > device / us_samd_presub defaults to samd and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible 510k / cdx / US_CDX_PMA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible pma / cdx / US_CDX_510K 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible ind / drug / US_CDX_PMA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible 510k / device / US_NDA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible ivdr / samd / EU_IVDR 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible mdr / cdx / EU_MDR_TECHDOC 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible pma / samd / US_PMA_IVD 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > retains compatible refinements and generic-family controls 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 282ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 128ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 146ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 149ms
+
+ Test Files  6 passed (6)
+      Tests  152 passed (152)
+   Start at  15:08:56
+   Duration  8.79s (transform 1.82s, setup 191ms, import 3.64s, tests 3.72s, environment 690ms)
+

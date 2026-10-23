@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "audit:repo-health:ceiling"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.84,
+  "output": "release-gate-audit-repo-health-ceiling.log.gz",
+  "outputSha256": "07f1a9225ca11016a398cb9fef87ef4efea03724e0a627bf88b8d81921f7c2a8",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}

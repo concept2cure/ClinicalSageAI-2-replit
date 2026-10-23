@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-23T15:43:19Z",
+  "status": "automated release qualification passed; human and external qualification remain open",
+  "sourceFreeze": "source-freeze-release.json",
+  "qualifiedBase": "19bd192422af5c398c6de8041be28e5e7e9e8f9a",
+  "incomingRemote": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+  "testFiles": 47,
+  "testsPassed": 1040,
+  "testsFailed": 0,
+  "existingTodo": [
+    "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today"
+  ],
+  "selectedStaticGatesPassed": 16,
+  "typecheck": "zero errors",
+  "productionBuild": "passed",
+  "eslint": "zero errors; our source warning count did not increase",
+  "sourceDrift": [],
+  "humanCases": {
+    "device": [
+      62,
+      63,
+      64,
+      65,
+      66,
+      67
+    ],
+    "totalSequential": 67,
+    "status": "Not run"
+  },
+  "receipts": [
+    "release-integration",
+    "release-eslint",
+    "release-typecheck",
+    "release-build",
+    "release-component-browser-review"
+  ],
+  "nativeTaskingDbtest": "Not run; default suite uses the declared PGlite/DOM fixtures, not native multi-connection PostgreSQL",
+  "remaining": [
+    "automatic edited-document refiling predecessor/supersession policy",
+    "human acceptance",
+    "full fresh installation and production deployment",
+    "live-provider qualification",
+    "current regional requirements/official-form adequacy",
+    "recipient transport and agency acceptance"
+  ]
+}

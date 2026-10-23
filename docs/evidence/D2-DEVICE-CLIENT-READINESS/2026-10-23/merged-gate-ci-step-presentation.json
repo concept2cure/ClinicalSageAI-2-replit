@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:step-presentation"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.715,
+  "output": "merged-gate-ci-step-presentation.log.gz",
+  "outputSha256": "2860391ac7f888ea0f14a999fd568cbb309f422c110b4169d699e47ca270596b",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}

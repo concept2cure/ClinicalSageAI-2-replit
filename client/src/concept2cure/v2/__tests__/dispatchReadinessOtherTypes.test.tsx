@@ -41,10 +41,10 @@ const MAA_VERDICT = {
   gate: { cleared: false, blockers: ['1 open error-severity validation finding.'] },
 };
 
-function serve(subs: unknown[]) {
+function serve(subs: unknown[], program = PROGRAM) {
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
     const url = String(raw ?? '');
-    if (url === `/api/c2c/projects/${PROGRAM_UUID}`) return ok(PROGRAM);
+    if (url === `/api/c2c/projects/${PROGRAM_UUID}`) return ok(program);
     if (url === `/api/submissions?programId=${PROGRAM_UUID}`) return ok(subs);
     if (url === '/api/submissions/12/sequences') return ok([{ id: 40, sequenceNumber: '0000', status: 'assembling' }]);
     if (url === '/api/submissions/sequences/40/dispatch-readiness') return ok(MAA_VERDICT);
@@ -66,6 +66,23 @@ afterEach(() => {
 });
 
 describe('DispatchReadiness — the program’s submissions of other types', () => {
+  it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])(
+    'shows %s as preparation only and gives AnA the same limit', async (programType) => {
+      serve([], { ...PROGRAM, program_type: programType });
+      const seen: { ctx: SurfaceContext | null } = { ctx: null };
+      function Probe() { seen.ctx = useActiveSurfaceContext('dispatch-readiness'); return null; }
+      render(<><DispatchReadiness {...props()} /><Probe /></>);
+      await waitFor(() => expect(text()).toContain('document preparation only'));
+      expect(text()).toContain('does not create submission records or sequences');
+      expect(text()).not.toContain('No market for this project yet');
+      expect(text()).not.toMatch(/each market['’]s latest sequence/);
+      await waitFor(() => expect(seen.ctx?.facts?.listState).toBe('not-sequenced'));
+      expect(seen.ctx?.summary).toContain('document preparation only');
+      expect(seen.ctx?.facts?.markets).toEqual([]);
+      expect(apiRequest.mock.calls.some(c => String(c[1]).endsWith('/dispatch-readiness'))).toBe(false);
+    },
+  );
+
   it('gates the MAA as its own market, and never says the program has no submission', async () => {
     serve([MAA]);
     const seen: { ctx: SurfaceContext | null } = { ctx: null };

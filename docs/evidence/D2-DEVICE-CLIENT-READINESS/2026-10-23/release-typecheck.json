@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 163.405,
+  "output": "release-typecheck.log.gz",
+  "outputSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}

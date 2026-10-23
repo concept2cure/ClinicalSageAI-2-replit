@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/step-presentation.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-DEVICE-CLIENT-READINESS/2026-10-23/final-presentation-test-results.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 1.325,
+  "output": "final-presentation-tests.log.gz",
+  "outputSha256": "8d0db390fc4fdeafa6567fd9674ee34d2139e909a82d334862412c77fdfed0e4",
+  "sourceFreeze": "source-freeze-final.json",
+  "sourceDrift": []
+}

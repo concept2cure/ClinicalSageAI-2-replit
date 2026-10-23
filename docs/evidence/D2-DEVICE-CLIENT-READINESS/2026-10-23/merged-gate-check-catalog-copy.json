@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "check:catalog-copy"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.1,
+  "output": "merged-gate-check-catalog-copy.log.gz",
+  "outputSha256": "9ff7d517539ba44770f1e0cb48f6ad0fc211e46dd902cf7f7a26661bc44a9a93",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}
