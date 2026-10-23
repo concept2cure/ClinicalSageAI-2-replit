@@ -2,9 +2,11 @@
 
 W1 / D2. Discovery source `035ee6854`, branch `concept2cure-v2`.
 Design: `docs/design/COMPANY_SETTINGS_SESSION_CONTINUITY_2026-10-23.md`.
-Implementation is frozen at `a3acbbbb1`; qualified code and canonical catch-up
-inputs are recorded below. Final publication uses the normal mandatory hooks.
-No production deployment is claimed.
+Feature implementation `a3acbbbb1` is published on `concept2cure-v2` at
+`093711f4c44f77b0d36f483ca318de08cbe5be91`. Normal push hooks passed, including
+whole TypeScript with zero errors on that exact publication revision. All 102 selected inputs
+match the fresh remote. `code-publication.json` and `code-push.txt` retain the
+accepted-ref and gate proof. No production deployment is claimed.
 
 ## What already exists
 
@@ -61,7 +63,7 @@ signature ceremonies and original bytes remain unchanged.
 - `workbench-results.json`/`workbench-scope.json`: separately **25 passed /
   1 file**, zero failures/skips, for the existing canonical editor-access
   consumer on the same unchanged feature source.
-- `lint-final.json`: all changed client source/test files have zero errors,
+- `lint-final.json`: company-owned client source/test files have zero errors,
   zero warnings and zero warning growth against discovery source `035ee6854`.
 - `independent-review.json`: read-only CLEAR after correcting first-render
   masking, canonical query ownership and captured admission withdrawal.
@@ -106,8 +108,10 @@ agency acceptance.
 The final production build passed at `fc6f213ab`. Commit `84025f505` changes only
 the reviewed host fixture and design; it does not change the built production
 code. `final-source-union.json` pins 102 selected current inputs, not a full
-dependency closure. The normal pre-push hook must run whole TypeScript on the
-exact publication revision; the publication receipt records that result.
+dependency closure. The normal pre-push hook ran whole TypeScript with zero
+errors on the exact publication revision `093711f4c`; `code-publication.json` records that
+accepted push. Earlier qualification snapshots keep their original pending
+publication fields and source epochs rather than being silently rebound.
 
 ## Limits
 

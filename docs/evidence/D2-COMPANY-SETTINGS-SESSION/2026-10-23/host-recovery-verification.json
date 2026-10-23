@@ -7,8 +7,9 @@
     "sha256": "0e7c9d35bfdc7ad805666c66e25a615e17ef21ccef3cbb09093fb479d0f9ca8f",
     "bytes": 14461,
     "cases": 38,
-    "archive": "host-recovery-before.test.tsx",
-    "observedFailure": "Root integration report: 391 pass /38 fail; all38 host recovery cases missing AuthProvider."
+    "archive": "original-authoring-host-fixture.tsx.txt",
+    "observedFailure": "Root integration report: 391 pass /38 fail; all38 host recovery cases missing AuthProvider.",
+    "workerPrivateArchive": "host-recovery-before.test.tsx"
   },
   "finalTests": {
     "report": "host-recovery-final.json",
