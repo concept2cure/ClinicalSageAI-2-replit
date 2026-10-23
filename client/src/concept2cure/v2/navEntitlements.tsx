@@ -23,7 +23,7 @@
  *      catalog, and deliberately `audit-trail` / `part11-console`, which under
  *      21 CFR §11.10(e) may not be something an org can be sold or an admin can
  *      switch off — are absent, and absent means unconditionally available.
- *      That is load-bearing in the other direction too: the Apps catalog and
+ *      That is load-bearing in the other direction too: the Workflows and
  *      AnA carry no catalog row, so they can never lock — which is what keeps
  *      the step that RESOLVES a lock reachable from a locked rail.
  *   3. THE REASON IS THE REAL ONE. A locked destination says which of the four
@@ -187,7 +187,7 @@ export interface LockNotice {
    * True when the step left for THIS viewer is to ask an administrator.
    *
    * Separate from `ctaLabel`, and it has to be. `ctaLabel` is the step the
-   * viewer can take THEMSELVES — open the plans page, open the Apps catalog —
+   * viewer can take THEMSELVES — open the plans page, open the Workflows —
    * and for a member who cannot buy it is correctly null on two of the three
    * lock reasons. That honesty was also a dead end: the panel named the reason,
    * refused to offer a button that would be refused, and left the person who
@@ -242,16 +242,16 @@ export function requestNotice(request: ModuleAccessRequestSummary | null): strin
   switch (request.status) {
     case 'open':
       return made
-        ? `You asked for this app on ${made}. It is with your administrators.`
-        : 'You have already asked for this app. It is with your administrators.';
+        ? `You asked for this feature on ${made}. It is with your administrators.`
+        : 'You have already asked for this feature. It is with your administrators.';
     case 'declined': {
       const when = answered ? `Declined on ${answered}.` : 'Your last request was declined.';
       return request.decisionReason ? `${when} Reason given: ${request.decisionReason}` : when;
     }
     case 'approved':
       return answered
-        ? `Your request was approved on ${answered}. If this app is still locked, reload the page.`
-        : 'Your request was approved. If this app is still locked, reload the page.';
+        ? `Your request was approved on ${answered}. If this feature is still locked, reload the page.`
+        : 'Your request was approved. If this feature is still locked, reload the page.';
     default:
       return null;
   }
@@ -320,7 +320,7 @@ const TIER_LABEL: Record<string, string> = {
  * Honest copy for a locked destination.
  *
  * Each branch names the reason the server actually returned and routes to the
- * place that resolves THAT reason — plans for a tier gap, the Apps catalog for
+ * place that resolves THAT reason — plans for a tier gap, the Workflows for
  * a module an admin switched off, workspace setup for an industry-mode
  * mismatch. Nothing here invents a price, a tier, or a renewal date.
  */
@@ -334,7 +334,7 @@ export function lockNotice(
          this release. Saying so beats offering a plan that changes nothing. */
       return {
         status: 'Not in this release',
-        body: 'This app is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.',
+        body: 'This feature is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.',
         ctaLabel: null,
         ctaTarget: null,
         requestable: false,
@@ -343,16 +343,16 @@ export function lockNotice(
       return {
         status: 'Turned off for this workspace',
         body: opts.isOrgAdmin
-          ? 'An administrator disabled this app for your organization. You can turn it back on in the Apps catalog.'
-          : 'An administrator disabled this app for your organization. Ask them to turn it back on.',
-        ctaLabel: opts.isOrgAdmin ? 'Open Apps catalog' : null,
+          ? 'An administrator disabled this feature for your organization. You can turn it back on in Workflows.'
+          : 'An administrator disabled this feature for your organization. Ask them to turn it back on.',
+        ctaLabel: opts.isOrgAdmin ? 'Open Workflows' : null,
         ctaTarget: opts.isOrgAdmin ? 'apps' : null,
         requestable: !opts.isOrgAdmin,
       };
     case 'industry':
       return {
         status: 'Not offered for this workspace',
-        body: 'This app is not part of the catalog for your workspace’s industry setting. Changing that setting is an administrator action, not a plan change.',
+        body: 'This feature is not part of the catalog for your workspace’s industry setting. Changing that setting is an administrator action, not a plan change.',
         ctaLabel: opts.isOrgAdmin ? 'Open workspace setup' : null,
         ctaTarget: opts.isOrgAdmin ? 'setup' : null,
         requestable: !opts.isOrgAdmin,
@@ -363,8 +363,8 @@ export function lockNotice(
       return {
         status: tier ? `Included from ${tier}` : 'Not included in your plan',
         body: tier
-          ? `Your plan does not include this app. It is included from the ${tier} plan upward.`
-          : 'Your plan does not include this app.',
+          ? `Your plan does not include this feature. It is included from the ${tier} plan upward.`
+          : 'Your plan does not include this feature.',
         ctaLabel: 'View plans',
         ctaTarget: 'licensing',
         /* A member sees the plans page too — it is the honest explanation of

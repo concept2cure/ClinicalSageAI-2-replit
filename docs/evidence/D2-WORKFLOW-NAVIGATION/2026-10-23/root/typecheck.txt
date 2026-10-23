@@ -1,0 +1,4 @@
+
+> concept2cure-riai@1.0.0 typecheck
+> NODE_OPTIONS="--max-old-space-size=24576" tsc --noEmit
+

@@ -142,8 +142,8 @@ const WAITING_EMPTY: Record<PastAsks, { hint: string; summary: string; actions?:
     actions: ['Switch the filter between Waiting and Everything (view state only)'],
   },
   'never-asked': {
-    hint: 'Nobody has asked for an app yet. When somebody asks for one they cannot open, the request appears here.',
-    summary: 'No access requests exist for this workspace at all — nobody has asked for an app yet.',
+    hint: 'Nobody has asked for a feature yet. When somebody asks for one they cannot open, the request appears here.',
+    summary: 'No access requests exist for this workspace at all — nobody has asked for a feature yet.',
   },
   unknown: {
     hint: 'Nobody is waiting for an answer. Whether earlier requests exist could not be checked.',
@@ -349,7 +349,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
               {I.info}
             </span>
             <p>
-              Requests from every workspace. Approving turns the app on for that workspace and
+              Requests from every workspace. Approving turns the feature on for that workspace and
               records who approved it and why. Declining records the reason and changes nothing.
             </p>
           </div>
@@ -417,11 +417,11 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
             title={showAnswered ? 'No requests yet' : 'No requests waiting'}
             hint={
               showAnswered
-                ? 'When somebody asks for an app they cannot open, the request appears here.'
+                ? 'When somebody asks for a feature they cannot open, the request appears here.'
                 : WAITING_EMPTY[past.pastAsks].hint
             }
             icon={I.clipboardList}
-            regulation="Serves the 21 CFR Part 11 record of who was granted an app, by whom, and why."
+            regulation="Serves the 21 CFR Part 11 record of who was granted a feature, by whom, and why."
             {...(/* Offered only over answered requests that exist: on a
                     workspace where nobody has asked it opened another empty list. */
                  !showAnswered && past.pastAsks === 'answered'
@@ -547,7 +547,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
           <div className="ph-eyebrow">Admin — organization</div>
           <h1 className="ph-title">Access requests</h1>
           <div className="ph-sub">
-            People in your workspace who asked for an app they cannot open. Approving turns the app
+            People in your workspace who asked for a feature they cannot open. Approving turns the feature
             on for the whole workspace and records who approved it and why. Declining records the
             reason and changes nothing.
           </div>

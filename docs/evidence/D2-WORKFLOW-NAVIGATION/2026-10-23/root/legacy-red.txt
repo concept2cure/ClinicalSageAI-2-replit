@@ -1,0 +1,4115 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 165ms
+   → expected [ 'Home', 'Apps catalog', …(10) ] to deeply equal [ 'Home', 'Workflows', …(10) ]
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false) 230ms
+   → Unable to find an accessible element with the role "button" and name "Workflows"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Home":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Home"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Apps catalog"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Projects":
+  [36m<button[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mdata-on[39m=[32m"true"[39m
+    [33mtitle[39m=[32m"Projects"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Tasking":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Tasking"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Communication":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Communication"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Vault":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Vault"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Submission Center":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Submission Center"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CMC / Module 3":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"CMC / Module 3"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Quality":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Quality"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reporting & analytics":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Reporting & analytics"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "My work":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"My work"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Conversation"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"rail-scroll"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rail-nav"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Home"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-house"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mHome[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Apps catalog"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-layout-grid"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mApps catalog[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-current[39m=[32m"page"[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mdata-on[39m=[32m"true"[39m
+      [33mtitle[39m=[32m"Projects"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-folder"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mProjects[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Tasking"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mTasking[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Communication"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCommunication[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Vault"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-vault"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 7.9 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 10.6 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 16.1 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 13.4 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mVault[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Submission Center"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-rocket"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mSubmission Center[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"CMC / Module 3"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-beaker"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 3h15"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 14h12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCMC / Module 3[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Quality"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 12 2 2 4-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mQuality[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Reporting & analytics"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 17V9"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M13 17V5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M8 17v-3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mReporting & analytics[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"My work"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mMy work[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Conversation"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mConversation[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true) 154ms
+   → Unable to find an accessible element with the role "button" and name "Workflows"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Home":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Home"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Apps catalog"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Projects":
+  [36m<button[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mdata-on[39m=[32m"true"[39m
+    [33mtitle[39m=[32m"Projects"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Tasking":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Tasking"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Communication":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Communication"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Vault":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Vault"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Submission Center":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Submission Center"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CMC / Module 3":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"CMC / Module 3"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Quality":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Quality"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reporting & analytics":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Reporting & analytics"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "My work":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"My work"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Conversation"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"rail-scroll"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rail-nav"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Home"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-house"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mHome[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Apps catalog"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-layout-grid"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mApps catalog[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-current[39m=[32m"page"[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mdata-on[39m=[32m"true"[39m
+      [33mtitle[39m=[32m"Projects"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-folder"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mProjects[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Tasking"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mTasking[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Communication"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCommunication[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Vault"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-vault"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 7.9 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 10.6 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 16.1 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 13.4 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mVault[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Submission Center"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-rocket"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mSubmission Center[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"CMC / Module 3"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-beaker"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 3h15"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 14h12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCMC / Module 3[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Quality"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 12 2 2 4-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mQuality[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Reporting & analytics"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 17V9"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M13 17V5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M8 17v-3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mReporting & analytics[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"My work"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mMy work[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Conversation"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mConversation[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > CMC / Module 3 is on the rail beside Quality, and opens CMC 57ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home 55ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 70ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 150ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 259ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 59ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 64ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers Workflows 239ms
+   → Unable to find an accessible element with the role "menuitem" and name `/Workflows/`
+
+Here are the accessible roles:
+
+  menuitem:
+
+  Name "Account":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Admin":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Access requests":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Usage & limits":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Billing":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------group:
+
+  Name "Client type":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Client type"[39m
+    [33mclass[39m=[32m"acct-group"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  menuitemradio:
+
+  Name "Medical Device & IVD":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Biotech & Pharma":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Diagnostics":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CRO / Research":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Health Systems":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "View all plans":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Set up a workspace":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Codebase coverage":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Get help":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Log out":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Account"[39m
+  [33mclass[39m=[32m"acct-menu"[39m
+  [33mid[39m=[32m"_r_e_"[39m
+  [33mrole[39m=[32m"menu"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"acct-head"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"avatar"[39m
+    [36m>[39m
+      [0mAR[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"who"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mAda Rowe[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rl"[39m
+      [36m>[39m
+        [0madmin[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-user"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"7"[39m
+          [33mr[39m=[32m"4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccount[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 12 2 2 4-4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAdmin[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-clipboard-list"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"4"[39m
+          [33mrx[39m=[32m"1"[39m
+          [33mry[39m=[32m"1"[39m
+          [33mwidth[39m=[32m"8"[39m
+          [33mx[39m=[32m"8"[39m
+          [33my[39m=[32m"2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 11h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 16h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 11h.01"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 16h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccess requests[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 17V9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M13 17V5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 17v-3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mUsage & limits[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m...
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers every client type once, the current one checked, by more than colour 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing a client type sets it 52ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing the type already chosen changes nothing and closes the menu 47ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 209ms
+   → Unable to find an accessible element with the role "menuitem" and name `/Workflows/`
+
+Here are the accessible roles:
+
+  menuitem:
+
+  Name "Account":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Admin":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Access requests":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Usage & limits":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Billing":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------group:
+
+  Name "Client type":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Client type"[39m
+    [33mclass[39m=[32m"acct-group"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  menuitemradio:
+
+  Name "Medical Device & IVD":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Biotech & Pharma":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Diagnostics":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CRO / Research":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Health Systems":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "View all plans":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Set up a workspace":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Codebase coverage":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Get help":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Log out":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Account"[39m
+  [33mclass[39m=[32m"acct-menu"[39m
+  [33mid[39m=[32m"_r_m_"[39m
+  [33mrole[39m=[32m"menu"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"acct-head"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"avatar"[39m
+    [36m>[39m
+      [0mAR[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"who"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mAda Rowe[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rl"[39m
+      [36m>[39m
+        [0madmin[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-user"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"7"[39m
+          [33mr[39m=[32m"4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccount[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 12 2 2 4-4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAdmin[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-clipboard-list"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"4"[39m
+          [33mrx[39m=[32m"1"[39m
+          [33mry[39m=[32m"1"[39m
+          [33mwidth[39m=[32m"8"[39m
+          [33mx[39m=[32m"8"[39m
+          [33my[39m=[32m"2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 11h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 16h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 11h.01"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 16h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccess requests[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 17V9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M13 17V5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 17v-3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mUsage & limits[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m...
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > adopts /catalog + /license: live names, retained additional categories, tiers, quotas 108ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > toggle PUTs to the real endpoint and reports the result 161ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > server rejection reverts the switch and surfaces the reason 4287ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > the switch asks for a reason first and sends nothing until one is confirmed 59ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > says so when the server reports the audit row was not written 67ms
+ × client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > offline → honest failed-load states, never a fixture or sample pill 5017ms
+   → Unable to find an element with the text: Couldn't load workflows. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace — apps[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mApps catalog[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtitle[39m=[32m"Toggle admin controls"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-settings"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mAdmin controls[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px; display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-info"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 16v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 8h.01"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span>[39m
+          [0mLicense & entitlement details are unavailable right now[0m
+          [0m — the billing service didn't respond[0m
+          [0m.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"admin-manage-plan-fallback"[39m
+          [33mstyle[39m=[32m"height: 28px; margin-left: auto;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-credit-card"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"20"[39m
+              [33mx[39m=[32m"2"[39m
+              [33my[39m=[32m"5"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"2"[39m
+              [33mx2[39m=[32m"22"[39m
+              [33my1[39m=[32m"10"[39m
+              [33my2[39m=[32m"10"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Manage plan[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace — apps[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mApps catalog[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtitle[39m=[32m"Toggle admin controls"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-settings"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mAdmin controls[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px; display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-info"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 16v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 8h.01"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span>[39m
+          [0mLicense & entitlement details are unavailable right now[0m
+          [0m — the billing service didn't respond[0m
+          [0m.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"admin-manage-plan-fallback"[39m
+          [33mstyle[39m=[32m"height: 28px; margin-left: auto;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-credit-card"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"20"[39m
+              [33mx[39m=[32m"2"[39m
+              [33my[39m=[32m"5"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"2"[39m
+              [33mx2[39m=[32m"22"[39m
+              [33my1[39m=[32m"10"[39m
+              [33my2[39m=[32m"10"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Manage plan[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > offline → honest failed-load states, never a fixture or sample pill
+TestingLibraryElementError: Unable to find an element with the text: Couldn't load workflows. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace — apps[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mApps catalog[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtitle[39m=[32m"Toggle admin controls"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-settings"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mAdmin controls[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px; display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-info"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 16v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 8h.01"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span>[39m
+          [0mLicense & entitlement details are unavailable right now[0m
+          [0m — the billing service didn't respond[0m
+          [0m.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"admin-manage-plan-fallback"[39m
+          [33mstyle[39m=[32m"height: 28px; margin-left: auto;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-credit-card"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"20"[39m
+              [33mx[39m=[32m"2"[39m
+              [33my[39m=[32m"5"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"2"[39m
+              [33mx2[39m=[32m"22"[39m
+              [33my1[39m=[32m"10"[39m
+              [33my2[39m=[32m"10"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Manage plan[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace — apps[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mApps catalog[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtitle[39m=[32m"Toggle admin controls"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-settings"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mAdmin controls[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px; display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-info"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 16v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 8h.01"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span>[39m
+          [0mLicense & entitlement details are unavailable right now[0m
+          [0m — the billing service didn't respond[0m
+          [0m.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"admin-manage-plan-fallback"[39m
+          [33mstyle[39m=[32m"height: 28px; margin-left: auto;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-credit-card"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"20"[39m
+              [33mx[39m=[32m"2"[39m
+              [33my[39m=[32m"5"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"2"[39m
+              [33mx2[39m=[32m"22"[39m
+              [33my1[39m=[32m"10"[39m
+              [33my2[39m=[32m"10"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Manage plan[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/appsLive.test.tsx:214:25
+    212|     mount();
+    213|     // Honest error for the catalog; license band degrades to the hone…
+    214|     expect(await screen.findByText("Couldn't load workflows")).toBeTru…
+       |                         ^
+    215|     expect(screen.getByText(/License & entitlement details are unavail…
+    216|     // No fixture content and no sample markers leak through.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order
+AssertionError: expected [ 'Home', 'Apps catalog', …(10) ] to deeply equal [ 'Home', 'Workflows', …(10) ]
+
+- Expected
++ Received
+
+@@ -1,8 +1,8 @@
+  [
+    "Home",
+-   "Workflows",
++   "Apps catalog",
+    "Projects",
+    "Tasking",
+    "Communication",
+    "Vault",
+    "Submission Center",
+
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:139:20
+    137|     const { scroll } = await mountRail();
+    138|     const labels = Array.from(scroll.querySelectorAll('button .lbl')).…
+    139|     expect(labels).toEqual(PLACES);
+       |                    ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false)
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true)
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Workflows"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Home":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Home"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Apps catalog"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Projects":
+  [36m<button[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mdata-on[39m=[32m"true"[39m
+    [33mtitle[39m=[32m"Projects"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Tasking":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Tasking"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Communication":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Communication"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Vault":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Vault"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Submission Center":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Submission Center"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CMC / Module 3":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"CMC / Module 3"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Quality":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Quality"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reporting & analytics":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Reporting & analytics"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "My work":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"My work"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"nav-item"[39m
+    [33mtitle[39m=[32m"Conversation"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"rail-scroll"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rail-nav"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Home"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-house"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mHome[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Apps catalog"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-layout-grid"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"14"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"7"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"7"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mApps catalog[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-current[39m=[32m"page"[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mdata-on[39m=[32m"true"[39m
+      [33mtitle[39m=[32m"Projects"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-folder"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mProjects[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Tasking"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mTasking[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Communication"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCommunication[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Vault"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-vault"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 7.9 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"7.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 10.6 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"7.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7.9 16.1 2.7-2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"16.5"[39m
+            [33mcy[39m=[32m"16.5"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mr[39m=[32m".5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m13.4 13.4 2.7 2.7"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"12"[39m
+            [33mr[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mVault[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Submission Center"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-rocket"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mSubmission Center[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"CMC / Module 3"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-beaker"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4.5 3h15"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 14h12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mCMC / Module 3[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Quality"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 12 2 2 4-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mQuality[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Reporting & analytics"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 17V9"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M13 17V5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M8 17v-3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mReporting & analytics[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"My work"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 11 3 3L22 4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mMy work[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nav-item"[39m
+      [33mtitle[39m=[32m"Conversation"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-message-square"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"lbl"[39m
+      [36m>[39m
+        [0mConversation[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:146:37
+    144|     const { rail, scroll, onNav } = await mountRail('biopharma', colla…
+    145|     for (const name of ['Workflows', 'Tasking', 'Communication']) {
+    146|       const button = within(scroll).getByRole('button', { name });
+       |                                     ^
+    147|       expect(button.getAttribute('disabled')).toBeNull();
+    148|       expect(button.tabIndex).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers Workflows
+TestingLibraryElementError: Unable to find an accessible element with the role "menuitem" and name `/Workflows/`
+
+Here are the accessible roles:
+
+  menuitem:
+
+  Name "Account":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Admin":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Access requests":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Usage & limits":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Billing":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------group:
+
+  Name "Client type":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Client type"[39m
+    [33mclass[39m=[32m"acct-group"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  menuitemradio:
+
+  Name "Medical Device & IVD":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Biotech & Pharma":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Diagnostics":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CRO / Research":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Health Systems":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "View all plans":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Set up a workspace":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Codebase coverage":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Get help":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Log out":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Account"[39m
+  [33mclass[39m=[32m"acct-menu"[39m
+  [33mid[39m=[32m"_r_e_"[39m
+  [33mrole[39m=[32m"menu"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"acct-head"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"avatar"[39m
+    [36m>[39m
+      [0mAR[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"who"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mAda Rowe[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rl"[39m
+      [36m>[39m
+        [0madmin[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-user"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"7"[39m
+          [33mr[39m=[32m"4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccount[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 12 2 2 4-4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAdmin[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-clipboard-list"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"4"[39m
+          [33mrx[39m=[32m"1"[39m
+          [33mry[39m=[32m"1"[39m
+          [33mwidth[39m=[32m"8"[39m
+          [33mx[39m=[32m"8"[39m
+          [33my[39m=[32m"2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 11h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 16h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 11h.01"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 16h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccess requests[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 17V9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M13 17V5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 17v-3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mUsage & limits[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:323:34
+    321|   it('offers Workflows', async () => {
+    322|     const { menu, onNav } = await openMenu();
+    323|     fireEvent.click(within(menu).getByRole('menuitem', { name: /Workfl…
+       |                                  ^
+    324|     expect(onNav).toHaveBeenCalledWith('apps');
+    325|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present
+TestingLibraryElementError: Unable to find an accessible element with the role "menuitem" and name `/Workflows/`
+
+Here are the accessible roles:
+
+  menuitem:
+
+  Name "Account":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Admin":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Access requests":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Usage & limits":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Billing":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Apps catalog":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------group:
+
+  Name "Client type":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Client type"[39m
+    [33mclass[39m=[32m"acct-group"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  menuitemradio:
+
+  Name "Medical Device & IVD":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Biotech & Pharma":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Diagnostics":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "CRO / Research":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Health Systems":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitemradio"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "View all plans":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Set up a workspace":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Codebase coverage":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Get help":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------menuitem:
+
+  Name "Log out":
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Account"[39m
+  [33mclass[39m=[32m"acct-menu"[39m
+  [33mid[39m=[32m"_r_m_"[39m
+  [33mrole[39m=[32m"menu"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"acct-head"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"avatar"[39m
+    [36m>[39m
+      [0mAR[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"who"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mAda Rowe[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rl"[39m
+      [36m>[39m
+        [0madmin[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-user"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"7"[39m
+          [33mr[39m=[32m"4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccount[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 12 2 2 4-4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAdmin[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-clipboard-list"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"4"[39m
+          [33mrx[39m=[32m"1"[39m
+          [33mry[39m=[32m"1"[39m
+          [33mwidth[39m=[32m"8"[39m
+          [33mx[39m=[32m"8"[39m
+          [33my[39m=[32m"2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 11h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 16h4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 11h.01"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 16h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mAccess requests[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 17V9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M13 17V5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 17v-3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"lbl"[39m
+    [36m>[39m
+      [0mUsage & limits[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"acct-item"[39m
+    [33mrole[39m=[32m"menuitem"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:433:25
+    431|     fireEvent.click(screen.getByTitle('Ada Rowe'));
+    432|     const menu = screen.getByRole('menu');
+    433|     expect(within(menu).getByRole('menuitem', { name: /Workflows/ })).…
+       |                         ^
+    434|     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CL…
+    435|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 27 passed (33)
+   Start at  20:07:19
+   Duration  14.89s (transform 1.32s, setup 202ms, import 1.72s, tests 11.87s, environment 867ms)
+

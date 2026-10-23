@@ -1,0 +1,75 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/Shell.tsx (942 lines)
+  client/src/concept2cure/v2/registryModel.ts (1125 lines)
+  client/src/concept2cure/v2/surfaces/AccessRequests.tsx (566 lines)
+  client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx (2709 lines)
+  client/src/concept2cure/v2/surfaces/Onboarding.tsx (1354 lines)
+  client/src/concept2cure/v2/surfaces/Surfaces.tsx (604 lines)
+  client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx (851 lines)
+  shared/constants/ui-surface-registry.ts (1250 lines)
+  shared/navigation/surface-actions.ts (1688 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+✅ Pre-commit checks complete
+[concept2cure-v2 c50f8810e] Complete workflow discovery in the existing client catalog
+ 76 files changed, 39442 insertions(+), 1183 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx
+ create mode 100644 client/src/concept2cure/v2/catalogWorkflows.ts
+ create mode 100644 client/src/concept2cure/v2/styles/workflows-v2.css
+ delete mode 100644 client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx
+ create mode 100644 client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx
+ create mode 100644 docs/design/IND_CROSS_FUNCTIONAL_WORK_2026-10-23.md
+ create mode 100644 docs/design/WORKFLOW_DISCOVERY_2026-10-23.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/copy-audit.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/review/CONTRACT.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/review/INDEPENDENT.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/build.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/final-inputs.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/first-green.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/home-final-red.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/home-red.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/legacy-red.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/lint-cleanup.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/lint-first.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/red-inputs.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/regressions-final.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/regressions-first.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/test-fixture-corrections.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/typecheck.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/workflows-red.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/README.md
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/artifact-pins.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-check.mjs
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-execution-final.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-execution-first.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-index.html
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/desktop-dark-search.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/desktop-filtered-governed-toggle.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/desktop-locked-additional.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/desktop-search-readiness.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/desktop-workflow-overview.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/failure.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/failure.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/mobile-workflow-overview.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-result/result.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server-final.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/first-run/browser-check.mjs.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/first-run/execution.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/first-run/failure.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/first-run/mobile-overflow.png
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/pre-settled-capture/browser-check.mjs.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/pre-settled-capture/execution.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/pre-settled-capture/result.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/stale-server-run/execution.txt
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/stale-server-run/failure.json
+ create mode 100644 docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/stale-server-run/failure.png

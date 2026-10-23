@@ -1,0 +1,958 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > is reachable inside the existing Admin Settings tab 165ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > saves the exact revision and audited reason, then reads the stored profile 192ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a refused draft and does not announce it saved 99ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a conflicting draft and requires deliberate reload before retry 122ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > disables management for a reader and shows a failed read as unavailable 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > imports canonical formatting into a draft and displays extraction warnings 80ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > rejects an SVG logo before reading or uploading it 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > registers the selected immutable Vault version without inventing approval 405ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > does not turn a Vault search outage into an empty library 133ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > shows a superseded-source refusal without claiming another administrator changed the profile 206ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes 236ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Delegated company capabilities and legacy adoption > lets a delegated brand manager edit stationery without legal management controls 35ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Delegated company capabilities and legacy adoption > lets a delegated legal custodian register originals while company presentation stays read-only 44ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Delegated company capabilities and legacy adoption > previews old assets without adopting until an explicit reasoned action 67ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Delegated company capabilities and legacy adoption > carries an explicit replacement decision only when the user selects it 100ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Legal library lifecycle refusal summaries > shows a recorded revocation even while the immutable source still has current Vault approval 76ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > reaches the canonical creation drawer without any write (inline=false) 385ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > reaches the canonical creation drawer without any write (inline=true) 509ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > opens only the returned UUID with both original selectors and no automatic build (inline=false) 377ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > opens only the returned UUID with both original selectors and no automatic build (inline=true) 688ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > cancels the drawer without creating or binding its sources, and ordinary creation stays ordinary 719ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > keeps the unsaved buffer guarded after Stay, then after opening and cancelling creation 934ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > refuses creation after the actual selected sources change while its form is open 505ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after source replacement 498ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after project round trip 592ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after session replacement 604ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after unmount 465ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > keeps the source start valid through an actual same-session token refresh 629ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > closes one creation drawer with Escape and leaves ordinary opening independent 443ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > retains exact selectors through explicit identified creation recovery 1067ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > keeps an absent returned record unbound instead of guessing another working document 664ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > hands the exact created record and selectors out of a filtered host after the form closes 711ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > preserves the original dirty canvas through creation and a reordered inventory until the actual leave decision 2048ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > adopts /catalog + /license: live names, retained additional categories, tiers, quotas 81ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > toggle PUTs to the real endpoint and reports the result 149ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > server rejection reverts the switch and surfaces the reason 4266ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > the switch asks for a reason first and sends nothing until one is confirmed 52ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > says so when the server reports the audit row was not written 61ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > offline → honest failed-load states, never a fixture or sample pill 13ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old receipt 257ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old identified503 71ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous document create and Cancel 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous section create and Cancel 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed document receipt before its normal callback and exact task navigation 88ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed section receipt before its normal callback and exact task navigation 103ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a definite403 refusal after the native form is closed 114ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retains an HTTP408 as unknown and never claims nothing was created 96ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown document, its recovery read and host refresh until all succeed 262ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown section, its recovery read and host refresh until all succeed 267ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a 403 recovery 117ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a wrong scope recovery 112ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a host refresh failure recovery 115ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > keeps an earlier project’s unresolved entry through A→B→A and suppresses its late receipt 181ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > unregisters a retired host without letting its late response recreate a guard or open a document 73ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown document when the actual host refresh fails after a valid recovery read 364ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown section when the actual host refresh fails after a valid recovery read 701ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope document host refresh after the recovery read succeeded 311ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope section host refresh after the recovery read succeeded 529ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 140ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false) 185ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true) 132ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > CMC / Module 3 is on the rail beside Quality, and opens CMC 52ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 59ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 132ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 214ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers Workflows 72ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers every client type once, the current one checked, by more than colour 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing a client type sets it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing the type already chosen changes nothing and closes the menu 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 70ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock and navigates normally when the navigation fetch fails 338ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock when the server answers resolved:false 163ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate 161ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > hands a locked result to the unlock panel, which outlives the palette 177ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > keeps a locked result arrow-reachable and Enter-activatable 54ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > leaves an entitled surface completely alone 140ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > shows no locks for the master-admin owner grant 132ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for 72ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a tier lock 137ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a disabled lock 130ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a industry lock 120ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > offers assembly for retained readable data without requiring original bytes 185ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > hands only the explicitly pinned ProjectHome sources to the shared chooser 183ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > refuses a sixth explicit pin without silently dropping a source 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > retains the selected Vault UUID namespace instead of converting it into a Data Room id 346ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not offer an explicit section-only read as a whole-document build target 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > withdraws a whole-document build target when the fresh list confirms section-only access 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > opens the exact project/document with selected identities and no write or generation 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > holds an unavailable target after the fresh read instead of opening another document 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > refuses a foreign scoped document list rather than presenting it as empty 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > retains sources for the existing-editor creation remedy without dispatching a pre-mount creator or writing 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not publish while another governed form is open 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after project round trip 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after account change 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after organization change 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after unmount 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > discards a late target list when the selected source changes 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > deep-copies at publication and at every read 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'empty selection' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Data Room id' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Vault id' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'duplicate source' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'six selected sources' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > requires the exact document/project and does not manufacture source intent from copied URLs 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after project round trip before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after account change before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after organization change before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after session replacement before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > keeps a legitimate handoff after the chooser closes and its component unmounts 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > registers ownership before the existing editor-target event is delivered 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > refuses an unregistered raw source-target copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > preserves ordinary target behavior across project visits 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 50ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 4ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 249ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 3ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 306ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 399ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 2ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > actual submission parent preserves and re-admits legal forms > keeps the selected original, filing reason and open legal rationale through canonical refresh 326ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > actual submission parent preserves and re-admits legal forms > hides the old library on a same-bearer account-object replacement, then remounts the current legal review 178ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > same-frame retained submission actions use their captured owner > does not dispatch a retained correspondence download after account replacement 32ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > same-frame retained submission actions use their captured owner > does not dispatch a retained correspondence download after raw-bearer replacement 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > same-frame retained submission actions use their captured owner > does not place through an old selected source after account replacement 43ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > same-frame retained submission actions use their captured owner > does not copy another project’s original through a retired handler 50ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > library callbacks keep their original account and filing visit > masks every old private value on the first replacement-owner layout and subsequent reads 107ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > library callbacks keep their original account and filing visit > starts replacement-owner reads with fresh filters even when the caller owner string is unchanged 264ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > library callbacks keep their original account and filing visit > refuses a retained Retry during raw browser bearer drift without an account event 54ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > library callbacks keep their original account and filing visit > does not let an old setter alter the replacement account before rerender 56ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx > library callbacks keep their original account and filing visit > does not let a retained A callback revive after A → B → A visits 159ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medtech uses the same live discovery path without inventing project context 213ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > diagnostics uses the same live discovery path without inventing project context 51ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biopharma uses the same live discovery path without inventing project context 53ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > cro uses the same live discovery path without inventing project context 44ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > health uses the same live discovery path without inventing project context 42ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > academic uses the same live discovery path without inventing project context 41ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > regulatory uses the same live discovery path without inventing project context 39ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medical_writing uses the same live discovery path without inventing project context 39ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biotech uses the same live discovery path without inventing project context 40ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > pharma uses the same live discovery path without inventing project context 42ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > an unknown client type reaches the same destination instead of a biopharma module fallback 34ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > remains reachable while the portfolio read is pending 39ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > remains reachable when the portfolio read fails without turning the failure into an empty portfolio 45ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > uses the canonical Workflows label without changing the routable surface id 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > the duplicate discovery presentation is retired > removes the overlay implementation and its Home integration after converging on Workflows 0ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'audit-trail' stays reachable without a subscribable catalog row 48ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'part11-console' stays reachable without a subscribable catalog row 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > delivers a confirmed reply and later explicit open through entry A after the host receives B 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > refuses a stale source before POST 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > refuses a different project before POST 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > keeps a confirmed creation known when its source owner retires before the reply 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > retains A through identified recovery even when the current prop is B 106ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > allows actual-outcome checking after source retirement without adopting a recovered document 107ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > does not infer a source-linked receipt from a generic inventory reconciliation 113ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > keeps the original source owner after a genuine same-session token refresh 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > each document attempt retains its original selected-source owner > keeps ordinary section creation separate from a retired document source start 56ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > opens the existing form with a count, then Cancel consumes the request and ordinary opening clears it 249ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > consumes a request refused by another ceremony instead of opening it later 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > does not replace an already open ordinary form with a new source request 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > consumes a held project request without later reopening it 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > consumes a stale source request without later reopening it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > Cancel closes the form while its pending attempt retains its original source callback 67ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails 217ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false 75ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans 92ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone 62ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant 63ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for 58ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name 57ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name 55ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name 56ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > nests each live feature once in its existing work area and explains when, where to start and what follows 248ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > shows only work areas represented by live rows instead of inventing the missing catalog 20ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > finds a subordinate feature, expands its workflow and opens its original destination 59ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches original backend categories even when their features belong to different workflows 38ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches the workflow guidance as well as feature names 43ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > retains unknown live capabilities and their category, including search and original navigation 51ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > keeps mapped and additional release-excluded features locked even when their grant is enabled 26ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > uses the original module and backend group for a governed toggle after regrouping and search 144ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > explains a no-match search and restores the actual live features when cleared 67ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports a genuinely empty catalog without claiming a search or read failure 10ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports network failure as a failed read, never an empty catalog 10ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports malformed successful body as a failed read, never an empty catalog 11ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > lockNotice — who is offered the ask > offers the ask to a member and never to an org administrator 2ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > lockNotice — who is offered the ask > leaves the admin-only call to action untouched for a member 0ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > names the day the open request was made 12ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > reports a decline with the reason the administrator gave 0ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > says nothing when there is no request on file 1ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > offers a member a way to ask, and sends the note with the request 192ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > says a request is already open, with its date, and offers no second press 21ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > reports a failed check as a failure, never as no request on file 20ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > shows a refused write as a refusal and keeps the form 33ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > never asks the server about requests for an administrator 15ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > shows who asked, for what, and their own words 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > will not approve until a reason has been given 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > sends the decision and the reason once both are given 50ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reports a failed load as a failure, never as an empty queue 8ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > renders a genuine zero as an honest empty state 10ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reads every workspace from the platform console endpoint, and shows the workspace column 8ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reads one workspace from the workspace endpoint, and never asks it for every workspace 9ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > answers another workspace's request through the platform console endpoint 50ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > above the plan: names the plan that includes it and routes to plans, with no switch 85ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > wrong industry: says so, and offers no plan — because no plan changes it 34ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > an administrator switched it off: a workspace decision, not an upsell, and the switch is offered 36ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > in the plan but never provisioned: it opens, like the rail says, and blames nobody 31ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > switched on: no lock sentence at all, and the card opens 17ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — writes the UI offers are writes the server accepts > an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it) 150ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a 200 that is not the catalog contract is an error, never "no apps" 12ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a genuinely empty catalog is still the honest empty state 13ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > with the licence unreadable, an unavailable module is not blamed on the plan 12ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > reads the base seed and every follow-up that adds catalog rows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > leaves no app the shell presents without a catalog row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no catalog row for something a user cannot actually open 0ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > lists one module once — never the same surface under two ids 0ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > never makes a Part 11 compliance control licensable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no duplicate module ids (module_id is UNIQUE) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > gives every module its true deep link, unique per module 5ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > guesses no commercial packaging — the BASE seed ships every module unrestricted 2ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > retires legacy rows instead of deleting them (ON DELETE CASCADE would take subscriptions) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > accepts a fresh verified read after a genuine same-session refresh with exact current headers 80ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after account changes 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after organization changes 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after session changes 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after bearer changes 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after same-session refresh changes 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after in-place account changes 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual canvas host retains its read owner > refuses a delayed verified refresh after in-place organization changes 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > accepts a fresh verified read after a genuine same-session refresh with exact current headers 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after account changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after organization changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after session changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after bearer changes 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after same-session refresh changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after in-place account changes 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > the actual working list host retains its read owner > refuses a delayed verified refresh after in-place organization changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses failed sections instead of confirming navigation 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses missing sections instead of confirming navigation 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses unsuccessful sections instead of confirming navigation 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses foreign section instead of confirming navigation 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses a response for another document 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses a pinned record from another program 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed module metadata before applying the record 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed product_code metadata before applying the record 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed status metadata before applying the record 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed updated_at metadata before applying the record 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed section_count metadata before applying the record 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed section_count metadata before applying the record 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed c2c_document_id metadata before applying the record 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses malformed created_by metadata before applying the record 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > confirms the actual metadata and section refresh without another navigation or write 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses a delayed recovery after document change 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses a delayed recovery after program round trip 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > pinned canvas recovery confirms only the current actual record read > refuses a delayed recovery after unmount 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > Authoring working-list recovery uses its existing scoped reader > does not confirm an invalid current working-list result 0 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > Authoring working-list recovery uses its existing scoped reader > does not confirm an invalid current working-list result 1 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > Authoring working-list recovery uses its existing scoped reader > does not confirm an invalid current working-list result 2 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx > Authoring working-list recovery uses its existing scoped reader > applies an all-status recovery without a duplicate filter-change GET 56ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > rejects raw browser credential drift without treating it as canonical refresh 40ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > retires same-id account-object replacement even when the auth revision stays current 11ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > cannot revive retained profile handlers after A to B to A or unmount 11ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > does not consume an old read body when the account changed before its response 6ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > rejects an old parsed read body after a new account receives its own saved profile 59ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > settles an already-sent save normally across ordinary bearer rotation 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > preserves a pending Word proof across refresh, but drops it after replacement during blob read 64ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > delivers a pending Word proof once after an ordinary refresh 58ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > retains an imported draft and its warnings through a genuine refresh 8ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > does not consume a retired extraction response or overwrite the replacement draft 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > keeps a new logo read busy when an older owner completes or fails 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > retains a pending current resource across ordinary refresh without another read 5ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > retires old calls and files on path/version changes, A to B to A and unmount 11ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > blocks old resource actions in the same frame as credential replacement 5ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > downloads correspondence with the submission presentation preference and explicit draft guidance 219ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not save a browser file when the correspondence download is refused 77ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows exact target scope, approval and expiry refusals and omits archived entries 68ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > places an eligible original with explicit section and reason and signals a confirmed write 57ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not announce placement after refusal or a receipt for another source 80ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > keeps a frozen sequence immutable and never posts a placement 28ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > reports the copied-but-unregistered outcome without transferring approval or placing it 62ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows a library outage without stale entries or an invented empty result 13ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > loads a bounded inventory page and searches across later registered versions 134ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > ignores a late library response after switching sequence context 21ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > real legal form continuity through canonical bearer refresh > preserves an open requirement title, rationale and supporting-review choices without reloading 302ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > real legal form continuity through canonical bearer refresh > preserves an open lifecycle reason, custodian and reminder intervals without reloading 91ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > real legal form continuity through canonical bearer refresh > confirms a pending requirements write exactly once after legitimate refresh 96ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > real legal form continuity through canonical bearer refresh > confirms a pending lifecycle write exactly once after legitimate refresh 60ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > refuses retained local requirement setters during storage-only bearer drift 77ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > blocks an old requirements Save in the same frame as account replacement 55ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > blocks an old lifecycle Save in the same frame as account replacement 43ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > withdraws the requirements draft after a role snapshot replacement without bearer rotation 63ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > withdraws the lifecycle draft after a role snapshot replacement without bearer rotation 42ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > discards a sent lifecycle reply after replacement, without invoking the old saved callback 51ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal source ownership retains path, revision and unmount boundaries > rejects an old A reply after A → B → A path visits 8ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal source ownership retains path, revision and unmount boundaries > rejects an old A reply after A → B → A revision visits 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal source ownership retains path, revision and unmount boundaries > does not parse a delayed legal read response after unmount 3ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal source ownership retains path, revision and unmount boundaries > rejects a legal JSON body finishing after replacement without exposing its source 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > deep-copies selectors at publication and read, and rejects a copied raw command 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > refuses a direct copied receiver value instead of assigning it new ownership 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > keeps a received form current after channel TTL, but does not admit a fresh capture of the expired command 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires a received intent when its admitted receiver is replaced 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > does not let a caller mutate received selectors into a different source selection 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires raw-payload or timestamp tampering without a plain-target fallback 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires received and pending starts after project round trip 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires received and pending starts after account change 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires received and pending starts after organization change 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires received and pending starts after session replacement 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > keeps the source intent through a real same-session token refresh 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires an inline start after source changed, including a later return 179ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > source-start ownership after the existing editor receives it > retires an inline start after source withdrawn, including a later return 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > preserves both original namespaces and checksums without claiming an existing document 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > does not turn an unowned raw command into an ordinary editor target 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > rejects a command mixed with an existing document target 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > rejects a command mixed with ordinary assembly sources 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > refuses 'empty selection' instead of a plain target fallback 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > refuses 'invalid identity' instead of a plain target fallback 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > refuses 'duplicate identity' instead of a plain target fallback 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > keeps the existing UUID requirement for ordinary assembly and does not reconstruct starts from a URL 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > owned source-document start through the existing target channel > keeps channel expiry at admission rather than allowing an old pending command 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > existing source chooser starts the canonical form through its owned receiver > retains selected sources after intentional chooser/action unmount without POST or pre-mount form event 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > existing source chooser starts the canonical form through its owned receiver > holds the start while another governed form is open 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx > existing source chooser starts the canonical form through its owned receiver > registers start ownership before delivering the existing editor event 1ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Optional independent review of the organization default > blocks a protected identity change early and keeps the draft available for independent review 249ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Optional independent review of the organization default > allows automatic-use preferences to change directly without sending approval-derived fields 98ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Optional independent review of the organization default > requires an activated approved default before enabling the policy 25ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Optional independent review of the organization default > enables policy with the current revision and preserves an unsaved designer draft 121ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Explicit approved default activation > activates with exact identity/hash and explicit output choices while retaining a dirty draft 241ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Explicit approved default activation > retains activation choices and the unsaved draft when the server no longer permits activation 232ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx > Explicit approved default activation > does not require another review when a retained matching draft has older internal brand-name metadata 356ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > records an explicit revocation with the saved revision, reason and selected eligible custodian 282ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > keeps external signature reports distinct from application cryptographic verification 43ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > renders an absent review explicitly without inventing a date or reviewer 3ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > shows unresolved coverage and records an explicit mapping bound to the displayed actual sequence 96ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > discards a late response after switching the sequence context 11ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > paged exact-version selection > searches in the admitted program and preserves selected IDs when moving to another server page 28ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > filters the ledger to one kind of governed event, and says how many that is 81ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > a kind the ledger does not file never reaches the screen, and the legal kinds are named 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > runs the search box over the ledger, and the box carries the term 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > an entry that is not on screen is refused, listing the ids that are 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > shows the hash chain 43ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > a ledger that could not be read is said so, never shown as an empty trail 57ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > an action sent before the ledger lands is held, then applied when it does 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > shows and hides the admin controls, the one thing a person switches here 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > a state the control does not have is refused with the legal pair 0ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Accessible company letterhead review > supports keyboard-addressable scroll, zoom and a readable text view without editing the design 189ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Accessible company letterhead review > uses known contrast extremes and warns when normal text is unreadable on white 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Company legal inventory tools > uses server pages and scoped counts, resetting the page when narrowing by language and search 123ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Company legal inventory tools > does not render stale entries or claim an empty inventory when a filtered read fails, and retries the same filter 49ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx > Canonical Vault picker recovery and paging > retries the same failed query and reads later results without discarding the selection contract 64ms
+ ✓ client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx > Governed named company designs > stages the current draft with explicit scope without saving the default or granting creator review 338ms
+ ✓ client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx > Governed named company designs > publishes only when the server permits it and sends the exact hash and current default revision 89ms
+ ✓ client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx > Governed named company designs > lets scoped readers request a proof and shows a refusal without downloading or exposing write controls 68ms
+ ✓ client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx > Governed named company designs > does not download a proof returned after the browser authentication session changes 57ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx > Delegated company-document responsibilities > loads only on request and changes explicit rights with a reason, preserving inherited owner rights 215ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx > Delegated company-document responsibilities > keeps refused permission choices and does not claim they were saved 50ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx > Presentation history and restore > compares retained presentation and requires an explicit reasoned restore against the current revision 100ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx > Presentation history and restore > lets readers inspect history without restore controls and shows an unread revision as a failure 37ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx > Presentation history and restore > requires the independent-review path when a historical identity differs from the approved default 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 195ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > on a workspace where nobody has asked, says so and claims no answered history 161ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > when answered requests exist, says everything was answered and offers them 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > when the answered set cannot be read, claims neither history 14ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > never makes the extra read while somebody is waiting 25ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the standalone route is a page > has a page frame and a title of its own 21ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the standalone route is a page > adds no second page or title inside the Master Licensing tab 12ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees an app token only when the caret is inside an @word at the start or after whitespace 3ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees a command token only as the first word of the draft — where the server reads it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > inserts the label with a trailing space and reports the caret after it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing @ opens the app list and Enter inserts the highlighted app instead of sending 143ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > arrow keys move the highlight and Escape closes without inserting 57ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing / at the start lists the commands the server parses and Enter inserts one 14ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > an unknown query offers nothing and Enter sends as usual 3ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/ConversationThread.tsx uses useAppMentions and renders AppMentionMenu on its textarea 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/Surfaces.tsx uses useAppMentions and renders AppMentionMenu on its textarea 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > lists matching skills after the commands, and choosing one picks it and inserts no text 21ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > chooses a skill from the keyboard like a command, and Enter does not send 11ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > offers no skill in a composer that passes no source, and commands are unchanged 3ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > returns the body on success 4ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a 428 as a readable result — the e-signature trigger 2ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a 409 conflict with the server’s own message 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a ZodIssue array as readable text, never [object Object] 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > distinguishes a transport failure from a server rejection 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > a 401 is reported as a status, not swallowed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiErrorText — fallback behaviour > falls back when the payload carries no usable message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > does not dispatch a retired owner and never retries it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > does not parse a response after its owner retires 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > discards a parsed body when ownership changes during JSON 51ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > discards an obsolete rejection without changing current rejection normalization 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > keeps a current guarded success identical to the existing three-argument result 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx > Apps — licence band with an unrecorded limit > renders the band, the unrecorded limit as "not recorded" with no bar, and the recorded one as before 68ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action operates a screen the navigation registry knows 2ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action id is namespaced to its surface and unique 3ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every enum param has non-empty values and required params have descriptions 2ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > no registered action names governed work 5ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > REFUSES a governed id — the check shown failing on what it exists to catch 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > ungoverned view verbs pass the pattern (no false positives on the registry style) 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > deep-research actions carry no credit-spend pre-arm params 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > unknown action → typed refusal listing the valid ids 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > missing required param → refusal naming the param 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > out-of-enum param → refusal naming the legal values 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > a sound request → the registry directive, params stringified and filtered 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > discovery filters by surface 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown screen fails 2ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown action fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step with illegal pinned params fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a silent step and a double-move step fail 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > an empty script fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every registered script validates clean 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > ships one training walkthrough and one sales demonstration 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > script ids are unique and findable 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > the picker listing carries honest metadata and no steps payload 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every script fits the demo drive budgets (a plan the budget cuts off is a defect here, not at runtime) 4ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the three scripts exist 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every navigate stop lands on a launch surface (never "Not in this release") 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every act operates a registered action whose screen is a launch surface 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all seven launch apps and ends at the audit trail 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 0ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > preserves an unsaved company name and reason across real ordinary bearer refresh 118ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > blocks the retained save before React can rerender a replaced account 175ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > rereads and remounts legal forms after a same-bearer account snapshot replacement 396ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it 208ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed 8ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry 9ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 91ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=true) 21ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=false) 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > keeps an uncertain export outcome visible after a legitimate refresh 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > does not deliver a canonical refresh carrying foreign actor claims 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > does not deliver a canonical refresh carrying foreign organization claims 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > refuses an unadopted storage bearer even when its actor claims match 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced same-account session before a delayed reply 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced actor before a delayed reply 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced organization before a delayed reply 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires the delayed reply after parent round trip 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires the delayed reply after unmount 2ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > every app is a navigation target AnA can resolve 3ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > includes the module workstreams and the tool-like globals, not the shell destinations 2ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > labels are unique, so a mention is never ambiguous 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > ranks a prefix match first and caps the list 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > an empty query lists the vocabulary 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > finds a mention by its full label, including spaces 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > prefers the longer label when one label prefixes another 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > ignores unknown labels and e-mail addresses 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > is case-insensitive and reports each app once 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > stripAppMentions removes recognised mention tokens and leaves unknown @text alone 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > answers to the navigation id and the short aliases the server has always honoured 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > a longer handle wins over a shorter one it starts with 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > every alias and id is unique across the vocabulary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx > Unsaved company letterhead proof > downloads a visibly named draft through the unsaved endpoint without writing a revision or output preferences 348ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx > Unsaved company letterhead proof > retains a refused proof draft and does not initiate a browser download or claim it was saved 87ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx > Unsaved company letterhead proof > drops a rendered proof if the canonical authentication session changes before delivery 97ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx > legal action admission does not revive across invalid presented credentials > retires an A callback across blank then valid A props while allowing a newly admitted action 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx > legal action admission does not revive across invalid presented credentials > drops a pending A receipt after mismatched then valid A props without changing the canonical account 6ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > has unique target ids 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > every target is well-formed (id, label, description, scope, group) 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > enum params declare a non-empty enum list 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > resolves a global target to a directive 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > rejects an unknown target and lists valid ones 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > accepts a valid enum param and rejects an invalid one 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > omits optional params when not supplied 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > findNavigationTarget round-trips 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > extracts and resolves a valid ana-navigate block 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for an unknown target without emitting a directive 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for malformed JSON 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > returns empty for text with no blocks 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is defined only as the table grid header 3ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is not the conversation thread header 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > cites § sections, never "ss11.10(e)" or "ss11.50", and never writes "entry(ies)" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > shows no API route as the Apps catalog eyebrow 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 129 — no empty breadcrumb > draws the tier crumb and its separator only when there is a tier 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > carries the module and its real required tier 2ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > is consumed exactly once 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > is null when the plans page is reached any other way 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > can be abandoned without being consumed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > only a tier lock is sent to the plans page at all > routes a tier lock to plans, and the other two somewhere a plan cannot help 1ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > only a tier lock is sent to the plans page at all > offers a non-admin no action they cannot take 0ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > is recognised only for an unentitled launch-scope verdict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > names the reason in the accessible short form 0ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > offers no plan, no toggle and no request — for admins and members alike 1ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > the seeded names were found (the check below is not vacuous) 1ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > no script names a record a launch-demo pack seeds 1ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > a stop that describes the portfolio says what to do when it holds no program 0ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > resolves every NAVIGATION_TARGETS id to a real surface view (never the scaffold) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > aliases only point AT real views — a dangling alias is drift in the other direction 1ms
+
+ Test Files  46 passed (46)
+      Tests  502 passed (502)
+   Start at  20:29:00
+   Duration  79.01s (transform 6.26s, setup 2.38s, import 14.38s, tests 43.24s, environment 14.20s)
+
+
+stderr | client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company letterhead and legal library > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes
+An update to CompanyDocumentSettings inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyPermissionsPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyPresentationHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyGovernedDesigns inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LegalRequirementsEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyLegalInventory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate
+An update to NavUnlockPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medtech uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > diagnostics uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biopharma uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > cro uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > health uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > academic uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > regulatory uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medical_writing uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biotech uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > pharma uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > an unknown client type reaches the same destination instead of a biopharma module fallback
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > consumes a held project request without later reopening it
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx > source requests use the same native New document drawer once > consumes a stale source request without later reopening it
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > blocks old resource actions in the same frame as credential replacement
+An update to ResourceHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx > legal forms retire replacement owners and stale save handlers > refuses retained local requirement setters during storage-only bearer drift
+An update to PagedCompanyLegalPicker inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > filters the ledger to one kind of governed event, and says how many that is
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > runs the search box over the ledger, and the box carries the term
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > shows the hash chain
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx > Governed named company designs > does not download a proof returned after the browser authentication session changes
+An update to CompanyGovernedDesigns inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyDesignDetail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx > Unsaved company letterhead proof > drops a rendered proof if the canonical authentication session changes before delivery
+An update to CompanyDocumentSettings inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyPermissionsPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyPresentationHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CompanyGovernedDesigns inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
