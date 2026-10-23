@@ -113,6 +113,18 @@ lint errors and no warning growth (23 existing changed-file warnings).
 command. The artifact manifest hashes this packet and its linked design/guide;
 its self-reference is excluded.
 
+## Canonical integration
+
+Implementation `f7e6c12fe` passed normal commit hooks. Canonical advanced during
+publication with native AnA model-call provenance and documentation. Normal
+merge `7909171a2` retains both increments, including incoming `4718e17cb`.
+`canonical-integration.json` lists seven incoming source/test paths; every
+qualified Authoring/Vault/UI source hash remains unchanged. Incoming paths are
+qualified separately in `merged-incoming-regressions*`, with zero-error
+compiler and production build receipts in `merged-checks.json` against
+`merged-source-freeze.json`. The original 384-test count retains its original
+source freeze and is not relabelled as a repeated merged run.
+
 ## Human handoff and limits
 
 The existing [human testing guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)

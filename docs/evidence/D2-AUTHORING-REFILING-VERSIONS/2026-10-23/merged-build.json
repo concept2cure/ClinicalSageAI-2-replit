@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "startedAt": "2026-10-23T17:49:52Z",
+  "elapsedSeconds": 12.958,
+  "exitCode": 0,
+  "output": "merged-build.log.gz",
+  "outputSha256": "8a01f4bdf1de700c079d006624a106f26a37de03dbaf66a080535ab198a47d1f",
+  "sourceFreeze": "merged-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

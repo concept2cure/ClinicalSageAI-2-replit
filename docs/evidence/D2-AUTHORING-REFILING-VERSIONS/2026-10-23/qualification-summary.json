@@ -41,5 +41,16 @@
     "Identical retained bytes remain refused, including compensated versions",
     "Existing sealed Authoring revision policy unchanged",
     "No native multi-writer phantom prevention, human acceptance, provider readiness, deployment or agency transmission qualification"
-  ]
+  ],
+  "canonicalIntegration": {
+    "head": "7909171a2",
+    "incomingHead": "4718e17cb",
+    "checks": "merged-checks.json",
+    "incomingPassed": 82,
+    "incomingFiles": 7,
+    "typecheckErrors": 0,
+    "buildPassed": true,
+    "authoringSourceHashesUnchanged": true,
+    "countsAreSeparate": true
+  }
 }
