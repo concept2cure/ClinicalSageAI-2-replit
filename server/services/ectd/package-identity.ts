@@ -58,8 +58,16 @@ export class PackageIdentityMissingError extends Error {
   }
 }
 
-/** Capture known fields by value, without retaining a mutable contact reference. */
-export function recordedPackageIdentitySnapshot(identity: RecordedPackageIdentity): RecordedPackageIdentitySnapshot {
+/** Capture package facts by value; FDA-only facts have no non-US meaning. */
+export function recordedPackageIdentitySnapshot(
+  identity: RecordedPackageIdentity,
+  options: { region?: string | null } = {},
+): RecordedPackageIdentitySnapshot {
+  const region = canonicalRegionOf(options.region ?? '');
+  // Default/FDA capture preserves the original version-1 bytes. A default
+  // clone of an already projected capture also retains its canonical nulls.
+  const nonUs = region !== undefined && region !== 'US';
+  const contact: Partial<RegulatoryContactValues> = nonUs ? {} : identity.contact ?? {};
   return {
     version: 1,
     identity: {
@@ -67,17 +75,17 @@ export function recordedPackageIdentitySnapshot(identity: RecordedPackageIdentit
       applicationNumber: identity.applicationNumber ?? null,
       applicantSponsorId: identity.applicantSponsorId ?? null,
       applicantName: identity.applicantName ?? null,
-      applicantId: identity.applicantId ?? null,
+      applicantId: nonUs ? null : identity.applicantId ?? null,
       contact: {
-        name: identity.contact?.name ?? null,
-        phone: identity.contact?.phone ?? null,
-        email: identity.contact?.email ?? null,
+        name: contact.name ?? null,
+        phone: contact.phone ?? null,
+        email: contact.email ?? null,
       },
     },
   };
 }
 
-/** Intact historical snapshots without identity proof do not cover FDA identity. */
+/** Intact historical snapshots without identity proof do not cover release identity. */
 export function sameRecordedPackageIdentitySnapshot(
   a: RecordedPackageIdentitySnapshot | null | undefined,
   b: RecordedPackageIdentitySnapshot | null | undefined,
@@ -150,6 +158,25 @@ function identityFromRow(row: IdentityRow, programId: string | null): RecordedPa
     },
     homeAgency: typeof row.primary_agency === 'string' ? row.primary_agency : null,
   };
+}
+
+/** Lock applicant-name fallback, then parent, before sequence/program/sponsor. */
+export async function lockSubmissionPackageIdentity(
+  q: PackageIdentityQueryable,
+  organizationId: number,
+  submissionId: number,
+  options: { forUpdate?: boolean } = {},
+): Promise<{ programId: string | null } | null> {
+  await q.query('SELECT id FROM organizations WHERE id = $1 FOR SHARE', [organizationId]);
+  const row = (await q.query(
+    options.forUpdate
+      ? `SELECT program_id FROM submissions
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`
+      : `SELECT program_id FROM submissions
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE`,
+    [submissionId, organizationId],
+  )).rows[0] as { program_id: string | null } | undefined;
+  return row ? { programId: row.program_id } : null;
 }
 
 /**

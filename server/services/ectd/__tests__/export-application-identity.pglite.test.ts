@@ -24,16 +24,26 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import type { PackageFromCoreParams } from '../package-from-core';
+import type { RecordedPackageIdentitySnapshot } from '../package-identity';
 
-const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
+const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any,
+  exportedProof: undefined as RecordedPackageIdentitySnapshot | undefined }));
 vi.mock('../../../db', () => ({
   get db() { return holder.db; },
   pool: { query: (sql: string, params?: unknown[]) => holder.pglite.query(sql, params) },
 }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
+vi.mock('../package-from-core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../package-from-core')>();
+  return { ...actual, packageSequenceFromCore: async (params: PackageFromCoreParams) => {
+    holder.exportedProof = globalThis.structuredClone(params.recordedPackageIdentity);
+    return actual.packageSequenceFromCore(params);
+  } };
+});
 
 import { assembleSubmissionEctd, assembleSequence } from '../assemble-from-core';
-import { PackageIdentityMissingError, readRecordedPackageIdentity, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../package-identity';
+import { PackageIdentityMissingError, readRecordedPackageIdentity, readSubmissionPackageIdentity, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../package-identity';
 
 let harness: IndPgliteDb;
 const ORG = 7;
@@ -246,5 +256,72 @@ describe('non-FDA identifiers retain their regional meaning', () => {
       await harness.pglite.query("UPDATE ectd_sequences SET region = 'fda' WHERE id = 11");
       await harness.pglite.query("UPDATE submissions SET primary_region = 'fda', application_number = NULL WHERE id = 1");
     }
+  });
+});
+
+describe('non-US export and supplied proof use the recorded regional identity', () => {
+  async function withMarket(region: string, run: () => Promise<void>) {
+    await harness.pglite.query('ALTER TABLE submissions ADD COLUMN IF NOT EXISTS application_number text');
+    await harness.pglite.query('UPDATE ectd_sequences SET region = $1 WHERE id = 11', [region]);
+    await harness.pglite.query("UPDATE submissions SET primary_region = $1, application_number = 'MARKET-000512' WHERE id = 1", [region]);
+    try { await run(); } finally {
+      await harness.pglite.query("UPDATE ectd_sequences SET region = 'fda' WHERE id = 11");
+      await harness.pglite.query("UPDATE submissions SET primary_region = 'fda', application_number = NULL WHERE id = 1");
+    }
+  }
+
+  it.each(['EU', 'JP', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'])(
+    'export carries %s proof that agrees with the actual regional XML bytes', async (region) => {
+      await withMarket(region, async () => {
+        const result = await assembleSubmissionEctd({ submissionId: 1, organizationId: ORG, userId: USER,
+          sequenceNumber: '0000', applicantId: 'REGIONAL-ORG-42' });
+        expect(holder.exportedProof).toEqual({ version: 1, identity: {
+          programId: RECORDED, applicationNumber: 'MARKET-000512', applicantSponsorId: SPONSOR,
+          applicantName: 'Concept2Cure Therapeutics', applicantId: null,
+          contact: { name: null, phone: null, email: null },
+        } });
+        const zip = await JSZip.loadAsync(result.buffer);
+        const code = region.toLowerCase();
+        const xml = await zip.file(`m1/${code}/${code}-regional.xml`)!.async('string');
+        expect(xml).toContain('MARKET-000512');
+        expect(xml).toContain('Concept2Cure Therapeutics');
+        expect(xml).toContain('>REGIONAL-ORG-42<');
+        expect(xml).not.toContain('123456789');
+        expect(xml).not.toContain('ra@example.test');
+        expect(xml).not.toContain('<applicant-contacts>');
+      });
+    });
+
+  it.each(['programId', 'applicationNumber', 'applicantName'] as const)(
+    'refuses a non-US supplied proof with a changed %s before packaging', async (field) => {
+      await withMarket('ema', async () => {
+        const identity = await readSubmissionPackageIdentity(harness.pglite, ORG, 1, { region: 'ema' });
+        const snapshot = recordedPackageIdentitySnapshot(identity, { region: 'ema' });
+        snapshot.identity[field] = field === 'programId' ? CODE_ONLY : 'contradictory-claimed-fact';
+        await expect(assembleSequence({ sequenceId: 11, organizationId: ORG, userId: USER,
+          applicationId: 'MARKET-000512', sponsorId: 'EMA-ORG-42', sponsorName: 'Concept2Cure Therapeutics',
+          recordedPackageIdentity: snapshot,
+        })).rejects.toThrow(/do not match the captured recorded applicant identity/);
+      });
+    });
+
+  it('returns projected non-US proof while preserving its caller-supplied regional identifier', async () => {
+    await withMarket('pmda', async () => {
+      const identity = await readSubmissionPackageIdentity(harness.pglite, ORG, 1, { region: 'pmda' });
+      const snapshot = recordedPackageIdentitySnapshot(identity, { region: 'pmda' });
+      const result = await assembleSequence({ sequenceId: 11, organizationId: ORG, userId: USER,
+        applicationId: 'MARKET-000512', sponsorId: 'PMDA-ORG-42', sponsorName: 'Concept2Cure Therapeutics',
+        recordedPackageIdentity: snapshot });
+      snapshot.identity.applicantName = 'changed after capture';
+      try {
+        expect(result.recordedPackageIdentity?.identity).toEqual({
+          programId: RECORDED, applicationNumber: 'MARKET-000512', applicantSponsorId: SPONSOR,
+          applicantName: 'Concept2Cure Therapeutics', applicantId: null,
+          contact: { name: null, phone: null, email: null },
+        });
+        const zip = await JSZip.loadAsync(await (await import('node:fs/promises')).readFile(result.bundle.path));
+        expect(await zip.file('m1/jp/jp-regional.xml')!.async('string')).toContain('<pmda-applicant-id>PMDA-ORG-42</pmda-applicant-id>');
+      } finally { await result.cleanup(); }
+    });
   });
 });

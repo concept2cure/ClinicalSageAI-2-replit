@@ -39,6 +39,10 @@ export type RunPackageIdentity =
  * A lookup that cannot run is a dry run, not a guess.
  */
 export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Promise<RunPackageIdentity> {
+  const region = canonicalRegionOf(inputs.region);
+  if (!region) {
+    return { recorded: false, reason: 'the run region is not recognized, so recorded release identity cannot be established.' };
+  }
   const fromText = Number(String(inputs.submissionId ?? '').trim());
   const submissionFk =
     typeof inputs.submissionFk === 'number' && inputs.submissionFk > 0
@@ -61,7 +65,7 @@ export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Prom
     console.error('[Orchestrator] package identity read failed:', err instanceof Error ? err.message : err);
     return { recorded: false, reason: 'the recorded application number and applicant could not be read.' };
   }
-  const fda = canonicalRegionOf(inputs.region) === 'US';
+  const fda = region === 'US';
   const refusal = packageIdentityRefusal(identity, 'This assembly is a dry run.', { fda });
   if (refusal) return { recorded: false, reason: refusal.message };
   if (identity.applicationNumber !== inputs.applicationNumber) {
@@ -72,12 +76,13 @@ export async function resolveRunPackageIdentity(inputs: RunIdentityInputs): Prom
         `"${identity.applicationNumber}". The record is authoritative.`,
     };
   }
+  const captured = recordedPackageIdentitySnapshot(identity, { region });
   return {
     recorded: true,
     applicationNumber: identity.applicationNumber as string,
     applicantName: identity.applicantName as string,
     applicantId: fda ? identity.applicantId : null,
-    contact: identity.contact,
-    ...(fda ? { recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
+    contact: captured.identity.contact,
+    recordedPackageIdentity: captured,
   };
 }

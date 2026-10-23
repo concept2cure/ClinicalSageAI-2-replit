@@ -1,0 +1,816 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 1 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=40
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2028:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1444:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1981:7)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:281:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 490ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 172ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 197ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 32ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 6ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 9ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 190ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > preserves the exact paused Module 3 narrative on async resume without repeating AI or enqueue 154ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 4ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 171ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 184ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 172ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 4ms
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh EU release without captured recorded applicant proof 25ms
+   → expected 'awaiting-signature' to be 'skipped' // Object.is equality
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > prepares a fresh EU release with projected proof and no FDA DUNS/contact 17ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all
+[Orchestrator] run failed: ValidationError: Cannot build the FDA regional backbone: no application type was supplied, and "510(k)" is not one. The eCTD Module 1 application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master files; device pathways (510(k), De Novo, PMA) and non-US pathways (MAA, CTA) have no code in it and must not be filed on this backbone. Pass fda.applicationType. Defaulting to fdaat1 would declare this package a New Drug Application, which is a statement about the filing, not a formatting detail.
+    at buildFdaBackbone (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:611:11)
+    at Object.fda (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1306:17)
+    at packageEctdSubmission (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1323:46)
+    at assembleRealPackage (/workspace/concept2cure/server/services/ectd/orchestrator-real-package.ts:191:26)
+    at assembleForValidation (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:649:16)
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:1947:42
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1444:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1946:5)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:809:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [],
+  errorClass: 'validation'
+}
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh FDA release without the captured recorded applicant proof 116ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 9ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 142ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 111ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 107ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys 7ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data 2ms
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > does not complete a historical proof-free EU authorization under its intact original digest 15ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > hydrates captured non-US number/name without requiring FDA DUNS/contact 1ms
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 2ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 1ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 2ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 2ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 2ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ × server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses an unknown snapshot region even with otherwise complete captured facts 2ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > detects a changed captured non-US application number under the original digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 439ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 0ms
+stderr | server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read
+{
+  "timestamp": "2026-10-23T17:28:28.742Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] recorded applicant read failed; coverage cannot be determined",
+  "context": {
+    "err": "database unavailable",
+    "sequenceId": 3,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > keeps a historical signature intact but refuses coverage without its applicant snapshot 3ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > covers identical leaves and the identical current recorded identity 3ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicationNumber 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantName 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantId 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantSponsorId 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not borrow applicant facts from a different submission with identical leaves 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed contact details 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not establish coverage from an unsupported stored identity version 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > refuses coverage when current required FDA facts were cleared 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read 2ms
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'EU' recorded number/name without FDA DUNS or contact 5ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ema' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'JP' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'pmda' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CA' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ca' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'UK' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'uk' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CN' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'cn' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'AU' recorded number/name without FDA DUNS or contact 0ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'au' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CH' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ch' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'BR' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'br' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'IN' recorded number/name without FDA DUNS or contact 2ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'in' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'KR' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'kr' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'SG' recorded number/name without FDA DUNS or contact 1ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'sg' } ]
+
+Number of calls: 0
+
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > requires proof for current EU coverage while preserving the historical record 5ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicationNumber despite identical leaves 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantName despite identical leaves 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantSponsorId despite identical leaves 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US programId despite identical leaves 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicationNumber 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicantName 0ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > does not bind non-US coverage to mutable FDA-only facts 0ms
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'EU' for an actual 'fda' sequence 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'US' for an actual 'ema' sequence 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'JP' for an actual 'ema' sequence 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow another non-US submission with the same leaves and facts 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region undefined 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region GLOBAL 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region unknown-agency 3ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region null 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region unknown-agency 1ms
+   → expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'EU' proof without borrowing FDA DUNS/contact 11ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'JP' proof without borrowing FDA DUNS/contact 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CA' proof without borrowing FDA DUNS/contact 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'UK' proof without borrowing FDA DUNS/contact 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CN' proof without borrowing FDA DUNS/contact 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'AU' proof without borrowing FDA DUNS/contact 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CH' proof without borrowing FDA DUNS/contact 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'BR' proof without borrowing FDA DUNS/contact 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'IN' proof without borrowing FDA DUNS/contact 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'KR' proof without borrowing FDA DUNS/contact 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'SG' proof without borrowing FDA DUNS/contact 3ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > projects FDA facts out of an otherwise recorded non-US package 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps missing non-US applicationNumber a dry run 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps missing non-US applicantName a dry run 0ms
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region undefined a dry run without reading guessed facts 2ms
+   → expected { recorded: true, …(4) } to match object { recorded: false, …(1) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region GLOBAL a dry run without reading guessed facts 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: false, …(1) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region unknown-agency a dry run without reading guessed facts 1ms
+   → expected { recorded: true, …(4) } to match object { recorded: false, …(1) }
+(7 matching properties omitted from actual)
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps the FDA proof byte-compatible and requires FDA DUNS/contact 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 53 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh EU release without captured recorded applicant proof
+AssertionError: expected 'awaiting-signature' to be 'skipped' // Object.is equality
+
+Expected: "skipped"
+Received: "awaiting-signature"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:767:26
+    765|     const { run } = await runOrchestrator(baseInputs({ region: 'EU', s…
+    766|     const step = run.steps.find((candidate) => candidate.key === 'pack…
+    767|     expect(step?.status).toBe('skipped');
+       |                          ^
+    768|     expect(step?.outputRef).toMatch(/reassemble.*recorded applicant/i);
+    769|     expect(step?.outputRef).not.toMatch(/payloadDigest/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/53]⎯
+
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > does not complete a historical proof-free EU authorization under its intact original digest
+AssertionError: expected 'complete' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "complete"
+
+ ❯ server/services/__tests__/sign-payload-snapshot.test.ts:357:26
+    355|     const { run } = await resumeWithProof(undefined);
+    356|     const step = run.steps.find((candidate) => candidate.key === 'pack…
+    357|     expect(step?.status).toBe('failed');
+       |                          ^
+    358|     expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+    359|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/53]⎯
+
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts
+AssertionError: expected 'complete' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "complete"
+
+ ❯ server/services/__tests__/sign-payload-snapshot.test.ts:376:26
+    374|     const { run } = await resumeWithProof(captured);
+    375|     const step = run.steps.find((candidate) => candidate.key === 'pack…
+    376|     expect(step?.status).toBe('failed');
+       |                          ^
+    377|     expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+    378|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/53]⎯
+
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses an unknown snapshot region even with otherwise complete captured facts
+AssertionError: expected 'complete' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "complete"
+
+ ❯ server/services/__tests__/sign-payload-snapshot.test.ts:382:75
+    380|   it('refuses an unknown snapshot region even with otherwise complete …
+    381|     const { run } = await resumeWithProof(proof, 'unknown-agency');
+    382|     expect(run.steps.find((step) => step.key === 'package.sign')?.stat…
+       |                                                                           ^
+    383|   });
+    384|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'EU' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ema' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'JP' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'pmda' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CA' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ca' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'UK' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'uk' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CN' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'cn' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'AU' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'au' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CH' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'ch' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'BR' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'br' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'IN' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'in' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'KR' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'kr' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'SG' recorded number/name without FDA DUNS or contact
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 42, 7, { region: 'sg' } ]
+
+Number of calls: 0
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:96:30
+     94|       expect(await signedManifestCoversSequence({ ...params, region: r…
+     95|         .toMatchObject({ covers: true, leafCount: 1 });
+     96|       expect(h.readIdentity).toHaveBeenCalledWith(expect.anything(), 4…
+       |                              ^
+     97|     },
+     98|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > requires proof for current EU coverage while preserving the historical record
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:101:78
+     99|
+    100|   it('requires proof for current EU coverage while preserving the hist…
+    101|     expect(await signedManifestCoversSequence({ ...params, region: 'em…
+       |                                                                              ^
+    102|   });
+    103|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicationNumber despite identical leaves
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantName despite identical leaves
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantSponsorId despite identical leaves
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US programId despite identical leaves
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:108:10
+    106|       h.readIdentity.mockResolvedValue({ ...nonUsIdentity, [field]: 'c…
+    107|       expect(await signedManifestCoversSequence({ ...params, region: '…
+    108|         .toMatchObject({ covers: false });
+       |          ^
+    109|     },
+    110|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicationNumber
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicantName
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:115:8
+    113|     h.readIdentity.mockResolvedValue({ ...nonUsIdentity, [field]: null…
+    114|     expect(await signedManifestCoversSequence({ ...params, region: 'EU…
+    115|       .toMatchObject({ covers: false });
+       |        ^
+    116|   });
+    117|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:128:10
+    126|       h.readIdentity.mockResolvedValue(nonUsIdentity);
+    127|       expect(await signedManifestCoversSequence({ ...params, region: '…
+    128|         .toMatchObject({ covers: false });
+       |          ^
+    129|     },
+    130|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'EU' for an actual 'fda' sequence
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'US' for an actual 'ema' sequence
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'JP' for an actual 'ema' sequence
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
+-   "detail": StringMatching /region/i,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:139:8
+    137|     sequenceRegion(actual);
+    138|     expect(await signedManifestCoversSequence({ ...params, region: cal…
+    139|       .toMatchObject({ covers: false, detail: expect.stringMatching(/r…
+       |        ^
+    140|     expect(h.readIdentity).not.toHaveBeenCalled();
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow another non-US submission with the same leaves and facts
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { covers: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "covers": false,
++   "covers": true,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:146:8
+    144|     sequenceRegion('ema', 8);
+    145|     expect(await signedManifestCoversSequence({ ...params, region: 'EU…
+    146|       .toMatchObject({ covers: false });
+       |        ^
+    147|     expect(h.readIdentity).not.toHaveBeenCalled();
+    148|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region undefined
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region GLOBAL
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region unknown-agency
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "unknown": true,
++   "corroboratedLeaves": 1,
++   "covers": true,
++   "leafCount": 1,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:152:8
+    150|   it.each([undefined, 'GLOBAL', 'unknown-agency'])('reports unknown fo…
+    151|     expect(await signedManifestCoversSequence({ ...params, region, rec…
+    152|       .toMatchObject({ unknown: true });
+       |        ^
+    153|     expect(h.readIdentity).not.toHaveBeenCalled();
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/53]⎯
+
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region null
+ FAIL  server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region unknown-agency
+AssertionError: expected { covers: true, leafCount: 1, …(1) } to match object { unknown: true }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "unknown": true,
++   "corroboratedLeaves": 1,
++   "covers": true,
++   "leafCount": 1,
+  }
+
+ ❯ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts:159:8
+    157|     sequenceRegion(region);
+    158|     expect(await signedManifestCoversSequence({ ...params, region: 'EU…
+    159|       .toMatchObject({ unknown: true });
+       |        ^
+    160|     expect(h.readIdentity).not.toHaveBeenCalled();
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/53]⎯
+
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'EU' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'JP' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CA' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'UK' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CN' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'AU' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CH' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'BR' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'IN' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'KR' proof without borrowing FDA DUNS/contact
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'SG' proof without borrowing FDA DUNS/contact
+AssertionError: expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,21 +4,6 @@
+      "email": null,
+      "name": null,
+      "phone": null,
+    },
+    "recorded": true,
+-   "recordedPackageIdentity": {
+-     "identity": {
+-       "applicantId": null,
+-       "applicantName": "Recorded Sponsor",
+-       "applicantSponsorId": "22222222-2222-4222-8222-222222222222",
+-       "applicationNumber": "123456",
+-       "contact": {
+-         "email": null,
+-         "name": null,
+-         "phone": null,
+-       },
+-       "programId": "11111111-1111-4111-8111-111111111111",
+-     },
+-     "version": 1,
+-   },
+  }
+
+ ❯ server/services/ectd/__tests__/run-package-identity.test.ts:27:90
+     25|       const expected = { ...identity, applicantId: null, contact: { na…
+     26|       h.readIdentity.mockResolvedValue(expected);
+     27|       expect(await resolveRunPackageIdentity({ ...inputs, region: regi…
+       |                                                                                          ^
+     28|         recorded: true, applicantId: null, contact: expected.contact,
+     29|         recordedPackageIdentity: { version: 1, identity: expected },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/53]⎯
+
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > projects FDA facts out of an otherwise recorded non-US package
+AssertionError: expected { recorded: true, …(4) } to match object { recorded: true, …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "applicantId": null,
+    "contact": {
+-     "email": null,
+-     "name": null,
+-     "phone": null,
++     "email": "ra@example.test",
++     "name": "Regulatory Contact",
++     "phone": "+1 555 0100",
+    },
+    "recorded": true,
+-   "recordedPackageIdentity": {
+-     "identity": {
+-       "applicantId": null,
+-       "contact": {
+-         "email": null,
+-         "name": null,
+-         "phone": null,
+-       },
+-     },
+-     "version": 1,
+-   },
+  }
+
+ ❯ server/services/ectd/__tests__/run-package-identity.test.ts:36:74
+     34|
+     35|   it('projects FDA facts out of an otherwise recorded non-US package',…
+     36|     expect(await resolveRunPackageIdentity({ ...inputs, region: 'EU' }…
+       |                                                                          ^
+     37|       recorded: true, applicantId: null, contact: { name: null, phone:…
+     38|       recordedPackageIdentity: { version: 1, identity: { applicantId: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/53]⎯
+
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region undefined a dry run without reading guessed facts
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region GLOBAL a dry run without reading guessed facts
+ FAIL  server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region unknown-agency a dry run without reading guessed facts
+AssertionError: expected { recorded: true, …(4) } to match object { recorded: false, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reason": StringMatching /region/i,
+-   "recorded": false,
++   "recorded": true,
+  }
+
+ ❯ server/services/ectd/__tests__/run-package-identity.test.ts:48:68
+     46|
+     47|   it.each([undefined, 'GLOBAL', 'unknown-agency'])('keeps unresolved r…
+     48|     expect(await resolveRunPackageIdentity({ ...inputs, region })).toM…
+       |                                                                    ^
+     49|     expect(h.readIdentity).not.toHaveBeenCalled();
+     50|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/53]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  53 failed | 54 passed (107)
+   Start at  17:28:13
+   Duration  15.66s (transform 4.49s, setup 372ms, import 10.83s, tests 2.91s, environment 0ms)
+

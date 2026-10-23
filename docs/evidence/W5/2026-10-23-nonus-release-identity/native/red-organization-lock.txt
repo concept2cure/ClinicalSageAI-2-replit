@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects the actual unbound organization applicant name until capture commits 13ms
+   → column "applicant_sponsor_id" does not exist
+ × server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > blocks market-number and program changes while allowing unrelated tenant work 4ms
+   → column "applicant_sponsor_id" does not exist
+ × server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects an explicitly bound sponsor without assigning its DUNS to the EU proof 2ms
+   → column "applicant_sponsor_id" of relation "regulatory_programs" does not exist
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > refuses missing and cross-tenant parents instead of lending an anchor 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects the actual unbound organization applicant name until capture commits
+error: column "applicant_sponsor_id" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Module.lockRecordedPackageIdentity server/services/ectd/package-identity.ts:188:16
+    186| ): Promise<void> {
+    187|   if (!programId) return;
+    188|   const row = (await q.query(
+       |                ^
+    189|     `SELECT applicant_sponsor_id FROM regulatory_programs
+    190|       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FO…
+ ❯ captureLock server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts:25:3
+ ❯ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts:56:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 119, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > blocks market-number and program changes while allowing unrelated tenant work
+error: column "applicant_sponsor_id" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Module.lockRecordedPackageIdentity server/services/ectd/package-identity.ts:188:16
+    186| ): Promise<void> {
+    187|   if (!programId) return;
+    188|   const row = (await q.query(
+       |                ^
+    189|     `SELECT applicant_sponsor_id FROM regulatory_programs
+    190|       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FO…
+ ❯ captureLock server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts:25:3
+ ❯ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts:64:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 119, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects an explicitly bound sponsor without assigning its DUNS to the EU proof
+error: column "applicant_sponsor_id" of relation "regulatory_programs" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts:77:5
+     75|
+     76|   it('protects an explicitly bound sponsor without assigning its DUNS …
+     77|     await first.query('UPDATE regulatory_programs SET applicant_sponso…
+       |     ^
+     78|     await captureLock();
+     79|     expect((await binding()).recordedPackageIdentity?.identity).toMatc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 154, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '32', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'analyze.c', routine: 'transformUpdateTargetList' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  17:33:20
+   Duration  1.47s (transform 359ms, setup 114ms, import 828ms, tests 183ms, environment 0ms)
+

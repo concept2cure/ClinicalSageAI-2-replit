@@ -347,13 +347,14 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   // The Vault versions this sequence names: what P-42 binds through lineage.
   const vaultUuids = coreLeaves.flatMap((l) => (l.documentTable === 'vault_documents' && l.documentUuid ? [l.documentUuid] : []));
 
-  if (capturedIdentity && toPackagerRegion(sequence.region) === 'fda') {
+  if (capturedIdentity) {
+    const fda = toPackagerRegion(sequence.region) === 'fda';
     const identity = capturedIdentity.identity;
-    const refusal = packageIdentityRefusal(identity, 'Nothing was packaged.', { fda: true });
+    const refusal = packageIdentityRefusal(identity, 'Nothing was packaged.', { fda });
     if (refusal) throw refusal;
     if (identity.programId !== submission.programId || identity.applicationNumber !== params.applicationId ||
-        identity.applicantId !== params.sponsorId || identity.applicantName !== params.sponsorName ||
-        JSON.stringify(fdaContactsForPackageIdentity(identity)) !== JSON.stringify(params.contacts ?? [])) {
+        identity.applicantName !== params.sponsorName || (fda && (identity.applicantId !== params.sponsorId ||
+        JSON.stringify(fdaContactsForPackageIdentity(identity)) !== JSON.stringify(params.contacts ?? [])))) {
       throw new Error('The package inputs do not match the captured recorded applicant identity. Nothing was packaged.');
     }
   }

@@ -356,30 +356,35 @@ describe('the Builder says what the server knows about each leaf', () => {
 });
 
 describe('confirmed release renewal refreshes the existing dispatch assessment', () => {
-  function renewalApi(confirmed: boolean) {
+  function renewalApi(confirmed: boolean, region = 'fda', refuseAt?: number) {
     let renewed = false;
-    seqs = [seqRow({ status: 'dispatched' })];
+    let dispatchChecks = 0;
+    seqs = [seqRow({ status: 'dispatched', region })];
     mockApi((method, url, body) => {
+      if (method === 'GET' && url === '/api/submissions') return ok([{ ...SUBS[0], primaryRegion: region }]);
       if (method === 'GET' && url.endsWith('/dispatch-readiness')) return ok(readiness({
-        sequenceStatus: 'dispatched',
+        region, sequenceStatus: 'dispatched',
         gate: renewed ? CLEAR : { cleared: false, blockers: ['The current recorded facts need a release signature.'] },
         releaseSignature: { required: true, verdict: renewed ? 'valid' : 'unsigned', cleared: renewed },
         dispatchAuthorization: { reauthorizing: true, eligible: true, refusal: null },
       }));
       if (method === 'POST' && url.endsWith('/governed-precheck')) {
         const step = (body as { step?: string } | undefined)?.step;
+        if (step === 'dispatch' && refuseAt && ++dispatchChecks >= refuseAt) {
+          return ok({ step, cleared: false, refusal: 'The recorded market facts changed; assemble and sign the current content.' });
+        }
         return step === 'dispatch' ? ok({ step, cleared: true, refusal: null }) : ok({ step: 'transmit', cleared: false, refusal: 'Gateway unavailable.', transmit: TRANSMIT({ staging: false, production: false }) });
       }
       if (method === 'POST' && url === '/api/c2c/actions/sign') return ok({ actionId: 'act_renewal', sha256Chain: 'a'.repeat(64) });
       if (method === 'POST' && url.endsWith('/dispatch')) {
         renewed = confirmed;
-        return confirmed ? ok(seqRow({ status: 'dispatched' })) : { ...ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503), ok: false } as Response;
+        return confirmed ? ok(seqRow({ status: 'dispatched', region })) : { ...ok({ error: { code: 'OUTCOME_UNKNOWN', message: 'The release renewal could not be confirmed.' } }, 503), ok: false } as Response;
       }
       return undefined;
     });
   }
-  it('reads the new release verdict after a confirmed dispatched to dispatched act', async () => {
-    renewalApi(true); await ready(); openWorkspace('Dispatch');
+  it.each(['fda', 'ema', 'jp'])('reads the new %s release verdict after a confirmed dispatched to dispatched act', async region => {
+    renewalApi(true, region); await ready(); openWorkspace('Dispatch');
     const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
     const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
     fireEvent.click(renew);
@@ -387,9 +392,21 @@ describe('confirmed release renewal refreshes the existing dispatch assessment',
     await screen.findByText('Signature applied');
     await waitFor(() => expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length).toBeGreaterThan(readsBefore));
     expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(1);
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(1);
+    expect(calledWith('POST', '/api/c2c/actions/sign')[0][2]).toMatchObject({ target: 'ectd-sequence:21', payload: { intent: 'dispatch' } });
+    expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')[0][2]).toEqual({ signatureActionId: 'act_renewal' });
   });
-  it('preserves the unresolved verdict when the governed act has no confirmed receipt', async () => {
-    renewalApi(false); await ready(); openWorkspace('Dispatch');
+  it.each(['ema', 'jp'])('asks the %s release gates again before taking a new signature', async region => {
+    renewalApi(true, region, 2); await ready(); openWorkspace('Dispatch');
+    fireEvent.click(await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ }));
+    await screen.findByRole('dialog'); await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The recorded market facts changed'));
+    expect(screen.getByRole('alert').textContent).toContain('Nothing was signed.');
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(0);
+    expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(0);
+  });
+  it.each(['fda', 'ema', 'jp'])('preserves the unresolved %s verdict when the governed act has no confirmed receipt', async region => {
+    renewalApi(false, region); await ready(); openWorkspace('Dispatch');
     const renew = await screen.findByRole('button', { name: /Re-sign release for current recorded facts/ });
     const readsBefore = calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness').length;
     fireEvent.click(renew);
@@ -397,5 +414,7 @@ describe('confirmed release renewal refreshes the existing dispatch assessment',
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The release renewal could not be confirmed.'));
     expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-readiness')).toHaveLength(readsBefore);
     expect(screen.queryByText('Signature applied')).toBeNull();
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(1);
+    expect(calledWith('POST', '/api/submissions/sequences/21/dispatch')).toHaveLength(1);
   });
 });

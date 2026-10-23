@@ -179,7 +179,8 @@ const signEnvelope = (target: string, over: Record<string, unknown> = {}) => ({
 async function applyApplicantIdentityFixture() {
   await pg.exec(PROGRAM_SPINE_PGLITE_DDL);
   await pg.exec(SUBMISSION_CORE_PGLITE_DDL);
-  for (const file of ['20260609_ind_master_data.sql', '20261021_regulatory_programs_applicant_sponsor.sql']) {
+  for (const file of ['20260609_ind_master_data.sql', '20261021_regulatory_programs_applicant_sponsor.sql',
+    '20261022b_submissions_market_application_number.sql']) {
     await pg.exec(fs.readFileSync(path.join(__dirname, '../../../../migrations', file), 'utf8'));
   }
   await pg.query('INSERT INTO organizations(id,name) VALUES($1,$2)', [ORG, 'Recorded organization']);
@@ -312,6 +313,71 @@ describe('governed sign → electronic_signatures (single write path)', () => {
       .update(manifestBytes(sig.signature_manifest))
       .digest('hex');
     expect(rederived).toBe(sig.signature_hash);
+  });
+
+  it.each([
+    { region: 'ema', number: 'EU-654321', nextNumber: 'EU-654322' },
+    { region: 'pmda', number: 'JP-654321', nextNumber: 'JP-654322' },
+  ])('persists the actual $region market identity and retains the signed record when its number changes', async ({ region, number, nextNumber }) => {
+    const programId = 'a72cf79d-a41c-4be8-8a2a-166fe912fb56';
+    const sponsorId = '6fa5af41-1c9a-42b6-9c2b-b6152e473fbc';
+    await pg.query(`INSERT INTO ind_sponsors (id,organization_id,name,duns,contact_name,contact_phone,contact_email)
+      VALUES($1,$2,'Recorded applicant','123456789','FDA Contact','+1 555 0100','fda@example.test')`, [sponsorId, ORG]);
+    await pg.query(`INSERT INTO regulatory_programs
+      (id,organization_id,name,code,program_type,product_name,primary_agency,application_number,applicant_sponsor_id)
+      VALUES($1,$2,'Home project','US-HOME','nda','Recorded product','FDA','001234',$3)`, [programId, ORG, sponsorId]);
+    await pg.query('UPDATE submissions SET program_id=$1,primary_region=$2,application_number=$3 WHERE id=1', [programId, region, number]);
+    await pg.query(`INSERT INTO ectd_sequences (id,submission_id,region,sequence_number,type,status,organization_id)
+      VALUES(21,1,$1,'0000','original','validated',$2)`, [region, ORG]);
+    await pg.query(`INSERT INTO submission_leaves
+      (sequence_id,section_code,lifecycle_op,document_table,document_id,checksum,title,organization_id)
+      VALUES(21,'m2.5','new','unified_documents',900,'abc123','Clinical Overview',$1)`, [ORG]);
+
+    const envelope = signEnvelope('ectd-sequence:21', {
+      reason: 'Approve the recorded market number and applicant', payload: { intent: 'dispatch', meaning: 'approval' },
+    });
+    const recorded = await writeMutation('sign', envelope as any, SIGNER, ORG);
+    const sig = (await pg.query('SELECT * FROM electronic_signatures')).rows[0] as any;
+    const originalManifest = manifestBytes(sig.signature_manifest);
+    const manifest = asManifest(sig.signature_manifest);
+    expect(manifest.actionId).toBe(recorded.actionId);
+    expect(sig.binding_basis).toBe(BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST);
+    expect(manifest.recordedPackageIdentity).toEqual({ version: 1, identity: {
+      programId, applicationNumber: number, applicantSponsorId: sponsorId, applicantName: 'Recorded applicant',
+      applicantId: null, contact: { name: null, phone: null, email: null },
+    } });
+    expect(manifest.sequenceContentDigest).toMatch(/^[0-9a-f]{64}$/);
+    expect(createHash('sha256').update(originalManifest).digest('hex')).toBe(sig.signature_hash);
+    const before = await deriveGovernedTargetBinding(client(), 'ectd-sequence:21', ORG);
+    expect(before.digest).toBe(sig.bound_payload_digest);
+    expect(before.recordedPackageIdentity).toEqual(manifest.recordedPackageIdentity);
+
+    // FDA-only registry facts cannot silently become a regional applicant ID,
+    // or invalidate an approval over facts those regional bytes do not use.
+    await pg.query(`UPDATE ind_sponsors SET duns='987654321',contact_name='Other FDA Contact',
+      contact_phone='+1 555 0199',contact_email='other-fda@example.test' WHERE id=$1`, [sponsorId]);
+    expect((await deriveGovernedTargetBinding(client(), 'ectd-sequence:21', ORG)).digest).toBe(before.digest);
+
+    // A record change leaves the original electronic signature untouched.
+    // These direct fixture writes model drift; the P-44 writer's fixed-number
+    // policy is exercised by its own actual-writer cohort.
+    await pg.query('UPDATE submissions SET application_number=$1 WHERE id=1', [nextNumber]);
+    const after = await deriveGovernedTargetBinding(client(), 'ectd-sequence:21', ORG);
+    expect(after.sequenceContentDigest).toBe(before.sequenceContentDigest);
+    expect(after.digest).not.toBe(before.digest);
+    expect(after.recordedPackageIdentity?.identity.applicationNumber).toBe(nextNumber);
+    expect(after.recordedPackageIdentity?.identity.applicantId).toBeNull();
+    const retained = (await pg.query('SELECT * FROM electronic_signatures WHERE id=$1', [sig.id])).rows[0] as any;
+    expect(manifestBytes(retained.signature_manifest)).toBe(originalManifest);
+    expect(retained.bound_payload_digest).toBe(before.digest);
+    expect(retained.signature_hash).toBe(sig.signature_hash);
+
+    await writeMutation('sign', envelope as any, SIGNER, ORG);
+    const rows = (await pg.query('SELECT * FROM electronic_signatures ORDER BY id')).rows as any[];
+    expect(rows).toHaveLength(2);
+    expect(rows[1].bound_payload_digest).toBe(after.digest);
+    expect(asManifest(rows[1].signature_manifest).recordedPackageIdentity).toEqual(after.recordedPackageIdentity);
+    expect(createHash('sha256').update(manifestBytes(rows[1].signature_manifest)).digest('hex')).toBe(rows[1].signature_hash);
   });
 
   it('ATOMIC / FAIL CLOSED: when the signature row cannot be written, the ledger writes roll back too', async () => {

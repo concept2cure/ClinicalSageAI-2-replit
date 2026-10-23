@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T17:37:32.959Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T17:37:33.172Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:37:33.173Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T17:37:33.173Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together 3375ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-derivable target: binds the audit chain hash under the EXPLICIT ledger basis (no fabricated content hash) 2859ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > derivable target (ectd-sequence): binds a REAL content digest of the leaf manifest 4080ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > §11.200 attribution hash re-derives from the persisted manifest bytes 3067ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the actual 'ema' market identity and retains the signed record when its number changes 2787ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the actual 'pmda' market identity and retains the signed record when its number changes 2696ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > ATOMIC / FAIL CLOSED: when the signature row cannot be written, the ledger writes roll back too 3301ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: an unresolvable signer aborts the sign (no anonymous signatures) 3441ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a sign that declares no meaning is refused before anything is written 3033ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning 4078ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared 2474ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-sign governed commands do not write electronic_signatures (regression) 2862ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > caller-owned transaction: sign writes ride the external client and roll back with it 2387ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the migration's anchor CHECK refuses an anchorless signature row 2171ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > recordGovernedAction alone stays ledger-only (domain callers unaffected) 2288ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  17:37:29
+   Duration  49.13s (transform 1.91s, setup 127ms, import 3.45s, tests 44.90s, environment 0ms)
+

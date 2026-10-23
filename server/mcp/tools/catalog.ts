@@ -160,6 +160,7 @@ export const getSequenceStatus = defineTool({
         organizationId: orgId,
         sequenceNumber: sequence.sequenceNumber,
         sequenceId: sequence.id,
+        region: sequence.region,
       })) };
     } catch (err) {
       releaseSignature = { verdict: 'undetermined', detail: `signature lookup failed: ${errorMessage(err)}` };

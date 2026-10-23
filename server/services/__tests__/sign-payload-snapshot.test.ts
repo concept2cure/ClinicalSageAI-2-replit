@@ -336,6 +336,63 @@ describe('FDA frozen applicant proof at the sign boundary', () => {
 
 });
 
+describe('non-US frozen applicant proof at the sign boundary', () => {
+  const proof = { version: 1 as const, identity: {
+    programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+    applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+    applicantId: null, contact: { name: null, phone: null, email: null },
+  } };
+
+  async function resumeWithProof(recordedPackageIdentity: unknown, region = 'EU') {
+    const snap = snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))], { region, recordedPackageIdentity });
+    const payloadDigest = digestForSnapshot(snap);
+    H.runRow = { ...makeRunRow({ payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap }), region };
+    H.signatureRows = [{ id: 777 }];
+    return runOrchestrator({ ...RESUME_INPUTS, region: region as OrchestratorInputs['region'] }, { resumeRunId: 'run-1' });
+  }
+
+  it('does not complete a historical proof-free EU authorization under its intact original digest', async () => {
+    const { run } = await resumeWithProof(undefined);
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('failed');
+    expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+  });
+
+  it('hydrates captured non-US number/name without requiring FDA DUNS/contact', async () => {
+    const { run, outputs } = await resumeWithProof(proof);
+    expect(run.steps.find((step) => step.key === 'package.sign')?.status).toBe('complete');
+    expect(outputs.assembly?.recordedPackageIdentity).toEqual(proof);
+  });
+
+  it.each([
+    { ...proof, version: 2 },
+    { ...proof, identity: { ...proof.identity, applicationNumber: '654321' } },
+    { ...proof, identity: { ...proof.identity, applicantName: null } },
+    { ...proof, identity: { ...proof.identity, contact: null } },
+    { ...proof, identity: { ...proof.identity, applicantId: '123456789' } },
+  ])('refuses malformed, inconsistent or unprojected captured non-US facts', async (captured) => {
+    const { run } = await resumeWithProof(captured);
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('failed');
+    expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+  });
+
+  it('refuses an unknown snapshot region even with otherwise complete captured facts', async () => {
+    const { run } = await resumeWithProof(proof, 'unknown-agency');
+    expect(run.steps.find((step) => step.key === 'package.sign')?.status).toBe('failed');
+  });
+
+  it('detects a changed captured non-US application number under the original digest', async () => {
+    const snap = snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))], { region: 'EU', recordedPackageIdentity: proof });
+    const payloadDigest = digestForSnapshot(snap);
+    const altered = { ...snap, recordedPackageIdentity: { ...proof, identity: { ...proof.identity, applicationNumber: '654321' } } };
+    H.runRow = { ...makeRunRow({ payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: altered }), region: 'EU' };
+    H.signatureRows = [{ id: 777 }];
+    const { run } = await runOrchestrator({ ...RESUME_INPUTS, region: 'EU' }, { resumeRunId: 'run-1' });
+    expect(run.steps.find((step) => step.key === 'package.sign')?.error).toBe('signature_snapshot_integrity_failure');
+  });
+});
+
 describe('resumeAwaitingSignature — snapshot hydration', () => {
   it('HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs', async () => {
     const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32)), makeLeaf('m3.2.P.1', 'b'.repeat(32))];

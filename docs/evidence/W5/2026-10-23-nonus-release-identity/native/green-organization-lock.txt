@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects the actual unbound organization applicant name until capture commits 172ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > blocks market-number and program changes while allowing unrelated tenant work 339ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects an explicitly bound sponsor without assigning its DUNS to the EU proof 165ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > refuses missing and cross-tenant parents instead of lending an anchor 6ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:35:33
+   Duration  2.04s (transform 384ms, setup 187ms, import 808ms, tests 765ms, environment 0ms)
+

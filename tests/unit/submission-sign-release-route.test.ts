@@ -58,17 +58,18 @@ const hoisted = vi.hoisted(() => ({
 
 vi.mock('../../server/services/csr/run-source-guard.js', () => ({ guardRunCsrSourcesTx: (...args: unknown[]) => hoisted.sourceGuard(...args) }));
 
-vi.mock('../../server/services/submission-orchestrator-continuation.js', () => ({
+vi.mock('../../server/services/submission-orchestrator-continuation.js', async (original) => ({
+  ...await original<typeof import('../../server/services/submission-orchestrator-continuation.js')>(),
   continueOrchestratorRun: (...args: unknown[]) => hoisted.resume(...args),
   prepareOrchestratorRelease: (...args: unknown[]) => hoisted.prepare(...args),
-  OrchestratorContinuationRefusal: class extends Error {},
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCKS — service layer
 // ═══════════════════════════════════════════════════════════════════════════════
 
-vi.mock('../../server/services/submission-package-orchestrator.js', () => ({
+vi.mock('../../server/services/submission-package-orchestrator.js', async (original) => ({
+  ...await original<typeof import('../../server/services/submission-package-orchestrator.js')>(),
   getRun: (...args: unknown[]) => hoisted.getRun(...args),
   findActiveReleaseSignature: (...args: unknown[]) =>
     hoisted.findActiveReleaseSignature(...args),
@@ -80,7 +81,8 @@ vi.mock('../../server/services/submission-package-orchestrator.js', () => ({
   computeBoundPayloadDigest: () => 'unused-in-route-tests',
   PACKAGE_SIGN_SIGNATURE_MEANING: 'approval',
 }));
-vi.mock('../../server/services/submission-package-orchestrator', () => ({
+vi.mock('../../server/services/submission-package-orchestrator', async (original) => ({
+  ...await original<typeof import('../../server/services/submission-package-orchestrator')>(),
   getRun: (...args: unknown[]) => hoisted.getRun(...args),
   findActiveReleaseSignature: (...args: unknown[]) =>
     hoisted.findActiveReleaseSignature(...args),
@@ -213,6 +215,9 @@ vi.mock('../../server/services/ectd/ectd-validator-hardening.js', () => ({
 
 import signReleaseRouter from '../../server/routes/submission-sign-release';
 import { CsrSourceInputError } from '../../server/services/csr/vault-source-input';
+import { verifyAwaitingReleasePayload } from '../../server/services/submission-orchestrator-continuation';
+import { computeBoundPayloadDigestFromComponents } from '../../server/services/submission-package-orchestrator';
+import { sealSignPayloadDigest } from '../../server/services/ectd/sign-payload-seal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEST APP
@@ -711,12 +716,12 @@ describe('POST /api/submissions/:submissionId/sign-release — body schema enfor
     expect(res.body).toMatchObject({ signatureId: 999, signedAt: null, runStatus: 'awaiting-signature', continuation: 'retry-required', continuationError: 'CONTINUATION_UNAVAILABLE' });
     expect(hoisted.createElectronicSignature).toHaveBeenCalledTimes(1);
   });
-  it('refuses unavailable release verification before inserting or continuing after valid credentials', async () => {
+  it('refuses unavailable release verification before a signing ceremony, insertion or continuation', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.prepare.mockRejectedValue(new Error('verification unavailable'));
     const res = await request(makeApp()).post('/api/submissions/sub-1/sign-release').send(BODY);
     expect(res.status).toBe(503);
-    expect(hoisted.compare).toHaveBeenCalledWith('right-password', 'stored-hash');
+    expect(hoisted.compare).not.toHaveBeenCalled();
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
     expect(hoisted.resume).not.toHaveBeenCalled();
   });
@@ -739,4 +744,35 @@ describe('POST /api/submissions/:submissionId/sign-release — body schema enfor
     expect(JSON.stringify(response.body)).not.toContain('right-password');
   });
 
+});
+
+describe('release route refuses unusable captured identity before a new signing ceremony', () => {
+  it.each([
+    { region: 'EU', recordedPackageIdentity: undefined },
+    { region: 'JP', recordedPackageIdentity: undefined },
+    { region: 'EU', recordedPackageIdentity: { version: 2, identity: {} } },
+  ])('returns a regenerate refusal for a valid-hash $region snapshot with missing/malformed proof', async ({ region, recordedPackageIdentity }) => {
+    const snapshot = {
+      leaves: [], backboneXml: '', validatorOutcome: { gatewayReady: true, hardenedScore: 100,
+        summary: { errors: 0, warnings: 0, infos: 0, sectionsPresent: 0, sectionsRequired: 0, sectionsMissing: [] } },
+      submissionId: 'sub-1', organizationId: 100, applicationNumber: '123456', sequenceNumber: '0000',
+      region: region as 'EU' | 'JP', submissionType: 'MAA', totalSizeBytes: 0,
+      recordedPackageIdentity,
+    };
+    const payloadDigest = computeBoundPayloadDigestFromComponents(snapshot as Parameters<typeof computeBoundPayloadDigestFromComponents>[0]);
+    const run = awaitingSignatureRun({ region, submissionType: 'MAA', applicationNumber: snapshot.applicationNumber,
+      steps: [{ key: 'package.sign', status: 'awaiting-signature', outputRef: JSON.stringify({
+        signedSnapshot: snapshot, payloadDigest, payloadSeal: sealSignPayloadDigest(payloadDigest, 100),
+      }) }] });
+    hoisted.getRun.mockResolvedValue(run);
+    // Keep the production frozen-payload verifier; isolate unrelated program/source reads.
+    hoisted.prepare.mockImplementation(verifyAwaitingReleasePayload);
+    const response = await request(makeApp()).post('/api/submissions/sub-1/sign-release').send(BODY);
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({ error: 'SIGNATURE_PACKAGE_IDENTITY_REQUIRED', message: expect.stringMatching(/reassemble|regenerate/i) });
+    expect(hoisted.compare).not.toHaveBeenCalled();
+    expect(hoisted.findActiveReleaseSignature).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+    expect(hoisted.resume).not.toHaveBeenCalled();
+  });
 });

@@ -1,6 +1,6 @@
 # W5 / D7 — complete non-US release identity coverage
 
-Status: claimed; implementation and verification pending.
+Status: implemented and scoped automated verification passed; normal canonical push gates pending.
 Baseline `dd749f3e56f1d9055b19067e90680d70bf9a9fb9`. Contract `docs/design/NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md`.
 
 ## What already exists
@@ -56,3 +56,58 @@ Baseline `dd749f3e56f1d9055b19067e90680d70bf9a9fb9`. Contract `docs/design/NONUS
   signature coverage and market-number names found no deleted replacement.
 
 Human witnessing, real agency qualification and acceptance remain unexecuted.
+
+
+## Completed behavior
+
+Recognized non-US sequences now bind the recorded market application number,
+applicant name and sponsor pointer through the existing version-1 proof. FDA
+DUNS/contact remain US-only. Current release coverage checks the sequence's real
+parent and region. Older proof-free packages remain historically verifiable but
+cannot establish current coverage or receive a fresh release signature without
+reassembly. Missing/damaged legacy attribution hashes keep the invalid verdict.
+
+The existing freeze, waiver/disposition and transmit paths capture facts under
+organization → submission → sequence → program → sponsor locks, with freeze
+requesting submission UPDATE directly. Claims assemble their captured proof and
+compare it again before gateway entry. The typed number must also equal the
+claim's captured number. Locks are released before network work. Existing
+unsent renewal and its UI now reach recognized regions with independent signing,
+full gates, spent-signature checks, audit and dispatch-state CAS intact.
+
+The original inventory above describes the starting state, not a second
+implementation. No schema, dependency, market-number writer policy, regional
+vocabulary, approval engine, UI surface or enforcement default was added.
+
+## Executed verification
+
+Counts are separate scoped cohorts and overlap; they are not a full-suite total.
+Exact commands, test inputs and red/intermediate outcomes are retained by each
+folder. Root current-source hash verification is in `verification/`.
+
+| Evidence | Executed result |
+| --- | --- |
+| `core/` | 189 passed, 1 pre-existing Vault supersession todo; capture/binding, 11 non-US ZIP projections, FDA compatibility, legacy hash/tamper, P-44/Vault regressions |
+| `verification/regional-boundary.txt` | 223 passed across 9 files after the canonical validator export and continuation completion |
+| `callers/verified-caller-cohort.txt` | 119 passed across 10 files; actual renewal/audit/rollback, captured transmit, typed-number race and claim-release safety |
+| `callers/verified-compile-cohort.txt` | 49 passed across 4 files; actual HTTP compile projection/refusal and conversion capacity |
+| `callers/ui/` | 38 passed; existing independent sign-to-dispatch continuation and refusal/uncertain receipt behavior |
+| `review/` | 15 persisted-writer checks passed, including actual EU/JP binder and signature persistence without mocked proofs; five review findings resolved |
+| `native/green-native-final.txt` | 6 passed on real PostgreSQL; identity row locks and existing leaf/freeze interleaving |
+| `browser/` | 10 Chromium checks passed; actual market-number/dispatch components, synthetic intercepted API, observed callback only |
+| `verification/build.txt` | Production build passed on Node 22.23.3; pre/post source hashes stable |
+
+Scoped lint has zero errors and no new warnings; existing warnings remain.
+The native fixture container and browser server were stopped after verification.
+Normal unchanged push/compiler gates must pass before canonical publication is
+reported. No baseline, hook or failing agency gate was weakened.
+
+## Limits and human handoff
+
+[HUMAN_CHECK.md](HUMAN_CHECK.md) is unexecuted. This packet does not establish
+agency qualification, protocol/pilot acceptance, production deployment or
+witnessed human use. Agency DTD/vocabulary assets and real agency conformance
+remain separate evidence. Optional non-US applicant identifiers retain their
+existing request-owned contract; no authoritative regional-ID registry is
+invented here. FDA rules, P-44 fixed-number immutability, EMA slash handling and
+the existing unknown-region home-number reading heuristic remain separate.

@@ -1,0 +1,54 @@
+[
+  {
+    "record": "core/final-inputs.json",
+    "inputCount": 19,
+    "moved": []
+  },
+  {
+    "record": "review/persisted-writer-inputs.json",
+    "inputCount": 15,
+    "moved": []
+  },
+  {
+    "record": "review/reviewed-source-inputs.json",
+    "inputCount": 14,
+    "moved": []
+  },
+  {
+    "record": "native/inputs-final.json",
+    "inputCount": 14,
+    "moved": []
+  },
+  {
+    "record": "verification/build-inputs.json",
+    "inputCount": 18,
+    "moved": []
+  },
+  {
+    "record": "verification/regional-boundary-inputs.json",
+    "inputCount": 21,
+    "moved": []
+  },
+  {
+    "record": "snapshots/continuation-green-inputs.sha256",
+    "inputCount": 8,
+    "moved": []
+  },
+  {
+    "record": "browser/result/result.json",
+    "inputCount": 20,
+    "moved": []
+  },
+  {
+    "record": "callers/verified-inputs.json",
+    "inputCount": 28,
+    "moved": [],
+    "capturedAfterExecution": true
+  },
+  {
+    "record": "callers/ui/verified-inputs.json",
+    "inputCount": 9,
+    "moved": [],
+    "capturedAfterExecution": false
+  }
+]

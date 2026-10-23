@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-10-23T17:32:19.688745+00:00",
+  "head": "fe81989cc1dd6914be676bea058a9dd25b5dbe9d",
+  "workingTree": true,
+  "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+  "exitCode": 0,
+  "passed": 38,
+  "testFiles": 2,
+  "sha256": {
+    "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx": "e0b1baf0b9100f4ffe8a48f01680ea2f427145fb4eecd0b19cf4df5bc1f422e4",
+    "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx": "736681769e9f66d8e9a999aade06ac4b6450a1f9d08b6b2a4bc6b08a084a6839",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx": "990064ad592a712d4d3954f7e48bd69de49ef1dfc308147520af53af37015fef",
+    "client/src/concept2cure/_shared/components/EsignModal.tsx": "a89aa87c81cee0712e1aac699c4fa3f59f134574431e8e73efe1ef3479fdee58",
+    "client/src/concept2cure/hooks/useEsignature.ts": "34db79d52d7cef517ea2c2b802c9e91a1e7b860687aa7c5f1215261e4dac9ee4",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "resultSha256": "a9a25b7a1c52ddbf0f85c366aeda420c1e3374d15ddb448c1f1041d7d31c5010"
+}

@@ -94,7 +94,7 @@ import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/re
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
-  packageIdentityRefusal, readSubmissionPackageIdentity, lockRecordedPackageIdentity,
+  packageIdentityRefusal, readSubmissionPackageIdentity, lockSubmissionPackageIdentity, lockRecordedPackageIdentity,
   recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity,
   type RecordedPackageIdentitySnapshot,
 } from '../ectd/package-identity';
@@ -202,12 +202,12 @@ export function canTransitionSequence(from: string, to: string): boolean {
   return Array.isArray(allowed) && allowed.includes(to as SequenceStatus);
 }
 
-/** Eligibility for the existing dispatch action, including an unsent FDA renewal.
+/** Eligibility for the existing dispatch action, including an unsent known-region renewal.
  * This is status advice only; signature, package and release gates run at the act. */
 export function sequenceDispatchAuthorizationEligibility(seq: {
   status: string; region: string; dispatchStatus?: string | null;
 }): { reauthorizing: boolean; eligible: boolean; refusal: string | null } {
-  const reauthorizing = seq.status === 'dispatched' && canonicalRegionOf(seq.region) === 'US';
+  const reauthorizing = seq.status === 'dispatched' && canonicalRegionOf(seq.region) !== undefined;
   if (reauthorizing) {
     const eligible = seq.dispatchStatus === null || seq.dispatchStatus === 'pending' || seq.dispatchStatus === 'rejected';
     return { reauthorizing, eligible, refusal: eligible ? null :
@@ -1507,30 +1507,28 @@ async function assertSequencePackageable(
   const sequence = await getSequence(id, ctx);
   const binding = await deriveGovernedTargetBinding(asQueryable(pool), `ectd-sequence:${id}`, ctx.organizationId);
   const assembledAgainst = binding.digest;
-  const fda = canonicalRegionOf(sequence.region) === 'US';
+  const region = canonicalRegionOf(sequence.region);
+  const fda = region === 'US';
   const captured = binding.recordedPackageIdentity;
   const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
   let assembled: Awaited<ReturnType<typeof assembleSequence>>;
   try {
-    // FDA readiness judges the recorded identity the signature binds. The
-    // temporary package is still discarded on every path. Other regions keep
-    // the existing explicit dry run until their applicant-id authority is set.
-    if (fda && !captured) throw new Error('The FDA signature binding has no recorded application/applicant identity.');
-    if (captured) {
-      const missing = packageIdentityRefusal(captured.identity, 'Nothing can be frozen or dispatched.', { fda });
-      if (missing) throw missing;
-    }
+    // Judge the recorded facts the signature binds for this actual market.
+    // FDA DUNS/contact requirements apply only to US packages; an optional
+    // other-agency identifier is never supplied from the FDA registry.
+    if (!region) throw new Error('The sequence region is not recognized, so its recorded release identity cannot be established.');
+    if (!captured) throw new Error('The signature binding has no recorded application/applicant identity.');
+    const missing = packageIdentityRefusal(captured.identity, 'Nothing can be frozen or dispatched.', { fda });
+    if (missing) throw missing;
     assembled = await assembleSequence({
       sequenceId: id,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      ...(fda && captured ? {
-        applicationId: captured.identity.applicationNumber as string,
-        sponsorId: captured.identity.applicantId as string,
-        sponsorName: captured.identity.applicantName as string,
-        contacts: fdaContactsForPackageIdentity(captured.identity),
-        recordedPackageIdentity: captured,
-      } : { dryRun: true as const }),
+      applicationId: captured.identity.applicationNumber as string,
+      sponsorId: fda ? captured.identity.applicantId as string : '',
+      sponsorName: captured.identity.applicantName as string,
+      recordedPackageIdentity: captured,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(captured.identity) } : {}),
     });
   } catch (err) {
     // A busy converter (OPS-13) is not a sequence that fails to assemble, and
@@ -1809,6 +1807,8 @@ async function applyGovernedSequenceTransition(
          seconds while the sequence is still unlocked — a leaf placed or removed
          in that window was frozen without having been judged, and no gate
          re-checked it. Under the lock:
+           - the organization row, so an unbound recorded applicant name cannot
+             change during capture;
            - the submission row, so governed transitions of one submission
              serialize and the filing-order rule cannot be passed by two
              sequences at once;
@@ -1823,14 +1823,16 @@ async function applyGovernedSequenceTransition(
              the package gate assembled against AND the one the signature binds;
            - the filing-order rule is re-read. */
       underLock: async (client) => {
-        await client.query(`SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [
-          seq.submissionId,
-          ctx.organizationId,
-        ]);
+        const q = asQueryable(client);
+        const parent = await lockSubmissionPackageIdentity(q, ctx.organizationId, seq.submissionId, { forUpdate: true });
         const locked = await client.query(
-          `SELECT id, status, dispatch_status, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+          `SELECT id, submission_id, status, dispatch_status, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
           [id, ctx.organizationId],
         );
+        if (!parent || locked.rows[0]?.submission_id !== seq.submissionId ||
+          parent.programId !== verdict.recordedPackageIdentity?.identity.programId) {
+          throw new SubmissionError('INVALID_STATE', 'The sequence parent or recorded program anchor changed while this release was being checked. Nothing was recorded; refresh and sign the current content.');
+        }
         if (reauthorizing) {
           assertDispatchRenewalStillEligible(locked.rows[0], seq.dispatchStatus);
           // Renewal keeps the status unchanged, so its status CAS alone cannot
@@ -1839,8 +1841,7 @@ async function applyGovernedSequenceTransition(
             throw new SubmissionError('GOVERNED_REQUIRED', 'This dispatch signature was already used or voided while renewal was being checked. Sign a fresh authorization.');
           }
         }
-        const q = asQueryable(client);
-        await lockRecordedPackageIdentity(q, ctx.organizationId, verdict.recordedPackageIdentity?.identity.programId ?? null);
+        await lockRecordedPackageIdentity(q, ctx.organizationId, parent.programId);
         const now = await sequenceLeafManifestDigest(q, id, ctx.organizationId);
         if (now === null || now !== assembledAgainst || now !== verdict.boundDigest) {
           throw new SubmissionError(
@@ -1975,22 +1976,25 @@ async function independentSignerRefusal(
 }
 
 /**
- * Inside a sequence act's transaction: take the sequence row lock — the lock
- * leaf writes take — re-ask the act's own rule on the transaction's client, and
- * refuse when the leaves are no longer the ones the signature binds. A throw
- * rolls the act back.
+ * Inside a sequence act's transaction: lock organization and submission before
+ * sequence, then program/sponsor, as release does. Validate the actual parent,
+ * re-ask the act's rule and compare the signature's full binding. A throw rolls
+ * the act back.
  */
 async function recheckUnderSequenceLock(
   client: PoolClient,
-  p: { sequenceId: number; organizationId: number; boundDigest: string; act: string; recheck: (q: SequenceQueryable) => Promise<void> },
+  p: { sequenceId: number; submissionId: number; organizationId: number; boundDigest: string; act: string; recheck: (q: SequenceQueryable) => Promise<void> },
 ): Promise<void> {
-  await client.query(
-    `SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+  const q = asQueryable(client);
+  const parent = await lockSubmissionPackageIdentity(q, p.organizationId, p.submissionId);
+  const locked = await client.query(
+    `SELECT id, submission_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
     [p.sequenceId, p.organizationId],
   );
-  const q = asQueryable(client);
-  const captured = await deriveGovernedTargetBinding(q, `ectd-sequence:${p.sequenceId}`, p.organizationId);
-  await lockRecordedPackageIdentity(q, p.organizationId, captured.recordedPackageIdentity?.identity.programId ?? null);
+  if (!parent || locked.rows[0]?.submission_id !== p.submissionId) {
+    throw new SubmissionError('INVALID_STATE', 'The sequence parent changed while this decision was being recorded. Nothing was recorded; refresh and sign the current content.');
+  }
+  await lockRecordedPackageIdentity(q, p.organizationId, parent.programId);
   await p.recheck(q);
   if ((await sequenceLeafManifestDigest(q, p.sequenceId, p.organizationId)) !== p.boundDigest) {
     throw new SubmissionError(
@@ -2032,6 +2036,7 @@ async function applyShadowReviewWaiver(
       underLock: (client) =>
         recheckUnderSequenceLock(client, {
           sequenceId: seq.id,
+          submissionId: seq.submissionId,
           organizationId: ctx.organizationId,
           boundDigest: verdict.boundDigest,
           act: 'waiver',
@@ -2131,6 +2136,7 @@ async function applyShadowFindingDisposition(
       underLock: (client) =>
         recheckUnderSequenceLock(client, {
           sequenceId: seq.id,
+          submissionId: seq.submissionId,
           organizationId: ctx.organizationId,
           boundDigest: verdict.boundDigest,
           act: 'disposition',
@@ -2371,32 +2377,34 @@ export interface TransmitSequenceResult {
  */
 async function claimTransmitSlot(
   sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string,
-  expected: { boundDigest: string; programId: string | null; fda: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot },
-): Promise<{ claimed: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot }> {
+  expected: { boundDigest: string; submissionId: number; programId: string | null; applicationId: string; fda: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot },
+): Promise<{ claimed: false } | { claimed: true; recordedPackageIdentity: RecordedPackageIdentitySnapshot }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, organizationId);
-    await client.query(`SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [sequenceId, organizationId]);
+    const q = asQueryable(client);
+    const parent = await lockSubmissionPackageIdentity(q, organizationId, expected.submissionId);
+    const locked = await client.query(`SELECT id, submission_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [sequenceId, organizationId]);
+    if (!parent || locked.rows[0]?.submission_id !== expected.submissionId || parent.programId !== expected.programId) {
+      throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence parent or recorded program anchor changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
+    }
     // A receipt may settle while this request waits for the sequence lock.
     // Read the canonical ledger in a fresh statement after acquiring it.
     if (await signatureSpentBy(signatureActionId, `ectd-sequence:${sequenceId}`, organizationId, client)) {
       throw new SubmissionError('GOVERNED_REQUIRED', 'The transmit signature was already used or voided. Sign a new transmit attempt. Nothing was transmitted.');
     }
-    const q = asQueryable(client);
-    await lockRecordedPackageIdentity(q, organizationId, expected.programId);
+    await lockRecordedPackageIdentity(q, organizationId, parent.programId);
     const binding = await deriveGovernedTargetBinding(q, `ectd-sequence:${sequenceId}`, organizationId);
     const captured = binding.recordedPackageIdentity;
-    if (binding.digest !== expected.boundDigest || (expected.fda &&
-      (!captured || captured.identity.programId !== expected.programId ||
-       !sameRecordedPackageIdentitySnapshot(captured, expected.recordedPackageIdentity)))) {
+    if (binding.digest !== expected.boundDigest || !captured || captured.identity.programId !== parent.programId ||
+      captured.identity.applicationNumber !== expected.applicationId ||
+      !sameRecordedPackageIdentitySnapshot(captured, expected.recordedPackageIdentity)) {
       throw new SubmissionError('GOVERNED_REQUIRED',
         'The sequence leaves or recorded application/applicant facts changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
     }
-    if (expected.fda && captured) {
-      const missing = packageIdentityRefusal(captured.identity, 'Nothing was sent.', { fda: true });
-      if (missing) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missing.message);
-    }
+    const missing = packageIdentityRefusal(captured.identity, 'Nothing was sent.', { fda: expected.fda });
+    if (missing) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missing.message);
     const res = await client.query(
       `UPDATE ectd_sequences
           SET dispatch_status = $3, transmit_signature_action_id = $4, transmit_attempt_id = $5, updated_at = NOW()
@@ -2407,8 +2415,9 @@ async function claimTransmitSlot(
       [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
     );
     await client.query('COMMIT');
-    return { claimed: (res.rowCount ?? res.rows?.length ?? 0) > 0,
-      ...(captured ? { recordedPackageIdentity: recordedPackageIdentitySnapshot(captured.identity) } : {}) };
+    return (res.rowCount ?? res.rows?.length ?? 0) > 0
+      ? { claimed: true, recordedPackageIdentity: recordedPackageIdentitySnapshot(captured.identity) }
+      : { claimed: false };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -2653,7 +2662,9 @@ async function transmitDispatchedSequence(
   // The package names its applicant and its application from the record, or it
   // is not sent (package-identity.ts, QA 2026-10-08 j6).
   const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submission.id, { region: seq.region });
-  const fda = canonicalRegionOf(seq.region) === 'US';
+  const region = canonicalRegionOf(seq.region);
+  if (!region) throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence region is not recognized, so recorded release identity cannot be established. Nothing was sent.');
+  const fda = region === 'US';
   const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.', { fda });
   if (missingIdentity) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missingIdentity.message);
   const numberRefusal = transmitApplicationNumberRefusal(applicationId, identity.applicationNumber);
@@ -2721,7 +2732,7 @@ async function transmitDispatchedSequence(
      status it read minutes ago. */
   const attemptId = randomUUID();
   const claim = await claimTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId,
-    { boundDigest: verdict.boundDigest, programId: submission.programId ?? null, fda, recordedPackageIdentity: verdict.recordedPackageIdentity });
+    { boundDigest: verdict.boundDigest, submissionId: seq.submissionId, programId: submission.programId ?? null, applicationId, fda, recordedPackageIdentity: verdict.recordedPackageIdentity });
   if (!claim.claimed) {
     const fresh = await getSequence(sequenceId, ctx);
     throw new SubmissionError(
@@ -2737,8 +2748,8 @@ async function transmitDispatchedSequence(
   const { assembleSequence } = await import('../ectd/assemble-from-core');
   let assembled;
   try {
-    const capturedIdentity = claim.recordedPackageIdentity?.identity ?? identity;
-    // Only the snapshot captured under the claim locks can supply FDA bytes.
+    const capturedIdentity = claim.recordedPackageIdentity.identity;
+    // Only the snapshot captured under the claim locks can supply package facts.
     // An optional non-FDA applicant id retains its existing charset contract;
     // a missing one stays empty rather than being invented from a DUNS.
     const nonFdaApplicantId = params.sponsorId === undefined ? '' : usableIdentifier('applicantId', params.sponsorId);
@@ -2750,7 +2761,8 @@ async function transmitDispatchedSequence(
       applicationId: capturedIdentity.applicationNumber as string,
       sponsorId: fda ? capturedIdentity.applicantId as string : nonFdaApplicantId as string,
       sponsorName: capturedIdentity.applicantName as string,
-      ...(fda ? { contacts: fdaContactsForPackageIdentity(capturedIdentity), recordedPackageIdentity: claim.recordedPackageIdentity } : {}),
+      recordedPackageIdentity: claim.recordedPackageIdentity,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(capturedIdentity) } : {}),
     });
   } catch (err) {
     await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
@@ -2819,9 +2831,9 @@ async function transmitDispatchedSequence(
   // A subsequent edit cannot alter this attempt's already assembled snapshot.
   try {
     const current = await deriveGovernedTargetBinding(asQueryable(pool), target, ctx.organizationId);
-    if (current.digest !== verdict.boundDigest || (fda &&
-      (!sameRecordedPackageIdentitySnapshot(assembled.recordedPackageIdentity, claim.recordedPackageIdentity) ||
-       !sameRecordedPackageIdentitySnapshot(current.recordedPackageIdentity, claim.recordedPackageIdentity)))) {
+    if (current.digest !== verdict.boundDigest ||
+      !sameRecordedPackageIdentitySnapshot(assembled.recordedPackageIdentity, claim.recordedPackageIdentity) ||
+      !sameRecordedPackageIdentitySnapshot(current.recordedPackageIdentity, claim.recordedPackageIdentity)) {
       throw new SubmissionError('GOVERNED_REQUIRED',
         'The assembled package does not match the approved leaves and recorded application/applicant facts at the transmit checkpoint. Nothing was sent; review the record and sign again.');
     }
@@ -2845,8 +2857,8 @@ async function transmitDispatchedSequence(
       bundle: assembled.bundle,
       environment,
       submissionType: seq.type ?? undefined,
-      metadata: { applicationId, sequence: seq.sequenceNumber, environment,
-        ...(fda ? { recordedPackageIdentity: claim.recordedPackageIdentity } : {}) },
+      metadata: { applicationId: claim.recordedPackageIdentity.identity.applicationNumber, sequence: seq.sequenceNumber, environment,
+        recordedPackageIdentity: claim.recordedPackageIdentity },
       // This internal field is not accepted by the public governed HTTP route.
       dispatchBinding: { attemptId, organizationId: ctx.organizationId, sequenceId, signatureActionId, bundleSha256: assembled.bundle.sha256 },
       // Gate 1 above already verified this signature governs THIS sequence and
@@ -2902,7 +2914,7 @@ async function transmitDispatchedSequence(
         transmittalId: result.transmittalId,
         transmissionId: result.transmissionId ?? null,
         packageSha256: assembled.bundle.sha256,
-        ...(fda ? { recordedPackageIdentity: claim.recordedPackageIdentity } : {}),
+        recordedPackageIdentity: claim.recordedPackageIdentity,
         status: result.status,
         environment,
         signatureActionId,
