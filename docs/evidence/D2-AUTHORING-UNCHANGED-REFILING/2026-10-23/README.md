@@ -117,6 +117,18 @@ pins match the merged source. Historical upstream cohorts remain separate;
 native concurrency was not rerun here. The original 595/32 and 499/14 counts
 remain unchanged.
 
+The first mandatory push was refused by the existing source-size ceilings
+(57/115 oversized files versus ceilings 56/114). Commit `32c1061c0` mechanically
+splits the existing filing cases and lineage primitives, preserving the service
+exports, lazy pool access, error identity and same original database fixture.
+All 93 contract cases retain their exact order and ancestry; a separate 154-case
+lineage/workflow run passes. Build, full zero-error TypeScript and lint pass,
+with no warning growth. The size gate now passes at 56/114, with both ceilings
+unchanged. `size-split-qualification.json` supplies the final source pins and
+refusal/remedy evidence; `size-split-tests.json` keeps these runs separate from
+the earlier 595/32, 499/14 and 244/8 qualifications. Publication still requires the
+entire mandatory push hook to pass.
+
 ## Reproduction and limits
 
 ```sh

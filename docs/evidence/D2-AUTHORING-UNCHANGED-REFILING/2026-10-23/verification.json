@@ -78,5 +78,19 @@
     "originalPinsUnchanged": 70,
     "reviewedCommentOnlyPinDifference": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
     "earlier595And499CountsPreserved": true
+  },
+  "postSplitQualification": {
+    "supplement": "size-split-qualification.json",
+    "qualifiedSourceCommit": "32c1061c0b6dd8add00ce9b5a15383c411fb2fff",
+    "contractPassed": 93,
+    "orderedContractNamesPreserved": true,
+    "lineagePassed": 154,
+    "lintErrors": 0,
+    "newLintWarnings": 0,
+    "productionBuildPassed": true,
+    "fullTypecheckErrors": 0,
+    "typecheckProcessExit": 0,
+    "sizeGatePassed": true,
+    "ceilingsUnchanged": true
   }
 }
