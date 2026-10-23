@@ -181,5 +181,44 @@
     "question": "How do we handle confounding by indication with propensity scores in our observational study?",
     "expect": "clinical.real-world-evidence",
     "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Is our phase 2 study an applicable clinical trial, and who is the responsible party for the ClinicalTrials.gov registration?",
+    "expect": "clinical.trial-transparency"
+  },
+  {
+    "question": "What do we need to redact before our clinical study reports are published under Policy 0070, and what counts as commercially confidential information?",
+    "expect": "clinical.trial-transparency"
+  },
+  {
+    "question": "When are results due on ClinicalTrials.gov after the primary completion date, and how do we certify on Form FDA 3674?",
+    "expect": "clinical.trial-transparency",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Does our open-label outcomes trial need an independent data monitoring committee, and who should sit on it?",
+    "expect": "clinical.data-monitoring-committees"
+  },
+  {
+    "question": "Draft a DSMB charter that sets out the closed session and open session arrangements.",
+    "expect": "clinical.data-monitoring-committees"
+  },
+  {
+    "question": "How do we keep unblinded interim data away from the sponsor's study team? Do we need an independent statistical group?",
+    "expect": "clinical.data-monitoring-committees",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Which countries should we pick for our phase 3 asthma trial? Help with country selection and site feasibility.",
+    "expect": "clinical.trial-feasibility-and-sites"
+  },
+  {
+    "question": "What does an investigator need to sign before site activation: the statement of investigator, financial disclosure, anything else?",
+    "expect": "clinical.trial-feasibility-and-sites"
+  },
+  {
+    "question": "What does investigator qualification involve, and how do we screen for debarment during site selection?",
+    "expect": "clinical.trial-feasibility-and-sites",
+    "context": { "segments": ["device"] }
   }
 ]

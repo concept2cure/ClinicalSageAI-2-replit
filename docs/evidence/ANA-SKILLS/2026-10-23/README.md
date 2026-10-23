@@ -49,7 +49,19 @@ All 12 markets are covered: 4 skills in Europe and 8 in Asia-Pacific and the Ame
 
 ### Third wave: depth
 
-Recorded below once its agents' work has been reviewed.
+Each new skill was checked against its siblings. Where an existing skill already covered part of the scope, the new one was narrowed to what was missing.
+
+**Clinical, device and quality systems: 7 skills, 21 golden questions**
+
+| Skill | Narrowed to |
+|---|---|
+| `clinical.trial-transparency` | Registration and results disclosure. CTIS mechanics are left to the EU clinical-trials market skill, and lay summaries to `medical-writing.plain-language`. |
+| `clinical.data-monitoring-committees` | DMCs: charter, independence, firewalls. Interim boundaries are left to `biostatistics.adaptive-and-interim`. |
+| `clinical.trial-feasibility-and-sites` | Country and site selection, and investigator documents. GCP conduct is left to `clinical.gcp-operations`. |
+| `device.udi-and-registration` | Assigning identifiers, when a new one is needed, database submission, and US registration and listing. Label elements stay in `labeling.device-labeling`, and EUDAMED actor registration in the EU technical documentation skill. |
+| `device.combination-and-drug-delivery` | The engineering of drug-delivery constituents only. Designation and cGMP stay in `regulatory-strategy.combination-products`. |
+| `quality-systems.complaint-handling` | Intake to trending, and the link to vigilance. Cites 21 CFR 820.10 and 820.35 under the QMSR, with removed sections only as "formerly". |
+| `quality-systems.audits-and-inspections` | Internal audit programmes and responding to findings, including Form 483 responses. Inspection readiness stays in `quality-systems.gmp-and-suppliers`. |
 
 ## Enhance: how often AnA used each skill
 

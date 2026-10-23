@@ -69,5 +69,32 @@
     "question": "What should our inspection readiness review cover?",
     "expect": "quality-systems.gmp-and-suppliers",
     "context": { "documentType": "QMS_GMP_INSPECTION" }
+  },
+  {
+    "question": "A customer complaint says the pen cap cracked. How should complaint intake work, and do we have to investigate?",
+    "expect": "quality-systems.complaint-handling"
+  },
+  {
+    "question": "What should our product quality complaint process cover for a marketed tablet under 211.198?",
+    "expect": "quality-systems.complaint-handling",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we set up complaint trending for our infusion pump so trends feed CAPA and the risk file?",
+    "expect": "quality-systems.complaint-handling",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Help me plan our internal audit programme for the ISO 13485 quality system next year.",
+    "expect": "quality-systems.audits-and-inspections"
+  },
+  {
+    "question": "We received six 483 observations after the FDA inspection. How should we structure the 483 response?",
+    "expect": "quality-systems.audits-and-inspections",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How should we respond to a major MDSAP audit nonconformity and the other audit findings from our notified body audit?",
+    "expect": "quality-systems.audits-and-inspections"
   }
 ]

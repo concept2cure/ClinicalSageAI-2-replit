@@ -1,9 +1,10 @@
 /**
  * Clinical development skills: the development plan, protocols and their
  * amendments, endpoints, consent, GCP conduct, the study report, the
- * Investigator's Brochure and the special areas (oncology dose optimization,
+ * Investigator's Brochure, the special areas (oncology dose optimization,
  * rare disease, vaccines, cell and gene therapy, pediatrics, real-world
- * evidence).
+ * evidence), and trial operations (registration and results disclosure, data
+ * monitoring committees, feasibility and site selection).
  *
  * @module server/services/ana/skills/library/clinical
  */
@@ -22,6 +23,11 @@ const DESIGNATIONS_RECORD = {
   kind: 'record',
   id: 'shared/regulatory/special-designations.ts',
   label: 'Special designations and pediatric programs',
+} as const;
+const FDA_FORMS_RECORD = {
+  kind: 'record',
+  id: 'server/config/FDAFormsRegistry.ts',
+  label: 'Canonical FDA forms (1572, 3454, 3455, 3674) that prepare_fda_form drafts',
 } as const;
 
 export const CLINICAL_SKILLS: LibrarySkillSource[] = [
@@ -1132,6 +1138,257 @@ A program proposing to use real-world data (claims, electronic health records, r
 ## Not AnA's to decide
 - Whether the evidence is adequate for its purpose is the agency's judgement.
 - Data access, licensing and privacy obligations are for the sponsor and the data holder.
+`,
+  }),
+
+  skill({
+    key: 'clinical.trial-transparency',
+    name: 'Trial registration and results disclosure',
+    description:
+      'Registering a clinical trial and disclosing its results: ClinicalTrials.gov duties for an applicable clinical trial, WHO and ICMJE registration, EU transparency at method level, the Form FDA 3674 certification, redaction of personal data and confidential information for publication, and data-sharing commitments.',
+    disciplines: ['clinical', 'regulatory-operations', 'medical-writing'],
+    useCases: ['drafting', 'review', 'submission-assembly', 'gap-analysis'],
+    triggers: [
+      'trial registration',
+      'clinical trial registration',
+      'clinicaltrials.gov',
+      'clinicaltrials.gov registration',
+      'clinicaltrials.gov results',
+      'results reporting',
+      'results disclosure',
+      'results posting',
+      'fdaaa 801',
+      '42 cfr part 11',
+      'applicable clinical trial',
+      'responsible party',
+      'primary completion date',
+      'who ictrp',
+      'prospective registration',
+      'trial transparency',
+      'clinical trial transparency',
+      'transparency rules',
+      'commercially confidential information',
+      'anonymisation report',
+      'policy 0070',
+      'clinical data publication',
+      'data sharing statement',
+      'individual participant data',
+      'form fda 3674',
+    ],
+    tools: [
+      'generate_ctgov_registration_draft',
+      'review_who_ictrp_record',
+      'search_clinical_evidence',
+      'search_eu_ctis',
+      'prepare_fda_form',
+      'lookup_fda_guidance',
+      'check_regulatory_currency',
+    ],
+    references: [
+      { kind: 'currency-fact', id: 'eu-ctis-only-trials' },
+      CONSENT_RECORD,
+      FDA_FORMS_RECORD,
+      {
+        kind: 'record',
+        id: 'server/services/global-ri/clinical-trial-disclosure.ts',
+        label: 'Registration and results-disclosure obligations by market (US, EU, WHO and ICMJE)',
+      },
+    ],
+    instructions: `
+## When this applies
+A trial must be registered, its results posted or its documents published, with redaction and data-sharing commitments. CTIS mechanics are the EU clinical trials skill's, the lay summary the plain-language skill's, publication practice the reporting-guidelines skill's, and the consent form's ClinicalTrials.gov statement the informed consent skill's.
+
+## Method
+1. Establish the trial from the program record: the product and its approval status, phase, whether it is interventional and controlled, the countries with sites, the sponsor and funders, the IND or IDE that covers it, and its own dates (first participant enrolled, primary completion, end of trial). Duties attach to these facts.
+2. US: whether the trial is an applicable clinical trial under 42 USC 282(j) (FDAAA 801) and 42 CFR Part 11, and who the responsible party is (the sponsor, or a principal investigator it designates). The definition turns on product type, phase or device study type, US nexus and control; work through ClinicalTrials.gov's published definitions with the person and say the determination is theirs. Funder policies can reach trials the statute does not (NIH's policy for trials it funds, for example), so ask about funding.
+3. Find what is already registered before drafting: \`search_clinical_evidence\` for the NCT record and \`search_eu_ctis\` for the EU trial number. One trial has one record per registry, and each record lists the others' identifiers as secondary identifiers.
+4. Draft the record from the protocol: \`generate_ctgov_registration_draft\` returns the FDAAA 801 data elements with completeness findings, and \`review_who_ictrp_record\` the WHO Trial Registration Data Set, item by item. Report missing items as returned; sponsor, dates, ethics review and the sharing statement are supplied at registration, never invented. ICMJE journals publish a trial only if it was registered by the time the first participant enrolled, whatever the statute requires.
+5. Deadlines: no AnA tool computes a trial's registration or results due dates, so never state one. The responsible party applies the registry's current rules to the trial's own dates, including any certification to delay results; say which dates the deadline runs from and ask for them.
+6. Results (participant flow, baseline characteristics, outcome measures, adverse events) come from the final analysis and agree with the CSR and any publication; a figure that differs is resolved before posting.
+7. Form FDA 3674 certifies compliance with the ClinicalTrials.gov requirements and accompanies certain applications and submissions; confirm which with \`lookup_fda_guidance\`. \`prepare_fda_form\` (form FDA_3674) drafts it from the NCT number and the certification basis the person states; AnA never chooses the basis or signs.
+8. EU: under Regulation (EU) No 536/2014 trial information becomes public through CTIS, and a summary of results and a lay summary follow the end of the trial. Run \`check_regulatory_currency\` on CTIS and report the fact; take what is published, when, and what may be deferred from EMA's current transparency rules.
+9. Redaction, for CTIS and for agency publication of clinical data (EMA's Policy 0070, Health Canada's public release of clinical information):
+   - personal data of participants and staff are anonymised by a documented method with an assessment of re-identification risk;
+   - commercially confidential information is proposed narrowly, each redaction justified; results, safety data and design are generally public;
+   - the agency decides on the proposal.
+10. Data sharing: the plan to share individual participant data, in the registry and the manuscript's data sharing statement, matches what the consent form allows for future use and the sponsor's policy, and is tracked as a commitment.
+
+## Pitfalls reviewers raise
+- Registration after enrolment began, or a primary outcome changed in the registry without explanation.
+- Results not posted, or posted figures that disagree with the CSR or the publication.
+- Results or safety data redacted as commercially confidential.
+- A data-sharing promise the consent form does not permit.
+
+## Before answering
+- Applicable-trial status, the responsible party and every due date are the responsible party's; no date appears that the person or the registry did not supply.
+- Registry gaps are reported as the tools returned them.
+
+## Not AnA's to decide
+- What is registered, redacted and posted, and when, is the responsible party's; agencies decide on redaction proposals.
+- AnA does not register a trial, post results or sign a certification.
+`,
+  }),
+
+  skill({
+    key: 'clinical.data-monitoring-committees',
+    name: 'Data monitoring committees',
+    description:
+      'Independent data monitoring committees (DMC, DSMB, IDMC): when a trial needs one, the charter, membership and independence, open and closed sessions, firewalls around comparative interim data, stopping guidelines and handling recommendations. Boundaries come from the statistical engines and the adaptive and interim analyses skill.',
+    disciplines: ['clinical', 'biostatistics', 'safety'],
+    useCases: ['study-design', 'drafting', 'review'],
+    triggers: [
+      'independent data monitoring committee',
+      'monitoring committee',
+      'dmc charter',
+      'dsmb charter',
+      'idmc charter',
+      'data monitoring committee charter',
+      'data safety monitoring board',
+      'data and safety monitoring board',
+      'dmc membership',
+      'dmc members',
+      'dmc meeting',
+      'dmc recommendation',
+      'closed session',
+      'open session',
+      'closed report',
+      'open report',
+      'independent statistician',
+      'independent statistical group',
+      'unblinded statistician',
+      'reporting statistician',
+      'unblinded interim data',
+      'interim data firewall',
+      'stopping guidelines',
+    ],
+    tools: ['lookup_fda_guidance', 'lookup_ich_guideline', 'generate_statistical_document', 'review_interim_operating_characteristics'],
+    references: [
+      { kind: 'ich', id: 'E9(R1)' },
+      { kind: 'ich', id: 'E20' },
+      { kind: 'ich', id: 'E6(R3)' },
+      E6R3_RECORD,
+    ],
+    instructions: `
+## When this applies
+Deciding whether a trial needs an independent data monitoring committee (DMC, also DSMB or IDMC), writing its charter, choosing members, running its sessions, protecting comparative interim data and acting on its recommendations. The statistics of interim analyses (boundaries, alpha spending, operating characteristics, simulations) are the adaptive and interim analyses skill's.
+
+## Method
+1. Establish the trial from the protocol and SAP: the population and its vulnerability, the endpoints, size and duration, planned interim analyses, blinding, the product's known safety concerns and the regions.
+2. Decide whether a DMC is needed and record why. It is most clearly warranted for large randomised trials with mortality or major morbidity endpoints, planned interim efficacy analyses, high-risk interventions, vulnerable populations, or long trials where early data could change what participants are told. US research under the exception from informed consent in emergency settings requires one (21 CFR 50.24). A short, low-risk trial of symptomatic endpoints often needs none. FDA's guidance on data monitoring committees and EMA's guideline on them set expectations: name them by topic and confirm FDA's current version with \`lookup_fda_guidance\`. ICH E9 describes the committee's role; confirm its wording with \`lookup_ich_guideline\` before quoting.
+3. Keep the DMC distinct from a dose-escalation safety review committee, an endpoint adjudication committee and a steering committee: their members, data and authority differ. Say which the question concerns.
+4. Membership and independence: clinicians expert in the disease and intervention, at least one statistician experienced in interim monitoring, and others the trial calls for (an ethicist, a patient representative). Members have no financial or intellectual stake in the outcome, take no part in conduct, and declare interests at appointment and throughout.
+5. The charter: scope (safety only, or safety and efficacy), membership and conflicts, meetings, quorum and how recommendations are reached, open and closed report content and who prepares it, data access controls, to whom recommendations go, records, and the stopping guidelines by reference to the protocol and SAP. \`generate_statistical_document\` drafts a charter (document type dsmb_charter) or an interim analysis plan (interim_analysis_plan) from the design parameters; the draft is the sponsor's to complete and approve.
+6. Sessions: in the open session the sponsor and steering committee may hear pooled data and conduct issues (enrolment, data quality, adherence). In the closed session only members and the reporting statistician see results by arm. Closed minutes stay with the committee until the trial is unblinded.
+7. Firewalls: comparative reports are prepared by a statistician or group independent of the trial team, with documented access controls. Sponsor staff who see comparative interim data take no further part in the trial's conduct or analysis. A breach is documented with its effect on the trial's integrity.
+8. Stopping guidelines: efficacy and futility boundaries come from the statistical engine, never from AnA. On a protocol with a bound design, \`review_interim_operating_characteristics\` reports the recorded boundaries and their operating characteristics; quote them as returned. Boundaries guide the committee's judgment; safety monitoring often has none, and the committee weighs the totality of the data.
+9. Recommendations: continue, modify (eligibility, monitoring, dose) or stop for benefit, harm or futility. The DMC recommends; the sponsor decides and documents its decision. A modification follows the protocol amendments skill, and new safety information the safety-reporting methods.
+
+## Pitfalls reviewers raise
+- Members tied to the sponsor or investigators, or no statistician.
+- Sponsor trial staff with access to comparative interim data.
+- A charter silent on who receives a recommendation and how it is acted on.
+- Stopping guidance in the charter that differs from the protocol and SAP.
+
+## Before answering
+- The need for a DMC is reasoned from the trial's features; guidance is named by topic and marked confirmed or unconfirmed.
+- No boundary, information fraction or error rate appears unless an engine returned it.
+
+## Not AnA's to decide
+- Establishing a DMC, its members and charter are the sponsor's decisions; the recommendations are the committee's, and acting on them the sponsor's.
+- AnA never interprets unblinded comparative interim data for a sponsor.
+`,
+  }),
+
+  skill({
+    key: 'clinical.trial-feasibility-and-sites',
+    name: 'Trial feasibility, country and site selection',
+    description:
+      'Choosing countries and sites for a clinical trial and qualifying its investigators: feasibility evidence and enrollment forecasts, regional data needs, competing trials, investigator qualification and screening, and the documents investigators sign before a site is activated (Form FDA 1572, financial disclosure, device investigator agreements).',
+    disciplines: ['clinical'],
+    useCases: ['strategy', 'study-design', 'review'],
+    triggers: [
+      'trial feasibility',
+      'feasibility assessment',
+      'site feasibility',
+      'feasibility questionnaire',
+      'site selection',
+      'country selection',
+      'country and site selection',
+      'investigator selection',
+      'investigator qualification',
+      'site qualification',
+      'site qualification visit',
+      'pre-study visit',
+      'site initiation visit',
+      'site activation',
+      'study start-up',
+      'statement of investigator',
+      'financial disclosure',
+      'part 54',
+      'form fda 3454',
+      'form fda 3455',
+      'investigator agreement',
+      'clinical trial agreement',
+      'recruitment rate',
+      'enrollment rate',
+      'debarment',
+      'disqualified investigator',
+      '312.120',
+    ],
+    tools: [
+      'get_regulatory_timeline',
+      'assess_trial_feasibility',
+      'search_clinical_evidence',
+      'search_eu_ctis',
+      'forecast_enrollment',
+      'review_enrollment_forecast',
+      'screen_restricted_party',
+      'prepare_fda_form',
+      'lookup_fda_guidance',
+      'create_irb_submission',
+      'add_irb_site',
+    ],
+    references: [
+      { kind: 'ich', id: 'E6(R3)' },
+      { kind: 'ich', id: 'E5(R1)' },
+      { kind: 'ich', id: 'E17' },
+      { kind: 'currency-fact', id: 'ich-e6r3-gcp-step4' },
+      E6R3_RECORD,
+      FDA_FORMS_RECORD,
+    ],
+    instructions: `
+## When this applies
+Planning where a trial runs and with whom: countries, sites, feasibility, enrollment forecasts, qualifying investigators and collecting what they sign before a site is activated. Conduct after activation (monitoring, essential records, delegation, deviations) is the GCP operations skill's; consent is the informed consent skill's.
+
+## Method
+1. Establish what the protocol demands of a site: the population and the eligibility criteria that most limit it, procedures, equipment and specialist staff, investigational product storage and handling, target enrollment and timelines, and the regulators who will review the data.
+2. Countries: choose for the population and for what each regulator needs, not only for speed. Consider ethnic factors that could change the product's effect (ICH E5) and how one trial supports several regions (ICH E17); whether local standard of care fits the comparator; how foreign data are accepted (for FDA, a foreign study not under an IND is judged under 21 CFR 312.120); and import of the product. \`get_regulatory_timeline\` (pathway eu_cta) returns EU review-clock goals as planning anchors; the EU application follows the EU clinical trials skill.
+3. Feasibility from evidence: \`assess_trial_feasibility\` returns completion and discontinuation rates of comparable trials, realised enrollment of completed comparators and active competing trials, or says evidence is insufficient. \`search_clinical_evidence\` and \`search_eu_ctis\` list competing trials, cited by identifier. Report counts as returned.
+4. Site feasibility: a questionnaire and, where needed, a qualification visit establish patients meeting the key criteria (from site records, not impressions), competing studies, staff, facilities, ethics timelines and past performance.
+5. Enrollment: \`forecast_enrollment\` gives time to target from per-site rates and activation times the sponsor supplies; on a protocol with a bound design, \`review_enrollment_forecast\` reads the site accrual plan by country. Never supply or assume a site rate.
+6. Investigator qualification (ICH E6(R3) Annex 1 §2.1 and §2.2; sponsor's investigator selection §3.7): a current CV and licence, GCP and protocol training, adequate time, staff and facilities, and access to the population. Under a US IND the sponsor obtains what 21 CFR 312.53 lists; for a device study, 21 CFR 812.43.
+7. Screening: \`screen_restricted_party\` checks a name against the SAM.gov exclusions list only, and needs the organization's connector. FDA's debarment list and its records of disqualified or restricted clinical investigators are checked separately; an empty SAM.gov result covers that list alone.
+8. What the investigator signs or supplies:
+   - US IND: Form FDA 1572, the Statement of Investigator. \`prepare_fda_form\` (form FDA_1572) drafts it from the investigator, facility, laboratory, IRB and sub-investigator details the person gives. How a non-US site handles the 1572 is confirmed with FDA's guidance on the form via \`lookup_fda_guidance\`.
+   - Financial disclosure: collected from each investigator before participation; in the marketing application the sponsor certifies on Form FDA 3454 or discloses on Form FDA 3455 (21 CFR Part 54), which \`prepare_fda_form\` also drafts.
+   - Device IDE: a signed investigator agreement (21 CFR 812.43) instead of a 1572.
+   - Everywhere: the clinical trial agreement and budget (Annex 1 §3.6 and §3.5) and the protocol signature page; in the EU, investigator and site suitability documents go in the Part II dossier.
+9. Ethics review: open the IRB submission with \`create_irb_submission\` and, for a single-IRB multi-site study, add each site with \`add_irb_site\`. Whether single-IRB review is required depends on funding and regulation; confirm it.
+10. A site is activated only when approvals, signed documents, training and supplies are in place (records: GCP operations skill).
+
+## Pitfalls reviewers raise
+- A standard of care that does not match the comparator, or a population unlike the intended users.
+- Forecasts built on unverified site estimates.
+- A 1572 that omits a sub-investigator, laboratory or IRB actually used.
+- Financial disclosure gathered at the application rather than before participation.
+
+## Before answering
+- Feasibility figures and forecasts are engine outputs with their inputs stated.
+- Each signed document is named with the regulation requiring it and its market.
+
+## Not AnA's to decide
+- Country, site and investigator selection are the sponsor's; ethics committees and regulators approve.
+- AnA does not sign or certify a form, and never fills a financial interest or qualification the person did not state.
 `,
   }),
 ];

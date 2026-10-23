@@ -115,5 +115,31 @@
   {
     "question": "Which PMA supplement type covers moving final assembly to a new site?",
     "expect": "device.changes-and-postmarket"
+  },
+  {
+    "question": "When does a change to our catheter require a new UDI-DI, and what goes into the GUDID submission?",
+    "expect": "device.udi-and-registration"
+  },
+  {
+    "question": "Do we need FDA establishment registration and device listing for our contract manufacturer, and does our foreign site need a US agent?",
+    "expect": "device.udi-and-registration",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Explain the device identifier and production identifier in unique device identification, and whether reusable instruments need direct marking.",
+    "expect": "device.udi-and-registration"
+  },
+  {
+    "question": "What essential drug delivery outputs should we verify for our autoinjector, and how do we test dose accuracy on aged units?",
+    "expect": "device.combination-and-drug-delivery"
+  },
+  {
+    "question": "How do we bridge from the vial used in phase 2 to the commercial pen injector? Do we need device bridging data?",
+    "expect": "device.combination-and-drug-delivery",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Plan design verification for the device constituent of our on-body injector, including its essential performance requirements.",
+    "expect": "device.combination-and-drug-delivery"
   }
 ]
