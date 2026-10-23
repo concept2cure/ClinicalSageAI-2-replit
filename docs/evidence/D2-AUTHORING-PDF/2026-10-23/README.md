@@ -5,12 +5,13 @@ W1 / D2. Locally qualified on `concept2cure-v2`, following
 
 ## What already exists
 
-The canonical `server/services/authoring/authoring-export.ts` already creates
-rich DOCX and converts retained company correspondence using strict
-`server/services/pdf-converter.ts`. Ordinary PDFs still use
-`server/export/renderers.ts`, whose optional Chromium lane can fall back to a
+Before this completion, the canonical
+`server/services/authoring/authoring-export.ts` already created rich DOCX and
+converted retained company correspondence using strict
+`server/services/pdf-converter.ts`. Ordinary PDFs used
+`server/export/renderers.ts`, whose optional Chromium lane could fall back to a
 labelled text PDF. `server/services/authoring/authoring-file-to-vault.ts`
-correctly refuses that fallback, so the installed Word converter does not yet
+correctly refused that fallback, so the installed Word converter did not yet
 make ordinary PDF filing available. Existing export/working-copy routes and
 their current-source, signature, audit, admission and uncertain-outcome checks
 remain canonical. Existing rich Word blocks own tables, images, captions,
