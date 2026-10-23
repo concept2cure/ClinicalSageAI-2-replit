@@ -1,0 +1,297 @@
+/**
+ * Actual backfill selection, canonical chunk writer and chunk-outcome SQL on
+ * owner-mode PGlite. Fixtures already have catalog rows: the unrelated first
+ * catalog upsert is a refusing mock, not qualified here. No embedding or native
+ * PostgreSQL RLS/pgvector behavior is claimed.
+ */
+import { PGlite } from '@electric-sql/pglite';
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const h = vi.hoisted(() => ({
+  pg: null as PGlite | null,
+  embeddingService: vi.fn(),
+  catalogBuild: vi.fn(),
+  catalogWrite: vi.fn(),
+}));
+const statements: string[] = [];
+
+function database(): PGlite {
+  if (!h.pg) throw new Error('Backfill source-basis test database is not ready');
+  return h.pg;
+}
+
+async function query(sql: string, params: unknown[] = []) {
+  statements.push(sql);
+  const result = await database().query(sql, params);
+  return { rows: result.rows, rowCount: result.rows.length || result.affectedRows || 0 };
+}
+
+vi.mock('../../../db.js', () => ({
+  pool: {
+    query: (sql: string, params?: unknown[]) => query(sql, params),
+    connect: async () => ({ query, release: () => undefined }),
+  },
+}));
+vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: h.embeddingService }));
+vi.mock('../document-catalog.service.js', () => ({
+  buildExtractionOutcome: h.catalogBuild,
+  recordExtractionOutcome: h.catalogWrite,
+}));
+
+import { backfillVaultChunks } from '../document-chunking-backfill.service';
+import { buildPassageContext, type ChunkCoordinate } from '../passage-context-span';
+import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
+
+const ORG = 42;
+const FOREIGN_ORG = 43;
+const PROGRAM = '10000000-0000-4000-8000-000000000042';
+const FOREIGN_PROGRAM = '10000000-0000-4000-8000-000000000043';
+const HASH = 'a'.repeat(64);
+
+interface StoredChunk extends ChunkCoordinate {
+  charStart: number;
+  charEnd: number;
+  pageNumber: number | null;
+  embeddingModel: string | null;
+  tokenCount: number;
+  vectorizedAt: Date | null;
+}
+interface CatalogRow {
+  document_id: string;
+  catalog_status: string;
+  chunk_status: string | null;
+  chunk_count: number | null;
+  chunk_error: string | null;
+  updated_at: Date;
+}
+
+beforeAll(async () => {
+  h.pg = new PGlite();
+  await database().exec(`
+    CREATE TABLE public.regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL);
+    CREATE TABLE public.document_data_dispositions (
+      organization_id integer NOT NULL, program_id uuid NOT NULL,
+      vault_document_id uuid, linked_ids jsonb NOT NULL DEFAULT '{}', source_sha256 text
+    );
+    CREATE SCHEMA vault;
+    CREATE TABLE vault.documents (
+      id uuid PRIMARY KEY, program_id uuid NOT NULL REFERENCES public.regulatory_programs(id),
+      content_hash text NOT NULL, extracted_text text, file_name text, page_count integer,
+      deleted_at timestamptz, created_at timestamptz NOT NULL
+    );
+    CREATE TABLE vault.document_catalog (
+      document_id uuid PRIMARY KEY REFERENCES vault.documents(id), catalog_status text NOT NULL,
+      chunk_status text, chunk_count integer, chunk_error text,
+      updated_at timestamptz NOT NULL DEFAULT '2026-01-01T00:00:00Z'
+    );
+    CREATE TABLE vault.document_chunks (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      document_id uuid NOT NULL REFERENCES vault.documents(id), chunk_index integer NOT NULL,
+      chunk_text text NOT NULL, char_start integer NOT NULL, char_end integer NOT NULL,
+      page_number integer, embedding_model text, token_count integer NOT NULL, vectorized_at timestamptz,
+      UNIQUE (document_id, chunk_index)
+    );
+  `);
+  await database().query('INSERT INTO public.regulatory_programs VALUES ($1,$2),($3,$4)',
+    [PROGRAM, ORG, FOREIGN_PROGRAM, FOREIGN_ORG]);
+});
+
+beforeEach(async () => {
+  // tenant-isolation-safe: isolated owner-mode fixture contains only the two organizations declared above.
+  await database().exec('TRUNCATE vault.document_chunks, vault.document_catalog, vault.documents, public.document_data_dispositions');
+  statements.length = 0;
+  h.embeddingService.mockReset();
+  h.embeddingService.mockImplementation(() => { throw new Error('Embedding must stay off'); });
+  h.catalogBuild.mockReset();
+  h.catalogBuild.mockImplementation(() => { throw new Error('Fixture unexpectedly lacks its catalog row'); });
+  h.catalogWrite.mockReset();
+  h.catalogWrite.mockImplementation(() => { throw new Error('First catalog upsert is outside this fixture'); });
+});
+afterAll(async () => { await h.pg?.close(); });
+
+async function seed(text: string | null, options: {
+  program?: string; catalogStatus?: string; chunkStatus?: string;
+  created?: string; deleted?: boolean;
+} = {}): Promise<string> {
+  const id = randomUUID();
+  // tenant-isolation-safe: exact new fixture UUID and one explicitly chosen fixture-owned program.
+  await database().query(`INSERT INTO vault.documents
+    (id,program_id,content_hash,extracted_text,file_name,page_count,created_at,deleted_at)
+    VALUES ($1,$2,$3,$4,'study.pdf',8,$5,$6)`,
+  [id, options.program ?? PROGRAM, HASH, text, options.created ?? '2026-01-01T00:00:00Z',
+    options.deleted ? '2026-02-01T00:00:00Z' : null]);
+  // tenant-isolation-safe: catalog belongs to the exact parent inserted immediately above.
+  await database().query(`INSERT INTO vault.document_catalog
+    (document_id,catalog_status,chunk_status,chunk_count) VALUES ($1,$2,$3,$4)`,
+  [id, options.catalogStatus ?? 'extracted', options.chunkStatus ?? null,
+    options.chunkStatus === 'chunked' ? 1 : null]);
+  return id;
+}
+
+async function source(id: string): Promise<string | null> {
+  // tenant-isolation-safe: exact ID returned by this isolated fixture's seed helper.
+  const result = await database().query<{ extracted_text: string | null }>(
+    'SELECT extracted_text FROM vault.documents WHERE id=$1', [id]);
+  return result.rows[0].extracted_text;
+}
+
+async function chunks(id: string): Promise<StoredChunk[]> {
+  // tenant-isolation-safe: exact parent ID returned by this isolated fixture's seed helper.
+  const result = await database().query<StoredChunk>(`SELECT id,chunk_index AS "chunkIndex",chunk_text AS text,
+    char_start AS "charStart",char_end AS "charEnd",page_number AS "pageNumber",
+    embedding_model AS "embeddingModel",token_count AS "tokenCount",vectorized_at AS "vectorizedAt"
+    FROM vault.document_chunks WHERE document_id=$1 ORDER BY chunk_index`, [id]);
+  return result.rows;
+}
+
+async function catalog(id: string): Promise<CatalogRow> {
+  // tenant-isolation-safe: exact parent ID returned by this isolated fixture's seed helper.
+  const result = await database().query<CatalogRow>(
+    'SELECT * FROM vault.document_catalog WHERE document_id=$1', [id]);
+  return result.rows[0];
+}
+
+function verifySource(id: string, text: string, stored: StoredChunk[]) {
+  expect(stored.length).toBeGreaterThan(0);
+  expect(stored[0].charStart).toBe(0);
+  expect(stored[stored.length - 1].charEnd).toBe(text.length);
+  for (const chunk of stored) {
+    expect(chunk.text).toBe(text.slice(chunk.charStart, chunk.charEnd));
+    expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chunk.text);
+    expect(chunk).toMatchObject({ pageNumber: null, embeddingModel: null, vectorizedAt: null });
+    expect(chunk.tokenCount).toBe(Math.ceil(chunk.text.length / 4));
+    const result = buildPassageContext({
+      documentId: id, contentHash: HASH, extractedText: text,
+      hit: { chunkId: chunk.id, chunkIndex: chunk.chunkIndex }, chunks: stored,
+    });
+    expect(result.context.status).toBe('available');
+    if (result.context.status !== 'available') throw new Error(JSON.stringify(result.context));
+    const { reference } = result.context;
+    expect(reference.span.totalChars).toBe(text.length);
+    expect(result.context.text).toBe(text.slice(reference.span.start, reference.span.end));
+    expect(reference).toEqual({ documentId: id, contentHash: HASH, span: reference.span,
+      ...draftSourceIdentityForText(text, reference.span) });
+    expect(result.hitSpan).toEqual({ start: chunk.charStart, end: chunk.charEnd });
+  }
+}
+
+const apply = () => backfillVaultChunks(ORG, { apply: true, embed: false });
+
+describe('applied backfill preserves the actual stored source through SQL and verification', () => {
+  it('retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span', async () => {
+    const text = '\r\n\ufeff \u00a0診断感度 94% — β 🧬 𠮷.\r\n\t ';
+    const id = await seed(text);
+    expect(await source(id)).toBe(text);
+    expect(await apply()).toMatchObject({ examined: 1, indexed: 1, chunksWritten: 1, failed: [], skipped: [] });
+    expect(await source(id)).toBe(text);
+    verifySource(id, text, await chunks(id));
+    expect(await catalog(id)).toMatchObject({ chunk_status: 'chunked', chunk_count: 1, chunk_error: null });
+    expect(h.embeddingService).not.toHaveBeenCalled();
+    expect(h.catalogWrite).not.toHaveBeenCalled();
+  });
+
+  it('preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks', async () => {
+    const text = '\r\n\ufeff \u00a0' + 'a'.repeat(3994) + '🧬' + 'z'.repeat(5000) + '\r\n\t';
+    const id = await seed(text);
+    expect(await source(id)).toBe(text);
+    const report = await apply();
+    const stored = await chunks(id);
+    expect(report).toMatchObject({ indexed: 1, chunksWritten: stored.length, failed: [] });
+    expect(stored.length).toBeGreaterThan(1);
+    expect(await source(id)).toBe(text);
+    verifySource(id, text, stored);
+  });
+
+  it('retains unchanged plain text, keyless metadata and the real chunk ledger', async () => {
+    const text = 'The prespecified endpoint assessment recorded 42 responders.';
+    const id = await seed(text);
+    expect(await apply()).toMatchObject({ indexed: 1, chunksWritten: 1 });
+    verifySource(id, text, await chunks(id));
+    expect(await catalog(id)).toMatchObject({ chunk_status: 'chunked', chunk_count: 1, chunk_error: null });
+    expect(h.embeddingService).not.toHaveBeenCalled();
+  });
+});
+
+describe('source preservation keeps the existing sweep controls', () => {
+  it('a dry run changes neither chunks, source nor catalog and asks no embedding provider', async () => {
+    const text = '\r\n\ufeff   Medical device study.\r\n';
+    const id = await seed(text);
+    expect(await source(id)).toBe(text);
+    const before = await catalog(id);
+    expect(await backfillVaultChunks(ORG, { embed: false })).toMatchObject({
+      dryRun: true, examined: 1, indexed: 0, chunksWritten: 0, skipped: [], failed: [],
+    });
+    expect(await chunks(id)).toEqual([]);
+    expect(await source(id)).toBe(text);
+    expect(await catalog(id)).toEqual(before);
+    expect(statements.some(sql => /^BEGIN|INSERT INTO vault\.document_chunks|UPDATE vault\.document_catalog/.test(sql))).toBe(false);
+    expect(h.embeddingService).not.toHaveBeenCalled();
+  });
+
+  it('NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write', async () => {
+    const missing = await seed(null);
+    const empty = await seed('', { catalogStatus: 'extraction_failed' });
+    const blank = await seed('\r\n\ufeff \t\r\n\u00a0');
+    const report = await apply();
+    expect(report).toMatchObject({ examined: 3, indexed: 0, chunksWritten: 0, failed: [] });
+    expect(report.skipped).toHaveLength(3);
+    expect(report.skipped.find(s => s.documentId === missing)?.reason).toContain('No extracted text');
+    expect(report.skipped.find(s => s.documentId === empty)?.reason).toContain('Extraction failed');
+    for (const id of [missing, empty, blank]) {
+      expect(await chunks(id)).toEqual([]);
+      expect(await catalog(id)).toMatchObject({ chunk_status: null, chunk_count: null });
+    }
+    expect(h.catalogBuild).not.toHaveBeenCalled();
+    expect(h.catalogWrite).not.toHaveBeenCalled();
+    expect(h.embeddingService).not.toHaveBeenCalled();
+  });
+
+  it('uses the bounded oldest-first candidate set, then resumes without reindexing completed rows', async () => {
+    const older = await seed('Earlier study.', { created: '2025-01-01T00:00:00Z' });
+    const newer = await seed('Later study.', { created: '2026-01-01T00:00:00Z' });
+    expect(await backfillVaultChunks(ORG, { apply: true, embed: false, limit: 1 }))
+      .toMatchObject({ examined: 1, indexed: 1 });
+    const original = await chunks(older);
+    expect(original).toHaveLength(1);
+    expect(await chunks(newer)).toEqual([]);
+    expect(await apply()).toMatchObject({ examined: 1, indexed: 1 });
+    expect(await chunks(older)).toEqual(original);
+    expect(await chunks(newer)).toHaveLength(1);
+    expect(await apply()).toMatchObject({ examined: 0, indexed: 0, chunksWritten: 0 });
+  });
+
+  it('does not silently repair an already-chunked historical trimmed-basis row', async () => {
+    const text = '\r\n   Historical study text.\n';
+    const id = await seed(text, { chunkStatus: 'chunked' });
+    // tenant-isolation-safe: intentionally misaligned legacy chunk on this fixture's exact seeded parent.
+    await database().query(`INSERT INTO vault.document_chunks
+      (document_id,chunk_index,chunk_text,char_start,char_end,token_count)
+      VALUES ($1,0,$2,0,$3,6)`, [id, text.trim(), text.trim().length]);
+    const before = await chunks(id);
+    expect(await apply()).toMatchObject({ examined: 0, indexed: 0, chunksWritten: 0 });
+    expect(await chunks(id)).toEqual(before);
+    const result = buildPassageContext({ documentId: id, contentHash: HASH, extractedText: text,
+      hit: { chunkId: before[0].id, chunkIndex: 0 }, chunks: before });
+    expect(result.context).toEqual({ status: 'unavailable', reason: 'basis_mismatch' });
+  });
+
+  it('selects only the requested organization and excludes a deleted document through real SQL', async () => {
+    const own = await seed('Current owned study.');
+    const foreign = await seed('Foreign study.', { program: FOREIGN_PROGRAM });
+    const deleted = await seed('Deleted study.', { deleted: true });
+    expect(await apply()).toMatchObject({ examined: 1, indexed: 1, chunksWritten: 1 });
+    expect(await chunks(own)).toHaveLength(1);
+    expect(await chunks(foreign)).toEqual([]);
+    expect(await chunks(deleted)).toEqual([]);
+  });
+
+  it('retries a previously failed candidate only when the existing retry flag is supplied', async () => {
+    const id = await seed('Retryable study text.', { chunkStatus: 'chunk_failed' });
+    expect(await apply()).toMatchObject({ examined: 0, indexed: 0 });
+    expect(await chunks(id)).toEqual([]);
+    expect(await backfillVaultChunks(ORG, { apply: true, embed: false, retryFailed: true }))
+      .toMatchObject({ examined: 1, indexed: 1, chunksWritten: 1 });
+    expect(await catalog(id)).toMatchObject({ chunk_status: 'chunked', chunk_count: 1, chunk_error: null });
+  });
+});

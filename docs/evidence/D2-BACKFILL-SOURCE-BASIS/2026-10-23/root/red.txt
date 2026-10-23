@@ -1,0 +1,927 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span
+{
+  "timestamp": "2026-10-23T19:42:55.953Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks
+{
+  "timestamp": "2026-10-23T19:42:55.973Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger
+{
+  "timestamp": "2026-10-23T19:42:55.986Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider
+{
+  "timestamp": "2026-10-23T19:42:55.998Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write
+{
+  "timestamp": "2026-10-23T19:42:56.010Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 3,
+    "indexed": 0,
+    "skipped": 3,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:42:56.025Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:42:56.032Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:42:56.035Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span 26ms
+   → expected '\r\n  診断感度 94% — β 🧬 𠮷.\r\n\t ' to be '\ufeff\r\n  診断感度 94% — β 🧬 𠮷.\r\n\t ' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks 15ms
+   → expected '\r\n  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be '\ufeff\r\n  aaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger 13ms
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider 10ms
+   → expected '\r\n   Medical device study.\r\n' to be '\ufeff\r\n   Medical device study.\r\n' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write 14ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row
+{
+  "timestamp": "2026-10-23T19:42:56.042Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL
+{
+  "timestamp": "2026-10-23T19:42:56.056Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:42:56.067Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:42:56.076Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows 21ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row 8ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL 16ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied 18ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:42:56.762Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant
+{
+  "timestamp": "2026-10-23T19:42:56.772Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:42:56.778Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider
+{
+  "timestamp": "2026-10-23T19:42:56.780Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set
+{
+  "timestamp": "2026-10-23T19:42:56.781Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing
+{
+  "timestamp": "2026-10-23T19:42:56.782Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS 18ms
+   → expected { examined: 1, indexed: 1, …(4) } to match object { examined: 1, indexed: +0, …(2) }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant 3ms
+   → expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS 5ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set 1ms
+ × server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing 2ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly
+{
+  "timestamp": "2026-10-23T19:42:57.327Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly
+{
+  "timestamp": "2026-10-23T19:42:57.336Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly
+{
+  "timestamp": "2026-10-23T19:42:57.339Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly
+{
+  "timestamp": "2026-10-23T19:42:57.340Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention
+{
+  "timestamp": "2026-10-23T19:42:57.341Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged
+{
+  "timestamp": "2026-10-23T19:42:57.343Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.345Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.345Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.346Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.346Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.347Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.347Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.348Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:42:57.348Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction
+{
+  "timestamp": "2026-10-23T19:42:57.348Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run
+{
+  "timestamp": "2026-10-23T19:42:57.349Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly 11ms
+   → expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "  	Sensitivity was 94% in the prespecified population.",
++     "text": "Sensitivity was 94% in the prespecified population.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly 2ms
+   → expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "The device met the acceptance criterion. 
+- 	",
++     "text": "The device met the acceptance criterion.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly 1ms
+   → expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "﻿
+-   Lot 23-104 met specification.
+- ",
++     "text": "Lot 23-104 met specification.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly 1ms
+   → expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": " 　診断試験の報告 𠮷 🧬 β　 ",
++     "text": "診断試験の報告 𠮷 🧬 β",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention 3ms
+   → expected [ { …(2) } ] to deeply equal [ { …(2) } ]
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span
+AssertionError: expected '\r\n  診断感度 94% — β 🧬 𠮷.\r\n\t ' to be '\ufeff\r\n  診断感度 94% — β 🧬 𠮷.\r\n\t ' // Object.is equality
+
+- Expected
++ Received
+
+- ﻿
++ 
+    診断感度 94% — β 🧬 𠮷.
+  	 
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts:186:30
+    184|     const id = await seed(text);
+    185|     expect(await apply()).toMatchObject({ examined: 1, indexed: 1, chu…
+    186|     expect(await source(id)).toBe(text);
+       |                              ^
+    187|     verifySource(id, text, await chunks(id));
+    188|     expect(await catalog(id)).toMatchObject({ chunk_status: 'chunked',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks
+AssertionError: expected '\r\n  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be '\ufeff\r\n  aaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+
+- Expected
++ Received
+
+- ﻿
++ 
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa🧬zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  	
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts:200:30
+    198|     expect(report).toMatchObject({ indexed: 1, chunksWritten: stored.l…
+    199|     expect(stored.length).toBeGreaterThan(1);
+    200|     expect(await source(id)).toBe(text);
+       |                              ^
+    201|     verifySource(id, text, stored);
+    202|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider
+AssertionError: expected '\r\n   Medical device study.\r\n' to be '\ufeff\r\n   Medical device study.\r\n' // Object.is equality
+
+- Expected
++ Received
+
+- ﻿
++ 
+     Medical device study.
+
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts:223:30
+    221|     });
+    222|     expect(await chunks(id)).toEqual([]);
+    223|     expect(await source(id)).toBe(text);
+       |                              ^
+    224|     expect(await catalog(id)).toEqual(before);
+    225|     expect(statements.some(sql => /^BEGIN|INSERT INTO vault\.document_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "  	Sensitivity was 94% in the prespecified population.",
++     "text": "Sensitivity was 94% in the prespecified population.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts:73:21
+     71|       apply: true, embed: false, exec: execWith([row(source)]),
+     72|     });
+     73|     expect(h.chunk).toHaveBeenCalledExactlyOnceWith({
+       |                     ^
+     74|       documentId: DOC, organizationId: ORG, text: source, embed: false,
+     75|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "The device met the acceptance criterion. 
+- 	",
++     "text": "The device met the acceptance criterion.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts:73:21
+     71|       apply: true, embed: false, exec: execWith([row(source)]),
+     72|     });
+     73|     expect(h.chunk).toHaveBeenCalledExactlyOnceWith({
+       |                     ^
+     74|       documentId: DOC, organizationId: ORG, text: source, embed: false,
+     75|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": "﻿
+-   Lot 23-104 met specification.
+- ",
++     "text": "Lot 23-104 met specification.",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts:73:21
+     71|       apply: true, embed: false, exec: execWith([row(source)]),
+     72|     });
+     73|     expect(h.chunk).toHaveBeenCalledExactlyOnceWith({
+       |                     ^
+     74|       documentId: DOC, organizationId: ORG, text: source, embed: false,
+     75|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "documentId": "20000000-0000-4000-8000-000000000042",
+      "embed": false,
+      "organizationId": 42,
+-     "text": " 　診断試験の報告 𠮷 🧬 β　 ",
++     "text": "診断試験の報告 𠮷 🧬 β",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts:73:21
+     71|       apply: true, embed: false, exec: execWith([row(source)]),
+     72|     });
+     73|     expect(h.chunk).toHaveBeenCalledExactlyOnceWith({
+       |                     ^
+     74|       documentId: DOC, organizationId: ORG, text: source, embed: false,
+     75|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention
+AssertionError: expected [ { …(2) } ] to deeply equal [ { …(2) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "method": "stored_at_ingest",
+-     "text": "﻿
+-   Approved diagnostic endpoint β 🧬. 
+- ",
++     "text": "Approved diagnostic endpoint β 🧬.",
+    },
+  ]
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts:89:29
+     87|     const exec = execWith([row(source, { uncatalogued: true, catalog_s…
+     88|     await backfillVaultChunks(ORG, { apply: true, embed: false, exec }…
+     89|     expect(h.builderInputs).toEqual([{ text: source, method: 'stored_a…
+       |                             ^
+     90|     expect(h.extractionOutcome).toHaveBeenCalledExactlyOnceWith(exec, {
+     91|       documentId: DOC, contentHash: HASH, pageCount: 7,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS
+AssertionError: expected { examined: 1, indexed: 1, …(4) } to match object { examined: 1, indexed: +0, …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chunksWritten": 0,
++   "chunksWritten": 500,
+    "examined": 1,
+-   "indexed": 0,
++   "indexed": 1,
+    "skipped": [],
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts:90:20
+     88|     candidate(raw);
+     89|     const report = await backfillVaultChunks(ORG, { apply: true, embed…
+     90|     expect(report).toMatchObject({ examined: 1, indexed: 0, chunksWrit…
+       |                    ^
+     91|     expect(report.failed).toHaveLength(1);
+     92|     expect(report.failed[0]).toMatchObject({ documentId: DOC, fileName…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "model": "text-embedding-3-small",
+      "tenantId": "42",
+      "texts": [
+-       "﻿
+-   Diagnostic sensitivity β 🧬 94% 日本語。
+- 	",
++       "Diagnostic sensitivity β 🧬 94% 日本語。",
+      ],
+    },
+  ]
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts:105:30
+    103|     candidate(TEXT);
+    104|     const report = await backfillVaultChunks(ORG, { apply: true, embed…
+    105|     expect(h.embeddingCalls).toEqual([{
+       |                              ^
+    106|       texts: [TEXT], model: 'text-embedding-3-small', tenantId: String…
+    107|     }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "﻿
+-   Diagnostic sensitivity β 🧬 94% 日本語。
+- 	",
++   "Diagnostic sensitivity β 🧬 94% 日本語。",
+  ]
+
+ ❯ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts:161:39
+    159|     const report = await backfillVaultChunks(ORG, { apply: true, embed…
+    160|     expect(report).toMatchObject({ indexed: 1, chunksWritten: 1, faile…
+    161|     expect(h.embeddingCalls[0].texts).toEqual([TEXT]);
+       |                                       ^
+    162|     const insert = requiredCall('INSERT INTO vault.document_chunks');
+    163|     expect(insert.params.slice(2, 7)).toEqual([TEXT, 0, TEXT.length, n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  11 failed | 16 passed (27)
+   Start at  19:42:52
+   Duration  4.98s (transform 1.05s, setup 107ms, import 2.16s, tests 2.17s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-BACKFILL-SOURCE-BASIS/2026-10-23/root/red.results.json
