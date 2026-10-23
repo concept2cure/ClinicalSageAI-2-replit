@@ -27,9 +27,11 @@ Baseline: `526e86cba` on canonical `concept2cure-v2`. Evidence:
   ownership needs a visible refusal and no number-recording offer.
 - Compile, export, orchestrator, sequence binding, current release coverage,
   transmit, and company-document identity/correspondence consume the canonical
-  submission reader. AnA's project-only packaging path already requires a
-  recognized home market. No parallel resolver or caller-specific fallback is
-  needed. The prior non-US identity completion is already canonical.
+  submission reader. AnA's project-only packaging path in
+  `server/services/ana/AnaToolExecutor.ts` also uses `isHomeMarket`: the old
+  fallback let an unknown home agency pass, and a strict comparison alone
+  would mislabel unresolved ownership as another market. Its existing refusal
+  must explain the unresolved agency. No parallel resolver is needed. The prior non-US identity completion is already canonical.
 - Existing PGlite reader/export and real chained-writer tests, route tests and
   `marketApplicationNumber.test.tsx` cover the reachable paths. P-44's evidence
   explicitly hands on the unknown-region home fallback. EMA slash handling is
@@ -46,10 +48,11 @@ Baseline: `526e86cba` on canonical `concept2cure-v2`. Evidence:
 2. The existing submission reader returns no application number when the
    effective package region or project's home agency is unresolved. A known
    non-home region also requires the submission's own recognized matching
-   region to read its market number. An explicit known sequence region can
-   still prove the home market even if the submission's primary region is bad.
-   Omitted/null override retains the existing submission-region semantics;
-   an explicit empty or unknown override never falls back.
+   region to read its market number. An unanchored record also carries its existing anchor
+   remedy through this diagnosis, rather than being labelled home. An explicit
+   known sequence region can still prove the home market even if the submission's primary region is bad.
+   Only an omitted/undefined override uses the submission region; explicit
+   null, empty or unknown overrides never fall back.
 3. Unresolved ownership carries an additive runtime-only reason through the
    existing refusal and market-number read. The existing Submit row shows it
    and offers no number form. It must not say the project lacks a number or

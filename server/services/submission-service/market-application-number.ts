@@ -17,8 +17,8 @@
  * with no project (UNANCHORED_SUBMISSION), a home-market submission, whose
  * number is the project's (INVALID_STATE), an unusable number (VALIDATION),
  * and a change to a number a frozen or dispatched sequence of this submission
- * was built under (INVALID_STATE; security review, 2026-10-22: for a non-US
- * market no release signature covers the number, so nothing else would notice).
+ * was built under (INVALID_STATE). Unrecognized market/home-agency records
+ * are refused rather than guessed to be the home market.
  * The audit row carries the project id, so the project's activity feed shows it.
  *
  * @module server/services/submission-service/market-application-number
@@ -26,7 +26,7 @@
 import { pool } from '../../db';
 import { writeChainedAuditRow } from '../auditService';
 import { canMutateProgram } from '../c2c/program-access';
-import { isHomeMarket, readSubmissionPackageIdentity } from '../ectd/package-identity';
+import { isHomeMarket, readSubmissionPackageIdentity, type PackageIdentityQueryable } from '../ectd/package-identity';
 import { fdaIdentifierProblems, usableIdentifier } from '../ectd/regulatory-identifiers';
 import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 import { SubmissionError, getSubmission } from './submission-service';
@@ -42,15 +42,18 @@ export interface MarketNumberRecorded {
   changed: boolean;
 }
 
-/** The submission's market and its project's gate, or the refusal. */
-async function marketOf(submissionId: number, ctx: MarketNumberContext): Promise<{ market: string; programId: string }> {
-  const submission = await getSubmission(submissionId, ctx);
+/** Read the market and authority after locking the submission, then its project. */
+async function marketOf(
+  submission: { programId: string | null; primaryRegion: string },
+  ctx: MarketNumberContext,
+  client: PackageIdentityQueryable,
+): Promise<{ market: string; programId: string }> {
   if (!submission.programId) {
     throw new SubmissionError('UNANCHORED_SUBMISSION',
       'This submission is not anchored to a project, so it has no market of a project to number. Anchor it first. Nothing was changed.');
   }
-  const program = (await pool.query(
-    `SELECT primary_agency, lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+  const program = (await client.query(
+    `SELECT primary_agency, lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE`,
     [submission.programId, ctx.organizationId],
   )).rows[0] as { primary_agency?: unknown; lead_user_id?: unknown } | undefined;
   if (!program) throw new SubmissionError('NOT_FOUND', 'Project not found for this organization. Nothing was changed.');
@@ -59,12 +62,21 @@ async function marketOf(submissionId: number, ctx: MarketNumberContext): Promise
     throw new SubmissionError('FORBIDDEN',
       "Only the project's lead or an organization manager can record a market's application number. Nothing was changed.");
   }
+  const market = canonicalRegionOf(submission.primaryRegion);
+  if (!market) {
+    throw new SubmissionError('INVALID_STATE',
+      "This submission's market is not recognized. Correct its primary region before recording an application number. Nothing was changed.");
+  }
+  if (!canonicalRegionOf(typeof program.primary_agency === 'string' ? program.primary_agency : null)) {
+    throw new SubmissionError('INVALID_STATE',
+      "The project's primary agency is not recognized. Correct it before recording a market's application number. Nothing was changed.");
+  }
   if (isHomeMarket(submission.primaryRegion, program.primary_agency)) {
     throw new SubmissionError('INVALID_STATE',
       `This submission is the project's home market (${String(program.primary_agency)}), so its application number is the ` +
       "project's, recorded on the project. A number is recorded on a submission only for another market (P-44). Nothing was changed.");
   }
-  return { market: canonicalRegionOf(submission.primaryRegion) as string, programId: submission.programId };
+  return { market, programId: submission.programId };
 }
 
 /** The number as the market's agency holds it, or the refusal that names why not. */
@@ -100,17 +112,18 @@ export async function recordMarketApplicationNumber(
   input: { submissionId: number; applicationNumber: string; reason: string; ipAddress?: string | null; userAgent?: string | null },
   ctx: MarketNumberContext,
 ): Promise<MarketNumberRecorded> {
-  const { market, programId } = await marketOf(input.submissionId, ctx);
-  const number = usableMarketNumber(input.applicationNumber, market);
+  await getSubmission(input.submissionId, ctx);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const row = (await client.query(
-      `SELECT to_jsonb(s)->>'application_number' AS previous FROM submissions s
+      `SELECT program_id, primary_region, to_jsonb(s)->>'application_number' AS previous FROM submissions s
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
       [input.submissionId, ctx.organizationId],
-    )).rows[0] as { previous?: string | null } | undefined;
+    )).rows[0] as { program_id: string | null; primary_region: string; previous?: string | null } | undefined;
     if (!row) throw new SubmissionError('NOT_FOUND', 'Submission not found for this organization.');
+    const { market, programId } = await marketOf({ programId: row.program_id, primaryRegion: row.primary_region }, ctx, client);
+    const number = usableMarketNumber(input.applicationNumber, market);
     const previous = row.previous ?? null;
     if (previous === number) {
       await client.query('COMMIT');
@@ -158,6 +171,8 @@ export interface MarketNumberRead {
   homeAgency: string | null;
   /** The number its packages carry: the project's for the home market, else the submission's own, or null. */
   applicationNumber: string | null;
+  /** Ownership could not be resolved; no number may be recorded until corrected. */
+  unresolvedReason: string | null;
   /** Who recorded the market's number, when and why (the newest audit row); null when none is on record. */
   lastRecorded: { by: string | null; at: string; reason: string | null } | null;
 }
@@ -183,10 +198,11 @@ export async function readMarketApplicationNumber(submissionId: number, ctx: { o
   const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submissionId);
   return {
     submissionId,
-    home: !identity.market,
+    home: !identity.market && !identity.marketResolutionProblem,
     market: identity.market?.region ?? null,
     homeAgency: identity.homeAgency ?? null,
     applicationNumber: identity.applicationNumber,
-    lastRecorded: identity.market ? await lastRecording(ctx.organizationId, submissionId) : null,
+    unresolvedReason: identity.marketResolutionProblem ?? null,
+    lastRecorded: identity.market && !identity.marketResolutionProblem ? await lastRecording(ctx.organizationId, submissionId) : null,
   };
 }

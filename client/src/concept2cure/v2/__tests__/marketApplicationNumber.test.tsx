@@ -112,3 +112,59 @@ describe("a market's own application number on its row (P-44)", () => {
     expect((await screen.findByRole('alert')).textContent).toMatch(/could not be read/);
   });
 });
+
+describe('unresolved market ownership on the existing number row', () => {
+  it.each([false, true])('shows unresolved ownership instead of a number or record form, even when home is %s', async (home) => {
+    const unresolvedReason = "The project's primary agency is not recognized. Correct it before recording a market number or packaging.";
+    // An inconsistent response must not turn the project number into this
+    // market's number or hide the server's refusal as a home-market read.
+    read = { ...read, home, market: null, unresolvedReason };
+    stored = '214321';
+    render(<MarketApplicationNumber submissionId={2} />);
+    expect((await screen.findByRole('alert')).textContent).toBe(unresolvedReason);
+    expect(screen.queryByText(/214321/)).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+
+  it.each([
+    { label: 'number', unresolvedReason: 42 },
+    { label: 'boolean', unresolvedReason: false },
+    { label: 'object', unresolvedReason: {} },
+    { label: 'array', unresolvedReason: [] },
+    { label: 'empty string', unresolvedReason: '' },
+    { label: 'blank string', unresolvedReason: '   ' },
+  ])('an invalid unresolved reason ($label) fails the read and offers no record act', async ({ unresolvedReason }) => {
+    read = { ...read, unresolvedReason };
+    render(<MarketApplicationNumber submissionId={2} />);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/could not be read/);
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('a null unresolved reason keeps the existing governed recording form available', async () => {
+    read = { ...read, unresolvedReason: null };
+    render(<MarketApplicationNumber submissionId={2} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Record the number' }));
+    expect(screen.getByRole('dialog').textContent).toMatch(/Record the application number/);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('an unresolved reread removes an already-open form and shows the current refusal', async () => {
+    const { rerender } = render(<MarketApplicationNumber submissionId={2} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Record the number' }));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    const unresolvedReason = 'This submission has no recognized market. Correct its region before recording an application number.';
+    apiRequest.mockImplementation(async () => ok({
+      submissionId: 3, home: false, market: null, homeAgency: 'FDA',
+      applicationNumber: null, unresolvedReason,
+    }));
+    rerender(<MarketApplicationNumber submissionId={3} />);
+    expect((await screen.findByRole('alert')).textContent).toBe(unresolvedReason);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+
+});

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says an added market's packages are refused until its number is recorded, and records it with a reason 316ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says what recording does before it is done, and who recorded the number, when and why 66ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unchanged number is said to be no change, and nothing is re-read 82ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows the server's refusal in its words, inside the form, which keeps what was typed 59ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > draws nothing for the home market, whose number is the project's 23ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is false 8ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is true 9ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('number') fails the read and offers no record act 11ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('boolean') fails the read and offers no record act 8ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('object') fails the read and offers no record act 12ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('array') fails the read and offers no record act 7ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('empty string') fails the read and offers no record act 7ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('blank string') fails the read and offers no record act 10ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a null unresolved reason keeps the existing governed recording form available 24ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unresolved reread removes an already-open form and shows the current refusal 39ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > offers no change to someone who may not change the project, and says who can 4ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a read that failed says so 8ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  18:55:43
+   Duration  2.28s (transform 424ms, setup 272ms, import 518ms, tests 696ms, environment 603ms)
+

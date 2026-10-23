@@ -1,0 +1,183 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:00:14.130Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:00:14.132Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:00:14.132Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number 23ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's 10ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number 32ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built 7ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("not-a-market") never borrows either recorded number 4ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("") never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("   ") never borrows either recorded number 3ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region (null) never borrows either recorded number 3ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number 10ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("") cannot authorize the project or submission number 8ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("   ") cannot authorize the project or submission number 9ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > two identical unknown region strings do not establish home ownership 1ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes 16ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number 9ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number 14ms
+stdout | server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts
+{
+  "timestamp": "2026-10-23T19:00:19.620Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:00:19.623Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts
+{
+  "timestamp": "2026-10-23T19:00:19.623Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts
+{
+  "timestamp": "2026-10-23T19:00:19.980Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses unresolved home agency "not-an-agency" without claiming another market or building bytes 55ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses unresolved home agency "" without claiming another market or building bytes 9ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses unresolved home agency "   " without claiming another market or building bytes 10ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses unresolved home agency null without claiming another market or building bytes 9ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses unresolved home agency undefined without claiming another market or building bytes 8ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses another market's region, and builds nothing 15ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > packages the home market from the record, as before 305ms
+stdout | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+{
+  "timestamp": "2026-10-23T19:00:29.408Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:00:29.409Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+{
+  "timestamp": "2026-10-23T19:00:29.410Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+{
+  "timestamp": "2026-10-23T19:00:30.489Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > takes no application number or applicant from its input, and asks for the project instead 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > writes the recorded application number and applicant, never the model-supplied ones 292ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the project records no application number, and builds nothing 12ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the organisation records no usable applicant name 11ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses missing or invalid recorded FDA identity ('applicantId') before publishing bytes 7ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses missing or invalid recorded FDA identity ('applicantId') before publishing bytes 10ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses missing or invalid recorded FDA identity ('applicationNumber') before publishing bytes 14ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses missing or invalid recorded FDA identity ('contact.phone') before publishing bytes 10ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses a call that names no project, even with model-supplied identity, and reads nothing 10ms
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-10-23T19:00:33.562Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:00:33.563Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-10-23T19:00:33.564Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-10-23T19:00:34.606Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 287ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 8ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 1ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 8ms
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  19:00:06
+   Duration  30.23s (transform 10.79s, setup 171ms, import 24.82s, tests 4.21s, environment 1ms)
+

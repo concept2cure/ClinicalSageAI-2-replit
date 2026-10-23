@@ -1,0 +1,115 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/submission-service/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:54:51.303Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stderr | server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the lead records the EU number on the added market, with the reason and a chained audit row; the package reads it
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 5 shows its reason and records neither a number nor an audit row 26ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 6 shows its reason and records neither a number nor an audit row 9ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 7 shows its reason and records neither a number nor an audit row 8ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 8 shows its reason and records neither a number nor an audit row 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 9 shows its reason and records neither a number nor an audit row 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved read 5 withholds both numbers and explains why 6ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved read 6 withholds both numbers and explains why 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved read 7 withholds both numbers and explains why 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved read 8 withholds both numbers and explains why 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved read 9 withholds both numbers and explains why 5ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the lead records the EU number on the added market, with the reason and a chained audit row; the package reads it 28ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the audit row names the project, so the project's feed shows it; the row's read says who recorded it, when and why 16ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the same number again writes nothing 6ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'the home market' is refused, and nothing is written 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a member who is not the lead' is refused, and nothing is written 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a number with a slash' is refused, and nothing is written 6ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'an FDA number that is not six digits' is refused, and nothing is written 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a submission with no project' is refused, and nothing is written 8ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > a manager may record it, and the FDA rule takes a six-digit number; a frozen sequence does not stop a first recording 18ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > a number a frozen or dispatched sequence was built under is not changed, and nothing is written 17ms
+stdout | tests/regulatory/region-identity.test.ts
+{
+  "timestamp": "2026-10-23T18:54:59.250Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:54:59.252Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/region-identity.test.ts
+{
+  "timestamp": "2026-10-23T18:54:59.252Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/region-identity.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > has 12 regions, each with code matching its key 4ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > maps to the gateway slug vocabulary 1ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > maps to the rule-region vocabulary (subset; undefined elsewhere) 1ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > reverse lookups round-trip 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > agency + language profile agrees with region-profiles for every region 1ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > every region default gateway exists in the live gateway registry 6ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > every region market key (when present) exists in the Module 1 requirements registry 1ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — preserves the legacy submission-resolver values > reproduces the old AGENCY_GATEWAY + AGENCY_MODULE1 literals for US/EU/JP 1ms
+stdout | server/routes/__tests__/submissions-market-number-route.test.ts
+{
+  "timestamp": "2026-10-23T18:55:01.774Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:55:01.776Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-number-route.test.ts
+{
+  "timestamp": "2026-10-23T18:55:01.776Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-market-number-route.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-market-number-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-number-route.test.ts
+{
+  "timestamp": "2026-10-23T18:55:02.325Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > answers the access refusal, and reads no number 40ms
+ ✓ server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > reads the market's number once the read is admitted 22ms
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  18:54:49
+   Duration  18.23s (transform 6.20s, setup 190ms, import 12.99s, tests 4.12s, environment 1ms)
+

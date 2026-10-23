@@ -1,0 +1,1445 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says an added market's packages are refused until its number is recorded, and records it with a reason 358ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says what recording does before it is done, and who recorded the number, when and why 54ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unchanged number is said to be no change, and nothing is re-read 60ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows the server's refusal in its words, inside the form, which keeps what was typed 48ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > draws nothing for the home market, whose number is the project's 24ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is false 5012ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mApplication number ([0m
+      [0mthis[0m
+      [0m market): [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+      [36m>[39m
+        [0m214321[0m
+      [36m</span>[39m
+      [0m.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mChange the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mApplication number ([0m
+      [0mthis[0m
+      [0m market): [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+      [36m>[39m
+        [0m214321[0m
+      [36m</span>[39m
+      [0m.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mChange the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is true 5019ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (42) fails the read and offers no record act 5008ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (false) fails the read and offers no record act 5013ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ({}) fails the read and offers no record act 5004ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (undefined) fails the read and offers no record act 5004ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ("") fails the read and offers no record act 5004ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ("   ") fails the read and offers no record act 5071ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a null unresolved reason keeps the existing governed recording form available 48ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unresolved reread removes an already-open form and shows the current refusal 5066ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mthis[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-bd"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Record the application number"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"de"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-h"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-eye"[39m
+              [36m>[39m
+                [0mthis market[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-t"[39m
+              [36m>[39m
+                [0mRecord the application number[0m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Close"[39m
+              [33mclass[39m=[32m"de-x"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-x"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M18 6 6 18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m6 6 12 12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-label"[39m
+              [36m>[39m
+                [0mApplication number[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-desc"[39m
+              [36m>[39m
+                [0mThe number the this market's agency assigned to this application. Letters, digits, ".", "_" or "-"; a slash is not accepted yet.[0m
+              [36m</div>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"_r_6_-applicationNumber-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-input"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-reason"[39m
+                [33mid[39m=[32m"_r_6_-reason-label"[39m
+              [36m>[39m
+                [0mReason[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-reason-desc"[39m
+              [36m>[39m
+                [0mWhy this number, in at least 8 characters. Recorded with your name and the time.[0m
+              [36m</div>[39m
+              [36m<textarea[39m
+                [33maria-describedby[39m=[32m"_r_6_-reason-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-textarea"[39m
+                [33mid[39m=[32m"_r_6_-reason"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mrows[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-gov"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"de-gov-t"[39m
+              [36m>[39m
+                [0mCompile, export and transmit of this market read this number. A sequence already signed for release reads unsigned until it is signed again over the new number, and a number a frozen or dispatched sequence was built under cannot be changed. Recorded with your name, the time and your reason, beside the old and the new number.[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-f"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn ghost"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mRecord[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mthis[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-bd"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Record the application number"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"de"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-h"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-eye"[39m
+              [36m>[39m
+                [0mthis market[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-t"[39m
+              [36m>[39m
+                [0mRecord the application number[0m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Close"[39m
+              [33mclass[39m=[32m"de-x"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-x"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M18 6 6 18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m6 6 12 12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-label"[39m
+              [36m>[39m
+                [0mApplication number[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-desc"[39m
+              [36m>[39m
+                [0mThe number the this market's agency assigned to this application. Letters, digits, ".", "_" or "-"; a slash is not accepted yet.[0m
+              [36m</div>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"_r_6_-applicationNumber-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-input"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-reason"[39m
+                [33mid[39m=[32m"_r_6_-reason-label"[39m
+              [36m>[39m
+                [0mReason[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-reason-desc"[39m
+              [36m>[39m
+                [0mWhy this number, in at least 8 characters. Recorded with your name and the time.[0m
+              [36m</div>[39m
+              [36m<textarea[39m
+                [33maria-describedby[39m=[32m"_r_6_-reason-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-textarea"[39m
+                [33mid[39m=[32m"_r_6_-reason"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mrows[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-gov"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"de-gov-t"[39m
+              [36m>[39m
+                [0mCompile, export and transmit of this market read this number. A sequence already signed for release reads unsigned until it is signed again over the new number, and a number a frozen or dispatched sequence was built under cannot be changed. Recorded with your name, the time and your reason, beside the old and the new number.[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-f"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn ghost"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mRecord[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > offers no change to someone who may not change the project, and says who can 6ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a read that failed says so 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is false
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mApplication number ([0m
+      [0mthis[0m
+      [0m market): [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+      [36m>[39m
+        [0m214321[0m
+      [36m</span>[39m
+      [0m.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mChange the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mApplication number ([0m
+      [0mthis[0m
+      [0m market): [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+      [36m>[39m
+        [0m214321[0m
+      [36m</span>[39m
+      [0m.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mChange the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx:110:26
+    108|     stored = '214321';
+    109|     render(<MarketApplicationNumber submissionId={2} />);
+    110|     expect((await screen.findByRole('alert')).textContent).toBe(unreso…
+       |                          ^
+    111|     expect(screen.queryByText(/214321/)).toBeNull();
+    112|     expect(screen.queryByRole('button')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is true
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx:110:26
+    108|     stored = '214321';
+    109|     render(<MarketApplicationNumber submissionId={2} />);
+    110|     expect((await screen.findByRole('alert')).textContent).toBe(unreso…
+       |                          ^
+    111|     expect(screen.queryByText(/214321/)).toBeNull();
+    112|     expect(screen.queryByRole('button')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (42) fails the read and offers no record act
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (false) fails the read and offers no record act
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ({}) fails the read and offers no record act
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason (undefined) fails the read and offers no record act
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ("") fails the read and offers no record act
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ("   ") fails the read and offers no record act
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx:120:26
+    118|     read = { ...read, unresolvedReason };
+    119|     render(<MarketApplicationNumber submissionId={2} />);
+    120|     expect((await screen.findByRole('alert')).textContent).toMatch(/co…
+       |                          ^
+    121|     expect(screen.queryByRole('button')).toBeNull();
+    122|     expect(screen.queryByRole('dialog')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unresolved reread removes an already-open form and shows the current refusal
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mthis[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-bd"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Record the application number"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"de"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-h"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-eye"[39m
+              [36m>[39m
+                [0mthis market[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-t"[39m
+              [36m>[39m
+                [0mRecord the application number[0m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Close"[39m
+              [33mclass[39m=[32m"de-x"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-x"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M18 6 6 18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m6 6 12 12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-label"[39m
+              [36m>[39m
+                [0mApplication number[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-desc"[39m
+              [36m>[39m
+                [0mThe number the this market's agency assigned to this application. Letters, digits, ".", "_" or "-"; a slash is not accepted yet.[0m
+              [36m</div>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"_r_6_-applicationNumber-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-input"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-reason"[39m
+                [33mid[39m=[32m"_r_6_-reason-label"[39m
+              [36m>[39m
+                [0mReason[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-reason-desc"[39m
+              [36m>[39m
+                [0mWhy this number, in at least 8 characters. Recorded with your name and the time.[0m
+              [36m</div>[39m
+              [36m<textarea[39m
+                [33maria-describedby[39m=[32m"_r_6_-reason-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-textarea"[39m
+                [33mid[39m=[32m"_r_6_-reason"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mrows[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-gov"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"de-gov-t"[39m
+              [36m>[39m
+                [0mCompile, export and transmit of this market read this number. A sequence already signed for release reads unsigned until it is signed again over the new number, and a number a frozen or dispatched sequence was built under cannot be changed. Recorded with your name, the time and your reason, beside the old and the new number.[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-f"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn ghost"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mRecord[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mthis[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-bd"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Record the application number"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"de"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-h"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-eye"[39m
+              [36m>[39m
+                [0mthis market[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-h-t"[39m
+              [36m>[39m
+                [0mRecord the application number[0m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Close"[39m
+              [33mclass[39m=[32m"de-x"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-x"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M18 6 6 18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m6 6 12 12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-label"[39m
+              [36m>[39m
+                [0mApplication number[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber-desc"[39m
+              [36m>[39m
+                [0mThe number the this market's agency assigned to this application. Letters, digits, ".", "_" or "-"; a slash is not accepted yet.[0m
+              [36m</div>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"_r_6_-applicationNumber-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-input"[39m
+                [33mid[39m=[32m"_r_6_-applicationNumber"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-field"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"de-label"[39m
+                [33mfor[39m=[32m"_r_6_-reason"[39m
+                [33mid[39m=[32m"_r_6_-reason-label"[39m
+              [36m>[39m
+                [0mReason[0m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"req"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"de-desc"[39m
+                [33mid[39m=[32m"_r_6_-reason-desc"[39m
+              [36m>[39m
+                [0mWhy this number, in at least 8 characters. Recorded with your name and the time.[0m
+              [36m</div>[39m
+              [36m<textarea[39m
+                [33maria-describedby[39m=[32m"_r_6_-reason-desc"[39m
+                [33maria-required[39m=[32m"true"[39m
+                [33mclass[39m=[32m"de-textarea"[39m
+                [33mid[39m=[32m"_r_6_-reason"[39m
+                [33mplaceholder[39m=[32m""[39m
+                [33mrows[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-gov"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"de-gov-t"[39m
+              [36m>[39m
+                [0mCompile, export and transmit of this market read this number. A sequence already signed for release reads unsigned until it is signed again over the new number, and a number a frozen or dispatched sequence was built under cannot be changed. Recorded with your name, the time and your reason, beside the old and the new number.[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"de-f"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn ghost"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"de-btn primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mRecord[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx:143:26
+    141|     }));
+    142|     rerender(<MarketApplicationNumber submissionId={3} />);
+    143|     expect((await screen.findByRole('alert')).textContent).toBe(unreso…
+       |                          ^
+    144|     expect(screen.queryByRole('dialog')).toBeNull();
+    145|     expect(screen.queryByRole('button')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 8 passed (17)
+   Start at  18:52:54
+   Duration  47.84s (transform 383ms, setup 250ms, import 488ms, tests 45.82s, environment 682ms)
+

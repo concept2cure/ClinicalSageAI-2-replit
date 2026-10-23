@@ -1,0 +1,26 @@
+{
+  "reviewedAt": "2026-10-23T19:02:37.097054+00:00",
+  "reviewType": "read-only source and contract review; no tests/build/compiler/native lock probe",
+  "files": [
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "fae0672f55d7ff7342a3a4adf0371de18f5634c7845688bb82d860005104cfbb"
+    },
+    {
+      "path": "server/services/submission-service/market-application-number.ts",
+      "sha256": "53abf2d8f8927706a3d943e377143092f71d968d0e10098e91f8a345562b7b10"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "d240a2893312b2433fc5a6951fdc7feef7db188c1b1c71882e5c7069ed0901e6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+      "sha256": "ecf7d2eb7abf847e243b219479da9e12810618bb215540a8675e2d8a458250ba"
+    },
+    {
+      "path": "shared/regulatory/region-identity.ts",
+      "sha256": "7c596268954c5c65e48280a354539bd368acc6af77df6bba6976057e411dabe2"
+    }
+  ]
+}

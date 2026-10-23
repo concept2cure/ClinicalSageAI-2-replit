@@ -1,0 +1,10 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts",
+  "inputs": {
+    "server/services/ectd/package-identity.ts": "09e0b87ac266be64bb8021df71c65c81304f052e013b53121604d742fb701e3f",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts": "08dac19f20efd1eddffb16f0109000788887e44b72bb4056a23fd7f11e60a965",
+    "server/services/ana/AnaToolExecutor.ts": "29a42cbf3bea8212cf10ab802533debe4b6711bc248c16973fd69c0eaeb2e42c",
+    "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts": "70e52584ec6c4e259e82a236654e1059c566b2260ca76e714ee04d9642b9f496"
+  }
+}

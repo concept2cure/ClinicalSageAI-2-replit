@@ -247,6 +247,7 @@ import {
 } from './document-workspace.js';
 import { CREATABLE_NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -9263,6 +9264,16 @@ async function recordedPackageIdentityOrRefusal(
     import('../../db.js'),
   ]);
   const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
+  if (!canonicalRegionOf(identity.homeAgency)) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({
+        error: "The project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was built.",
+        code: 'PACKAGE_IDENTITY_MISSING',
+        retry: false,
+      }),
+    };
+  }
   // The project's number is its home market's (decision P-44). Another market's
   // package carries the number its own agency assigned, recorded on that
   // market's submission, which this tool does not read: it is refused here.

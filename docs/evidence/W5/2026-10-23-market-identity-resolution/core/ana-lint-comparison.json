@@ -1,0 +1,24 @@
+{
+  "file": "server/services/ana/AnaToolExecutor.ts",
+  "baseline": "HEAD",
+  "baselineCounts": {
+    "complexity": 89,
+    "max-lines": 1,
+    "max-lines-per-function": 3,
+    "max-depth": 1,
+    "max-params": 1,
+    "no-useless-escape": 1
+  },
+  "currentCounts": {
+    "complexity": 89,
+    "max-lines": 1,
+    "max-lines-per-function": 3,
+    "max-depth": 1,
+    "max-params": 1,
+    "no-useless-escape": 1
+  },
+  "baselineErrors": 0,
+  "currentErrors": 0,
+  "baselineWarnings": 96,
+  "currentWarnings": 96
+}

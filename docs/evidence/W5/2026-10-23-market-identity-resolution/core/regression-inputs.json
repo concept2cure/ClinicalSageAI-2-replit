@@ -1,0 +1,19 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "observed": "During final regression execution, no subsequent worker edits to these inputs planned",
+  "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts server/services/ectd/__tests__/recorded-applicant-identity.test.ts server/services/ectd/__tests__/run-package-identity.test.ts server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+  "inputs": {
+    "server/services/ectd/package-identity.ts": "09e0b87ac266be64bb8021df71c65c81304f052e013b53121604d742fb701e3f",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts": "eaed43f6af864d07d90cfd891130b17bdfe4002a780b7bf8f67514b908067a4c",
+    "server/services/ectd/__tests__/export-application-identity.pglite.test.ts": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2",
+    "server/services/ectd/__tests__/recorded-applicant-identity.test.ts": "186f0e4da56746ec3e365555b19cd682be1926c4a290984311e8765111e8e1c1",
+    "server/services/ectd/__tests__/run-package-identity.test.ts": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7",
+    "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 5,
+    "passed": 150,
+    "inputHashesVerifiedAtCompletion": true
+  }
+}

@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { PDFDocument } from 'pdf-lib';
 
 const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity } = vi.hoisted(() => ({
   // Confirmed writes need an editor role (writeRoleRefusal); a member may edit.
@@ -38,7 +39,11 @@ const recordedIdentity = (patch: Record<string, unknown> = {}) => ({
   contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' },
   ...patch,
 });
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = async (label: string) => {
+  const document = await PDFDocument.create();
+  document.addPage().drawText(label);
+  return Buffer.from(await document.save());
+};
 
 
 async function run(input: Record<string, unknown>) {
@@ -55,7 +60,7 @@ async function coverLeaf() {
   const cover = path.join(work, 'p27-cover.pdf');
   const output = path.join(work, 'p27-out');
   await fs.mkdir(work, { recursive: true });
-  await fs.writeFile(cover, pdf('cover'));
+  await fs.writeFile(cover, await pdf('cover'));
   // Each fixture owns its paths; model input cannot choose a scratch directory.
   const modelInput = (extra: Record<string, unknown> = {}) => ({
     region: 'fda', program_id: PROGRAM, sequence: '0000', submission_type: 'original', application_type: 'ind',
@@ -74,6 +79,22 @@ beforeEach(() => {
 });
 
 describe('package_ectd_for_region packages the home market only (P-44)', () => {
+  it.each(['not-an-agency', '', '   ', null, undefined])('refuses unresolved home agency %j without claiming another market or building bytes', async (homeAgency) => {
+    readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ homeAgency }));
+    const { output, modelInput } = await coverLeaf();
+    try {
+      const out = await run(modelInput());
+      expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
+      expect(out.error).toMatch(/project's primary agency is not recognized/);
+      expect(out.error).toMatch(/correct the project's primary agency before packaging/i);
+      expect(out.error).not.toMatch(/is another market/);
+      expect(out.bundlePath).toBeUndefined();
+      await expect(fs.readdir(output)).rejects.toThrow();
+    } finally {
+      await fs.rm(output, { recursive: true, force: true });
+    }
+  });
+
   it("refuses another market's region, and builds nothing", async () => {
     readRecordedPackageIdentity.mockResolvedValue(recordedIdentity({ homeAgency: 'FDA' }));
     const { output, modelInput } = await coverLeaf();
