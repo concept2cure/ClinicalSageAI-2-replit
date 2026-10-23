@@ -1,0 +1,360 @@
+[
+  {
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+      "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "server/services/vault/__tests__/vault-version-compare.test.ts",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx",
+      "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/release-regressions-tests.json"
+    ],
+    "startedAt": "2026-10-23T17:37:15Z",
+    "elapsedSeconds": 46.941,
+    "exitCode": 0,
+    "output": "release-regressions.log.gz",
+    "outputSha256": "7b2245043e9e736e353f4454dd8b8ae0749087feb348340ebe0222c2acf83347",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:single-native-canvas"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.112,
+    "exitCode": 0,
+    "output": "release-ci-single-native-canvas.log.gz",
+    "outputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:canvas-path"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.138,
+    "exitCode": 0,
+    "output": "release-ci-canvas-path.log.gz",
+    "outputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.297,
+    "exitCode": 0,
+    "output": "release-ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:class-vocabulary"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.648,
+    "exitCode": 0,
+    "output": "release-ci-class-vocabulary.log.gz",
+    "outputSha256": "141de4cdaee011da7227d4c6a491df5adc7f0a3abd7e95a1492adfc3fa41adc1",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:filing-exit-agreement"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.418,
+    "exitCode": 0,
+    "output": "release-ci-filing-exit-agreement.log.gz",
+    "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:internals-in-copy"
+    ],
+    "startedAt": "2026-10-23T17:38:02Z",
+    "elapsedSeconds": 0.614,
+    "exitCode": 0,
+    "output": "release-ci-internals-in-copy.log.gz",
+    "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:empty-state-honesty"
+    ],
+    "startedAt": "2026-10-23T17:38:03Z",
+    "elapsedSeconds": 0.604,
+    "exitCode": 0,
+    "output": "release-ci-empty-state-honesty.log.gz",
+    "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:action-overclaim"
+    ],
+    "startedAt": "2026-10-23T17:38:03Z",
+    "elapsedSeconds": 0.303,
+    "exitCode": 0,
+    "output": "release-ci-action-overclaim.log.gz",
+    "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:success-before-ok"
+    ],
+    "startedAt": "2026-10-23T17:38:03Z",
+    "elapsedSeconds": 0.295,
+    "exitCode": 0,
+    "output": "release-ci-success-before-ok.log.gz",
+    "outputSha256": "b529e879a6806ab1c0e8b1c586beecc88a09ed3d6ac1f47e7363c64ecb525a73",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.14,
+    "exitCode": 0,
+    "output": "release-ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.105,
+    "exitCode": 0,
+    "output": "release-ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.139,
+    "exitCode": 0,
+    "output": "release-ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.269,
+    "exitCode": 1,
+    "output": "release-ci-surface-text-ramp.log.gz",
+    "outputSha256": "db231ddfe4415c7fc6cd7f6119732dec0da923f46658734c9d988cfe9aa09ccf",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:check-shell-css-collisions"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.18,
+    "exitCode": 0,
+    "output": "release-ci-check-shell-css-collisions.log.gz",
+    "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:vault-document-writers"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.337,
+    "exitCode": 0,
+    "output": "release-ci-vault-document-writers.log.gz",
+    "outputSha256": "36ff550d2ef40fb1213fc6cd1544d2ef3b07361ba158ee7daf21a420e58e5b3e",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "audit:repo-health:ceiling"
+    ],
+    "startedAt": "2026-10-23T17:38:04Z",
+    "elapsedSeconds": 0.727,
+    "exitCode": 0,
+    "output": "release-audit-repo-health-ceiling.log.gz",
+    "outputSha256": "bc006650bac33421593d4c6dc620fbd7811a731fdcd343594639a1259aa2dde7",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "server/routes/authoring.router.ts",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+      "server/services/authoring/authoring-file-to-vault.ts",
+      "server/services/authoring/authoring-vault-version-plan.ts",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+      "server/services/vault/vault-version-checkin.ts",
+      "--format=json"
+    ],
+    "startedAt": "2026-10-23T17:38:05Z",
+    "elapsedSeconds": 1.413,
+    "exitCode": 0,
+    "output": "release-eslint.log.gz",
+    "outputSha256": "413687391fc46eba911a846c7bbbbf2c2c50fe1b6d32aeb4dafa84f8c993ea47",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "--since",
+      "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+      "--gate"
+    ],
+    "startedAt": "2026-10-23T17:38:07Z",
+    "elapsedSeconds": 2.58,
+    "exitCode": 0,
+    "output": "release-warning-ratchet.log.gz",
+    "outputSha256": "2e9dcaa53c550dcf7e2e1055ac781e7682a15d5121c43ffc9e68229e30930968",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "startedAt": "2026-10-23T17:38:09Z",
+    "elapsedSeconds": 13.524,
+    "exitCode": 0,
+    "output": "release-build.log.gz",
+    "outputSha256": "c44ab9685ed8a41c0c74023ee0fdb549da2c02785d44d6f201b9852d3b321fcc",
+    "sourceFreeze": "release-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  }
+]

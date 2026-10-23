@@ -9,7 +9,7 @@
  * the way the database did on either side of the winner's commit.
  */
 import { describe, expect, it } from 'vitest';
-import { planCheckIn, type CheckInQueryable } from '../vault-version-checkin';
+import { planCheckIn, recheckUnderLock, type CheckInHead, type CheckInQueryable } from '../vault-version-checkin';
 
 const HEAD = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -61,5 +61,18 @@ describe('planCheckIn under a concurrent check-in', () => {
   it('no successor: the next major version is planned', async () => {
     const plan = await planCheckIn(stub(null), PARAMS);
     expect(plan).toMatchObject({ ok: true, version: '2.0' });
+  });
+
+  it.each([
+    ['folder_id', 'module-3'], ['document_type', 'MODULE_3'], ['classification', 'RESTRICTED'],
+    ['retention_policy', 'clinical-record'], ['placement_status', 'confirmed'],
+    ['placement_confidence', '0.900'], ['placement_rationale', 'Moved after preparation'],
+    ['placed_by', 99], ['evidence_kind', 'protocol'], ['ctd_section', '3.2.P.8'],
+  ])('refuses changed inherited %s under the head lock', async (key, value) => {
+    const base = stub(null);
+    const current = { query: async (sql: string, params?: unknown[]) => /FOR UPDATE/.test(sql)
+      ? { rows: [{ ...HEAD, [key]: value }] } : base.query(sql, params) };
+    const planned = { head: { ...HEAD } as CheckInHead, version: '2.0' };
+    expect(await recheckUnderLock(current, PARAMS, planned)).toMatchObject({ ok: false, code: 'VERSION_METADATA_CHANGED' });
   });
 });

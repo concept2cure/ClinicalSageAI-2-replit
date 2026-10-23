@@ -1,0 +1,6 @@
+{
+  "baseCommit": "64e668e35044e7bccab2facdb78fccfa5da31419",
+  "dirtySource": {
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "30f7dd9cd45d9cf7aded3a64e0039862c6c16a941461517ce5115283c4d318f5"
+  }
+}

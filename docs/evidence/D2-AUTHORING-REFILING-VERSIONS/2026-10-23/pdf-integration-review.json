@@ -1,0 +1,29 @@
+{
+  "reviewers": [
+    "/root/refiling_backend_audit",
+    "/root/refiling_ui_audit"
+  ],
+  "verdict": "No blocking merge issue after retaining both migrations and aligning two fixture labels",
+  "preserved": [
+    "Verified per-format version plans",
+    "Canonical head locks and metadata recheck",
+    "Compensation and approval carryover",
+    "Strict PDF refusal before admission",
+    "Unknown outcome and version receipt guards"
+  ],
+  "layout": {
+    "comparisonBase": "93ee0299b",
+    "functionsUnchanged": true,
+    "bodySha256": {
+      "filedVersionLine": "4e94bbf0bb306255b391dadb1292477b8a161f8b153fb4d8c3b6c2e4d61c2dba",
+      "FileToVaultOutcome": "b043823ce6f6dadee356f467d4cba8ab530254321d279281b50dd9725d386ab3",
+      "FileToVaultForm": "7be5898ce3642fc25126d04985e35714514b4b9e2a00bf9d34c054235e5082f8"
+    },
+    "scope": "Existing8layout proof retained; renderedfunctions/CSS unchanged by incomingPDFerrorhandling; wholefilehashpredatesmerge"
+  },
+  "sourceSha256": {
+    "server/services/authoring/authoring-file-to-vault.ts": "41afd5a251f38e70c62e7b81ba1b069fe7d31940c8abee111aaf2f23bfadda6a",
+    "server/services/authoring/authoring-export.ts": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "dee56cc02e50b864f5489f89f15fdd3d04bf60d7a714c4016586fe2143b3728f"
+  }
+}

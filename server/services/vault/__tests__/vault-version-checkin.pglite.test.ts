@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { currentVersionOfCode, nextMajorVersion, planCheckIn } from '../vault-version-checkin';
+import { currentVersionOfCode, nextMajorVersion, planCheckIn, recheckUnderLock } from '../vault-version-checkin';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const ORG = 7;
@@ -48,6 +48,7 @@ describe('the next version (FD1: sequential majors)', () => {
     expect(nextMajorVersion('1.3')).toBe('2.0');
     expect(nextMajorVersion('9')).toBe('10.0');
     for (const v of ['draft-1a2b3c4d', '1.0-1a2b3c4d', 'abc123', '', '1.0.0']) expect(nextMajorVersion(v), v).toBeNull();
+    expect(nextMajorVersion('999999.0')).toBeNull();
   });
 });
 
@@ -80,6 +81,62 @@ describe('planCheckIn without the program-hash unique index', () => {
     const v1 = await version('DOC-D', '1.0', H('1'));
     const plan = await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: v1, contentHash: H('2') });
     expect(plan).toMatchObject({ ok: true, version: '2.0', head: { id: v1, document_code: 'DOC-D' } });
+  });
+
+  it('advances past immutable retired major slots without reviving their rows', async () => {
+    const head = await version('RETIRED-SLOT', '1.0', H('a'));
+    const retired = await version('RETIRED-SLOT', '2.0', H('b'), head);
+    await pg.query('UPDATE vault.documents SET deleted_at = now() WHERE id = $1', [retired]);
+    expect(await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: head, contentHash: H('c') }))
+      .toMatchObject({ ok: true, version: '3.0' });
+    expect(await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: head, contentHash: H('b') }))
+      .toMatchObject({ ok: false, code: 'CONTENT_ALREADY_A_VERSION' });
+    expect((await pg.query<{ version: string; deleted_at: Date | null }>('SELECT version, deleted_at FROM vault.documents WHERE id=$1', [retired])).rows[0])
+      .toMatchObject({ version: '2.0', deleted_at: expect.any(Date) });
+  });
+
+  it('scopes retired slots and refuses an occupied live next slot', async () => {
+    const head = await version('RETIRED-SCOPE', '1.0', H('d'));
+    const theirs = await version('RETIRED-SCOPE', '42.0', H('e'), null, 99);
+    const otherCode = await version('RETIRED-OTHER', '60.0', H('f'));
+    await pg.query('UPDATE vault.documents SET deleted_at=now() WHERE id IN ($1,$2)', [theirs, otherCode]);
+    expect(await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: head, contentHash: H('0') }))
+      .toMatchObject({ ok: true, version: '2.0' });
+    await version('RETIRED-SCOPE', '2.0', H('1'));
+    expect(await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: head, contentHash: H('0') }))
+      .toMatchObject({ ok: false, code: 'VERSION_SLOT_OCCUPIED' });
+  });
+
+  it('refuses exhausted numeric numbering without inventing a wider scheme', async () => {
+    const head = await version('VERSION-EXHAUSTED', '999999.0', H('2'));
+    expect(await planCheckIn(q, { organizationId: ORG, programId: PROGRAM, headId: head, contentHash: H('3') }))
+      .toMatchObject({ ok: false, code: 'VERSION_SCHEME_UNKNOWN' });
+  });
+
+  it('reserves the highest retired major and rechecks its assignment under the head lock', async () => {
+    const head = await version('RETIRED-RECHECK', '1.0', H('4'));
+    const retired = await version('RETIRED-RECHECK', '7.3', H('5'));
+    await pg.query('UPDATE vault.documents SET deleted_at=now() WHERE id=$1', [retired]);
+    await pg.query(`INSERT INTO vault.documents (program_id,organization_id,document_code,version,content_hash,deleted_at)
+      VALUES ($1,$2,'RETIRED-RECHECK','80.0',$3,now())`, ['22222222-2222-4222-8222-222222222222', ORG, H('6')]);
+    const input = { organizationId: ORG, programId: PROGRAM, contentHash: H('7') };
+    const planned = await planCheckIn(q, { ...input, headId: head });
+    expect(planned).toMatchObject({ ok: true, version: '8.0' });
+    if (!planned.ok) throw new Error('Expected a valid next version');
+    const intervening = await version('RETIRED-RECHECK', '8.0', H('8'));
+    await pg.query('UPDATE vault.documents SET deleted_at=now() WHERE id=$1', [intervening]);
+    expect(await recheckUnderLock(q, input, planned)).toMatchObject({ ok: false, code: 'VERSION_NOT_CURRENT' });
+  });
+
+  it('refuses a prepared 2.0 when a retained 2.0 slot appears before the locked recheck', async () => {
+    const head = await version('RETIRED-INITIAL-RACE', '1.0', H('9'));
+    const input = { organizationId: ORG, programId: PROGRAM, contentHash: H('a') };
+    const planned = await planCheckIn(q, { ...input, headId: head });
+    expect(planned).toMatchObject({ ok: true, version: '2.0' });
+    if (!planned.ok) throw new Error('Expected a valid next version');
+    const retired = await version('RETIRED-INITIAL-RACE', '2.0', H('b'), head);
+    await pg.query('UPDATE vault.documents SET deleted_at=now() WHERE id=$1', [retired]);
+    expect(await recheckUnderLock(q, input, planned)).toMatchObject({ ok: false, code: 'VERSION_NOT_CURRENT' });
   });
 });
 

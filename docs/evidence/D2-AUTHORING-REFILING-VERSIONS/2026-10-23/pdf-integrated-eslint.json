@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "--format=json"
+  ],
+  "startedAt": "2026-10-23T17:55:19Z",
+  "elapsedSeconds": 0.586,
+  "exitCode": 0,
+  "output": "pdf-integrated-eslint.log.gz",
+  "outputSha256": "aa0c5011e03676705a981abb196170152e13bff85b93161f25f1908c6fc1ae3c",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

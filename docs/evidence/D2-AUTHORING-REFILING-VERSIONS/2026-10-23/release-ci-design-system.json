@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:design-system"
+  ],
+  "startedAt": "2026-10-23T17:38:02Z",
+  "elapsedSeconds": 0.297,
+  "exitCode": 0,
+  "output": "release-ci-design-system.log.gz",
+  "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "startedAt": "2026-10-23T17:55:21Z",
+  "elapsedSeconds": 13.151,
+  "exitCode": 0,
+  "output": "pdf-integrated-build.log.gz",
+  "outputSha256": "8361be3b9caba1dcf44ffa678d881e0262de74d085f62b827cd85ba61cf04155",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}
