@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:27.894Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:29.227Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T06:07:29.228Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:29.228Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers the boundary’s refusal 409, with its code and where the program’s Module 3 is authored 23ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers a read the boundary could not make 503, never as a verdict 6ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > POST /place-into-submission/:projectId > answers the boundary’s refusal with its code, its words and its hint 20ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_missing_inputs 1ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_stale_sections 0ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_refresh_stale 1ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  06:07:25
+   Duration  6.82s (transform 4.62s, setup 140ms, import 6.24s, tests 57ms, environment 0ms)
+

@@ -1,0 +1,7 @@
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > facet counts (VR-18 "with counts") > are absent unless asked 11ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > facet counts (VR-18 "with counts") > count each value over the other filters, so a chosen type still shows the other types 22ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > facet counts (VR-18 "with counts") > each bucket equals COUNT(*) over the same predicate with that value chosen 145ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > facet counts (VR-18 "with counts") > keep scope: the library counts no folder, and nothing from another program or organisation 39ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > facet counts bind the org first and the programs third in every statement, and run on the first page only 78ms
+ Test Files  120 passed (120)
+      Tests  1348 passed (1348)

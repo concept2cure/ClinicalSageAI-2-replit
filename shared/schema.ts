@@ -15727,7 +15727,10 @@ export const accountCanonItems = pgTable(
     sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
     sourceDocumentId: text('source_document_id'), // Reference to originating document
     sourceDescription: text('source_description'),
-    confidenceScore: real('confidence_score').default(0.9),
+    // 2026-10-15: default(0.9) dropped — an unstated confidence is null. Created by
+    // drizzle-kit push only; existing databases keep the column DEFAULT, which
+    // account-canon.ts never reaches (it always writes the value).
+    confidenceScore: real('confidence_score'),
 
     // ── Vector Embedding (for semantic resolution) ────────────────
     embedding: vector('embedding', { dimensions: 1536 }),
@@ -15980,6 +15983,21 @@ export const accountSkillBundles = pgTable(
       signatureRequired?: boolean;
     }>(),
 
+    // ── AnA skill (migrations/20261022_ana_skills.sql) ──────────
+    // A bundle is an organization's own AnA skill. module_types holds its
+    // disciplines and work_types its use cases (shared/ana/skills.ts); these
+    // are the facets and links that had no column. Empty list = any.
+    extendsSkillKey: text('extends_skill_key'), // platform-library skill it extends, or null
+    extensionMode: text('extension_mode'), // 'addendum' | 'replace' when extendsSkillKey is set
+    triggers: jsonb('triggers').$type<string[]>().default([]).notNull(),
+    segments: jsonb('segments').$type<string[]>().default([]).notNull(),
+    therapeuticAreas: jsonb('therapeutic_areas').$type<string[]>().default([]).notNull(),
+    surfaces: jsonb('surfaces').$type<string[]>().default([]).notNull(),
+    documentTypes: jsonb('document_types').$type<string[]>().default([]).notNull(),
+    toolNames: jsonb('tool_names').$type<string[]>().default([]).notNull(),
+    // A skill written for one project: selected only on that project's turns (20261022c).
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+
     // ── Governance ──────────────────────────────────────────────
     version: integer('version').default(1).notNull(),
     status: text('status').default('active').notNull(), // draft, active, locked, archived
@@ -16002,6 +16020,62 @@ export const accountSkillBundles = pgTable(
 );
 
 export type AccountSkillBundle = InferSelectModel<typeof accountSkillBundles>;
+
+/**
+ * An administrator's on/off for each platform-library AnA skill, with the
+ * reason they stated (migrations/20261022_ana_skills.sql). No row means the
+ * library skill is on. The change and its reason are also in the chained
+ * audit row written in the same transaction.
+ */
+export const organizationSkillSettings = pgTable(
+  'organization_skill_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    skillKey: text('skill_key').notNull(),
+    enabled: boolean('enabled').notNull(),
+    reason: text('reason').notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgKey: unique('organization_skill_settings_org_key').on(table.organizationId, table.skillKey),
+    orgIdx: index('organization_skill_settings_org_idx').on(table.organizationId),
+  })
+);
+
+export type OrganizationSkillSetting = InferSelectModel<typeof organizationSkillSettings>;
+
+/**
+ * A project's own setting for one AnA skill (20261022c): 'always' loads it on
+ * every AnA turn in the project, 'off' never loads it there. Written with a
+ * stated reason and a chained audit row (server/services/ana/skills/project-skills.ts).
+ */
+export const projectSkillSettings = pgTable(
+  'project_skill_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    skillKey: text('skill_key').notNull(),
+    state: text('state').notNull(), // 'always' | 'off'
+    reason: text('reason').notNull(),
+    updatedById: integer('updated_by_id').references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    projectKey: unique('project_skill_settings_project_key').on(table.projectId, table.skillKey),
+    orgProjectIdx: index('project_skill_settings_org_project_idx').on(table.organizationId, table.projectId),
+  })
+);
+
+export type ProjectSkillSetting = InferSelectModel<typeof projectSkillSettings>;
 export const insertAccountSkillBundleSchema = createInsertSchemaOmit(accountSkillBundles, {
   id: true,
   createdAt: true,
@@ -17656,7 +17730,10 @@ export const evidenceClaims = pgTable(
     pageNumber: integer('page_number'),
     sectionReference: varchar('section_reference', { length: 200 }),
     sentenceIndex: integer('sentence_index'),
-    confidence: numeric('confidence', { precision: 3, scale: 2 }).notNull().default('0.50'),
+    // As the extractor scored it; null when nothing did. It was NOT NULL DEFAULT
+    // 0.50, so an unscored claim — and the governed fact established from it —
+    // read back at 0.5 (2026-10-15; migrations/20261015m).
+    confidence: numeric('confidence', { precision: 3, scale: 2 }),
     extractionMethod: varchar('extraction_method', { length: 50 }).notNull().default('pattern'),
     version: integer('version').notNull().default(1),
     previousVersionId: integer('previous_version_id'),
@@ -18257,6 +18334,8 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
   primarySourceId: text('primary_source_id').notNull(),
   primarySourceTitle: text('primary_source_title').notNull(),
   primaryRelevance: real('primary_relevance'),
+  // 'fixed_weight' when primaryRelevance is a hand-set weight, not a measurement (2026-10-15).
+  primaryRelevanceBasis: text('primary_relevance_basis'),
   supportingSources: json('supporting_sources').$type<Array<{
     sourceType: string;
     sourceId: string;
@@ -18267,7 +18346,10 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 
   // Confidence assessment
   confidenceBasis: text('confidence_basis').notNull(), // 'rules_based', 'validation_based', 'ai_inferred'
-  confidenceScore: real('confidence_score'), // null for rules_based
+  // A confidence the caller measured; null for rules_based and whenever none was measured.
+  confidenceScore: real('confidence_score'),
+  // Heuristic evidence coverage 0-100 — not a confidence (2026-10-15).
+  evidenceCoverageHeuristic: real('evidence_coverage_heuristic'),
   chainStrength: text('chain_strength').notNull(), // 'strong', 'moderate', 'weak'
 
   // Context

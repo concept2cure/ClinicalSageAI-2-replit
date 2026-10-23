@@ -1,0 +1,145 @@
+[
+  {
+    "question": "What is the right order of work for a new medical device program, from intended use through to what the reviewer will ask?",
+    "expect": "device"
+  },
+  {
+    "question": "We are planning a class III device for the US and EU MDR. What has to be in place before we file?",
+    "expect": "device"
+  },
+  {
+    "question": "Walk me through what FDA will look for in our device submission before we build the PMA.",
+    "expect": "device",
+    "context": { "segments": ["device"], "submissionType": "US_PMA" }
+  },
+  {
+    "question": "How should our design inputs trace to verification and validation results in the design history file?",
+    "expect": "device.design-controls"
+  },
+  {
+    "question": "Our SOP still cites 820.30 for design reviews. Is that right under the new regulation?",
+    "expect": "device.design-controls"
+  },
+  {
+    "question": "Check this file for gaps before the audit.",
+    "expect": "device.design-controls",
+    "context": { "documentType": "US_DHF", "segments": ["device"] }
+  },
+  {
+    "question": "How do I document the overall residual risk evaluation in our ISO 14971 risk management file?",
+    "expect": "device.risk-management"
+  },
+  {
+    "question": "Our dFMEA lists failure modes but the notified body says we never identified hazardous situations. How do we restructure it?",
+    "expect": "device.risk-management"
+  },
+  {
+    "question": "What is missing from this before we send it to the notified body?",
+    "expect": "device.risk-management",
+    "context": { "documentType": "ISO_RMF", "segments": ["device"] }
+  },
+  {
+    "question": "Which IEC 62304 software safety class fits our insulin dose calculator, and what documentation level will FDA expect?",
+    "expect": "device.software-and-ai"
+  },
+  {
+    "question": "We want to retrain our AI/ML model every quarter after clearance. Do we need a PCCP?",
+    "expect": "device.software-and-ai"
+  },
+  {
+    "question": "Is our sepsis risk score clinical decision support or a device software function?",
+    "expect": "device.software-and-ai"
+  },
+  {
+    "question": "Is our Bluetooth glucose meter a cyber device under 524B, and what has to be in the SBOM?",
+    "expect": "device.cybersecurity"
+  },
+  {
+    "question": "How should we present threat modeling and penetration testing results in the premarket cybersecurity documentation?",
+    "expect": "device.cybersecurity"
+  },
+  {
+    "question": "How many participants do we need for the summative validation of our autoinjector, and which tasks count as critical tasks?",
+    "expect": "device.human-factors"
+  },
+  {
+    "question": "What goes into a use-related risk analysis under IEC 62366-1?",
+    "expect": "device.human-factors"
+  },
+  {
+    "question": "Which ISO 10993 endpoints apply to a catheter in contact with circulating blood for ten days?",
+    "expect": "device.biocompatibility-and-safety-testing"
+  },
+  {
+    "question": "Our device is ethylene oxide sterilized and mains powered. What sterilization validation and IEC 60601 testing do we need?",
+    "expect": "device.biocompatibility-and-safety-testing"
+  },
+  {
+    "question": "Can we cite one predicate device for the intended use and another for the technology in our 510(k)?",
+    "expect": "device.substantial-equivalence"
+  },
+  {
+    "question": "How do we show our different technological characteristics do not raise different questions of safety and effectiveness?",
+    "expect": "device.substantial-equivalence"
+  },
+  {
+    "question": "Build the predicate comparison against K201234 and tell me where our argument is weak.",
+    "expect": "device.substantial-equivalence",
+    "context": { "segments": ["device"], "submissionType": "US_510K" }
+  },
+  {
+    "question": "Is our trial a significant risk device study that needs an IDE, or can the IRB treat it as non-significant risk?",
+    "expect": "device.clinical-evidence"
+  },
+  {
+    "question": "What will the notified body expect in our clinical evaluation report if we rely on MDR equivalence to a competitor's implant?",
+    "expect": "device.clinical-evidence"
+  },
+  {
+    "question": "Review this against MDR Annex XIV.",
+    "expect": "device.clinical-evidence",
+    "context": { "documentType": "EU_CER", "segments": ["device"] }
+  },
+  {
+    "question": "We changed the housing material on our cleared device. Is that a new 510(k) or a letter to file?",
+    "expect": "device.changes-and-postmarket"
+  },
+  {
+    "question": "FDA has ordered a 522 study for our implant. What does that obligation involve?",
+    "expect": "device.changes-and-postmarket"
+  },
+  {
+    "question": "Does a software change to our cleared infusion pump need a new 510(k), or is our assessment enough?",
+    "expect": "device.changes-and-postmarket"
+  },
+  {
+    "question": "Which PMA supplement type covers moving final assembly to a new site?",
+    "expect": "device.changes-and-postmarket"
+  },
+  {
+    "question": "When does a change to our catheter require a new UDI-DI, and what goes into the GUDID submission?",
+    "expect": "device.udi-and-registration"
+  },
+  {
+    "question": "Do we need FDA establishment registration and device listing for our contract manufacturer, and does our foreign site need a US agent?",
+    "expect": "device.udi-and-registration",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Explain the device identifier and production identifier in unique device identification, and whether reusable instruments need direct marking.",
+    "expect": "device.udi-and-registration"
+  },
+  {
+    "question": "What essential drug delivery outputs should we verify for our autoinjector, and how do we test dose accuracy on aged units?",
+    "expect": "device.combination-and-drug-delivery"
+  },
+  {
+    "question": "How do we bridge from the vial used in phase 2 to the commercial pen injector? Do we need device bridging data?",
+    "expect": "device.combination-and-drug-delivery",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Plan design verification for the device constituent of our on-body injector, including its essential performance requirements.",
+    "expect": "device.combination-and-drug-delivery"
+  }
+]

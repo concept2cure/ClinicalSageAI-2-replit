@@ -185,7 +185,11 @@ const SPECIAL_DESIGNATIONS_TOOL: AnaAdvisoryToolSpec = {
       usPrevalence: { type: 'number', description: 'Estimated US prevalence (persons).' },
       euPrevalencePer10k: { type: 'number', description: 'Estimated EU prevalence per 10,000.' },
       jpPrevalence: { type: 'number', description: 'Estimated Japan prevalence (patients).' },
-      seriousOrLifeThreatening: { type: 'boolean', description: 'Life-threatening / seriously debilitating condition.' },
+      // 2026-10-15: said "seriously debilitating"; the criterion it decides says "chronically".
+      seriousOrLifeThreatening: {
+        type: 'boolean',
+        description: 'The condition is life-threatening or chronically debilitating — the EU orphan prevalence-limb criterion (Regulation (EC) No 141/2000), the only one this input decides.',
+      },
       noSatisfactoryTreatment: { type: 'boolean', description: 'No satisfactory authorised treatment exists.' },
       significantBenefit: { type: 'boolean', description: 'Significant benefit over existing methods.' },
       pediatricDevelopment: { type: 'boolean', description: 'Whether the program includes pediatric development.' },

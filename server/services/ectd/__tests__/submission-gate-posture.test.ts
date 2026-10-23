@@ -184,12 +184,15 @@ const GATE_POSTURE: GatePosture[] = [
     gates: 'a production device build whose official FDA eSTAR/PreSTAR template is not vendored',
     flipWhen:
       'every template in ESTAR_TEMPLATE_MANIFEST is vendored into assets/estar-templates/ (or ESTAR_TEMPLATE_DIR). ' +
-      'PARTIAL TODAY: the two 510(k) eSTAR templates are present; the three PreSTAR templates are not.',
+      'MET since e1f3fd425 (2026-10-17): nIVD/IVD 7.1 and PreSTAR 3.1 (one PDF for Q-Sub, IDE and 513(g)) are vendored and ' +
+      'pinned in checksums.txt. Switching the gate on is not decided here; it stays report-only until that decision is recorded.',
     asset: {
       dir: path.join(REPO, 'assets/estar-templates'),
       list: async (dir) => (await listVendoredTemplates(dir)).map((d) => d.fileName),
       artifactExtensions: ['.pdf'],
-      blocksProductionToday: true,
+      // 2026-10-15 record, updated 2026-10-22: this said `true` (PreSTAR absent).
+      // e1f3fd425 vendored PreSTAR-q-sub.pdf, so every manifest pathway clears.
+      blocksProductionToday: false,
       probe: (present) => {
         const blocked = ESTAR_TEMPLATE_MANIFEST.filter(
           (d) =>
@@ -468,16 +471,15 @@ describe('submission gate posture — recorded, not accidental', () => {
     }
   });
 
-  it('eSTAR is PARTIALLY unblocked: the 510(k) templates are vendored, the PreSTAR ones are not', async () => {
-    // The posture is not uniform across pathways, and recording it as "blocks
-    // everything" would be as wrong as recording it as "blocks nothing": a
-    // 510(k) build would clear the gate today, a Q-Sub would not.
+  it('eSTAR is unblocked for every family: the 510(k) and the PreSTAR templates are vendored', async () => {
+    // 2026-10-22: this said "PARTIALLY" and pinned a Q-Sub as blocked; e1f3fd425
+    // vendored PreSTAR 3.1, the one FDA PDF for Q-Sub, IDE and 513(g).
     const present = (await listVendoredTemplates(path.join(REPO, 'assets/estar-templates'))).map((t) => t.fileName);
-    const verdict = (type: '510k' | 'q_sub', variant: 'device' | 'prestar') =>
+    const verdict = (type: '510k' | 'q_sub' | 'ide' | '513g', variant: 'device' | 'prestar') =>
       assessEstarTemplateReadiness({ type, variant, present, environment: 'production', requireTemplate: true });
-    expect(verdict('510k', 'device').available).toBe(true);
-    expect(verdict('510k', 'device').blockers).toEqual([]);
-    expect(verdict('q_sub', 'prestar').available).toBe(false);
-    expect(verdict('q_sub', 'prestar').blockers).toHaveLength(1);
+    for (const [type, variant] of [['510k', 'device'], ['q_sub', 'prestar'], ['ide', 'prestar'], ['513g', 'prestar']] as const) {
+      expect(verdict(type, variant).available, `${type}/${variant}`).toBe(true);
+      expect(verdict(type, variant).blockers, `${type}/${variant}`).toEqual([]);
+    }
   });
 });

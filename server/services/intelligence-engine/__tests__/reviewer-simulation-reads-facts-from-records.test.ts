@@ -183,6 +183,7 @@ describe('reviewer simulation: the run records its sources, and reads nonclinica
   it('persists where each fact group came from with the run', async () => {
     const r = await runReviewerSimulation({
       organizationId: ORG, programId: PROGRAM, program: k510, packet: callerPacket, intel: callerIntel, triggeredBy: 'user-1',
+      trigger: 'manual', // 2026-10-15: a persisted run must state its trigger
     });
     expect(holder.inserted).toHaveLength(1);
     expect(holder.inserted[0].summary?.inputsSource, 'the run did not record where its facts came from').toMatchObject({

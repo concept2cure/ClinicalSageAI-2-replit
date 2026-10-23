@@ -1,11 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-results/rc-beta-path-screenshots';
 
 async function forceDevSession(page: Page) {
   const res = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-    data: { email: 'jonmichaelpsmith@gmail.com' },
+    data: { email: devLoginEmail() },
   });
 
   if (!res.ok()) {

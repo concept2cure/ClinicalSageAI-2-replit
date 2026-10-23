@@ -12,7 +12,6 @@
  *     ceiling only so a missed wake cannot stall it;
  *   - the first waiter to see 'paused' announces {type:'paused', round}; the
  *     one that sees 'running' again announces {type:'resumed', round};
- *   - a dropped client stops the run (client_disconnected);
  *   - a pause that outlives the ceiling is resumed as abandoned — a server
  *     decision, recorded as one — measured from when the hold was entered,
  *     before the first read, exactly as the stream's `pauseStart` was.
@@ -26,8 +25,8 @@
  *
  *   - one pause clock, opened by the first waiter that sees 'paused' (at the
  *     moment it entered) and closed by the first that sees it leave — or,
- *     if the run is still paused, by the last waiter to go (its own signal, a
- *     dropped client, an error): nobody is holding then, so nothing is being
+ *     if the run is still paused, by the last waiter to go (its own signal,
+ *     an error): nobody is holding then, so nothing is being
  *     held, and the next hold starts its own clock as the stream's per-call
  *     `pauseStart` did;
  *   - one paused/resumed frame pair;
@@ -52,6 +51,21 @@
  * aborts, and one {type:'hold_expired'} frame is sent. If it wrote nothing, a
  * Continue got there first: re-read and carry on. Nothing in S3 asks for 'end'.
  *
+ * ── A page that closes is not seen here (AnA detach DT3) ────────────────────
+ * The hold used to ask `clientGone()` — `res.writableEnded` — and stop the run
+ * for a dropped client. Node sets that flag only after `res.end()`, so it
+ * never saw a dropped socket (design §1, row 10). A drop is acted on in one
+ * place, the stream's disconnect handler: a turn that detaches keeps holding
+ * for its person on any device, and one that cannot is stopped there, which
+ * reaches this hold as the run's cancel. The dead check is gone.
+ *
+ * And a run that ENDED while held leaves the hold: 'cancelled' for a
+ * cancel (a person's Stop, an admin's, the session's end), 'ended' for a row
+ * that failed (reaped, shut down, the unattended limit) or finished. It used
+ * to read every status but 'cancelled' as "carry on" (§2.4). The two stay
+ * apart so a caller settles a cancel with no further read of the row
+ * (661a2c93a) and still never takes a failed row for a person's Stop.
+ *
  * Pure: every effect is an injected dependency, so it is tested without a
  * database (run-hold.test.ts).
  *
@@ -64,8 +78,12 @@ import { MAX_PAUSE_MS } from './run-status.js';
 /** The longest one wait lasts before the row is read again, if no wake arrives. */
 export const RUN_HOLD_WAKE_CEILING_MS = 5_000;
 
-/** What a waiter is told when it stops waiting. */
-export type RunHoldOutcome = 'running' | 'cancelled' | 'expired' | 'disconnected';
+/**
+ * What a waiter is told when it stops waiting. 'ended': the row became
+ * `failed` or `finished` while held — reaped, shut down, or ended — which is
+ * not a person's Stop and not "carry on" (AnA detach DT3, §2.4).
+ */
+export type RunHoldOutcome = 'running' | 'cancelled' | 'ended' | 'expired';
 
 /**
  * Said on the paused frame by the waiter that announces it. Absent, the frame
@@ -84,10 +102,6 @@ interface RunHoldCommonDeps {
   wake(ms: number): Promise<void>;
   /** Send a control frame to the client. */
   emit(frame: Record<string, unknown>): void;
-  /** Whether the client has gone. */
-  clientGone(): boolean;
-  /** Stop the run because the client went (not a person's decision). */
-  stopForDisconnect(): Promise<void>;
   now?: () => number;
   maxPauseMs?: number;
 }
@@ -110,10 +124,10 @@ export type RunHoldDeps = RunHoldCommonDeps &
 export interface RunHold {
   /**
    * Wait while the run is paused. Returns 'running' when the turn may go on
-   * (resumed, never paused, or ended some way that is not a cancel),
-   * 'cancelled' when the run was cancelled or this waiter's signal aborted,
-   * 'disconnected' when the client went, and 'expired' when an 'end' hold ran
-   * out — for every waiter, from then on.
+   * (resumed, or never paused), 'cancelled' when the run was cancelled while
+   * held or this waiter's signal aborted, 'ended' when the row became failed
+   * or finished while held, and 'expired' when an 'end' hold ran out — for
+   * every waiter, from then on.
    */
   hold(round: number, announce?: RunHoldAnnounce, signal?: AbortSignal): Promise<RunHoldOutcome>;
   /** True once an 'end' hold has expired. */
@@ -202,10 +216,6 @@ class TurnHold implements RunHold {
       }
       const pause = (this.current ??= { start: seen.at });
       this.announcePaused(pause, round, announce);
-      if (this.deps.clientGone()) {
-        await this.deps.stopForDisconnect();
-        return 'disconnected';
-      }
       if (endDue && this.now() - pause.start > this.maxPauseMs) {
         const outcome = await this.atDeadline(pause, round);
         if (outcome !== 'reread') return outcome === 'expired' ? 'expired' : this.leave('running', round);
@@ -269,7 +279,8 @@ class TurnHold implements RunHold {
       this.deps.emit({ type: 'resumed', round });
       this.announced = false;
     }
-    return status === 'cancelled' ? 'cancelled' : 'running';
+    if (status === 'cancelled') return 'cancelled';
+    return status === 'failed' || status === 'finished' ? 'ended' : 'running';
   }
 
   /** The ceiling was reached: resume as abandoned, or try to end the turn. Once per pause. */

@@ -1,0 +1,5 @@
+ × server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > refuses another market's region, and builds nothing 123ms
+   → expected undefined to be 'NOT_HOME_MARKET' // Object.is equality
+ ✓ server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts > package_ectd_for_region packages the home market only (P-44) > packages the home market from the record, as before 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

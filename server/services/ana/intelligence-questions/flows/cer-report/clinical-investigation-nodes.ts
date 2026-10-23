@@ -233,7 +233,7 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
     question:
       'Summarize the clinical experience and post-market data for this device.',
     guidance:
-      'Post-market clinical data provides real-world evidence on the device\'s safety and performance. Include distribution volumes, complaint rates, vigilance reports, and any field safety corrective actions. High vigilance rates or FSCA occurrences may indicate safety concerns requiring additional analysis. Data from EUDAMED vigilance system should be considered where available. Per EU MDR Article 83-86, the manufacturer must have a post-market surveillance system that collects and evaluates real-world data on the device. This data feeds into the CER as clinical experience per MEDDEV 2.7/1 Rev 4 Section 7.',
+      'Post-market clinical data provides real-world evidence on the device\'s safety and performance. Include distribution volumes, complaint rates, vigilance reports, and any field safety corrective actions. High vigilance rates or FSCA occurrences may indicate safety concerns requiring additional analysis. Data from EUDAMED vigilance system should be considered where available. Per EU MDR Article 83-86, the manufacturer must have a post-market surveillance system that collects and evaluates real-world data on the device. This data feeds into the CER as clinical experience per MEDDEV 2.7/1 Rev 4 Section 8.1.',
     fields: [
       {
         id: 'total_units_distributed',

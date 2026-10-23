@@ -72,3 +72,12 @@ provider/DB, source-admission authority, whole-turn rollback, multilingual
 relevance or agency acceptance is claimed by these fixtures. Selected source
 pins are not an exhaustive dependency graph. Raw `.txt` transcripts retain exact
 bytes; lint JSON summaries omit duplicated source and retain raw stdout hashes.
+
+## Canonical integration — 2026-10-23
+
+The interrupted push was rejected after its checks passed because the branch
+advanced. The incoming DT3 stop/reconnect behavior is preserved, together with
+this context recovery. The dated [contract amendment](CONTRACT.md#integration-amendment--2026-10-23)
+documents the superseded stop-carrier assertion and retained original bytes.
+Historical 970-test results qualify the pre-merge implementation only; fresh
+merged-tree results and publication checks are recorded separately.

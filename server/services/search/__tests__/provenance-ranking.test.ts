@@ -1,6 +1,9 @@
 /**
  * Tests for provenance-ranked search: authority tier mapping + authority-first
- * ordering (credible sources lead even when a preprint scores higher relevance).
+ * ordering (credible sources lead even when a preprint came first in its own
+ * source). 2026-10-15: the within-tier key is `sourceRank` (position in the
+ * source's response); these cases used to pin a `relevanceScore` that was only
+ * that position on a per-connector slope.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -22,23 +25,23 @@ describe('connectorAuthorityTier', () => {
 });
 
 describe('rankResultsByProvenance', () => {
-  it('ranks by authority tier first, then relevance within a tier', () => {
+  it('ranks by authority tier first, then position in the source within a tier', () => {
     const ranked = rankResultsByProvenance([
-      { sourceConnector: 'biorxiv', relevanceScore: 0.99, id: 'preprint' },
-      { sourceConnector: 'fda_drugs', relevanceScore: 0.50, id: 'fda' },
-      { sourceConnector: 'box', relevanceScore: 0.95, id: 'repo' },
-      { sourceConnector: 'clinical_trials_gov', relevanceScore: 0.80, id: 'ctgov' },
+      { sourceConnector: 'biorxiv', sourceRank: 1, id: 'preprint' },
+      { sourceConnector: 'fda_drugs', sourceRank: 2, id: 'fda' },
+      { sourceConnector: 'box', sourceRank: 1, id: 'repo' },
+      { sourceConnector: 'clinical_trials_gov', sourceRank: 1, id: 'ctgov' },
     ]);
-    // primary (ctgov 0.80 > fda 0.50), then secondary (box), then preliminary (preprint)
+    // primary (ctgov #1 before fda #2), then secondary (box), then preliminary (preprint)
     expect(ranked.map(r => r.id)).toEqual(['ctgov', 'fda', 'repo', 'preprint']);
     expect(ranked[0].provenanceTier).toBe('primary');
     expect(ranked[ranked.length - 1].provenanceTier).toBe('preliminary');
   });
 
-  it('a high-relevance preprint still ranks below a lower-relevance primary source', () => {
+  it("a preprint first in its source still ranks below a primary source's later result", () => {
     const ranked = rankResultsByProvenance([
-      { sourceConnector: 'biorxiv', relevanceScore: 0.99 },
-      { sourceConnector: 'ema_epar', relevanceScore: 0.40 },
+      { sourceConnector: 'biorxiv', sourceRank: 1 },
+      { sourceConnector: 'ema_epar', sourceRank: 9 },
     ]);
     expect(ranked[0].provenanceTier).toBe('primary');
   });

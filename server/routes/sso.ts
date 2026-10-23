@@ -661,6 +661,7 @@ async function handleSpInitiatedLogout(req: Request, res: Response): Promise<voi
     let claims: Record<string, unknown>;
     try {
       // Use the rotation-aware verifier (HS256-pinned, prev-secret fallback).
+      // token-class: reads a signed token's federated session index only to build the identity provider's logout redirect; it revokes, authorises and changes nothing here.
       claims = verifyJwtWithRotation<Record<string, unknown>>(token);
     } catch {
       return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });

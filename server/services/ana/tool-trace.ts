@@ -15,6 +15,7 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
+import { DETACHED_WALL_WORDS, UNATTENDED_WORDS } from '@shared/ana/run-detach';
 import { isTruncated } from '../ai-gateway/finish-reason.js';
 import { authoringCreationTrace } from '../authoring/authoring-create-outcome';
 import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
@@ -32,8 +33,10 @@ export interface ToolTraceEntry {
    * 'cancelled' — the person stopped the run before this step finished.
    * 'incomplete' — a sub-agent (run_agent only) stopped at its budget: what it
    * found is usable, and it is not a failure to retry (row 74, S5).
+   * 'not_run' — never dispatched: a screen action a Live Drive turn asked for
+   * after its page closed (D-7, decided 2026-10-22). Nobody stopped it.
    */
-  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
+  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' | 'not_run';
   /** One-line summary of the tool's result. */
   resultSummary: string;
   /*
@@ -170,7 +173,7 @@ export function buildTraceEntry(
   if (tool === RUN_AGENT_TOOL) {
     // The agent's own outcome refines a mechanical success (agentTraceStatus);
     // a status already refined is kept.
-    const refined = status === 'incomplete' ? status : agentTraceStatus(status, resultContent);
+    const refined = status === 'incomplete' || status === 'not_run' ? status : agentTraceStatus(status, resultContent);
     return { tool, label, status: refined, resultSummary: agentResultSummary(resultContent) };
   }
   return { tool, label, status, resultSummary: summarizeToolResult(resultContent) };
@@ -444,11 +447,22 @@ export function turnStopWarning(
     pendingSteps?: readonly string[] | null;
     /** Her own holds this turn: an expired one means SHE was waiting, not a person's pause. */
     policyHolds?: readonly PolicyHold[] | null;
+    /** The page that started the turn closed and it went on (AnA detach DT3). */
+    detached?: boolean;
   },
 ): string {
   const heldByHer = (context?.policyHolds ?? []).some(h => h.outcome === 'expired');
-  const words = stopWords(reason, rounds, context?.pendingSteps, heldByHer);
   const policy = parseRunPolicy(context?.runPolicy);
+  const rowWords = ROW_STOP_WORDS[reason];
+  // A detached turn not under Auto stopped at the detached turn's cap: Auto's
+  // work budget was never in force for it (DT3 review, finding 4.6).
+  const detachedCap = reason === 'budget_exhausted' && context?.detached === true && policy !== 'auto';
+  const words = detachedCap
+    ? `The page that started this turn was closed, and the turn stopped at the ${DETACHED_WALL_WORDS} limit for a turn that continues after its page closes${roundsRan(rounds)}, ` +
+      'before AnA said she was done. The answer was written from the work done up to that point.'
+    : rowWords
+      ? rowWords(roundsRan(rounds), context?.pendingSteps)
+      : stopWords(reason, rounds, context?.pendingSteps, heldByHer);
   return words && policy ? `${words} Run policy: ${POLICY_NAME[policy]}.` : words;
 }
 
@@ -458,6 +472,31 @@ function expiredWords(ran: string, heldByHer: boolean): string {
     ? `Manual: AnA waited ${PAUSE_WORDS} for the person before her next step and nobody answered, so the turn ended${ran}`
     : `Manual: the run was paused and nobody resumed it within ${PAUSE_WORDS}, so the turn ended${ran}`;
 }
+
+/** " after N round(s)", or nothing before the first round (see stopWords). */
+function roundsRan(rounds: number): string {
+  return rounds > 0 ? ` after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}` : '';
+}
+
+/**
+ * The run row's reasons (AnA detach DT3, §2.10): a server path ended the run,
+ * and the turn records what its row says. Kept apart from stopWords so each
+ * stays one readable table.
+ */
+const ROW_STOP_WORDS: Partial<Record<TurnStoppedReason, (ran: string, pendingSteps?: readonly string[] | null) => string>> = {
+  unattended_limit: ran =>
+    `The page that started this turn was closed and nobody watched it for ${UNATTENDED_WORDS}, so AnA stopped${ran}, ` +
+    'before she said she was done. The answer is what she had written by then.',
+  // What ended it — a sign-out, a credential that expired, a removal, an
+  // organisation suspended or read-only — is the record's next warning
+  // (sessionEndCauseWarning; DT3 review, DP-83).
+  session_ended: (ran, pending) =>
+    `The sign-in or access that started this turn ended, so the run was stopped${ran}.${notRunSentence(pending)}`,
+  server_shutdown: ran => `The server restarted for an update, so the run was stopped${ran}. The answer is what AnA had written by then.`,
+  orphaned: ran => `The server handling this turn stopped responding, so the run was ended${ran}.`,
+  admin_cancelled: (ran, pending) => `An administrator stopped the run${ran}, before AnA said she was done.${notRunSentence(pending)}`,
+  error: ran => `The turn ended with an error${ran}.`,
+};
 
 /** The record's words for a stop, before the policy is named. */
 function stopWords(
@@ -470,7 +509,7 @@ function stopWords(
   // (agentic-loop: round++ precedes both). A cancel can land at the first
   // checkpoint, before any round — so "after N rounds" is said only when
   // there were some, and a stop before the first round claims no round.
-  const ran = rounds > 0 ? ` after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}` : '';
+  const ran = roundsRan(rounds);
   switch (reason) {
     case 'no_more_tools':
       return '';

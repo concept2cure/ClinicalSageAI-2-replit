@@ -1,0 +1,17 @@
+# Red at 4eacf0fd27 with the new test file only (filing-lock-write-through.pglite.test.ts), before any fix.
+# The first run failed in the fixture (authoring_sections.id is uuid, compared to text); it was corrected and this is the run that shows the defect.
+# The PATCH case already answered 409 DOCUMENT_LOCKED and is red only on the sentence this change adds. The seal-release case was added with the fix; its red is the mutation 'the seal refusal releases its connection twice again'.
+ × server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves
+   → {"success":true,"section":{"id":"27860d57-d730-4859-a922-79fe7065bd7f","doc_id":"cec81768-1afd-4f0b-891a-78f99f2faf26","code":"2.5","title":"2.5","content":"Text that must not reach a locked filing.","order_index":1,"track_changes":false,"tenant_id":1,"created_at":"2026-10-22T16:35:20.960Z","updated_at":"2026-10-22T16:35:21.065Z"},"message":"Section updated successfully","revision_created":
+ × server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves
+   → {"success":true,"section":{"id":"1c46dcff-49ba-4ff6-b015-4aede3995fea","doc_id":"171ae963-60f1-4d72-884f-dcecffa42c07","code":"2.5","title":"2.5","content":"Text that must not reach a locked filing.","order_index":1,"track_changes":false,"tenant_id":1,"created_at":"2026-10-22T16:35:21.135Z","updated_at":"2026-10-22T16:35:21.204Z"},"message":"Section updated successfully","revision_created":
+ × server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves
+   → {"success":true,"section":{"id":"34b6541d-beec-48fe-80d4-b2711b3c3e10","doc_id":"d18b0024-6de7-4250-8883-6c48d57f382e","code":"2.5","title":"2.5","content":"Text that must not reach a locked filing.","order_index":1,"track_changes":false,"tenant_id":1,"created_at":"2026-10-22T16:35:21.265Z","updated_at":"2026-10-22T16:35:21.340Z"},"message":"Section updated successfully","revision_created":
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal)
+ × server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why
+   → expected { approved: [ '2.5' ], …(2) } to match object { approved: [], …(2) }
+ × server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move
+   → expected 'undefined' to match /is locked/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)

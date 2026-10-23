@@ -1,0 +1,244 @@
+# head-hooks-reads-notices: exit 1 (non-zero = red)
+# tests: server/services/__tests__/account-standing-stops-runs.test.ts server/routes/admin/__tests__/master-admin.test.ts server/routes/__tests__/passwordResetAuditTrail.test.ts server/services/tenant/__tests__/tenant-offboarding.test.ts server/__tests__/security/scim-deprovision-stops-runs.test.ts server/routes/__tests__/tenant-users-audit.test.ts server/services/notifications/__tests__/notification-conversation-target.test.ts server/middleware/__tests__/establishRequestTenantScope.test.ts server/routes/ana-ri/__tests__/runs-read.pglite.test.ts
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 24ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 1261ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 353ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 2ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 637ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > setting its password through the activation link 998ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > an expired link 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a link another request used first 357ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > asking for a reset 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a wrong password 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account is locked 2ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the address is not yet confirmed 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads) 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > changing its password while signed in 617ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > keeps the default organisation when the account is a member there 1000ms
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a password reset stops them, for that account, in every organisation 1008ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a reset refused (the token was used first) stops nothing 327ms
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a password change while signed in stops them 668ms
+   → expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a sign-out with a live access token stops the runs its session started, and only those 6ms
+   → expected [] to deeply equal [ [ 7, 'sid-desk', …(2) ] ]
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a live access token with no session id stops nothing at once (its runs stop at their next round) 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa_challenge token (a correct password, no second factor) stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a refresh token stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an mfa-partial token stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a connector (delegated) token stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an unclassed token stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > an expired access token stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a token this server did not sign stops nothing (IAM-34) 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a token already revoked (a second sign-out with it) stops nothing 4ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker: 200, with the run, its rows, its plan and its controls 51ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin: 200, with approval null and cancel-only control 14ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin's read names whose turn it is; the asker's does not 18ms
+   → expected undefined to be 'Sam Rivera' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker sees their own pending approval, as the approval_required frame carries it 15ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a colleague who can read the transcript: 403, with the sentence 10ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > another organisation: 404, even for its admin 9ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a run with no person: 403 for a member, 200 for an admin 18ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check present 14ms
+   → expected undefined to deeply equal { verdict: 'unsupported', …(1) }
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check absent 14ms
+   → expected 'This action changes the official reco…' to match /AnA is waiting on this before she goe…/
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check malformed (not an object) 15ms
+   → expected 'This action changes the official reco…' to match /AnA is waiting on this before she goe…/
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. the listings apply the same rule > the conversation listing: the asker and admins see its runs, a colleague none 43ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > lists a terminal run that is not yet released and has no record 8ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > does not list a terminal, unreleased run whose record already exists 13ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > applies the same person rule: a colleague sees none of it 12ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the hand-over > a sealed run names its record 16ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row 18ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin 24ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > the asker's visible poll stamps last_watched_at; a hidden one, and an admin's, never do 24ms
+   → expected null not to be null
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > at most once per 5 s per run 18ms
+   → expected 'Thu Oct 22 2026 17:11:38 GMT+0000 (Co…' not to be 'Thu Oct 22 2026 17:11:38 GMT+0000 (Co…' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > a run that ended is not stamped 10ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > detachedAt and unattendedStopsAt: null while the page is open; 15 minutes after watching stopped once it closed 13ms
+   → column "detached_at" of relation "ana_runs" does not exist
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > never later than 40 minutes from the start 3ms
+   → column "detached_at" of relation "ana_runs" does not exist
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written 328ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written 8ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason 10ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > revokes the cached membership once the change commits, so a demotion takes effect on the next request 7ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed) 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a role set to the one the member already holds writes nothing and records nothing 8ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched 4ms
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > stops the removed member's live AnA runs, once the removal has committed 10ms
+   → expected [ 'COMMIT' ] to deeply equal [ 'COMMIT', 'UPDATE ana_runs' ]
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > PATCH: 409 LAST_ADMINISTRATOR, a sentence that says nothing changed, nothing written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > DELETE: 409 LAST_ADMINISTRATOR and nothing removed or recorded 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > locks the administrator rows FOR UPDATE on the change transaction, before the change 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > with another administrator left, an administrator can be demoted and removed 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > promoting a member to administrator is never refused by the guard 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: assigned with a reason, recorded with the role before and after 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: assigned with a reason, recorded with the role before and after 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: refused without a reason (400 REASON_REQUIRED), nothing written 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: refused without a reason (400 REASON_REQUIRED), nothing written 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > a role outside the assignable list is still refused 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock 4ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an unknown organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses when the organization is not scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > lists every table a purge door erases, since a door opens only for a listed table 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads 0ms
+ × server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > requestDeletion stops them with session_ended once the organisation is pending deletion 6ms
+   → the live runs were not stopped: expected -1 to be greater than -1
+ × server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > purgeTenant stops them FIRST, before any table is purged 1ms
+   → the live runs were not stopped: expected -1 to be greater than -1
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), a sole-organisation account 108ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), an account in other organisations too 5ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PATCH active=false, a sole-organisation account 11ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PATCH active=false, an account in other organisations too 3ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ × server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PUT active=false on an account in other organisations too 4ms
+   → expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ ✓ server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > an activating patch stops nothing 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 401s an unauthenticated request 24ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s an org member 6ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s a tenant membership role of super_admin with no platform grant 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > access gating > 200s a platform admin 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > lists tenants 5ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > reports system health from the pool 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > reads > paginates the audit explorer and accepts the client filter 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects a tenant status change without a reason 11ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects an invalid tenant status value 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > applies a tenant suspension and writes an audit entry 4ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > applies a user suspension and writes an audit entry 2ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > rejects a module toggle without moduleId 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > toggles a module entitlement and audits it 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > 404s a feature flag toggle for an unknown key 3ms
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > governed mutations > toggles a known feature flag and audits it 2ms
+ × server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > an organisation suspended: its runs stop 8ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, …(2) ]
+ ✓ server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > an organisation reactivated: nothing stops 2ms
+ × server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > a person suspended: their runs stop, on every device 3ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, { userId: 2 }, { …(2) } ]
+ × server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > the decision's audit row says how many live runs it stopped (DT3 review, the session-end cause) 6ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ × server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended 12ms
+   → expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]
+ ✓ server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > an account that was not there stops nothing 1ms
+ × server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > in one organisation, for a deprovisioning there: keyed on that organisation 2ms
+   → stopPersonsRuns is not a function
+ × server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > one session's sign-out: that session's runs only 1ms
+   → stopPersonsRuns is not a function
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > opens a per-user scope and attaches a request DB client 2ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when a scope is already active (does not clobber) 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when req.dbClient is already set 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > does NOT fabricate a scope for a tenant-less identity 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > rejects a non-integer org id rather than scoping to a garbage tenant 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > routes a SYSTEM-prefixed path to the system scope, not the caller org 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > REPLACES a pre-auth placeholder scope with the caller org once authenticated 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > leaves the pre-auth placeholder untouched when there is no verified tenant yet 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > forces the system scope on a system path even when a per-user scope opened first 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent on a system path already under the system scope 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestSystemScope > opens the cross-tenant system scope and attaches a client 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > matches exact and sub-path, not sibling prefixes 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > every declared prefix is recognized 0ms
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder 11ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it 4ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client 2ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ Test Files  9 failed (9)
+      Tests  28 failed | 125 passed (153)
+ FAIL  server/services/notifications/__tests__/notification-conversation-target.test.ts [ server/services/notifications/__tests__/notification-conversation-target.test.ts ]
+Error: Cannot find module '../../../../shared/ana/run-detach' imported from /home/user/ClinicalSageAI-2-replit/server/services/notifications/__tests__/notification-conversation-target.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), a sole-organisation account
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > DELETE (offboarding), an account in other organisations too
+AssertionError: expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PATCH active=false, a sole-organisation account
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PATCH active=false, an account in other organisations too
+AssertionError: expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ FAIL  server/__tests__/security/scim-deprovision-stops-runs.test.ts > SCIM deprovisioning stops the person's live AnA runs in that organisation > PUT active=false on an account in other organisations too
+AssertionError: expected "vi.fn()" to be called with arguments: [ 100, …(2) ]
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a password reset stops them, for that account, in every organisation
+AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a password change while signed in stops them
+AssertionError: expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a sign-out with a live access token stops the runs its session started, and only those
+AssertionError: expected [] to deeply equal [ [ 7, 'sid-desk', …(2) ] ]
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > stops the removed member's live AnA runs, once the removal has committed
+AssertionError: expected [ 'COMMIT' ] to deeply equal [ 'COMMIT', 'UPDATE ana_runs' ]
+ FAIL  server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended
+AssertionError: expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]
+ FAIL  server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > in one organisation, for a deprovisioning there: keyed on that organisation
+TypeError: stopPersonsRuns is not a function
+ FAIL  server/services/__tests__/account-standing-stops-runs.test.ts > stopPersonsRuns > one session's sign-out: that session's runs only
+TypeError: stopPersonsRuns is not a function
+ FAIL  server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > an organisation suspended: its runs stop
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, …(2) ]
+ FAIL  server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > a person suspended: their runs stop, on every device
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, { userId: 2 }, { …(2) } ]
+ FAIL  server/routes/admin/__tests__/master-admin.test.ts > a suspension stops the live AnA runs it ends the authority of (AnA detach DT3, §2.9) > the decision's audit row says how many live runs it stopped (DT3 review, the session-end cause)
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin's read names whose turn it is; the asker's does not
+AssertionError: expected undefined to be 'Sam Rivera' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check present
+AssertionError: expected undefined to deeply equal { verdict: 'unsupported', …(1) }
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check absent
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the follower carries what the attached approval frame carries (DT3 review) > a proposal check malformed (not an object)
+AssertionError: expected 'This action changes the official reco…' to match /AnA is waiting on this before she goe…/
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > the asker's visible poll stamps last_watched_at; a hidden one, and an admin's, never do
+AssertionError: expected null not to be null
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > at most once per 5 s per run
+AssertionError: expected 'Thu Oct 22 2026 17:11:38 GMT+0000 (Co…' not to be 'Thu Oct 22 2026 17:11:38 GMT+0000 (Co…' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > detachedAt and unattendedStopsAt: null while the page is open; 15 minutes after watching stopped once it closed
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the watched stamp and the armed limit (DT3) > never later than 40 minutes from the start
+Serialized Error: { length: 134, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '58', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'analyze.c', routine: 'transformUpdateTargetList', query: 'UPDATE ana_runs SET created_at = \'2026-10-08T14:00:00Z\', detached_at = \'2026-10-08T14:02:00Z\',\n              last_watched_at = \'2026-10-08T14:16:00Z\' WHERE id = $1', params: [ 'run_t23' ], queryOptions: undefined }
+ FAIL  server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > requestDeletion stops them with session_ended once the organisation is pending deletion
+AssertionError: the live runs were not stopped: expected -1 to be greater than -1
+ FAIL  server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > purgeTenant stops them FIRST, before any table is purged
+AssertionError: the live runs were not stopped: expected -1 to be greater than -1

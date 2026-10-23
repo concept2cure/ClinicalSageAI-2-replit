@@ -21,6 +21,8 @@ interface Window {
 interface ImportMetaEnv {
   readonly DEV?: boolean;
   readonly VITE_SHOW_DEMO_LOGIN?: string;
+  /** Dev-login identity; the dev-login button is hidden when unset. */
+  readonly VITE_DEV_LOGIN_EMAIL?: string;
 }
 
 interface ImportMeta {

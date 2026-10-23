@@ -120,6 +120,21 @@ async function readOrganization(
 }
 
 /**
+ * Stop the organisation's live AnA runs with `session_ended` (AnA detach
+ * §2.9). Lazy, so offboarding does not load run control until it needs it;
+ * never throws (stopRunsFor logs its own failure).
+ */
+async function stopOrganisationRuns(
+  pool: Pool,
+  organizationId: number,
+  cause: 'deletion_requested' | 'purge',
+  byUserId: number,
+): Promise<void> {
+  const { stopRunsFor } = await import('../ana/run-control.js');
+  await stopRunsFor(pool, { organizationId }, { cause, byUserId });
+}
+
+/**
  * Move an active organization into `pending_deletion` and start the retention
  * clock. Idempotent for an organization already pending deletion: the original
  * request time and eligibility instant are preserved, so re-requesting cannot be
@@ -173,6 +188,9 @@ export async function requestDeletion(
   );
 
   invalidateTenantPosture(organizationId);
+  // A deleting organisation is read-only: its live AnA runs stop now, not at
+  // their next round (AnA detach §2.9, session_ended). Never throws.
+  await stopOrganisationRuns(pool, organizationId, 'deletion_requested', requestedByUserId);
 
   const r = rows[0];
   logger.warn('Tenant offboarding requested', {
@@ -948,6 +966,10 @@ export async function purgeTenant(
 
   const { existing, receipt } = await assertPurgePermitted(pool, organizationId, purgedByUserId, preconditions);
 
+  // AnA's live runs stop FIRST, before any table is purged (AnA detach §2.9):
+  // a turn still running would go on writing rows the purge is removing.
+  await stopOrganisationRuns(pool, organizationId, 'purge', purgedByUserId);
+
   const tally = await purgeInOneTransaction(pool, {
     existing,
     receipt,
@@ -1042,6 +1064,13 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
   'module_access_requests',
+  // An administrator's on/off for each platform AnA skill, with the stated
+  // reason (2026-10-22). The reason and the change are in the chained audit
+  // row, which is retained; this is the tenant's working configuration.
+  'organization_skill_settings',
+  // A project's 'always' or 'off' for one AnA skill, with the reason
+  // (2026-10-22). The audit row is retained; this is working configuration.
+  'project_skill_settings',
   // A tenant's AnA run-control records: the pauses, steers and stops their
   // people issued mid-turn. Tenant-owned working data, not the audit trail —
   // the Part 11 rows for those actions live elsewhere and outlive the account.

@@ -23,7 +23,8 @@
  *     'bla') — no second hand-kept list;
  *   - for an IND, the IB at 1.14.4.1: required under 21 CFR 312.23(a)(5) "if
  *     required under § 312.55", and § 312.55 binds every sponsor other than a
- *     sponsor-investigator (regulator text, eCFR; see the step's facts.md);
+ *     sponsor-investigator (recall, from eCFR search extracts, the sections not
+ *     opened; see the step's facts.md);
  *   - for an NDA or BLA, a pointer to plan_submission_from_database_lock for the
  *     order and where the project stands — the order is not restated here;
  *   - the drafting route: get_document_section_requirements, then

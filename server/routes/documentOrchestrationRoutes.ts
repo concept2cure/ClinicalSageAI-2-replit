@@ -41,6 +41,10 @@ router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
 
     res.json(result);
   } catch (error) {
+    // 2026-10-15: another organization's 510(k) project was read by id and answered 500.
+    if (error instanceof Error && error.name === 'OrchestrationProjectNotFoundError') {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
     return serverError(res, log, 'generating the 510(k) documents', error);
   }
 });

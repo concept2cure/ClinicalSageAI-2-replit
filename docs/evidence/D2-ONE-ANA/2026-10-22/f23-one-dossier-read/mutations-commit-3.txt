@@ -1,0 +1,17 @@
+# F23 (3/9): each mutation applied alone, the file restored and the restore checked after (mutate.py).
+# Tests: projects-readiness.test.ts, projects-detail-taxonomy.test.ts, projectsCardStatusReadiness.test.tsx, projectsPortfolioEmptyMean.test.tsx
+# 14 mutations, 14 red.
+RED  the home figure pools the added markets again: the tests went red
+RED  the list ignores the figures read: the tests went red
+RED  a failed figure read takes the list down: the tests went red
+RED  a failed figure read reads as 'no sections': the tests went red
+RED  rows carry no state: the tests went red
+RED  an unavailable figure gives no reason: the tests went red
+RED  a time is given with no figure: the tests went red
+RED  the create's card keeps the stored 0: the tests went red
+RED  a grid card with no figure draws its empty bar: the tests went red
+RED  a list row with no figure draws its empty bar: the tests went red
+RED  unavailable printed as 'not measured': the tests went red
+RED  the card hides why a figure is unavailable: the tests went red
+RED  the mean never says how many it covers: the tests went red
+RED  the mean counts an unmeasured program as 0: the tests went red

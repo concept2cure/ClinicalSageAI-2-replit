@@ -37,7 +37,7 @@ import {
 } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission } from '../../services/submission-service/submission-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, coerceEventDates, type Ctx } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, sendRecordedFile, coerceEventDates, type Ctx } from './shared';
 
 const router = Router();
 
@@ -197,7 +197,7 @@ router.post('/annual-report', limiter, requireRole(AUTHOR), (req, res) => {
  * Body: { events: AdverseEvent[], periodStart, periodEnd }. JSON by default;
  * `?format=csv` returns the line listing as an attachable CSV appendix.
  */
-router.post('/annual-report/line-listing', limiter, requireRole(AUTHOR), (req, res) => {
+router.post('/annual-report/line-listing', limiter, requireRole(AUTHOR), async (req, res) => {
   const b = body(req);
   if (!Array.isArray(b.events) || !b.periodStart || !b.periodEnd) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'events[], periodStart and periodEnd are required.' } });
@@ -205,9 +205,12 @@ router.post('/annual-report/line-listing', limiter, requireRole(AUTHOR), (req, r
   try {
     const listing = buildSaeLineListing({ events: b.events, periodStart: b.periodStart, periodEnd: b.periodEnd });
     if (String(req.query.format).toLowerCase() === 'csv') {
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', 'attachment; filename="ind-sae-line-listing.csv"');
-      return res.status(200).send(saeLineListingToCsv(listing));
+      return await sendRecordedFile(req, res, {
+        filename: 'ind-sae-line-listing.csv',
+        buffer: Buffer.from(saeLineListingToCsv(listing), 'utf8'),
+        mimeType: 'text/csv; charset=utf-8',
+        sourceType: 'export_csv',
+      });
     }
     res.json(listing);
   } catch (err) {
@@ -227,7 +230,7 @@ router.post('/safety-report/pdf', limiter, requireRole(AUTHOR), async (req, res)
       aggregateContext: b.aggregateContext,
       now: b.now ? new Date(b.now) : undefined,
     });
-    sendPdf(res, 'ind-safety-report.pdf', await renderIndSafetyReportPdf(document));
+    await sendPdf(req, res, 'ind-safety-report.pdf', await renderIndSafetyReportPdf(document));
   } catch (err) {
     fail(res, err);
   }
@@ -237,7 +240,7 @@ router.post('/safety-report/pdf', limiter, requireRole(AUTHOR), async (req, res)
 router.post('/annual-report/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   try {
     const model = assembleIndAnnualReport(parseAnnualReportInput(body(req)));
-    sendPdf(res, 'ind-annual-report.pdf', await renderIndAnnualReportPdf(model));
+    await sendPdf(req, res, 'ind-annual-report.pdf', await renderIndAnnualReportPdf(model));
   } catch (err) {
     fail(res, err);
   }
@@ -275,7 +278,7 @@ router.post('/cover-letter/pdf', limiter, requireRole(AUTHOR), async (req, res) 
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName and drugName are required.' } });
   }
   try {
-    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(await withRecordedSubmissionType(b, ctxOf(req)))));
+    await sendPdf(req, res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(await withRecordedSubmissionType(b, ctxOf(req)))));
   } catch (err) {
     fail(res, err);
   }
@@ -296,7 +299,7 @@ router.post('/cover-letter/pdf-from-records', limiter, requireRole(AUTHOR), asyn
       b.submissionId ? getSubmission(Number(b.submissionId), ctx) : Promise.resolve(null),
     ]);
     const { input } = assembleCoverLetterContext({ sponsor, submission, overrides: b.overrides });
-    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(input)));
+    await sendPdf(req, res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(input)));
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
     if (code === 'NOT_FOUND') {
@@ -330,7 +333,7 @@ router.post('/loa/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required.' } });
   }
   try {
-    sendPdf(res, 'ind-letter-of-authorization.pdf', await renderLetterOfAuthorizationPdf(assembleLetterOfAuthorization(b)));
+    await sendPdf(req, res, 'ind-letter-of-authorization.pdf', await renderLetterOfAuthorizationPdf(assembleLetterOfAuthorization(b)));
   } catch (err) {
     fail(res, err);
   }
@@ -357,7 +360,7 @@ router.post('/right-of-reference/pdf', limiter, requireRole(AUTHOR), async (req,
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, referencedFileType and referencedFileNumber are required.' } });
   }
   try {
-    sendPdf(res, 'ind-right-of-reference.pdf', await renderRightOfReferenceStatementPdf(assembleRightOfReferenceStatement(b)));
+    await sendPdf(req, res, 'ind-right-of-reference.pdf', await renderRightOfReferenceStatementPdf(assembleRightOfReferenceStatement(b)));
   } catch (err) {
     fail(res, err);
   }
@@ -383,7 +386,7 @@ router.post('/authorized-persons/pdf', limiter, requireRole(AUTHOR), async (req,
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'persons[] is required.' } });
   }
   try {
-    sendPdf(res, 'ind-authorized-persons.pdf', await renderAuthorizedPersonsListPdf(assembleAuthorizedPersonsList(b)));
+    await sendPdf(req, res, 'ind-authorized-persons.pdf', await renderAuthorizedPersonsListPdf(assembleAuthorizedPersonsList(b)));
   } catch (err) {
     fail(res, err);
   }
@@ -426,7 +429,7 @@ router.post('/briefing-book/pdf', limiter, requireRole(AUTHOR), async (req, res)
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } });
   }
   try {
-    sendPdf(res, 'fda-briefing-book.pdf', await renderBriefingBookPdf(assembleBriefingBook(b)));
+    await sendPdf(req, res, 'fda-briefing-book.pdf', await renderBriefingBookPdf(assembleBriefingBook(b)));
   } catch (err) {
     fail(res, err);
   }

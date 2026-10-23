@@ -211,4 +211,17 @@ describe('each rule says where it is enforced — the work order\'s three statem
   it('cites FDA\'s criteria for the required-Module-1 rule an FDA IND trips most', () => {
     expect(getRule('MISSING_REQUIRED_SECTION')!.source).toMatch(/FDA/);
   });
+
+  // 2026-10-08 (sweep VP-5): these four read "Enforced here — the eCTD validator
+  // checks it", and no in-repo check implements any of them: a planted orphan
+  // file and emptied leaf titles both passed, INDEX_XML_VALID is a regex subset
+  // with no DTD, and nothing checks an STF is present. AnA's list_validation_rules
+  // and the validation-rules API repeat this label to operators.
+  it('rules no in-repo check implements are labelled as decided by the agency validator', () => {
+    for (const id of ['NO_ORPHAN_FILES', 'LEAF_TITLE_PRESENT', 'INDEX_XML_VALID', 'STF_FOR_STUDIES']) {
+      const v = ruleView(id)!;
+      expect(v.enforcement, id).toBe('external');
+      expect(v.enforcementStatement, id).toMatch(/^Requires the agency validator/);
+    }
+  });
 });

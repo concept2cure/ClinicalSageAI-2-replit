@@ -87,11 +87,27 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { programInOrganization } from '../services/c2c/program-access';
+import { governedActorId } from '../middleware/orgMembership';
 
 function userIdFromReq(req: Request): string | null {
   const raw = (req as any).user?.id;
   if (raw === undefined || raw === null) return null;
   return typeof raw === 'string' ? raw : String(raw);
+}
+
+/**
+ * The signed-in user a governed post-market write is attributed to, as a
+ * string, or null after answering 401. 2026-10-15: generate, PATCH, approve and
+ * supersede recorded 'system' when no user was present, so the write and its
+ * §11.10(e) row went through attributed to nobody.
+ */
+function signedInActor(req: Request, res: Response, verb: string): string | null {
+  const actorId = governedActorId(req);
+  if (actorId === null) {
+    res.status(401).json({ error: `A signed-in user is required to ${verb} a post-market document` });
+    return null;
+  }
+  return String(actorId);
 }
 
 const router = Router();
@@ -388,7 +404,8 @@ postMarketRouter.post(
     if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
-    const createdBy = userIdFromReq(req) ?? 'system';
+    const createdBy = signedInActor(req, res, 'generate');
+    if (createdBy === null) return;
     try {
       const programId = String(req.params.programId);
       const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
@@ -466,12 +483,8 @@ postMarketRouter.post(
     if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
     }
-    const parseDate = (v: unknown): Date | undefined => {
-      if (v == null) return undefined;
-      const d = new Date(v as string);
-      return Number.isNaN(d.getTime()) ? undefined : d;
-    };
-    const createdBy = userIdFromReq(req) ?? 'system';
+    const createdBy = signedInActor(req, res, 'generate');
+    if (createdBy === null) return;
     try {
       const programId = String(req.params.programId);
       const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
@@ -497,8 +510,11 @@ postMarketRouter.post(
         regulation,
         relatedCerReportId,
         title: typeof body.title === 'string' ? body.title : undefined,
-        reportingPeriodStart: parseDate(body.reportingPeriodStart),
-        reportingPeriodEnd: parseDate(body.reportingPeriodEnd),
+        // As declared: the engine refuses a date that is not a real ISO day, or
+        // a start not before the end (PM_BAD_INPUT, 422 below). 2026-10-15: an
+        // unparseable date was turned into "not declared" here.
+        reportingPeriodStart: body.reportingPeriodStart,
+        reportingPeriodEnd: body.reportingPeriodEnd,
       });
 
       // WO-16C #133, same shape as the pmcf-plan route above: the draft is
@@ -524,7 +540,7 @@ postMarketRouter.post(
 
       res.status(201).json({ ...result, auditTrail });
     } catch (err: any) {
-      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
+      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE' || err?.code === 'PM_BAD_INPUT') {
         return res.status(422).json({ error: err.message });
       }
       return serverError(res, logger, 'loading coverage', err);
@@ -601,12 +617,11 @@ postMarketRouter.get('/documents/:documentId', async (req: Request, res: Respons
 });
 
 postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Response) => {
+  const updatedBy = signedInActor(req, res, 'edit');
+  if (updatedBy === null) return;
   const ctx = await loadDocOrFail(req, res);
   if (!ctx) return;
   try {
-    const userIdRaw = (req as any).user?.id;
-    const updatedBy =
-      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
     const updated = await updateDocument(ctx.orgId, String(req.params.documentId), req.body, updatedBy);
     if (!updated) return res.status(404).json({ error: 'Document not found' });
 
@@ -661,11 +676,10 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
 });
 
 postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res: Response) => {
+  const approvedBy = signedInActor(req, res, 'approve');
+  if (approvedBy === null) return;
   const ctx = await loadDocOrFail(req, res);
   if (!ctx) return;
-  const userIdRaw = (req as any).user?.id;
-  const approvedBy =
-    typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
   const signatureId = typeof req.body?.signatureId === 'string' ? req.body.signatureId : undefined;
   try {
     const result = await approveDocument({
@@ -730,11 +744,10 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
 postMarketRouter.post(
   '/documents/:documentId/supersede',
   async (req: Request, res: Response) => {
+    const createdBy = signedInActor(req, res, 'supersede');
+    if (createdBy === null) return;
     const ctx = await loadDocOrFail(req, res);
     if (!ctx) return;
-    const userIdRaw = (req as any).user?.id;
-    const createdBy =
-      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
     try {
       const newDoc = await supersedeDocument(ctx.orgId, ctx.doc.id, {
         newTitle: typeof req.body?.newTitle === 'string' ? req.body.newTitle : undefined,

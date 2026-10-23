@@ -21,7 +21,7 @@
 import { PLATFORM_COMMAND_TOOL } from './governed-tool-gate.js';
 
 /** The model call that served the turn, as servedModelOf reports it. */
-export interface ServedModel {
+export interface ServingModelCall {
   provider?: string | null;
   model?: string | null;
   requestId?: string | null;
@@ -31,7 +31,7 @@ export interface ServedModel {
 export interface TurnIdentity {
   threadId: string | null | undefined;
   turnId: string | null | undefined;
-  servingModel: ServedModel | null | undefined;
+  servingModel: ServingModelCall | null | undefined;
 }
 
 /** The project as the client sent it, in both forms the tools read. */
@@ -62,7 +62,7 @@ export function turnToolContext(rawProject: unknown, id: TurnIdentity) {
 export interface HeldToolContext {
   projectId: number | null;
   projectRef: string | null;
-  servingModel: ServedModel | null;
+  servingModel: ServingModelCall | null;
   /** Absent on a run held before PF-10 S5: the confirmed run then records none. */
   threadId?: string | null;
   turnId?: string | null;

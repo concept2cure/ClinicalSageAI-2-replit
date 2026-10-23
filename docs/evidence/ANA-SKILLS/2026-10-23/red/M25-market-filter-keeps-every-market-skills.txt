@@ -1,0 +1,82 @@
+Mutation: client/src/concept2cure/v2/surfaces/AdminSkills.tsx
+- if (f.market && !s.regions.includes(f.market as never)) return false;
++ if (f.market && s.regions.length > 0 && !s.regions.includes(f.market as never)) return false;
+Test: client/src/concept2cure/v2/__tests__/adminSkills.test.tsx
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > says a failed library read failed, and never shows it as an empty library 66ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > turns a skill off only with a stated reason, and sends that reason 247ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > sends the change with the reason when one is stated 101ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > shows which skills a question would load and why 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says how many turns followed skills, marks each skill’s use, and explains it in the drawer 49ms
+ × client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > filters to the skills AnA did not use, and to those written for a market 57ms
+   → expected <button …(1)>…(4)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says use could not be read, and never shows every skill as unused 33ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:17:55
+   Duration  1.49s (transform 269ms, setup 100ms, import 332ms, tests 599ms, environment 356ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > filters to the skills AnA did not use, and to those written for a market
+AssertionError: expected <button …(1)>…(4)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="ctable-row adm-skill-row"
+>
+  <span
+    class="adm-skill-name"
+    data-depth="1"
+  >
+    <span
+      class="ctable-strong"
+    >
+      Stability programs and shelf life
+    </span>
+    <span
+      class="mono tiny adm-muted"
+    >
+      cmc.stability
+    </span>
+  </span>
+  <span
+    class="adm-sub"
+  >
+    Pharmaceutical, Biotechnology
+    <span
+      class="adm-muted"
+    >
+       · 
+      used 3×
+    </span>
+  </span>
+  <span>
+    <span
+      class="status-pill active"
+    >
+      On
+    </span>
+  </span>
+  <span />
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx:153:74
+    151|     fireEvent.change(screen.getByLabelText('Use'), { target: { value: …
+    152|     fireEvent.change(screen.getByLabelText('Written for a market'), { …
+    153|     expect(screen.queryByRole('button', { name: /Stability programs/ }…
+       |                                                                          ^
+    154|     expect(screen.getByRole('button', { name: /Japan: PMDA and MHLW/ }…
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -26,8 +26,8 @@ export interface TrialFeasibilityRequest {
 export interface TrialFeasibilityServiceResult extends TrialFeasibilityResult {
   source: 'ClinicalTrials.gov';
   query: { condition: string; intervention?: string; phase?: string };
-  /** Total registered trials matching the query (may exceed comparatorsAnalyzed). */
-  totalMatched: number;
+  /** Total registered trials matching the query (may exceed comparatorsAnalyzed); null when CT.gov did not report it. */
+  totalMatched: number | null;
   provenance: ProvenanceRecord[];
 }
 

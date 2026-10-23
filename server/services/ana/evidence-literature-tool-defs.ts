@@ -1162,15 +1162,18 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
   },
 };
 
+// 2026-10-15: said "live abilities" and "what is truly available" — but nothing here calls an
+// integration (reachability is 'unchecked'), so configured is all it can report.
 export const DESCRIBE_CAPABILITIES: AnaTool = {
   name: 'describe_capabilities',
   description:
-    "Introspect AnA's OWN live abilities in this deployment: every registered tool, and which " +
+    "Introspect AnA's own abilities in this deployment: every registered tool, and which " +
     'integrations (evidence APIs, Gmail mailbox, Google Calendar, HubSpot CRM, document connectors) ' +
-    'are actually configured right now. ALWAYS call this before answering "what can you do?", when ' +
-    'planning a multi-tool workflow, or before relying on a workflow integration — so you only ' +
-    'promise and attempt what is truly available, and can tell the user exactly what to connect to ' +
-    'unlock the rest. Deterministic and read-only.',
+    'are configured right now. Nothing here calls an integration: a configured one can be tried, but ' +
+    'is not verified to work until a call succeeds. ALWAYS call this before answering "what can you ' +
+    'do?", when planning a multi-tool workflow, or before relying on a workflow integration — so you ' +
+    'only attempt what is configured, and can tell the user exactly what to connect to unlock the ' +
+    'rest. Deterministic and read-only.',
   input_schema: {
     type: 'object',
     properties: {},

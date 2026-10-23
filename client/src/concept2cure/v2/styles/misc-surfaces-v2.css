@@ -416,6 +416,18 @@
   .vd-d-idx{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-300); }
   .vd-idx-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-500,var(--text-400)); }
   .vd-idx-dot.on{ background:var(--success); }
+  /* Upload (gap 7.1): the drop target around the upload controls, and one row per staged file. */
+  .vd-upload-zone{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:4px 8px; border:1px dashed transparent; border-radius:var(--radius-lg); }
+  .vd-upload-zone[data-dragging]{ border-color:var(--accent-200); background:var(--accent-000); }
+  .vd-upload-zone-t{ font-size:12px; color:var(--text-300); }
+  .vd-stage{ margin:0 0 12px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-lg); }
+  .vd-stage-list{ list-style:none; margin:8px 0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .vd-stage-row{ padding:10px 0; border-top:1px solid var(--border); }
+  .vd-stage-h{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .vd-stage-path{ flex:1 1 12rem; min-width:0; font-size:12px; color:var(--text-200); overflow-wrap:anywhere; }
+  .vd-stage .c2c-input:disabled{ background:var(--bg-100); cursor:not-allowed; }
+  .vd-stage-fields{ display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 10px; align-items:center; font-size:12px; color:var(--text-300); }
+  .vd-stage-actions{ display:flex; gap:8px; margin-top:8px; }
   .vd-vers{ display:flex; flex-direction:column; gap:6px; }
   .vd-ver{ display:flex; gap:10px; align-items:baseline; }
   .vd-ver-v{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; color:var(--accent-200); min-width:42px; }

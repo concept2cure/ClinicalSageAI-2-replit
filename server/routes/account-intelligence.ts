@@ -1,8 +1,9 @@
 /**
  * Account Intelligence Routes
  *
- * API endpoints for account-level canon, event ledger, skill bundles,
- * term dictionary, and template registry.
+ * API endpoints for account-level canon, event ledger, term dictionary and
+ * template registry. Skill bundles are organization AnA skills, served by
+ * routes/ana-skills.ts.
  *
  * @module server/routes/account-intelligence
  */
@@ -24,9 +25,6 @@ import {
   getProjection,
 } from '../services/account-canon.js';
 import {
-  createSkillBundle,
-  updateSkillBundle,
-  getSkillBundles,
   addTerm,
   getTermDictionary,
   addTemplate,
@@ -287,7 +285,6 @@ router.post('/resolve', authMiddleware, async (req: Request, res: Response) => {
       data: {
         canonItems: resolved.canonItems.length,
         terms: resolved.terms.length,
-        bundles: resolved.bundles.length,
         templates: resolved.templates.length,
         tokensEstimate: resolved.tokensEstimate,
         requestId: resolved.requestId,
@@ -304,128 +301,15 @@ router.post('/resolve', authMiddleware, async (req: Request, res: Response) => {
 // ════════════════════════════════════════════════════════════════════════════
 // SKILL BUNDLES
 // ════════════════════════════════════════════════════════════════════════════
-
-/**
- * POST /api/account-intelligence/bundles
- * Create a new skill bundle.
- */
-router.post('/bundles', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const schema = z.object({
-      name: z.string().min(1).max(200),
-      description: z.string().optional(),
-      bundleType: z.string().min(1),
-      submissionTypes: z.array(z.string()).optional(),
-      moduleTypes: z.array(z.string()).optional(),
-      workTypes: z.array(z.string()).optional(),
-      regulatoryRegions: z.array(z.string()).optional(),
-      promptFragments: z.array(z.object({
-        role: z.string(),
-        content: z.string(),
-        priority: z.number(),
-      })).optional(),
-      outputStructure: z.record(z.unknown()).optional(),
-      evidencePreferences: z.record(z.unknown()).optional(),
-      authorityResponseStyle: z.record(z.unknown()).optional(),
-      policyBindings: z.array(z.object({
-        policyType: z.string(),
-        description: z.string(),
-        enforcement: z.string(),
-      })).optional(),
-      artifactDefaults: z.record(z.unknown()).optional(),
-      reviewerRequirements: z.record(z.unknown()).optional(),
-      metadata: z.record(z.unknown()).optional(),
-    });
-
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ success: false, error: { message: 'Validation failed', details: parsed.error.format() } });
-    }
-
-    const bundle = await createSkillBundle({
-      ...parsed.data,
-      organizationId: getOrgId(req),
-      actorId: getUserId(req) || undefined,
-      actorName: getUserName(req) || undefined,
-    });
-
-    return res.json({ success: true, data: bundle });
-  } catch (error: any) {
-    logger.error(`Failed to create skill bundle: ${error.message}`);
-    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to create skill bundle' } });
-  }
-});
-
-/**
- * GET /api/account-intelligence/bundles
- * List skill bundles.
- */
-router.get('/bundles', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const bundleType = req.query.bundleType as string | undefined;
-    const status = req.query.status as string | undefined;
-
-    const bundles = await getSkillBundles(getOrgId(req), { bundleType, status });
-    return res.json({ success: true, data: bundles });
-  } catch (error: any) {
-    logger.error(`Failed to get skill bundles: ${error.message}`);
-    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get skill bundles' } });
-  }
-});
-
-/**
- * PATCH /api/account-intelligence/bundles/:id
- * Update a skill bundle.
- */
-router.patch('/bundles/:id', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(String(req.params.id), 10);
-    if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid bundle ID' } });
-
-    const updateSchema = z.object({
-      name: z.string().min(1).max(200).optional(),
-      description: z.string().optional(),
-      bundleType: z.string().min(1).optional(),
-      submissionTypes: z.array(z.string()).optional(),
-      moduleTypes: z.array(z.string()).optional(),
-      workTypes: z.array(z.string()).optional(),
-      regulatoryRegions: z.array(z.string()).optional(),
-      promptFragments: z.array(z.object({
-        role: z.string(),
-        content: z.string(),
-        priority: z.number(),
-      })).optional(),
-      outputStructure: z.record(z.unknown()).optional(),
-      evidencePreferences: z.record(z.unknown()).optional(),
-      authorityResponseStyle: z.record(z.unknown()).optional(),
-      policyBindings: z.array(z.object({
-        policyType: z.string(),
-        description: z.string(),
-        enforcement: z.string(),
-      })).optional(),
-      artifactDefaults: z.record(z.unknown()).optional(),
-      reviewerRequirements: z.record(z.unknown()).optional(),
-      metadata: z.record(z.unknown()).optional(),
-    });
-
-    const parsed = updateSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ success: false, error: { message: 'Validation failed', details: parsed.error.format() } });
-    }
-
-    const bundle = await updateSkillBundle(
-      id,
-      getOrgId(req),
-      parsed.data,
-      getUserId(req) || undefined,
-      getUserName(req) || undefined
-    );
-    return res.json({ success: true, data: bundle });
-  } catch (error: any) {
-    logger.error(`Failed to update skill bundle: ${error.message}`);
-    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || 'Failed to update skill bundle' } });
-  }
-});
+//
+// The bundle routes that were here (POST/GET/PATCH /bundles, 2026-10-22) are
+// replaced by the organization-skill routes in routes/ana-skills.ts: an
+// organization's skill bundles are its AnA skills. These took no role check,
+// so any member could change the instructions AnA follows for the whole
+// organization, and no reason for the change; they had no client caller. The
+// replacement is admin-only, takes a stated reason, and writes the change and
+// its chained audit row in one transaction (server/routes/ana-skills.ts,
+// tested by server/routes/__tests__/ana-skills-routes.test.ts).
 
 // ════════════════════════════════════════════════════════════════════════════
 // TERM DICTIONARY

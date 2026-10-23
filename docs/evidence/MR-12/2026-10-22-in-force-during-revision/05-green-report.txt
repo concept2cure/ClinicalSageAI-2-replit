@@ -1,0 +1,31 @@
+# GREEN (report) at 044dc55d6 + this change (2026-10-22T04:34:22Z)
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > an account created by single sign-on is not reported as having the emailed code
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > the retention policies section says it is as at generation, not as at the period
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+## compliance-reports unit
+ Test Files  8 passed (8)
+      Tests  104 passed (104)

@@ -206,3 +206,25 @@ describe('GET /features never invents a tier', () => {
     expect(res.body.tier).toBe('professional');
   });
 });
+
+// 2026-10-22: publishAgreement refuses an agreement with no body or url
+// (AgreementPublishTextMissingError, 400), and the route answered it 500.
+describe('POST /agreements: an agreement with no text is the request\'s fault', () => {
+  it('answers 400 AGREEMENT_TEXT_MISSING and publishes nothing', async () => {
+    wire();
+    const a = express();
+    a.use(express.json());
+    a.use((req: Request, _res: Response, next: NextFunction) => {
+      (req as unknown as { user: { id: number; organizationId: number; role: string } }).user = { id: 7, organizationId: 3, role: 'admin' };
+      next();
+    });
+    a.use('/api/licensing', licensingRouter);
+    const res = await request(a)
+      .post('/api/licensing/agreements')
+      .send({ agreementKey: 'eula', version: '2026.10', title: 'End-User License Agreement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body.code).toBe('AGREEMENT_TEXT_MISSING');
+    const writes = query.mock.calls.filter(([sql]) => /INSERT INTO license_agreements|UPDATE license_agreements/.test(String(sql)));
+    expect(writes).toEqual([]);
+  });
+});

@@ -1,0 +1,17 @@
+# Slice C (OPS-08), after: validate (bootstrap, both roots) and terraform test (stack, every module with tests)
+# tfcheck.sh slicec-after keep-locks; Terraform 1.11.4, aws 5.100.0, random 3.6.3 from the committed locks
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                      Success! 67 passed, 0 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 9 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 2 passed, 0 failed. 
+
+# Acceptance grep: grep -rn 'worker_desired_count\|ecr_worker_url\|aws_ecs_service" "worker' terraform/
+exit 1 (1 = no match)
+
+# terraform fmt -recursive -check terraform/
+exit 0

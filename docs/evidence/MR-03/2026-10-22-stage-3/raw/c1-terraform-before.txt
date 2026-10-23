@@ -1,0 +1,57 @@
+# Slice C, before: the two new boot_contract runs, alone, against HEAD's terraform (e218851a1). Mocked AWS provider, terraform 1.11.4.
+# The secrets' mock ARNs are random per secret: j6e8ngoa is database_url, t71d71xc is app_service_db_password.
+# (The override for module.ecs.aws_iam_role.migrate_execution has no target at HEAD; terraform says so and continues.)
+
+=== a_api (head's terraform)
+  run "the_api_task_holds_no_owner_credential"... fail
+Error: Test assertion failed
+  on tests/a_api.tftest.hcl line 163, in run "the_api_task_holds_no_owner_credential":
+ 163:     condition = length(setintersection(
+    │ module.ecs.api_container.environment is tuple with 32 elements
+    │ module.ecs.api_container.secrets is tuple with 15 elements
+Error: Test assertion failed
+  on tests/a_api.tftest.hcl line 170, in run "the_api_task_holds_no_owner_credential":
+ 170:     condition = length(setintersection(
+    │ module.ecs.api_container.secrets is tuple with 15 elements
+    │ module.secrets.secret_arns["app_service_db_password"] is "t71d71xc"
+    │ module.secrets.secret_arns["database_url"] is "j6e8ngoa"
+Error: Test assertion failed
+  on tests/a_api.tftest.hcl line 177, in run "the_api_task_holds_no_owner_credential":
+ 177:     condition = length(setintersection(
+    │ module.ecs.execution_secrets_policy is "{\"Statement\":[{\"Action\":[\"secretsmanager:GetSecretValue\"],\"Effect\":\"Allow\",\"Resource\":[\"b5xk5ds0\",\"djbueyws\",\"t71d71xc\",\"smr2iqax\",\"c8owedgk\",\"4w8zi90t\",\"qkodmdkd\",\"9km2270p\",\"j6e8ngoa\",\"b6lu45f0\",\"7n1mkckv\",\"em0z8wxl\",\"mqqxqyxy\",\"80yfivrn\",\"7m20ney2\"]},{\"Action\":[\"kms:Decrypt\"],\"Condition\":{\"StringEquals\":{\"kms:ViaService\":\"secretsmanager.us-east-1.amazonaws.com\"}},\"Effect\":\"Allow\",\"Resource\":[\"arn:aws:kms:us-east-1:123456789012:key/secrets\"]}],\"Version\":\"2012-10-17\"}"
+    │ module.secrets.secret_arns["app_service_db_password"] is "t71d71xc"
+    │ module.secrets.secret_arns["database_url"] is "j6e8ngoa"
+  on tests/a_api.tftest.hcl line 104, in override_resource:
+The override target module.ecs.aws_iam_role.migrate_execution does not exist
+Failure! 0 passed, 1 failed.
+=== b_db (head's terraform)
+  run "the_one_off_database_task_alone_holds_it"... fail
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 166, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_container".
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 166, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_container".
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 173, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_execution_role_arn".
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 174, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 174, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_container".
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 182, in run "the_one_off_database_task_alone_holds_it":
+ 182:     condition     = jsonencode(module.ecs.migrate_container.environment) == jsonencode(module.ecs.api_container.environment)
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_container".
+Error: Unsupported attribute
+  on tests/b_db.tftest.hcl line 189, in run "the_one_off_database_task_alone_holds_it":
+    │ module.ecs is object with 16 attributes
+This object does not have an attribute named "migrate_container".

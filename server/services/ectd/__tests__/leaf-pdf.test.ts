@@ -46,6 +46,21 @@ describe('buildLeafPdf', () => {
     expect(bytes).toContain('Concept2Cure eCTD leaf renderer');
   });
 
+  // 2026-10-08 (sweep VP-3): pdfkit's default header is %PDF-1.3, outside the
+  // PDF 1.4–1.7 every eCTD region accepts, and that is what shipped whenever the
+  // PDF/A conversion did not run. FDA also asks for bookmarks on documents.
+  it('renders PDF 1.7 with a bookmark for the document, still reproducibly', async () => {
+    const input = { title: 'Clinical Overview — Overview (2.5)', markdown: '### A\n\nBody.\n', contentModifiedAt: AT };
+    const bytes = await buildLeafPdf(input);
+    const text = bytes.toString('latin1');
+    expect(text.slice(0, 8)).toBe('%PDF-1.7');
+    expect(text).toMatch(/\/Outlines \d+ 0 R/);
+    expect(text).toMatch(/\/PageMode \/UseOutlines/);
+    // One outline item, opening the document's first page.
+    expect(text.match(/\/Dest \[\d+ 0 R \/Fit\]/g)).toHaveLength(1);
+    expect(md5(await buildLeafPdf(input))).toBe(md5(bytes));
+  });
+
   it('different content still renders differently — determinism is not collapse', async () => {
     const a = await buildLeafPdf({ title: 'T', markdown: 'One.', contentModifiedAt: AT });
     const b = await buildLeafPdf({ title: 'T', markdown: 'Two.', contentModifiedAt: AT });

@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx > a field's changing description is the only live part > the fixed part is not live; the changing part is, alone 42ms
+ × client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx > a field's changing description is the only live part > an empty changing part is still drawn, so its first change is heard; it alone describes the field 8ms
+ ✓ client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx > a field's changing description is the only live part > a field with only a fixed description has no live region 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

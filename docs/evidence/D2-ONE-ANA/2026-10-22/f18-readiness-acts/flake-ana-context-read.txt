@@ -1,0 +1,7 @@
+# The AnA-context reads in dispatchReadinessNotAssessed.test.tsx raced the effect that publishes the facts.
+# Reproduced under load: six copies of the file at once, twice.
+Before (synchronous read after the gate text appears): 2 of 12 runs failed.
+  Failing value: markets[0] = { answered: false, readState: 'reading', verdict: 'Checking…' } while the gate was already drawn.
+After (the read waits for the published facts): 0 of 18 runs failed (11/11 each).
+dispatchReadinessActs.test.tsx 'what AnA is told': waits for both verdict reads, which settle in either order. 12 loaded runs with submissionCenterBuilderSection: 0 failed (37/37 each).
+Every client test touching the changed surfaces (53 files): 493/493.

@@ -520,7 +520,7 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     });
   });
 
-  it('a failed filing is toasted and nothing pretends to have saved', async () => {
+  it('a failed filing is announced once, as an alert, and nothing pretends to have saved', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === '/api/biostat/assurance') {
         return ok({ assurance: 0.7, provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', seed: 1, inputsSha256: FULL_HASH, reproducible: true } });
@@ -541,11 +541,12 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     // A 5xx can follow a committed write, so since 9bd3ee734 the writer reports
     // the outcome as unconfirmed — neither "saved" nor "nothing was saved".
     // (A 4xx refusal is the "Couldn’t create the document" case.)
-    await waitFor(() => {
-      expect(screen.getByText(/Could not confirm whether the document was saved/)).toBeTruthy();
-    });
-    const toast = document.querySelector('.de-toast');
-    expect(toast?.getAttribute('data-tone')).toBe('error');
+    // Announced exactly once: by the persistent recovery notice, as an alert.
+    // A toast repeating the same text made a screen reader announce it twice.
+    const announced = await screen.findByText(/Could not confirm whether the document was saved/);
+    expect(announced.classList.contains('scaf-note')).toBe(true);
+    expect(announced.getAttribute('role')).toBe('alert');
+    expect(document.querySelector('.de-toast')).toBeNull();
     expect(document.body.textContent ?? '').not.toMatch(/Saved to the authoring store|Nothing was saved/);
     // No section write was attempted after the document create failed.
     expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')).toBeFalsy();
@@ -653,14 +654,13 @@ describe('BP-W2-4 — with no project open, Insert into document files nothing (
     fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
 
-    const toast = await waitFor(() => {
-      const el = document.querySelector('.de-toast');
-      if (!el || !/open a project first/i.test(el.textContent ?? '')) throw new Error('no refusal toast');
-      return el as HTMLElement;
-    });
-    // Reported as a refusal, not the green success tick.
-    expect(toast.getAttribute('data-tone')).toBe('error');
-    expect(toast.getAttribute('role')).toBe('alert');
+    // Reported once, by the recovery notice, as a refusal (an alert), not as
+    // a success status — and not repeated as a toast.
+    const refusal = await screen.findByText(/open a project first/i);
+    expect(refusal.classList.contains('scaf-note')).toBe(true);
+    expect(refusal.getAttribute('role')).toBe('alert');
+    expect(refusal.textContent).toMatch(/Nothing was saved/);
+    expect(document.querySelector('.de-toast')).toBeNull();
     // Nothing reached the authoring store.
     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
     expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(false);

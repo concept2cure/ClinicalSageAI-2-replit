@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/place-module3-into-submission.test.ts
+{
+  "timestamp": "2026-10-22T04:49:31.307Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses with the gate verdict and performs no write when the gate refuses 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a submission that does not file on CTD headings, before any read or write 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > another program's submission is refused before anything is read or written 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > the same program, in any case, is placed 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project is compared with the program's anchored row: another one is refused 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project of the anchored row is placed 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a program with no anchor cannot be judged, and is not refused (as upsertLeaf) 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses an eSTAR device submission for the same reason 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places normally when the submission files on CTD headings 1ms
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a nda target, naming it, before anything is read or written 7ms
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a bla target, naming it, before anything is read or written 1ms
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a anda target, naming it, before anything is read or written 1ms
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a maa target, naming it, before anything is read or written 1ms
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a program outside the boundary, even when its sections passed the gate 1ms
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > places a small-molecule program into its US IND 2ms
+   → expected "vi.fn()" to be called with arguments: [ 7, 'proj-1' ]
+
+Number of calls: 0
+
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the section label into coauthor_documents.module_name 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > files a section already placed in an earlier sequence as replace of that leaf, not as new 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the SAME sequence updates its leaves rather than adding a second copy 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > snapshots approved sections into coauthor_documents and places m-prefixed leaves 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a sequence that belongs to a different submission 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > skips (and says it skipped) an approved section with no compiled narrative 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the composed tables the narrative cites into the placed snapshot 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places the placeable sections and says which ones were skipped as pre-tables 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses the whole placement — with no write — when every approved section is unplaceable 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places a genuinely table-free section with no table block and no trailing blank tail 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > toLeafSectionCode > prefixes the eCTD spine's m onto CMC OS section keys 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > the governed artifact and the filed leaf are the same bytes > renders a narrative with a trailing space identically for both consumers 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a nda target, naming it, before anything is read or written
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a bla target, naming it, before anything is read or written
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a anda target, naming it, before anything is read or written
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a maa target, naming it, before anything is read or written
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ fileSectionAsLeaf server/services/cmc/place-module3-into-submission.ts:359:38
+    357|     title,
+    358|     coauthorDocumentId: snapshot.id,
+    359|     leafId: (leaf as { id: number }).id,
+       |                                      ^
+    360|     tableCount: tables.length,
+    361|     updatedInPlace: Boolean(existing),
+ ❯ Module.placeModule3IntoSubmission server/services/cmc/place-module3-into-submission.ts:523:7
+ ❯ server/services/cmc/__tests__/place-module3-into-submission.test.ts:286:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a program outside the boundary, even when its sections passed the gate
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ fileSectionAsLeaf server/services/cmc/place-module3-into-submission.ts:359:38
+    357|     title,
+    358|     coauthorDocumentId: snapshot.id,
+    359|     leafId: (leaf as { id: number }).id,
+       |                                      ^
+    360|     tableCount: tables.length,
+    361|     updatedInPlace: Boolean(existing),
+ ❯ Module.placeModule3IntoSubmission server/services/cmc/place-module3-into-submission.ts:523:7
+ ❯ server/services/cmc/__tests__/place-module3-into-submission.test.ts:302:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > places a small-molecule program into its US IND
+AssertionError: expected "vi.fn()" to be called with arguments: [ 7, 'proj-1' ]
+
+Number of calls: 0
+
+ ❯ server/services/cmc/__tests__/place-module3-into-submission.test.ts:313:45
+    311|       const result = await place();
+    312|       expect(result.placed).toBe(true);
+    313|       expect(assessProgramCompositionScope).toHaveBeenCalledWith(7, 'p…
+       |                                             ^
+    314|     });
+    315|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 21 passed (27)
+   Start at  04:49:27
+   Duration  4.14s (transform 1.86s, setup 90ms, import 2.68s, tests 36ms, environment 0ms)
+

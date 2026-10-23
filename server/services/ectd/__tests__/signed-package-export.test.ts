@@ -180,6 +180,40 @@ beforeEach(() => {
 // ── Happy path ──────────────────────────────────────────────────────────────
 
 describe('resolveSignedPackageForExport — accepts an intact signed package', () => {
+  it('exports the exact recorded applicant snapshot the signature binds', async () => {
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const snapshot = { ...SNAPSHOT, recordedPackageIdentity };
+    const payloadDigest = computeBoundPayloadDigestFromComponents({ ...snapshot, backboneXml: snapshot.backboneXml });
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: { payloadDigest,
+      payloadSeal: sealSignPayloadDigest(payloadDigest, ORG, SEALED_ENV), signatureId: 7,
+      awaitingSince: '2026-09-01T00:05:00Z', signedSnapshot: snapshot } }));
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.descriptor.recordedPackageIdentity).toEqual(recordedPackageIdentity);
+  });
+
+  it('refuses an applicant contact altered inside an otherwise intact frozen record', async () => {
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const snapshot = { ...SNAPSHOT, recordedPackageIdentity };
+    const payloadDigest = computeBoundPayloadDigestFromComponents({ ...snapshot, backboneXml: snapshot.backboneXml });
+    const altered = { ...snapshot, recordedPackageIdentity: { ...recordedPackageIdentity, identity: {
+      ...recordedPackageIdentity.identity, contact: { ...recordedPackageIdentity.identity.contact, email: 'changed@example.test' },
+    } } };
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: { payloadDigest,
+      payloadSeal: sealSignPayloadDigest(payloadDigest, ORG, SEALED_ENV), signatureId: 7,
+      awaitingSince: '2026-09-01T00:05:00Z', signedSnapshot: altered } }));
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+    expect(result).toMatchObject({ ok: false, refusal: 'digest-drift' });
+  });
+
   it('returns the signed manifest when every control verifies', async () => {
     mockGetRun.mockResolvedValue(runWithSignStep({ payload: validPayload() }));
 

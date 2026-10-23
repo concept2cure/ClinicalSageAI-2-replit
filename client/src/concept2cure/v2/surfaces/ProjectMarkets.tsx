@@ -34,7 +34,10 @@ import { stashNavParamsForTarget } from '../navParams';
 import { SC_REGIONS, SC_SEQ_STATUS } from '../fixtures/submission';
 import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regulatory/filing-document-classes';
 import type { ReviewItem } from '../fixtures/review-data';
+import type { BuilderSection } from './submissionNavTarget';
+import { MarketApplicationNumber } from './MarketApplicationNumber';
 import {
+  awaitingOwnReleaseSignature,
   programTypeLabel,
   SUB_STATUS_LABEL,
   SUB_STATUS_TONE,
@@ -108,6 +111,12 @@ export function marketVerdict(read: MarketRead): VerdictWords {
   const { gate, assessment } = read;
   if (!gate) return { text: 'No verdict from the server', tone: 'warn', icon: I.alertTriangle, failed: false };
   if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: externalIssue(assessment) ? 'warn' : 'ok', icon: I.shieldCheck, failed: false };
+  /* The Dispatch tab's third state: the only thing between this sequence and
+     dispatch is the release signature that the dispatch e-signature records.
+     "Dispatch blocked" sent people looking for a defect that does not exist. */
+  if (awaitingOwnReleaseSignature(assessment)) {
+    return { text: 'Clear except for the release signature, which the dispatch e-signature applies', tone: 'warn', icon: I.shieldCheck, failed: false };
+  }
   const n = gate.blockers.length;
   const text = n > 0 ? `Dispatch blocked · ${n} blocker${n === 1 ? '' : 's'}` : 'Dispatch blocked';
   return { text, tone: 'blocked', icon: I.lock, failed: false };
@@ -151,7 +160,7 @@ function NotAssessedLines({ a }: { a: DispatchReadinessAssessment | null }) {
 
 /** The server's answer under the verdict: its blockers verbatim, what it did
  *  not assess, and its structural counts. */
-function VerdictDetail({ read }: { read: MarketRead }) {
+export function VerdictDetail({ read }: { read: MarketRead }) {
   if (read.state !== 'verdict') return null;
   const { gate, assessment: a } = read;
   const rd = a?.readiness;
@@ -178,38 +187,58 @@ const SUB_ROW_TONE: Record<string, string> = { ai: 'acc', ok: 'ok', idle: 'idle'
 
 /** Where the Submission Center opens: a market's sequence, or the open
  *  project's submission list. Every key the Submission Center reads is
- *  named here (submissionNavTarget: submissionId, sequenceId, ws); a key with
- *  no value is sent empty, and consumeNavParams drops it. */
-interface CenterTarget {
+ *  named here (submissionNavTarget: submissionId, sequenceId, ws, and the
+ *  Builder section builderAct/sectionCode); a key with no value is sent
+ *  empty, and consumeNavParams drops it. */
+export interface CenterTarget {
   submissionId?: number;
   sequenceId?: number;
-  ws: 'validation' | 'sequences' | 'portfolio';
+  ws: 'validation' | 'sequences' | 'portfolio' | 'builder' | 'dispatch';
   /** Open New submission on arrival ("Add a market"). */
   newSubmission?: boolean;
+  /** In the Builder: open the placement form at, or mark the leaf at, a section (F18). */
+  section?: BuilderSection;
 }
 
-/** The one way this list opens the Submission Center. */
-function openSubmissionCenter(onNav: (id: string) => void, at: CenterTarget): void {
+/** The one way the project's markets open the Submission Center: this list,
+ *  and Submission Readiness's acts (F18). */
+export function openSubmissionCenter(onNav: (id: string) => void, at: CenterTarget): void {
   stashNavParamsForTarget('submission-center', {
     submissionId: at.submissionId != null ? String(at.submissionId) : '',
     sequenceId: at.sequenceId != null ? String(at.sequenceId) : '',
     ws: at.ws,
     newSubmission: at.newSubmission ? '1' : '',
+    builderAct: at.section?.act ?? '',
+    sectionCode: at.section?.code ?? '',
   });
   onNav('submission-center');
 }
 
-/** A market opens on its latest sequence: on Validation when the server
+/** A market opens on its latest sequence: on Dispatch when only the release
+ *  signature dispatch applies is outstanding, on Validation when the server
  *  blocked dispatch, otherwise on Sequences. */
-function marketTarget(m: ProgramMarket): CenterTarget {
+export function marketTarget(m: ProgramMarket): CenterTarget {
   const r = m.read;
   const sequence = r.state === 'verdict' || r.state === 'verdict-failed' ? r.sequence : null;
+  if (r.state === 'verdict' && awaitingOwnReleaseSignature(r.assessment)) {
+    return { submissionId: m.submission.id, sequenceId: sequence?.id, ws: 'dispatch' };
+  }
   const blocked = r.state === 'verdict' && r.gate != null && !r.gate.cleared;
   return { submissionId: m.submission.id, sequenceId: sequence?.id, ws: blocked ? 'validation' : 'sequences' };
 }
 
-function MarketRow({ m, onRetry, onOpen }: {
+/** A market's accessible name: its type and agency, and its title, so two
+ *  markets of one type to one agency are told apart. */
+export function marketAccessibleName(s: Pick<MarketSubmission, 'applicationType' | 'primaryRegion' | 'title'>): string {
+  return [marketName(s), s.title].filter(Boolean).join(', ');
+}
+
+function MarketRow({ m, onRetry, onOpen, detail, number }: {
   m: ProgramMarket; onRetry: (id: number) => void; onOpen: ((m: ProgramMarket) => void) | null;
+  /** What is shown under the verdict in place of VerdictDetail (Submission Readiness's gates). */
+  detail?: (m: ProgramMarket) => React.ReactNode;
+  /** The market's own application number (P-44), where the list offers it. */
+  number?: (m: ProgramMarket) => React.ReactNode;
 }) {
   const s = m.submission;
   const name = marketName(s);
@@ -244,9 +273,10 @@ function MarketRow({ m, onRetry, onOpen }: {
           </button>
         )}
       </div>
-      <VerdictDetail read={m.read} />
+      {detail ? detail(m) : <VerdictDetail read={m.read} />}
       {/* What the platform can carry for this market, in the server's words (F19). */}
       <div className="pj-file-m"><MarketSupportLine applicationType={s.applicationType} market={s.primaryRegion} /></div>
+      {number?.(m)}
       {onOpen && (
         <div className="pj-mkt-acts">
           <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)} aria-label={`Open ${name} in the Submission Center`}>
@@ -277,8 +307,15 @@ export function marketsForbidden(markets: ProgramMarkets): boolean {
 
 const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this project’s markets are not shown.';
 
-function MarketsBody({ markets, onOpen, center }: {
+/** The project's markets as a list, with its loading, refused, failed and
+ *  empty states. The Submit tab and Submission Readiness (F18) both draw it. */
+export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
+  /** Said after "No market for this project yet": how one is started from here. */
+  startHint?: string;
+  detail?: (m: ProgramMarket) => React.ReactNode;
+  /** Each market's own application number (P-44); drawn by the project's Submit tab. */
+  number?: (m: ProgramMarket) => React.ReactNode;
 }) {
   const { list } = markets;
   if (list.loading) {
@@ -295,7 +332,7 @@ function MarketsBody({ markets, onOpen, center }: {
   }
   const others = notOfferedLine(markets.notOffered);
   if (markets.markets.length === 0) {
-    const start = center ? ' Add a market to start one.' : '';
+    const start = startHint ?? (center ? ' Add a market to start one.' : '');
     return (
       <EmptyState icon={I.rocket} title="No market for this project yet"
         hint={`A market is one submission: an application to one agency.${start}${others ? ` ${others}` : ''}`} />
@@ -304,11 +341,17 @@ function MarketsBody({ markets, onOpen, center }: {
   return (
     <>
       <ul className="pj-files pj-mkts" aria-label="Markets">
-        {markets.markets.map((m) => <MarketRow key={m.submission.id} m={m} onRetry={markets.retryMarket} onOpen={onOpen} />)}
+        {markets.markets.map((m) => <MarketRow key={m.submission.id} m={m} onRetry={markets.retryMarket} onOpen={onOpen} detail={detail} number={number} />)}
       </ul>
       {others && <p className="pj-mkt-note">{others}</p>}
     </>
   );
+}
+
+/** A filing document class project has no market, in the platform's terms:
+ *  the Submit tab and Submission Readiness (F18) say the same thing. */
+export function NotSequencedState({ documentClass }: { documentClass: FilingDocumentClass }) {
+  return <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced" hint={classNotSequencedReason(documentClass)} />;
 }
 
 /** The Submit tab's market list. "Open Submission Center" opens the open
@@ -334,8 +377,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
     return (
       <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
         <div className="pj-sec-h"><h2 id="pj-markets-h">Markets</h2></div>
-        <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced"
-          hint={classNotSequencedReason(documentClass)} />
+        <NotSequencedState documentClass={documentClass} />
       </section>
     );
   }
@@ -385,7 +427,9 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
           )}
         </span>
       </div>
-      <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null} />
+      <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
+        number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
+          onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
   );
 }

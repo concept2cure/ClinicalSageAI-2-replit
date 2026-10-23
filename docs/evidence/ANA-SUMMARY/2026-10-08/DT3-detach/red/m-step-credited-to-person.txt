@@ -1,0 +1,22 @@
+# m-step-credited-to-person: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t credited
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (server_shutdown) says what ended it, never "You stopped" 48ms
+   → expected 'You stopped searching the literature …' to match /was ended because the server restarte…/
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (session_ended) says what ended it, never "You stopped" 7ms
+   → expected 'You stopped searching the literature …' to match /was ended because the sign-in or acce…/
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (admin_cancelled) says what ended it, never "You stopped" 6ms
+   → expected 'You stopped searching the literature …' to match /was ended because an administrator st…/
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (unattended_limit) says what ended it, never "You stopped" 10ms
+   → expected 'You stopped searching the literature …' to match /was ended because nobody was watching…/
+ ✓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a person's own Stop still says they stopped it 7ms
+ Test Files  1 failed | 1 skipped (2)
+      Tests  4 failed | 1 passed | 41 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (server_shutdown) says what ended it, never "You stopped"
+AssertionError: expected 'You stopped searching the literature …' to match /was ended because the server restarte…/
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (session_ended) says what ended it, never "You stopped"
+AssertionError: expected 'You stopped searching the literature …' to match /was ended because the sign-in or acce…/
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (admin_cancelled) says what ended it, never "You stopped"
+AssertionError: expected 'You stopped searching the literature …' to match /was ended because an administrator st…/
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (unattended_limit) says what ended it, never "You stopped"
+AssertionError: expected 'You stopped searching the literature …' to match /was ended because nobody was watching…/

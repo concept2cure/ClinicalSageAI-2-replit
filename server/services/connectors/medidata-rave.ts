@@ -77,7 +77,7 @@ export class MedidataRaveConnector implements DataConnector {
         sourceConnector: this.id,
         title: study.StudyName || study.OID || 'Untitled Study',
         summary: `Medidata Study: ${study.StudyName || study.OID} | Environment: ${study.Environment || 'Production'}`,
-        relevanceScore: 1 - i * 0.05,
+        sourceRank: i + 1,
         metadata: study,
       }));
   }

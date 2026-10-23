@@ -3161,7 +3161,7 @@ router.get(
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
     }
     try {
-      const { listConsistencyAlerts } = await import(
+      const { listConsistencyAlerts, CONSISTENCY_SCAN_HISTORY_NOTE } = await import(
         '../services/intelligence/cross-artifact-consistency-scanner'
       );
       const { rows, total } = await listConsistencyAlerts({
@@ -3173,7 +3173,8 @@ router.get(
         limit: parsed.data.limit,
         offset: parsed.data.offset,
       });
-      return res.json({ organizationId, total, alerts: rows });
+      // 2026-10-22: an empty list said nothing of the scan history the summary names.
+      return res.json({ organizationId, total, alerts: rows, scanHistory: { recorded: false, note: CONSISTENCY_SCAN_HISTORY_NOTE } });
     } catch (err: any) {
       logger.error('[AnA consistency alerts list] failed', { error: err?.message || err });
       return res.status(500).json({
@@ -3368,8 +3369,8 @@ router.post(
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
     }
     // Cross-org scans are intentionally blocked at the route layer:
-    // the caller can only scan their own org. (Global / cross-tenant
-    // scans are an admin-only path that the system scheduler runs.)
+    // the caller can only scan their own org. No path scans every org:
+    // the scanner refuses a scan that names no organization.
     const scanOrg =
       typeof parsed.data.scanOrganizationId === 'number'
         ? parsed.data.scanOrganizationId
@@ -3491,7 +3492,7 @@ router.get(
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
     }
     try {
-      const { listGuidanceAlerts } = await import(
+      const { listGuidanceAlerts, GUIDANCE_SCAN_HISTORY_NOTE } = await import(
         '../services/intelligence/guidance-impact-scanner'
       );
       const { rows, total } = await listGuidanceAlerts({
@@ -3507,6 +3508,8 @@ router.get(
         organizationId,
         total,
         alerts: rows,
+        // 2026-10-22: an empty list said nothing of the scan history the summary names.
+        scanHistory: { recorded: false, note: GUIDANCE_SCAN_HISTORY_NOTE },
       });
     } catch (err: any) {
       logger.error('[AnA guidance alerts list] failed', { error: err?.message || err });
@@ -3794,12 +3797,15 @@ router.post(
       );
       const ingested: Array<{
         guidanceCode: string;
-        changed: boolean;
+        /** null for a failed update: whether it changed was not established. */
+        changed: boolean | null;
         prevVersion: string | null;
         newVersion: string;
         alertsCreated: number | null;
         alertsSkippedDuplicate: number | null;
         artifactsAffected: number | null;
+        failed?: true;
+        error?: string;
       }> = [];
       // Process sequentially — concurrent upserts on the same code
       // would hit the SELECT FOR UPDATE lock; sequential keeps it
@@ -3828,21 +3834,29 @@ router.post(
             guidanceCode: update.guidanceCode,
             error: innerErr?.message || innerErr,
           });
+          // 2026-10-15: reported as { changed: false } inside an ok: true batch,
+          // so a failed upsert or impact scan read as a guidance that had not
+          // changed. ingestGuidanceUpdate rolls the version back when its scan
+          // fails, so nothing was recorded and the update can be sent again.
           ingested.push({
             guidanceCode: update.guidanceCode,
-            changed: false,
+            changed: null,
             prevVersion: null,
             newVersion: update.newVersion,
             alertsCreated: null,
             alertsSkippedDuplicate: null,
             artifactsAffected: null,
+            failed: true,
+            error: 'Not ingested: the version or its impact scan could not be saved. Nothing was recorded; send the update again.',
           });
         }
       }
-      return res.json({
-        ok: true,
+      const failed = ingested.filter(entry => entry.failed).length;
+      return res.status(failed > 0 && failed === ingested.length ? 500 : 200).json({
+        ok: failed === 0,
         organizationId,
         received: parsed.data.updates.length,
+        failed,
         ingested,
       });
     } catch (err: any) {
@@ -3970,8 +3984,10 @@ router.post(
         // signature block would read as clean. Detail goes to the log.
         return respondVerificationUnavailable(res, logger, 'reading the provenance ledger', err, {
           code: 'LEDGER_UNAVAILABLE',
+          // 2026-10-15: named only the audit history and signatures, though an
+          // unread AI-use record (proposals, runs, plan) refuses the export too.
           message:
-            'The export was refused: its provenance ledger could not be read, so the document cannot substantiate its audit history or signatures. Nothing was exported.',
+            'The export was refused: its provenance ledger (audit history, signatures or AI-use record) could not be read. Nothing was exported.',
           extra: { artifactId },
         });
       }
@@ -5523,6 +5539,15 @@ router.get(
       return res.json(plan);
     } catch (err: any) {
       logger.error('[AnA authoring-plan active] failed:', { error: err?.message || err });
+      // 2026-10-15: the generator answered a missing authoring_plans table as
+      // "no plan", so this route said 404 "No active plan" without reading
+      // anything. The store being absent is now said as that.
+      if (err?.code === '42P01') {
+        return res.status(503).json({
+          error: 'The authoring plan store could not be read, so whether this section has an active plan is not known.',
+          code: 'AUTHORING_PLAN_STORE_UNAVAILABLE',
+        });
+      }
       return res.status(500).json({
         error: 'Failed to load active authoring plan',
         code: 'AUTHORING_PLAN_ACTIVE_ERROR',

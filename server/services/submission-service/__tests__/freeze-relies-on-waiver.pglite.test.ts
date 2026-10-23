@@ -28,7 +28,7 @@ vi.mock('../../../db', () => {
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({ assessSequenceDispatchReadiness: async () => holder.assessment }));
 
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
-import { ORG, USER, FREEZE_GATE_SEED_SQL, freezeGateHelpers } from './_freeze-gate-fixture';
+import { ORG, USER, FREEZE_GATE_SEED_SQL, FREEZE_PROGRAM_ID, freezeGateHelpers } from './_freeze-gate-fixture';
 import { freezeSequence } from '../submission-service';
 import { resolveShadowReviewWaiver } from '../../ectd/shadow-review-waiver';
 
@@ -43,7 +43,7 @@ let nextSeq = 9100;
 /** A validated sequence 0000 of a submission of its own (so no filing-order rule joins two cases), with two approved leaves. */
 async function validatedSequence(): Promise<number> {
   const id = nextSeq++;
-  await q(`INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES ($1, 'P-34 reliance', 'ind', 'biotech', 'fda', ${ORG}, ${USER})`, [id]);
+  await q(`INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id) VALUES ($1, 'P-34 reliance', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${FREEZE_PROGRAM_ID}')`, [id]);
   await q(`INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES ($1, $1, 'fda', '0000', ${ORG}, ${USER}, 'validated')`, [id]);
   await q(
     `INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
@@ -73,7 +73,7 @@ const frozenRow = async (seq: number) =>
   (await q(`SELECT new_values::jsonb AS v FROM audit_logs WHERE table_name = 'ectd_sequence' AND record_id = $1 AND action = 'SEQUENCE_FROZEN'`, [String(seq)])).rows;
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
+  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);

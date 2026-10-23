@@ -29,7 +29,7 @@
  *
  * @module server/services/labeling/spl-generation-service
  */
-import { generateSpl, splDeterministicGuid, type SplSpec } from './spl-generator';
+import { generateSpl, splDeterministicGuid, validateSplSpec, type SplSpec } from './spl-generator';
 
 // ── SPL LOINC Section Codes (NLM standard) ──────────────────────────────────
 const SECTION_CODES = {
@@ -73,6 +73,14 @@ export interface SplGenerationResult {
   xml: string;
   sectionCount: number;
   status: 'generated';
+  /**
+   * The canonical generator's own verdict on the spec. false: the document was
+   * built from a spec with structural errors (`specErrors` names each, e.g. a
+   * malformed NDC), so it is a partial document, not one that passes.
+   */
+  structurallyValid: boolean;
+  /** The generator's errors on the spec; empty when `structurallyValid`. */
+  specErrors: SplValidationFinding[];
   /**
    * Each document element the caller did not state, and what the document
    * carries in its place. Empty when the version and effective date were given.
@@ -196,7 +204,36 @@ export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
   };
 
   const built = generateSpl(spec);
-  return { xml: built.xml, sectionCount: spec.sections.length, status: 'generated', warnings };
+  // 2026-10-15: generateSpl's verdict was dropped here, so a spec it rejects (a
+  // malformed NDC) came back as a clean document; validateSplStructure checks the
+  // XML's shape, not the NDC, and called it passing. generateSpl reports only
+  // the verdict, so its validator names the errors.
+  const specErrors: SplValidationFinding[] = validateSplSpec(spec).errors.map((e) => ({
+    rule: `spec${e.path}`,
+    severity: 'error',
+    message: e.message,
+  }));
+  return {
+    xml: built.xml,
+    sectionCount: spec.sections.length,
+    status: 'generated',
+    structurallyValid: built.structurallyValid,
+    specErrors,
+    warnings,
+  };
+}
+
+/**
+ * The structural verdict on a document generateSplXml built: the generator's
+ * errors on its spec (e.g. a malformed NDC) and validateSplStructure's findings
+ * on its XML. Valid only when both are clean.
+ */
+export function validateGeneratedSpl(result: SplGenerationResult): SplValidationResult {
+  const xmlCheck = validateSplStructure(result.xml);
+  return {
+    valid: xmlCheck.valid && result.structurallyValid,
+    findings: [...result.specErrors, ...xmlCheck.findings],
+  };
 }
 
 /**

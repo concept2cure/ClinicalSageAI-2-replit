@@ -95,7 +95,12 @@ export interface LineageCoverageReport {
   lineageSources: Array<{
     sourceType: string;
     count: number;
-    avgConfidence: number;
+    /** How many of `count` carry a measured confidence_score. */
+    measuredCount: number;
+    /** Mean of the measured scores; null when none was measured. */
+    avgConfidence: number | null;
+    /** 'no measured confidence' when avgConfidence is null; else null. */
+    confidenceNote: string | null;
   }>;
   gaps: string[];
 }
@@ -229,7 +234,8 @@ export async function persistEvidenceChain(
       primarySourceType: chain.primarySource.sourceType,
       primarySourceId: chain.primarySource.sourceId,
       primarySourceTitle: chain.primarySource.sourceTitle,
-      primaryRelevance: chain.primarySource.relevance,
+      // 2026-10-15: the relevance basis and the coverage heuristic were dropped on persist.
+      primaryRelevance: chain.primarySource.relevance, primaryRelevanceBasis: chain.primarySource.relevanceBasis ?? null,
       supportingSources: chain.supportingSources.map(s => ({
         sourceType: s.sourceType,
         sourceId: s.sourceId,
@@ -239,6 +245,7 @@ export async function persistEvidenceChain(
       })),
       confidenceBasis: chain.confidenceBasis,
       confidenceScore: chain.confidenceScore,
+      evidenceCoverageHeuristic: chain.evidenceCoverage ?? null,
       chainStrength: chain.chainStrength,
       rimVersion: context?.rimVersion ?? null,
       judgmentFrameworkVersion: context?.judgmentFrameworkVersion ?? null,
@@ -406,12 +413,14 @@ export async function getLineageCoverage(
     fieldCoverage.get(field)!.push(rec);
   }
 
-  // Group by source type for summary
-  const sourceGroups = new Map<string, { count: number; totalConf: number }>();
+  // Group by source type for summary. 2026-10-15: `confidenceScore || 0` made
+  // every unmeasured (NULL) score a measured 0 in the average; only measured
+  // scores are averaged now, and none measured is null.
+  const sourceGroups = new Map<string, { count: number; measured: number[] }>();
   for (const rec of records) {
-    const existing = sourceGroups.get(rec.sourceObjectType) || { count: 0, totalConf: 0 };
+    const existing = sourceGroups.get(rec.sourceObjectType) || { count: 0, measured: [] as number[] };
     existing.count++;
-    existing.totalConf += rec.confidenceScore || 0;
+    if (rec.confidenceScore != null && Number.isFinite(rec.confidenceScore)) existing.measured.push(rec.confidenceScore);
     sourceGroups.set(rec.sourceObjectType, existing);
   }
 
@@ -424,10 +433,12 @@ export async function getLineageCoverage(
     totalSections,
     sectionsWithLineage,
     coveragePercent: Math.round((sectionsWithLineage / totalSections) * 100),
-    lineageSources: Array.from(sourceGroups.entries()).map(([type, data]) => ({
+    lineageSources: Array.from(sourceGroups.entries()).map(([type, { count, measured }]) => ({
       sourceType: type,
-      count: data.count,
-      avgConfidence: data.count > 0 ? Math.round(data.totalConf / data.count) : 0,
+      count,
+      measuredCount: measured.length,
+      avgConfidence: measured.length > 0 ? Math.round(measured.reduce((s, c) => s + c, 0) / measured.length) : null,
+      confidenceNote: measured.length > 0 ? null : 'no measured confidence',
     })),
     gaps: records.length === 0 ? ['No lineage records found for this object'] : [],
   };

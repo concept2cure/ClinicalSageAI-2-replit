@@ -5,9 +5,12 @@ import { getHuggingfaceModels } from '../config/huggingface-models';
 
 interface ProcessedDocument {
   title: string;
-  type: string;
-  source: string;
-  year: number;
+  /** null: the document's metadata states none. */
+  type: string | null;
+  /** null: the document's metadata states none. */
+  source: string | null;
+  /** null: the document's metadata states no year. */
+  year: number | null;
   summary: string;
   keyInsights: string[];
   tags: string[];
@@ -16,12 +19,15 @@ interface ProcessedDocument {
 interface AcademicKnowledgeResult {
   id: string;
   title: string;
-  type: string;
-  source: string;
+  type: string | null;
+  source: string | null;
   relevance: number;
   summary: string;
   context: string;
 }
+
+/** A metadata value as extracted, or null when none was. */
+const statedOrNull = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value : null);
 
 export class AcademicDocumentProcessor {
   /**
@@ -134,9 +140,13 @@ export class AcademicDocumentProcessor {
       }
 
       const title = documentInfo.title || fileName;
-      const type = documentInfo.type || 'Academic Paper';
-      const source = documentInfo.source || 'Unknown';
-      const year = documentInfo.year || new Date().getFullYear();
+      // 2026-10-22: these were 'Academic Paper' and 'Unknown' when the metadata
+      // stated none, recorded as if extracted.
+      const type = statedOrNull(documentInfo.type);
+      const source = statedOrNull(documentInfo.source);
+      // 2026-10-15: a document whose metadata stated no year was stamped with the
+      // current year, so an undated paper read as published this year.
+      const year: number | null = documentInfo.year || null;
 
       // Generate summary
       const summary = await this.huggingFaceService.generateSummary(text);
@@ -155,7 +165,7 @@ export class AcademicDocumentProcessor {
       const embedding = await this.huggingFaceService.generateEmbeddings(text);
 
       // Create document ID
-      const documentId = Buffer.from(`${title}-${source}-${year}`).toString('base64');
+      const documentId = Buffer.from(`${title}-${source ?? 'source not stated'}-${year ?? 'year not stated'}`).toString('base64');
 
       // Create document data
       const documentData = {

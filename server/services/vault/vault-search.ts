@@ -12,6 +12,9 @@
  * expression the GIN index is built on (migrations/20260906_vault_documents_fulltext.sql).
  * Paginated with a real `total`. Current versions only unless asked (VR-09).
  * An empty query is not "match everything": it answers no results and says why.
+ * Metadata filters (vault-document-filter.ts) narrow the same predicate; with
+ * filters and no text the query browses the filtered set, newest first
+ * ('browse' mode). Filters with no text are a question; an empty box alone is not.
  *
  * Every count and page binds the verified accessible programs and checks their
  * organization through regulatory_programs. The document's recorded parent
@@ -20,6 +23,10 @@
 import { supersededSql } from './vault-version-family.js';
 import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
+import {
+  hasVaultFilters, vaultFacetValueSql, vaultFilterSql, vaultFiltersWithout, vaultLifecycleStageSql,
+  VAULT_FACET_DIMENSIONS, VAULT_FILTER_PARAMETERS, type VaultDocumentFilters, type VaultFacets,
+} from './vault-document-filter.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -43,6 +50,15 @@ export interface VaultSearchParams {
   match?: 'all' | 'any';
   /** Additional server-admitted source restriction; never establishes access. */
   allowedProgramIds?: readonly string[];
+  /** Metadata filters, already validated (parseVaultFilters). They only narrow. */
+  filters?: VaultDocumentFilters;
+  /**
+   * Count each filter's values (VR-18): one GROUP BY per dimension, over the same
+   * predicate less that dimension's own filter, so the counts say what choosing
+   * a value would select. Asked for on the first page only; a failed count fails
+   * the search, never reads as zero.
+   */
+  facets?: boolean;
 }
 
 /**
@@ -68,6 +84,12 @@ export interface VaultSearchHit {
   folderId: string | null;
   ctdSection: string | null;
   placementStatus: string | null;
+  evidenceKind: string | null;
+  classification: string | null;
+  /** The version's lifecycle stage; null when none is recorded ("Not sent for review"). */
+  lifecycleStage: string | null;
+  /** ISO 8601, or null when the row has none. */
+  updatedAt: string | null;
   version: string | null;
   current: boolean;
   snippet: string | null;
@@ -78,7 +100,50 @@ export interface VaultSearchHit {
 const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
                @@ websearch_to_tsquery('english', $2)`;
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[] }> {
+/** The metadata a row shows beside its title, as the tree shows it. */
+function metadataOf(r: Record<string, unknown>): Pick<VaultSearchHit, 'evidenceKind' | 'classification' | 'lifecycleStage' | 'updatedAt'> {
+  const text = (v: unknown) => (typeof v === 'string' ? v : null);
+  return {
+    evidenceKind: text(r.evidence_kind),
+    classification: text(r.classification),
+    lifecycleStage: text(r.lifecycle_stage),
+    updatedAt: isoOrNull(r.updated_at),
+  };
+}
+
+function isoOrNull(v: unknown): string | null {
+  if (v == null) return null;
+  const d = v instanceof Date ? v : new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Facet counts, each over the search's own predicate (`whereFor`) less one
+ * dimension's filter, with its own bind list that starts with the same three
+ * tenant, query and program positions.
+ */
+async function readFacets(
+  db: Queryable, p: VaultSearchParams, base: readonly unknown[],
+  whereFor: (filterSql: string) => string,
+): Promise<VaultFacets> {
+  const facets: VaultFacets = {};
+  // A folder is one project's cabinet: counted within a project only.
+  const dimensions = VAULT_FACET_DIMENSIONS.filter((d) => d !== 'folderIds' || p.programId !== null);
+  for (const dimension of dimensions) {
+    const params = [...base];
+    const where = whereFor(vaultFilterSql(vaultFiltersWithout(p.filters, dimension), params, 'd'));
+    // Two fixed fragments: the dimension's value expression (a code map, no
+    // request value) and the search's own predicate, whose values are bound.
+    const counted = await db.query(`SELECT ${vaultFacetValueSql(dimension, 'd')} AS value, count(*)::int AS count
+       FROM vault.documents d
+      WHERE ${where}
+      GROUP BY 1 ORDER BY 2 DESC, 1`, params);
+    facets[VAULT_FILTER_PARAMETERS[dimension]] = counted.rows.map((r) => ({ value: r.value ?? null, count: Number(r.count) }));
+  }
+  return facets;
+}
+
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets }> {
   p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
@@ -87,18 +152,25 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
   const permitted = p.allowedProgramIds === undefined ? scope.programIds
     : scope.programIds.filter(id => p.allowedProgramIds!.includes(id));
-  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
+  // Browse: filters and no text, newest version first. $2 stays bound (null)
+  // and referenced, so every position after it is where the tenant-scope test
+  // pins it; with no rank, the order is the tie-break the search already uses.
+  const browse = !p.q.trim() && hasVaultFilters(p.filters);
+  const params: unknown[] = [p.organizationId, browse ? null : p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
+  const base = [...params];
+  const filterSql = vaultFilterSql(p.filters, params, 'd');
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+  const whereFor = (filters: string) => `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
           AND d.organization_id = $1
           AND d.program_id = ANY($3::uuid[])
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
           )
-          AND ${MATCH}${p.includeSuperseded ? '' : `
+          AND ${browse ? '$2::text IS NULL' : MATCH}${filters}${p.includeSuperseded ? '' : `
           AND NOT ${supersededSql('d')}`}`;
+  const where = whereFor(filterSql);
 
   // The count and the page share `where`, each on its own line after FROM.
   const counted = await db.query(`SELECT count(*)::int AS total
@@ -110,8 +182,12 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             ${vaultDispositionChoiceSql('d')} AS disposition,
             d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
+            d.evidence_kind, d.classification::text AS classification, d.updated_at,
+            ${vaultLifecycleStageSql('d')} AS lifecycle_stage,
             NOT ${supersededSql('d')} AS current,
             d.program_id::text AS program_id, prog.name AS program_name,
+            -- In browse, $2 is null: both functions are strict, so rank and
+            -- snippet are null and ts_headline does no work.
             ts_rank_cd(
               vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
               websearch_to_tsquery('english', $2)
@@ -128,8 +204,11 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  const facets = p.facets ? await readFacets(db, p, base, whereFor) : undefined;
   await requireProgramScopeStillCurrent(db, identity, scope);
   return {
+    ...(facets ? { facets } : {}),
+    mode: browse ? 'browse' : 'search',
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({
       originalFileAvailable: r.original_file_available ?? true,
@@ -143,6 +222,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       folderId: r.folder_id ?? null,
       ctdSection: r.ctd_section ?? null,
       placementStatus: r.placement_status ?? null,
+      ...metadataOf(r),
       version: r.version ?? null,
       current: Boolean(r.current),
       // Only offered when the match was in the body; a snippet echoing the

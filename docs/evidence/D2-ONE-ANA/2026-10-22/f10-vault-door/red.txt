@@ -1,0 +1,17 @@
+# F10 remainder (break 13), red at 9eea7d7ced with the new cases only
+# The two behavioural cases carry nothing to the Submission Center, and the F0 gate, now reading the Vault door too, names it a regression.
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > blocks retry after a lost write reply and offers the existing filing workspace
+   → expected null to deeply equal { submissionId: '4', …(2) }
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > after a confirmed placement, Open in Submission Center opens that sequence in the Builder (break 13)
+   → expected null to deeply equal { submissionId: '4', …(2) }
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open
+ × tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center", from Authoring or the Vault (and the market row, once F9 builds it) → the Submission Center, on that sequence
+   → placed-document-to-sequence is not reachable: client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx: 1 link(s) to the Submission Center carry no sequenceId. It is not in the baseline, so the filing path has regressed.: expected false to be true // Object.is equality
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center", from Authoring or the Vault (and the market row, once F9 builds it) → the Submission Center, on that sequence
+ Test Files  2 failed (2)
+      Tests  3 failed | 75 passed (78)

@@ -1,0 +1,36 @@
+# m-client-drops-row-reasons: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > unattended_limit 6ms
+   → expected undefined to be 'unattended_limit' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > session_ended 1ms
+   → expected undefined to be 'session_ended' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > server_shutdown 1ms
+   → expected undefined to be 'server_shutdown' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > orphaned 1ms
+   → expected undefined to be 'orphaned' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > error 1ms
+   → expected undefined to be 'error' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > admin_cancelled 1ms
+   → expected undefined to be 'admin_cancelled' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > a reason this build does not know is still dropped 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > server_shutdown: "Stopped: the server restarted for an update. Continue picks it up." 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > orphaned: "Stopped: the server handling this turn stopped responding. Continue picks it up." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > session_ended: "Stopped: the sign-in or access that started this turn ended. Continue picks it up." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > unattended_limit: "Stopped: nobody was watching for 15 minutes. Continue picks it up." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > admin_cancelled: "Stopped by an administrator." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > error: "Stopped: the turn ended with an error." 0ms
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > unattended_limit
+AssertionError: expected undefined to be 'unattended_limit' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > session_ended
+AssertionError: expected undefined to be 'session_ended' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > server_shutdown
+AssertionError: expected undefined to be 'server_shutdown' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > orphaned
+AssertionError: expected undefined to be 'orphaned' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > error
+AssertionError: expected undefined to be 'error' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > admin_cancelled
+AssertionError: expected undefined to be 'admin_cancelled' // Object.is equality

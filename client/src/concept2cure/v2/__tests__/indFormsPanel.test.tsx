@@ -181,7 +181,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     (window as any).C2C_PROJECT = { id: uuid };
     const refusal = 'This program has no project record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the program its project record.';
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'], program: { id: String(window.C2C_PROJECT?.id), code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', sponsorName: 'Recorded test sponsor', productName: 'Test product', applicationNumber: null, indication: null, formMetadata: {} } }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
         return { ok: false, status: 409, json: async () => ({ error: { code: 'PROGRAM_NOT_ANCHORED', message: refusal } }) } as Response;
       }
@@ -208,7 +208,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
   it('a 200 with no artifact id is not reported as any kind of save', async () => {
     (window as any).C2C_PROJECT = { id: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70' };
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'], program: { id: String(window.C2C_PROJECT?.id), code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', sponsorName: 'Recorded test sponsor', productName: 'Test product', applicationNumber: null, indication: null, formMetadata: {} } }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
         return { ok: true, status: 200, json: async () => ({ governed: false, audited: true, artifactId: null, ready: false, missingRequired: [] }) } as Response;
       }

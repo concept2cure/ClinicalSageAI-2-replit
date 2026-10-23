@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > in the home copy: the home outline, and the EU filing offers to create its document, bound by the server 5410ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > in the EU copy: its Module 1 and 3.2.R, the gaps named, a Module 1 node starts here 154ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx > a market's own part of the filing in the editor (F22b) > a market list that could not be read is said, and the home outline stays 99ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

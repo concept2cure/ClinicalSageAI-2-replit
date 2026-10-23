@@ -1,0 +1,10 @@
+# m-sign-out-everywhere-stops-nothing: exit 1 (non-zero = red)
+# tests: server/services/__tests__/account-standing-stops-runs.test.ts  -t endEverySessionOf
+ × server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended 10ms
+   → expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]
+ ✓ server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > an account that was not there stops nothing 1ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 2 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/__tests__/account-standing-stops-runs.test.ts > endEverySessionOf > stops the account's live runs in every organisation, with session_ended
+AssertionError: expected [] to deeply equal [ [ 7, null, 'session_ended', …(1) ] ]

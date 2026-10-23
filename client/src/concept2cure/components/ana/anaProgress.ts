@@ -259,6 +259,26 @@ export function readContextUsed(event: Record<string, unknown>): AnaContextUsed 
         ...(typeof a.documentName === 'string' && a.documentName ? { documentName: a.documentName } : {}),
       })),
     memoryStatus: status,
+    ...readSkillsUsed(event),
+  };
+}
+
+/** The skills a `context_used` event names; nothing when the server did not say. */
+function readSkillsUsed(event: Record<string, unknown>): Pick<AnaContextUsed, 'skills' | 'skillsStatus'> {
+  const status = event.skillsStatus;
+  if (!Array.isArray(event.skills) || (status !== 'loaded' && status !== 'none' && status !== 'unavailable')) return {};
+  return {
+    skills: event.skills
+      .filter((s) => s && typeof s.key === 'string' && typeof s.name === 'string' && s.name)
+      .map((s) => ({
+        key: s.key as string,
+        name: s.name as string,
+        source: s.source === 'organization' ? ('organization' as const) : ('library' as const),
+        version: typeof s.version === 'number' ? s.version : 0,
+        reasons: Array.isArray(s.reasons) ? s.reasons.filter((r: unknown): r is string => typeof r === 'string') : [],
+        chosen: s.chosen === 'picked' || s.chosen === 'deployed' ? s.chosen : null,
+      })),
+    skillsStatus: status,
   };
 }
 
@@ -320,6 +340,14 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'hold_unavailable',
   'answer_cut_off',
   'client_disconnected',
+  // The run row's own stops (AnA detach DT3, §2.10): they reach a page that
+  // is still attached, and a stored answer carries them.
+  'unattended_limit',
+  'session_ended',
+  'server_shutdown',
+  'orphaned',
+  'error',
+  'admin_cancelled',
 ]);
 
 /** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */

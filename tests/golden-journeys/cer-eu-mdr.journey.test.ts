@@ -116,6 +116,7 @@ const R = new JourneyRecorder(
     // regulatory_programs.application_number (WO-9 Click 1): the column the
     // create handler now writes; replayed here for the same reason 20260524 is.
     'migrations/20260907_regulatory_programs_application_number.sql',
+    'migrations/20261012b_regulatory_programs_eu_device_classes.sql', // eu_mdr_class/eu_ivdr_class, written on create since 352ca5aa
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -187,6 +188,7 @@ beforeAll(async () => {
       // regulatory_programs.application_number (WO-9 Click 1): the column the
       // create handler now writes; replayed here for the same reason 20260524 is.
       'migrations/20260907_regulatory_programs_application_number.sql',
+      'migrations/20261012b_regulatory_programs_eu_device_classes.sql', // eu_mdr_class/eu_ivdr_class, written on create since 352ca5aa
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260506_kit_section_draft_provenance.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',

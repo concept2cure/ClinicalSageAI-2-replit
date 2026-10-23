@@ -1,0 +1,16 @@
+# m-admin-audit-outcome-discarded: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts  -t chained trail
+ × server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: persisted and chained 69ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: persisted to the tamper-proof log only, not chained 11ms
+   → expected undefined to be false // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: not persisted 15ms
+   → expected undefined to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: persisted and chained
+AssertionError: expected undefined to be true // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: persisted to the tamper-proof log only, not chained
+ FAIL  server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > the response says whether the audit row is on the chained trail: not persisted
+AssertionError: expected undefined to be false // Object.is equality

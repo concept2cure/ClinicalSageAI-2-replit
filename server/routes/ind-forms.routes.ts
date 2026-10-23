@@ -77,15 +77,20 @@ import { db } from '../db';
 import {
   projects,
   concept2cureArtifacts,
-  organizations,
   submissionLeaves,
   renderedLeafFiles,
   ectdSequences,
 } from '@shared/schema';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
+import {
+  createAuditedUnplacedExport,
+  isUnauditedExportRefusal,
+  sendAuditedDownload,
+} from '../services/export/governedExportConsequence';
 import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
+import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
+import { ProgramFactsWriteRefusal, recordProgramFormFacts, resolveProgramIdent, type ResolvedProgram } from '../services/ind-forms/program-form-facts';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -110,74 +115,6 @@ function ctxOf(req: Request): Ctx | null {
 
 function isSupported(formId: string): formId is SupportedFormId {
   return (SUPPORTED_FORM_IDS as readonly string[]).includes(formId);
-}
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * The open program as the Module 1 forms need it: its identity, the facts that
- * belong on the forms, and its organisation's name — the sponsor of record in
- * this data model.
- */
-interface ResolvedProgram {
-  id: string;
-  code: string | null;
-  name: string | null;
-  productName: string | null;
-  indication: string | null;
-  applicationNumber: string | null;
-  programType: string | null;
-  sponsorName: string | null;
-  /** regulatory_programs.sponsor_address / ind_type (20261008b): the 1571's
-   *  address and IND type, stored on the program (P-20 follow-up). */
-  sponsorAddress: string | null;
-  indType: string | null;
-}
-
-/**
- * Resolve a program-spine ident (regulatory_programs UUID or program code),
- * org-scoped — the same 3-way ident contract as the eSTAR export routes
- * (510k-estar-routes.ts resolveProjectAnchor). Null when nothing in the caller's
- * org matches; a failed lookup is a non-match, never a guessed program.
- *
- * Selects the FORM FACTS as well as the identity: sponsor (the organisation),
- * product, indication and the agency-assigned application number. Those four are
- * held once, on the program record, and every Module 1 form takes them from
- * there — which is what stops a filing's sponsor name depending on who typed it
- * into which panel.
- */
-async function resolveProgramIdent(
-  ident: string,
-  organizationId: number,
-): Promise<ResolvedProgram | null> {
-  const byUuid = UUID_RE.test(ident);
-  try {
-    const [row] = await db
-      .select({
-        id: regulatoryPrograms.id,
-        code: regulatoryPrograms.code,
-        name: regulatoryPrograms.name,
-        productName: regulatoryPrograms.productName,
-        indication: regulatoryPrograms.indication,
-        applicationNumber: regulatoryPrograms.applicationNumber,
-        programType: regulatoryPrograms.programType,
-        sponsorName: organizations.name,
-        sponsorAddress: regulatoryPrograms.sponsorAddress,
-        indType: regulatoryPrograms.indType,
-      })
-      .from(regulatoryPrograms)
-      .leftJoin(organizations, eq(organizations.id, regulatoryPrograms.organizationId))
-      .where(
-        and(
-          byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
-          eq(regulatoryPrograms.organizationId, organizationId),
-        ),
-      )
-      .limit(1);
-    return row ?? null;
-  } catch {
-    return null;
-  }
 }
 
 /** The CTD section a completed Module 1 form files at, or null when the FDA
@@ -276,12 +213,47 @@ async function metaForRequest(
     res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
     return null;
   }
-  const program = await resolveProgramIdent(ident, ctx.organizationId);
+  let program: ResolvedProgram | null;
+  try {
+    program = await resolveProgramIdent(ident, ctx.organizationId);
+  } catch (error) {
+    fail(res, error);
+    return null;
+  }
   if (!program) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     return null;
   }
-  return { meta: { ...programToFormMetadata(program), ...stated }, program };
+  if (program.applicantSponsorId && !program.boundSponsor) {
+    res.status(409).json({ error: { code: 'APPLICANT_SPONSOR_UNAVAILABLE', message: 'The recorded applicant sponsor is unavailable for this organization. Review the program binding before generating a form.' } });
+    return null;
+  }
+  const meta = recordedRequestMetadata(program, stated);
+  return { meta, program };
+}
+
+/** Pin program-backed identity after applying the existing per-build choices. */
+function recordedRequestMetadata(program: ResolvedProgram, stated: IndProjectMetadata): IndProjectMetadata {
+  const recorded = programToFormMetadata(program);
+  const meta: IndProjectMetadata = { ...recorded, ...stated };
+  // Caller metadata can still state phase/serial and existing per-build form
+  // choices. Applicant identity comes only from the program's current record.
+  meta.sponsorName = recorded.sponsorName;
+  meta.indNumber = recorded.indNumber;
+  meta.applicationNumber = recorded.applicationNumber;
+  meta.applicationType = recorded.applicationType;
+  meta.sponsor = {
+    ...(stated.sponsor ?? {}),
+    ...recorded.sponsor,
+    name: recorded.sponsor?.name ?? recorded.sponsorName,
+    address: recorded.sponsor?.address,
+    ...(program.applicantSponsorId ? {
+      contactName: recorded.sponsor?.contactName,
+      contactPhone: recorded.sponsor?.contactPhone,
+      contactEmail: recorded.sponsor?.contactEmail,
+    } : {}),
+  };
+  return meta;
 }
 
 /** The program's canonical submission spine — the one rule, from submission-spine. */
@@ -375,11 +347,24 @@ async function listFormPlacements(
   }
 }
 
-function sendPdf(res: Response, result: IndFormPdfResult): void {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${result.formId}.pdf"`);
-  // This is a stateless PREVIEW render: the platform does not record that it was
-  // produced. Use POST /:formId/artifact for a governed, persisted record.
+/**
+ * Deliver a rendered form, recorded (D5).
+ *
+ * A render is a PREVIEW: no governed artifact holds it (POST /:formId/artifact
+ * makes one), which is what X-Form-Untracked-Preview still says. Its delivery
+ * is recorded all the same, as every generated download is: an
+ * EXPORT_GENERATED row with the SHA-256 of these exact bytes, and nothing sent
+ * when that row does not persist (`fail` answers 503). A filled FDA form that
+ * left the system with no record was the finding (2026-10-15 launch-boundary
+ * re-proof); "the platform does not record that it was produced" was this
+ * function's own description of it.
+ */
+async function sendPdf(req: Request, res: Response, result: IndFormPdfResult): Promise<void> {
+  const ctx = ctxOf(req);
+  if (!ctx) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return;
+  }
   res.setHeader('X-Form-Untracked-Preview', 'true');
   res.setHeader('X-Form-Used-Official-Template', String(result.usedOfficialTemplate));
   // Honestly signal a faithful reconstruction (pure dynamic XFA forms 1571/3674)
@@ -404,10 +389,89 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   // The renderer reports it on every path, so there is no case where this is
   // unknown; an absent header means an older server, not a clean form.
   res.setHeader('X-Form-Required-Blank', result.requiredFieldsLeftBlank.join(','));
-  res.status(200).send(Buffer.from(result.pdfBytes));
+  await sendAuditedDownload(res, {
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: 'export_pdf',
+    backendRoute: `${req.baseUrl}${req.route?.path ?? req.path}`,
+    resourceType: 'ind_form_render',
+    resourceId: result.formId,
+    programUuid: null,
+    filename: `${result.formId}.pdf`,
+    mimeType: 'application/pdf',
+    buffer: Buffer.from(result.pdfBytes),
+  });
+}
+
+/**
+ * Deliver one form per investigator as JSON, recorded (D5): the body sent is
+ * the bytes recorded, one EXPORT_GENERATED row with its SHA-256, each PDF's
+ * own SHA-256 in the row and beside it in the body. Nothing is sent when the
+ * row does not persist.
+ */
+async function sendRecordedFormSet(
+  req: Request,
+  res: Response,
+  formId: string,
+  results: IndFormPdfResult[],
+): Promise<void> {
+  const ctx = ctxOf(req);
+  if (!ctx) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return;
+  }
+  // No investigator yields a form (a 3455 with none disclosing): no document
+  // leaves the system, so there is nothing to record.
+  if (results.length === 0) {
+    res.json({ formId, documents: [] });
+    return;
+  }
+  const documents = results.map((r) => {
+    const pdf = Buffer.from(r.pdfBytes);
+    return {
+      usedOfficialTemplate: r.usedOfficialTemplate,
+      reconstructed: r.reconstructed === true,
+      fieldCoverage: r.fieldCoverage,
+      missingRequired: r.missingRequired,
+      // Per document: each investigator's form leaves its own boxes blank.
+      // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
+      requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
+      sha256: crypto.createHash('sha256').update(pdf).digest('hex'),
+      pdfBase64: pdf.toString('base64'),
+    };
+  });
+  const body = Buffer.from(JSON.stringify({ formId, documents }), 'utf8');
+  const recorded = await createAuditedUnplacedExport({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: 'export_pdf',
+    backendRoute: `${req.baseUrl}${req.route?.path ?? req.path}`,
+    resourceType: 'ind_form_render',
+    resourceId: formId,
+    programUuid: null,
+    filename: `${formId}-all.json`,
+    mimeType: 'application/json',
+    buffer: body,
+    metadata: { documents: documents.map((d, i) => ({ index: i, sha256: d.sha256 })) },
+  });
+  res.setHeader('X-Export-Sha256', recorded.sha256);
+  res.type('application/json').status(200).send(body);
 }
 
 function fail(res: Response, err: unknown): void {
+  if (isUnauditedExportRefusal(err)) {
+    res.status(503).json({
+      error: {
+        code: 'UNAUDITED_EXPORT_REFUSED',
+        message: 'The form was not delivered because its record could not be written. Nothing was sent. Try again.',
+      },
+    });
+    return;
+  }
+  if (err instanceof ProgramFactsWriteRefusal || err instanceof ProgramRecordWriteRefusal) {
+    res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    return;
+  }
   logger.error('ind-forms route error', { err: err instanceof Error ? err.message : String(err) });
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Form generation failed.' } });
 }
@@ -462,10 +526,14 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
         code: program.code,
         name: program.name,
         programType: program.programType,
+        primaryAgency: program.primaryAgency,
         sponsorName: program.sponsorName,
         productName: program.productName,
         indication: program.indication,
         applicationNumber: program.applicationNumber,
+        applicantSponsorId: program.applicantSponsorId,
+        boundSponsor: program.boundSponsor,
+        factsVersion: program.factsVersion,
         sponsorAddress: program.sponsorAddress,
         indType: program.indType,
         // Exactly what the builders will receive from the record, so the panel
@@ -487,94 +555,15 @@ function registryIndTypes(): string[] {
   return Array.isArray(field?.options) ? field!.options.map(String) : [];
 }
 
-/** A clearable text from a request body: undefined = not sent (unchanged);
- *  null or blank = cleared; otherwise the trimmed text. */
-function clearableText(v: unknown): string | null | undefined | false {
-  if (v === undefined) return undefined;
-  if (v === null) return null;
-  if (typeof v !== 'string') return false;
-  const t = v.trim();
-  return t === '' ? null : t;
-}
-
-const SPONSOR_ADDRESS_MAX = 1000;
-
-/**
- * Record the sponsor's address and the IND type ON THE PROGRAM (P-20 follow-up,
- * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08). Form FDA 1571 requires both
- * and no program column held either, so the forms panel sent them with every
- * build and the program record never knew them. They are stored in
- * regulatory_programs.sponsor_address / ind_type
- * (migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql), and
- * every build reads them from there (programToFormMetadata).
- *
- * Body: { projectIdent: program UUID or code, sponsorAddress?, indType? }. An
- * absent field is left as recorded; null or a blank clears it. The IND type
- * must be one of the registry's FDA_1571 ind_type options, and only an IND
- * program has one. Org-scoped (404 for another organisation's program) and
- * audited with the names of the fields it wrote.
- */
-/** A stated program-facts request, or why it is refused (400). Pure. */
-type ProgramFactsPatch = { sponsorAddress?: string | null; indType?: string | null };
-function parseProgramFacts(
-  body: Record<string, unknown>,
-  indTypes: string[],
-): { ident: string; patch: ProgramFactsPatch } | { refusal: string } {
-  const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
-  if (ident === '' || /^\d+$/.test(ident)) {
-    return { refusal: 'projectIdent (the program UUID or code) is required: these facts are recorded on a program.' };
-  }
-  const sponsorAddress = clearableText(body.sponsorAddress);
-  const indType = clearableText(body.indType);
-  if (sponsorAddress === false || indType === false) return { refusal: 'sponsorAddress and indType are text, or null to clear.' };
-  if (sponsorAddress === undefined && indType === undefined) return { refusal: 'State the sponsor address, the IND type, or both.' };
-  if (typeof sponsorAddress === 'string' && sponsorAddress.length > SPONSOR_ADDRESS_MAX) {
-    return { refusal: `The sponsor address is longer than ${SPONSOR_ADDRESS_MAX} characters.` };
-  }
-  if (typeof indType === 'string' && !indTypes.includes(indType)) return { refusal: `IND type must be one of ${indTypes.join(', ')}.` };
-  const patch: ProgramFactsPatch = {};
-  if (sponsorAddress !== undefined) patch.sponsorAddress = sponsorAddress;
-  if (indType !== undefined) patch.indType = indType;
-  return { ident, patch };
-}
-
+/** Record applicant binding and other existing program form facts together. */
 router.put('/program-facts', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const parsed = parseProgramFacts((req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>, registryIndTypes());
-  if ('refusal' in parsed) return res.status(400).json({ error: { code: 'VALIDATION', message: parsed.refusal } });
-  const { ident, patch } = parsed;
   try {
-    const program = await resolveProgramIdent(ident, ctx.organizationId);
-    if (!program) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
-    }
-    if (typeof patch.indType === 'string' && (program.programType ?? '').trim().toUpperCase() !== 'IND') {
-      return res.status(400).json({
-        error: { code: 'VALIDATION', message: `An IND type is recorded only on an IND program; this program is ${program.programType ?? 'of no recorded type'}.` },
-      });
-    }
-    await db
-      .update(regulatoryPrograms)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, ctx.organizationId)));
-
-    // Part 11 §11.10(e): who set the facts printed on the filed form, and which.
-    const audit = await auditService.logAction({
-      action: 'ind_form.program_facts.update',
-      userId: ctx.userId,
-      organizationId: ctx.organizationId,
-      resourceType: 'regulatory_program',
-      resourceId: program.id,
-      metadata: { fields: Object.keys(patch), programCode: program.code },
-    });
-    if (!audit?.persisted) {
-      logger.warn('ind-form program facts audit row was not persisted', { err: audit?.error ?? 'no durable store accepted the row' });
-    }
-    const next = { ...program, ...patch };
-    return res.status(200).json({ programId: program.id, sponsorAddress: next.sponsorAddress, indType: next.indType });
-  } catch (err) {
-    fail(res, err);
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+    return res.status(200).json(await recordProgramFormFacts(body, ctx, registryIndTypes()));
+  } catch (error) {
+    fail(res, error);
   }
 });
 
@@ -647,7 +636,7 @@ router.post('/:formId/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    sendPdf(res, await generateIndForm(formId, resolved.meta));
+    await sendPdf(req, res, await generateIndForm(formId, resolved.meta));
   } catch (err) {
     fail(res, err);
   }
@@ -675,7 +664,7 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
         : Promise.resolve([]),
     ]);
     const meta = assembleFormMetadata({ sponsor, agent, investigators, overrides: b.overrides });
-    sendPdf(res, await generateIndForm(formId, meta));
+    await sendPdf(req, res, await generateIndForm(formId, meta));
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
     if (code === 'NOT_FOUND') {
@@ -1080,20 +1069,7 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    const results = await generateAllForm1572(resolved.meta);
-    res.json({
-      formId: FORM_1572,
-      documents: results.map((r) => ({
-        usedOfficialTemplate: r.usedOfficialTemplate,
-        reconstructed: r.reconstructed === true,
-        fieldCoverage: r.fieldCoverage,
-        missingRequired: r.missingRequired,
-        // Per document: each investigator's form leaves its own boxes blank.
-        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
-        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
-        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
-      })),
-    });
+    await sendRecordedFormSet(req, res, FORM_1572, await generateAllForm1572(resolved.meta));
   } catch (err) {
     fail(res, err);
   }
@@ -1109,20 +1085,7 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   const resolved = await metaForRequest(req, res, ctxOf(req));
   if (!resolved) return;
   try {
-    const results = await generateAllForm3455(resolved.meta);
-    res.json({
-      formId: FORM_3455,
-      documents: results.map((r) => ({
-        usedOfficialTemplate: r.usedOfficialTemplate,
-        reconstructed: r.reconstructed === true,
-        fieldCoverage: r.fieldCoverage,
-        missingRequired: r.missingRequired,
-        // Per document: each investigator's form leaves its own boxes blank.
-        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
-        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
-        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
-      })),
-    });
+    await sendRecordedFormSet(req, res, FORM_3455, await generateAllForm3455(resolved.meta));
   } catch (err) {
     fail(res, err);
   }

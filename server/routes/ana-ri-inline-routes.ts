@@ -14,6 +14,7 @@ import {
   EndpointCorpusUnavailableError,
   type EndpointRecommenderService,
 } from '../services/endpoint-recommender-service';
+import { resolveOrgId } from '../types/auth-request';
 
 interface AnaRiDeps {
   csrSearchService: any;
@@ -79,8 +80,14 @@ router.post('/endpoint/recommend', async (req: Request, res: Response) => {
     }
     const phase = String(req.body?.phase ?? '').trim();
     const therapeuticArea = String(req.body?.therapeuticArea ?? '').trim();
+    // The corpus read is the caller's organization's (2026-10-15).
+    const organizationId = resolveOrgId(req);
+    if (organizationId === null) {
+      return res.status(401).json({ error: 'Authenticated organization required' });
+    }
     const service = getEndpointRecommenderService();
     const { recommendations, sources } = await service.getComprehensiveEndpointRecommendations(
+      organizationId,
       indication,
       phase,
       10,

@@ -43,6 +43,10 @@ vi.mock('../../../db.js', () => {
   const pool = { query: holder.query, connect: async () => ({ query: holder.query, release: () => undefined }) };
   return { getPool: () => pool, pool };
 });
+// Names as public.actor_name answers them (services/tenant/actor-names.ts), for the admin's control.
+vi.mock('../../../services/ana/control-actor-names.js', () => ({
+  readControlActorNames: async (ids: number[]) => new Map(ids.map(id => [id, id === 80425 ? 'Dana Okafor' : null] as const)),
+}));
 vi.mock('../../../services/audit/tenant-chain-verdict.js', async () => {
   const { verifyAuditChain } = await import('../../../services/audit/chain.js');
   return { verifyTenantChainOnAdminScope: async (orgId: number) => verifyAuditChain(holder.pg, { tenantId: orgId }) };
@@ -106,7 +110,7 @@ const NOTE = 'I will look in the Vault for the stability reports first.';
  * A /4 record built the way the stream builds one: the recorder for the turn's
  * texts, the timeline emitter for its events, presentStep for each step.
  */
-async function recordTurn(threadId: string | null, assistantMessageId: number | null = null) {
+async function recordTurn(threadId: string | null, assistantMessageId: number | null = null, controls?: unknown[]) {
   const r = new TurnRecorder();
   r.setTurn({ organizationId: ORG, threadId, runId: 'run_s4', actorUserId: ASKER });
   r.setMessageIds({ user: 1, assistant: assistantMessageId });
@@ -133,7 +137,7 @@ async function recordTurn(threadId: string | null, assistantMessageId: number | 
   r.addServed(1, { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req_SENT_REQUEST_ID' });
   r.setReasoning('SENT_THINKING weighing the reports');
   r.setAnswer({ streamed: 'SENT_ANSWER The shelf life is 24 months.', stored: 'SENT_ANSWER The shelf life is 24 months.' });
-  r.setControls([{ action: 'interject', message: 'Look at 2024 too', round: 2, at: new Date().toISOString(), byUserId: ASKER }]);
+  r.setControls(controls ?? [{ action: 'interject', message: 'Look at 2024 too', round: 2, at: new Date().toISOString(), byUserId: ASKER }]);
   t.end('answered', 'no_more_tools');
   return writeTurnRecord(pool(), r.seal('answered'));
 }
@@ -190,6 +194,30 @@ describe('3. the Summary payload leaks nothing the Summary never contains', () =
     expect(res.status).toBe(200);
     const leaked = leaksIn(res.body.data);
     expect(leaked).toEqual(expect.arrayContaining([`organizationId ${ORG}`, `actorUserId ${ASKER}`, 'SENT_SYSTEM_PROMPT', 'SENT_THINKING']));
+  });
+});
+
+/* AnA detach DT3 review (the blocker): an administrator's cancel was shown in
+   the Summary as the asker's "You stopped the run". Each control now says who
+   took it, for its reader, and the Summary still never names the asker. */
+describe("who took each control, for the reader (DT3 review)", () => {
+  const at = new Date().toISOString();
+  const CONTROLS = [
+    { action: 'interject', message: 'Look at 2024 too', round: 1, at, byUserId: ASKER },
+    { action: 'cancel', round: 2, at, byUserId: USERS.admin.id, byRole: 'admin', reason: 'Wrong agency.' },
+  ];
+  it.each([
+    ['asker', [undefined, { kind: 'administrator', name: 'Dana Okafor' }]],
+    ['admin', [{ kind: 'asker' }, { kind: 'you_as_administrator' }]],
+    ['colleague', [{ kind: 'asker' }, { kind: 'administrator', name: 'Dana Okafor' }]],
+  ])('read by the %s', async (who, by) => {
+    const { id } = await recordTurn('th_s4', null, CONTROLS);
+    const res = await request(appAs()).get(`/api/ana-ri/turn-records/${id}/summary`).set('x-as', who);
+    expect(res.status).toBe(200);
+    const s = res.body.data;
+    expect(s.controls.map((c: any) => c.by)).toEqual(by);
+    expect(s.controls[1]).toMatchObject({ action: 'cancel', reason: 'Wrong agency.' });
+    expect(leaksIn(s)).toEqual([]);
   });
 });
 

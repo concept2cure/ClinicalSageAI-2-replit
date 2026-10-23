@@ -14,10 +14,21 @@
  * if docs/validation/ is absent at runtime the catalog is honestly empty.
  *
  * Mounted at /api/validation-kit via register-inline-routes.ts (auth-gated).
+ *
+ * A download is recorded before it is delivered (D5, 2026-10-23): it used to
+ * stream the file with no record of who took which version of which
+ * validation document. It now goes through sendAuditedDownload, the one
+ * recorded-download implementation (services/export/governedExportConsequence.ts):
+ * EXPORT_GENERATED with the SHA-256 of these bytes, and nothing delivered when
+ * that row does not persist (services/export/__tests__/recorded-downloads.contract.test.ts).
  */
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+
+import { governedActorId } from '../middleware/orgMembership';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
+import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 
 const router = Router();
 
@@ -119,7 +130,7 @@ router.get('/', (_req: Request, res: Response) => {
 });
 
 /** GET /api/validation-kit/:docId — download one document by its parsed id. */
-router.get('/:docId', (req: Request, res: Response) => {
+router.get('/:docId', async (req: Request, res: Response) => {
   const artifact = readCatalog().find(a => a.docId === req.params.docId);
   if (!artifact) {
     return void res.status(404).json({ error: 'Validation document not found' });
@@ -130,11 +141,44 @@ router.get('/:docId', (req: Request, res: Response) => {
   if (path.dirname(full) !== VALIDATION_DIR) {
     return void res.status(400).json({ error: 'Invalid document path' });
   }
-  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${artifact.file}"`);
-  fs.createReadStream(full)
-    .on('error', () => res.status(500).json({ error: 'Failed to read document' }))
-    .pipe(res);
+  const organizationId = usableOrgId(authedOrgId(req));
+  const userId = governedActorId(req);
+  if (!organizationId || !userId) {
+    return void res.status(401).json({
+      error: { code: 'AUTH_REQUIRED', message: 'A signed-in member of an organisation is required; nothing was delivered.' },
+    });
+  }
+  let buffer: Buffer;
+  try {
+    buffer = fs.readFileSync(full);
+  } catch {
+    return void res.status(500).json({ error: 'Failed to read document' });
+  }
+  try {
+    await sendAuditedDownload(res, {
+      organizationId,
+      userId,
+      sourceType: 'export_stored_file',
+      backendRoute: '/api/validation-kit/:docId',
+      resourceType: 'validation_kit_document',
+      resourceId: artifact.docId,
+      programUuid: null,
+      filename: artifact.file,
+      mimeType: 'text/markdown; charset=utf-8',
+      buffer,
+      metadata: { version: artifact.version, status: artifact.status, type: artifact.type },
+    });
+  } catch (err) {
+    if (isUnauditedExportRefusal(err)) {
+      return void res.status(503).json({
+        error: {
+          code: 'UNAUDITED_EXPORT_REFUSED',
+          message: 'The document was not delivered because its download could not be recorded. Try again.',
+        },
+      });
+    }
+    return void res.status(500).json({ error: 'Failed to deliver document' });
+  }
 });
 
 export default router;

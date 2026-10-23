@@ -190,7 +190,8 @@ export const securityHeaders = config.isDevelopment
           // enforcing production policy below keeps it.
           upgradeInsecureRequests: null,
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          frameSrc: ["'self'"],
+          // As the enforcing policy below: the PDF viewer frames a blob: URL.
+          frameSrc: ["'self'", 'blob:'],
           // Hardening directives (defense-in-depth, report-only in dev):
           //   base-uri locks <base href> so an injected element can't
           //     re-root every relative URL on the page.
@@ -250,7 +251,18 @@ export const securityHeaders = config.isDevelopment
           // breaking live integrations. Revisit once the connector registry
           // can emit the canonical host list.
           connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
-          frameSrc: ["'self'"],
+          // blob: is the in-browser PDF viewer (PdfViewerPane,
+          // client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx): it frames
+          // the audited Vault download as an object URL, only bytes that begin
+          // %PDF, typed application/pdf (pdfBytes.ts). Without it this
+          // enforcing policy refused the frame and the viewer showed Chromium's
+          // error page (docs/evidence/D3/2026-10-22-pdf-viewer-csp/). blob: is
+          // a scheme source, so it matches any origin's blob URL, but framing
+          // one takes an <iframe> the page builds (the sanitizer admits none)
+          // and a blob URL only its minter knows. A framed blob document
+          // inherits this policy, so it adds no script source (shown in
+          // Chromium, with a no-policy control). data: stays refused.
+          frameSrc: ["'self'", 'blob:'],
           objectSrc: ["'none'"],
           // Hardening directives (enforced in prod):
           //   base-uri 'self' blocks <base href> injection from rewriting

@@ -1,0 +1,8 @@
+# this change
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > records the exact bytes it delivers, under the caller 30ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > delivers nothing when the record cannot be written 10ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > refuses a caller with no organisation or no user, and records nothing 13ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > a document not in the catalog is 404, and nothing is recorded 6ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)

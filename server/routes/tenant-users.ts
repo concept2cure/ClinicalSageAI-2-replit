@@ -12,6 +12,7 @@ import { declineOwnInvitation, listOwnPendingInvitations } from '../services/ten
 import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
+import { stopPersonsRuns } from '../services/account-standing';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
@@ -241,6 +242,8 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
         FORBIDDEN: 403,
         NOT_PENDING: 409,
         QUOTA_EXCEEDED: 403,
+        // 2026-10-15: a limit not recorded (NULL max_users) answered 400.
+        QUOTA_NOT_RECORDED: 403,
         ORGANIZATION_NOT_FOUND: 404,
         DATABASE_ERROR: 500,
       };
@@ -476,6 +479,15 @@ router.post('/', async (req, res) => {
           details: result.details,
         });
       }
+      // 2026-10-15: a limit not recorded (NULL max_users) fell through to 400.
+      if (result.error === 'QUOTA_NOT_RECORDED') {
+        return res.status(403).json({
+          success: false,
+          error: result.error,
+          message: result.message,
+          details: result.details,
+        });
+      }
       if (result.error === 'USER_EXISTS') {
         return res.status(400).json({
           success: false,
@@ -672,6 +684,9 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     // Revocation must take effect immediately, not after the auth
     // middleware's membership-cache TTL.
     invalidateOrgMembershipCache(userId, organizationId);
+    // And so does the end of their AnA turns in this organisation: a removed
+    // member's detached turn stops now, with session_ended (AnA detach §2.9).
+    await stopPersonsRuns(userId, { cause: 'member_removed', byUserId: getCallerId(req) ?? null }, { organizationId });
 
     log.debug(`Removed user ${userId} from organization ${organizationId}`);
     res.json({ message: 'User removed from organization successfully' });

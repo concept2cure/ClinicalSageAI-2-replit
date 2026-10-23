@@ -1,0 +1,15 @@
+ × server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a new form > is seeded with the FDA elements; the ClinicalTrials.gov statement is required unless the trial is not an applicable clinical trial 36ms
+ × server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a new form > cannot be approved without the FDA inspection wording, and can be with it 158ms
+ × server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > in review: is refused naming the missing element, gains it on the next edit, then approves once it is drafted 9ms
+ × server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > recording that the trial is not an applicable clinical trial lets it approve without the statement 7ms
+ × server/services/protocol-consent/__tests__/protocol-consent-elements-lifecycle.pglite.integration.test.ts > a form seeded before the change > approved: unchanged, and its completeness says it predates the requirement 12ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > a new consent form is seeded from the shared record > holds the 21 CFR 50.25(a) elements, the research statement among them, cited to 21 CFR 50.25 6ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > a new consent form is seeded from the shared record > applicable-clinical-trial status: unknown or yes requires the ClinicalTrials.gov statement; no makes it optional 1ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > refuses a confidentiality element that does not say FDA may inspect the records 3ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > refuses an applicable clinical trial form without the ClinicalTrials.gov statement 1ms
+ ✓ tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > approves a form that carries every element with the required wording 0ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > the approval gate > a required element the form does not have at all is missing, not silently absent 1ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > a form seeded before the change > its old element keys count for the elements they always covered 0ms
+ × tests/regulatory/consent-form-approval-gate.test.ts > a form seeded before the change > is held to the ClinicalTrials.gov statement until it is added and drafted 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 1 passed (13)

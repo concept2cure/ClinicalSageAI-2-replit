@@ -468,3 +468,46 @@ describe('purgeTenant — what it actually does', () => {
     expect(chunks).toBeLessThan(docs);
   });
 });
+
+describe("the organisation's live AnA runs stop (AnA detach DT3, §2.9)", () => {
+  const yesterday = new Date(Date.now() - 86_400_000);
+  const runStop = (s: { text: string; params?: unknown[] }) =>
+    /UPDATE ana_runs/.test(s.text) && /stopped_reason = \$4/.test(s.text) && s.params?.[0] === ORG && s.params?.[3] === 'session_ended';
+
+  it('requestDeletion stops them with session_ended once the organisation is pending deletion', async () => {
+    const pool = makePool([
+      { match: /SELECT id, name, status/, rows: [orgRow()] },
+      { match: /UPDATE organizations/, rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: new Date() })] },
+    ]);
+    await requestDeletion(pool, { organizationId: ORG, requestedByUserId: ACTOR, reason: 'contract ended' });
+    const texts = pool.statements;
+    const update = texts.findIndex((s: any) => /UPDATE organizations/.test(s.text));
+    const stop = texts.findIndex(runStop);
+    expect(stop, 'the live runs were not stopped').toBeGreaterThan(-1);
+    expect(stop).toBeGreaterThan(update);
+    expect(texts[stop].params?.[1], "a person's scope was used for an organisation's stop").toBeNull();
+    // What ended it, and who, on the row (DT3 review, the session-end cause).
+    expect(JSON.parse(String(texts[stop].params?.[4]))).toEqual({ cause: 'deletion_requested', byUserId: ACTOR });
+  });
+
+  it('purgeTenant stops them FIRST, before any table is purged', async () => {
+    const pool = makePool([
+      receiptResponse,
+      { match: /SELECT id, name, status/, rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: yesterday })] },
+    ]);
+    await purgeTenant(pool, {
+      organizationId: ORG,
+      purgedByUserId: ACTOR,
+      preconditions: { finalExportDigest: VALID_DIGEST },
+      childTables: ['projects'],
+    });
+    const texts = pool.statements;
+    const stop = texts.findIndex(runStop);
+    const begin = texts.findIndex((s: any) => s.text === 'BEGIN');
+    const firstDelete = texts.findIndex((s: any) => /^\s*DELETE FROM/.test(s.text));
+    expect(stop, 'the live runs were not stopped').toBeGreaterThan(-1);
+    expect(stop).toBeLessThan(begin);
+    expect(stop).toBeLessThan(firstDelete);
+    expect(JSON.parse(String(texts[stop].params?.[4]))).toEqual({ cause: 'purge', byUserId: ACTOR });
+  });
+});

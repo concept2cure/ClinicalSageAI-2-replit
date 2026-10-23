@@ -1,0 +1,9 @@
+# m-notice-names-no-record: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t ends: one notice
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > ends: one notice to the asker, naming the conversation by when it started, linking to it, and expiring 60ms
+   → expected { organizationId: 7, …(7) } to match object { organizationId: 7, …(7) }
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > ends: one notice to the asker, naming the conversation by when it started, linking to it, and expiring
+AssertionError: expected { organizationId: 7, …(7) } to match object { organizationId: 7, …(7) }

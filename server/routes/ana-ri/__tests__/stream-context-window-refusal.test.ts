@@ -131,6 +131,19 @@ function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome = 'failed
   expect.soft(events.some(event => event.type === 'done')).toBe(false);
 }
 
+// DT3 integration: an authoritative stop wins over a concurrent context refusal.
+function assertStoppedCarrier(events: SseEvent[], reason: 'cancelled' | 'admin_cancelled'): void {
+  expect.soft(errorOf(events)).toBeUndefined();
+  expect.soft(events.find(event => event.type === 'done')).toMatchObject({ stoppedReason: reason, rounds: 1 });
+  expect.soft(events.find(event => event.type === 'post_done')?.turnRecord).toMatchObject({ status: 'recorded', id: 'synthetic-context-record' });
+  expect.soft(h.state.post, 'stopped refusal does not enter normal answer post-processing').toBeNull();
+  expect.soft(seam.filedOutcome).toBe('stopped');
+  expect.soft(seam.sealed?.body.turn.outcome).toBe('stopped');
+  expect.soft(events.filter(event => event.type === 'timeline').map(event => event.event).find(event => event?.kind === 'end')).toMatchObject({ outcome: 'stopped', stoppedReason: reason });
+  expect.soft(seam.sealed?.body.steps[0]?.result?.sha256).toBe(sha(TOOL_RAW));
+  expect.soft(events.find(event => event.type === 'tool_result')?.result).toBe(TOOL_RAW);
+}
+
 function afterTool(partial = PARTIAL_REFUSAL): void {
   seam.throwAt = 2;
   seam.partial = partial;
@@ -173,12 +186,26 @@ describe('canonical context refusal reaches mounted SSE', () => {
     afterTool();
     seam.stopBeforeThrow = true;
     const events = await stream();
-    assertContextCarrier(events, 'stopped');
+    assertStoppedCarrier(events, 'cancelled');
     expect.soft(seam.gatewayInvocations).toBe(2);
     expect.soft(answerText()).toBe(`${PARTIAL_FIRST}${PARTIAL_REFUSAL}`);
     expect.soft(seam.stoppedAnswers).toEqual([`${PARTIAL_FIRST}${PARTIAL_REFUSAL}`]);
     expect.soft(seam.sealed?.body.turn.assistantMessageId).toBe(101);
     expect.soft(seam.sealed?.body.steps).toHaveLength(1);
+  });
+
+  it('retains an earlier administrator stop when its abort arrives after the context refusal', async () => {
+    afterTool();
+    h.state.endRunOutcome = 'already_ended';
+    h.state.rowEnding = 'admin_cancelled';
+    const events = await stream();
+    assertStoppedCarrier(events, 'admin_cancelled');
+    expect.soft(seam.gatewayInvocations).toBe(2);
+    expect.soft(answerText()).toBe(`${PARTIAL_FIRST}${PARTIAL_REFUSAL}`);
+    expect.soft(seam.stoppedAnswers).toEqual([`${PARTIAL_FIRST}${PARTIAL_REFUSAL}`]);
+    expect.soft(seam.sealed?.body.turn.assistantMessageId).toBe(101);
+    expect.soft(seam.sealed?.body.steps).toHaveLength(1);
+    expect.soft(seam.sealed?.body.warnings.join(' ')).toContain((seam.error as Error).message);
   });
 
   it('uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status', async () => {

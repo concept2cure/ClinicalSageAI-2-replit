@@ -429,17 +429,22 @@ export interface ConsistencyAlertsSummary {
   projectId: number | null;
   asOf: string;
   /**
-   * Whether a scan result is on record for this scope. A scan writes a row
-   * only for a contradiction it finds, so false means no scan result is on
-   * record (never scanned, or no scan found anything) — never "scanned, clean".
+   * Whether an alert is on record for this scope. A scan writes a row only for
+   * a contradiction it finds, so false means no alert is on record (never
+   * scanned, or no scan found anything) — never "scanned, clean".
    */
   assessed: boolean;
   /**
-   * The newest alert row's creation time: the latest scan on record. A scan
-   * that raises no new alert writes nothing, so a later scan may exist.
-   * Null when no scan result is on record.
+   * Scan runs are not recorded: no table on the deploy path holds them, so a
+   * scan that finds nothing leaves no trace and no alerts is not a clean result.
    */
-  lastScanAt: string | null;
+  scanHistory: { recorded: false; note: string };
+  /**
+   * The newest alert's creation time; null when no alert is on record. Not a
+   * scan time: a later scan that raised nothing would not show here.
+   * (2026-10-15: named lastScanAt, so a clean scan read as "never scanned".)
+   */
+  lastAlertAt: string | null;
   /** Every alert raised, by severity, in any status (resolved included). */
   bySeverity: Record<GapSeverity, number>;
   /** Open and acknowledged alerts by severity: what is still unresolved. */
@@ -452,6 +457,11 @@ export interface ConsistencyAlertsSummary {
 }
 
 const TOP_LIST_CAP = 10;
+
+/** Exported for the alert list route, which says the same (2026-10-22). */
+export const CONSISTENCY_SCAN_HISTORY_NOTE =
+  'Scan history is not recorded: a consistency scan that finds no contradiction leaves no record, ' +
+  'so no alerts is not a clean result.';
 
 /**
  * 2026-10-15: this returned a zeroed summary for an organisation nothing had
@@ -515,7 +525,7 @@ export async function getConsistencyAlertsSummary(
         limited
       ),
       getPool().query(
-        `SELECT MAX(created_at) AS last_scan_at
+        `SELECT MAX(created_at) AS last_alert_at
            FROM cross_artifact_consistency_alerts
           WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)`,
         params
@@ -534,15 +544,16 @@ export async function getConsistencyAlertsSummary(
   for (const r of statRes.rows as Array<{ status: ConsistencyAlertStatus; c: number }>) {
     byStatus[r.status] = Number(r.c) || 0;
   }
-  const lastScanRaw = lastRes.rows[0]?.last_scan_at;
-  const lastScanAt = lastScanRaw ? new Date(lastScanRaw).toISOString() : null;
+  const lastAlertRaw = lastRes.rows[0]?.last_alert_at;
+  const lastAlertAt = lastAlertRaw ? new Date(lastAlertRaw).toISOString() : null;
 
   return {
     organizationId,
     projectId,
     asOf: new Date().toISOString(),
-    assessed: lastScanAt !== null,
-    lastScanAt,
+    assessed: lastAlertAt !== null,
+    scanHistory: { recorded: false, note: CONSISTENCY_SCAN_HISTORY_NOTE },
+    lastAlertAt,
     bySeverity,
     openBySeverity,
     byStatus,

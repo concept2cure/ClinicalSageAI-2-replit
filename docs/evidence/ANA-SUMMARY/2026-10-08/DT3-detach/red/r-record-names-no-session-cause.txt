@@ -1,0 +1,9 @@
+# r-record-names-no-session-cause: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t names what ended it
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a session's end names what ended it in the record: the abort's cause, and the row's when it won late (DT3 review) 54ms
+   → expected [ …(2) ] to include 'The session ended because the person …'
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a session's end names what ended it in the record: the abort's cause, and the row's when it won late (DT3 review)
+AssertionError: expected [ …(2) ] to include 'The session ended because the person …'

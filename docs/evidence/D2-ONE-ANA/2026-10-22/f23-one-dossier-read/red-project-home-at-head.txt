@@ -1,0 +1,21 @@
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row 5194ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 5130ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0% 5084ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with nothing to measure is stated as "not measured", never left out or drawn as 0 93ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted 5083ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "not measured" 119ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn 5094ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier 5061ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows 5065ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s 5063ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0%
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "not measured"
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s
+      Tests  9 failed | 1 passed (10)

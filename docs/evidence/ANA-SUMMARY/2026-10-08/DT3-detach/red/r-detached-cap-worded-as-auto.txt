@@ -1,0 +1,23 @@
+# r-detached-cap-worded-as-auto: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/tool-trace-detached-cap.test.ts client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts
+ × client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under undefined: the 40-minute cap, never Auto's budget 9ms
+   → expected 'AnA reached this turn\'s time limit (…' to contain '40-minute limit for a turn that goes …'
+ × client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under manual: the 40-minute cap, never Auto's budget 3ms
+   → expected 'AnA reached this turn\'s time limit (…' to contain '40-minute limit for a turn that goes …'
+ ✓ client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under Auto: Auto's budget, as before 1ms
+ × server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under null: the cap that applied, never Auto's budget 13ms
+   → expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ × server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under manual: the cap that applied, never Auto's budget 4ms
+   → expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ ✓ server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under Auto: Auto's own words, whose limits both applied 1ms
+ ✓ server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > a turn that never detached is as before 1ms
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under null: the cap that applied, never Auto's budget
+AssertionError: expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ FAIL  server/services/ana/__tests__/tool-trace-detached-cap.test.ts > a detached turn stopped at the 40-minute cap > under manual: the cap that applied, never Auto's budget
+AssertionError: expected 'The turn stopped at its time limit af…' to contain 'stopped at the 40-minute limit for a …'
+ FAIL  client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under undefined: the 40-minute cap, never Auto's budget
+ FAIL  client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts > the time-limit note > under manual: the 40-minute cap, never Auto's budget
+AssertionError: expected 'AnA reached this turn\'s time limit (…' to contain '40-minute limit for a turn that goes …'

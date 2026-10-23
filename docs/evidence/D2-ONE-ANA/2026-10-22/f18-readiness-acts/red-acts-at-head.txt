@@ -1,0 +1,29 @@
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: readiness is the project’s markets in one list > lists every market from the scoped list, each with its own gate, and never reads the unscoped list 5054ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a missing section opens the Builder’s placement form at that section, on that market’s sequence 5010ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a defect on a placed leaf marks that leaf; a placement could not fix it 5010ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a missing letter of authorization opens Validation, never a placement that would not clear it 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > an empty sequence opens the placement form with no section named 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a warning has no act 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > the second market’s finding opens that market’s submission and sequence, never the first’s 5013ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > nothing on the screen asks AnA to do the work 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > before dispatch: "Open Dispatch for sequence 0000", and transmit is not promised 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > once dispatched: "Open governed transmit" 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > a blocked gate offers neither 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: what AnA is told > a market whose verdict could not be read is unanswered, never cleared 5009ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18 end to end: the act lands on the Builder at the section > "Place a leaf at 1.2" opens the Submission Center on sequence 0000 with Section filled in 5006ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: readiness is the project’s markets in one list > lists every market from the scoped list, each with its own gate, and never reads the unscoped list
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a missing section opens the Builder’s placement form at that section, on that market’s sequence
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a defect on a placed leaf marks that leaf; a placement could not fix it
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a missing letter of authorization opens Validation, never a placement that would not clear it
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > an empty sequence opens the placement form with no section named
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > a warning has no act
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > the second market’s finding opens that market’s submission and sequence, never the first’s
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: each finding’s act opens where it is fixed > nothing on the screen asks AnA to do the work
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > before dispatch: "Open Dispatch for sequence 0000", and transmit is not promised
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > once dispatched: "Open governed transmit"
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: a cleared gate opens the sequence’s Dispatch tab, named for what it is > a blocked gate offers neither
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18: what AnA is told > a market whose verdict could not be read is unanswered, never cleared
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx > F18 end to end: the act lands on the Builder at the section > "Place a leaf at 1.2" opens the Submission Center on sequence 0000 with Section filled in
+ Test Files  1 failed (1)
+      Tests  13 failed (13)

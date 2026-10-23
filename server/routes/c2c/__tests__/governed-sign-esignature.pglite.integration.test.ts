@@ -26,6 +26,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { PROGRAM_SPINE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/pglite-harness';
 
 // ── db.js → PGlite (writeMutation manages its own pool transactions) ─────────
 
@@ -175,6 +176,17 @@ const signEnvelope = (target: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+async function applyApplicantIdentityFixture() {
+  await pg.exec(PROGRAM_SPINE_PGLITE_DDL);
+  await pg.exec(SUBMISSION_CORE_PGLITE_DDL);
+  for (const file of ['20260609_ind_master_data.sql', '20261021_regulatory_programs_applicant_sponsor.sql']) {
+    await pg.exec(fs.readFileSync(path.join(__dirname, '../../../../migrations', file), 'utf8'));
+  }
+  await pg.query('INSERT INTO organizations(id,name) VALUES($1,$2)', [ORG, 'Recorded organization']);
+  await pg.query(`INSERT INTO submissions(id,title,application_type,client_type,primary_region,organization_id,created_by)
+    VALUES(1,'Recorded submission','ind','biotech','fda',$1,$2)`, [ORG, SIGNER]);
+}
+
 beforeEach(async () => {
   pg = new PGlite();
   await pg.exec(AUDIT_LOGS_DDL);
@@ -183,6 +195,7 @@ beforeEach(async () => {
   await pg.exec(USERS_DDL);
   await pg.exec(ORGANIZATION_USERS_DDL);
   await pg.exec(ECTD_DDL);
+  await applyApplicantIdentityFixture();
   await pg.exec(STF_MIGRATION);
   await pg.exec(D6_MIGRATION); // the REAL migration under test
   await pg.query(
@@ -281,6 +294,8 @@ describe('governed sign → electronic_signatures (single write path)', () => {
 
     // Deterministic: re-deriving over the same persisted content reproduces it.
     const rederived = await deriveGovernedTargetBinding(client(), 'ectd-sequence:21', ORG);
+    expect(asManifest(sig.signature_manifest).recordedPackageIdentity).toEqual(rederived.recordedPackageIdentity);
+    expect(asManifest(sig.signature_manifest).sequenceContentDigest).toBe(rederived.sequenceContentDigest);
     expect(rederived.basis).toBe(BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST);
     expect(rederived.digest).toBe(sig.bound_payload_digest);
 

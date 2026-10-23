@@ -30,19 +30,22 @@ variable "azs" {
 
 variable "rds_instance_class" {
   type    = string
-  default = "db.t3.medium"
+  default = "db.m6g.large" # not burstable: terraform/stack refuses db.t* in production
 }
 
+# Two vCPUs: the task runs Node, the virus scanner and the document converters.
+# The stack refuses less in production (OPS-13, MR-03 Stage 2).
 variable "api_cpu" {
   type    = number
-  default = 1024
+  default = 2048
 }
 
 # The API task also runs the virus scanner (modules/ecs-fargate): 4096 MiB of
-# this is clamd's, 2048 the application's. The stack refuses less.
+# this is clamd's, 4096 the application's, whose heap NODE_OPTIONS caps at 60%.
+# The stack refuses less than 2048 for the application (OPS-13, MR-03 Stage 2).
 variable "api_memory" {
   type    = number
-  default = 6144
+  default = 8192
 }
 
 variable "api_desired_count" {
@@ -50,9 +53,11 @@ variable "api_desired_count" {
   default = 2
 }
 
-variable "worker_desired_count" {
+# The autoscaling ceiling. Held at 2 until MR-14 closes OPS-07: three opt-in
+# schedulers still run once per task. Raise it to 6 in that change.
+variable "api_max_count" {
   type    = number
-  default = 1
+  default = 2
 }
 
 # ── Image, TLS, domain ───────────────────────────────────────────────────────
@@ -192,4 +197,10 @@ variable "db_credentials_rotation" {
   type        = string
   default     = "initial"
   description = "Rotation marker for the database passwords. Change it (e.g. to the date) to rotate both; apply, then deploy at once. See terraform/stack/variables.tf."
+}
+
+variable "staging_account_id" {
+  type        = string
+  default     = ""
+  description = "The staging account, whose verified images production promotes (F-4). Empty until staging exists; a production deploy is refused at promotion until then."
 }

@@ -36,6 +36,7 @@ import { captureOrchestratorInputs, captureOrchestratorSuspendedOutputs } from '
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
 import { composeFullModule3, type RegionCode } from './module3-extensions.js';
+import { applicationRefusal } from './cmc/composition-scope.js';
 import { classifyModule3Regional } from './module3-regional-readiness.js';
 import {
   buildM23QualityOverallSummary,
@@ -62,7 +63,8 @@ import {
   assembleRealPackage,
   isPackagerBuildableRegion,
 } from './ectd/orchestrator-real-package.js';
-import { dryRunPackageIdentity } from './ectd/package-identity.js';
+import { dryRunPackageIdentity, fdaContactsForPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, type RecordedPackageIdentitySnapshot } from './ectd/package-identity.js';
+import { canonicalRegionOf } from '../../shared/regulatory/region-identity.js';
 import { resolveRunPackageIdentity } from './ectd/run-package-identity.js';
 import {
   isSignSealConfigured,
@@ -445,6 +447,8 @@ export interface OrchestratorOutputs {
  * persisted copy exists — there is none, and resume would then validate nothing.
  */
 export interface AssembledPackage {
+  /** Recorded FDA facts captured for these exact assembled bytes. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   leaves: ECTDLeaf[];
   totalSizeBytes: number;
   applicationNumber: string;
@@ -616,7 +620,7 @@ async function assembleForValidation(
 ): Promise<{ assembled: AssembledPackage; leafBuffers: Record<string, Buffer> }> {
   const identity = await resolveRunPackageIdentity(inputs);
   const dryRun = identity.recorded
-    ? { dryRun: false }
+    ? { dryRun: false, ...(identity.recordedPackageIdentity ? { recordedPackageIdentity: identity.recordedPackageIdentity } : {}) }
     : { dryRun: true, dryRunReason: identity.reason };
   // Region widening (Move-7) accepts regions beyond the four the canonical
   // packager has a backbone builder for. For a region the packager cannot build,
@@ -639,16 +643,17 @@ async function assembleForValidation(
     };
   }
 
-  // The applicant's <id> (D-U-N-S) has no recorded home yet (package-identity.ts
-  // header); with a recorded applicant it says so as the compile's does. A dry
-  // run carries the one dry-run placeholder throughout.
+  // A recorded FDA run uses the registry facts it captured. Placeholders are
+  // confined to the explicitly unsigned dry run. Non-FDA IDs remain unknown.
   const placeholder = dryRunPackageIdentity(sequenceNumber, inputs.organizationId);
   const real = await assembleRealPackage(sections, {
     region: inputs.region,
     applicationNumber: inputs.applicationNumber,
     sequenceNumber,
     submissionType: inputs.submissionType,
-    applicantId: placeholder.sponsorId,
+    applicantId: identity.recorded ? (identity.applicantId ?? '') : placeholder.sponsorId,
+    ...(identity.recorded && identity.recordedPackageIdentity
+      ? { contacts: fdaContactsForPackageIdentity(identity.recordedPackageIdentity.identity) } : {}),
     sponsorName: identity.recorded ? identity.applicantName : placeholder.sponsorName,
     productName: inputs.drugProductName ?? inputs.drugSubstanceName,
   });
@@ -782,6 +787,7 @@ export function computeBoundPayloadDigestFromComponents(params: {
   submissionType: string;
   organizationId: number;
   backboneXml?: Buffer | string;
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
 }): string {
   const leafManifestDigest = crypto
     .createHash('sha256')
@@ -822,6 +828,16 @@ export function computeBoundPayloadDigestFromComponents(params: {
         : params.backboneXml
     );
   }
+  // Optional by design: historical frozen snapshots reproduce their original
+  // digest exactly. New recorded FDA packages bind the applicant/contact facts
+  // as part of the same signed record, with an explicit domain separator.
+  if (params.recordedPackageIdentity !== undefined) {
+    h.update('\0recorded-package-identity\0');
+    const captured = params.recordedPackageIdentity;
+    const canonical = sameRecordedPackageIdentitySnapshot(captured, captured)
+      ? recordedPackageIdentitySnapshot(captured.identity) : captured;
+    h.update(JSON.stringify(canonical));
+  }
   return h.digest('hex');
 }
 
@@ -848,6 +864,7 @@ export function computeBoundPayloadDigest(params: {
     submissionType: params.submissionType,
     organizationId: params.organizationId,
     backboneXml: params.backboneXml,
+    recordedPackageIdentity: params.assembly.recordedPackageIdentity,
   });
 }
 
@@ -871,6 +888,8 @@ export function computeBoundPayloadDigest(params: {
  * for useAI leaves the rendered PDFs must be persisted before transmit lands.
  */
 export interface SignedPackageSnapshot {
+  /** Absent on historical snapshots; absence preserves their integrity recipe. */
+  recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   leaves: ECTDLeaf[];
   backboneXml: string;
   validatorOutcome: BoundDigestValidatorOutcome;
@@ -931,6 +950,26 @@ function stripLeafBytes(leaves: ECTDLeaf[]): ECTDLeaf[] {
   });
 }
 
+/** A new release cannot authorize an FDA package missing captured applicant facts.
+ * Historical completed signatures still verify with their original digest; an
+ * unfinished sign step must reassemble with the recorded identity before signing.
+ */
+function packageSignIdentityRefusal(assembly: AssembledPackage | undefined): string | null {
+  if (!assembly) return null;
+  if (assembly.dryRun) {
+    return `dry run, not a package: ${assembly.dryRunReason ?? 'its identity is not recorded.'} ` +
+      'A release signature binds the recorded application number and applicant, so nothing was signed.';
+  }
+  if (canonicalRegionOf(assembly.region) !== 'US') return null;
+  const captured = assembly.recordedPackageIdentity;
+  if (!sameRecordedPackageIdentitySnapshot(captured, captured) ||
+      packageIdentityRefusal(captured!.identity, '', { fda: true }) ||
+      captured!.identity.applicationNumber !== assembly.applicationNumber) {
+    return 'Reassemble this FDA package with recorded applicant facts before requesting a release signature.';
+  }
+  return null;
+}
+
 /** Freeze the assembled + validated package into the signable snapshot. Called
  *  at sign-prep, when outputs.assembly and outputs.validation are both known.
  *  submissionId + organizationId come from the run identity, not the assembly,
@@ -959,6 +998,7 @@ function buildSignedSnapshot(
     region: assembly.region,
     submissionType: assembly.submissionType,
     totalSizeBytes: assembly.totalSizeBytes,
+    ...(assembly.recordedPackageIdentity ? { recordedPackageIdentity: assembly.recordedPackageIdentity } : {}),
   };
 }
 
@@ -1446,7 +1486,16 @@ export async function runOrchestrator(
            own audit reads it. */
         return inputs.module3ExportRefusal ? { skip: inputs.module3ExportRefusal } : null;
       }
-      const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region);
+      /* The composition boundary, asked of the package's target (decision
+         P-28): Module 3 is composed here only for a US IND. A run for an NDA,
+         BLA or MAA carried the IND-composed text into a marketing application
+         — 3.2.R statements that say marketing items "do not apply to an IND"
+         — and signed it (2026-10-22, the launch-boundary re-proof's review).
+         The program itself was judged when its sources were loaded
+         (load-approved-cmc-sources-for-project.ts). */
+      const targetRefusal = applicationRefusal(inputs.submissionType, 'submission');
+      if (targetRefusal) return { skip: targetRefusal.message };
+      const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region, { applicationType: inputs.submissionType });
       // Split: S/P core go to m3.compose; A/R get split into their own steps for traceability
       const core = fullM3.filter(s => /^3\.[123]|^3\.2\.[SP]/.test(s.sectionKey));
       outputs.module3Sections = fullM3;
@@ -2049,8 +2098,12 @@ function rederiveSyncOutputsForResume(inputs: OrchestratorInputs): OrchestratorO
     csrTables: [],
   };
 
-  if (inputs.cmcSources.length > 0) {
-    outputs.module3Sections = composeFullModule3(inputs.cmcSources, inputs.region);
+  /* The same rule m3.compose applies: Module 3 only for a US IND target, with
+     the IND's regional section. */
+  if (inputs.cmcSources.length > 0 && !applicationRefusal(inputs.submissionType, 'submission')) {
+    outputs.module3Sections = composeFullModule3(inputs.cmcSources, inputs.region, {
+      applicationType: inputs.submissionType,
+    });
   }
   if (inputs.clinicalStudyData.length > 0) {
     outputs.csrTables = inputs.clinicalStudyData.map(buildCSRTables);
@@ -2151,6 +2204,7 @@ async function runPackageSignGate(args: {
   const validateStep = stepOf('package.validate');
 
   const signInputHash = signStepInputHash(inputs, outputs);
+  const identityRefusal = packageSignIdentityRefusal(outputs.assembly);
 
   // OQ-1 skip path: non-REQUIRED submission types bypass the gate.
   if (!SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)) {
@@ -2160,7 +2214,7 @@ async function runPackageSignGate(args: {
       signInputHash,
       `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`
     );
-  } else if (outputs.assembly?.dryRun) {
+  } else if (identityRefusal) {
     // P-27 (2026-10-08): a dry run carries placeholder identity; a release
     // signature binds the package's recorded identity, so it is refused here —
     // no payload digest, no signed snapshot, nothing stored as a package.
@@ -2168,8 +2222,7 @@ async function runPackageSignGate(args: {
       run,
       signStep,
       signInputHash,
-      `skipped (dry run, not a package: ${outputs.assembly.dryRunReason ?? 'its identity is not recorded.'} ` +
-        'A release signature binds the recorded application number and applicant, so nothing was signed.)'
+      `skipped (${identityRefusal})`
     );
   } else if (validateStep.status !== 'complete' || !outputs.assembly || !outputs.validation) {
     // The gate is required, but upstream isn't gateway-ready. Mark skipped
@@ -2874,6 +2927,7 @@ async function resumeAwaitingSignature(
       region: snap.region,
       submissionType: snap.submissionType,
       backboneXml: snap.backboneXml,
+      ...(snap.recordedPackageIdentity ? { recordedPackageIdentity: snap.recordedPackageIdentity } : {}),
     };
 
     // Integrity guard: recompute the digest ENTIRELY from the snapshot's own
@@ -2891,6 +2945,7 @@ async function resumeAwaitingSignature(
       submissionType: snap.submissionType,
       organizationId: snap.organizationId,
       backboneXml: snap.backboneXml || undefined,
+      recordedPackageIdentity: snap.recordedPackageIdentity,
     });
 
     if (recomputedDigest !== persistedPayload.payloadDigest) {
@@ -3067,6 +3122,9 @@ async function resumeAwaitingSignature(
       return failResumeSignStep(signStep, previousRun, outputs, 'signature_payload_drift');
     }
   }
+
+  const identityRefusal = packageSignIdentityRefusal(outputs.assembly);
+  if (identityRefusal) return failResumeSignStep(signStep, previousRun, outputs, identityRefusal);
 
   // No drift — look up the active signature. OQ-7: WHERE organization_id = $1.
   // OQ-4: AND superseded_by IS NULL.

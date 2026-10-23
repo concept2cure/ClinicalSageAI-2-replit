@@ -1,0 +1,87 @@
+[
+  {
+    "question": "What evidence does a new in vitro diagnostic need before we choose a regulatory pathway?",
+    "expect": "diagnostics"
+  },
+  {
+    "question": "How do we show scientific validity for a novel analyte with only a handful of published studies?",
+    "expect": "diagnostics"
+  },
+  {
+    "question": "Where are the gaps in our IVD submission plan?",
+    "expect": "diagnostics",
+    "context": { "segments": ["ivd"] }
+  },
+  {
+    "question": "Calculate the limit of blank and limit of detection from our EP17 replicates.",
+    "expect": "diagnostics.analytical-performance"
+  },
+  {
+    "question": "How should we design the EP05 imprecision study and the method comparison for our troponin assay?",
+    "expect": "diagnostics.analytical-performance"
+  },
+  {
+    "question": "What is missing from this report?",
+    "expect": "diagnostics.analytical-performance",
+    "context": { "documentType": "US_IVD_ANALYTICAL_VALIDATION", "segments": ["ivd"] }
+  },
+  {
+    "question": "Our comparator is another cleared assay, not a reference method. Should we report PPA and NPA rather than sensitivity and specificity?",
+    "expect": "diagnostics.clinical-performance"
+  },
+  {
+    "question": "How many positive specimens does the clinical performance study need to show sensitivity above our goal?",
+    "expect": "diagnostics.clinical-performance"
+  },
+  {
+    "question": "Is our PD-L1 test a companion diagnostic or a complementary diagnostic?",
+    "expect": "diagnostics.companion-diagnostics"
+  },
+  {
+    "question": "The pivotal trial enrolled on a clinical trial assay. How do we bridge to the final CDx kit?",
+    "expect": "diagnostics.companion-diagnostics"
+  },
+  {
+    "question": "What does contemporaneous approval of the drug and its companion diagnostic require from our side?",
+    "expect": "diagnostics.companion-diagnostics",
+    "context": { "segments": ["pharma"], "therapeuticArea": "oncology" }
+  },
+  {
+    "question": "Is this a predictive biomarker or a prognostic biomarker, and what evidence does each claim need?",
+    "expect": "diagnostics.biomarkers"
+  },
+  {
+    "question": "Should we seek biomarker qualification through the drug development tool program or keep it inside our IND?",
+    "expect": "diagnostics.biomarkers"
+  },
+  {
+    "question": "Help me write the context of use for our kidney safety biomarker.",
+    "expect": "diagnostics.biomarkers",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "What goes into the performance evaluation report under the IVDR?",
+    "expect": "diagnostics.eu-ivdr"
+  },
+  {
+    "question": "What IVDR class is an HbA1c self-test, and does it need an IVDR notified body?",
+    "expect": "diagnostics.eu-ivdr"
+  },
+  {
+    "question": "Gap-check this against Annex XIII.",
+    "expect": "diagnostics.eu-ivdr",
+    "context": { "documentType": "EU_PER", "segments": ["ivd"] }
+  },
+  {
+    "question": "Do LDTs still have to follow the FDA phase-out schedule from the LDT final rule?",
+    "expect": "diagnostics.clia-and-ldts"
+  },
+  {
+    "question": "How do we get a CLIA waiver for our point-of-care strep test?",
+    "expect": "diagnostics.clia-and-ldts"
+  },
+  {
+    "question": "What does our CLIA lab have to establish before running a modified FDA-cleared assay on patient samples?",
+    "expect": "diagnostics.clia-and-ldts"
+  }
+]

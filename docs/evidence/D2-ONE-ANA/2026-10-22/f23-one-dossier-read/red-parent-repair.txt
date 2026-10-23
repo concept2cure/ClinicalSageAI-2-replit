@@ -1,0 +1,16 @@
+# F23 hand-on, red at 59105431a9 with the new cases only (the migration not yet amended).
+# The repair case is red on the defect. The guard case passes at head because nothing is repaired yet; its guards are proven by mutation (mutations-parent-repair.txt).
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > the pack has headings, and they are never approved
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > with every content section approved, the document reads 100, and so does the home figure (at head: 79)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a replay with nothing stale changes nothing: not the figure, not updated_at
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > replaying the migration keeps the value, corrects a stale one and leaves updated_at alone
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a document with no sections keeps the figure it was inserted with on replay (a legacy row is not zeroed)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > an empty heading is not counted; a heading someone has written in is (review: unsigned text at a heading must not read 100)
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > a todo section that gains a child stops being counted: 1 of 2 becomes 2 of 2, never 2 of 3
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > readiness counts sections, not headings > re-parenting a section recounts the document
+ × server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > a replay files a section the old PATCH wrote without its parent > the heading stops being counted; a locked row is filed too; nothing else moves, updated_at included
+   → expected null to be 'M1' // Object.is equality
+ ✓ server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts > a replay files a section the old PATCH wrote without its parent > a pack it cannot read one way does not fail the deploy: no array, a key listed twice, a section its own parent
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected null to be 'M1' // Object.is equality
+      Tests  1 failed | 9 passed (10)

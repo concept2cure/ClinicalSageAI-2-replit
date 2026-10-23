@@ -1,0 +1,13 @@
+# m-detach-without-conversation: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-detachable.test.ts
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > a durable run with a person and a resolved conversation: detaches 2ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > a turn that asked to drive the screen detaches too (D-7, decided 2026-10-22) 1ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > local-only (no run row): stops on disconnect 1ms
+ ✓ server/services/ana/__tests__/run-detachable.test.ts > detachable > no person: stops on disconnect 1ms
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect 8ms
+   → expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-detachable.test.ts > detachable > no resolved conversation: stops on disconnect
+AssertionError: expected true to be false // Object.is equality

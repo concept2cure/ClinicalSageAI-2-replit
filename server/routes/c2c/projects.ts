@@ -7,7 +7,7 @@
  *
  * Routes:
  *   GET  /api/c2c/projects/:id                     project metadata
- *   GET  /api/c2c/projects/:id/workstreams          section counts grouped by CTD module
+ *   GET  /api/c2c/projects/:id/dossier              approved sections: home filing, each market, each module
  *   GET  /api/c2c/projects/:id/drafts?limit=7       recent section drafts
  *   GET  /api/c2c/projects/:id/team                 project members
  *   GET  /api/c2c/projects/:id/evidence?pinned=1    pinned evidence cards
@@ -21,8 +21,9 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
+import { readProjectActivity } from '../../services/c2c/project-activity.js';
+import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
 import { requestPgClient } from '../../db/requestDb';
-import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
 import {
   scaffoldProjectDocuments,
@@ -41,13 +42,6 @@ import {
 import { checkProgramQuota } from '../../services/license-manager.js';
 import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import {
-  foldersForView,
-  docKindsForView,
-  filingTypesForView,
-  type VaultViewId,
-} from '../../../shared/constants/domain/vault-taxonomy.js';
-import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
@@ -320,71 +314,43 @@ function send404(res: Response) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const READ_FAILED_REASON = 'The governed sections could not be read.';
+const unread = (): DossierFigure => ({ state: 'unavailable', pct: null, reason: READ_FAILED_REASON });
+
 /**
- * Real readiness for a set of projects: the share of each project's governed
- * sections that the filing has approved or locked.
+ * Each project's dossier readiness: the home filing's figure from
+ * server/services/c2c/dossier-read.ts, the figure Project home's card prints
+ * (FILING_SPINE F23). The list, the detail and the create read it here, so a
+ * program reads the same on its card, its page and its create response.
  *
- * ── Why this exists ───────────────────────────────────────────────────────────
- * The list used to report `COALESCE(p.progress_percent, 0) AS readiness`.
- * `regulatory_programs.progress_percent` is written exactly ONCE — as the
- * literal `0` in this file's own INSERT — and no UPDATE of that column exists
- * anywhere in server/. So every project a customer created reported 0% forever.
- * Draft and approve an entire IND and the card still read 0%, while the
- * documents inside it carried a genuinely maintained number.
+ * It replaces `readinessByProject`, which counted approved or locked sections
+ * over every document of the project, the home filing and its added markets
+ * pooled: adding EMA's MAA lowered an FDA NDA's figure, and the card disagreed
+ * with Project home's own card. Before that the list read
+ * `regulatory_programs.progress_percent`, written once as 0 and never updated;
+ * that column is read nowhere now.
  *
- * A figure that looks measured and can never move is worse than no figure: it
- * reads as "no progress" rather than as "not computed".
- *
- * ── The definition is the document one, one level up ──────────────────────────
- * c2c_documents.readiness is maintained by c2c_recompute_document_readiness()
- * as the share of that document's sections which are approved or locked. This
- * aggregates the same predicate across all of a project's governed documents,
- * so a project is measured exactly the way its documents are, weighted by how
- * many sections each actually has. The status list comes from the single
- * constant, so it cannot drift from the trigger.
- *
- * ── Separate query, on purpose ────────────────────────────────────────────────
- * Folding this into the list SELECT would make the projects list — the primary
- * surface — depend on c2c_documents existing. The vault route already fails
- * closed on 42P01 for exactly that store, so its absence is a real state in
- * this codebase, not a hypothetical. Keeping it separate means a database
- * without the phase-9 schema still gets its project list.
- *
- * On that failure it answers null, not an empty map: "could not measure" and
- * "measured, nothing approved" are different answers. The list keeps the stored
- * value on null — not a good answer, it is the same 0, but it is the
- * pre-existing one and it is logged. The detail read reports null, which
- * ProjectHome renders as no figure.
+ * A store this environment has not provisioned is answered by the service as
+ * 'unavailable'. Any other failure is logged here and each figure is
+ * 'unavailable' with the reason: the list is the primary surface and still
+ * answers, and a figure that could not be read is shown as such, never as 0
+ * and never as "no sections".
  */
-async function readinessByProject(
-  projectIds: string[],
-  orgId: number,
-): Promise<Map<string, number> | null> {
-  const out = new Map<string, number>();
-  if (projectIds.length === 0) return out;
+async function homeFigures(projectIds: string[], orgId: number): Promise<Map<string, DossierFigure>> {
   try {
-    const { rows } = await pool.query(
-      `SELECT d.project_id::text AS project_id,
-              COALESCE(ROUND(100.0
-                * COUNT(*) FILTER (WHERE s.status IN (${completeStatusSqlList()}))
-                / NULLIF(COUNT(*), 0))::integer, 0) AS readiness
-         FROM c2c_documents d
-         JOIN c2c_document_sections s ON s.document_id = d.id
-        WHERE d.project_id = ANY($1::uuid[]) AND d.org_id = $2
-        GROUP BY d.project_id`,
-      [projectIds, orgId],
-    );
-    for (const r of rows as Array<{ project_id: string; readiness: number }>) {
-      out.set(r.project_id, Number(r.readiness));
-    }
+    return await readDossierFigures(pool, orgId, projectIds);
   } catch (err) {
-    logger.warn('Governed readiness unavailable; project cards keep their stored value', {
+    logger.warn('Dossier readiness could not be read; each figure is unavailable', {
       err: err instanceof Error ? err.message : String(err),
       code: (err as { code?: string })?.code,
     });
-    return null;
+    return new Map(projectIds.map((id) => [id, unread()]));
   }
-  return out;
+}
+
+/** A figure as a program row carries it: the share, its state, and why there is none. */
+function readinessFields(f: DossierFigure): { readiness: number | null; readinessState: DossierFigure['state']; readinessReason?: string } {
+  return { readiness: f.pct, readinessState: f.state, ...(f.state === 'unavailable' ? { readinessReason: f.reason } : {}) };
 }
 
 /**
@@ -542,36 +508,41 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
 /**
  * The detail row for one program in one organization, or null.
  *
- * `readiness` is the figure the list reports for the same program
- * (readinessByProject), so a program reads the same on its card and on its own
- * page. It used to return the raw `progress_percent` — written once as 0 and
- * never updated — which ProjectHome drew as "Dossier readiness 0%" and told AnA,
- * while the card beside it showed the real share. `progress_percent` is left
- * out of the projection: a column nothing maintains is not offered to a reader.
- * Null when the aggregate could not be read: not assessed, never 0.
+ * `readiness`, `readinessState` and `readinessReason` are the figure the list
+ * reports for the same program (homeFigures), so a program reads the same on
+ * its card and on its own page. `progress_percent` is left out of the
+ * projection: a column nothing maintains is not offered to a reader.
  * `readinessAsOf` is when this read measured it, null with no figure.
  */
 async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
   const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
   if (!rows.length) return null;
-  const measured = await readinessByProject([id], orgId);
-  const readiness = measured?.get(id) ?? null;
+  const figure = (await homeFigures([id], orgId)).get(id) ?? unread();
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness,
+    ...readinessFields(figure),
     // When it was measured: on this read, and a project page stays open for
     // hours. No figure, no time (filing-spine design review, open item 9).
-    readinessAsOf: readiness === null ? null : new Date().toISOString(),
+    readinessAsOf: figure.state === 'measured' ? new Date().toISOString() : null,
   };
+}
+
+/** The figure a detail read measured, for the card a create returns, so the
+ *  two agree. No detail read, no figure read. */
+function readinessOfDetail(program: Record<string, unknown> | null): ReturnType<typeof readinessFields> {
+  if (!program) return readinessFields(unread());
+  const { readiness, readinessState, readinessReason } = program as ReturnType<typeof readinessFields>;
+  return { readiness, readinessState, ...(readinessReason ? { readinessReason } : {}) };
 }
 
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
 // Portfolio list shaped to the v2 Projects surface's display contract
-// ({ id, title, ws, code, stage, readiness, status, lead, blocker, due,
-// activity }) — every field projected from a real regulatory_programs column
-// (progress_percent → readiness, phase → stage, target_submission_date → due,
-// lead_user_id → lead). Fails closed to an empty envelope when the store is
+// ({ id, title, ws, code, stage, readiness, readinessState, status, lead,
+// blocker, due, activity }) — every field projected from a real
+// regulatory_programs column (phase → stage, target_submission_date → due,
+// lead_user_id → lead), except readiness, which is the home filing's measured
+// figure (homeFigures). Fails closed to an empty envelope when the store is
 // not provisioned.
 //
 // Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
@@ -604,7 +575,6 @@ router.get('/', async (req: Request, res: Response) => {
               ${WS_CASE}                                            AS ws,
               COALESCE(p.code, '—')                                 AS code,
               initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              COALESCE(p.progress_percent, 0)                       AS readiness,
               p.status                                              AS status,
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
@@ -625,23 +595,14 @@ router.get('/', async (req: Request, res: Response) => {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
 
-    // Replace the stored progress_percent — which nothing has ever updated —
-    // with the share of each project's governed sections the filing has
-    // approved. Only for the page being returned, so the aggregate is bounded
-    // by the page size rather than by the org's project count.
-    const real = await readinessByProject(
-      (page as Array<{ id: string }>).map((p) => p.id),
-      orgId,
-    );
-    /* A measurement that failed, or a program with no governed sections to
-       measure, is no figure: null, which the card renders as "not measured".
-       Both used to fall back to the stored progress_percent 0 — a failed read
-       rendered as a measured "0% ready", which the note above admits was "not
-       a good answer". A share over no sections is undefined, as a mean over
-       no programs is. (A program with its dossier spine and nothing approved
-       is a real, measured 0 and still reads 0%.) */
-    for (const p of page as Array<{ id: string; readiness: number | null }>) {
-      p.readiness = real?.get(p.id) ?? null;
+    // Each card's dossier readiness, for the page being returned only, so the
+    // read is bounded by the page size rather than by the org's project count.
+    // A program with nothing to count is 'no_sections' and one whose sections
+    // could not be read is 'unavailable', each with a null figure; a program
+    // with its sections and nothing approved is a measured 0.
+    const figures = await homeFigures((page as Array<{ id: string }>).map((p) => p.id), orgId);
+    for (const p of page as Array<Record<string, unknown> & { id: string }>) {
+      Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
     await requireProgramScopeStillCurrent(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, scope);
@@ -1073,7 +1034,6 @@ router.post('/', async (req: Request, res: Response) => {
               ${WS_CASE}                                            AS ws,
               COALESCE(p.code, '—')                                 AS code,
               initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              COALESCE(p.progress_percent, 0)                       AS readiness,
               p.status                                              AS status,
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
@@ -1094,7 +1054,7 @@ router.post('/', async (req: Request, res: Response) => {
     // return a field the read then omits.
     const program = await readProgramDetail(newId, orgId);
     return res.status(201).json({
-      data: rows[0],
+      data: rows[0] ? { ...rows[0], ...readinessOfDetail(program) } : rows[0],
       program,
       meta: {
         created: true,
@@ -1153,47 +1113,25 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ── GET /api/c2c/projects/:id/workstreams ─────────────────────────────────────
+// ── GET /api/c2c/projects/:id/dossier ─────────────────────────────────────────
 //
-// Groups c2c_document_sections by CTD module prefix (the first component of
-// section_key, e.g. 'm3', 'm4', 'm5', 'm2', 'm1'). Each group returns a
-// status rollup and a completion percentage.
-//
-// Falls back gracefully when no sections exist yet.
+// The project's dossier, read once (FILING_SPINE F23, server/services/c2c/
+// dossier-read): the home filing's figure, each market's own line, and one row
+// per module, on one definition of complete. It replaces /workstreams, whose
+// weighted mean (review 75, drafted 50, locked 0) and split of "M1" from "1.1"
+// disagreed with the header beside it. A store this environment has not
+// provisioned answers 200 with each figure 'unavailable' and the reason; any
+// other failure is a 500, never an empty dossier.
 
-router.get('/:id/workstreams', async (req: Request, res: Response) => {
+router.get('/:id/dossier', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
-
-    const { rows } = await pool.query(
-      `SELECT
-         split_part(ds.section_key, '.', 1) AS module,
-         COUNT(*)                            AS total,
-         COUNT(*) FILTER (WHERE ds.status = 'approved') AS approved,
-         COUNT(*) FILTER (WHERE ds.status = 'review')   AS review,
-         COUNT(*) FILTER (WHERE ds.status = 'drafted')  AS drafted,
-         COUNT(*) FILTER (WHERE ds.status = 'todo')     AS todo,
-         ROUND(
-           AVG(CASE WHEN ds.status = 'approved' THEN 100
-                    WHEN ds.status = 'review'   THEN  75
-                    WHEN ds.status = 'drafted'  THEN  50
-                    ELSE 0 END)
-         )::integer AS completion_pct,
-         MAX(ds.updated_at) AS last_updated
-       FROM c2c_document_sections ds
-       JOIN c2c_documents d ON d.id = ds.document_id
-       WHERE d.project_id = $1 AND d.org_id = $2
-       GROUP BY 1
-       ORDER BY 1`,
-      [req.params.id, orgId],
-    );
-
-    return res.json({ workstreams: rows });
+    return res.json(await readDossier(pool, orgId, String(req.params.id)));
   } catch (err: unknown) {
-    return serverError(res, logger, 'loading the workstreams', err, { programId: String(req.params.id) });
+    return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1368,36 +1306,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
-    // Columns aliased from what audit_logs ACTUALLY has (table_name /
-    // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
-    // chain fields from 20260527_mutation_primitives.sql) to the names the
-    // client's ActivityRow reads. The projection previously named
-    // resource_type / resource_id / details, none of which are columns, so
-    // every request raised 42703 into the catch below and the feed rendered
-    // empty no matter how much audited activity a project had.
-    const { rows } = await pool.query(
-      `SELECT
-         al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
-         COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
-         COALESCE(u.name, u.email) AS actor_name,
-         al.occurred_at, al.ip_address
-       FROM audit_logs al
-       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
-       WHERE al.tenant_id = $2
-         AND (al.record_id = $1
-              OR al.target = 'regulatory_program:' || $1
-              OR al.new_values->>'project_id' = $1
-              OR al.new_values->>'programId' = $1
-              -- A governed action on one of the project's own filing documents
-              -- names its target (document:<id>), not the project (PF-17): the
-              -- scaffold that created the project's dossier was invisible here.
-              OR (al.target_type = 'document' AND al.target_id IN (
-                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
-       ORDER BY al.occurred_at DESC NULLS LAST
-       LIMIT $3`,
-      [req.params.id, orgId, limit],
-    );
-
+    const rows = await readProjectActivity(pool, String(req.params.id), orgId, limit);
     return res.json({ activity: rows });
   } catch (err: unknown) {
     // The activity feed is an audit-log read; a caught failure must not render
@@ -1718,133 +1627,6 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
     return res.json({ projectId: programId, files, window: { shown: files.length, truncated } });
   } catch (err: unknown) {
     return serverError(res, logger, 'listing conversation files', err, { programId });
-  }
-});
-
-// ── GET /api/c2c/projects/:id/vault-structure ────────────────────────────────
-//
-// Workstream A1 — the dynamic, build-type-aware Vault structure. Returns the
-// folder/document tree the Vault Explorer should render for THIS project,
-// aligned to its client segment AND its active document build types:
-//   - `view`         the vault view (pharma/biotech/device/ivd/service),
-//                    derived from the project's product_type (falls back across
-//                    the org's programs, then to the cross-sponsor service view)
-//   - `folders`      the segment folder spine (CTD / DHF / TMF) — foldersForView
-//   - `docKinds`     the document-kind filters valid for this view
-//   - `filingTypes`  the framework pills valid for this view
-//   - `buildTypes`   the distinct (doc_type/agency) filings live on the project
-//   - `documents`    each filing's rule-pack section tree merged with LIVE
-//                    section status (todo/drafted/…); this is what makes the
-//                    files "organized exactly by document build type".
-//
-// Everything is derived — no hardcoded per-segment tree — so a 510(k) device
-// project renders the DHF/eSTAR structure, an IVDR project its Annex tree, a
-// pharma NDA the CTD modules, and a CRO study the TMF zones. Tenant-scoped.
-
-router.get('/:id/vault-structure', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return send403(res);
-  const projectId = req.params.id;
-
-  try {
-    // Project + its product modality (org-scoped for tenancy).
-    const projRes = await pool.query(
-      `SELECT id, name, product_type
-       FROM regulatory_programs
-       WHERE id = $1 AND organization_id = $2
-       LIMIT 1`,
-      [projectId, orgId],
-    );
-    if (projRes.rows.length === 0) return send404(res);
-    const productType = (projRes.rows[0] as any).product_type as string | null;
-
-    // Derive the vault view: project product_type → segment; if the project has
-    // none, fall back to the union across the org's programs; else the
-    // cross-sponsor service (CRO/CDMO) view.
-    let view: VaultViewId;
-    const projSegs = productType ? productTypesToSegments([productType]) : [];
-    if (projSegs.length > 0) {
-      view = projSegs[0];
-    } else {
-      const orgTypesRes = await pool.query(
-        `SELECT DISTINCT product_type FROM regulatory_programs
-         WHERE organization_id = $1 AND product_type IS NOT NULL`,
-        [orgId],
-      );
-      const orgSegs = productTypesToSegments(orgTypesRes.rows.map((r: any) => r.product_type));
-      view = orgSegs[0] ?? 'service';
-    }
-
-    // The project's active document build types + their rule-pack section trees.
-    const docsRes = await pool.query(
-      `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
-              d.status, d.readiness, rp.required_sections
-       FROM c2c_documents d
-       LEFT JOIN c2c_rule_packs rp
-         ON rp.doc_type = d.doc_type AND rp.agency = d.agency
-            AND rp.version = d.rule_pack_version
-       WHERE d.project_id = $1 AND d.org_id = $2
-       ORDER BY d.updated_at DESC`,
-      [projectId, orgId],
-    );
-
-    const documents = [];
-    for (const d of docsRes.rows as any[]) {
-      // Live section statuses for this document.
-      const secRes = await pool.query(
-        `SELECT section_key, status, version,
-                ${sectionHasContentSql('content')} AS has_content
-         FROM c2c_document_sections
-         WHERE document_id = $1`,
-        [d.id],
-      );
-      const live = new Map<string, any>(secRes.rows.map((r: any) => [r.section_key, r]));
-      const specs = Array.isArray(d.required_sections) ? (d.required_sections as any[]) : [];
-      const sections = specs.map((spec: any) => ({
-        key:        spec.key,
-        parentKey:  spec.parent_key ?? null,
-        label:      spec.label,
-        mandatory:  spec.mandatory ?? false,
-        pathOrder:  spec.path_order ?? 0,
-        status:     live.get(spec.key)?.status ?? 'todo',
-        version:    live.get(spec.key)?.version ?? null,
-        hasContent: live.get(spec.key)?.has_content ?? false,
-      }));
-      documents.push({
-        id:        d.id,
-        docType:   d.doc_type,
-        agency:    d.agency,
-        title:     d.title,
-        status:    d.status,
-        readiness: d.readiness,
-        sections,
-      });
-    }
-
-    const buildTypes = Array.from(
-      new Set((docsRes.rows as any[]).map(d => `${d.doc_type}/${d.agency}`)),
-    );
-
-    return res.json({
-      projectId,
-      view,
-      folders:     foldersForView(view),
-      docKinds:    docKindsForView(view).map(k => ({ value: k.value, label: k.label, description: k.description })),
-      // Industry-specific framing: each framework pill carries its governing
-      // regulation(s) so the Explorer can render "510(k) · 21 CFR 807",
-      // "eCTD · ICH M8", "IVDR PE · EU IVDR 2017/746" — the segment's real
-      // regulatory language, not a generic label.
-      filingTypes: filingTypesForView(view).map(f => ({
-        value: f.value,
-        label: f.label,
-        description: f.description,
-        regulatoryRefs: (f as { regulatoryRefs?: string[] }).regulatoryRefs ?? [],
-      })),
-      buildTypes,
-      documents,
-    });
-  } catch (err: unknown) {
-    return serverError(res, logger, 'loading the Vault structure', err, { programId: String(req.params.id) });
   }
 });
 

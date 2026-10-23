@@ -34,6 +34,7 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
   const [docType, setDocType] = React.useState<DocType>(document?.docType ?? template?.docType ?? 'sop');
   const [templateKey, setTemplateKey] = React.useState(template?.key ?? '');
   const [number, setNumber] = React.useState('');
+  const [reviewDate, setReviewDate] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -74,7 +75,7 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
     try {
       const input = { programId, reason: reason.trim(), ...(templateKey ? { templateKey } : {}) };
       const row = document ? revision ? await reviseQmsDocument(document.id, input.reason, input) : await bindQmsDocument(document.id, input) : await createQmsDocument({ ...input,
-        title: title.trim(), docType, ...(number.trim() ? { docNumber: number.trim() } : {}) });
+        title: title.trim(), docType, ...(number.trim() ? { docNumber: number.trim() } : {}), ...(reviewDate ? { nextReviewDate: reviewDate } : {}) });
       onCreated(row.id);
     } catch (err) {
       setError(redactInternals(err instanceof Error ? err.message : '', 'The document change could not be confirmed. Reload the register before trying again.'));
@@ -106,6 +107,9 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
           {(Object.entries(DOC_TYPE_LABEL) as [DocType, string][]).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select></label>
         <label>Document number (optional)<input value={number} onChange={event => setNumber(event.target.value)} maxLength={60} placeholder="Assign the next number automatically" disabled={busy} /></label>
+        <label>Next periodic review (optional)<input type="date" value={reviewDate} min={new Date().toISOString().slice(0, 10)}
+          onChange={event => setReviewDate(event.target.value)} disabled={busy} /></label>
+        <p className="qms-dialog-hint">Once effective, the document is listed for review from this date. Leave it empty and no periodic review is scheduled.</p>
       </>}
       <label>Reason<textarea value={reason} onChange={event => setReason(event.target.value)} minLength={8} maxLength={2000} required disabled={busy} /></label>
       <p className="qms-dialog-hint">Use at least 8 characters to state why this document is being {document ? 'set up for authoring' : 'created'}.</p>

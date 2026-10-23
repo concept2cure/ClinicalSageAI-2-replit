@@ -98,3 +98,23 @@ scripted gateway/source/writer seams. No live provider/DB, exact tokenizer or
 serialized provider payload size, multilingual relevance, receipt rollback or
 agency acceptance is claimed. Finish normal direct pushes, full TypeScript,
 remote Git-byte/ancestry checks and a clean synchronized branch.
+
+## Integration amendment — 2026-10-23
+
+Incoming canonical commit `55f75b72fac95a387d3b72e82a1998a08ff5ef96`
+contains DT3 detachment and authoritative run-row stop handling. Its confirmed
+stops close with `done` (the stop reason) and `post_done` (the stopped record),
+including a concurrent context refusal. The SSE error carrier specified above
+applies when the turn has not been authoritatively stopped. Retain context
+error diagnostics in the existing record where the stop/error path records
+them; preserve partial answers, exact tool results and record authority.
+The pre-header 413 and non-stopped context refusal behavior are unchanged.
+
+The original frozen test and 970-test qualification remain historical evidence
+for `a8d76dcece377f6c347ead2f9185681fb832b40d`. The single outdated cancellation
+carrier assertion failed after the merge; its exact bytes are retained in
+[root/stream-context-window-refusal.pre-detach.ts.txt](root/stream-context-window-refusal.pre-detach.ts.txt),
+with the original hash in `frozen-tests.json`. The live assertion now requires
+stop framing, retained partial answer, raw result SHA-256 and a stopped record;
+an additional administrator row-before-abort case verifies the new race.
+Fresh merged-tree qualification is recorded separately under `root/resume-*`.

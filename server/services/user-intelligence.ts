@@ -37,7 +37,8 @@ export interface UserIdentity {
   department: string | null; // "Regulatory Affairs"
   bio: string | null;
   avatar: string | null;
-  greetingName: string; // How AnA addresses them (from prefs or parsed name)
+  /** How AnA addresses them: the recorded preferred name, else the full recorded name; null when none is recorded. */
+  greetingName: string | null;
   /** organization_users.role in this organization; null when no membership row records one. */
   role: string | null; // admin, manager, member, viewer
   expertiseLevel: string | null; // novice, intermediate, expert; null when not recorded
@@ -167,10 +168,11 @@ async function loadUserIdentity(
     const u = result.rows[0];
     const prefs = u.preferences || {};
 
-    // Parse greeting name: preference > first name from "name" field
-    const greetingName =
-      prefs.greeting_name ||
-      (u.title ? `${u.title.split(' ')[0]} ${u.name.split(' ').pop()}` : u.name.split(' ')[0]);
+    // The recorded preferred name, else the full recorded name; null when none
+    // is recorded. 2026-10-15: built from the first word of the job title and
+    // the last word of the name ("Senior Raman").
+    const recorded = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+    const greetingName = recorded(prefs.greeting_name) ?? recorded(u.name);
 
     return {
       id: u.id,
@@ -660,22 +662,8 @@ export async function touchWorkSession(params: {
   }
 }
 
-/**
- * Record that user created an artifact during their session.
- */
-export async function recordArtifactCreation(userId: number): Promise<void> {
-  try {
-    await pool.query(
-      `UPDATE user_work_sessions SET
-        artifacts_created = artifacts_created + 1,
-        last_activity_at = NOW()
-       WHERE user_id = $1 AND session_type = 'active'`,
-      [userId]
-    );
-  } catch {
-    // Non-critical
-  }
-}
+// recordArtifactCreation was deleted 2026-10-15: it had no caller, and it bumped
+// the user's active session in every organization (no organization predicate).
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORK QUEUE MANAGEMENT — AI-recommended actions
@@ -751,19 +739,17 @@ export async function generateWorkRecommendations(params: {
   const { userId, organizationId, projectId } = params;
 
   try {
-    // Find sections that are not_started or stalled
+    // Find sections that are not_started or stalled. 2026-10-15: this selected
+    // ps.assigned_to_id and ordered by ps.sort_order; project_sections
+    // (20260220_ind_section_tracking.sql) has assigned_to and no sort_order, so
+    // every regeneration threw. Ordered by module, then section code.
     const sectionsResult = await pool.query(
-      `SELECT ps.section_code, ps.title, ps.status, ps.deadline, ps.assigned_to_id,
+      `SELECT ps.section_code, ps.title, ps.status, ps.deadline, ps.assigned_to,
               ps.module
        FROM project_sections ps
        WHERE ps.project_id = $1 AND ps.organization_id = $2
          AND ps.status NOT IN ('approved', 'locked')
-       ORDER BY
-         CASE ps.module
-           WHEN '1' THEN 1 WHEN '2' THEN 2 WHEN '3' THEN 3
-           WHEN '4' THEN 4 WHEN '5' THEN 5 ELSE 6
-         END,
-         ps.sort_order`,
+       ORDER BY ps.module, ps.section_code`,
       [projectId, organizationId]
     );
 
@@ -778,7 +764,7 @@ export async function generateWorkRecommendations(params: {
 
     // Find not-started items assigned to this user
     const myNotStarted = sectionsResult.rows.filter(
-      (s: any) => s.status === 'not_started' && (s.assigned_to_id === userId || !s.assigned_to_id)
+      (s: any) => s.status === 'not_started' && (s.assigned_to === userId || !s.assigned_to)
     );
 
     // Find items in review that might need attention
@@ -792,13 +778,16 @@ export async function generateWorkRecommendations(params: {
        "Blocking downstream sections from proceeding" with no dependency
        looked at — and lumen-context-builder put those reasons in AnA's
        prompt. Each now carries the rule that produced it and the facts it
-       read (2026-10-15). Old 'ai' rows are cleared with the rule's own. */
+       read (2026-10-15). Old 'ai' rows are cleared with the rule's own — in this
+       organization only: until 2026-10-15 the DELETE named none, so a
+       regeneration here deleted the user's rows naming this project id in every
+       organization. */
     await pool.query(
       `DELETE FROM user_work_queue
-       WHERE user_id = $1 AND project_id = $2
+       WHERE user_id = $1 AND project_id = $2 AND organization_id = $3
          AND source IN ('ai', 'deadline', 'review_request', 'sequence')
          AND status = 'pending'`,
-      [userId, projectId]
+      [userId, projectId, organizationId]
     );
 
     let priority = 1;
@@ -849,7 +838,7 @@ export async function generateWorkRecommendations(params: {
         referenceType: 'section',
         referenceId: item.section_code,
         source: 'sequence',
-        aiReasoning: `Not started and ${item.assigned_to_id === userId ? 'assigned to you' : 'unassigned'}; listed in Module ${item.module} order.`,
+        aiReasoning: `Not started and ${item.assigned_to === userId ? 'assigned to you' : 'unassigned'}; listed in Module ${item.module} order.`,
       });
     }
   } catch (error) {

@@ -192,11 +192,23 @@ export interface ExclusivityComponent {
   citation: string;
 }
 
+/**
+ * A claimed pediatric extension: 'applied' (counted in bindingMonths), 'not_applied'
+ * (the market's rule does not attach it here), or 'not_assessed' (no basis on file for
+ * the product class); the note says which and why.
+ */
+export interface PediatricExtensionStatus {
+  status: 'applied' | 'not_applied' | 'not_assessed';
+  note: string;
+}
+
 export interface ExclusivityResult {
   market: ExclusivityMarket;
   productClass: ProductClass;
   /** All exclusivity components considered (base + orphan + pediatric). */
   components: ExclusivityComponent[];
+  /** The claimed pediatric extension's status; null when none was claimed. */
+  pediatricExtension: PediatricExtensionStatus | null;
   /** The binding (longest) exclusivity duration in months. */
   bindingMonths: number;
   /** Which component is binding. */
@@ -235,6 +247,39 @@ function orphanExclusivity(
 }
 
 /**
+ * The pediatric extension a claim adds to the binding period, per the market's rule.
+ * 2026-10-15: it was applied to any class, so a generic/biosimilar came back FDA +6
+ * months (base 0 + 6). Nothing here holds a basis for pediatric exclusivity attaching
+ * to that class, so for it the extension is not assessed and adds nothing.
+ */
+function pediatricExtension(
+  input: ExclusivityInput,
+  orphanApplies: boolean,
+  bindingMonths: number,
+): { status: PediatricExtensionStatus; component: ExclusivityComponent | null; orphanBinding: boolean } | null {
+  if (!input.pediatricExtension) return null;
+  if (input.productClass === 'generic_or_biosimilar') {
+    const note = 'Pediatric extension not assessed for a generic/biosimilar: no basis on file for pediatric exclusivity attaching to this product class, so no months are added.';
+    return { status: { status: 'not_assessed', note }, component: null, orphanBinding: false };
+  }
+  const ped = PEDIATRIC_EXTENSION[input.market];
+  // An orphan product's binding period is governed by orphan exclusivity when
+  // orphan is claimed and the orphan period is at least as long as the base
+  // (it ties with the base under reduce() but should still count as orphan for
+  // the purpose of the orphan-only pediatric/PIP extension, e.g. EU Art 37).
+  const orphanBinding = orphanApplies && ORPHAN_RULE[input.market].baseMonths >= bindingMonths;
+  const applies =
+    ped.appliesTo === 'both' ||
+    (ped.appliesTo === 'orphan' && orphanBinding) ||
+    (ped.appliesTo === 'standard' && !orphanBinding);
+  if (applies && ped.months > 0) {
+    const component = { type: 'Pediatric extension', months: ped.months, description: ped.description, citation: ped.citation };
+    return { status: { status: 'applied', note: ped.description }, component, orphanBinding };
+  }
+  return { status: { status: 'not_applied', note: ped.description }, component: null, orphanBinding };
+}
+
+/**
  * Compute regulatory exclusivity for a product in a market and project the LOE
  * date. The binding exclusivity is the longest applicable component. Orphan
  * exclusivity, where applicable, is considered alongside (not added to) the base
@@ -267,31 +312,19 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
   let bindingType = binding.type;
 
   // Pediatric extension adds to the binding period per the market's rule.
-  if (input.pediatricExtension) {
-    const ped = PEDIATRIC_EXTENSION[input.market];
-    // An orphan product's binding period is governed by orphan exclusivity when
-    // orphan is claimed and the orphan period is at least as long as the base
-    // (it ties with the base under reduce() but should still count as orphan for
-    // the purpose of the orphan-only pediatric/PIP extension, e.g. EU Art 37).
-    const orphanBinding =
-      orphanApplies && ORPHAN_RULE[input.market].baseMonths >= bindingMonths;
-    const applies =
-      ped.appliesTo === 'both' ||
-      (ped.appliesTo === 'orphan' && orphanBinding) ||
-      (ped.appliesTo === 'standard' && !orphanBinding);
-    if (applies && ped.months > 0) {
-      // When the orphan period ties (or exceeds) the base, reduce() keeps the
-      // earlier base component, but the binding is actually governed by orphan
-      // exclusivity — and the orphan-only extension (e.g. EU Art 37 PIP) can
-      // only attach to it. Relabel the binding as orphan so the reported type
-      // matches the months (avoids an impossible "8+2 + pediatric = 144 months").
-      if (orphanBinding) bindingType = ORPHAN_RULE[input.market].type;
-      bindingMonths += ped.months;
-      components.push({ type: 'Pediatric extension', months: ped.months, description: ped.description, citation: ped.citation });
-      bindingType = `${bindingType} + pediatric extension`;
-    } else if (ped.months > 0) {
-      notes.push(ped.description);
-    }
+  const ped = pediatricExtension(input, orphanApplies, bindingMonths);
+  if (ped?.component) {
+    // When the orphan period ties (or exceeds) the base, reduce() keeps the
+    // earlier base component, but the binding is actually governed by orphan
+    // exclusivity — and the orphan-only extension (e.g. EU Art 37 PIP) can
+    // only attach to it. Relabel the binding as orphan so the reported type
+    // matches the months (avoids an impossible "8+2 + pediatric = 144 months").
+    if (ped.orphanBinding) bindingType = ORPHAN_RULE[input.market].type;
+    bindingMonths += ped.component.months;
+    components.push(ped.component);
+    bindingType = `${bindingType} + pediatric extension`;
+  } else if (ped) {
+    notes.push(ped.status.note);
   }
 
   let lossOfExclusivityDate: string | null = null;
@@ -308,6 +341,7 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
     market: input.market,
     productClass: input.productClass,
     components,
+    pediatricExtension: ped ? ped.status : null,
     bindingMonths,
     bindingType,
     approvalDate: input.approvalDate ?? null,

@@ -156,7 +156,9 @@ describe('with a draft — the reviewed draft is what is filed', () => {
   it('renders the PDF from the draft\'s stored report, not from the body', async () => {
     m.getAnnualReport.mockResolvedValue(draft);
     m.markAnnualReportFiled.mockResolvedValue({ ...draft, status: 'filed', sequenceId: 501 });
-    const res = await file({ ...cardReport(), productName: 'FROM THE BODY', draftId: 'd-1', acknowledgedGaps: ['outstanding_business'] });
+    // 2026-10-15: report fields beside a draftId are refused (400), no longer
+    // silently ignored, so the draft alone is sent.
+    const res = await file({ indNumber: '123456', draftId: 'd-1', acknowledgedGaps: ['outstanding_business'] });
     expect(res.status).toBe(201);
     expect(m.renderIndAnnualReportPdf).toHaveBeenCalledTimes(1);
     expect(m.renderIndAnnualReportPdf.mock.calls[0][0].productName).toBe('AS DRAFTED');

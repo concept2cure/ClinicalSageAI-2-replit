@@ -185,7 +185,7 @@ describe('the lead rule does not apply to reads (sharing admission is proven in 
     ['team roster', `/api/c2c/projects/${PROGRAM_ID}/team`],
     ['pinned evidence', `/api/c2c/projects/${PROGRAM_ID}/evidence`],
     ['activity', `/api/c2c/projects/${PROGRAM_ID}/activity`],
-    ['workstreams', `/api/c2c/projects/${PROGRAM_ID}/workstreams`],
+    ['dossier', `/api/c2c/projects/${PROGRAM_ID}/dossier`],
     ['drafts', `/api/c2c/projects/${PROGRAM_ID}/drafts`],
   ];
 

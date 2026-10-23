@@ -51,7 +51,7 @@ export function createSopSpecializationNodes(): QuestionNode[] {
           label: 'System Validation Status',
           type: 'select',
           required: true,
-          helpText: 'All systems used for Part 11 records must be validated per GAMP 5 principles.',
+          helpText: 'All systems used for Part 11 records must be validated to ensure accuracy, reliability, consistent intended performance and the ability to discern invalid or altered records (21 CFR 11.10(a)); GAMP 5 is a commonly used, non-mandatory approach.',
           options: [
             { value: 'validated', label: 'Validated' },
             { value: 'validation_planned', label: 'Validation Planned' },

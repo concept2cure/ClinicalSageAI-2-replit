@@ -174,7 +174,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     const res = await request(app(2, 1)).post('/api/c2c/projects').send({
       name: '[Demo · MDX] NeuroPanel-Dx 510(k)', productName: 'NeuroPanel-Dx', programType: '510k', productType: 'ivd',
       primaryAgency: 'FDA', indication: 'Differential diagnosis of viral CNS infection',
-      deviceClassification: { deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology', predicateK: 'K223456', flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
+      deviceClassification: { deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology', predicateK: 'K223456', predicateName: 'ViroPanel CNS', flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
     });
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ id: PID, ws: 'MDX' });
@@ -183,7 +183,11 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     // "Readiness not measured"). This expected 0 from before that change.
     // 2026-10-08: the read also says when it measured readiness, and with no
     // figure it gives no time (filing-spine design review, open item 9).
-    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null, readinessAsOf: null });
+    // F23 (3/9): the figure says why there is none.
+    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null, readinessState: 'no_sections', readinessAsOf: null });
+    // The card carries the same figure, not the stored progress_percent 0 the
+    // re-select used to project (the mocked card row still holds that 0).
+    expect(res.body.data).toMatchObject({ readiness: null, readinessState: 'no_sections' });
     expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).

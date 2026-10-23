@@ -9,16 +9,17 @@
 # staging stopped proving anything about production.
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.11"
 
   required_providers {
+    # The same bounds as the roots, whose lock files pin the exact builds.
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "~> 5.93"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.5"
+      version = "~> 3.6"
     }
   }
 }

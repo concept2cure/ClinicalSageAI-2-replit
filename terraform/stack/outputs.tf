@@ -14,10 +14,6 @@ output "ecr_api_url" {
   value = module.ecr.repository_urls["api"]
 }
 
-output "ecr_worker_url" {
-  value = module.ecr.repository_urls["worker"]
-}
-
 output "rds_endpoint" {
   value     = module.rds.endpoint
   sensitive = true
@@ -63,10 +59,21 @@ output "deploy_targets" {
     ECS_API_TASK_FAMILY     = "${local.long}-api"
     ECS_API_CONTAINER_NAME  = module.ecs.api_container.name
     ECS_MIGRATE_TASK_FAMILY = local.migrate_family
+    # The container the one-off database tasks derive from (OPS-16).
+    ECS_MIGRATE_CONTAINER_NAME = module.ecs.migrate_container.name
+    AWS_REGION                 = var.region
+    ECS_PROVISION_TASK_FAMILY  = local.provision_family
     # The configured name, which is what S3 creates; the module's output is
     # the bucket's computed id, unknown until apply.
     FRONTEND_BUCKET = local.frontend_bucket
   }
+}
+
+# The repository variable FRONTEND_BUCKET that deploy-aws.yml publishes the
+# frontend to: the bucket name carries the account id, so it is read from here
+# after apply rather than written into the workflow.
+output "frontend_bucket" {
+  value = local.frontend_bucket
 }
 
 # Every name this stack gives a resource, so staging can be checked for never

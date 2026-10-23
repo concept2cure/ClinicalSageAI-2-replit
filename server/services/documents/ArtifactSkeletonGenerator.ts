@@ -5,7 +5,7 @@
  * metadata, and placeholder content based on submission type and eCTD requirements.
  * 
  * Phase 6 Component - eCTD Co-Author + Document Drafting
- * Integrates with: ComplianceRulesEngine, ECTDScaffoldingService
+ * Integrates with: ComplianceRulesEngine
  */
 
 import { logger } from '../../utils/logger';

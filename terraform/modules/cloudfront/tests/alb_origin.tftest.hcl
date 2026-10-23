@@ -162,3 +162,49 @@ run "the_alb_origin_waits_as_long_as_the_alb_does" {
     error_message = "The ALB origin's read timeout must be 60 s, the ALB's idle timeout; the 30 s default cuts off work the server completes."
   }
 }
+
+# MR-03 OPS-21. One SPA delivery path on the hosted deployment: the bucket. The
+# API image also carries the bundle (dist/public), which the server serves on a
+# self-hosted install with no CloudFront; here every behaviour that reaches the
+# ALB is a path the server answers as an API, so none can serve the SPA.
+run "the_spa_is_served_from_the_bucket_alone" {
+  command = apply
+
+  assert {
+    condition     = aws_cloudfront_distribution.this.default_cache_behavior[0].target_origin_id == "s3-frontend"
+    error_message = "Every path no ALB behaviour claims must be served from the frontend bucket."
+  }
+
+  assert {
+    condition = alltrue([
+      for b in aws_cloudfront_distribution.this.ordered_cache_behavior :
+      b.target_origin_id != "alb-api" || contains([
+        "/api/*", "/readyz", "/healthz", "/collab", "/collab/*", "/scim/*",
+        "/mcp", "/mcp/*", "/.well-known/*", "/authorize", "/token", "/register",
+        "/revoke", "/oauth/*",
+      ], b.path_pattern)
+    ])
+    error_message = "An ALB behaviour claims a path the server does not answer as an API; the SPA would have a second delivery path."
+  }
+}
+
+# A bad publish can be reverted: the bucket versions, and keeps a previous
+# release long enough to restore it.
+run "a_bad_publish_can_be_reverted" {
+  command = apply
+
+  assert {
+    condition     = aws_s3_bucket_versioning.frontend.bucket == aws_s3_bucket.frontend.id && aws_s3_bucket_versioning.frontend.versioning_configuration[0].status == "Enabled"
+    error_message = "The frontend bucket must version, so an overwritten index.html can be restored."
+  }
+
+  assert {
+    condition = anytrue([
+      for r in aws_s3_bucket_lifecycle_configuration.frontend.rule :
+      r.status == "Enabled" && alltrue([for n in r.noncurrent_version_expiration : n.noncurrent_days >= 30])
+      && length(r.noncurrent_version_expiration) > 0
+    ])
+    error_message = "Previous versions must be kept for at least 30 days, and expire after that."
+  }
+}
+

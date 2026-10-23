@@ -1,8 +1,6 @@
 import { db } from '../db';
 import { csrReports } from 'shared/schema';
 import { eq, and } from 'drizzle-orm';
-import path from 'path';
-import fs from 'fs';
 import { OperatingSystemIntegration, SapCaptureIncomplete } from './operating-system-integration';
 import { LedgerInputRefusal } from './assumption-registry-service';
 import {
@@ -14,13 +12,20 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('sap-generator-service');
 
-// Define the file paths
-const SAP_DIR = path.join(process.cwd(), 'data/sap');
+// 2026-10-15: generateSAP wrote data/sap/<protocol_id>_sap.txt — one directory
+// for every organization, keyed by protocol id alone — and two readers read it
+// back by protocol id alone. Nothing called the readers, and the continuum keeps
+// the SAP as its thread's sapSnapshot.content. The file, its directory and the
+// readers are gone.
 
-// Create directories if they don't exist
-if (!fs.existsSync(SAP_DIR)) {
-  fs.mkdirSync(SAP_DIR, { recursive: true });
-}
+/** The type of the primary endpoint's variable, as the request states it. */
+export type SapEndpointType = 'continuous' | 'binary' | 'time_to_event';
+const SAP_ENDPOINT_TYPES: readonly SapEndpointType[] = ['continuous', 'binary', 'time_to_event'];
+const ENDPOINT_TYPE_LABEL: Record<SapEndpointType, string> = {
+  continuous: 'continuous',
+  binary: 'binary',
+  time_to_event: 'time-to-event',
+};
 
 export interface SapRequestData {
   protocol_id?: string;
@@ -28,6 +33,9 @@ export interface SapRequestData {
   phase: string;
   sample_size: number;
   primary_endpoint: string;
+  // The methods template's primary analysis is stated only for a type it fits;
+  // absent, the SAP says the method is not determined (2026-10-15).
+  primary_endpoint_type?: SapEndpointType;
   secondary_endpoints?: string[];
   arms?: string[] | number;
   randomization?: string;
@@ -57,7 +65,6 @@ export interface SapRequestData {
 export interface GeneratedSapData {
   protocol_id?: string;
   sapContent: string;
-  sapPath?: string;
   assumptions?: unknown[];
   decision?: unknown;
   // Structured metadata for the rendered estimand framework section: how many
@@ -101,6 +108,7 @@ const OPTIONAL_SAP_INPUTS: SapInputCheck[] = [
   ['duration_weeks', (v) => isNum(v) && v > 0, 'a positive number of weeks'],
   ['alpha', (v) => isNum(v) && v > 0 && v < 1, 'a proportion between 0 and 1'],
   ['arms', (v) => (Array.isArray(v) ? v.length > 0 && v.every(isText) : isCount(v)), 'a positive whole number of arms, or their names'],
+  ['primary_endpoint_type', (v) => (SAP_ENDPOINT_TYPES as readonly unknown[]).includes(v), `one of ${SAP_ENDPOINT_TYPES.join(', ')}`],
 ];
 
 /**
@@ -164,6 +172,58 @@ function describeDesign(req: SapRequestData) {
     perArm: singleArm ? String(req.sample_size) : 'not computed — the allocation ratio is not specified',
     alpha: statedOr(req.alpha, NOT_FROM_STATISTICIAN, String),
     dropout: statedOr(req.dropout_rate, NOT_FROM_STATISTICIAN, pct),
+  };
+}
+
+/** A phase template's methods, and the primary-endpoint types its primary analysis fits. */
+interface StatisticalMethods {
+  primaryMethod: string;
+  primaryFits: readonly SapEndpointType[];
+  missingDataMethod: string;
+  continuousMethod: string;
+  binaryMethod: string;
+  timeToEventMethod: string;
+  multiplicityMethod: string;
+  primaryMissingDataApproach: string;
+  sensitivityAnalyses: string;
+}
+
+/**
+ * The primary analysis and its missing-data handling as the phase template has
+ * them, stated only for an endpoint type the template's method fits; otherwise
+ * the method is not determined, and the SAP says why. Until 2026-10-15 the
+ * template's method was printed as the plan whatever the endpoint was (MMRM
+ * for overall survival).
+ */
+function primaryAnalysis(methods: StatisticalMethods, phase: string, type: SapEndpointType | undefined) {
+  // A method that fits every type fits whatever the type is, stated or not.
+  const fitsEveryType = SAP_ENDPOINT_TYPES.every((t) => methods.primaryFits.includes(t));
+  if (type ? methods.primaryFits.includes(type) : fitsEveryType) {
+    return {
+      plan: [
+        `The primary endpoint will be analyzed using ${methods.primaryMethod}.`,
+        `Missing data will be handled using ${methods.missingDataMethod}.`,
+        'The analysis method is aligned with the estimand defined in Section 2.',
+      ].join('\n       '),
+      missingData: [
+        `Primary approach: ${methods.primaryMissingDataApproach}`,
+        `Sensitivity analyses: ${methods.sensitivityAnalyses}`,
+        'Missing-data handling supports the intercurrent-event strategies in the Section 2 estimands.',
+      ].join('\n   '),
+    };
+  }
+  const why = !type
+    ? "method not determined — the primary endpoint's type (continuous, binary or time-to-event) was not stated"
+    : methods.primaryFits.length === 0
+      ? `method not determined for a ${ENDPOINT_TYPE_LABEL[type]} endpoint — there is no methods template for "${phase}"`
+      : `method not determined for a ${ENDPOINT_TYPE_LABEL[type]} endpoint — the ${phase} template's ${methods.primaryMethod} ` +
+        `applies to ${methods.primaryFits.map((t) => ENDPOINT_TYPE_LABEL[t]).join(', ')} endpoints`;
+  return {
+    plan: `Primary analysis: ${why}. To be set by the study statistician.`,
+    missingData: [
+      'Primary approach: not determined (the primary analysis method is not determined)',
+      'Sensitivity analyses: not determined',
+    ].join('\n   '),
   };
 }
 
@@ -235,6 +295,7 @@ export class SapGeneratorService {
       // when it returned five rows or more — a count, read across tenants and
       // never their methods. That read and that switch are gone.
       const statisticalMethods = this.determineStatisticalMethods(phase);
+      const primary = primaryAnalysis(statisticalMethods, phase, request.primary_endpoint_type);
 
       // Generate SAP Content
       const sapContent = `
@@ -271,9 +332,7 @@ Study Information:
 
 5. STATISTICAL METHODS
    5.1 Primary Analysis
-       The primary endpoint will be analyzed using ${statisticalMethods.primaryMethod}.
-       Missing data will be handled using ${statisticalMethods.missingDataMethod}.
-       The analysis method is aligned with the estimand defined in Section 2.
+       ${primary.plan}
 
    5.2 Secondary Analyses
        Secondary endpoints will be analyzed using appropriate statistical methods based on the data type:
@@ -293,9 +352,7 @@ Study Information:
    - Safety: All participants who received at least one dose of study drug
 
 8. HANDLING OF MISSING DATA
-   Primary approach: ${statisticalMethods.primaryMissingDataApproach}
-   Sensitivity analyses: ${statisticalMethods.sensitivityAnalyses}
-   Missing-data handling supports the intercurrent-event strategies in the Section 2 estimands.
+   ${primary.missingData}
 
 9. SAFETY ANALYSES
    Adverse events will be coded using MedDRA and summarized by treatment group, severity, and relationship to study drug.
@@ -319,14 +376,9 @@ Study Information:
     Any amendments to this SAP will be documented with justification and version control.
 `;
 
-      // Save SAP to file if protocol_id is provided. storeSapSegments, called
-      // here until 2026-10-15, read the protocol's csr_reports row with no
-      // organization filter, stored nothing, and logged "segments extracted".
-      let sapPath: string | undefined;
-      if (protocol_id) {
-        sapPath = path.join(SAP_DIR, `${protocol_id}_sap.txt`);
-        fs.writeFileSync(sapPath, sapContent);
-      }
+      // storeSapSegments, called here until 2026-10-15, read the protocol's
+      // csr_reports row with no organization filter, stored nothing, and logged
+      // "segments extracted". No file is written (see the note at the top).
 
       // Capture structured assumptions into the operating system layer
       const { assumptionCapture, captured } = await this.captureInputs(request, {
@@ -337,7 +389,6 @@ Study Information:
       return {
         protocol_id,
         sapContent,
-        sapPath,
         assumptions: captured?.assumptions,
         decision: captured?.decision,
         estimandSection,
@@ -408,55 +459,14 @@ Study Information:
   }
 
   /**
-   * Extract sections from SAP content
-   * @param sapContent The full SAP content
-   * @returns Object containing section names and content
-   */
-  private extractSapSections(sapContent: string) {
-    const sections: Record<string, string> = {};
-
-    // Regular expression to match section headers (numbers followed by dot and uppercase text)
-    const sectionRegex = /(\d+\.\s[A-Z\s]+)\n/g;
-    let match;
-    let lastIndex = 0;
-    let lastSectionName = 'header';
-
-    // Extract the header section (before first numbered section)
-    const firstSectionMatch = sapContent.match(sectionRegex);
-    if (firstSectionMatch && firstSectionMatch.length > 0) {
-      const firstSectionIndex = sapContent.indexOf(firstSectionMatch[0]);
-      sections[lastSectionName] = sapContent.substring(0, firstSectionIndex).trim();
-    }
-
-    // Reset regex lastIndex
-    sectionRegex.lastIndex = 0;
-
-    // Extract numbered sections
-    while ((match = sectionRegex.exec(sapContent)) !== null) {
-      // If this is not the first match, save the previous section
-      if (lastIndex > 0) {
-        sections[lastSectionName] = sapContent.substring(lastIndex, match.index).trim();
-      }
-
-      lastSectionName = match[1].trim();
-      lastIndex = match.index + match[0].length;
-    }
-
-    // Add the last section
-    if (lastIndex > 0 && lastIndex < sapContent.length) {
-      sections[lastSectionName] = sapContent.substring(lastIndex).trim();
-    }
-
-    return sections;
-  }
-
-  /**
    * The methods template for a phase. Nothing else is read: the count-based
    * "similar trials" switch was removed on 2026-10-15 (see generateSAP).
+   * primaryFits names the endpoint types the primary analysis (and its
+   * missing-data handling) applies to; primaryAnalysis states it only for those.
    * @param phase The trial phase
    * @returns Statistical methods object
    */
-  private determineStatisticalMethods(phase: string) {
+  private determineStatisticalMethods(phase: string): StatisticalMethods {
     // Base statistical methods on phase
     let primaryMethod,
       missingDataMethod,
@@ -466,10 +476,13 @@ Study Information:
       multiplicityMethod,
       primaryMissingDataApproach,
       sensitivityAnalyses;
+    let primaryFits: readonly SapEndpointType[];
 
     // Set default values based on phase
     switch (phase) {
       case 'Phase 1':
+        // Descriptive statistics and complete-case analysis apply to any type.
+        primaryFits = SAP_ENDPOINT_TYPES;
         primaryMethod = 'descriptive statistics';
         missingDataMethod = 'complete case analysis';
         continuousMethod = 'descriptive statistics';
@@ -481,6 +494,8 @@ Study Information:
         break;
 
       case 'Phase 2':
+        // ANCOVA on a baseline and LOCF: a continuous, repeatedly measured endpoint.
+        primaryFits = ['continuous'];
         primaryMethod = 'ANCOVA adjusted for baseline';
         missingDataMethod = 'last observation carried forward (LOCF)';
         continuousMethod = 'ANCOVA with baseline as covariate';
@@ -494,6 +509,8 @@ Study Information:
 
       case 'Phase 3':
       case 'Phase 4':
+        // MMRM: a continuous endpoint measured at repeated visits.
+        primaryFits = ['continuous'];
         primaryMethod = 'mixed model for repeated measures (MMRM)';
         missingDataMethod = 'multiple imputation';
         continuousMethod = 'MMRM or ANCOVA depending on measurement frequency';
@@ -505,19 +522,25 @@ Study Information:
         sensitivityAnalyses = 'Pattern mixture models and tipping point analysis';
         break;
 
-      default:
-        primaryMethod = 'appropriate statistical methods based on endpoint type';
-        missingDataMethod = 'methods appropriate for the study design';
-        continuousMethod = 'descriptive statistics and appropriate inferential methods';
-        binaryMethod = 'appropriate categorical analysis methods';
-        timeToEventMethod = 'survival analysis methods as appropriate';
-        multiplicityMethod = 'Methods appropriate for the number of endpoints being evaluated';
-        primaryMissingDataApproach = 'Methods appropriate for the study design';
-        sensitivityAnalyses = 'Methods appropriate for the study design';
+      default: {
+        // No template for this phase: no method is determined. Until
+        // 2026-10-15 each line read "appropriate … methods", as the plan.
+        const none = `method not determined — there is no methods template for "${phase}"`;
+        primaryFits = [];
+        primaryMethod = none;
+        missingDataMethod = none;
+        continuousMethod = none;
+        binaryMethod = none;
+        timeToEventMethod = none;
+        multiplicityMethod = `Multiplicity adjustment: ${none}`;
+        primaryMissingDataApproach = none;
+        sensitivityAnalyses = none;
+      }
     }
 
     return {
       primaryMethod,
+      primaryFits,
       missingDataMethod,
       continuousMethod,
       binaryMethod,
@@ -526,46 +549,6 @@ Study Information:
       primaryMissingDataApproach,
       sensitivityAnalyses,
     };
-  }
-
-  /**
-   * Retrieve a saved SAP by protocol ID
-   * @param protocolId The protocol ID to retrieve
-   * @returns The SAP content, or null when none was saved. A read that fails
-   * throws: it answered null — "no SAP" — until 2026-10-15.
-   */
-  async getSapByProtocolId(protocolId: string): Promise<string | null> {
-    const sapPath = path.join(SAP_DIR, `${protocolId}_sap.txt`);
-    if (!fs.existsSync(sapPath)) {
-      return null;
-    }
-    return fs.readFileSync(sapPath, 'utf8');
-  }
-
-  /**
-   * Get the segments of a saved SAP by protocol ID
-   * @param protocolId The protocol ID
-   * @returns Array of SAP segments; [] when no SAP was saved. A read that fails
-   * throws: it answered [] until 2026-10-15.
-   */
-  async getSapSegmentsByProtocolId(protocolId: string): Promise<
-    Array<{
-      section: string;
-      content: string;
-      order: number;
-    }>
-  > {
-    const sapContent = await this.getSapByProtocolId(protocolId);
-    if (!sapContent) {
-      return [];
-    }
-
-    const sections = this.extractSapSections(sapContent);
-    return Object.entries(sections).map(([section, content], index) => ({
-      section,
-      content,
-      order: index + 1,
-    }));
   }
 
   /**

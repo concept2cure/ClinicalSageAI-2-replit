@@ -1,0 +1,68 @@
+Mutation: client/src/concept2cure/v2/appMentions.tsx
+- if (item.kind === 'skill') skills?.pick(item.skill.key);
++ 
+Test: client/src/concept2cure/v2/__tests__/appMentions.test.tsx
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees an app token only when the caret is inside an @word at the start or after whitespace 2ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees a command token only as the first word of the draft — where the server reads it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > inserts the label with a trailing space and reports the caret after it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing @ opens the app list and Enter inserts the highlighted app instead of sending 123ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > arrow keys move the highlight and Escape closes without inserting 47ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing / at the start lists the commands the server parses and Enter inserts one 10ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > an unknown query offers nothing and Enter sends as usual 3ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/ConversationThread.tsx uses useAppMentions and renders AppMentionMenu on its textarea 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/Surfaces.tsx uses useAppMentions and renders AppMentionMenu on its textarea 0ms
+ × client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > lists matching skills after the commands, and choosing one picks it and inserts no text 18ms
+   → expected "vi.fn()" to be called with arguments: [ 'cmc.stability' ]
+
+Number of calls: 0
+
+ × client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > chooses a skill from the keyboard like a command, and Enter does not send 7ms
+   → expected "vi.fn()" to be called with arguments: [ 'cmc.stability' ]
+
+Number of calls: 0
+
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > offers no skill in a composer that passes no source, and commands are unchanged 2ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  23:13:26
+   Duration  910ms (transform 127ms, setup 99ms, import 170ms, tests 217ms, environment 317ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > lists matching skills after the commands, and choosing one picks it and inserts no text
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'cmc.stability' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/appMentions.test.tsx:175:18
+    173|     expect(screen.getByText('Commands start your message; a skill is u…
+    174|     fireEvent.mouseDown(option);
+    175|     expect(pick).toHaveBeenCalledWith('cmc.stability');
+       |                  ^
+    176|     expect(box.value).toBe('');
+    177|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > chooses a skill from the keyboard like a command, and Enter does not send
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'cmc.stability' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/appMentions.test.tsx:189:18
+    187|     for (let i = 0; i < index; i++) fireEvent.keyDown(box, { key: 'Arr…
+    188|     fireEvent.keyDown(box, { key: 'Enter' });
+    189|     expect(pick).toHaveBeenCalledWith('cmc.stability');
+       |                  ^
+    190|     expect(onSend).not.toHaveBeenCalled();
+    191|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

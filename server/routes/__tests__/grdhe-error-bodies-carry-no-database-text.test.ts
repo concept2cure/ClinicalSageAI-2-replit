@@ -41,6 +41,14 @@ vi.mock('../../services/grdhe/grdheService', () => {
   class ExportJobRefusedError extends Error {}
   return { grdheService: svc, AuditScopeError, ExportJobNotFoundError, AdverseEventNotFoundError, ExportJobRefusedError };
 });
+// 2026-10-15: a format no regulatory_format value records is refused before the
+// service (grdhe-export-jobs-refuse-a-format-no-regulatory-format-records.pglite.test.ts).
+// This suite tests what follows that check, so FDA_AE_3500A stands in for a
+// format one records; the service is a double, so the value is never cast.
+vi.mock('../../services/grdhe/exportGenerators', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../services/grdhe/exportGenerators')>();
+  return { ...actual, RECORDED_AS: { ...actual.RECORDED_AS, FDA_AE_3500A: 'STAND_IN_RECORDED_FORMAT' } };
+});
 
 import router from '../grdheRoutes';
 import {

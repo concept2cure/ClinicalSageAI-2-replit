@@ -31,6 +31,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Hoisted mocks (must be declared before the vi.mock factories run) ───────
 
 const hoisted = vi.hoisted(() => ({
+  omitApplicantProof: false,
   poolQuery: vi.fn<(sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }>>(),
   validateEctdPackageHardened: vi.fn(),
   buildModule3WithNarrative: vi.fn(),
@@ -46,8 +47,15 @@ const hoisted = vi.hoisted(() => ({
 // steps, not the record, so the record names the run's own application number
 // (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
 const { recordedRunIdentity } = vi.hoisted(() => ({
-  recordedRunIdentity: async (i: { applicationNumber: string }) => ({
+  recordedRunIdentity: async (i: { applicationNumber: string; region?: string }) => ({
     recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+    applicantId: i.region === 'US' ? '123456789' : null,
+    contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    ...(i.region === 'US' && !hoisted.omitApplicantProof ? { recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
+      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } } } : {}),
   }),
 }));
 vi.mock('../../server/services/ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
@@ -143,7 +151,7 @@ function baseInputs(over: Partial<OrchestratorInputs> = {}): OrchestratorInputs 
   return {
     organizationId: 1,
     submissionId: 'sub-1',
-    applicationNumber: 'IND123456',
+    applicationNumber: '123456',
     region: 'US',
     submissionType: 'IND',
     cmcSources: [
@@ -246,6 +254,7 @@ function notGatewayReadyResult(): HardenedValidationResult {
 }
 
 beforeEach(() => {
+  hoisted.omitApplicantProof = false;
   hoisted.poolQuery.mockReset();
   hoisted.validateEctdPackageHardened.mockReset();
   hoisted.buildModule3WithNarrative.mockReset();
@@ -461,7 +470,7 @@ function registerPackageOrchestrationCases2() {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -506,7 +515,7 @@ function registerPackageOrchestrationCases3() {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -550,7 +559,7 @@ function registerPackageOrchestrationCases3() {
     const frozenOutputs = JSON.parse(JSON.stringify(initial.outputs));
     expect(frozenOutputs.module3Sections.length).toBeGreaterThan(0);
     frozenOutputs.module3Sections[0].narrativeDraft = 'Exact previously refined narrative retained across the pause';
-    setupGetRunMock(() => ({ run_id: initial.run.runId, organization_id: 1, submission_id: 'sub-1', application_number: 'IND123456', region: 'US', submission_type: 'IND', started_at: initial.run.startedAt, status: 'awaiting-async', steps: initial.run.steps }));
+    setupGetRunMock(() => ({ run_id: initial.run.runId, organization_id: 1, submission_id: 'sub-1', application_number: '123456', region: 'US', submission_type: 'IND', started_at: initial.run.startedAt, status: 'awaiting-async', steps: initial.run.steps }));
     hoisted.getCSRBuildJobStatus.mockResolvedValue({ status: 'complete', progress: 100, sectionsComplete: 13 });
     const resumed = await runOrchestrator(inputs, { resumeRunId: initial.run.runId, resumeOutputs: frozenOutputs });
     expect(resumed.outputs.module3Sections[0].narrativeDraft).toBe(frozenOutputs.module3Sections[0].narrativeDraft);
@@ -749,6 +758,16 @@ describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () =
 // every other pool.query invocation.
 
 function registerPackageOrchestrationCases5() {
+  it('refuses preparing a fresh FDA release without the captured recorded applicant proof', async () => {
+    hoisted.omitApplicantProof = true;
+    const { run } = await runOrchestrator(baseInputs({ submissionType: 'IND' }));
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('skipped');
+    expect(step?.outputRef).toMatch(/reassemble.*recorded applicant/i);
+    expect(step?.outputRef).not.toMatch(/payloadDigest/);
+    expect(run.status).toBe('partial');
+  });
+
   it('a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all', async () => {
     /* This case used to assert that a 510(k) run completes with package.sign
        `skipped`, 510k being outside the REQUIRED allowlist (IND/NDA/BLA/MAA).
@@ -805,7 +824,7 @@ function registerPackageOrchestrationCases6() {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,
@@ -853,7 +872,7 @@ function registerPackageOrchestrationCases7() {
       run_id: initial.run.runId,
       organization_id: 1,
       submission_id: 'sub-1',
-      application_number: 'IND123456',
+      application_number: '123456',
       region: 'US',
       submission_type: 'IND',
       started_at: initial.run.startedAt,

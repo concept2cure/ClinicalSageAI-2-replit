@@ -29,7 +29,7 @@ const follow = (over: Partial<AnaFollow> = {}): AnaFollow => ({
 describe('§2.10, §5.3: the run row’s stop lines', () => {
   it.each([
     ['unattended_limit', 'Stopped: nobody was watching for 15 minutes.'],
-    ['session_ended', 'Stopped: the session that started this turn ended.'],
+    ['session_ended', 'Stopped: the sign-in or access that started this turn ended.'],
     ['server_shutdown', 'Stopped: the server restarted for an update.'],
     ['orphaned', 'Stopped: the server handling this turn stopped responding.'],
     ['error', 'Stopped: the turn ended with an error.'],
@@ -86,6 +86,21 @@ describe('§2.7, §5.3: the closing row counts the steps that were not authorise
       ev(1),
       ev(2, { step: 's1', phase: 'finished', status: 'not_run', heldBack: true }),
       { kind: 'end', seq: 3, at: AT, round: 1, outcome: 'answered', stoppedReason: null },
+    ];
+    const rows = summaryRows(events, [], { live: false });
+    expect(rows[rows.length - 1]).toMatchObject({ kind: 'end', notes: ['1 step was not authorised and did not run.'] });
+  });
+
+  // 2aa766a76 records a step refused because the person asked for a
+  // read-only answer as held back. Nobody declined it: it is not counted as
+  // "not authorised" (AnA detach DT3 review: the wrong cause).
+  it('a step the person kept read-only is not counted as not authorised', () => {
+    const events: TimelineEvent[] = [
+      ev(1),
+      ev(2, { step: 's1', phase: 'finished', status: 'error', heldBack: true, readOnly: true }),
+      ev(3, { step: 's3' }),
+      ev(4, { step: 's3', phase: 'finished', status: 'error', heldBack: true }),
+      { kind: 'end', seq: 5, at: AT, round: 1, outcome: 'answered', stoppedReason: null },
     ];
     const rows = summaryRows(events, [], { live: false });
     expect(rows[rows.length - 1]).toMatchObject({ kind: 'end', notes: ['1 step was not authorised and did not run.'] });

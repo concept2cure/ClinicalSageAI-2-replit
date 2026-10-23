@@ -1,0 +1,15 @@
+# pre-fix red, 2026-10-22: a governed action executed after its run had ended (DT3 review finding 4.3); the claim's SQL was red before claimApproval existed ('claimApproval is not a function', run-control-detach.pglite.test.ts -t claimApproval)
+# tests: server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > the run had ended: 409 RUN_ENDED, nothing executed, nothing signed off, no decision written 33ms
+   → {"success":true,"data":{"success":true}}: expected 200 to be 409 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > a second request for the same step: 409 APPROVAL_IN_PROGRESS, and it does not run twice 7ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > claimed before the sign-off row and the execution 4ms
+   → expected +0 to be 1 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > a sign-off row that is refused gives the claim back, so the person can try again 4ms
+   → expected +0 to be 1 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionRunEnded.test.ts > a governed action on a run that ended while its person signed (DT3 review) > the run ended DURING the execution: said in the response, and in the ledger beside the execution row 6ms
+   → expected '{"success":true,"data":{"success":tru…' to contain '"runEnded":true'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

@@ -1,0 +1,17 @@
+# F23 (7/9) green
+## Every project-vault route test, the parent-access pglite suite included
+ Test Files  8 passed (8)
+      Tests  74 passed (74)
+
+## Every client test that reaches the Vault or its read
+ Test Files  61 passed (61)
+      Tests  541 passed (541)
+
+ESLint: project-vault.ts 7 -> 7. Typecheck 0 errors. ci:sql-interpolation OK.
+
+## Mutations (each alone, restored after): 5, all red
+RED  a market folder is the whole pack again: the tests went red
+RED  the home filing is cut to the regional part too: the tests went red
+RED  the scope is not read: the tests went red
+RED  no sections reads 0% again: the tests went red
+RED  a document with sections loses its figure: the tests went red

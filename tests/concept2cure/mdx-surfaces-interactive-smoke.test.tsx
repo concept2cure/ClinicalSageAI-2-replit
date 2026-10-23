@@ -178,8 +178,26 @@ describe('MDX rich-surface interactive smoke', () => {
   it('Analytics: every button click is handler-safe', async () => {
     const { container, findAllByText } = wrap(<AnalyticsSurface onAskAna={askAna} />);
     await findAllByText(/Test cause/);
+    /* Since e1f3fd425 the pathway filters other than "All" are disabled (no
+       current source aggregates by pathway) and the DocumentsPanel is gone, so
+       a count floor no longer describes this surface. Name what it ships
+       instead: the one live filter, the saved-reports retry (the fixture
+       serves no report source, so the honest unavailable state renders), and
+       one Ask-AnA control per blocker and per reviewer row. */
+    const buttons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[];
+    const label = (b: HTMLButtonElement) => (b.textContent || '').replace(/\s+/g, ' ').trim();
+    expect(buttons.filter((b) => b.disabled).map(label)).toEqual(['510(k)', 'PMA', 'CER']);
+    const enabled = buttons.filter((b) => !b.disabled).map(label);
+    expect(enabled).toHaveLength(4);
+    expect(enabled.slice(0, 2)).toEqual(['All', 'Retry saved reports']);
+    expect(enabled[2]).toMatch(/^1Test cause/);
+    expect(enabled[3]).toMatch(/^TSTTest division/);
     const { clicked } = clickEveryButton(container);
-    expect(clicked).toBeGreaterThan(5);
+    expect(clicked).toBe(4);
+    expect(askAna.mock.calls.map((c) => String(c[0]))).toEqual([
+      expect.stringContaining('blocked on "Test cause"'),
+      expect.stringContaining('Compare our TST (Test division) submissions'),
+    ]);
   });
 
   it('Postmarket: every button click is handler-safe', () => {

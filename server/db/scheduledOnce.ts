@@ -3,8 +3,9 @@
  * time, coordinated through Postgres.
  *
  * ── Why ──────────────────────────────────────────────────────────────────────
- * Production runs several copies of the same server command (two API tasks and
- * a "worker" task on ECS), and server/index.ts + server/startup/services.ts
+ * Production runs several copies of the same server command (two API tasks on
+ * ECS; a third, "worker" task was removed from terraform/ on 2026-10-22, MR-03
+ * OPS-08), and server/index.ts + server/startup/services.ts
  * start every in-process scheduler (node-cron / setInterval) on each. There is
  * no Redis in that deploy, so nothing coordinated them: every tick of every
  * job ran once per process. For a job that writes, that is N copies of each

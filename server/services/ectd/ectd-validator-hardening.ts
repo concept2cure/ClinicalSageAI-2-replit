@@ -137,6 +137,13 @@ const ICH_ROOT_CHILDREN = new Set<string>([
 
 const REQUIRED_LEAF_ATTRIBUTES = ['xlink:href', 'checksum', 'operation'] as const;
 
+/** The version a PDF's header declares ('%PDF-1.7' → '1.7'), or null when there are no bytes or no header. */
+function pdfHeaderVersion(bytes: Buffer | undefined): string | null {
+  if (!bytes) return null;
+  const m = /^%PDF-(\d+\.\d+)/.exec(bytes.subarray(0, 16).toString('latin1'));
+  return m ? m[1] : null;
+}
+
 // ── Top-level entry point ───────────────────────────────────────────────────
 
 /**
@@ -196,11 +203,14 @@ export async function validateEctdPackageHardened(
   );
 
   // 6) Regional rules
+  // The PDF header version, where the leaf's bytes are in hand, for FDA-ESG-006
+  // (2026-10-15: never evaluated). No bytes: the rule reports "not assessed".
   const regionalLeaves: RegionalLeafRef[] = leaves.map(l => ({
     sectionCode: l.sectionCode,
     filePath: l.filePath,
     mimeType: l.mimeType,
     fileSize: l.fileSize,
+    pdfVersion: pdfHeaderVersion(l.buffer ?? context.leafBuffers?.[l.filePath]),
   }));
   const regionalContext: RegionalContext = {
     region: context.region,
@@ -585,7 +595,6 @@ export async function detectSequenceGaps(
   // primary) still blocks — the "an outage must never be swallowed as no-history"
   // invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1) is preserved.
   const UNDEFINED_TABLE = '42P01';
-  const UNDEFINED_COLUMN = '42703';
   const sqlState = (err: unknown): string | undefined =>
     err && typeof err === 'object' && 'code' in err
       ? String((err as { code: unknown }).code)
@@ -610,7 +619,7 @@ export async function detectSequenceGaps(
     try {
       const secondary = await pool.query(
         `SELECT sequence_number FROM ectd_submissions
-          WHERE application_number = $1 AND organization_id = $2`,
+          WHERE application_number = $1 AND org_id = $2`,
         [applicationNumber, organizationId]
       );
       rows.push(...(secondary.rows || []));
@@ -620,22 +629,14 @@ export async function detectSequenceGaps(
         log.warn('SEQ_SUBMISSIONS_ABSENT — ectd_submissions not provisioned; using ectd_compilations only', {
           applicationNumber,
         });
-      } else if (state === UNDEFINED_COLUMN) {
-        /* The table exists but carries no organization_id. Its own migration
-           notes the tenant column lands "only on the install-fresh path", so
-           this is a real deploy shape rather than a defect here. An
-           un-scopable source cannot be read: folding it in would restore
-           exactly the cross-tenant read this parameter exists to close. Drop
-           it and say so.
-
-           Safe in the blocking direction: losing history can only shrink the
-           known set, and an empty history with a non-0000 sequence raises
-           SEQ_FIRST_NOT_0000 below — a block, not a pass. */
-        log.warn(
-          'SEQ_SUBMISSIONS_UNSCOPABLE — ectd_submissions has no organization_id; excluded from history rather than read across tenants',
-          { applicationNumber, attemptedSequence: newSequenceNumber },
-        );
       } else {
+        /* 2026-10-15: the tenant column is org_id (migration 082, in the deploy
+           set). This read named organization_id, so it hit 42703 on every
+           deploy and a branch here dropped the source as "unscopable" — its
+           claim that the migration adds the column only on a fresh install was
+           false. Dropping history is not safe either way: a sequence recorded
+           only here would read as unused. An absent column is now a schema
+           mismatch and blocks, as it does on the primary. */
         throw subErr;
       }
     }

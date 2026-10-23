@@ -55,6 +55,7 @@ import {
   type TenantScope,
 } from '../db/tenantStore';
 import { LazyRequestDbClient } from './lazyRequestDbClient';
+import { bindRequestDbClient } from '../db/requestDbLease';
 import { createScopedLogger } from '../utils/logger';
 import { applySessionScope } from '../db/sessionScope';
 
@@ -152,22 +153,19 @@ function resolveOrgUuid(req: Request): string | null {
 
 /**
  * Attach a lazily-acquired, session-var-setting DB client to the request and
- * arrange for its release when the response ends. The client is only acquired
- * on first `.query()`, so requests that never touch the DB spend no pool slot.
+ * arrange for its release when the response ends — or, when work retained it
+ * to outlive the response, when that work ends (db/requestDbLease.ts). The
+ * client is only acquired on first `.query()`, so requests that never touch
+ * the DB spend no pool slot.
  */
 function attachLazyClient(
   req: Request,
   res: Response,
   applySessionVars: (client: PoolClient) => Promise<void>,
 ): void {
-  const lazy = new LazyRequestDbClient(getPool(), applySessionVars);
-  req.dbClient = lazy;
-  const release = () => {
-    req.dbClient = null;
-    void lazy.release();
-  };
-  res.on('finish', release);
-  res.on('close', release);
+  // Held by the response until it ends, and by any work that retained it to
+  // outlive the response (db/requestDbLease.ts: a detached AnA turn).
+  bindRequestDbClient(req, res, new LazyRequestDbClient(getPool(), applySessionVars));
 }
 
 /** Session-var applier for a per-user tenant scope. */

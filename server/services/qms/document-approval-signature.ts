@@ -69,6 +69,7 @@ import { recordGovernedAction } from '../../routes/c2c/actions';
 import {
   persistGovernedActionSignature,
   sha256CanonicalJson,
+  type BindingBasis,
   type SignatureDbClient,
 } from '../part11/signature-persistence';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
@@ -87,11 +88,14 @@ import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 export const QMS_DOCUMENT_APPROVAL_MEANING: (typeof TASK_SIGNATURE_MEANINGS)[number] = 'APPROVED';
 
 /**
- * `electronic_signatures.binding_basis` for a QMS controlled-document approval.
- * Stated explicitly so a reader of the row knows what `bound_payload_digest`
- * is a digest OF (see BINDING_BASIS in signature-persistence for the others).
+ * `electronic_signatures.binding_basis` for a QMS controlled-document approval,
+ * retirement and periodic review. Stated explicitly so a reader of the row
+ * knows what `bound_payload_digest` is a digest OF. It is
+ * BINDING_BASIS.QMS_DOCUMENT_VERSION_CONTENT in signature-persistence, which
+ * names the others; `satisfies` holds the two together without a load-time
+ * import of that module, which imports this one through its binders.
  */
-export const QMS_DOCUMENT_BINDING_BASIS = 'qms-document-version-content-sha256';
+export const QMS_DOCUMENT_BINDING_BASIS = 'qms-document-version-content-sha256' as const satisfies BindingBasis;
 
 /** The qms_documents columns the approval reads. */
 export interface QmsDocumentRow {

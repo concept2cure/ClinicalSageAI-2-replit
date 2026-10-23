@@ -46,6 +46,9 @@ vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 import { runConsistencyCheck } from '../truth-engine-service';
+// Imported at collection, not inside the test: the executor's import takes about
+// 10 s under load, and the stubbed audit outcome belongs to the check's own write.
+import { getToolHandler } from '../../ana/AnaToolExecutor';
 
 const lost = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" is unavailable' };
 const CTX = { organizationId: 7, userId: 3 };
@@ -83,7 +86,6 @@ describe('runConsistencyCheck reports its audit row', () => {
 describe("AnA's check_consistency passes the outcome on", () => {
   it('tells AnA the record was not written', async () => {
     h.logAction.mockResolvedValueOnce(lost);
-    const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
         { submission_id: 11, dimension: 'enrollment', left: PARAMS.left, right: PARAMS.right },
@@ -93,6 +95,9 @@ describe("AnA's check_consistency passes the outcome on", () => {
     expect(res.ok).toBe(true);
     expect(res.conflicts).toBe(1);
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
-    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    // The canonical caller-facing note (audit-write-outcome.ts) is appended verbatim.
+    expect(String(res.message)).toMatch(/^2 finding\(s\) recorded, 1 conflict\(s\)\./);
+    expect(String(res.message)).toMatch(/audit entry .* could not be confirmed/i);
+    expect(String(res.message).endsWith(` ${res.auditTrail.message}`)).toBe(true);
   });
 });

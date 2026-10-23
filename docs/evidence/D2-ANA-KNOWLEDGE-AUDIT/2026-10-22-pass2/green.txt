@@ -1,0 +1,6 @@
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the fixture is the full verified set 2ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > no quoted wrong statement remains in its file 14ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the recurring miscitations appear nowhere in the question flows or auditors 5ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > second pass: confirmed regulatory errors are gone > the fixture is the full verified set 0ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > second pass: confirmed regulatory errors are gone > no quoted wrong statement remains in its file 5ms
+      Tests  5 passed (5)

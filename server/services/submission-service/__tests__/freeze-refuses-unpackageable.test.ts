@@ -46,7 +46,10 @@ vi.mock('../../../db', () => {
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) }, writeChainedAuditRow: vi.fn() }));
 vi.mock('../../part11/signature-persistence', async (orig) => ({
   ...(await orig<any>()),
-  deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '' }),
+  deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '',
+    recordedPackageIdentity: { version: 1, identity: { programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789', applicantName: 'Recorded Sponsor',
+      contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' } } } }),
   isSignatureWithdrawn: () => false,
 }));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({

@@ -160,7 +160,7 @@ const {applySessionScope,clearSessionScope}=load(workerData.root+'/server/db/ses
   while(Date.now()<deadline){
    const {rows}=await inspect.query('SELECT pid,state,query,query_start,pg_blocking_pids(pid) AS blockers FROM pg_stat_activity WHERE pid=ANY($1::int[])',[workerData.signerPid?[workerData.exportPid,workerData.signerPid]:[workerData.exportPid]]);
    const exporting=rows.find(r=>r.pid===workerData.exportPid),signing=rows.find(r=>r.pid===workerData.signerPid);
-   if(exporting&&exporting.state==='idle in transaction'&&exporting.query==='SELECT name FROM public.actor_name($1)'){
+   if(exporting&&exporting.state==='idle in transaction'&&exporting.query==='SELECT name, settings FROM organizations WHERE id=$1'){
     const start=exporting.query_start.toISOString();
     if(sourceStart!==start){sourceStart=start;detectedAt=Date.now();}
     const stable=Date.now()-detectedAt;

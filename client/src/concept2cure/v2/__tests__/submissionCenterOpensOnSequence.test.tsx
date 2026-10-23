@@ -112,7 +112,7 @@ describe('F10: Open in Submission Center lands on the sequence placed into', () 
     await screen.findByText('ZX-9 First-in-Human');
     act(()=>stashNavParamsForTarget('submission-center',{submissionId:'5',sequenceId:'7',ws:'builder'}));
     await waitFor(()=>expect(tab('Builder').getAttribute('aria-selected')).toBe('true'));
-    await waitFor(()=>expect(apiRequest).toHaveBeenCalledWith('GET','/api/submissions/sequences/7/leaves'));
+    await waitFor(()=>expect(apiRequest).toHaveBeenCalledWith('GET','/api/submissions/sequences/7/leaves?submissionId=5'));
     act(()=>stashNavParamsForTarget('submission-center',{submissionId:'3',sequenceId:'2',ws:'sequences'}));
     await waitFor(()=>expect(tab('Sequences').getAttribute('aria-selected')).toBe('true'));
     await waitFor(()=>expect(document.body.textContent).not.toContain('M2.7 Clinical Summary'));
@@ -162,9 +162,9 @@ describe('F10: Open in Submission Center lands on the sequence placed into', () 
     expect((screen.getByLabelText('Submission to work on') as HTMLSelectElement).value).toBe('5');
     expect((screen.getByLabelText('Working sequence') as HTMLSelectElement).value).toBe('7');
     expect(await screen.findByText('M2.7 Clinical Summary')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/7/leaves');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/7/leaves?submissionId=5');
     // Never the first row's leaves: the default was not used.
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/sequences/6/leaves');
+    expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && String(url).split('?')[0] === '/api/submissions/sequences/6/leaves')).toBe(false);
     expect(text()).not.toMatch(/was not found/);
   });
 
@@ -212,7 +212,8 @@ describe("F10: Open in Submission Center lands on the sequence placed into — r
     await waitFor(() => expect(text()).toMatch(/The submission this link named is not in this list/));
     expect(tab('Submissions').getAttribute('aria-selected')).toBe('true');
     expect(text()).toContain('AB-1 Phase 2 IND');
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/sequences/7/leaves');
+    // Any read of sequence 7's leaves, scoped or not (the Builder's read carries ?submissionId=).
+    expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && String(url).split('?')[0] === '/api/submissions/sequences/7/leaves')).toBe(false);
   });
 
   it('the line about the link is cleared once the person moves to another tab', async () => {

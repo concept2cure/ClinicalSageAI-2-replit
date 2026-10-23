@@ -95,7 +95,8 @@ export async function logToolRun(params: {
    * stopped or cut-short step recorded as either an error or a plain success
    * would misreport why.
    */
-  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
+  /** 'not_run': never dispatched — a screen action after its Live Drive page closed (AnA detach D-7, 2026-10-22). */
+  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' | 'not_run';
   errorMessage?: string;
   latencyMs: number;
 }): Promise<void> {

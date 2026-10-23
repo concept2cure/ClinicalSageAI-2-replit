@@ -477,7 +477,7 @@ export function createProjectSetupFlow(): FlowDefinition {
             id: 'product_code',
             label: 'FDA Product Code',
             type: 'text',
-            placeholder: 'e.g., QAS (Class II, Cardiovascular)',
+            placeholder: 'e.g., QAS (Class II, Radiology)',
           },
           {
             id: 'eu_mdr_class',

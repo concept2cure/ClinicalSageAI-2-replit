@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
-import { ok } from '../lib/api-response';
+import { ok, respondIfConverterBusy } from '../lib/api-response';
 import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -28,6 +28,8 @@ import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-
 import {
   createSubmission,
   getSubmission,
+  getSequence,
+  sequenceDispatchAuthorizationEligibility,
   createSequence,
   transitionSequence,
   upsertLeaf,
@@ -62,6 +64,7 @@ import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../s
 import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import { readMarketApplicationNumber, recordMarketApplicationNumber } from '../services/submission-service/market-application-number';
 import { stfFileName } from '../services/ectd/stf-generator';
 import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
@@ -126,6 +129,10 @@ function handleKnownCodeFailure(res: Response, err: unknown): boolean {
 }
 function fail(res: Response, err: unknown): void {
   if (handleReadRefusal(res, err)) return;
+  // Assemble, freeze, dispatch and transmit all assemble the package, which
+  // converts PDF leaves in conversion slots: a slot that never freed is 503
+  // with Retry-After, not a 500 (OPS-13, MR-03 Stage 2).
+  if (respondIfConverterBusy(res, err)) return;
   if (handleKnownCodeFailure(res, err)) return;
   const code = (err as { code?: string } | null)?.code;
 
@@ -1055,6 +1062,47 @@ router.get('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res)
     fail(res, err);
   }
 });
+// ── A market's own application number (decision P-44) ───────────────────────
+// The number another market's agency assigned, recorded on that market's
+// submission; packages for that market read it, never the project's. One
+// governed act: lead or manager, a stated reason, a chained audit row.
+const marketNumberSchema = z.object({ applicationNumber: z.string().min(1).max(200) });
+router.get('/:id/application-number', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    // The caller's project access, as every submission read (getSubmissionForRequest).
+    await getSubmissionForRequest(requestPgClient(req), ctx, id, readSelection(req));
+    res.json(await readMarketApplicationNumber(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.post('/:id/application-number', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = marketNumberSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
+  try {
+    const orgRole = await resolveSignerOrgRole(ctx.userId, ctx.organizationId);
+    res.json(await recordMarketApplicationNumber(
+      { submissionId: id, applicationNumber: parsed.data.applicationNumber, reason: reason.reason,
+        ipAddress: req.ip ?? null, userAgent: req.get('user-agent') ?? null },
+      { ...ctx, orgRole },
+    ));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1928,7 +1976,11 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
     const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-    const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
+    const [assessment, sequence] = await Promise.all([
+      assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId }),
+      getSequence(seqId, ctx),
+    ]);
+    const dispatchAuthorization = sequenceDispatchAuthorizationEligibility(sequence);
     // Whether THIS user may sign the sequence's freeze and dispatch, asked of
     // the sign step's own separation-of-duties check (signerIndependenceOf),
     // so the Dispatch tab can say so before a password is typed rather than
@@ -1938,7 +1990,7 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
     // 'independent'.
     const { signerIndependenceOf } = await import('../services/governance/separation-of-duties');
     const signer = { state: await signerIndependenceOf(`ectd-sequence:${seqId}`, ctx.organizationId, ctx.userId) };
-    res.json({ ...assessment, signer });
+    res.json({ ...assessment, signer, dispatchAuthorization });
   } catch (err) {
     fail(res, err);
   }

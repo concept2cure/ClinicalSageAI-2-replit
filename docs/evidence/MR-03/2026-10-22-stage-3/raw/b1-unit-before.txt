@@ -1,0 +1,12 @@
+# Slice B, before: the new and changed unit tests against head's source (git stash of the source files only; the new migration moved aside).
+# auth-schema-migration.test.ts cannot load there: the boot check it tests does not exist at head.
+      Tests  7 failed | 15 passed (22)
+ FAIL  server/db/bootstrap/__tests__/auth-schema-migration.test.ts [ server/db/bootstrap/__tests__/auth-schema-migration.test.ts ]
+ Test Files  3 failed (3)
+ × server/db/bootstrap/__tests__/seed-default-org.test.ts > seedGaDemoUser — SEED_DEMO_USER gate > PRODUCTION: never seeds, even with SEED_DEMO_USER=1
+ × server/db/bootstrap/__tests__/seed-default-org.test.ts > seedGaDemoUser — SEED_DEMO_USER gate > PRODUCTION: never seeds, even with SEED_DEMO_USER=on
+ × server/db/bootstrap/__tests__/seed-default-org.test.ts > seedGaDemoUser — SEED_DEMO_USER gate > PRODUCTION: never seeds, even with SEED_DEMO_USER=true
+ × server/db/bootstrap/__tests__/seed-default-org.test.ts > seedGaDemoUser — SEED_DEMO_USER gate > PRODUCTION: never seeds, even with SEED_DEMO_USER=yes
+ × server/startup/__tests__/env-production-database-url.test.ts > validateEnvironment — the database URL a process needs > outside production, APP_DATABASE_URL alone is enough
+ × server/startup/__tests__/env-production-database-url.test.ts > validateEnvironment — the database URL a process needs > production refuses to start without APP_DATABASE_URL, even with the owner URL
+ × server/startup/__tests__/env-production-database-url.test.ts > validateEnvironment — the database URL a process needs > production starts with APP_DATABASE_URL and no owner URL

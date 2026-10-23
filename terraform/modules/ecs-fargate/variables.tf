@@ -30,11 +30,6 @@ variable "api_image" {
   description = "Full ECR image URI for the API"
 }
 
-variable "worker_image" {
-  type        = string
-  description = "Full ECR image URI for the Worker"
-}
-
 variable "scanner_image" {
   type        = string
   description = "The clamd image that runs beside the API (main.tf, the scanner container), pinned by digest."
@@ -62,16 +57,6 @@ variable "scanner_memory" {
   default     = 4096
 }
 
-variable "worker_cpu" {
-  type    = number
-  default = 1024
-}
-
-variable "worker_memory" {
-  type    = number
-  default = 2048
-}
-
 variable "api_container_port" {
   type    = number
   default = 5000
@@ -94,22 +79,34 @@ variable "trust_proxy_hops" {
 }
 
 variable "api_desired_count" {
-  type    = number
-  default = 2
+  description = "Tasks the service starts with, and the autoscaling floor."
+  type        = number
+  default     = 2
 }
 
-variable "worker_desired_count" {
-  type    = number
-  default = 1
+variable "api_max_count" {
+  description = "The autoscaling ceiling for the API service."
+  type        = number
+  default     = 6
+}
+
+variable "api_request_count_resource_label" {
+  description = "<alb arn_suffix>/<target group arn_suffix>, for the ALBRequestCountPerTarget scaling policy."
+  type        = string
+}
+
+variable "api_requests_per_target_per_minute" {
+  description = "Requests per minute per task the request-count policy holds the service to."
+  type        = number
+  default     = 1000
 }
 
 # ── Secrets ──────────────────────────────────────────────────────────────────
 
-variable "secret_arns" {
-  type        = list(string)
-  description = "Secrets Manager ARNs the execution role can read"
-  default     = ["*"]
-}
+# Each task's execution role may read exactly the secrets its container
+# references (api_secrets, migrate_secrets), and nothing else. This was one
+# list, every secret in the stack, so the API's role could read the owner
+# credential whether or not its container named it (MR-03 OPS-16).
 
 variable "secrets_kms_key_arn" {
   type        = string
@@ -122,7 +119,16 @@ variable "api_secrets" {
     name       = string
     value_from = string
   }))
-  description = "Secrets injected into the API container"
+  description = "Secrets injected into the API container. Never the database owner's: those are migrate_secrets."
+  default     = []
+}
+
+variable "migrate_secrets" {
+  type = list(object({
+    name       = string
+    value_from = string
+  }))
+  description = "Secrets injected into the one-off database task (migrate, provision): what the API boots with, plus the owner credential the API never holds."
   default     = []
 }
 
@@ -133,24 +139,6 @@ variable "api_environment" {
   }))
   default     = []
   description = "Plain (non-secret) environment variables for the API container, after the module's own."
-}
-
-variable "worker_environment" {
-  type = list(object({
-    name  = string
-    value = string
-  }))
-  default     = []
-  description = "Plain (non-secret) environment variables for the worker container, after NODE_ENV."
-}
-
-variable "worker_secrets" {
-  type = list(object({
-    name       = string
-    value_from = string
-  }))
-  description = "Secrets injected into the Worker container"
-  default     = []
 }
 
 # ── S3 access ────────────────────────────────────────────────────────────────

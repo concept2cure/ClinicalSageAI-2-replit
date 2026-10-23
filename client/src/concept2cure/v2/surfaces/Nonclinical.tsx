@@ -44,7 +44,8 @@ interface NcM4Placement {
 /** SEND package-readiness rollup (live projection of the governed registry). */
 interface NcSendRollup {
   inScope: number;
-  validated: number;
+  /** Low-risk verdicts on a user-declared validation status; the platform runs no validator. */
+  declaredPassed: number;
   missingDomains: string[];
   risk: 'high' | 'medium' | 'low' | 'none';
 }
@@ -403,7 +404,11 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     if (liveStudies.loading || liveStudies.error || summaryState.loading || summaryState.error) return [];
     const items: Array<{ ico: string; title: string; sub: string; tone: string; action: string; cmd: string }> = [];
 
-    const sendOpen = studies.filter((st) => st.send === 'in progress');
+    // 2026-10-15: the server's 'in progress' covered every status but passed; it
+    // now names each one, and a dataset not validated or declared with
+    // warnings or errors is still outstanding.
+    const SEND_OUTSTANDING = ['not validated', 'declared warnings (not validated by the platform)', 'declared errors (not validated by the platform)'];
+    const sendOpen = studies.filter((st) => SEND_OUTSTANDING.includes(st.send));
     if (sendOpen.length) {
       const names = sendOpen.slice(0, 3).map((st) => st.id).join(', ');
       items.push({
@@ -591,7 +596,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       summary:
         `Nonclinical (CTD Module 4): ${studies.length} GLP study(ies) in the governed registry. ` +
         `Module 2.6 is ${summary.completeness}% complete with ${(summary.gaps ?? []).length} gap(s). ` +
-        `SEND — ${summary.send.validated} of ${summary.send.inScope} in-scope dataset(s) validated, ` +
+        `SEND — ${summary.send.declaredPassed} of ${summary.send.inScope} in-scope dataset(s) declared passed (not validated by the platform), ` +
         `${(summary.send.missingDomains ?? []).length} domain(s) missing, conformance risk "${summary.send.risk}" ` +
         '(SEND is mandatory for FDA nonclinical data; "none" means no conformance risk was flagged, not out of scope).',
       facts: {
@@ -603,7 +608,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
         module4Placements: (summary.m4 ?? []).map((pl) => ({ code: pl.code, label: pl.l, percent: pl.pct })),
         send: {
           inScope: summary.send.inScope,
-          validated: summary.send.validated,
+          declaredPassed: summary.send.declaredPassed,
           missingDomains: summary.send.missingDomains ?? [],
           conformanceRisk: summary.send.risk,
         },
@@ -712,7 +717,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
               <div className="sp-list">
                 <div className="sp-row">
                   <span className="sp-row-b">
-                    <span className="sp-row-t">{sum.send.validated}/{sum.send.inScope} package(s) validation-ready</span>
+                    <span className="sp-row-t">{sum.send.declaredPassed}/{sum.send.inScope} package(s) declared passed (not validated by the platform)</span>
                     <span className="sp-row-s">
                       {sum.send.missingDomains.length > 0
                         ? 'Missing required SEND domain(s): ' + sum.send.missingDomains.join(', ')

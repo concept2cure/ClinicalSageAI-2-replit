@@ -24,7 +24,9 @@ import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
-import { CONTINUE_PROMPT, continueTurnIndex, FOLLOW_LINES } from '../anaWorkModel';
+import { CONTINUE_PROMPT, continueTurnIndex, FOLLOW_LINES, RUN_LIMIT_WORKING_LEAD, workingMarkerLine } from '../anaWorkModel';
+import { useWorkingThreads } from './projectThreads';
+import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import { useProgressDock } from '../workDock';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -53,6 +55,8 @@ import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
+import { ComposerSkills, TurnSkillsUsed, useSkillMentionSource } from '../ComposerSkills';
+import { useConversationSkills } from '../anaSkillChoice';
 
 
 /* The starters a new conversation opens on. They are the product speaking
@@ -96,6 +100,7 @@ function toTurn(m: AnaChatMessage): CtTurn {
     turnRecord: m.turnRecord,
     unfinished: answerUnfinished(m) || undefined,
     contextUsed: contextUsed.length ? contextUsed : undefined,
+    skillsUsed: nonEmpty(m.contextUsed?.skills?.map(({ key, name, reasons, chosen }) => ({ key, name, reasons, chosen }))),
     evidence: m.evidence,
     /* Present while the turn is in flight — the phase line IS the waiting
        state — and, once settled, only when there is real work to show for it.
@@ -501,6 +506,7 @@ function AnaTurn({ turn, onAsk, onNav, onStartDemo, onContinue, onSummary, onAns
             {turn.contextUsed.map((src, i) => (<span key={i} className="ct-ground-chip">{src}</span>))}
           </div>
         )}
+        {turn.skillsUsed && <TurnSkillsUsed skills={turn.skillsUsed} />}
         {turn.executedActions && (
           <div className="ana-msg-executed">
             <AnaActionChips
@@ -581,6 +587,39 @@ function ProjectMismatchOffer({ messages, index, projectName, disabled, onStart 
           {reason}
         </span>
       )}
+    </div>
+  );
+}
+
+/**
+ * Under a turn refused because the person already has three turns running
+ * (RUN_LIMIT, AnA detach §2.8, D-3): the conversations they are running in,
+ * each a link that opens it. Read from GET /runs?mine=live through the hook
+ * the conversation list's "Working" marker reads (projectThreads.ts
+ * useWorkingThreads, §5.1). A read that fails shows no links and says
+ * nothing false: the refusal's own sentence stands.
+ */
+export function RunLimitOffer({ messages, index, onOpen }: {
+  messages: AnaChatMessage[];
+  index: number;
+  onOpen: (threadId: string) => void;
+}) {
+  return messages[index]?.refusalCode === 'RUN_LIMIT' ? <RunLimitLinks onOpen={onOpen} /> : null;
+}
+
+/** The links themselves: mounted only under a RUN_LIMIT refusal, so nothing else reads the list. */
+function RunLimitLinks({ onOpen }: { onOpen: (threadId: string) => void }) {
+  const { byThread } = useWorkingThreads();
+  if (byThread.size === 0) return null;
+  return (
+    <div className="ct-refs" data-testid="ct-run-limit">
+      <span className="ct-ref-l">{RUN_LIMIT_WORKING_LEAD}</span>
+      {[...byThread.entries()].map(([threadId, r]) => (
+        <button key={r.runId} type="button" className="ct-ref" onClick={() => onOpen(threadId)}>
+          <span className="ct-ref-ic">{I.arrowRight}</span>
+          <span className="ct-ref-l">{(r.threadTitle || 'Untitled conversation').slice(0, 80)} · {workingMarkerLine(r)}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -1158,6 +1197,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const anaChat = shellChat ?? ownChat;
+  /* Skills the person picked in the composer for this conversation; every
+     turn sent from here carries them, and the thread keeps them
+     (anaSkillChoice.ts). */
+  const [chosenSkills, setChosenSkills, skillsTouched] = useConversationSkills(anaChat.threadId ?? null, anaChat.threadSkills);
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -1198,7 +1241,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
        sends it, once. */
     const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId, omittedOriginEditor ? null : editor?.bridge, editor?.open === true);
     if (fromOrigin) setAskOrigin(null);
-    const opts = turnOpts || fromOrigin ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}) } : undefined;
+    const skillOpts = skillsTouched ? { skills: chosenSkills } : undefined;
+    const opts = turnOpts || fromOrigin || skillOpts ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}), ...(skillOpts ?? {}) } : undefined;
     originOmissionSpentRef.current = true;
     if (opts) return anaChat.send(text, files, opts);
     return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
@@ -1236,7 +1280,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   const fileRef = useRef<HTMLInputElement>(null);
   /* `@app` in the thread composer — the same hook the rail uses (appMentions.tsx). */
   const draftRef = useRef<HTMLTextAreaElement>(null);
-  const mentions = useAppMentions(draft, setDraft, draftRef);
+  /* `/` offers the conversation's skills after the commands; choosing one picks it. */
+  const skillMentions = useSkillMentionSource(shellProjectId, draft, chosenSkills, setChosenSkills);
+  const mentions = useAppMentions(draft, setDraft, draftRef, skillMentions);
   /* An ask from inside a document canvas lands HERE — in this composer, with
      focus — so the person keeps talking to AnA about the document she is
      looking at. Not auto-sent: it is her message to send. */
@@ -1732,6 +1778,23 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      §4.2): the composer does not steer it — only the person who asked can —
      and it says so rather than taking text it cannot send. */
   const adminFollowing = anaChat.followScope === 'cancel';
+  /* An administrator's Stop of a colleague's turn is not one click (DT3
+     review, DP-82): it opens the canonical reason-for-change dialog, which
+     names whose turn it is and what stopping it does, and sends the reason
+     with the cancel. A refusal is said in the dialog, which stays open. */
+  const [adminStopOpen, setAdminStopOpen] = useState(false);
+  const [adminStopError, setAdminStopError] = useState<string | null>(null);
+  const adminStopName = anaChat.followAskerName || 'this person';
+  const confirmAdminStop = async ({ reason }: { reason: string }) => {
+    if (!anaChat.adminStop) return;
+    const answer = await anaChat.adminStop(reason);
+    if (answer.ok) {
+      setAdminStopOpen(false);
+      setAdminStopError(null);
+    } else {
+      setAdminStopError(answer.message);
+    }
+  };
   // A saved-record handoff waits for this run to finish; its scoped context
   // belongs to the next explicit turn, not a words-only steer of another run.
   const steering = busy && !!anaChat.runStatus && !adminFollowing && !askOrigin?.authoringDocument;
@@ -1932,7 +1995,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                   <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
                     {STARTER_ASKS.map((q, i) => (
-                      <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
+                      <button key={i} className="ct-empty-chip" onClick={() => { void sendTurn(q); }}>{q}</button>
                     ))}
                   </div>
                 </div>
@@ -1968,16 +2031,32 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                       returnFocus: openedFromList !== t.authoringDoc.docId,
                     } : undefined}
                     after={(
-                      <ProjectMismatchOffer
-                        messages={anaChat.messages}
-                        index={i}
-                        projectName={shellProgramName()}
-                        disabled={cannotStartOver}
-                        onStart={restartInOpenProject}
-                      />
+                      <>
+                        <ProjectMismatchOffer
+                          messages={anaChat.messages}
+                          index={i}
+                          projectName={shellProgramName()}
+                          disabled={cannotStartOver}
+                          onStart={restartInOpenProject}
+                        />
+                        <RunLimitOffer messages={anaChat.messages} index={i} onOpen={loadConversation} />
+                      </>
                     )}
                   />
                 )
+              )}
+              {/* Whether AnA is still working here could not be read (a failed
+                  or malformed GET /runs?thread_id=): said, with a way to check
+                  again, never shown as "nothing running" (DT3 review). */}
+              {anaChat.liveRunsUnchecked && !anaChat.isStreaming && (
+                <div className="scaf-note" role="status" data-testid="ct-live-runs-unchecked">
+                  <p>{FOLLOW_LINES.liveRunsUnchecked}</p>
+                  {anaChat.recheckLiveRuns && (
+                    <button type="button" className="ct-head-open" onClick={() => anaChat.recheckLiveRuns?.()}>
+                      Check again
+                    </button>
+                  )}
+                </div>
               )}
               {/* No trailing "typing" turn. The in-flight message is already
                   the last turn above — `useAnaChat` appends it, streaming and
@@ -1992,12 +2071,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               so a Manual hold is answered here (Run this step / Do this
               instead / Stop). Pause, resume and steer only once the run is
               controllable, as the shell gates the rail's; Stop always. */}
-          {/* An admin following a colleague's turn gets no controls here yet.
-              Pause, resume and steer are the asker's alone (§2.5); Stop is the
-              admin's by design, but the server accepts an admin's cancel only
-              from slice DT3, so until then a Stop here would be refused on
-              press. Hidden, not disabled: the turn's own lines say what it is
-              waiting on. Restore `onStop` for controlScope 'cancel' in DT3. */}
+          {/* An admin following a colleague's turn has Stop and nothing else
+              (§2.5): the server accepts an organisation admin's cancel since
+              DT3, attributes it to them, and the turn then reads "Stopped by
+              an administrator." Pause, resume and steer stay the asker's. */}
           <RunControlStrip
             streaming={anaChat.isStreaming}
             runStatus={anaChat.runStatus}
@@ -2005,9 +2082,23 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             runPolicy={anaChat.turnRunPolicy}
             onPause={anaChat.runStatus && !adminFollowing ? () => void anaChat.pause() : undefined}
             onResume={anaChat.runStatus && !adminFollowing ? () => void anaChat.resume() : undefined}
-            onStop={adminFollowing ? undefined : () => void anaChat.stop()}
+            onStop={adminFollowing && anaChat.adminStop
+              ? () => { setAdminStopError(null); setAdminStopOpen(true); }
+              : () => void anaChat.stop()}
             /* No steer box in the strip here: this screen's composer steers. */
           />
+          {adminFollowing && (
+            <GovernedConfirmDialog
+              open={adminStopOpen}
+              action={`Stop ${adminStopName}'s turn`}
+              target={`AnA stops at once. The turn cannot be continued, and an approval it is waiting for is cancelled. ${adminStopName === 'this person' ? 'The person who asked' : adminStopName} reads that an administrator stopped it.`}
+              minReason={10}
+              confirmWord="stop"
+              submitError={adminStopError}
+              onCancel={() => { setAdminStopOpen(false); setAdminStopError(null); }}
+              onConfirm={confirmAdminStop}
+            />
+          )}
           {askOrigin && (
             <div className="ct-ask-origin" data-testid="ct-ask-origin">
               <span className="ct-ask-origin-chip">
@@ -2140,6 +2231,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             <div className="ct-comp-foot">
               <LiveDriveSwitch />
               <RunPolicySwitch variant="foot" />
+              <ComposerSkills projectId={shellProjectId} chosen={chosenSkills} onChange={setChosenSkills} />
               {/* The engine this conversation's turns run on. It was chosen in
                   the right rail's menu; the rail is gone. */}
               {engine && (

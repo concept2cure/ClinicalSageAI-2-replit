@@ -1,0 +1,16 @@
+# The SPA document as CloudFront serves it from S3: the policy string read from terraform/modules/cloudfront/main.tf, no Express headers (2026-10-22T05:50:32Z)
+## a PDF blob
+served frame-src: (none)
+served object-src: object-src 'none'
+frame url=http://127.0.0.1:<port>/cloudfront
+frame url=blob:http://127.0.0.1:<port>/<uuid>
+frame url=about:blank
+violations recorded by the page: []
+VERDICT: the PDF frame loaded (blob:http://127.0.0.1:<port>/<uuid>)
+## an HTML blob with an un-nonced inline script
+served frame-src: (none)
+served object-src: object-src 'none'
+frame url=http://127.0.0.1:<port>/cloudfront/html
+frame url=blob:http://127.0.0.1:<port>/<uuid>
+violations recorded by the page: []
+VERDICT: the framed HTML ran its script

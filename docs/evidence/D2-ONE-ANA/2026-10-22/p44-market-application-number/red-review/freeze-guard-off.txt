@@ -1,0 +1,4 @@
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > a number a frozen or dispatched sequence was built under is not changed, and nothing is written 16ms
+   → promise resolved "{ submissionId: 2, market: 'EU', …(3) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)

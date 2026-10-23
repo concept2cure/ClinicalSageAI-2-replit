@@ -33,7 +33,10 @@ import {
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
   { label: 'nIVD', file: 'eSTAR-510k-non-ivd.pdf', names: 221, javascript: 222 },
-  { label: 'IVD', file: 'eSTAR-510k-ivd.pdf', names: 236, javascript: 237 },
+  /* IVD numbers re-measured 2026-10-22 from the template e1f3fd425 committed;
+     the method is recorded in pdf-object-store.test.ts, which pins the same
+     objects (catalog 225 → /Names 234 → /JavaScript 235). */
+  { label: 'IVD', file: 'eSTAR-510k-ivd.pdf', names: 234, javascript: 235 },
 ].map((t) => ({ ...t, path: path.resolve(DIR, t.file), exists: fsSync.existsSync(path.resolve(DIR, t.file)) }));
 
 function hexString(text: string, at: number): Buffer {

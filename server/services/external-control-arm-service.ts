@@ -156,6 +156,22 @@ function contributingPatientsSentence(synthData: Record<string, unknown>): strin
     : 'The number of patients in the source arms that entered the synthesis is not recorded.';
 }
 
+/**
+ * A synthetic control that does not exist in this organization. Until
+ * 2026-10-15 this was a plain Error, which the routes answered 500.
+ */
+export class SyntheticControlNotFoundError extends Error {
+  constructor(readonly syntheticControlId: number) {
+    super(`Synthetic control ${syntheticControlId} not found`);
+    this.name = 'SyntheticControlNotFoundError';
+  }
+}
+
+/** A LIKE pattern matching `term` as a literal substring ('%' and '_' escaped). */
+function containsPattern(term: string): string {
+  return `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
 // ── Service ────────────────────────────────────────────────────────────
 
 export class ExternalControlArmService {
@@ -185,10 +201,12 @@ export class ExternalControlArmService {
   ) {
     const database = this.getDb();
 
+    // 2026-10-15: the terms went into the pattern unescaped, so '%' or '_'
+    // in a term was a wildcard ("%" matched every arm).
     const conditions = [
       eq(armLevelData.organizationId, organizationId),
-      sql`lower(${armLevelData.indication}) LIKE lower(${'%' + params.indication + '%'})`,
-      sql`lower(${armLevelData.endpoint}) LIKE lower(${'%' + params.endpoint + '%'})`,
+      sql`lower(${armLevelData.indication}) LIKE lower(${containsPattern(params.indication)})`,
+      sql`lower(${armLevelData.endpoint}) LIKE lower(${containsPattern(params.endpoint)})`,
     ];
 
     if (params.phase) {
@@ -548,7 +566,7 @@ export class ExternalControlArmService {
       );
 
     if (!control) {
-      throw new Error(`Synthetic control ${syntheticControlId} not found`);
+      throw new SyntheticControlNotFoundError(syntheticControlId);
     }
 
     const diagnostics: DiagnosticsResult = {
@@ -603,7 +621,7 @@ export class ExternalControlArmService {
       );
 
     if (!control) {
-      throw new Error(`Synthetic control ${syntheticControlId} not found`);
+      throw new SyntheticControlNotFoundError(syntheticControlId);
     }
 
     // Recomputed for every package. Persisted diagnostics were reused until
@@ -760,7 +778,7 @@ export class ExternalControlArmService {
       );
 
     if (!control) {
-      throw new Error(`Synthetic control ${syntheticControlId} not found`);
+      throw new SyntheticControlNotFoundError(syntheticControlId);
     }
 
     // Fetch source arms

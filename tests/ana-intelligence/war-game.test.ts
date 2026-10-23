@@ -76,6 +76,22 @@ vi.mock('../../server/services/ana/intelligence-questions/war-game/auditors/inde
   };
 });
 
+/* Since 2026-10-22 the engine judges every rule against the questions its
+   source interview asks; the synthetic auditor's trigger field is one the
+   synthetic protocol interview asks. */
+vi.mock('../../server/services/ana/intelligence-questions/flows/index.js', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../server/services/ana/intelligence-questions/flows/index')
+  >('../../server/services/ana/intelligence-questions/flows/index');
+  return {
+    ...actual,
+    getFlowDefinition: (category: string, ctx: never) =>
+      category === 'protocol_development'
+        ? { id: 'flow-1', name: 'Synthetic protocol interview', nodes: [{ id: 'node1', fields: [{ id: '__fire__' }] }] }
+        : actual.getFlowDefinition(category as never, ctx),
+  };
+});
+
 import { runWarGame } from '../../server/services/ana/intelligence-questions/war-game/engine';
 
 describe('war-game engine (synthetic auditor)', () => {

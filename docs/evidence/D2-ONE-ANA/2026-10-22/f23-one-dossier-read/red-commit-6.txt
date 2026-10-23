@@ -1,0 +1,28 @@
+# F23 (6/9) red before the change (at 3df9a2f722, the move)
+## tests/routes/ectd-compile-placement.test.ts (new)
+ × tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a sequence with nothing placed is a measured 0, counted as placement (at head: "approved") 12ms
+   → expected 'approved' to be 'placed' // Object.is equality
+ × tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > an EU sequence of an NDA/FDA program is measured against the EMA set, not FDA’s 5ms
+   → expected [ 'nda', 'fda' ] to deeply equal [ 'maa', 'EMA' ]
+ × tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a module with nothing required has no figure and is not "ready" (at head: 0% and ready) 4ms
+   → expected { moduleCode: 'm1', …(6) } to match object { requiredSections: +0, …(2) }
+ × tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a market whose agency has no required set is unavailable, with the reason, and no figure 2ms
+   → expected 'placed' to be 'unavailable' // Object.is equality
+ × tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status with no sequence > a program with no sequence has no figure and says so (at head: a measured-looking 0) 2ms
+   → expected { projectId: null, …(14) } to match object { readinessBasis: 'no-sequence', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)
+
+## client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx (new)
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a program with no sequence: the sentence, and no percentage 5094ms
+   → Unable to find an element with the text: No sequence exists for this program yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a module with nothing required reads "none required", never 0% or ready 53ms
+   → expected 'Module 1 — Administrative0/00%partial' to contain 'none required'
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a market with no required set says why, with no figure 5045ms
+   → Unable to find an element with the text: Sequence 0000 is for the ZZ market, which has no required-section set for a NDA here, so placement is not measured.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a 200 without modules is a failed read, never "No module readiness yet" 5031ms
+   → Unable to find an element with the text: Compilation readiness could not be read. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)
+
+Note: the EU case first expected the pack query's agency as 'EMA'; it was then corrected to the query's lower case ('ema'). At 3df9a2f722 the query was ['nda', 'fda'] either way: the program's set, not the sequence's market.

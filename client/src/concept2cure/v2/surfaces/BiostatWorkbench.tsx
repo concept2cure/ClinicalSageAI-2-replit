@@ -328,8 +328,12 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
   useEffect(() => () => { calculationGeneration.current += 1; }, []);
 
   /* BP-W2-4: file the tabulated result + full-hash provenance stamp as a
-     governed authoring section. Never throws; the outcome is toasted either
-     way, and on failure nothing navigates and the result stays on screen. */
+     governed authoring section. Never throws; on failure nothing navigates
+     and the result stays on screen. The outcome is announced once, by the
+     AuthoringHandoffNotice below the result (role=status on success,
+     role=alert otherwise). Repeating it as a toast made a screen reader
+     announce the same outcome twice (WCAG 4.1.3), so only a refusal the
+     notice does not show — a save already held by another — is toasted. */
   const insertIntoDocument = useCallback(async () => {
     if (handoff.blocked) return;
     if (!acceptedResult || acceptedResult.generation !== calculationGeneration.current) {
@@ -351,7 +355,7 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
       content: html,
       subject: 'the computed result',
     });
-    if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+    if (outcome.isCurrent() && !outcome.ok && outcome.phase === 'blocked') fireToast(outcome.message, 'error');
   }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked]);
 
   const run = useCallback(async () => {
