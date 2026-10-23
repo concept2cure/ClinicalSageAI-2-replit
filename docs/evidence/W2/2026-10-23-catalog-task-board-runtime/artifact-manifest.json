@@ -1,11 +1,11 @@
 {
   "qualifiedCommit": "66110e1a7",
-  "finalIntegrationCommit": "ba41b4cac79f700b33299782c9512dff74d0141b",
+  "finalIntegrationCommit": "313750faf1ae4c71eace55e498159a55a488afd0",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 14877,
-      "sha256": "cb0cec82dcee1330b8e15a40ddc937b2b4b3f108d9e154ec3b070175e7a91883"
+      "bytes": 15808,
+      "sha256": "f3c231d6c099d3d560194842d37efbc16c859e24be8708f544e6facc3f2b851e"
     },
     {
       "path": "assembly-build.log.gz",
@@ -201,6 +201,21 @@
       "path": "reporting-catchup.json",
       "bytes": 782,
       "sha256": "265ec6f86bc0905eacff1b4a70d8980ec81744ce0b9d2fce00ad298195a2a080"
+    },
+    {
+      "path": "reporting-library-build.log.gz",
+      "bytes": 4742,
+      "sha256": "fa7d4160f0512631f58bd89e6eb134bb3b2137d6ba701286c025bf7a2d3fe0c5"
+    },
+    {
+      "path": "reporting-library-catchup.json",
+      "bytes": 757,
+      "sha256": "f90af9834619cc5f63e9ad14986fa309d30b6805a880bad560a4f8f9023d41dd"
+    },
+    {
+      "path": "reporting-library-tests.log.gz",
+      "bytes": 9735,
+      "sha256": "82b79cff15acb62c42945c04ba8f22fcc3802aa599d7c7626b191fcf6833c67d"
     },
     {
       "path": "reporting-tests.log.gz",
