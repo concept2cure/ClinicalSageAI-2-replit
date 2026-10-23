@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "startedAt": "2026-10-23T18:57:18Z",
+  "elapsedSeconds": 0.566,
+  "exitCode": 0,
+  "output": "ci-class-vocabulary.log.gz",
+  "outputSha256": "4134ff119eec22fab32fedf17371900d17fe56d25c3a8627520ea4d651106ee5",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

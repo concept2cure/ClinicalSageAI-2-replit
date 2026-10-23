@@ -1,15 +1,17 @@
 # Independent review — existing official eSTAR attachment completion
 
 Date: 2026-10-23. W1 / D2. Product branch: `concept2cure-v2`.
-Review base supplied by the control tower:
-`05b72a72f14f1a5a0ce70ffb612b6881d7906775` plus the pinned working sources below.
+Final merged source head supplied by the control tower:
+`4c5f2745fa95327721276b85bc8f1a63b8883152`, with the implementation pins below.
 
-Status: no residual blocking source defect found; ready for local qualification
-only. The primary Generate action's 44px source correction was independently
-reviewed, and the final combined automated qualification passed on the pinned
-sources. The control tower's final browser measurement is pending. The first
-retained layout epoch measured this
-existing action at 18px wide-screen / 36px narrow-screen; the attachment-only
+Status: bounded local qualification complete; no residual blocking defect found.
+The primary Generate action's 44px source correction and the final shared
+picker wrapping correction were independently reviewed. Merged automated
+qualification and the refreshed post-merge built-CSS browser proof passed for
+this reviewed increment. This review's behavioral conclusions remain bounded
+to the attachment completion described below; human acceptance is **Not run**.
+The first retained layout epoch measured the existing Generate action at
+18px wide-screen / 36px narrow-screen; the attachment-only
 touch gate did not include it. Root accepted the finding and added only
 `minHeight: 44` to the existing action before repeating qualification.
 
@@ -71,8 +73,9 @@ The review read root `AGENTS.md` and `CLAUDE.md` and the bounded contract in
 - The shared program search guard now requires boolean `current` metadata;
   the picker maps only `current === true` to a positive current-version claim.
   Existing picker CSS supplies 44px buttons and input without new tokens.
-  The existing Generate action now has a 44px minimum height; final browser
-  proof remains pending above.
+  The existing Generate action now has a 44px minimum height. The final
+  picker title span can shrink and wrap long unbroken text, while its action
+  retains its width. The built-CSS browser proof confirms these corrections.
 
 The final compiler-driven change to the authored-section loader is a non-null
 assertion on `input.programUuid` immediately after
@@ -115,16 +118,34 @@ qualification of this bounded increment only.
   DOM layouts, light/dark at 390px/1440px, with no horizontal overflow. It
   truthfully retains four picker touch failures and exposed the primary
   Generate sizing issue. It is an initial epoch, not final geometry evidence.
+- `ui/layout-after-touch-change/component-browser-review.json`: retains four
+  long-title internal picker overflow failures after touch sizing. The bounded
+  follow-up CSS changes only the existing picker title's flex shrinking/text
+  wrapping and the action's non-shrinking width.
+- `ui/layout-final/component-browser-review.json`: twelve passing layouts
+  (picker/selected/receipt, light/dark, 390px/1440px). Every measured control
+  and Generate action is at least 44px high; every tested action is reachable;
+  page, panel and text/container overflow checks pass. The reviewer inspected
+  the numeric report and narrow dark picker/light receipt screenshots. This
+  report's SHA-256 is
+  `73f6a1a0e51cdadad46f342815d410996144b36cb17ab3a3775d15c9a9d17ebb`.
+  This refreshed report identifies merged head `4c5f2745fa95327721276b85bc8f1a63b8883152`
+  and post-merge built CSS. Its actual mounted DOM capture preserves selected
+  options/input values, awaits the settled Search action, and restores natural
+  inner scroll position after hit testing.
 
 These are overlapping qualification epochs and are not added together. The
 reviewer also inspected root's final `qualification-regressions-tests.json`
-(842 passed, zero failed/pending, 52 files), `qualification-checks.json`
-(all 16 repository gates passed), forced lint (zero errors, 24 warnings), the
+(1062 passed, zero failed/pending/TODO, 64 files), `qualification-checks.json`
+(all 21 checks passed, including 16 repository gates), forced lint
+(zero errors, 24 existing warnings), the
 passing warning ratchet, production build and compiler (zero TypeScript
 errors). Their receipts show matching source freezes before and after each
 command. The separate `initial-qualification/` retains the earlier compiler
-failure rather than replacing it with a claimed success. Final browser geometry
-is still pending; normal commit/push hooks remain root's responsibility.
+failure rather than replacing it with a claimed success. The final merged
+qualification covers the wrapping correction and incoming integration on one
+stable source set; refreshed browser geometry uses that build. Normal
+commit/push hooks and publication remain root's responsibility.
 
 ## Limits
 
@@ -142,9 +163,12 @@ medical-device/diagnostic readiness are not claimed. Human acceptance remains
 
 ## Exact source and fixture pins
 
-All 23 hashes below were independently recomputed from working files and
-matched the refreshed `qualification-source-freeze.json`, including the final
-Generate height and loader-narrowing deltas.
+All 23 hashes below were independently recomputed from working files and match
+`qualification-source-freeze.json`'s `implementationSource` map at merged head
+`4c5f2745fa95327721276b85bc8f1a63b8883152`. This includes the final Generate height,
+loader-narrowing and picker-wrapping deltas. The Builder file's final pin
+includes the control tower's comment-only integration; its canonical
+`mutationUnconfirmed` import/re-export was rechecked.
 
 | Path | SHA-256 |
 | --- | --- |
@@ -158,8 +182,8 @@ Generate height and loader-narrowing deltas.
 | `client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx` | `aa7be21b7d75d953dc6e1287103d9ec61838c02e932fa54bb5a4d059fb461943` |
 | `client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx` | `426a70ff792f2d3995bbf5380ae89dbc600f0835a3a59295d58a6ad7d1172f9c` |
 | `client/src/concept2cure/v2/mutationOutcome.ts` | `18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86` |
-| `client/src/concept2cure/v2/styles/vault-picker.css` | `78416b38c1f4568e247fb3346becc3f3bc09df19e8a3ccf0d9efa91a2a91aa70` |
-| `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx` | `97b2856373133e3357afdd288acb711479193352d8401734e9f0d9d0b5f54c75` |
+| `client/src/concept2cure/v2/styles/vault-picker.css` | `79729c51f8f46fb7b4588607db86105cbba30561aeb2b8f6f07a2f447d60a0d3` |
+| `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx` | `1e1daef689d794b0db316d4001d2981c9940352e43fc8d9950e454ed87893ae9` |
 | `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx` | `590a587bf07e6cd6f3cca56234c65f2dd97af129bb511239722a1c096bc4de4b` |
 | `server/routes/510k-estar-routes.ts` | `33763121ae1f072968cd759d78681ff222cc1fc14763082eb9fbd354e0ac02de` |
 | `server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts` | `318b60645dc45d7bb1eb4f9509a7508b3c9360b0d32fd7bb39cc518c58b98dbc` |

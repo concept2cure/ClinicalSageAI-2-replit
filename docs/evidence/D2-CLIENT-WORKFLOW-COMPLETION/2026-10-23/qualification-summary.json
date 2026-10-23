@@ -1,0 +1,24 @@
+{
+  "qualifiedSourceCommit": "4c5f2745fa95327721276b85bc8f1a63b8883152",
+  "implementationCommit": "8c87144fd",
+  "tests": {
+    "files": 64,
+    "passed": 1062,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "allChecks": 21,
+  "allChecksPassedOnStableSource": true,
+  "staticGates": 16,
+  "typescriptErrors": 0,
+  "build": "passed",
+  "addedLintWarnings": 0,
+  "existingForcedLintWarnings": 24,
+  "browserLayouts": 12,
+  "browserFailures": 0,
+  "manualGuideCases": 83,
+  "manualAcceptance": "Not run",
+  "publication": "pending normal push",
+  "scope": "existing official eSTAR attachment workflow; local automated qualification, not global launch readiness"
+}

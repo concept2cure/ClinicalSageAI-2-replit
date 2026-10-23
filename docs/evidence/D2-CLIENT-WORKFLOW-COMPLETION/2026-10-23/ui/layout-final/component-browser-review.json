@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-23T18:52:20Z",
+  "at": "2026-10-23T18:59:45Z",
   "scope": "Serialized actual mounted official eSTAR component/picker DOM, existing MDX surface host inside V2 scope, all built CSS in index,V2App,other order. Local Chromium layout only; full app events, live backend, actual PDF viewing, external fonts and human acceptance not exercised. External requests blocked.",
-  "sourceHead": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "sourceHead": "4c5f2745fa95327721276b85bc8f1a63b8883152",
   "captures": {
-    "picker": "ddd5e1d8b9da5a1e81c08c5b29d8a2b57ec95b111cb590bebf29be582b3ecb09",
+    "picker": "5c143bb08e75df9436a999d917e4dcdf0530cfcd6a7d9434e6b97102858e86a5",
     "selected": "dd27dea39394fd7c9e821d18dced563a870d34c197ef40c025820a8a6e801f6e",
     "receipt": "7dadae3ee5d0c886de7fc1404d3ea16cf25c733b3975bbf680471a0ff69b0dc2"
   },
@@ -191,7 +191,7 @@
             "width": 93.640625,
             "height": 44
           },
-          "disabled": true
+          "disabled": false
         },
         {
           "tag": "BUTTON",
@@ -377,7 +377,7 @@
             "width": 93.640625,
             "height": 44
           },
-          "disabled": true
+          "disabled": false
         },
         {
           "tag": "BUTTON",
@@ -563,7 +563,7 @@
             "width": 93.640625,
             "height": 44
           },
-          "disabled": true
+          "disabled": false
         },
         {
           "tag": "BUTTON",
@@ -749,7 +749,7 @@
             "width": 93.640625,
             "height": 44
           },
-          "disabled": true
+          "disabled": false
         },
         {
           "tag": "BUTTON",

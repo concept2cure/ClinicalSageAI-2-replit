@@ -1,6 +1,6 @@
 # W1 / D2 — official eSTAR Vault attachment completion
 
-Status: implementation complete; combined automated qualification running.
+Status: automated qualification passed; normal canonical publication pending.
 Product branch: `concept2cure-v2`.
 Design: `docs/design/ESTAR_VAULT_ATTACHMENT_COMPLETION_2026-10-23.md`.
 
@@ -83,3 +83,32 @@ remain **Not run**. No live deployment, native PostgreSQL concurrency,
 Acrobat/FDA validation, agency transmission or general client-readiness
 certification is claimed. No legacy recovery policy, new persistent store,
 schema migration or production dependency was introduced.
+
+## Final merged qualification
+
+Qualified source: `4c5f2745fa95327721276b85bc8f1a63b8883152`.
+Implementation: `8c87144fd`; all work stays on `concept2cure-v2`.
+
+- **1,062 passed across 64 files**, zero failed, skipped or TODO tests.
+- Full TypeScript check: **zero errors**; production build passed.
+- **16 static/UI gates passed**; changed-file warning ratchet has no growth.
+  Forced lint checks all 22 changed code files: zero errors, 24 existing
+  warnings. New helpers and tests introduce no warning allowance.
+- **12 browser layouts passed**, covering actual mounted picker, selection
+  and receipt DOM at 390/1440px in light/dark themes. All attachment controls
+  and Generate meet 44px height; actions remain reachable, with no page,
+  panel or tested text-container horizontal overflow. Long unbroken titles,
+  full UUIDs and hashes are included.
+- Final source fingerprints stayed unchanged throughout all 21 checks.
+  `qualification-source-freeze.json`, `qualification-checks.json` and
+  `qualification-summary.json` retain exact commands, epochs and results.
+- Incoming release/Unicode changes were merged normally. Their historical
+  evidence is not added to our totals; twelve selected integration files
+  are included in the 64-file run. See `incoming-review.md`.
+
+Initial/focused epochs are retained separately, including the corrected
+compiler nullability error and browser sizing/wrapping failures. DOM capture
+faithfully serializes current select/input state; `ui/mounted-dom/*.html.gz`
+contains the final fragments. Browser geometry uses the qualified build's
+CSS in the existing MDX/V2 scope; external requests are blocked. These are
+component checks, not a live authenticated application or PDF-editor session.
