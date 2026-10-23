@@ -99,3 +99,20 @@ includes repeated assembly and actual Workbench tests; it is a separate cohort,
 not 184 additional distinct tests. All own 64 repository pins are unchanged.
 Current whole-project TypeScript runs in the normal direct push hook; the actual
 accepted receipt and source Git-object verification follow publication.
+
+## Accepted canonical publication
+
+Normal direct push **`a2a34279f0d5a1cd098cc1d2fc2e7e37d9451d9b`** succeeded on `concept2cure-v2`.
+All mandatory hooks pass, including actual whole-project TypeScript **0 errors /
+tsc exit 0**. `publication.json` identifies that accepted receipt and its raw
+hash. `source-git-verification.json` independently verifies all **117 actual Git
+blobs** at that commit, the removed CapabilityBrowser's absence, retained prior
+canonical/implementation/incoming ancestors and equality with a fresh remote
+fetch. No input mismatch, force, bypass, PR, alternate branch, dependency or
+baseline change occurred.
+
+This record and the accepted receipt follow in a normal documentation-only
+canonical commit. The final remote/status observation is read-only. Human
+cases **1–95 remain Not run**. This completes the bounded authoring workflow
+change; it does not qualify live providers, agency delivery, deployment,
+universal template/regional completeness or human acceptance.
