@@ -22,13 +22,14 @@
  *     filing type's label.
  */
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest,
+  apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 
 /* The registry picker is stubbed to one choice: these tests are about the
@@ -55,10 +56,11 @@ import { NewProjectWizard } from '../surfaces/Projects';
 
 const LABEL = 'Investigational New Drug Application';
 
-function toConfigure() {
+async function toConfigure() {
   render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
   fireEvent.click(screen.getByRole('button', { name: /pick ind/i }));
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  await waitForIntakeWorkspace();
 }
 const nameInput = () => screen.getByRole('textbox', { name: /project name/i }) as HTMLInputElement;
 const productInput = () => screen.getByRole('textbox', { name: /product name/i }) as HTMLInputElement;
@@ -74,22 +76,22 @@ afterEach(() => {
 });
 
 describe('New Project wizard — the project name', () => {
-  it('cannot continue past Configure without a project name, and says it is required', () => {
-    toConfigure();
+  it('cannot continue past Configure without a project name, and says it is required', async () => {
+    await toConfigure();
     expect(nameInput().value).toBe('');
     expect(continueBtn().disabled, 'Continue was enabled with no project name').toBe(true);
     expect(nameInput().required || nameInput().getAttribute('aria-required') === 'true').toBe(true);
     expect(document.querySelector('.npw-form')?.textContent).toMatch(/required/i);
   });
 
-  it('treats a name of spaces as no name', () => {
-    toConfigure();
+  it('treats a name of spaces as no name', async () => {
+    await toConfigure();
     fireEvent.change(nameInput(), { target: { value: '   ' } });
     expect(continueBtn().disabled).toBe(true);
   });
 
-  it('never reaches a review that reads "(unnamed)"', () => {
-    toConfigure();
+  it('never reaches a review that reads "(unnamed)"', async () => {
+    await toConfigure();
     fireEvent.click(continueBtn()); // disabled: nothing happens
     expect(screen.queryByText('(unnamed)')).toBeNull();
     expect(screen.queryByRole('button', { name: /create project/i })).toBeNull();
@@ -103,7 +105,7 @@ describe('New Project wizard — the review is what is saved', () => {
       status: 201,
       json: async () => ({ data: { id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05', title: name.trim(), code: 'HLV-334' }, meta: {} }),
     });
-    toConfigure();
+    await toConfigure();
     fireEvent.change(nameInput(), { target: { value: name } });
     fireEvent.change(productInput(), { target: { value: product } });
     // An IND's drug / biologic class is stated before Continue (P-21; see
@@ -111,7 +113,7 @@ describe('New Project wizard — the review is what is saved', () => {
     fireEvent.change(screen.getByRole('combobox', { name: /product type/i }), { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
     const shown = { name: reviewValue('Project name'), product: reviewValue('Product') };
-    fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
+    await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /create project/i })); });
     /* The create is found by what it is, not by call order: the Configure step
        also reads what the platform can carry for the chosen market (F19). */
     const createCall = () => apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects');

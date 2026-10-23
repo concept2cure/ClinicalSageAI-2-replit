@@ -1,0 +1,11 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Projects.tsx
+   121:8   warning  Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15                                                                                                      complexity
+   218:1   warning  Function 'NewProjectWizardSession' has too many lines (651). Maximum allowed is 100                                                                                          max-lines-per-function
+   218:1   warning  Function 'NewProjectWizardSession' has a complexity of 137. Maximum allowed is 15                                                                                            complexity
+   373:29  warning  Async arrow function has a complexity of 38. Maximum allowed is 15                                                                                                           complexity
+   701:1   warning  File has too many lines (1162). Maximum allowed is 500                                                                                                                       max-lines
+  1111:8   warning  Function 'Projects' has too many lines (332). Maximum allowed is 100                                                                                                         max-lines-per-function
+  1167:9   warning  The 'health' array makes the dependencies of useMemo Hook (at line 1268) change on every render. To fix this, wrap the initialization of 'health' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+✖ 7 problems (0 errors, 7 warnings)

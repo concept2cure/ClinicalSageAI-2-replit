@@ -1,0 +1,206 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:27:05.405Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:27:08.106Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:08.107Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:27:08.107Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 167ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 61ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 35ms
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > requires an explicit choice even when several workspaces include a marked default 52ms
+   → {"data":{"id":"400d6dbc-af3b-4826-aa4f-8bfc6cb2cbc9","title":"PM05 Marked Omitted","ws":"MDX","code":"PM05","stage":"Planning","status":"active","lead":"Lead","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 23","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"400d6dbc-af3b-4826-aa4f-8bfc6cb2cbc9","code":"PM05","name":"PM05 Marked Omitted","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"PM05 Marked Omitted","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-10-23T17:27:09.861Z","updated_at":"2026-10-23T17:27:09.861Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"marked","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":4,"projectAnchorCreated":true}}: expected 201 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > places the actual saved anchor and audit in the explicitly selected client instead of the default 46ms
+   → expected { created: true, …(5) } to match object { organizationId: 3, …(3) }
+(10 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection null without falling back 31ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 0 without falling back 26ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection -1 without falling back 27ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1.5 without falling back 33ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 4 without falling back 27ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 999 without falling back 24ms
+   → expected [ 400, 409 ] to include 201
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1 without falling back 30ms
+   → expected [ 400, 409 ] to include 201
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-10-23T17:27:10.194Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "9c22b933-d365-41b3-bfc0-540e63f85d58",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "This organization has 2 client workspaces, none of them marked as the organization’s own, and the program names none of them. projects.client_workspace_id decides who can see a project, so it is not defaulted. A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-10-23T17:27:10.214Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "4b281084-fc1f-4d1e-8bb5-e1476174519e",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. A program cannot be created without its PM-spine anchor until a workspace exists."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-10-23T17:27:10.234Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses an inactive workspace and a contradictory workspace header without saving 30ms
+   → expected 201 to be 409 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind 18ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it 20ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > every program the route created is anchored in its own organisation 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > requires an explicit choice even when several workspaces include a marked default
+AssertionError: {"data":{"id":"400d6dbc-af3b-4826-aa4f-8bfc6cb2cbc9","title":"PM05 Marked Omitted","ws":"MDX","code":"PM05","stage":"Planning","status":"active","lead":"Lead","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 23","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"400d6dbc-af3b-4826-aa4f-8bfc6cb2cbc9","code":"PM05","name":"PM05 Marked Omitted","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"PM05 Marked Omitted","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-10-23T17:27:09.861Z","updated_at":"2026-10-23T17:27:09.861Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"marked","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":4,"projectAnchorCreated":true}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts:208:50
+    206|     const before = await holdings(MARKED);
+    207|     const res = await create(MARKED, 'PM05 Marked Omitted');
+    208|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    209|     expect(res.body.reason).toBe('AMBIGUOUS_CLIENT_WORKSPACE');
+    210|     expect(await holdings(MARKED)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > places the actual saved anchor and audit in the explicitly selected client instead of the default
+AssertionError: expected { created: true, …(5) } to match object { organizationId: 3, …(3) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "actorUserId": 11,
+-   "clientWorkspaceId": 4,
+-   "clientWorkspaceName": "A client",
+-   "organizationId": 3,
++   "created": true,
++   "documentId": null,
++   "marketSupport": {
++     "appliesTo": null,
++     "label": "Author documents for this market",
++     "reason": "Author the documents here. This platform builds no FDA sequence for a 510K.",
++     "tier": "author_only",
++   },
++   "projectAnchorCreated": true,
++   "projectAnchorId": 5,
++   "scaffoldedSections": 0,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts:216:27
+    214|     const res = await create(MARKED, 'PM05 Explicit Client', 4);
+    215|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    216|     expect(res.body.meta).toMatchObject({ organizationId: MARKED, acto…
+       |                           ^
+    217|       clientWorkspaceId: 4, clientWorkspaceName: 'A client' });
+    218|     const [row] = await rows<{ client_workspace_id: number }>(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection null without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 0 without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection -1 without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1.5 without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 4 without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 999 without falling back
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1 without falling back
+AssertionError: expected [ 400, 409 ] to include 201
+ ❯ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts:229:24
+    227|     const before = await holdings(MARKED);
+    228|     const res = await create(MARKED, 'PM05 Invalid Choice', id);
+    229|     expect([400, 409]).toContain(res.status);
+       |                        ^
+    230|     expect(await holdings(MARKED)).toEqual(before);
+    231|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses an inactive workspace and a contradictory workspace header without saving
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts:236:63
+    234|     await jdb.pool.query("INSERT INTO client_workspaces (id,organizati…
+    235|     const before = await holdings(MARKED);
+    236|     expect((await create(MARKED, 'PM05 Inactive', 6)).status).toBe(409…
+       |                                                               ^
+    237|     const res = await request(app).post('/api/c2c/projects').set('x-or…
+    238|       .send({ name: 'PM05 Contradictory', productName: 'Meter', progra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 7 passed (17)
+   Start at  17:26:56
+   Duration  13.88s (transform 4.21s, setup 236ms, import 1.52s, tests 11.58s, environment 0ms)

@@ -1,0 +1,799 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/clients-routes.tenant-isolation.test.ts
+{
+  "timestamp": "2026-10-23T17:28:55.397Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — query-param trust (GET /) > no longer trusts ?organizationId — request without JWT org returns 403 28ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — query-param trust (GET /) > uses the JWT org id, ignoring any query param 9ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — POST / body-org spoofing > ignores body.organizationId and uses the JWT org 14ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — POST / body-org spoofing > rejects unauth POST 5ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > returns 404 (not 403) on GET /:id when workspace belongs to another org 5ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects PATCH /:id on foreign workspace 5ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects PATCH /:id/security-settings on foreign workspace — the highest-stakes endpoint 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects DELETE /:id on foreign workspace (cascade would wipe another tenants data) 4ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects GET /:id/security-settings on foreign workspace 5ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects GET /:id/settings on foreign workspace 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects PATCH /:id/settings on foreign workspace 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — fetch-by-id tenant guard > rejects all /:id routes for authed-with-no-org JWT (403) 7ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > the double honours the guard: a member of the owning org reads its own workspace (200) 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > super_admin as a request role alone, with no platform grant, cannot fetch a workspace of another org (404) 2ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > a membership role of super_admin with no platform grant cannot load another org's workspace on any /:id route (404, nothing written) 13ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > a super_admin platform grant holder (membership role user) loads another org's workspace (200) 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > a super_admin platform grant holder needs no tenant context of their own (200) 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > a platform_admin platform grant is not super_admin standing for workspaces (404) 3ms
+ ✓ server/routes/__tests__/clients-routes.tenant-isolation.test.ts > clients-routes — super_admin cross-org path > a support platform grant is not super_admin standing for workspaces (404) 3ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:29:03.190Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:29:06.477Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:29:06.478Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:29:06.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 143ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 45ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > requires an explicit choice even when several workspaces include a marked default
+{
+  "timestamp": "2026-10-23T17:29:09.026Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "ba544b7d-b374-4b9c-b688-aaf121663492",
+    "orgId": 3,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 77ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > requires an explicit choice even when several workspaces include a marked default 62ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 999 without falling back
+{
+  "timestamp": "2026-10-23T17:29:09.236Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "065a9d76-c9a5-40e5-b263-80842b04e837",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > places the actual saved anchor and audit in the explicitly selected client instead of the default 63ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection null without falling back 26ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 0 without falling back 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection -1 without falling back 15ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1.5 without falling back 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 4 without falling back 11ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1 without falling back
+{
+  "timestamp": "2026-10-23T17:29:09.267Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "b9c27ab0-94ef-4528-bc0a-3b1deed40f67",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-23T17:29:09.304Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "614e160b-432c-4604-bb30-3673d4353990",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-23T17:29:09.332Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "92cfc797-0e2c-452a-8bee-0b0848b8e616",
+    "orgId": 3,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 999 without falling back 42ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses invalid or foreign explicit selection 1 without falling back 28ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-10-23T17:29:09.367Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "3a088c28-ab81-49c3-b77f-31d972a06866",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-10-23T17:29:09.390Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "1a6da002-c8dd-4dd2-89ce-860683604c4c",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-10-23T17:29:09.421Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > refuses an inactive workspace and a contradictory workspace header without saving 71ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 29ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it 37ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > every program the route created is anchored in its own organisation 5ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-23T17:29:10.933Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-23T17:29:10.994Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:29:10.995Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts
+{
+  "timestamp": "2026-10-23T17:29:10.995Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 63ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses missing membership before quota or any program mutation 18ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses membership in a different organization before quota or any program mutation 8ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract
+{
+  "timestamp": "2026-10-23T17:29:12.849Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "The selected workspace identity could not be verified",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it
+{
+  "timestamp": "2026-10-23T17:29:12.867Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505)
+{
+  "timestamp": "2026-10-23T17:29:12.883Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client
+{
+  "timestamp": "2026-10-23T17:29:12.893Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses active viewer before quota or any program mutation 9ms
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls back if membership is revoked between preflight and the locked admission 32ms
+   → expected "vi.fn()" to be called once with arguments: []
+
+Received:
+
+  1st vi.fn() call:
+
+- []
++ [
++   undefined,
++ ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 10ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches business SQL) 6ms
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 21ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 16ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 10ms
+   → expected 500 to be 201 // Object.is equality
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+{
+  "timestamp": "2026-10-23T17:29:12.909Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit_logs write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success
+{
+  "timestamp": "2026-10-23T17:29:12.943Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-23T17:29:12.979Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "33a5ede1-9ce2-4164-b315-d33fc3439e8e",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-23T17:29:12.987Z",
+  "level": "error",
+  "message": "[c2c-projects] 42P01 names a relation that EXISTS — not a provisioning failure",
+  "context": {
+    "correlationId": "9505258b-f180-42a1-99de-04b40e5d3691",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "code": "42P01",
+    "route": "/api/c2c/projects",
+    "detail": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-23T17:29:12.988Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "relation \"audit_logs\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+{
+  "timestamp": "2026-10-23T17:29:12.995Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "e4c5bef6-a14e-4134-bcdd-2da4e9d5bb21",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 12ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 19ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back 15ms
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 32ms
+   → Cannot read properties of undefined (reading 'documentId')
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 16ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 10ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-23T17:29:13.010Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "0f8d595a-7ca5-466a-ad0c-78f334b62c41",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "PROJECT_RECORD_UNAVAILABLE",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-23T17:29:13.011Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: the anchor column is not provisioned",
+  "context": {
+    "correlationId": "0f8d595a-7ca5-466a-ad0c-78f334b62c41",
+    "orgId": 7,
+    "reason": "PENDING_ANCHOR_COLUMN",
+    "detail": "projects.regulatory_program_id is not present in this database (migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+{
+  "timestamp": "2026-10-23T17:29:13.019Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "ce8f3c35-6da7-466a-b359-11ff0066256d",
+    "orgId": 7,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda)
+{
+  "timestamp": "2026-10-23T17:29:13.035Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program
+{
+  "timestamp": "2026-10-23T17:29:13.042Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k)
+{
+  "timestamp": "2026-10-23T17:29:13.060Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program
+{
+  "timestamp": "2026-10-23T17:29:13.071Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+{
+  "timestamp": "2026-10-23T17:29:13.079Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "submissions insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-23T17:29:13.084Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "2a026225-3716-4fd1-ad6e-d3da37dc55ac",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+{
+  "timestamp": "2026-10-23T17:29:13.091Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "20ad6143-0f49-489f-bbdf-3e85b90f83a7",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+{
+  "timestamp": "2026-10-23T17:29:13.096Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "cd4ea54a-f408-4beb-9f18-7b308fc40060",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 9ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 9ms
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 11ms
+   → expected { …(4) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 11ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 9ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 19ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 10ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 5ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+{
+  "timestamp": "2026-10-23T17:29:13.104Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "null value in column \"code\" violates not-null constraint",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+{
+  "timestamp": "2026-10-23T17:29:13.112Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "boom",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 11ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls back if membership is revoked between preflight and the locked admission
+AssertionError: expected "vi.fn()" to be called once with arguments: []
+
+Received:
+
+  1st vi.fn() call:
+
+- []
++ [
++   undefined,
++ ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:152:21
+    150|     ]);
+    151|     expect(sqlCalls()).toEqual(['BEGIN', 'ROLLBACK']);
+    152|     expect(release).toHaveBeenCalledExactlyOnceWith();
+       |                     ^
+    153|     expect(scaffold).not.toHaveBeenCalled();
+    154|     expect(createSubmissionTx).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:186:24
+    184|       .mockResolvedValueOnce({ rows: [shapedRow()] });                …
+    185|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    186|     expect(res.status).toBe(201);
+       |                        ^
+    187|     expect(res.body.meta.created).toBe(true);
+    188|     expect(membershipQuery.mock.calls).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:217:24
+    215|     void productType;
+    216|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    217|     expect(res.status).toBe(201);
+       |                        ^
+    218|     const params = callWith('INSERT INTO regulatory_programs')![1];
+    219|     expect(params).toContain('biologic'); // bla → biologic
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505)
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:235:24
+    233|       .mockResolvedValueOnce({ rows: [shapedRow()] });                …
+    234|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    235|     expect(res.status).toBe(201);
+       |                        ^
+    236|     const inserts = query.mock.calls.filter((c) => String(c[0]).includ…
+    237|     expect(inserts).toHaveLength(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:257:24
+    255|       .mockResolvedValueOnce({ rows: [shapedRow()] });                …
+    256|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    257|     expect(res.status).toBe(201);
+       |                        ^
+    258|     const order = sqlCalls();
+    259|     expect(order[0]).toBe('BEGIN');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success
+TypeError: Cannot read properties of undefined (reading 'documentId')
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:324:26
+    322|       .mockResolvedValueOnce({ rows: [shapedRow()] });
+    323|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    324|     expect(res.body.meta.documentId).toBe('doc_test');
+       |                          ^
+    325|     expect(res.body.meta.scaffoldedSections).toBe(24);
+    326|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+AssertionError: expected { …(4) } to match object { …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": "PROJECT_RECORD_UNAVAILABLE",
+-   "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
++   "reason": "NO_CLIENT_WORKSPACE",
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:412:22
+    410|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    411|     expect(res.status).toBe(409);
+    412|     expect(res.body).toMatchObject({ error: 'PROJECT_RECORD_UNAVAILABL…
+       |                      ^
+    413|     expect(res.body.correlationId).toEqual(expect.any(String));
+    414|     expect(res.body.message).toMatch(/Nothing was saved/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda)
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:449:24
+    447|     queueDrugCreate();
+    448|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    449|     expect(res.status).toBe(201);
+       |                        ^
+    450|
+    451|     // The insert ran ONCE, on the SAME client the transaction runs on…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:504:24
+    502|       .mockResolvedValueOnce({ rows: [shapedRow()] });                …
+    503|     const res = await request(appWith(7, 3)).post('/api/c2c/projects')…
+    504|     expect(res.status).toBe(201);
+       |                        ^
+    505|     expect(createSubmissionTx).not.toHaveBeenCalled();
+    506|     expect(res.body.meta.submissionId).toBe(55);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k)
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:530:24
+    528|       .post('/api/c2c/projects')
+    529|       .send({ ...validBody, name: 'CGM Sensor 510(k)', programType: '5…
+    530|     expect(res.status).toBe(201);
+       |                        ^
+    531|     expect(createSubmissionTx).not.toHaveBeenCalled();
+    532|     expect(callWith('FROM submissions')).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-create.test.ts:547:24
+    545|       .post('/api/c2c/projects')
+    546|       .send({ ...validBody, name: 'CGM CER', programType: 'cer', produ…
+    547|     expect(res.status).toBe(201);
+       |                        ^
+    548|     expect(createSubmissionTx).not.toHaveBeenCalled();
+    549|     expect(callWith('FROM submissions')).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  11 failed | 55 passed (66)
+   Start at  17:28:54
+   Duration  18.93s (transform 5.18s, setup 158ms, import 3.80s, tests 14.29s, environment 0ms)

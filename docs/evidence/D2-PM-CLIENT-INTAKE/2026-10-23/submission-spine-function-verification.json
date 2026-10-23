@@ -1,0 +1,12 @@
+{
+  "path": "server/services/submission-service/submission-service.ts",
+  "beforeCommit": "56a076306c6dbbaa8455526d56db825cbddaa1f6",
+  "currentSourceSha256": "ea60306b96ff7b151997452436072d76fd3ad6225ed16e1c7c12fc1724a86021",
+  "functions": {
+    "insertSubmissionRow": "4451f9ae8d2d39e6a031985357668ca8dc4af99fcddf779a7fe23c79fdb7e640",
+    "refuseForeignProgram": "0e6f6c953bfdd6a1594e98b9ec42860d94cfae7be11a03ca5dc8bd926c9180e4",
+    "createSubmissionTx": "d9858260169df295c7078f13a010e27abc5a842bcb3590d6d537be8f4a6cc2e3"
+  },
+  "allListedFunctionTextsUnchanged": true,
+  "scope": "Only actual function declarations used by ensureSubmissionSpine; the whole module changed for upstream release identity. This is not a new native database rerun."
+}

@@ -1,0 +1,73 @@
+{
+  "fixture": "Actual wizard/request guards/product CSS; synthetic auth, filing picker and API",
+  "results": [
+    {
+      "width": 1280,
+      "explicitMultiClientChoice": true,
+      "matchingBodyAndHeader": true,
+      "namedReview": true,
+      "emptyAndFailedDirectoryBlocked": true,
+      "foreignDirectoryBlocked": true,
+      "unknownAndBadReceiptBlockReplay": true,
+      "pendingCancelAndEscapeBlocked": true,
+      "savedWorkspaceSelectedBeforeNavigation": true,
+      "unverifiedSaveKeepsPriorWorkspace": true,
+      "actorSwitchRetiresSponsorForm": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "explicitMultiClientChoice": true,
+      "matchingBodyAndHeader": true,
+      "namedReview": true,
+      "emptyAndFailedDirectoryBlocked": true,
+      "foreignDirectoryBlocked": true,
+      "unknownAndBadReceiptBlockReplay": true,
+      "pendingCancelAndEscapeBlocked": true,
+      "savedWorkspaceSelectedBeforeNavigation": true,
+      "unverifiedSaveKeepsPriorWorkspace": true,
+      "actorSwitchRetiresSponsorForm": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "writes": [
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "pending",
+      "actorBound": true
+    },
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "unknown",
+      "actorBound": true
+    },
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "bad-receipt",
+      "actorBound": true
+    },
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "pending",
+      "actorBound": true
+    },
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "unknown",
+      "actorBound": true
+    },
+    {
+      "clientWorkspaceId": 71,
+      "name": "Sponsor A validation",
+      "mode": "bad-receipt",
+      "actorBound": true
+    }
+  ]
+}

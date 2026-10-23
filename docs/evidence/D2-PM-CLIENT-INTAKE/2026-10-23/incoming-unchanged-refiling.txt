@@ -1,0 +1,2441 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:05.724Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:26.299Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:12:26.310Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:26.310Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:28.221Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "77d39b38-31b5-4066-a015-41c40e418395",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:28.332Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:28.437Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-23T19:12:28.485Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section
+{
+  "timestamp": "2026-10-23T19:12:28.598Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor
+{
+  "timestamp": "2026-10-23T19:12:28.699Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section 109ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > the governed outline now reports the section as written 2ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one
+{
+  "timestamp": "2026-10-23T19:12:28.813Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor 103ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > and the working copy still holds the text too 2ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a content save with no reason, and writes nothing 16ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save
+{
+  "timestamp": "2026-10-23T19:12:28.936Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one 87ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a whitespace-only reason as no reason at all 38ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger
+{
+  "timestamp": "2026-10-23T19:12:29.040Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save 100ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-23T19:12:29.078Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b4d206d6-bf3a-4095-a799-408505b347e3",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-23T19:12:29.116Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc b4d206d6-bf3a-4095-a799-408505b347e3 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+{
+  "timestamp": "2026-10-23T19:12:29.198Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+CRITICAL: Failed to create audit trail: error: new row for relation "audit_logs" violates check constraint "tmp_no_authoring"
+    at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 764,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (4c62c51e-bd3a-498f-873b-7b4a37e9991e, 1, 42, authoring.section.UPDATE, authoring_section, ac0f43a2-cd85-4030-911a-d697c938f659, 42, authoring_section:ac0f43a2-cd85-4030-911a-d697c938f659, null, null, drafting the overview, 2103236e6c78c067c34ad0b3885302077602c73c9bd19d5d06c9249382d578de, null, a5b2daea38ebe9d5f6a15924dfdce386172ca3bba6d672625c837d99de4ef8c5, 2026-10-23 19:12:29.198+00, 735b53e6b3b6055b05760ad89f4515708991b8489f9efbeab00ae365a827de55, null, {"docId":"77d39b38-31b5-4066-a015-41c40e418395","sectionId":"ac0..., ::ffff:127.0.0.1, unknown, 10).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'audit_logs',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'tmp_no_authoring',
+  file: 'execMain.c',
+  line: '2081',
+  routine: 'ExecConstraints',
+  query: 'INSERT INTO audit_logs\n' +
+    '       (id, tenant_id, user_id, action, table_name, record_id,\n' +
+    '        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n' +
+    '        old_values, new_values, ip_address, user_agent, reason)\n' +
+    '     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16,$17)',
+  params: [
+    '4c62c51e-bd3a-498f-873b-7b4a37e9991e',
+    1,
+    42,
+    'authoring.section.UPDATE',
+    'authoring_section',
+    'ac0f43a2-cd85-4030-911a-d697c938f659',
+    42,
+    'authoring_section:ac0f43a2-cd85-4030-911a-d697c938f659',
+    '2103236e6c78c067c34ad0b3885302077602c73c9bd19d5d06c9249382d578de',
+    'a5b2daea38ebe9d5f6a15924dfdce386172ca3bba6d672625c837d99de4ef8c5',
+    '2026-10-23T19:12:29.198Z',
+    '735b53e6b3b6055b05760ad89f4515708991b8489f9efbeab00ae365a827de55',
+    null,
+    '{"docId":"77d39b38-31b5-4066-a015-41c40e418395","sectionId":"ac0f43a2-cd85-4030-911a-d697c938f659","operationType":"UPDATE","contentHashBefore":"e7b1302707cd457401de02c743e6296f7cd0d0c8cd19d6fc8c81893d1a6748a0","contentHashAfter":"7d604aecd91103e250840f371484ebf1137dafb4fd41e3cb074643eb8c5f394f","changeReason":"drafting the overview","actorRole":"unknown","sessionId":"82325c8e-48be-45b1-bb17-44486ea91ef3","trailId":"44de950e-e14d-4373-8a90-c786e03188dd","metadataSha256":"35e650679425d31dfd1bd233ba0c606eaa7bb07cbf9ffbf864a631a2372d087f","actorEmail":"author@filing.example"}',
+    '::ffff:127.0.0.1',
+    'unknown',
+    'drafting the overview'
+  ],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+{
+  "timestamp": "2026-10-23T19:12:29.208Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "ac0f43a2-cd85-4030-911a-d697c938f659",
+    "tenantId": 1,
+    "err": "new row for relation \"audit_logs\" violates check constraint \"tmp_no_authoring\""
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger 108ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one 58ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-23T19:12:29.252Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-23T19:12:29.292Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-23T19:12:29.347Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written 84ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename
+{
+  "timestamp": "2026-10-23T19:12:29.370Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision
+{
+  "timestamp": "2026-10-23T19:12:29.393Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle
+{
+  "timestamp": "2026-10-23T19:12:29.422Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: TRACK_CHANGES on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document
+{
+  "timestamp": "2026-10-23T19:12:29.457Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections 141ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > records WHY in the version ledger — a mechanism naming itself 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename 24ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision 26ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > reaches the hash-chained ledger, not only the soft table 3ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle 23ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > does not audit a metadata PATCH that changes nothing 14ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged
+{
+  "timestamp": "2026-10-23T19:12:29.504Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-23T19:12:29.521Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bef82a73-3d41-45ad-9d3f-d78423128130",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-23T19:12:29.539Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bef82a73-3d41-45ad-9d3f-d78423128130 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-23T19:12:29.569Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc bef82a73-3d41-45ad-9d3f-d78423128130 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document 22ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > refuses a code change, and changes nothing 23ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged 25ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-23T19:12:29.582Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5be61591-7595-464c-bdbb-ea39d2dde342",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-23T19:12:29.612Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5be61591-7595-464c-bdbb-ea39d2dde342 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-23T19:12:29.650Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "c7980627-6e61-4047-b73d-ed938a4a95dd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-23T19:12:29.675Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c7980627-6e61-4047-b73d-ed938a4a95dd by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break 60ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many 69ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-23T19:12:29.701Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "736524b8-0929-4aff-9d17-c16c9252b281",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-23T19:12:29.726Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 736524b8-0929-4aff-9d17-c16c9252b281 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-23T19:12:29.769Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 736524b8-0929-4aff-9d17-c16c9252b281 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-23T19:12:29.785Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "1a36bea2-c03f-47df-be94-b741fb414486",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided 46ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent 84ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-23T19:12:29.811Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1a36bea2-c03f-47df-be94-b741fb414486 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-23T19:12:29.835Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 1a36bea2-c03f-47df-be94-b741fb414486 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-23T19:12:29.856Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "0530fe98-9847-480a-8a4e-b4af061b2f25",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-23T19:12:29.883Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0530fe98-9847-480a-8a4e-b4af061b2f25 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-23T19:12:29.908Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0530fe98-9847-480a-8a4e-b4af061b2f25 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands 77ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define
+{
+  "timestamp": "2026-10-23T19:12:29.946Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:29.964Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "c8297c97-c9bf-4040-93a2-b96807648efe",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:29.983Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c8297c97-c9bf-4040-93a2-b96807648efe by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:30.014Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc c8297c97-c9bf-4040-93a2-b96807648efe by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge 63ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define 43ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it
+{
+  "timestamp": "2026-10-23T19:12:30.074Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "ac0f43a2-cd85-4030-911a-d697c938f659",
+    "tenantId": 1,
+    "err": "new row for relation \"c2c_document_sections\" violates check constraint \"tmp_refuse\""
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-23T19:12:30.090Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "fe983588-0eb4-4ac7-894e-6ba075c1a87c",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-23T19:12:30.108Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-23T19:12:30.129Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing 67ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it 54ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-23T19:12:30.150Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went
+{
+  "timestamp": "2026-10-23T19:12:30.194Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order
+{
+  "timestamp": "2026-10-23T19:12:30.231Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided 78ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went 44ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a section under a node the outline subdivides is still not filed, and says so
+{
+  "timestamp": "2026-10-23T19:12:30.272Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc fe983588-0eb4-4ac7-894e-6ba075c1a87c by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > an unbound document reverts, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:30.285Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "f6b32d3a-2e54-4eeb-bac9-eaf6f4206ecb",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > an unbound document reverts, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:30.305Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f6b32d3a-2e54-4eeb-bac9-eaf6f4206ecb by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > an unbound document reverts, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:30.336Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc f6b32d3a-2e54-4eeb-bac9-eaf6f4206ecb by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order 41ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a section under a node the outline subdivides is still not filed, and says so 38ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > an unbound document reverts, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-23T19:12:30.363Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc f6b32d3a-2e54-4eeb-bac9-eaf6f4206ecb by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > a bound document reverts, and says the text DID reach the filing
+{
+  "timestamp": "2026-10-23T19:12:30.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > a bound document reverts, and says the text DID reach the filing
+{
+  "timestamp": "2026-10-23T19:12:30.452Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > a bound document reverts, and says the text DID reach the filing
+{
+  "timestamp": "2026-10-23T19:12:30.486Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > an unbound document reverts, and says the text did not reach a filing 94ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > restores draft_source from the revision instead of nulling it
+{
+  "timestamp": "2026-10-23T19:12:30.542Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > restores draft_source from the revision instead of nulling it
+{
+  "timestamp": "2026-10-23T19:12:30.583Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert says whether its text reached the filing > a bound document reverts, and says the text DID reach the filing 118ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > restores draft_source from the revision instead of nulling it
+{
+  "timestamp": "2026-10-23T19:12:30.619Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent
+{
+  "timestamp": "2026-10-23T19:12:30.676Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent
+{
+  "timestamp": "2026-10-23T19:12:30.712Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent
+{
+  "timestamp": "2026-10-23T19:12:30.751Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > restores draft_source from the revision instead of nulling it 137ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent
+{
+  "timestamp": "2026-10-23T19:12:30.782Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent
+{
+  "timestamp": "2026-10-23T19:12:30.818Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > a revert to a person’s own revision still states no origin
+{
+  "timestamp": "2026-10-23T19:12:30.855Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > a revert to a person’s own revision still states no origin
+{
+  "timestamp": "2026-10-23T19:12:30.890Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 77d39b38-31b5-4066-a015-41c40e418395 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > survives a revert OF the revert: the attribution is recorded again, not spent 196ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > records one COMMIT act with the exact saved and filing identity and stated reason
+{
+  "timestamp": "2026-10-23T19:12:30.909Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "9450384e-50f2-4468-8222-f2dfc426bb8a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > records one COMMIT act with the exact saved and filing identity and stated reason
+{
+  "timestamp": "2026-10-23T19:12:30.924Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9450384e-50f2-4468-8222-f2dfc426bb8a by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > records one COMMIT act with the exact saved and filing identity and stated reason
+{
+  "timestamp": "2026-10-23T19:12:30.960Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9450384e-50f2-4468-8222-f2dfc426bb8a by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > records one COMMIT act with the exact saved and filing identity and stated reason
+{
+  "timestamp": "2026-10-23T19:12:31.024Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: COMMIT on doc 9450384e-50f2-4468-8222-f2dfc426bb8a by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > a revert to a person’s own revision still states no origin 74ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses false intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.042Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6b4b55ef-67ae-423b-b897-b1c5344f1b00",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses false intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.064Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b4b55ef-67ae-423b-b897-b1c5344f1b00 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses false intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 6b4b55ef-67ae-423b-b897-b1c5344f1b00 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses nonboolean intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.118Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d9b96428-67e2-4810-b5a1-8e25a218a8a5",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses nonboolean intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.137Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d9b96428-67e2-4810-b5a1-8e25a218a8a5 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > records one COMMIT act with the exact saved and filing identity and stated reason 133ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses false intent without falling through to an ordinary save 78ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses nonboolean intent without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d9b96428-67e2-4810-b5a1-8e25a218a8a5 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses content without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.196Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "97970157-d5a7-47c5-80a7-d325d47ef21a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses content without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.212Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97970157-d5a7-47c5-80a7-d325d47ef21a by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses content without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.249Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 97970157-d5a7-47c5-80a7-d325d47ef21a by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses nonboolean intent without falling through to an ordinary save 78ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses metadata without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.271Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "0b49e351-07c8-497e-98d9-605cb78209be",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses metadata without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.288Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0b49e351-07c8-497e-98d9-605cb78209be by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses metadata without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.321Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0b49e351-07c8-497e-98d9-605cb78209be by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses accepted attribution without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.345Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e0f8b203-f8ce-4529-a80e-836f682672fd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses accepted attribution without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.362Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e0f8b203-f8ce-4529-a80e-836f682672fd by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses content without falling through to an ordinary save 77ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses metadata without falling through to an ordinary save 71ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses accepted attribution without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.404Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0f8b203-f8ce-4529-a80e-836f682672fd by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing timestamp without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.429Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "f6a93a2b-8c0a-43ca-a1fb-34265068a8f9",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing timestamp without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.450Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f6a93a2b-8c0a-43ca-a1fb-34265068a8f9 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing timestamp without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.482Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc f6a93a2b-8c0a-43ca-a1fb-34265068a8f9 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses accepted attribution without falling through to an ordinary save 83ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses ambiguous date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.506Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7e325e7e-bced-4757-92be-69bb8b7d598c",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses ambiguous date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.523Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7e325e7e-bced-4757-92be-69bb8b7d598c by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses ambiguous date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.558Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 7e325e7e-bced-4757-92be-69bb8b7d598c by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.583Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "549076d8-0d67-4fbc-96d6-a8c8ac0215f5",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.599Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 549076d8-0d67-4fbc-96d6-a8c8ac0215f5 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing timestamp without falling through to an ordinary save 78ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses ambiguous date without falling through to an ordinary save 78ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid date without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.632Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 549076d8-0d67-4fbc-96d6-a8c8ac0215f5 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing document without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.658Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "95391408-aaa2-4977-8a58-e557320a06b2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing document without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.679Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 95391408-aaa2-4977-8a58-e557320a06b2 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing document without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.713Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 95391408-aaa2-4977-8a58-e557320a06b2 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid date without falling through to an ordinary save 73ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid program without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.739Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "90aca506-3b8d-40bb-a328-ac8ddc971740",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid program without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.754Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 90aca506-3b8d-40bb-a328-ac8ddc971740 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid program without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.792Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 90aca506-3b8d-40bb-a328-ac8ddc971740 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses empty native filing without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.811Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "2fe78a51-8f00-48bc-9994-591198f12ee5",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses empty native filing without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.826Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2fe78a51-8f00-48bc-9994-591198f12ee5 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses missing document without falling through to an ordinary save 80ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses invalid program without falling through to an ordinary save 76ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses empty native filing without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.864Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2fe78a51-8f00-48bc-9994-591198f12ee5 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses reason without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.890Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7b010ccc-0067-496b-bc82-dceb8887a1a5",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses reason without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.908Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7b010ccc-0067-496b-bc82-dceb8887a1a5 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses reason without falling through to an ordinary save
+{
+  "timestamp": "2026-10-23T19:12:31.954Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 7b010ccc-0067-496b-bc82-dceb8887a1a5 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses empty native filing without falling through to an ordinary save 75ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed document binding
+{
+  "timestamp": "2026-10-23T19:12:31.974Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e113c12c-3d44-40b9-9f34-dd7e06d95763",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed document binding
+{
+  "timestamp": "2026-10-23T19:12:31.994Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e113c12c-3d44-40b9-9f34-dd7e06d95763 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed document binding
+{
+  "timestamp": "2026-10-23T19:12:32.024Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e113c12c-3d44-40b9-9f34-dd7e06d95763 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed project binding
+{
+  "timestamp": "2026-10-23T19:12:32.050Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "8fca6322-beda-42b7-a9cd-86d47074ee79",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed project binding
+{
+  "timestamp": "2026-10-23T19:12:32.065Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8fca6322-beda-42b7-a9cd-86d47074ee79 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses reason without falling through to an ordinary save 88ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed document binding 75ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed project binding
+{
+  "timestamp": "2026-10-23T19:12:32.119Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 8fca6322-beda-42b7-a9cd-86d47074ee79 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed native filing binding
+{
+  "timestamp": "2026-10-23T19:12:32.151Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "25a09ff6-ec73-4b03-9f5a-976441cfbc4e",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed native filing binding
+{
+  "timestamp": "2026-10-23T19:12:32.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 25a09ff6-ec73-4b03-9f5a-976441cfbc4e by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed native filing binding
+{
+  "timestamp": "2026-10-23T19:12:32.207Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 25a09ff6-ec73-4b03-9f5a-976441cfbc4e by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed project binding 100ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed saved version binding
+{
+  "timestamp": "2026-10-23T19:12:32.246Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5f2f28c3-dde7-4e48-9407-bb675b62e834",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed saved version binding
+{
+  "timestamp": "2026-10-23T19:12:32.261Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5f2f28c3-dde7-4e48-9407-bb675b62e834 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed saved version binding
+{
+  "timestamp": "2026-10-23T19:12:32.292Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 5f2f28c3-dde7-4e48-9407-bb675b62e834 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses missing existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.330Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "f5901c18-d1ac-43c2-a666-2f806b27876b",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed native filing binding 95ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged saved-section filing > refuses a changed saved version binding 85ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses missing existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.348Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5901c18-d1ac-43c2-a666-2f806b27876b by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses missing existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.386Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc f5901c18-d1ac-43c2-a666-2f806b27876b by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses wrong hash existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.451Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "9cf2cf31-4f3d-479b-9a47-730167d53a8e",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses wrong hash existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.469Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9cf2cf31-4f3d-479b-9a47-730167d53a8e by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses wrong hash existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.504Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9cf2cf31-4f3d-479b-9a47-730167d53a8e by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses missing existing lineage rather than generating new authorship 120ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses out-of-bounds existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.564Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "f5590961-1639-4fe1-b3ce-8501c05f7fdd",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses out-of-bounds existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.578Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5590961-1639-4fe1-b3ce-8501c05f7fdd by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses out-of-bounds existing lineage rather than generating new authorship
+{
+  "timestamp": "2026-10-23T19:12:32.612Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc f5590961-1639-4fe1-b3ce-8501c05f7fdd by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses wrong hash existing lineage rather than generating new authorship 114ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.676Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b62073fd-b91b-4806-9ed6-ecfed9938129",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.693Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b62073fd-b91b-4806-9ed6-ecfed9938129 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.726Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b62073fd-b91b-4806-9ed6-ecfed9938129 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.746Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b62073fd-b91b-4806-9ed6-ecfed9938129 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.776Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b62073fd-b91b-4806-9ed6-ecfed9938129 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > refuses out-of-bounds existing lineage rather than generating new authorship 113ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor
+{
+  "timestamp": "2026-10-23T19:12:32.830Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: COMMIT on doc b62073fd-b91b-4806-9ed6-ecfed9938129 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rolls back canonical committed:false, including the parent reservation
+{
+  "timestamp": "2026-10-23T19:12:32.893Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "1b818dfb-a4e5-4dea-941f-2f7b246eacfc",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rolls back canonical committed:false, including the parent reservation
+{
+  "timestamp": "2026-10-23T19:12:32.907Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1b818dfb-a4e5-4dea-941f-2f7b246eacfc by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rolls back canonical committed:false, including the parent reservation
+{
+  "timestamp": "2026-10-23T19:12:32.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 1b818dfb-a4e5-4dea-941f-2f7b246eacfc by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing preserves all existing lineage > restores the complete canonical assembled node while preserving every saved contributor 216ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the locked filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.041Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a7c6e02d-5eef-4c59-89f6-0e28ca6b8947",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the locked filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.055Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a7c6e02d-5eef-4c59-89f6-0e28ca6b8947 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the locked filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.085Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a7c6e02d-5eef-4c59-89f6-0e28ca6b8947 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rolls back canonical committed:false, including the parent reservation 148ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the submitted filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.147Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "2d004d00-4066-4dd0-8c36-e55c559cfc07",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the submitted filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.163Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2d004d00-4066-4dd0-8c36-e55c559cfc07 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the submitted filing refusal
+{
+  "timestamp": "2026-10-23T19:12:33.203Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2d004d00-4066-4dd0-8c36-e55c559cfc07 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the locked filing refusal 105ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the immutable-document middleware refusal
+{
+  "timestamp": "2026-10-23T19:12:33.260Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "567a7c5c-07a8-448d-85b3-487e225d58a0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the immutable-document middleware refusal
+{
+  "timestamp": "2026-10-23T19:12:33.275Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 567a7c5c-07a8-448d-85b3-487e225d58a0 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the immutable-document middleware refusal
+{
+  "timestamp": "2026-10-23T19:12:33.305Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 567a7c5c-07a8-448d-85b3-487e225d58a0 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > requires full-document view even when the selected section remains editable
+{
+  "timestamp": "2026-10-23T19:12:33.326Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "da471b8d-98c6-4769-930f-3ceb3b141121",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > requires full-document view even when the selected section remains editable
+{
+  "timestamp": "2026-10-23T19:12:33.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc da471b8d-98c6-4769-930f-3ceb3b141121 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > requires full-document view even when the selected section remains editable
+{
+  "timestamp": "2026-10-23T19:12:33.378Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc da471b8d-98c6-4769-930f-3ceb3b141121 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the submitted filing refusal 114ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > retains the immutable-document middleware refusal 67ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > requires full-document view even when the selected section remains editable
+{
+  "timestamp": "2026-10-23T19:12:33.440Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc da471b8d-98c6-4769-930f-3ceb3b141121 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rechecks current QMS control inside the filing transaction
+{
+  "timestamp": "2026-10-23T19:12:33.453Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d37e0f8b-0c44-4cbc-afd6-c1ef360fc4f6",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rechecks current QMS control inside the filing transaction
+{
+  "timestamp": "2026-10-23T19:12:33.466Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d37e0f8b-0c44-4cbc-afd6-c1ef360fc4f6 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rechecks current QMS control inside the filing transaction
+{
+  "timestamp": "2026-10-23T19:12:33.501Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d37e0f8b-0c44-4cbc-afd6-c1ef360fc4f6 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > requires full-document view even when the selected section remains editable 128ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > refuses an unavailable declared saved source
+{
+  "timestamp": "2026-10-23T19:12:33.552Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bf1e672b-af03-41a5-bc95-3f30c3adea22",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > refuses an unavailable declared saved source
+{
+  "timestamp": "2026-10-23T19:12:33.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bf1e672b-af03-41a5-bc95-3f30c3adea22 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > refuses an unavailable declared saved source
+{
+  "timestamp": "2026-10-23T19:12:33.618Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc bf1e672b-af03-41a5-bc95-3f30c3adea22 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > rechecks current QMS control inside the filing transaction 98ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > uses the current account email when a stale JWT still matches an old email-only document grant
+{
+  "timestamp": "2026-10-23T19:12:33.656Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "09af2d1b-15c7-4d95-97fc-7438ca80c08a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > uses the current account email when a stale JWT still matches an old email-only document grant
+{
+  "timestamp": "2026-10-23T19:12:33.672Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 09af2d1b-15c7-4d95-97fc-7438ca80c08a by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > uses the current account email when a stale JWT still matches an old email-only document grant
+{
+  "timestamp": "2026-10-23T19:12:33.716Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 09af2d1b-15c7-4d95-97fc-7438ca80c08a by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current locked governance > refuses an unavailable declared saved source 102ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > uses the current account email when a stale JWT still matches an old email-only document grant 99ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > refuses project read access that does not permit the actual write
+{
+  "timestamp": "2026-10-23T19:12:33.753Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b96abbe5-5fc4-419c-acad-e57fc66e5b77",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > refuses project read access that does not permit the actual write
+{
+  "timestamp": "2026-10-23T19:12:33.769Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b96abbe5-5fc4-419c-acad-e57fc66e5b77 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > refuses project read access that does not permit the actual write
+{
+  "timestamp": "2026-10-23T19:12:33.800Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b96abbe5-5fc4-419c-acad-e57fc66e5b77 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks membership after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.840Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a43112c8-7a77-47fd-bd68-4f7144926d25",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks membership after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.858Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a43112c8-7a77-47fd-bd68-4f7144926d25 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks membership after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.893Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a43112c8-7a77-47fd-bd68-4f7144926d25 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > refuses project read access that does not permit the actual write 87ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks object permission after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.921Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "973a0e00-8900-42f9-90db-02393df48878",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks object permission after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.935Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 973a0e00-8900-42f9-90db-02393df48878 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks object permission after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:33.972Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 973a0e00-8900-42f9-90db-02393df48878 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks saved timestamp after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:34.005Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "4b2732f9-f9c6-4fe1-9f0d-294e95689667",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks saved timestamp after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:34.019Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4b2732f9-f9c6-4fe1-9f0d-294e95689667 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks membership after the HTTP middleware and transaction reservation 82ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks object permission after the HTTP middleware and transaction reservation 83ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks saved timestamp after the HTTP middleware and transaction reservation
+{
+  "timestamp": "2026-10-23T19:12:34.057Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4b2732f9-f9c6-4fe1-9f0d-294e95689667 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=true
+{
+  "timestamp": "2026-10-23T19:12:34.088Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6f692f50-a6c1-40e4-bc00-365506d18ae0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=true
+{
+  "timestamp": "2026-10-23T19:12:34.101Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6f692f50-a6c1-40e4-bc00-365506d18ae0 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=true
+{
+  "timestamp": "2026-10-23T19:12:34.135Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 6f692f50-a6c1-40e4-bc00-365506d18ae0 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing rechecks current write access > rechecks saved timestamp after the HTTP middleware and transaction reservation 85ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=false
+{
+  "timestamp": "2026-10-23T19:12:34.251Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "410b1d5b-c9f5-4a4d-8a08-bc300afea947",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=false
+{
+  "timestamp": "2026-10-23T19:12:34.267Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 410b1d5b-c9f5-4a4d-8a08-bc300afea947 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=false
+{
+  "timestamp": "2026-10-23T19:12:34.300Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 410b1d5b-c9f5-4a4d-8a08-bc300afea947 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=true 159ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > rolls back the filing repair when its COMMIT audit cannot be stored
+{
+  "timestamp": "2026-10-23T19:12:34.394Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d8514919-1ceb-4256-b9d2-fd8e798b38a7",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > rolls back the filing repair when its COMMIT audit cannot be stored
+{
+  "timestamp": "2026-10-23T19:12:34.407Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d8514919-1ceb-4256-b9d2-fd8e798b38a7 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > rolls back the filing repair when its COMMIT audit cannot be stored
+{
+  "timestamp": "2026-10-23T19:12:34.442Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d8514919-1ceb-4256-b9d2-fd8e798b38a7 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > rolls back the filing repair when its COMMIT audit cannot be stored
+CRITICAL: Failed to create audit trail: error: private audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 140,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_refile_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'd8514919-1ceb-4256-b9d2-fd8e798b38a7',
+    '0580b22e-5737-4e3e-bbe4-23eb26546b2e',
+    'COMMIT',
+    'author@filing.example',
+    'member',
+    null,
+    null,
+    null,
+    null,
+    'Restore the retained saved words to the filing.',
+    {
+      filingOnly: true,
+      revision_created: false,
+      source: [Object],
+      filing: [Object],
+      savedContentSha256: 'd71dca7cdb77f54f1de966e189672766487f20aba227aa55e1ace35525d93802'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'e9330155-b026-405f-90fb-fe91faaeac28',
+    1,
+    '42'
+  ],
+  queryOptions: undefined
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing retains current full workflow release gates > does not release a retained workflow source with generated=false 143ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost COMMIT acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.513Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "72d6fc56-7444-4f66-8e7d-13ec02c25715",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost COMMIT acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.527Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 72d6fc56-7444-4f66-8e7d-13ec02c25715 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost COMMIT acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.563Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 72d6fc56-7444-4f66-8e7d-13ec02c25715 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost COMMIT acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.616Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: COMMIT on doc 72d6fc56-7444-4f66-8e7d-13ec02c25715 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > rolls back the filing repair when its COMMIT audit cannot be stored 122ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost ROLLBACK acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.634Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "dc3d70a7-1968-4f6a-8ddb-2c27a2817626",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost ROLLBACK acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.648Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dc3d70a7-1968-4f6a-8ddb-2c27a2817626 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost ROLLBACK acknowledgment
+{
+  "timestamp": "2026-10-23T19:12:34.686Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc dc3d70a7-1968-4f6a-8ddb-2c27a2817626 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost COMMIT acknowledgment 120ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision
+{
+  "timestamp": "2026-10-23T19:12:34.747Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d690ee05-3ca8-45f2-ae4d-3c33eccc0ca1",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision
+{
+  "timestamp": "2026-10-23T19:12:34.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d690ee05-3ca8-45f2-ae4d-3c33eccc0ca1 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision
+{
+  "timestamp": "2026-10-23T19:12:34.795Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d690ee05-3ca8-45f2-ae4d-3c33eccc0ca1 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision
+{
+  "timestamp": "2026-10-23T19:12:34.846Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: COMMIT on doc d690ee05-3ca8-45f2-ae4d-3c33eccc0ca1 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > deliberate unchanged filing has atomic and nonreplayable outcomes > holds against replay after lost ROLLBACK acknowledgment 112ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision
+{
+  "timestamp": "2026-10-23T19:12:34.873Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc d690ee05-3ca8-45f2-ae4d-3c33eccc0ca1 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses, names the section, and seals nothing
+{
+  "timestamp": "2026-10-23T19:12:34.888Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "3c8e951c-48a8-47c8-a279-fe1243b02553",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses, names the section, and seals nothing
+{
+  "timestamp": "2026-10-23T19:12:34.904Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3c8e951c-48a8-47c8-a279-fe1243b02553 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses, names the section, and seals nothing
+{
+  "timestamp": "2026-10-23T19:12:34.936Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 3c8e951c-48a8-47c8-a279-fe1243b02553 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > re-files unchanged saved text without an Authoring content revision 139ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is
+{
+  "timestamp": "2026-10-23T19:12:34.966Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a30c53ca-ea8f-49a9-8c01-b5942ab7a68d",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is
+{
+  "timestamp": "2026-10-23T19:12:34.983Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a30c53ca-ea8f-49a9-8c01-b5942ab7a68d by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is
+{
+  "timestamp": "2026-10-23T19:12:35.011Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a30c53ca-ea8f-49a9-8c01-b5942ab7a68d by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is
+{
+  "timestamp": "2026-10-23T19:12:35.059Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a30c53ca-ea8f-49a9-8c01-b5942ab7a68d by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses, names the section, and seals nothing 80ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is
+{
+  "timestamp": "2026-10-23T19:12:35.081Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc a30c53ca-ea8f-49a9-8c01-b5942ab7a68d by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses a filed copy that differs only in whitespace
+{
+  "timestamp": "2026-10-23T19:12:35.096Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "8c8529e2-9ca4-45b2-9cf3-565298fff03e",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses a filed copy that differs only in whitespace
+{
+  "timestamp": "2026-10-23T19:12:35.108Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8c8529e2-9ca4-45b2-9cf3-565298fff03e by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses a filed copy that differs only in whitespace
+{
+  "timestamp": "2026-10-23T19:12:35.136Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 8c8529e2-9ca4-45b2-9cf3-565298fff03e by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > is cleared by re-saving in the editor — resolvable where the author already is 129ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > a bound document whose filing agrees freezes
+{
+  "timestamp": "2026-10-23T19:12:35.193Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a88af924-c3aa-4de4-94bb-1a388cff580f",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > a bound document whose filing agrees freezes
+{
+  "timestamp": "2026-10-23T19:12:35.206Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a88af924-c3aa-4de4-94bb-1a388cff580f by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > a bound document whose filing agrees freezes
+{
+  "timestamp": "2026-10-23T19:12:35.233Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a88af924-c3aa-4de4-94bb-1a388cff580f by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > a bound document whose filing agrees freezes
+{
+  "timestamp": "2026-10-23T19:12:35.252Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc a88af924-c3aa-4de4-94bb-1a388cff580f by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > an unbound document freezes — there is no filing to compare
+{
+  "timestamp": "2026-10-23T19:12:35.264Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "510596cc-4f80-4f5e-93e8-c4744d9a18a1",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > an unbound document freezes — there is no filing to compare
+{
+  "timestamp": "2026-10-23T19:12:35.277Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 510596cc-4f80-4f5e-93e8-c4744d9a18a1 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > refuses a filed copy that differs only in whitespace 93ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > a bound document whose filing agrees freezes 78ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > an unbound document freezes — there is no filing to compare
+{
+  "timestamp": "2026-10-23T19:12:35.301Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 510596cc-4f80-4f5e-93e8-c4744d9a18a1 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > an unbound document freezes — there is no filing to compare
+{
+  "timestamp": "2026-10-23T19:12:35.318Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 510596cc-4f80-4f5e-93e8-c4744d9a18a1 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > names the node the filing holds nothing for
+{
+  "timestamp": "2026-10-23T19:12:35.332Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "be228fea-932c-4a27-a365-d899e320afc7",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > names the node the filing holds nothing for
+{
+  "timestamp": "2026-10-23T19:12:35.346Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc be228fea-932c-4a27-a365-d899e320afc7 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > names the node the filing holds nothing for
+{
+  "timestamp": "2026-10-23T19:12:35.378Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc be228fea-932c-4a27-a365-d899e320afc7 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > names the node the filing holds nothing for
+{
+  "timestamp": "2026-10-23T19:12:35.403Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc be228fea-932c-4a27-a365-d899e320afc7 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document whose filed copy is not its text > an unbound document freezes — there is no filing to compare 64ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing when every node agrees
+{
+  "timestamp": "2026-10-23T19:12:35.418Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5daa0ea3-47d5-4066-89d5-5dd8624ebb9f",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing when every node agrees
+{
+  "timestamp": "2026-10-23T19:12:35.433Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5daa0ea3-47d5-4066-89d5-5dd8624ebb9f by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing when every node agrees
+{
+  "timestamp": "2026-10-23T19:12:35.466Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 5daa0ea3-47d5-4066-89d5-5dd8624ebb9f by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing when every node agrees
+{
+  "timestamp": "2026-10-23T19:12:35.490Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 5daa0ea3-47d5-4066-89d5-5dd8624ebb9f by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet
+{
+  "timestamp": "2026-10-23T19:12:35.506Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "64544132-ee9c-4513-870b-7d6dfea58627",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > names the node the filing holds nothing for 87ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing when every node agrees 88ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet
+{
+  "timestamp": "2026-10-23T19:12:35.519Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 64544132-ee9c-4513-870b-7d6dfea58627 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet
+{
+  "timestamp": "2026-10-23T19:12:35.547Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 64544132-ee9c-4513-870b-7d6dfea58627 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet
+{
+  "timestamp": "2026-10-23T19:12:35.564Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 64544132-ee9c-4513-870b-7d6dfea58627 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet
+{
+  "timestamp": "2026-10-23T19:12:35.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 64544132-ee9c-4513-870b-7d6dfea58627 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > ignores a filing node this document has no section for
+{
+  "timestamp": "2026-10-23T19:12:35.597Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "4303329d-e5ec-4e07-a202-ae9cf53fe86d",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > ignores a filing node this document has no section for
+{
+  "timestamp": "2026-10-23T19:12:35.612Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4303329d-e5ec-4e07-a202-ae9cf53fe86d by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > ignores a filing node this document has no section for
+{
+  "timestamp": "2026-10-23T19:12:35.643Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4303329d-e5ec-4e07-a202-ae9cf53fe86d by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > ignores a filing node this document has no section for
+{
+  "timestamp": "2026-10-23T19:12:35.671Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 4303329d-e5ec-4e07-a202-ae9cf53fe86d by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > says nothing about a section the author has not written yet 91ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /e-sign as APPROVER refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.685Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "54068b87-2110-4541-b2e4-129668b4e1a3",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /e-sign as APPROVER refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.699Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 54068b87-2110-4541-b2e4-129668b4e1a3 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /e-sign as APPROVER refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.729Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 54068b87-2110-4541-b2e4-129668b4e1a3 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /sign refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.762Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "8ea5b16d-33a9-4302-8dc7-78caa3e51a46",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /sign refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.776Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8ea5b16d-33a9-4302-8dc7-78caa3e51a46 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze reports, without refusing, a filing node its text did not reach > ignores a filing node this document has no section for 88ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /e-sign as APPROVER refuses, and seals and signs nothing 76ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /sign refuses, and seals and signs nothing
+{
+  "timestamp": "2026-10-23T19:12:35.804Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 8ea5b16d-33a9-4302-8dc7-78caa3e51a46 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER
+{
+  "timestamp": "2026-10-23T19:12:35.837Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a4098083-4a59-415c-9ac3-63bebcdcd0df",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER
+{
+  "timestamp": "2026-10-23T19:12:35.852Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a4098083-4a59-415c-9ac3-63bebcdcd0df by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER
+{
+  "timestamp": "2026-10-23T19:12:35.884Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a4098083-4a59-415c-9ac3-63bebcdcd0df by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER
+{
+  "timestamp": "2026-10-23T19:12:35.934Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc a4098083-4a59-415c-9ac3-63bebcdcd0df by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > POST /sign refuses, and seals and signs nothing 74ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names
+{
+  "timestamp": "2026-10-23T19:12:35.953Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "64c99a61-2a41-4f4e-a3ee-27ac1a4a06f4",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names
+{
+  "timestamp": "2026-10-23T19:12:35.976Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 64c99a61-2a41-4f4e-a3ee-27ac1a4a06f4 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names
+{
+  "timestamp": "2026-10-23T19:12:36.027Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 64c99a61-2a41-4f4e-a3ee-27ac1a4a06f4 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER 114ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names
+{
+  "timestamp": "2026-10-23T19:12:36.204Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 64c99a61-2a41-4f4e-a3ee-27ac1a4a06f4 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names
+{
+  "timestamp": "2026-10-23T19:12:36.319Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 64c99a61-2a41-4f4e-a3ee-27ac1a4a06f4 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > names the contributing section, not only the node it is filed at
+{
+  "timestamp": "2026-10-23T19:12:36.381Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6600f652-6ebd-44ee-8c51-d7bc10d551f5",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > names the contributing section, not only the node it is filed at
+{
+  "timestamp": "2026-10-23T19:12:36.422Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6600f652-6ebd-44ee-8c51-d7bc10d551f5 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names 392ms
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > names the contributing section, not only the node it is filed at
+{
+  "timestamp": "2026-10-23T19:12:36.533Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 6600f652-6ebd-44ee-8c51-d7bc10d551f5 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > says it once when the section IS the node
+{
+  "timestamp": "2026-10-23T19:12:36.627Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "77a10a70-a808-4545-b7a2-9358544f8ed2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > says it once when the section IS the node
+{
+  "timestamp": "2026-10-23T19:12:36.680Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 77a10a70-a808-4545-b7a2-9358544f8ed2 by a***@filing.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > says it once when the section IS the node
+{
+  "timestamp": "2026-10-23T19:12:36.793Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 77a10a70-a808-4545-b7a2-9358544f8ed2 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > names the contributing section, not only the node it is filed at 282ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the refusal names a section the author can open > says it once when the section IS the node 299ms
+
+ Test Files  1 passed (1)
+      Tests  93 passed (93)
+   Start at  19:12:03
+   Duration  33.52s (transform 12.14s, setup 97ms, import 3.67s, tests 29.42s, environment 0ms)

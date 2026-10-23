@@ -92,6 +92,7 @@ import { assertAnaUploadAccess } from '../../services/ana/source-context-admissi
 import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
 import { readProjectAuthoringRecords } from '../../services/c2c/project-authoring-records';
 import { readProjectTeam } from '../../services/c2c/project-team';
+import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 
 /** A filing the market verdict does not offer, found once the scaffold has
@@ -228,15 +229,18 @@ async function pendingStore(
 const logger = createScopedLogger('c2c-projects');
 
 /** What the person creating the program is told, per reason. No schema names. */
-const PROJECT_RECORD_REFUSAL: Record<'NO_CLIENT_WORKSPACE' | 'AMBIGUOUS_CLIENT_WORKSPACE', string> = {
+const PROJECT_RECORD_REFUSAL: Record<'NO_CLIENT_WORKSPACE' | 'AMBIGUOUS_CLIENT_WORKSPACE' | 'INVALID_CLIENT_WORKSPACE' | 'CLIENT_WORKSPACE_MISMATCH', string> = {
   NO_CLIENT_WORKSPACE:
     'The project was not created: this organization has no workspace set up yet, so the project ' +
     'could not be given its record. Nothing was saved. Share the reference below with your system ' +
     'administrator or Concept2Cure support.',
   AMBIGUOUS_CLIENT_WORKSPACE:
-    'The project was not created: this organization has several workspaces and none is set as its ' +
-    'own, so the project could not be given its record. Nothing was saved. Share the reference below ' +
-    'with your system administrator or Concept2Cure support.',
+    'Choose a client workspace before creating this project. Nothing was saved.',
+  INVALID_CLIENT_WORKSPACE:
+    'The selected client workspace is unavailable. Refresh the workspace choices. Nothing was saved.',
+  CLIENT_WORKSPACE_MISMATCH:
+    'The workspace selection does not match this request or the recorded project. Nothing was saved.',
+
 };
 
 /**
@@ -662,6 +666,12 @@ router.post('/', async (req: Request, res: Response) => {
     await requireProjectCreationAccess(pool, orgId, userId);
   } catch (err) { return sendProjectAccessFailure(res, err); }
 
+  let workspaceInput: ReturnType<typeof projectWorkspaceInput>;
+  try { workspaceInput = projectWorkspaceInput(req); }
+  catch (error) {
+    if (error instanceof ProjectWorkspaceInputError) return res.status(400).json({ error: error.code, message: error.message });
+    throw error;
+  }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
@@ -886,12 +896,15 @@ router.post('/', async (req: Request, res: Response) => {
   // The code actually persisted — `base`, or the disambiguated retry code. The
   // audit row below records what was written, not what was first attempted.
   let createdCode = base;
-  let scaffold: ScaffoldResult = { documentId: null, sectionCount: 0 };
+  let scaffold: ScaffoldResult;
   // Canonical application type for drug programs; null for device/CER/MDR
   // program types, which create no submission spine.
   const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
   let submissionSpine: { id: number; created: boolean } | null = null;
-  let projectAnchor: { projectId: number; created: boolean } | null = null;
+  let projectAnchor: Awaited<ReturnType<typeof requireProgramProjectAnchor>> | null = null;
+  let commitStarted = false;
+  let committed = false;
+  let discardError: Error | undefined;
   try {
     try {
       await client.query('BEGIN');
@@ -963,17 +976,16 @@ router.post('/', async (req: Request, res: Response) => {
       // and any error propagates so the whole creation rolls back — never a
       // program with a half-written anchor.
       //
-      // Nor a program with NO anchor (P-19). `projects.client_workspace_id` is
-      // NOT NULL and nothing in program data names a workspace, so the row is
-      // written only where the workspace is unambiguous. Where it is not, this
-      // throws ProgramAnchorUnavailableError and the catch below refuses the
-      // creation: until 2026-10-08 a skip here still created the program, and
-      // it answered "no record" on every surface keyed by its project.
+      // Strict intake verifies the active owned workspace and retains its row
+      // lock on this transaction. Multiple active choices require an explicit
+      // ID; a default marker or request header cannot choose on the user's behalf.
+      // Any refusal rolls the program, scaffold and submission spine back.
       // The project record carries the registry context the readiness digest
       // reads (projects.metadata). Intake wrote none, so readiness was never
       // computed for any program (QA 2026-10-08, j8).
       projectAnchor = await requireProgramProjectAnchor({
         client, orgId, userId, programId: newId, name, code: createdCode, priority,
+        ...workspaceInput, requireExplicitWorkspace: true,
         metadata: registryContextForProgram({ submissionTypeId, programType, primaryAgency }),
       });
 
@@ -1011,6 +1023,7 @@ router.post('/', async (req: Request, res: Response) => {
         // program that could not have one was refused above (P-19).
         project_anchor_id: projectAnchor.projectId,
         project_anchor_created: projectAnchor.created,
+        client_workspace_id: projectAnchor.clientWorkspaceId,
       };
       await writeProgramAudit(client, {
         orgId, userId, programId: newId,
@@ -1018,12 +1031,18 @@ router.post('/', async (req: Request, res: Response) => {
         details: auditDetails,
       });
 
+      commitStarted = true;
       await client.query('COMMIT');
+      committed = true;
     } catch (e) {
-      await client.query('ROLLBACK').catch(() => {});
+      if (commitStarted) discardError = e instanceof Error ? e : new Error('Project creation commit was not acknowledged');
+      else await client.query('ROLLBACK').catch(rollbackError => {
+        discardError = rollbackError instanceof Error ? rollbackError : new Error('Project creation rollback was not acknowledged');
+      });
       throw e;
     } finally {
-      client.release();
+      if (discardError) client.release(discardError);
+      else client.release();
     }
 
     // Re-read through the EXACT projection the list uses, so the client receives
@@ -1053,11 +1072,16 @@ router.post('/', async (req: Request, res: Response) => {
     // code and predicate without a second round trip, and the create can never
     // return a field the read then omits.
     const program = await readProgramDetail(newId, orgId);
+    if (!rows[0] || !program) throw new Error('The committed project details could not be read');
     return res.status(201).json({
       data: rows[0] ? { ...rows[0], ...readinessOfDetail(program) } : rows[0],
       program,
       meta: {
         created: true,
+        organizationId: orgId,
+        actorUserId: userId,
+        clientWorkspaceId: projectAnchor.clientWorkspaceId,
+        clientWorkspaceName: projectAnchor.clientWorkspaceName,
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
@@ -1076,6 +1100,19 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (err: unknown) {
+    if (commitStarted || discardError) {
+      const correlationId = (req as Request & { requestId?: string }).requestId || randomUUID();
+      logger.error(committed ? 'Project committed but details unavailable' : 'Project creation commit outcome unknown', { correlationId, orgId, err });
+      return res.status(503).json({
+        error: committed ? 'PROJECT_CREATED_DETAILS_UNAVAILABLE' : 'PROJECT_CREATE_OUTCOME_UNKNOWN',
+        message: committed ? 'The project was created, but its details are unavailable. Check Projects before trying again.'
+          : 'The project creation outcome could not be confirmed. Check Projects before trying again.',
+        correlationId,
+        ...(committed ? { created: true, programId: newId!, projectAnchorId: projectAnchor?.projectId,
+          organizationId: orgId, actorUserId: userId, clientWorkspaceId: projectAnchor?.clientWorkspaceId,
+          clientWorkspaceName: projectAnchor?.clientWorkspaceName } : {}),
+      });
+    }
     if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     if (err instanceof ProgramAnchorUnavailableError) {

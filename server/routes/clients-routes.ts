@@ -11,6 +11,7 @@ import {
 } from '@shared/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
+import { sendProjectIntakeWorkspaces } from './c2c/project-intake-workspace';
 
 // Create a new router for client endpoints
 const router = Router();
@@ -210,6 +211,7 @@ router.get('/all', async (req, res) => {
  * API: GET /api/clients?organizationId=1
  */
 router.get('/', async (req, res) => {
+  if (req.query.purpose === 'project-intake') return sendProjectIntakeWorkspaces(req, res, getAuthedOrgId(req));
   try {
     // SECURITY: The org id comes from the JWT, never from the query
     // string. The legacy `?organizationId=` query param was an IDOR —

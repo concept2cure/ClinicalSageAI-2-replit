@@ -99,10 +99,12 @@ function queueDeviceCreate() {
     .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
     .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
+    .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
     .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce({ rows: [{ id: 'x', title: 'x' }] });
+    .mockResolvedValueOnce({ rows: [{ id: 'x', title: 'x' }] })
+    .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
 }
 
 /** BEGIN, program INSERT, spine identity SELECT, anchor x3, audit, COMMIT, re-select. */
@@ -113,10 +115,12 @@ function queueDrugCreate() {
     .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
+    .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
     .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce({ rows: [{ id: 'x', title: 'x' }] });
+    .mockResolvedValueOnce({ rows: [{ id: 'x', title: 'x' }] })
+    .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
 }
 
 const sqlCalls = () => query.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0].toUpperCase());
