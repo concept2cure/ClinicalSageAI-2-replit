@@ -793,7 +793,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             id: 'facility_fda_inspected',
             label: 'Manufacturing Facility FDA-Inspected',
             type: 'yes_no',
-            helpText: 'Per 42 USC 262(c) and 21 CFR 600.21, FDA must inspect and approve the manufacturing facility before a BLA can be licensed.',
+            helpText: 'Per 21 CFR 601.20(d), a biologics license is issued only after FDA inspects the establishment(s) listed in the BLA (inspection authority: 42 USC 262(c); timing: 21 CFR 600.21).',
           },
         ],
         defaultNext: 'process_validation_comparability',
@@ -813,8 +813,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Pre-Approval Inspection Likely',
             message:
-              'Per 42 USC 262(c) and 21 CFR 600.21, the manufacturing facility must be inspected by FDA before the BLA can be approved. Plan for a pre-approval inspection (PAI) with at least 6 months lead time.',
-            reference: '21 CFR 600.21',
+              'Per 21 CFR 601.20(d), a biologics license is issued only after FDA inspects the establishment(s) listed in the BLA (timing under 21 CFR 600.21). Plan for a pre-approval inspection (PAI) with at least 6 months lead time.',
+            reference: '21 CFR 601.20(d); 21 CFR 600.21',
           },
         ],
       },
@@ -937,7 +937,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
         question:
           'Provide the vaccine lot release testing details required for CBER lot release.',
         guidance:
-          'Per 21 CFR 610 (General Biological Products Standards) and 21 CFR 600.3, certain biological products including vaccines and blood products require CBER lot release. Manufacturers must submit samples and release protocols for each lot before distribution. Per 21 CFR 610.2, a lot release protocol must accompany each lot submitted for release. Testing must include potency (21 CFR 610.10), sterility (21 CFR 610.12), purity including pyrogenic substances/endotoxin (21 CFR 610.13), and identity (21 CFR 610.14); the former general safety test (21 CFR 610.11) was removed in 2015. A prescribed test may be replaced by a modified or equivalent method under 21 CFR 610.9, and for blood and blood components FDA may approve exceptions or alternatives under 21 CFR 640.120.',
+          'Per 21 CFR 610 (General Biological Products Standards) and 21 CFR 600.3, certain biological products, including most vaccines and many plasma-derived products, are under CBER lot release. Once notified by the Director, CBER, manufacturers must submit samples and release protocols for each lot and may not distribute it before release. Per 21 CFR 610.2, a lot release protocol must accompany each lot submitted for release. Testing must include potency (21 CFR 610.10), sterility (21 CFR 610.12), purity including pyrogenic substances/endotoxin (21 CFR 610.13), and identity (21 CFR 610.14); the former general safety test (21 CFR 610.11) was removed in 2015. A prescribed test may be replaced by a modified or equivalent method under 21 CFR 610.9, and for blood and blood components FDA may approve exceptions or alternatives under 21 CFR 640.120.',
         fields: [
           {
             id: 'lot_release_protocol',
@@ -951,7 +951,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             label: 'CBER Lot Release Required',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 610.2, samples and protocols must be submitted to CBER for lot release before distribution of vaccines and blood products.',
+            helpText: 'Per 21 CFR 610.2(a), CBER may require samples of any lot, with protocols showing test results, at any time; once notified by the Director, CBER, the manufacturer may not distribute a lot until CBER releases it. Most vaccines and many plasma-derived products are under routine lot release on this basis; it is not a blanket requirement for all blood products.',
           },
           {
             id: 'potency_testing_each_lot',
@@ -1138,7 +1138,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             label: 'Immunotoxicology Assessment Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Per ICH S6(R1) and ICH S8, immunotoxicity assessment is especially important for immunomodulatory biologics.',
+            helpText: 'Per ICH S6(R1), immunotoxicity assessment is especially important for immunomodulatory biologics (ICH S8 does not apply to biotechnology-derived products).',
           },
           {
             id: 'reproductive_tox',
@@ -1889,9 +1889,9 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             type: 'select',
             required: true,
             options: [
-              { value: 'psur', label: 'PSUR (Periodic Safety Update Report)' },
-              { value: 'pader', label: 'PADER (Periodic Adverse Drug Experience Report)' },
-              { value: 'both', label: 'Both PSUR and PADER' },
+              { value: 'psur', label: 'PBRER/PSUR (ICH E2C(R2) format, submitted in place of the PAER under an FDA waiver)' },
+              { value: 'pader', label: 'PAER (Periodic Adverse Experience Report, 21 CFR 600.80(c)(2))' },
+              { value: 'both', label: 'Both PBRER/PSUR and PAER' },
             ],
           },
           {
@@ -2125,7 +2125,7 @@ export function createBlaSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'More Reference Product Lots May Be Needed',
             message:
-              'FDA expects analysis of multiple lots (typically 10+) of the US-licensed reference product to adequately characterize the reference product quality range. Fewer lots may not provide sufficient statistical power for the tiered analytical similarity assessment.',
+              'FDA expects analysis of multiple lots (typically 10+) of the US-licensed reference product to adequately characterize the reference product quality range. Fewer lots may not adequately characterize reference product variability for the risk-based comparative analytical assessment (quantitative evaluation such as equivalence testing or a quality range, or qualitative evaluation, as justified by each attribute\'s risk ranking) described in FDA\'s current draft guidance on comparative analytical assessment for therapeutic protein biosimilars.',
             reference: 'FDA Guidance on Biosimilar Development (2015)',
           },
         ],

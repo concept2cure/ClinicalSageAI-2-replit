@@ -104,7 +104,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
     question:
       'Summarize the overall CER conclusions and identify any gaps or open items.',
     guidance:
-      'The CER conclusion must state whether sufficient clinical evidence exists to demonstrate conformity with the relevant General Safety and Performance Requirements (GSPR) of the EU MDR. Include identified data gaps, needed additional evidence, and the update schedule. Per EU MDR Article 61(11), CERs for implantable and Class III devices must be updated at least annually. For other device classes, updates may be less frequent but must be justified. The conclusion must be clearly traceable to the evidence presented in the CER and must address each claimed clinical benefit and identified risk.',
+      'The CER conclusion must state whether sufficient clinical evidence exists to demonstrate conformity with the relevant General Safety and Performance Requirements (GSPR) of the EU MDR. Include identified data gaps, needed additional evidence, and the update schedule. Per EU MDR Article 61(11), the clinical evaluation must be updated throughout the device life cycle with PMCF data; for implantable and Class III devices, the PMCF evaluation report and, if indicated, the SSCP (Article 32) must be updated at least annually, and the CER should be updated to reflect them. For other device classes, the CER update frequency must be justified. The conclusion must be clearly traceable to the evidence presented in the CER and must address each claimed clinical benefit and identified risk.',
     fields: [
       {
         id: 'overall_conclusion',
@@ -146,7 +146,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
         required: true,
         defaultValue: 'annual',
         options: [
-          { value: 'annual', label: 'Annual (required for Class III and implantable per Article 61(11))' },
+          { value: 'annual', label: 'Annual (aligned with the at-least-annual PMCF evaluation report and SSCP update required for Class III and implantable devices by Article 61(11))' },
           { value: 'biennial', label: 'Biennial (Class IIa/IIb non-implant — with justification)' },
           { value: 'triennial', label: 'Triennial (low-risk devices — with robust justification)' },
           { value: 'triggered', label: 'Triggered by Significant New Data' },
@@ -175,7 +175,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
         label: 'CER Reviewed and Approved by Qualified Person',
         type: 'yes_no',
         required: true,
-        helpText: 'The CER must be reviewed and approved by the Person Responsible for Regulatory Compliance (PRRC) per EU MDR Article 15',
+        helpText: 'The CER must be signed and dated by suitably qualified clinical evaluators whose qualifications are documented (MEDDEV 2.7/1 Rev 4 Section 6.4). Approving the CER is not one of the PRRC responsibilities listed in EU MDR Article 15',
       },
     ],
     defaultNext: 'pmcf_plan',
@@ -187,7 +187,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
     question:
       'Describe the Post-Market Clinical Follow-up (PMCF) plan for this device.',
     guidance:
-      'EU MDR Article 61(11) and Annex XIV Part B require a PMCF plan for all devices except where duly justified. The PMCF plan must describe how the manufacturer will proactively collect and evaluate clinical data after CE marking to confirm safety and performance throughout the device\'s lifetime, address residual risks, and detect emerging risks. MDCG 2020-7 provides detailed guidance on PMCF plan and PMCF evaluation report content. The PMCF plan should be proportionate to the risk class of the device and must address any gaps identified in the clinical evaluation.',
+      'EU MDR Article 61(11) and Annex XIV Part B require a PMCF plan for all devices except where duly justified. The PMCF plan must describe how the manufacturer will proactively collect and evaluate clinical data after CE marking to confirm safety and performance throughout the device\'s lifetime, address residual risks, and detect emerging risks. MDCG 2020-7 provides a template and guidance for PMCF plan content; MDCG 2020-8 provides the corresponding template for the PMCF evaluation report. The PMCF plan should be proportionate to the risk class of the device and must address any gaps identified in the clinical evaluation.',
     fields: [
       {
         id: 'pmcf_plan_established',
@@ -284,7 +284,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
         severity: 'critical',
         title: 'No PMCF Plan',
         message:
-          'A Post-Market Clinical Follow-up plan is required per EU MDR Article 61(11) and Annex XIV Part B for all devices unless duly justified. Notified Bodies will not approve the CER without a PMCF plan (or a robust justification for its absence). For Class III and implantable devices, a PMCF plan is always required.',
+          'A Post-Market Clinical Follow-up plan is required per EU MDR Article 61(11) and Annex XIV Part B for all devices unless duly justified. Notified Bodies will not approve the CER without a PMCF plan (or a robust justification for its absence). For Class III and implantable devices, a justification for not performing PMCF is rarely accepted, and Article 61(11) requires the PMCF evaluation report to be updated at least annually.',
         reference: 'EU MDR Article 61(11); Annex XIV Part B; MDCG 2020-7',
       },
     ],
@@ -344,7 +344,7 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
         id: 'pmcf_study_competent_authority',
         label: 'Competent Authority Approval/Notification',
         type: 'yes_no',
-        helpText: 'Required for interventional PMCF studies per EU MDR Article 70',
+        helpText: 'Required for PMCF investigations involving additional invasive or burdensome procedures: notify the Member States concerned at least 30 days before start per EU MDR Article 74(1); if the device is used outside its intended purpose, the full clinical investigation regime applies per Article 74(2)',
       },
       {
         id: 'pmcf_study_data_management',

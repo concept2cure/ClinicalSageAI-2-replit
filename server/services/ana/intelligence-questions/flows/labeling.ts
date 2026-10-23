@@ -201,7 +201,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Which labeling format and submission standard will you use?',
         guidance:
-          'All prescription drug and biologic labeling must follow the Physician Labeling Rule (PLR) format per 21 CFR 201.56(d) and 201.57. Labeling content is submitted electronically in Structured Product Labeling (SPL) XML format to the FDA\'s DailyMed system. Biosimilar labeling follows the same PLR format with modifications per FDA\'s "Labeling for Biosimilar Products" guidance.',
+          'Prescription drug and biologic labeling for new NDAs, BLAs and efficacy supplements, and for products approved since June 30, 2001 under the implementation schedule, must follow the Physician Labeling Rule (PLR) format per 21 CFR 201.56(d) and 201.57; older products not yet converted may use the format in 21 CFR 201.80. Labeling content is submitted electronically to FDA in Structured Product Labeling (SPL) XML format, and FDA-received SPL is then published on the National Library of Medicine\'s DailyMed. Biosimilar labeling follows the same PLR format with modifications per FDA\'s "Labeling for Biosimilar Products" guidance.',
         fields: [
           {
             id: 'plr_format_confirmed',
@@ -215,7 +215,7 @@ export function createLabelingFlow(): FlowDefinition {
             label: 'Will labeling be submitted in SPL XML format?',
             type: 'yes_no',
             required: true,
-            helpText: 'Electronic SPL submission to FDA DailyMed is required. See FDA SPL guidance and HL7 SPL standard.',
+            helpText: 'Electronic SPL submission to FDA is required (via the Electronic Submissions Gateway); FDA-received SPL is then published on the National Library of Medicine\'s DailyMed. See FDA SPL guidance and HL7 SPL standard.',
           },
           {
             id: 'spl_tool',
@@ -289,7 +289,7 @@ export function createLabelingFlow(): FlowDefinition {
             label: 'Recent Major Changes (within last 12 months)',
             type: 'textarea',
             placeholder: 'List each section changed and the month/year, e.g.:\n- Indications and Usage (1.1): 03/2025\n- Warnings and Precautions (5.2): 06/2025',
-            helpText: 'Per 21 CFR 201.57(a)(5) (Recent Major Changes), list sections with substantive labeling changes within the past year. Include section number and date of change.',
+            helpText: 'Per 21 CFR 201.57(a)(5) (Recent Major Changes), list substantive labeling changes made within the past year to the Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions sections only. Include section number and month/year of change.',
           },
           {
             id: 'highlights_limitations',
@@ -324,7 +324,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Which sections of Full Prescribing Information (FPI) will the labeling include?',
         guidance:
-          'Per 21 CFR 201.57(c), FPI sections are numbered 1 through 17. Not all sections are required for every product — include only those relevant. Sections 9 (Drug Abuse and Dependence) and 16 (How Supplied / Storage and Handling) are commonly included. Section 11 (Description) and Section 12 (Clinical Pharmacology) are always required.',
+          'Per 21 CFR 201.57(c), FPI sections are numbered 1 through 17. Most FPI sections are required. Under 21 CFR 201.56(d), a section may be left out only when it is clearly inapplicable and is one of those the rule allows to be omitted, such as Boxed Warning, 9 (Drug Abuse and Dependence), 10 (Overdosage), 14 (Clinical Studies) and 15 (References). Section 16 (How Supplied / Storage and Handling) is required for every product. Section 4 (Contraindications) must appear, and it states "None" when there are none. Section 11 (Description) and Section 12 (Clinical Pharmacology) are always required.',
         fields: [
           {
             id: 'fpi_sections_included',
@@ -643,7 +643,7 @@ export function createLabelingFlow(): FlowDefinition {
             title: 'REMS Required but No Boxed Warning',
             message:
               'This product requires a REMS program, but no Boxed Warning is planned. While REMS and Boxed Warnings are independent requirements, most REMS products carry a Boxed Warning. Confirm with FDA whether a Boxed Warning is needed.',
-            reference: '21 CFR 201.57(c)(1); FDA Guidance: REMS Integration with Labeling',
+            reference: '21 CFR 201.57(c)(1); FD&C Act section 505-1 (REMS)',
           },
         ],
         defaultNext: 'warnings_precautions_detail',
@@ -965,8 +965,8 @@ export function createLabelingFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Patient Material Reading Level Too High',
             message:
-              'Patient-facing materials are written at a high school reading level. FDA recommends a 6th-8th grade reading level to ensure broad comprehension. Consider revising for readability.',
-            reference: 'FDA Guidance: Medication Guides — Distribution Requirements and Inclusion in REMS (2011)',
+              'Patient-facing materials are written at a high school reading level. 21 CFR 208.20 requires Medication Guides to use nontechnical, understandable language, and health-literacy best practice targets a 6th-8th grade reading level to ensure broad comprehension. Consider revising for readability.',
+            reference: '21 CFR 208.20 (Medication Guide content and format: nontechnical, understandable language); 6th-8th grade target reflects health-literacy best practice',
           },
         ],
         defaultNext: 'medication_guide_assessment',
@@ -1039,7 +1039,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Complete the OTC Drug Facts labeling (21 CFR 201.66).',
         guidance:
-          'OTC products must display a "Drug Facts" panel in a standardized format per 21 CFR 201.66. This replaces the PLR format for OTC products. The Drug Facts panel must include: Active ingredient(s), Purpose, Uses, Warnings (including allergy alert, stomach bleeding warning if applicable), Directions, Other information, Inactive ingredients, and Questions? phone number.',
+          'OTC products must display a "Drug Facts" panel in a standardized format per 21 CFR 201.66. This replaces the PLR format for OTC products. The Drug Facts panel must include: Active ingredient(s), Purpose, Uses, Warnings (including allergy alert, stomach bleeding warning if applicable), Directions, Other information, Inactive ingredients, and optionally Questions? (or Questions or comments?) with a phone number (21 CFR 201.66(c)(9)); the label must also give a domestic address or phone number for adverse event reporting (FD&C Act 502(x)).',
         fields: [
           {
             id: 'otc_active_ingredients',
@@ -1177,7 +1177,7 @@ export function createLabelingFlow(): FlowDefinition {
             title: 'Home-Use Device — Additional Labeling Required',
             message:
               'Devices intended for home use by lay users require labeling written at a lower reading level, with clear illustrations, and must address patient self-testing / self-care scenarios. Review FDA guidance on medical device home-use labeling.',
-            reference: '21 CFR 801.4; FDA Guidance: Medical Device Home-Use Initiative (2023)',
+            reference: '21 CFR Part 801; FDA Guidance: Design Considerations for Devices Intended for Home Use (2014)',
           },
         ],
         defaultNext: 'device_ifu_content',
@@ -1255,7 +1255,7 @@ export function createLabelingFlow(): FlowDefinition {
         question:
           'Address UDI compliance and standardized symbols on device labeling.',
         guidance:
-          'Per 21 CFR 830, all medical devices must bear a Unique Device Identifier (UDI) on their label. The UDI consists of a Device Identifier (DI) and Production Identifier (PI). Labels should use standardized symbols per FDA-recognized standards (ISO 15223-1, IEC 60417) and include a symbol glossary if symbols are used without adjacent text.',
+          'Per 21 CFR 801.20, the device label must bear a Unique Device Identifier (UDI), subject to the general exceptions in 21 CFR 801.30; 21 CFR Part 830 governs the UDI system itself (issuing agencies, UDI format and GUDID). The UDI consists of a Device Identifier (DI) and Production Identifier (PI). Labels should use standardized symbols per FDA-recognized standards (ISO 15223-1, IEC 60417) and include a symbol glossary if symbols are used without adjacent text.',
         fields: [
           {
             id: 'udi_compliance',

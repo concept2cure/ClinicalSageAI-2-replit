@@ -33,7 +33,7 @@ export const gsprComplianceNodes: QuestionNode[] = [
         label: 'GSPRs Requiring Clinical Evidence',
         type: 'textarea',
         required: true,
-        helpText: 'List the specific GSPRs (by number) that require clinical data as supporting evidence. Typically includes GSPR 1 (safety/performance), 2 (risk management), 6 (clinical benefits), 8 (performance characteristics).',
+        helpText: 'List the specific GSPRs (by number) that require clinical data as supporting evidence. Typically includes GSPR 1 (performance, safety and acceptable benefit-risk), 8 (undesirable side-effects minimised and acceptable against the benefits) and, where relevant, 6 (performance and safety over the device lifetime); GSPRs 2-4 (risk reduction, risk management system, residual risk) are usually supported by clinical data as an input.',
       },
       {
         id: 'gsprs_design_verification',
@@ -52,21 +52,21 @@ export const gsprComplianceNodes: QuestionNode[] = [
         label: 'Chapter I (General Requirements) GSPRs 1-9 Addressed',
         type: 'yes_no',
         required: true,
-        helpText: 'Includes: general safety/performance (1), risk management (2), acceptability of benefit-risk (3-4), design for performance (5), clinical benefits (6), chemical properties (7), performance characteristics (8), design for safety (9)',
+        helpText: 'Includes: general performance and safety (1), risk reduction as far as possible (2), risk management system (3), risk control measures and information for safety (4), use error and ergonomics (5), performance maintained over device lifetime (6), transport and storage (7), side-effects minimised and acceptable against benefits (8), Annex XVI products without a medical purpose (9)',
       },
       {
         id: 'annex_i_chapter_ii_covered',
         label: 'Chapter II (Design & Manufacturing) GSPRs 10-22 Addressed',
         type: 'yes_no',
         required: true,
-        helpText: 'Includes: chemical/physical/biological properties (10-11), infection (12), substances (13-14), software (15-17), active devices (18-22)',
+        helpText: 'Includes: chemical/physical/biological properties (10), infection and microbial contamination (11), medicinal and absorbed substances (12), materials of biological origin (13), construction and environment (14), diagnostic/measuring function (15), radiation (16), software and electronic programmable systems (17), active and active implantable devices (18-19), mechanical/thermal risks (20), energy or substance delivery (21), lay-person devices (22)',
       },
       {
         id: 'annex_i_chapter_iii_covered',
         label: 'Chapter III (Information Supplied) GSPR 23 Addressed',
         type: 'yes_no',
         required: true,
-        helpText: 'Labeling requirements including label, IFU, implant card per Annex I Section 23',
+        helpText: 'Labeling requirements including label and IFU per Annex I Section 23 (implant card per MDR Article 18)',
       },
       {
         id: 'gspr_specific_concerns',
@@ -121,7 +121,7 @@ export const gsprComplianceNodes: QuestionNode[] = [
         label: 'Deviations from Common Specifications',
         type: 'textarea',
         visibleWhen: { field: 'common_specs_applicable', operator: 'eq', value: true },
-        helpText: 'If deviating from any CS, provide justification that the alternative approach provides equivalent safety and performance per EU MDR Article 9(2)',
+        helpText: 'If deviating from any CS, provide justification that the alternative approach provides at least equivalent safety and performance per EU MDR Article 9(3)',
       },
       {
         id: 'conformity_assessment_route',

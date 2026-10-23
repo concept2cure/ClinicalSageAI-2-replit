@@ -69,7 +69,7 @@ const rules: AuditRule[] = [
             '21 CFR 807.87(a) requires identification of the device, including its trade or proprietary name.',
           reference: '21 CFR 807.87(a); FDA Refuse to Accept Checklist for 510(k) Submissions',
           recommendation:
-            'Provide the exact trade/proprietary name under which the device will be marketed. This is a mandatory field and its absence will trigger an RTA (Refuse to Accept) determination.',
+            'Provide the exact trade/proprietary name under which the device will be marketed. This is a required field. For eSTAR 510(k) submissions, which are not subject to RTA review, a missing device name will place the submission on technical screening hold until it is provided.',
           relatedFields: ['device_trade_name'],
         };
       }
@@ -389,7 +389,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Device Description Missing',
     question:
-      'A complete device description is required under 21 CFR 807.87(e), including sufficient detail for the reviewer to understand how the device works, its components, and patient interface. Has a comprehensive description been provided?',
+      'A complete device description is expected in a 510(k) under 21 CFR 807.87 (including the comparison with similar devices in 807.87(f)) and FDA\u2019s 510(k) RTA/eSTAR content expectations, including sufficient detail for the reviewer to understand how the device works, its components, and patient interface. Has a comprehensive description been provided?',
     check: (a) => {
       if (isBlank(a.device_description)) {
         return {
@@ -398,12 +398,12 @@ const rules: AuditRule[] = [
           severity: 'warning',
           title: 'Device Description Missing',
           question:
-            'A complete device description is required under 21 CFR 807.87(e), including sufficient detail for the reviewer to understand how the device works, its components, and patient interface. Has a comprehensive description been provided?',
+            'A complete device description is expected in a 510(k) under 21 CFR 807.87 (including the comparison with similar devices in 807.87(f)) and FDA\u2019s 510(k) RTA/eSTAR content expectations, including sufficient detail for the reviewer to understand how the device works, its components, and patient interface. Has a comprehensive description been provided?',
           observation:
             'No device description was provided. CDRH expects a narrative description accompanied by diagrams, photographs, or engineering drawings.',
           requirement:
             'The device description must be sufficient for the reviewer to understand how the device works, its components, and how it interfaces with the patient or user.',
-          reference: '21 CFR 807.87(e); FDA Guidance: Format for Traditional and Abbreviated 510(k)s',
+          reference: '21 CFR 807.87(f); FDA Guidance: Format for Traditional and Abbreviated 510(k)s',
           recommendation:
             'Include a detailed device description covering: physical description, component list, accessories, operational overview, and diagrams or photographs.',
           relatedFields: ['device_description', 'tech_characteristics_comparison'],
@@ -878,7 +878,7 @@ const rules: AuditRule[] = [
             question:
               'Per 21 CFR 807.87(e), the indications for use statement in the 510(k) must be consistent with the proposed labeling. Has the submitter ensured that the intended use, indications for use, and labeling all align?',
             observation:
-              'The intended use statement in the 510(k) submission appears to differ from the intended use as stated in the proposed labeling. Any inconsistency between these statements may result in an Additional Information (AI) request or Refuse to Accept (RTA) decision.',
+              'The intended use statement in the 510(k) submission appears to differ from the intended use as stated in the proposed labeling. Any inconsistency between these statements may result in an Additional Information (AI) request during substantive review.',
             requirement:
               '21 CFR 807.87(e) requires the 510(k) to include proposed labeling. The indications for use statement (FDA Form 3881) must be consistent with the labeling, instructions for use (IFU), and any promotional materials. Inconsistencies between the 510(k) intended use and the labeling are a common reason for Additional Information requests.',
             reference:

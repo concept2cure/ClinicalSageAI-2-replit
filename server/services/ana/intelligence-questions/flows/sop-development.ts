@@ -1082,7 +1082,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'No Mock Audit Program',
             message:
               'Regular mock audits help identify compliance gaps before regulatory inspections. Consider establishing at least an annual mock audit schedule for GxP SOPs.',
-            reference: 'FDA Inspection Best Practices',
+            reference: 'Industry practice (no FDA rule requires mock audits). Internal audits: ISO 13485:2016 clause 8.2.4, incorporated by 21 CFR 820.10 (QMSR), for devices; ICH Q10 for drugs',
           },
           {
             id: 'not_inspection_ready',

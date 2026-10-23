@@ -73,7 +73,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No impurity profile was provided for the drug substance.',
-          'A complete impurity profile is required per ICH Q3A(R2) Section 3, including identification and qualification of all impurities above reporting thresholds.',
+          'A complete impurity profile is required per ICH Q3A(R2) Section 3, including reporting of impurities above the reporting threshold, identification of those above the identification threshold, and qualification of those above the qualification threshold.',
           'ICH Q3A(R2) Section 3; ICH Q3B(R2) Section 3; 21 CFR 314.50(d)(1)',
           'Provide a comprehensive impurity profile listing all identified and unidentified impurities, their structures where known, proposed limits, and qualification status relative to ICH Q3A/Q3B thresholds.',
           ['organic_impurities', 'inorganic_impurities', 'ds_specification_tests'],
@@ -122,8 +122,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Container closure system is not described in the CMC submission.',
-          'A full description of the container closure system is required per 21 CFR 314.50(d)(1)(ii)(b) and ICH Q1A(R2) Section 2.2.4 (Container Closure System), including materials of construction, specifications, and compatibility data.',
-          '21 CFR 314.50(d)(1)(ii)(b); ICH Q1A(R2) Section 2.2.4; FDA Guidance: Container Closure Systems for Packaging Human Drugs and Biologics (1999)',
+          'A full description of the container closure system is required per 21 CFR 314.50(d)(1)(ii)(a) and ICH Q1A(R2) Section 2.2.4 (Container Closure System), including materials of construction, specifications, and compatibility data.',
+          '21 CFR 314.50(d)(1)(ii)(a); ICH M4Q 3.2.P.7; ICH Q1A(R2) Section 2.2.4; FDA Guidance: Container Closure Systems for Packaging Human Drugs and Biologics (1999)',
           'Describe the container closure system including materials of construction, dimensions, extractables/leachables studies, and compatibility with the drug product formulation.',
           ['container_system_name', 'primary_packaging', 'closure_description', 'el_assessment'],
         );
@@ -168,8 +168,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Drug substance structural characterization (e.g., NMR, MS, IR, elemental analysis) is not provided.',
-          'ICH Q6A Section 3.1 and S.3.1 of the CTD require comprehensive structural elucidation including spectroscopic confirmation of molecular structure.',
-          'ICH Q6A Section 3.1; ICH M4Q(R1) Module 3.2.S.3.1',
+          'CTD Module 3.2.S.3.1 (Elucidation of Structure and other Characteristics, ICH M4Q) requires comprehensive structural elucidation including spectroscopic confirmation of molecular structure.',
+          'ICH M4Q(R1) Module 3.2.S.3.1',
           'Provide full structural elucidation data including 1H/13C NMR, high-resolution mass spectrometry, IR/UV spectroscopy, and elemental analysis. Include stereochemistry assignment if applicable.',
           ['characterization_methods', 'characterization_summary', 'polymorphic_forms'],
         );
@@ -268,8 +268,8 @@ const rules: AuditRule[] = [
           this.title,
           `The proposed shelf life of ${shelfLife} months exceeds the ${stabilityDuration} months of available long-term stability data. On what basis does the sponsor justify a shelf life beyond the observed data range?`,
           `Proposed shelf life (${shelfLife} months) exceeds available stability data (${stabilityDuration} months). Extrapolation must be justified per ICH Q1E.`,
-          'ICH Q1E permits shelf life extrapolation beyond observed data only when statistical analysis supports the projection and no significant change is observed.',
-          'ICH Q1E; ICH Q1A(R2) Section 2.2.5; FDA Guidance: Stability Testing (2014)',
+          'ICH Q1E permits limited shelf life extrapolation beyond observed long-term data; how far depends on whether significant change occurs at the accelerated (and, where tested, intermediate) condition and on the variability of the data, and statistical analysis is normally expected unless the data show little or no change and little or no variability.',
+          'ICH Q1E Evaluation of Stability Data; ICH Q1A(R2) Section 2.2.9 (Evaluation)',
           'Either extend stability studies to cover the proposed shelf life or provide a formal ICH Q1E statistical extrapolation analysis. Limit initial shelf life to the duration supported by real-time data.',
           ['proposed_shelf_life_months', 'stability_data_duration_months', 'stability_trend_analysis'],
         );
@@ -298,7 +298,7 @@ const rules: AuditRule[] = [
             ? 'The sponsor reports impurities above the ICH Q3A/Q3B qualification threshold that are not qualified for the proposed maximum daily dose.'
             : 'Whether any impurity exceeds the ICH Q3A/Q3B qualification threshold for the proposed maximum daily dose is not stated.',
           'ICH Q3A(R2) and Q3B(R2) establish dose-dependent thresholds for reporting, identification, and qualification of impurities. Compliance must be demonstrated.',
-          'ICH Q3A(R2) Table 1; ICH Q3B(R2) Table 1; ICH Q3C(R9); ICH Q3D(R2)',
+          'ICH Q3A(R2) Attachment 1 (Thresholds); ICH Q3B(R2) Attachment 1 (Thresholds for Degradation Products in New Drug Products); ICH Q3C(R9); ICH Q3D(R2)',
           'Tabulate all impurities against ICH Q3A/Q3B thresholds based on maximum daily dose. For any impurity above the identification threshold, provide structural identification. For impurities above the qualification threshold, provide toxicological qualification data.',
           ['unqualified_impurities', 'max_daily_dose', 'organic_impurities'],
         );
@@ -344,7 +344,7 @@ const rules: AuditRule[] = [
           this.question,
           'Specification setting does not reference ICH Q6A/Q6B decision trees or provide a systematic justification for acceptance criteria.',
           'ICH Q6A (small molecules) and Q6B (biologics) provide decision trees for establishing appropriate test procedures and acceptance criteria in drug substance and drug product specifications.',
-          'ICH Q6A; ICH Q6B; FDA Guidance: Setting Specifications for Biotechnological/Biological Products (1999)',
+          'ICH Q6A; ICH Q6B; FDA Guidance for Industry: Q6B Specifications: Test Procedures and Acceptance Criteria for Biotechnological/Biological Products (1999)',
           'Apply the relevant ICH Q6A or Q6B decision trees to systematically justify each specification attribute and acceptance criterion. Document the rationale for each included and excluded test.',
           ['specification_justification', 'q6_decision_trees_applied', 'drug_product_specification', 'drug_substance_specification'],
         );
@@ -593,8 +593,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No technology transfer protocol or plan is documented for the manufacturing process.',
-          'ICH Q10 Section 3.1.2 (Technology Transfer) and WHO TRS 961 Annex 7 recommend a structured technology transfer process to ensure successful transfer of manufacturing knowledge between development and production, or between sites.',
-          'ICH Q10 Section 3.1.2; ICH Q12; WHO TRS 961 Annex 7',
+          'ICH Q10 Section 3.1.2 (Technology Transfer) and the WHO guidelines on technology transfer in pharmaceutical manufacturing (WHO TRS 1044, 2022, which replaced TRS 961 Annex 7) recommend a structured technology transfer process to ensure successful transfer of manufacturing knowledge between development and production, or between sites.',
+          'ICH Q10 Section 3.1.2; ICH Q12; WHO guidelines on technology transfer in pharmaceutical manufacturing (TRS 1044, 2022)',
           'Develop a technology transfer protocol covering process description, critical parameters, analytical methods, equipment qualification requirements, and acceptance criteria for demonstration batches at the receiving site.',
           ['tech_transfer_protocol', 'manufacturing_sites', 'process_knowledge'],
         );
@@ -737,7 +737,7 @@ const rules: AuditRule[] = [
           this.question,
           'No assessment of mutagenic (genotoxic) impurities per ICH M7(R2) is provided. This is a significant patient safety gap.',
           'ICH M7(R2) requires assessment of mutagenic potential for all actual and potential impurities, with control strategies based on acceptable intake (AI) limits derived from the Threshold of Toxicological Concern (TTC).',
-          'ICH M7(R2); FDA Guidance: Genotoxic and Carcinogenic Impurities in Drug Substances and Products (2008); EMA/CHMP/ICH/83812/2013',
+          'ICH M7(R2); FDA Guidance: M7(R2) Assessment and Control of DNA Reactive (Mutagenic) Impurities in Pharmaceuticals to Limit Potential Carcinogenic Risk; EMA/CHMP/ICH/83812/2013',
           'Conduct a comprehensive ICH M7(R2) assessment: (1) identify all potential mutagenic impurities via (Q)SAR analysis; (2) classify per M7 Classes 1-5; (3) establish acceptable intake limits; (4) demonstrate control via specification limits or purge factor arguments.',
           ['mutagenic_impurity_assessment', 'organic_impurities', 'synthesis_overview'],
         );
@@ -762,7 +762,7 @@ const rules: AuditRule[] = [
           this.question,
           'No elemental impurities risk assessment per ICH Q3D(R2) is provided. Catalysts, reagents, and equipment may introduce toxic elements.',
           'ICH Q3D(R2) requires a risk-based assessment of elemental impurities from all potential sources (drug substance synthesis, excipients, manufacturing equipment, container closure) with control below established PDEs.',
-          'ICH Q3D(R2); USP <232>/<233>; FDA Guidance: Elemental Impurities in Drug Products (2022)',
+          'ICH Q3D(R2); USP <232>/<233>; FDA Guidance: Elemental Impurities in Drug Products (2018)',
           'Conduct an ICH Q3D risk assessment covering all Class 1, 2A, and 2B elements. Evaluate all potential sources including catalysts, reagents, utilities, equipment, and container closure. Provide ICP-MS or ICP-OES data for relevant elements.',
           ['inorganic_impurities', 'synthesis_overview', 'equipment_type'],
         );
@@ -784,8 +784,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No nitrosamine risk evaluation is provided. FDA requires assessment of N-nitrosamine impurity risk for all drug products.',
-          'FDA requires nitrosamine risk evaluations per the September 2020 guidance, including assessment of all potential root causes (amine + nitrite, nitrosating conditions, cross-contamination).',
-          'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (2021); ICH M7(R2); EMA Referral on Nitrosamines (2020)',
+          'FDA requires nitrosamine risk evaluations per its guidance Control of Nitrosamine Impurities in Human Drugs (Revision 2, September 2024), including assessment of all potential root causes (amine + nitrite, nitrosating conditions, cross-contamination).',
+          'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (Rev. 2, 2024); ICH M7(R2); EMA Referral on Nitrosamines (2020)',
           'Conduct a comprehensive nitrosamine risk evaluation: (1) assess all potential sources of N-nitrosamine formation; (2) test for NDSRIs using sufficiently sensitive methods (LOD at AI level); (3) implement controls if risk is identified; (4) establish confirmatory testing program.',
           ['nitrosamine_assessment', 'nitrosamine_risk_evaluation', 'synthesis_route', 'amine_containing_components'],
         );
@@ -809,7 +809,7 @@ const rules: AuditRule[] = [
           this.question,
           'No drug-excipient compatibility studies are provided to support the chosen formulation.',
           'ICH Q8(R2) recommends drug-excipient compatibility studies as part of pharmaceutical development to identify potential incompatibilities that could affect product quality during storage.',
-          'ICH Q8(R2) Section 2.3; FDA Guidance: Quality Considerations for Continuous Manufacturing (2019)',
+          'ICH Q8(R2) Section 2.1 (Components of the Drug Product: Drug Substance and Excipients)',
           'Conduct binary and multicomponent drug-excipient compatibility studies using accelerated conditions and stability-indicating analytical methods. Document results and impact on formulation selection.',
           ['excipient_compatibility_studies', 'compatibility_study_details', 'formulation_composition_detail'],
         );
@@ -835,7 +835,7 @@ const rules: AuditRule[] = [
           this.question,
           'Microbiological controls (bioburden, endotoxin, sterility) are not adequately described for a product with potential microbial contamination risk.',
           'USP <61>/<62> (microbial enumeration and specified organisms), USP <85> (endotoxin), and USP <71> (sterility) requirements apply based on route of administration. 21 CFR 211.113 requires appropriate controls.',
-          '21 CFR 211.113; USP <61>/<62>/<71>/<85>; ICH Q6A Decision Tree #6',
+          '21 CFR 211.113; USP <61>/<62>/<71>/<85>; ICH Q6A Decision Tree #8 (non-sterile drug products)',
           'Define microbiological specifications appropriate to the dosage form and route. For sterile products, describe the sterility assurance strategy (terminal sterilization or aseptic processing) and include media fill and environmental monitoring programs.',
           ['microbiological_controls', 'route_of_administration', 'dosage_form', 'sterility_assurance'],
         );

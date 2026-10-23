@@ -612,7 +612,7 @@ export function buildSuggestedActions(
       break;
     case 'safety_narrative':
       actions.push(
-        { label: 'Draft Safety Narrative', actionType: 'draft_safety_narrative', description: 'Draft the ICH E3 §16 patient safety narrative from the collected case facts (draft_safety_narrative)' },
+        { label: 'Draft Safety Narrative', actionType: 'draft_safety_narrative', description: 'Draft the ICH E3 §12.3.2 patient safety narrative (placed in the report text or §14.3.3) from the collected case facts (draft_safety_narrative)' },
         { label: 'Compose E2B(R3) ICSR', actionType: 'compose_e2b_icsr', description: 'Compose the E2B(R3) ICSR data elements for the recorded adverse-event case (compose_e2b_icsr)' },
       );
       break;

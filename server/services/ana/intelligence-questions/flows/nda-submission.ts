@@ -299,7 +299,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         id: 'drug_description',
         section: 'drug_product_info',
         question:
-          'Provide detailed drug product information. Per 21 CFR 314.50(d)(1), the NDA must contain a full description of the drug substance, its mechanism of action, dosage form, route, and all proposed strengths.',
+          'Provide detailed drug product information. Per 21 CFR 314.50(d)(1), the NDA must contain a full chemistry, manufacturing and controls description of the drug substance and the drug product, including its dosage form, route, and all proposed strengths; the mechanism of action and pharmacologic class are addressed in the application summary (21 CFR 314.50(c)) and in labeling.',
         guidance:
           'Per 21 CFR 314.50(d)(1), the NDA must include a full description of the drug including: chemical name and structure, established (generic) name, proposed brand name, mechanism of action, dosage form, route of administration, and all strengths for which approval is sought. For 505(b)(2) applications, therapeutic equivalence rating (per the Orange Book) relative to the reference listed drug must be addressed. The drug substance should be fully characterized at the NDA stage including polymorphism, chirality, and impurity profile.',
         fields: [
@@ -576,7 +576,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Standard battery: (1) bacterial reverse mutation (Ames test), (2) in vitro chromosomal aberration or micronucleus assay, (3) in vivo micronucleus or equivalent. All three tests must be negative for a clean genotoxicity profile.',
+              'Standard battery (either option is acceptable): Option 1 - (1) bacterial reverse mutation (Ames test), (2) in vitro mammalian cell test (chromosomal aberration, micronucleus or mouse lymphoma Tk assay), (3) in vivo genotoxicity test (e.g., micronucleus); or Option 2 - (1) Ames test plus (2) in vivo genotoxicity assessment with two endpoints/tissues (e.g., micronucleus and a second in vivo assay such as the comet assay). All tests in the chosen battery must be negative for a clean genotoxicity profile.',
           },
           {
             id: 'has_target_organ_tox',
@@ -959,7 +959,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Sex-Based PK/PD Analysis Completed',
             type: 'yes_no',
             helpText:
-              'Per FDA Guidance and ICH E1/E7, sponsors should analyze PK and safety data by sex. Any sex-based differences should be reflected in labeling.',
+              'Per FDA guidance on sex differences in drug evaluation and 21 CFR 314.50(d)(5), sponsors should analyze PK and safety data by sex. Any sex-based differences should be reflected in labeling.',
           },
           {
             id: 'race_ethnicity_analysis',
@@ -1469,7 +1469,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'Boxed Warning Impact on Labeling and REMS',
             message:
-              'An anticipated boxed warning has significant regulatory implications: (1) the boxed warning is the most prominent safety communication in labeling per 21 CFR 201.57(c)(1), (2) FDA may require a REMS (with Medication Guide as a minimum element) when a boxed warning is warranted, (3) payer coverage and formulary positioning may be affected. Coordinate with FDA on the exact boxed warning language during the review process.',
+              'An anticipated boxed warning has significant regulatory implications: (1) the boxed warning is the most prominent safety communication in labeling per 21 CFR 201.57(c)(1), (2) FDA may require a REMS under 21 USC 355-1 (which may include a Medication Guide, a communication plan and/or ETASU) when the serious risk behind a boxed warning needs more than labeling to manage, (3) payer coverage and formulary positioning may be affected. Coordinate with FDA on the exact boxed warning language during the review process.',
             reference: '21 CFR 201.57(c)(1); 21 USC 355-1',
           },
         ],
@@ -1481,7 +1481,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Provide a detailed analysis of deaths, serious adverse events (SAEs), and safety narratives in the clinical program.',
         guidance:
-          'Per 21 CFR 314.50(d)(5)(vi)(b) and ICH E2D "Post-Approval Safety Data Management," all deaths and serious adverse events must be thoroughly analyzed. For each death, a narrative should describe the patient, the event, the temporal relationship to drug exposure, and the investigator\'s and sponsor\'s causality assessment. Per ICH E2A, SAEs include: death, life-threatening events, hospitalization (or prolongation), persistent disability, congenital anomaly, and important medical events. The integrated safety summary should present deaths and SAEs by treatment group with rate comparisons (drug vs. control) and patient-year-adjusted incidence rates.',
+          'Per 21 CFR 314.50(d)(5)(vi)(a) (integrated summary of safety) and ICH E3 (deaths, other serious and significant adverse events), all deaths and serious adverse events must be thoroughly analyzed. For each death, a narrative should describe the patient, the event, the temporal relationship to drug exposure, and the investigator\'s and sponsor\'s causality assessment. Per ICH E2A, SAEs include: death, life-threatening events, hospitalization (or prolongation), persistent disability, congenital anomaly, and important medical events. The integrated safety summary should present deaths and SAEs by treatment group with rate comparisons (drug vs. control) and patient-year-adjusted incidence rates.',
         fields: [
           {
             id: 'deaths_in_program',
@@ -1541,7 +1541,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             title: 'Drug-Related Deaths Require Thorough Analysis',
             message:
               'One or more deaths have been assessed as drug-related. Thorough analysis is required including: (1) individual patient narratives for each case, (2) comparison of death rates with control arm, (3) temporal relationship analysis, (4) risk factor identification, and (5) proposed risk mitigation measures. Drug-related deaths will be closely scrutinized by the FDA review team and may impact labeling (boxed warning, contraindications) and REMS requirements.',
-            reference: '21 CFR 314.50(d)(5)(vi)(b); ICH E2A; ICH E2D',
+            reference: '21 CFR 314.50(d)(5)(vi)(a); ICH E2A; ICH E3 (section 12.3)',
           },
         ],
       },
@@ -1634,7 +1634,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Provide eCTD technical details including sequence numbering, datasets, and validation status.',
         guidance:
-          'Per FDA Technical Specifications Documents and the FDA Data Standards Catalog, NDA submissions must include study datasets in CDISC format (SDTM for tabulation datasets, ADaM for analysis datasets). The define.xml file per CDISC Define-XML v2.0 must accompany all datasets. Reviewer\'s Guides for each study dataset are expected per FDA Guidance "Study Data Technical Conformance Guide" (2023). The ESG only transmits the submission; after receipt, CDER or CBER validates the eCTD against the FDA eCTD Validation Criteria, and high-severity errors can lead to technical rejection. All sequence numbers must follow the FDA Comprehensive Table of Contents (CTOCh) and CDER/CBER numbering conventions.',
+          'Per FDA Technical Specifications Documents and the FDA Data Standards Catalog, NDA submissions must include study datasets in CDISC format (SDTM for tabulation datasets, ADaM for analysis datasets). The define.xml file per CDISC Define-XML v2.0 must accompany all datasets. Reviewer\'s Guides for each study dataset are expected per FDA Guidance "Study Data Technical Conformance Guide" (2023). The ESG only transmits the submission; after receipt, CDER or CBER validates the eCTD against the FDA eCTD Validation Criteria, and high-severity errors can lead to technical rejection. Document placement must follow the FDA Comprehensive Table of Contents Headings and Hierarchy, and sequence numbers must follow the FDA eCTD technical specifications and the eCTD Technical Conformance Guide.',
         fields: [
           {
             id: 'ectd_sequence_number',
@@ -1875,8 +1875,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             id: 'rems_assessment_timeline',
             label: 'REMS Assessment and Reporting Timeline',
             type: 'text',
-            placeholder: 'e.g., REMS assessments due at 18 months, 3 years, and 7 years post-approval',
-            helpText: 'Per 21 USC 355-1(g), REMS assessments must be submitted at 18 months, 3 years, and 7 years after initial REMS approval, or as otherwise specified by FDA.',
+            placeholder: 'e.g., REMS assessments due by 18 months, by 3 years, and in year 7 post-approval',
+            helpText: 'Per 21 USC 355-1(d), REMS assessments must be submitted by 18 months, by 3 years, and in the 7th year after initial REMS approval, or as otherwise specified by FDA.',
           },
           {
             id: 'prior_rems_experience',
@@ -1915,7 +1915,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Describe post-marketing commitments (PMCs) and post-marketing requirements (PMEs). For accelerated approval, a confirmatory study is required.',
         guidance:
-          'Per 21 CFR 314.81 "Other Post-Marketing Reports" and FDAAA Section 505(o)(3), FDA may require post-marketing studies or clinical trials to assess a known or potential serious risk, to assess signals of serious risk, or to identify unexpected serious risks. For drugs approved under Accelerated Approval (21 CFR 314.510), a confirmatory study demonstrating clinical benefit is required per 21 CFR 314.510 and FD&C Act 506(c). FDA may withdraw accelerated approval if the confirmatory study fails to verify clinical benefit. Post-marketing commitments are agreed-upon studies; post-marketing requirements are mandatory per FDAAA. Periodic Safety Update Reports (PSURs) per ICH E2C(R2) or Periodic Adverse Drug Experience Reports (PADERs) per 21 CFR 314.80 are required.',
+          'Per 21 CFR 314.81 "Other Post-Marketing Reports" and FD&C Act section 505(o)(3) (added by FDAAA), FDA may require post-marketing studies or clinical trials to assess a known or potential serious risk, to assess signals of serious risk, or to identify unexpected serious risks. For drugs approved under Accelerated Approval (21 CFR 314.510), a confirmatory study demonstrating clinical benefit is required per 21 CFR 314.510 and FD&C Act 506(c). FDA may withdraw accelerated approval if the confirmatory study fails to verify clinical benefit. Post-marketing commitments are agreed-upon studies; post-marketing requirements are mandatory per FDAAA. Periodic Safety Update Reports (PSURs) per ICH E2C(R2) or Periodic Adverse Drug Experience Reports (PADERs) per 21 CFR 314.80 are required.',
         fields: [
           {
             id: 'confirmatory_study_planned',
@@ -1943,11 +1943,11 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             label: 'Post-Marketing Commitments (PMCs) — Agreed-Upon Studies',
             type: 'textarea',
             placeholder:
-              'e.g., PMC 1: Long-term safety registry (5,000 patients, 5 years). PMC 2: QTc definitive study (per ICH E14). PMC 3: Renal impairment PK study (Child-Pugh classification).',
+              'e.g., PMC 1: Long-term safety registry (5,000 patients, 5 years). PMC 2: QTc definitive study (per ICH E14). PMC 3: Renal impairment PK study (stratified by eGFR/creatinine clearance).',
           },
           {
             id: 'pme_list',
-            label: 'Post-Marketing Requirements (PMEs) — Mandatory Studies',
+            label: 'Post-Marketing Requirements (PMRs) — Mandatory Studies',
             type: 'textarea',
             placeholder:
               'e.g., PMR 1: Confirmatory OS study (21 CFR 314.510). PMR 2: Pediatric studies per iPSP (PREA). PMR 3: REMS assessment at 18 months.',
@@ -2164,7 +2164,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Complete the final submission checklist. All administrative documents must be included per 21 CFR 314.50.',
         guidance:
-          'Per 21 CFR 314.50, the NDA must include: Form FDA 356h (Application Form), financial disclosure information (21 CFR Part 54), debarment certification (21 CFR 314.50(a)(5)(iv)), field copy certification, environmental assessment or categorical exclusion (21 CFR Part 25), and a cover letter. The field copy certification confirms that the field copy (the chemistry, manufacturing and controls technical section, with a copy of Form FDA 356h) is a true copy of the CMC technical section in the archival and review copies, for use by the FDA district office (21 CFR 314.50(l)(3)). A field copy is not required when the technical section is submitted electronically, for example in eCTD. Financial disclosure (21 CFR 54) requires disclosure of financial interests of clinical investigators. The environmental assessment usually qualifies for categorical exclusion under 21 CFR 25.31: 25.31(b) for a new molecular entity (use of the active moiety increases, but the expected introduction concentration is below 1 part per billion), or 25.31(a) when the action does not increase use of the active moiety. The target submission date should account for the 60-day filing period and PDUFA review clock.',
+          'Per 21 CFR 314.50, the NDA must include: Form FDA 356h (Application Form), financial disclosure information (21 CFR Part 54), debarment certification (FD&C Act section 306(k)(1), 21 USC 335a(k)(1)), field copy certification, environmental assessment or categorical exclusion (21 CFR Part 25), and a cover letter. The field copy certification confirms that the field copy (the chemistry, manufacturing and controls technical section, with a copy of Form FDA 356h) is a true copy of the CMC technical section in the archival and review copies, for use by the FDA district office (21 CFR 314.50(l)(3)). A field copy is not required when the technical section is submitted electronically, for example in eCTD. Financial disclosure (21 CFR 54) requires disclosure of financial interests of clinical investigators. The environmental assessment usually qualifies for categorical exclusion under 21 CFR 25.31: 25.31(b) for a new molecular entity (use of the active moiety increases, but the expected introduction concentration is below 1 part per billion), or 25.31(a) when the action does not increase use of the active moiety. The target submission date should account for the 60-day filing period and PDUFA review clock.',
         fields: [
           {
             id: 'form_fda_356h_complete',
@@ -2184,7 +2184,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
           },
           {
             id: 'debarment_certification',
-            label: 'Debarment Certification (21 CFR 314.50(a)(5)(iv)) Complete',
+            label: 'Debarment Certification (FD&C Act section 306(k)(1); 21 USC 335a(k)(1)) Complete',
             type: 'yes_no',
             required: true,
             helpText:
@@ -2258,7 +2258,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Form FDA 356h Required',
             message:
-              'Form FDA 356h (Application to Market a New Drug, Biologic, or Antibiotic Drug for Human Use) is a mandatory NDA component. The signed form must be included as the first document in Module 1 of the eCTD submission. FDA will issue a Refuse to Receive if Form 356h is missing.',
+              'Form FDA 356h (Application to Market a New or Abbreviated New Drug or Biologic for Human Use) is a mandatory NDA component. The signed form must be included as the first document in Module 1 of the eCTD submission. FDA will issue a Refuse to Receive if Form 356h is missing.',
             reference: '21 CFR 314.50(a)',
           },
           {

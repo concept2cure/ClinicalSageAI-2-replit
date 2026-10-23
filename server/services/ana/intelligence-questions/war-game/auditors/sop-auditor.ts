@@ -54,7 +54,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'completeness',
       title: 'SOP title is missing or inadequate',
       question:
-        'This SOP has no descriptive title. Per 21 CFR 211.188, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
+        'This SOP has no descriptive title. Per 21 CFR 211.100(a), production and process control procedures must be written and approved, so each controlled procedure has to be identifiable. How do your personnel locate and reference this procedure?',
       check(answers): WarGameFinding | null {
         const title = str(answers.sop_title);
         if (title.length >= 10) return null;
@@ -64,7 +64,7 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'critical',
           title: 'SOP title is missing or inadequate',
           question:
-            'This SOP has no descriptive title. Per 21 CFR 211.188, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
+            'This SOP has no descriptive title. Per 21 CFR 211.100(a), production and process control procedures must be written and approved, so each controlled procedure has to be identifiable. How do your personnel locate and reference this procedure?',
           observation:
             `The SOP title is ${title.length === 0 ? 'blank' : `only ${title.length} characters ("${title}")`}. ` +
             'A clear, descriptive title is essential for document control, cross-referencing, and training records.',
@@ -471,8 +471,8 @@ export function createSopAuditor(): WarGameAuditor {
             'The SOP has no version history. Without a revision log, it is impossible to trace what was changed between versions, ' +
             'the reason for the change, who authored and approved each revision, and whether affected personnel were retrained.',
           requirement:
-            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that changes to documents be reviewed and approved by the same function/organization that performed the original review. ' +
-            'The approved changes must be communicated to appropriate personnel in a timely manner. A revision history is the primary evidence of compliance.',
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that changes to documents be reviewed and approved either by the original approving function or by another designated function that has access to pertinent background information upon which to base its decisions. ' +
+            'Changes to documents and their current revision status must be identified. A revision history is the primary evidence of compliance.',
           reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.186',
           recommendation:
             'Add a revision history table documenting: version number, effective date, description of changes, author, and approver for each revision. ' +
@@ -571,7 +571,7 @@ export function createSopAuditor(): WarGameAuditor {
             'The SOP has no effective date. Without an effective date, it is impossible to determine whether this version was in effect ' +
             'during a particular manufacturing event, making retrospective investigations and batch record reviews unreliable.',
           requirement:
-            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that documents be available at locations of use and that obsolete documents be promptly removed. ' +
+            'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR) requires that relevant versions of applicable documents be available at points of use and that the unintended use of obsolete documents be prevented, with suitable identification applied to them. ' +
             'An effective date is essential for document control and compliance verification during inspections.',
           reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR); 21 CFR 211.186',
           recommendation:
@@ -742,7 +742,7 @@ export function createSopAuditor(): WarGameAuditor {
             'there is no mechanism to ensure all affected personnel have access to the current version and that obsolete copies are removed.',
           requirement:
             'ISO 13485:2016 clause 4.2.4, incorporated by reference at 21 CFR 820.10 (QMSR), requires that relevant versions of applicable documents are available at points of use. ' +
-            'Obsolete documents must be promptly removed from all points of use.',
+            'The unintended use of obsolete documents must be prevented, and any obsolete documents retained must be suitably identified.',
           reference: 'ISO 13485:2016 clause 4.2.4 (incorporated by 21 CFR 820.10, QMSR)',
           recommendation:
             'Define a distribution list specifying all departments, roles, or work stations that must have access to this SOP. ' +
@@ -984,7 +984,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'risk_identification',
       title: 'Deviation handling lacks severity classification',
       question:
-        'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
+        'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that any unexplained discrepancy or failure to meet specifications be thoroughly investigated, and ICH Q9 expects the depth of that investigation to reflect its risk.',
       check(answers): WarGameFinding | null {
         // deviation_classification is a multi_select of severity levels; empty is sop_008's case.
         const levels = Array.isArray(answers.deviation_classification) ? answers.deviation_classification.map(String) : [];
@@ -996,7 +996,7 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'warning',
           title: 'Deviation handling lacks severity classification',
           question:
-            'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
+            'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that any unexplained discrepancy or failure to meet specifications be thoroughly investigated, and ICH Q9 expects the depth of that investigation to reflect its risk.',
           observation:
             'The deviation handling description does not include a severity classification system (e.g., critical, major, minor). ' +
             'Without classification, all deviations receive the same level of investigation, leading to either over-investigation of trivial issues ' +

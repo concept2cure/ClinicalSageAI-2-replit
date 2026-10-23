@@ -1106,7 +1106,7 @@ export function createRiskManagementFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Incomplete Risk Management File',
             message:
-              'The risk management file must be complete before the risk management review. Ensure all required documents (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, risk management report) are included.',
+              'The risk management file must be complete before the risk management review. Ensure all required records (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, overall residual risk evaluation) are included. The results of the review are then documented as the risk management report and added to the risk management file.',
             reference: 'ISO 14971:2019 Section 4.5, ISO/TR 24971:2020',
           },
         ],
