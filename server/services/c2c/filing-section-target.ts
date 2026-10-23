@@ -28,6 +28,23 @@ import type { CommitSectionResult } from './commit-section-to-filing.js';
 /** A pg-shaped executor: the caller's transaction (a PoolClient, or a router's Queryable). */
 type FilingQuery = { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
 
+export interface FilingSectionMember { id: string; code: string; title: string | null; content: string | null }
+
+/** The canonical saved contributors to a filing node, in assembly order. */
+export async function filingSectionMembers(
+  client: FilingQuery, args: { sectionId: string; tenantId: number; key: string },
+): Promise<FilingSectionMember[]> {
+  return (await client.query(
+    `SELECT s.id::text AS id, s.code, s.title, s.content
+       FROM authoring_sections s
+      WHERE s.tenant_id = $2
+        AND s.doc_id = (SELECT doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2)
+        AND (s.code = $3 OR left(s.code, length($3) + 1) = $3 || '.')
+      ORDER BY s.order_index, s.created_at, s.id`,
+    [args.sectionId, args.tenantId, args.key],
+  )).rows;
+}
+
 export interface FilingSectionText {
   /** What the outline node receives. */
   text: string;
@@ -47,16 +64,8 @@ export async function filingSectionText(
   args: { sectionId: string; tenantId: number; key: string; code: string; content: string },
 ): Promise<FilingSectionText> {
   const { sectionId, tenantId, key, code, content } = args;
-  const rows: { rows: Array<{ id: string; code: string; title: string | null; content: string | null }> } = await client.query(
-    `SELECT s.id::text AS id, s.code, s.title, s.content
-       FROM authoring_sections s
-      WHERE s.tenant_id = $2
-        AND s.doc_id = (SELECT doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2)
-        AND (s.code = $3 OR left(s.code, length($3) + 1) = $3 || '.')
-      ORDER BY s.order_index, s.created_at, s.id`,
-    [sectionId, tenantId, key],
-  );
-  const members = rows.rows.map((r) => (r.id === String(sectionId) ? { ...r, content } : r));
+  const rows = await filingSectionMembers(client, { sectionId, tenantId, key });
+  const members = rows.map((r) => (r.id === String(sectionId) ? { ...r, content } : r));
   if (members.length <= 1 && code === key) return { text: content };
   const written = members.filter((m) => String(m.content ?? '').trim() !== '');
   return { text: assembleAuthoredSections(written), partOf: key };

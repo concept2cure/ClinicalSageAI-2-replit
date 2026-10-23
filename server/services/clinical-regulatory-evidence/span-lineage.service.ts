@@ -46,6 +46,26 @@ import { MACHINE_AUTHOR_IDS } from '../authoring/revision-ledger';
 
 export class SpanLineageError extends Error {}
 
+/** Read-only verification of the exact saved words described by live spans.
+ * Coverage and text identity are separate checks; neither repairs provenance. */
+export async function assertLineageHashesMatchContent(
+  organizationId: number, ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  content: string, exec: Queryable = defaultExec,
+): Promise<void> {
+  const spans = await exec.query<{ char_start: number; char_end: number; span_text_sha256: string }>(
+    `SELECT char_start, char_end, span_text_sha256 FROM document_span_lineage
+      WHERE organization_id=$1 AND document_table=$2 AND document_id=$3 AND deleted_at IS NULL`,
+    [organizationId, ref.documentTable, ref.documentId],
+  );
+  for (const span of spans.rows) {
+    const start = Number(span.char_start), end = Number(span.char_end);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end <= start || end > content.length
+      || hashSpanText(content.slice(start, end)) !== span.span_text_sha256) {
+      throw new SpanLineageError('Current clause lineage does not describe the saved text.');
+    }
+  }
+}
+
 /**
  * Anything that can run a query — the pool, or a client inside a transaction.
  *

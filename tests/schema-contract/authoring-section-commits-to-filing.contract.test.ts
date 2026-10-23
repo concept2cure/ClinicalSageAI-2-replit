@@ -40,6 +40,8 @@ import { SignJWT } from 'jose';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
 import { TurnRecorder, writeTurnRecord } from '../../server/services/ana/turn-record';
+import { materializeWorkflowSource } from '../../server/services/authoring/workflow-source-import';
+import { hashSpanText } from '../../server/services/clinical-regulatory-evidence/span-lineage.service';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -74,8 +76,8 @@ const PREREQ = `
   -- Without the column POST /docs/:docId/e-sign answered 500 in this harness,
   -- before and independently of anything this file asserts. (No backticks in
   -- here: PREREQ is a template literal, and one ends it.)
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid TEXT);
-  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid TEXT, status TEXT DEFAULT 'active');
+  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT, status TEXT DEFAULT 'active');
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
@@ -103,6 +105,15 @@ const PREREQ = `
     primary_agency text,
     deleted_at timestamptz
   );
+  -- The deliberate filing act rechecks the canonical current project/member
+  -- policy, including its native integer project anchor and sharing stores.
+  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, regulatory_program_id UUID,
+    client_workspace_id INTEGER, owner_id INTEGER, created_by_id INTEGER, settings JSONB, status TEXT DEFAULT 'active');
+  CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+  CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+  CREATE TABLE concept2cure_artifacts (id INTEGER PRIMARY KEY, organization_id INTEGER, project_id INTEGER);
+  CREATE TABLE concept2cure_review_assignments (id SERIAL PRIMARY KEY, artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
+  CREATE TABLE qms_documents (id SERIAL PRIMARY KEY, organization_id INTEGER, authoring_document_id UUID, status TEXT, metadata JSONB DEFAULT '{}');
   CREATE TABLE audit_logs (
     id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
     table_name text, record_id text, actor_id text, target text,
@@ -118,6 +129,9 @@ const PREREQ = `
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${MEMBERSHIP_ID}, 'member');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
+  INSERT INTO projects (id, organization_id, regulatory_program_id, client_workspace_id, owner_id, created_by_id, settings)
+    VALUES (1, 1, '${PROJECT}', 1, ${MEMBERSHIP_ID}, ${MEMBERSHIP_ID}, '{}');
+  INSERT INTO project_visibility_settings VALUES (1, 1, 'org_public');
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -177,6 +191,7 @@ beforeAll(async () => {
       // is written to (PF-07: every document is created in a project). Guarded
       // on the loop tables above, so it follows them.
       'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260921_authoring_document_provenance.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -225,6 +240,9 @@ beforeAll(async () => {
          500. Another harness gap, not a product defect: the durable applier
          runs both files. */
       'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
+      'db/migrations/20261014_qms_controlled_authoring_content.sql',
+      'migrations/20260628_csr_job_state.sql',
+      'migrations/20260728_authoring_reviews.sql',
     ],
   });
   h.db = jdb.db;
@@ -1237,7 +1255,7 @@ describe('a revert carries the attribution the restored revision recorded (round
 let p29Minted = 0;
 
 /** A fresh filing with one node, and a bound document whose 2.5 is saved into it. */
-async function boundAndSaved(text: string) {
+async function boundAndSaved(text: string, code = '2.5') {
   const filingId = `doc_p29_${++p29Minted}`;
   const pack = await q<{ version: string }>(
     `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
@@ -1261,7 +1279,7 @@ async function boundAndSaved(text: string) {
   // Created empty, then SAVED: `createSection` with content does not commit to
   // the filing (one of the six non-committing writers), the PATCH does.
   const sec = await as(request(app).post('/api/authoring/sections')).send({
-    doc_id: docId, code: '2.5', title: '2.5', content: '', order_index: 1,
+    doc_id: docId, code, title: code, content: '', order_index: 1,
   });
   expect(sec.status).toBe(201);
   const sectionId = sec.body.section.id as string;
@@ -1310,6 +1328,334 @@ async function rewriteFiling(filingId: string, text: string) {
   }
 }
 
+async function savedRefileFixture(code = '2.5') {
+  const ids = await boundAndSaved('<p>Retained saved words and attribution.</p>', code);
+  await rewriteFiling(ids.filingId, 'Divergent filing words.');
+  const [section] = await q(`SELECT * FROM authoring_sections WHERE id=$1`, [ids.sectionId]);
+  return { ...ids, section, body: { filingOnly: true, expectedDocumentId: ids.docId,
+    expectedFilingDocumentId: ids.filingId, expectedProgramId: PROJECT,
+    expectedUpdatedAt: new Date(section.updated_at).toISOString(), changeReason: 'Restore the retained saved words to the filing.' } };
+}
+const refile = (fixture: Awaited<ReturnType<typeof savedRefileFixture>>, body: Record<string, unknown> = fixture.body) =>
+  as(request(app).patch(`/api/authoring/sections/${fixture.sectionId}`)).send(body);
+const filingText = async (filingId: string) => (await q(
+  `SELECT content->>'text' AS text FROM c2c_document_sections WHERE document_id=$1 AND section_key='2.5'`, [filingId]))[0].text;
+
+describe('deliberate unchanged saved-section filing', () => {
+  it('records one COMMIT act with the exact saved and filing identity and stated reason', async () => {
+    const f = await savedRefileFixture();
+    const before = await q(`SELECT id FROM authoring_audit_trail WHERE section_id=$1`, [f.sectionId]);
+    const timestamp = f.body.expectedUpdatedAt.replace('.000Z', 'Z');
+    const result = await refile(f, { ...f.body, expectedUpdatedAt: timestamp });
+    expect(result.status, JSON.stringify(result.body)).toBe(200);
+    expect(result.body.source.updatedAt).toBe(timestamp);
+    const acts = await q(`SELECT * FROM authoring_audit_trail WHERE section_id=$1 ORDER BY created_at,id`, [f.sectionId]);
+    expect(acts).toHaveLength(before.length + 1);
+    const act = acts.find(row => row.operation_type === 'COMMIT');
+    expect(act).toMatchObject({ actor_id: AUTHOR.id, change_reason: f.body.changeReason,
+      before_content: null, after_content: null, metadata: { filingOnly: true, revision_created: false,
+        source: result.body.source, filing: result.body.filing } });
+    const chained = await q(`SELECT * FROM audit_logs WHERE record_id=$1 AND action='authoring.section.COMMIT'`, [f.sectionId]);
+    expect(chained).toHaveLength(1);
+    expect(JSON.stringify(result.body)).not.toContain(f.section.content);
+  });
+
+  it.each([
+    ['false intent', { filingOnly: false }], ['nonboolean intent', { filingOnly: 'true' }],
+    ['content', { content: '<p>Claimed replacement.</p>' }], ['metadata', { title: 'New title' }],
+    ['accepted attribution', { acceptedAuthors: [{ id: 'ana' }] }],
+    ['missing timestamp', { expectedUpdatedAt: undefined }], ['ambiguous date', { expectedUpdatedAt: 'October 23, 2026' }],
+    ['invalid date', { expectedUpdatedAt: '2026-02-30T12:00:00Z' }],
+    ['missing document', { expectedDocumentId: undefined }], ['invalid program', { expectedProgramId: '42' }],
+    ['empty native filing', { expectedFilingDocumentId: '' }], ['reason', { changeReason: 'short' }],
+  ])('refuses %s without falling through to an ordinary save', async (_name, change) => {
+    const f = await savedRefileFixture();
+    const result = await refile(f, { ...f.body, ...change });
+    expect(result.status, JSON.stringify(result.body)).toBe(400);
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    expect((await q(`SELECT * FROM authoring_sections WHERE id=$1`, [f.sectionId]))[0]).toEqual(f.section);
+  });
+
+  it.each([
+    ['document', { expectedDocumentId: '00000000-0000-4000-8000-000000000001' }],
+    ['project', { expectedProgramId: '00000000-0000-4000-8000-000000000001' }],
+    ['native filing', { expectedFilingDocumentId: 'another_native_filing' }],
+    ['saved version', { expectedUpdatedAt: '2020-01-01T00:00:00.000Z' }],
+  ])('refuses a changed %s binding', async (_name, change) => {
+    const f = await savedRefileFixture();
+    const result = await refile(f, { ...f.body, ...change });
+    expect(result.status, JSON.stringify(result.body)).toBe(_name === 'project' ? 404 : 409);
+    expect(result.body.code).toBe(_name === 'project' ? 'PROJECT_NOT_FOUND' : 'REFILING_SOURCE_CHANGED');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+  });
+});
+
+describe('deliberate unchanged filing preserves all existing lineage', () => {
+  it.each(['missing', 'wrong hash', 'out-of-bounds'])('refuses %s existing lineage rather than generating new authorship', async kind => {
+    const f = await savedRefileFixture();
+    await q(kind === 'missing' ? `UPDATE document_span_lineage SET deleted_at=NOW() WHERE document_id=$1`
+      : kind === 'wrong hash' ? `UPDATE document_span_lineage SET span_text_sha256=repeat('a',64) WHERE document_id=$1`
+        : `UPDATE document_span_lineage SET char_end=99999 WHERE document_id=$1`, [f.sectionId]);
+    const spans = await q(`SELECT * FROM document_span_lineage WHERE document_id=$1 ORDER BY id`, [f.sectionId]);
+    const result = await refile(f);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.code).toBe('LINEAGE_UNVERIFIED');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    expect(await q(`SELECT * FROM document_span_lineage WHERE document_id=$1 ORDER BY id`, [f.sectionId])).toEqual(spans);
+  });
+
+  it('restores the complete canonical assembled node while preserving every saved contributor', async () => {
+    const f = await savedRefileFixture('2.5.1');
+    const sibling = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: f.docId, code: '2.5.2', title: 'Second saved contributor', content: '', order_index: 200,
+    });
+    expect(sibling.status).toBe(201);
+    const saved = await as(request(app).patch(`/api/authoring/sections/${sibling.body.section.id}`)).send({
+      content: '<p>The independently saved sibling.</p>', changeReason: 'Draft the second saved clinical contributor.',
+    });
+    expect(saved.status).toBe(200);
+    const assembled = await filingText(f.filingId);
+    expect(assembled).toContain(f.section.content);
+    expect(assembled).toContain('The independently saved sibling.');
+    const before = await q(`SELECT * FROM authoring_sections WHERE doc_id=$1 ORDER BY id`, [f.docId]);
+    const spans = await q(`SELECT * FROM document_span_lineage WHERE document_id=ANY($1) ORDER BY id`,
+      [[f.sectionId, sibling.body.section.id]]);
+    const [current] = await q(`SELECT updated_at FROM authoring_sections WHERE id=$1`, [f.sectionId]);
+    await rewriteFiling(f.filingId, 'Divergent assembled copy.');
+    const result = await refile(f, { ...f.body, expectedUpdatedAt: new Date(current.updated_at).toISOString() });
+    expect(result.status, JSON.stringify(result.body)).toBe(200);
+    expect(result.body.filing).toMatchObject({ committed: true, documentId: f.filingId, sectionKey: '2.5', partOf: '2.5' });
+    expect(await filingText(f.filingId)).toBe(assembled);
+    expect(await q(`SELECT * FROM authoring_sections WHERE doc_id=$1 ORDER BY id`, [f.docId])).toEqual(before);
+    expect(await q(`SELECT * FROM document_span_lineage WHERE document_id=ANY($1) ORDER BY id`,
+      [[f.sectionId, sibling.body.section.id]])).toEqual(spans);
+    // The selected section alone is insufficient evidence for the assembled
+    // filing: an invalid sibling must stop a subsequent repair of that node.
+    await rewriteFiling(f.filingId, 'Divergent assembled copy.');
+    await q(`UPDATE document_span_lineage SET span_text_sha256=repeat('b',64) WHERE document_id=$1`, [sibling.body.section.id]);
+    const refused = await refile(f, { ...f.body, expectedUpdatedAt: new Date(current.updated_at).toISOString() });
+    expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+    expect(refused.body.code).toBe('LINEAGE_UNVERIFIED');
+    expect(await filingText(f.filingId)).toBe('Divergent assembled copy.');
+  });
+});
+
+describe('deliberate unchanged filing retains current locked governance', () => {
+  it('rolls back canonical committed:false, including the parent reservation', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE c2c_document_sections SET status='locked' WHERE document_id=$1`, [f.filingId]);
+    const [parent] = await q(`SELECT updated_at FROM authoring_documents WHERE id=$1`, [f.docId]);
+    const result = await refile(f);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.code).toBe('REFILING_NOT_COMMITTED');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    expect((await q(`SELECT updated_at FROM authoring_documents WHERE id=$1`, [f.docId]))[0]).toEqual(parent);
+    expect(await q(`SELECT id FROM authoring_audit_trail WHERE section_id=$1 AND operation_type='COMMIT'`, [f.sectionId])).toHaveLength(0);
+  });
+
+  it.each(['locked', 'submitted'])('retains the %s filing refusal', async status => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE c2c_documents SET status=$2 WHERE id=$1`, [f.filingId, status]);
+    const result = await refile(f);
+    expect(result.status, JSON.stringify(result.body)).toBe(403);
+    expect(result.body.code).toBe(status === 'locked' ? 'FILING_LOCKED' : 'FILING_SUBMITTED');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+  });
+
+  it('retains the immutable-document middleware refusal', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE authoring_documents SET status='FROZEN' WHERE id=$1`, [f.docId]);
+    expect((await refile(f)).status).toBe(403);
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+  });
+
+  it('requires full-document view even when the selected section remains editable', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE doc_permissions SET revoked_at=NOW() WHERE doc_id=$1 AND role='OWNER'`, [f.docId]);
+    await q(`UPDATE doc_permissions SET section_id=$2 WHERE doc_id=$1 AND role='AUTHOR'`, [f.docId, f.sectionId]);
+    const result = await refile(f);
+    expect(result.status, JSON.stringify(result.body)).toBe(403);
+    expect(result.body.code).toBe('REFILING_PERMISSION_DENIED');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    // This correction must not redefine the existing ordinary section save.
+    const save = await as(request(app).patch(`/api/authoring/sections/${f.sectionId}`)).send({
+      content: '<p>The authorized section edit remains available.</p>', changeReason: 'Edit only the authorized saved section.',
+    });
+    expect(save.status, JSON.stringify(save.body)).toBe(200);
+  });
+
+  it('rechecks current QMS control inside the filing transaction', async () => {
+    const f = await savedRefileFixture();
+    await q(`INSERT INTO qms_documents (organization_id,authoring_document_id,status) VALUES (1,$1,'draft')`, [f.docId]);
+    const original = jdb.pool.connect.bind(jdb.pool);
+    const connect = vi.spyOn(jdb.pool, 'connect').mockImplementation(async () => {
+      const client = await original();
+      return { ...client, query: async (sql, params) => {
+        const result = await client.query(sql, params);
+        if (sql === 'BEGIN ISOLATION LEVEL REPEATABLE READ') {
+          await client.query(`UPDATE qms_documents SET status='in_review' WHERE authoring_document_id=$1`, [f.docId]);
+        }
+        return result;
+      } };
+    });
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(409);
+      expect(result.body.code).toBe('QMS_DOCUMENT_CONTROLLED');
+      expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    } finally { connect.mockRestore(); }
+  });
+
+  it('refuses an unavailable declared saved source', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE authoring_documents SET provenance=$2::jsonb WHERE id=$1`, [f.docId,
+      JSON.stringify({ projectSourceReferences: [{ sources: [{ documentId: 'not-a-verified-source' }] }] })]);
+    const result = await refile(f);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+  });
+});
+
+describe('deliberate unchanged filing rechecks current write access', () => {
+  it('uses the current account email when a stale JWT still matches an old email-only document grant', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE doc_permissions SET principal_id='999' WHERE doc_id=$1`, [f.docId]);
+    await q(`INSERT INTO doc_permissions (doc_id,section_id,tenant_id,principal_id,email,role,granted_by)
+      VALUES ($1,$2,1,'42',NULL,'AUTHOR','42')`, [f.docId, f.sectionId]);
+    await q(`UPDATE users SET email='current-author@filing.example' WHERE id=42`);
+    const queries: string[] = [];
+    const original = jdb.pool.connect.bind(jdb.pool);
+    const connect = vi.spyOn(jdb.pool, 'connect').mockImplementation(async () => {
+      const client = await original();
+      return { ...client, query: async (sql, params) => { queries.push(sql); return client.query(sql, params); } };
+    });
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(403);
+      expect(result.body.code).toBe('REFILING_PERMISSION_DENIED');
+      expect(queries.some(sql => /SELECT d\.\* FROM authoring_documents/.test(sql))).toBe(false);
+      expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    } finally { connect.mockRestore(); await q(`UPDATE users SET email=$1 WHERE id=42`, [AUTHOR.email]); }
+  });
+
+  it('refuses project read access that does not permit the actual write', async () => {
+    const f = await savedRefileFixture();
+    await q(`UPDATE projects SET owner_id=99,created_by_id=99 WHERE id=1`);
+    await q(`INSERT INTO project_members VALUES (1,1,42,'viewer','active')`);
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(403);
+      expect(result.body.code).toBe('PROJECT_PERMISSION_DENIED');
+      expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    } finally {
+      await q(`DELETE FROM project_members WHERE user_id=42`);
+      await q(`UPDATE projects SET owner_id=42,created_by_id=42 WHERE id=1`);
+    }
+  });
+
+  it.each(['membership', 'object permission', 'saved timestamp'])('rechecks %s after the HTTP middleware and transaction reservation', async gate => {
+    const f = await savedRefileFixture();
+    const original = jdb.pool.connect.bind(jdb.pool);
+    const connect = vi.spyOn(jdb.pool, 'connect').mockImplementation(async () => {
+      const client = await original();
+      return { ...client, query: async (sql, params) => {
+        const result = await client.query(sql, params);
+        if (sql === 'BEGIN ISOLATION LEVEL REPEATABLE READ') {
+          if (gate === 'membership') await client.query(`UPDATE users SET status='inactive' WHERE id=42`);
+          else if (gate === 'object permission') await client.query(`UPDATE doc_permissions SET revoked_at=NOW() WHERE doc_id=$1`, [f.docId]);
+          else await client.query(`UPDATE authoring_sections SET updated_at='2020-01-01' WHERE id=$1`, [f.sectionId]);
+        }
+        return result;
+      } };
+    });
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(gate === 'saved timestamp' ? 409 : gate === 'object permission' ? 404 : 403);
+      expect(result.body.code).toBe(gate === 'membership' ? 'PROJECT_ACTOR_ACCESS_DENIED'
+        : gate === 'object permission' ? 'AUTHORING_DOCUMENT_NOT_FOUND' : 'REFILING_SOURCE_CHANGED');
+      expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    } finally { connect.mockRestore(); }
+  });
+});
+
+describe('deliberate unchanged filing retains current full workflow release gates', () => {
+  it.each([true, false])('does not release a retained workflow source with generated=%s', async generated => {
+    const prose = 'The retained clinical source states a prespecified efficacy result that requires scientific verification and the existing independent governance before regulatory release.';
+    const ids = await boundAndSaved(`<p>${prose}</p>`);
+    await rewriteFiling(ids.filingId, 'Divergent filing words.');
+    const jobId = 10000 + ++p29Minted;
+    await q(`INSERT INTO csr_build_jobs (id,organization_id,project_id,study_id,status,sections_to_generate,study_info_snapshot)
+      VALUES ($1,1,1,'refile-source','complete',ARRAY['13'],'{}')`, [jobId]);
+    await q(`INSERT INTO csr_section_outputs (organization_id,project_id,job_id,section_number,content,content_hash,ai_generated)
+      VALUES (1,1,$1,'13',$2,$3,$4)`, [jobId, prose, hashSpanText(prose), generated]);
+    const source = await materializeWorkflowSource({ organizationId: 1, userId: 42,
+      target: { programId: PROJECT, projectId: 1 }, source: { kind: 'csr', jobId } }, jdb.pool);
+    await q(`UPDATE authoring_documents SET provenance=$2::jsonb WHERE id=$1`,
+      [ids.docId, JSON.stringify({ importSource: source.origin })]);
+    await q(`INSERT INTO authoring_audit_trail
+      (doc_id,section_id,operation_type,actor_email,actor_id,tenant_id,metadata)
+      VALUES ($1,$2,'CREATE',$3,'42',1,$4::jsonb)`, [ids.docId, ids.sectionId, AUTHOR.email,
+      JSON.stringify({ provenance: { importSource: source.origin }, section_code: '13' })]);
+    const [section] = await q(`SELECT * FROM authoring_sections WHERE id=$1`, [ids.sectionId]);
+    const spans = await q(`SELECT * FROM document_span_lineage WHERE document_id=$1 ORDER BY id`, [ids.sectionId]);
+    const result = await as(request(app).patch(`/api/authoring/sections/${ids.sectionId}`)).send({
+      filingOnly: true, expectedDocumentId: ids.docId, expectedFilingDocumentId: ids.filingId,
+      expectedProgramId: PROJECT, expectedUpdatedAt: new Date(section.updated_at).toISOString(),
+      changeReason: 'Restore only the retained saved regulatory source.',
+    });
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.code).toBe(generated ? 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' : 'WORKFLOW_HUMAN_ADOPTION_REQUIRED');
+    expect(await filingText(ids.filingId)).toBe('Divergent filing words.');
+    expect(await q(`SELECT * FROM document_span_lineage WHERE document_id=$1 ORDER BY id`, [ids.sectionId])).toEqual(spans);
+    expect((await q(`SELECT * FROM authoring_sections WHERE id=$1`, [ids.sectionId]))[0]).toEqual(section);
+  });
+});
+
+describe('deliberate unchanged filing has atomic and nonreplayable outcomes', () => {
+  it('rolls back the filing repair when its COMMIT audit cannot be stored', async () => {
+    const f = await savedRefileFixture();
+    await q(`CREATE FUNCTION reject_refile_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.operation_type='COMMIT' THEN RAISE EXCEPTION 'private audit failure'; END IF; RETURN NEW; END $$`);
+    await q(`CREATE TRIGGER reject_refile_audit BEFORE INSERT ON authoring_audit_trail FOR EACH ROW EXECUTE FUNCTION reject_refile_audit()`);
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(503);
+      expect(result.body.code).toBe('REFILING_UNAVAILABLE');
+      expect(JSON.stringify(result.body)).not.toMatch(/private audit|INSERT|SELECT/);
+      expect(await filingText(f.filingId)).toBe('Divergent filing words.');
+    } finally {
+      await q(`DROP TRIGGER reject_refile_audit ON authoring_audit_trail`);
+      await q(`DROP FUNCTION reject_refile_audit()`);
+    }
+  });
+
+  it.each(['COMMIT', 'ROLLBACK'])('holds against replay after lost %s acknowledgment', async boundary => {
+    const f = await savedRefileFixture();
+    if (boundary === 'ROLLBACK') await q(`UPDATE c2c_document_sections SET status='locked' WHERE document_id=$1`, [f.filingId]);
+    const original = jdb.pool.connect.bind(jdb.pool);
+    const released = vi.fn();
+    const connect = vi.spyOn(jdb.pool, 'connect').mockImplementation(async () => {
+      const client = await original();
+      return { query: async (sql, params) => {
+        const result = await client.query(sql, params);
+        if (sql === boundary) throw new Error('private lost transaction acknowledgment');
+        return result;
+      }, release: released };
+    });
+    try {
+      const result = await refile(f);
+      expect(result.status, JSON.stringify(result.body)).toBe(503);
+      expect(result.body).toMatchObject({ success: false, code: 'OUTCOME_UNKNOWN', retryAllowed: false,
+        source: { documentId: f.docId, sectionId: f.sectionId, programId: PROJECT, filingDocumentId: f.filingId,
+          updatedAt: f.body.expectedUpdatedAt } });
+      expect(JSON.stringify(result.body)).not.toContain('private lost');
+      expect(released).toHaveBeenCalledWith(expect.any(Error));
+      expect(await filingText(f.filingId)).toBe(boundary === 'COMMIT' ? f.section.content : 'Divergent filing words.');
+    } finally { connect.mockRestore(); }
+  });
+});
+
 /** A second outline node on the same filing, which this document may or may not reach. */
 const addFilingNode = (filingId: string, key: string, label: string) =>
   q(
@@ -1319,6 +1665,31 @@ const addFilingNode = (filingId: string, key: string, label: string) =>
   );
 
 describe('a freeze refuses a document whose filed copy is not its text', () => {
+  it('re-files unchanged saved text without an Authoring content revision', async () => {
+    const { docId, sectionId, filingId } = await boundAndSaved('<p>The unchanged saved source.</p>');
+    await rewriteFiling(filingId, 'A divergent filing copy.');
+    const [before] = await q(`SELECT content, updated_at FROM authoring_sections WHERE id = $1`, [sectionId]);
+    const revisions = await q(`SELECT id FROM doc_revisions WHERE section_id = $1 ORDER BY id`, [sectionId]);
+    const spans = await q(`SELECT * FROM document_span_lineage WHERE document_table = 'authoring_sections' AND document_id = $1 ORDER BY id`, [sectionId]);
+    const response = await as(request(app).patch(`/api/authoring/sections/${sectionId}`)).send({
+      filingOnly: true, expectedDocumentId: docId, expectedFilingDocumentId: filingId,
+      expectedProgramId: PROJECT, expectedUpdatedAt: new Date(before.updated_at).toISOString(),
+      changeReason: 'Restoring the unchanged saved source to its filing.',
+    });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body).toMatchObject({
+      success: true, refiled: true, revision_created: false,
+      source: { documentId: docId, sectionId, filingDocumentId: filingId, programId: PROJECT,
+        updatedAt: new Date(before.updated_at).toISOString() },
+      filing: { committed: true, documentId: filingId, sectionKey: '2.5' },
+    });
+    expect((await q(`SELECT content, updated_at FROM authoring_sections WHERE id = $1`, [sectionId]))[0]).toEqual(before);
+    expect(await q(`SELECT id FROM doc_revisions WHERE section_id = $1 ORDER BY id`, [sectionId])).toEqual(revisions);
+    expect(await q(`SELECT * FROM document_span_lineage WHERE document_table = 'authoring_sections' AND document_id = $1 ORDER BY id`, [sectionId])).toEqual(spans);
+    expect((await q(`SELECT content FROM c2c_document_sections WHERE document_id = $1 AND section_key = '2.5'`, [filingId]))[0].content).toEqual({ text: before.content });
+    expect((await freezeDoc(docId)).status).toBe(200);
+  }, T);
+
   it('refuses, names the section, and seals nothing', async () => {
     const { docId, filingId } = await boundAndSaved('<p>The text the author signed.</p>');
     await rewriteFiling(filingId, 'Text nobody typed here.');
