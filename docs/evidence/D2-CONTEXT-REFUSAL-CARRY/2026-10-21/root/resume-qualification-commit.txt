@@ -1,0 +1,14 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 264560f40] Record merged AnA context recovery qualification and evidence
+ 10 files changed, 5424 insertions(+)
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/PUBLICATION.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-correction-commit.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-final-command.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-final-exit.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-final-results.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-final-review.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-final.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-qualification.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-qualified-artifacts.json

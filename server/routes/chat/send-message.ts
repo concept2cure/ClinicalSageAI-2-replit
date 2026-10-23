@@ -45,6 +45,8 @@ import {
 } from '../../services/ai-gateway/reasoning.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
+import { GatewayContextWindowError } from '../../services/ai-gateway/context-budget.js';
+import { classifyGatewayError, GATEWAY_ERROR_HTTP_STATUS } from '../../services/ai-gateway/gateway-error-map.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getProjectInstructionsBlock } from '../../services/projects/project-instructions.js';
@@ -941,6 +943,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       });
     } catch (gwError: any) {
       const budgetRefusal = gwError instanceof ToolResultBudgetExceededError ? gwError : null;
+      const contextRefusal = gwError instanceof GatewayContextWindowError
+        ? classifyGatewayError(gwError, { priorToolWorkMayExist: true }) : null;
       console.error(budgetRefusal ? '[AnA] Tool result handoff refused:' : '[AnA] AI Gateway call failed:', gwError.message);
       void logKernelDecision({
         requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
@@ -953,14 +957,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
         selectedTools: [],
-        decisionRationale: budgetRefusal ? 'AnA tool results exceeded the handoff limit.' : 'AnA chat failed during AI Gateway call.',
+        decisionRationale: budgetRefusal ? 'AnA tool results exceeded the handoff limit.'
+          : contextRefusal ? 'AnA request exceeded the available context windows.' : 'AnA chat failed during AI Gateway call.',
         outcome: 'failed',
         errorMessage: gwError?.message || 'AI Gateway call failed',
       });
       const turnRecord = await fileTurn('failed', undefined, gwError);
-      return res.status(budgetRefusal ? 422 : 503).json({
-        error: budgetRefusal?.message ?? 'AI provider call failed',
-        code: budgetRefusal?.code ?? 'AI_PROVIDER_UNAVAILABLE',
+      return res.status(budgetRefusal ? 422 : contextRefusal ? GATEWAY_ERROR_HTTP_STATUS[contextRefusal.code] : 503).json({
+        error: budgetRefusal?.message ?? contextRefusal?.message ?? 'AI provider call failed',
+        code: budgetRefusal?.code ?? contextRefusal?.code ?? 'AI_PROVIDER_UNAVAILABLE',
         turnRecord,
       });
     }

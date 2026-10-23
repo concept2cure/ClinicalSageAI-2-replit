@@ -1,0 +1,31 @@
+{
+  "baseline": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "tests": {
+    "failed": 4,
+    "passed": 16,
+    "pending": 0,
+    "total": 20
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "files": {
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts": "fd5ec0fc4e3130510500e7dd3ec4ea248e5b26e0b12855e8f8e5b986295cb226",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/baseline-inputs.json": "a08e95e6339ed7fa332427f21c46ed7b2d24951ed434bf25398cbe57c42a3c7a",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/SUMMARY.md": "41d226b6b92a6b8a7e727d60452f0a5753927f9a02713050ec8a565040b971b3",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/baseline-post.json": "94626ffee43a04e02ab142cca5c393cd0c0b5c50fe63da1fe8c9f57466f07032",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/baseline-pre.json": "94626ffee43a04e02ab142cca5c393cd0c0b5c50fe63da1fe8c9f57466f07032",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.argv.json": "8fdfd9c41604192e1216271cba4b1d4d177bf34b5b99c48a6fbd090e186b06e2",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.command.txt": "4d5ae34bf8ec026195d9f041abfcd71a307c03b1f06ba58e027859b7af18f366",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.exit-code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/node-version.txt": "33e26f35db6e57ce0c486ddc815fe966867e4f649e418eaf323f75f4720eb8e9",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.argv.json": "bb3477b3598937f4be5c9f16cd157e557585b9f63d9845f2116bbd42daae407a",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.command.txt": "353671a67a262df3cf596c2e05e3dfb2d394f2572ce0de0b1fd118819dd85a84",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.exit-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.raw.txt": "d007abf36e21bfba3f6b1d5c0c20261ae2f69293de2f1a00a4c5c4fd797947d2",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.report.json": "116b37c6b2f486721e68aced01b080fa2c400512a0ef822c98523e0b658cb2d8"
+  }
+}

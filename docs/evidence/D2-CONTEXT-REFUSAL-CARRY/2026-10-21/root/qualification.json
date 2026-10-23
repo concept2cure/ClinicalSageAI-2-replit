@@ -1,0 +1,17 @@
+{
+  "tests": 970,
+  "suites": 79,
+  "skips": 0,
+  "newFrozenTestFiles": 6,
+  "newTestCases": 80,
+  "intendedBaselineFailures": 33,
+  "passingNewBaselineControls": 47,
+  "additionalExistingAdmissionControls": 3,
+  "selectedSourceInputs": 104,
+  "allFrozenAndRegressionHashesVerified": true,
+  "lintErrors": 0,
+  "includedWarnings": 80,
+  "warningGrowth": 0,
+  "newTestWarnings": 0,
+  "qualification": "Synthetic host/UI/source/persistence seams and real gateway admission with accepting dispatch spy; not live DB/provider or agency acceptance."
+}
