@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-10-23T21:32:10.872238+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "--format",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.031,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "fixture-before-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx": "186d10503af4d4f7fa4a99d1e709ffae3b39d7d74f11e5ae8e77d6ec664d7be7",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx": "b6f5c5374cb824ae2290ea352e359ec5bf581f5fcfbc4d65e8f20cff036cdfdd",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "01d06802f85e5526623261664375af08b1ed8b488d394db719051e70a616aca3"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx": "186d10503af4d4f7fa4a99d1e709ffae3b39d7d74f11e5ae8e77d6ec664d7be7",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx": "b6f5c5374cb824ae2290ea352e359ec5bf581f5fcfbc4d65e8f20cff036cdfdd",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "01d06802f85e5526623261664375af08b1ed8b488d394db719051e70a616aca3"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-baseline.log.gz",
+  "rawGzipSha256": "69d2b6747950124c4de087dead3ca2fc27562755f6790cb134a0b7c9bdcdd9d9",
+  "testSummary": []
+}

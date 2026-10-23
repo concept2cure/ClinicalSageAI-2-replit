@@ -1,0 +1,80 @@
+{
+  "reviewedAt": "2026-10-23T21:58:12.417438+00:00",
+  "scope": "Independent bounded review of existing SourceImportDialog/useSourceIntake and frozen intake transport against SOURCE_INTAKE_OWNERSHIP_2026-10-23.md; no production edits or global checks",
+  "status": "CLEAR: both accepted bounded findings fixed by root; historical pre-merge 85-case cohort passes; no remaining material blocker found in reviewed source",
+  "reviewedFiles": {
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "62aaac112023b7a94607499ab75cf5e8c3046977068a0eee7a42194afde8666d",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "c51c406971bc550140739c3b1aa4bd13ba8c17a4ee048265ac30718af17a404c",
+    "client/src/concept2cure/v2/editor/useSourceIntake.ts": "e6a8459fd96cd3161c3dff7953c7861068e075f5ed76d302a0eb015d873f8523"
+  },
+  "findings": [
+    {
+      "id": "latest-host-after-close",
+      "severity": "P2",
+      "file": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "line": 115,
+      "problem": "Open checks current openBlocked before onClose, then invokes cached host callback after onClose without checking the newly rendered hold or callback. A synchronous same-owner host update bypasses the latest hold/callback.",
+      "requestedFix": "After onClose and contextCurrent, check host.current.openBlocked and invoke current host callback. Preserve ordinary close/unmount navigation.",
+      "evidence": "Two actual-dialog flushSync regressions fail before fix.",
+      "disposition": "Resolved by root; corresponding actual-dialog regression passes in historical pre-merge review-green.json"
+    },
+    {
+      "id": "empty-edited-working-copy",
+      "severity": "P2",
+      "file": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "line": 262,
+      "problem": "validSavedCopy rejects sections=[] for all replies. Existing backend reuse returns actual saved section rows, including legitimate empty edited copies. Verified binary/workflow reuse therefore cannot open that saved copy.",
+      "requestedFix": "Permit empty actual sections only for reused/recovered receipts; retain fresh-copy requirements. Hide empty section selector and Open exact document without a guessed code.",
+      "evidence": "Actual-dialog binary and workflow reused empty-section regressions fail before fix; backend existingWorkingCopy reads current sections without requiring nonempty.",
+      "disposition": "Resolved by root; corresponding actual-dialog regression passes in historical pre-merge review-green.json"
+    }
+  ],
+  "otherBoundariesReviewed": [
+    "Synchronous retained Create/Refresh/Check and fields consult original owner and busy/unknown attempts before dispatch",
+    "Mounted source/project/account/session visit retires on mismatches; project revision catches A-B-A, source prop/remount and source snapshots retain original selection",
+    "Canonical refresh uses same revision/adopted live credentials; raw storage replacement fails service-adoption equality; each request/read chain pins original actor headers",
+    "Unknown writes block replacement, malformed/foreign identified outcomes stay held, explicit generic inventory checking never infers a receipt and workflow needs a new preview",
+    "Retired state masks reasons, source preview, receipt and recovery actions; Open uses exact saved identity and validates selected actual code",
+    "Fresh/reused receipts retain recorded source provenance and tenant/parent/code/content/order checks without comparing transformed HTML to source hashes"
+  ],
+  "authorizedRegressionRun": {
+    "receipt": "review-red.json",
+    "testSummary": [
+      "4 failed",
+      "54 skipped"
+    ],
+    "exitCode": 1,
+    "sourceDrift": [],
+    "note": "Read-only review was followed by root-authorized test/evidence-only regression work; no production/compiler/build/Git mutation."
+  },
+  "resolvedAt": "2026-10-23T22:01:03.522653+00:00",
+  "finalReviewedFiles": {
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "2fb465847ecf605b9a87e156eadf9b051614588c11d4528141a4097743619c63",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "4063ee05ba6f52673ca2883459720e1e302d22096ae07a5ad4161610b102d7c8",
+    "client/src/concept2cure/v2/editor/useSourceIntake.ts": "e6a8459fd96cd3161c3dff7953c7861068e075f5ed76d302a0eb015d873f8523"
+  },
+  "resolution": [
+    "After host close, contextCurrent and host.current.openBlocked are rechecked and host.current.onOpenDocument is invoked",
+    "Only reused/recovered copies may have zero saved sections; fresh copies retain nonempty validation. Empty workflow receipt hides selector and opens exact document without section code"
+  ],
+  "finalValidation": {
+    "epoch": "Pre-merge historical; root owns final merged requalification",
+    "receipt": "review-green.json",
+    "testsPassed": 85,
+    "suitesPassed": 4,
+    "focusedCases": 58,
+    "exitCode": 0,
+    "sourceDrift": [],
+    "lintReceipt": "review-lint.json",
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "scopeLimit": "Bounded code review and explicitly authorized tests/evidence only; no production edits/compiler/build/Git mutations or live database/provider checks by worker"
+  },
+  "rootReportedCanonicalMerge": {
+    "codeCommit": "8c86a44a3",
+    "mergedOrigin": "eba2d8050",
+    "dependencyChange": "authToken generic getOrgId now delegates bearer claim; capturedActorHeaders unchanged",
+    "instruction": "Do not replay worker tests; root final merged cohort includes the four suites",
+    "currentProductionPinsAfterMerge": "Not claimed by this worker; root owns final requalification"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-23T21:20:40.721016+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--ff-only",
+    "origin/concept2cure-v2"
+  ],
+  "before": "1eca721b1081d1fe1ef2491b70b726cc0f083fad",
+  "fetchedCanonical": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+  "after": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+  "exitCode": 0,
+  "rawGzipSha256": "e7a7d19d5cb8234817d6566afef02cee3bd94be621210c639bd201a6910d2154",
+  "preliminaryIntakeSourcePins": {
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "fd7109971d44da0b8d970fdf4d012a2c797a77de8f561d3ce1c64efe58582757",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "bba2f120b45b3b3df19ae9d97c5271c90ad9f6ec0a37073f86466af939956250",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854"
+  },
+  "intakeSourceDrift": []
+}

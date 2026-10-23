@@ -1,0 +1,43 @@
+{
+  "sourceFreezeSha256": "ba3aadd322ce103254f5c26c1b1a7f23601b3061378dd6d350362f6a0843ef18",
+  "currentPinsVerified": 20,
+  "originalRedSnapshotPinsVerified": 3,
+  "receipts": [
+    {
+      "receipt": "green-expanded.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "green-initial.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-baseline.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-final.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-tests-initial.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "red.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    }
+  ]
+}

@@ -134,3 +134,8 @@ source copies. Open rechecks the latest host hold/callback after Close as well a
 the original context, and verified reuse/recovery preserves an empty actual
 section inventory. Fresh receipts remain nonempty. These are a new evidence
 epoch; earlier qualified snapshots remain historical and unchanged.
+
+Canonical combined-test preparation also found one old `sourceUiRules` test
+using anonymous intake while asserting governed reason behavior (1 failed,
+3 passed; archived as a fixture failure). Root aligns only its adopted
+account/project setup; all reason-limit assertions remain unchanged.

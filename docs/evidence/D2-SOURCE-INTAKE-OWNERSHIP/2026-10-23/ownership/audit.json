@@ -1,0 +1,64 @@
+{
+  "sourceFreezeSha256": "fb2ab595ee22876f6e697113d034f0f8c347f16100334042d8c9719e6b6ac91f",
+  "sourceEpoch": "Historical pre-merge qualification; current production pins after merge not claimed",
+  "historicalDeclaredInputPins": 20,
+  "originalRedSnapshotPinsVerified": 3,
+  "reviewRedSnapshotPinsVerified": 4,
+  "receipts": [
+    {
+      "receipt": "green-expanded.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "green-initial.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-baseline.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-final.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-tests-initial.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "red.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "review-green.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "review-lint.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "review-red.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    }
+  ],
+  "postMergeQualificationOwner": "Root; no worker test replay per explicit instruction"
+}
