@@ -1174,7 +1174,7 @@ interface ReadinessAssessment extends WaiverReadiness {
    *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
    *  and this client never re-derives it. */
   dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
-  /** Existing dispatch action may reauthorize an unsent FDA release; server-owned eligibility. */
+  /** Existing dispatch action may reauthorize an unsent release; server-owned eligibility. */
   dispatchAuthorization?: { reauthorizing: boolean; eligible: boolean; refusal: string | null };
   /** Whether THIS user may sign the freeze and dispatch, from the lookup the
    *  sign step enforces (separation of duties: the sequence's creator cannot).

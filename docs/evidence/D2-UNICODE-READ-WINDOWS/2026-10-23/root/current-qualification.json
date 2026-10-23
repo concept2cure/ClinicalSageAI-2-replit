@@ -19,7 +19,15 @@
     "warnings": 0,
     "warningGrowth": 0
   },
-  "normalPush": "Firstpush c116 rejected by one test-wrapper TS2345; corrected retry and whole-project TypeScript pending.",
+  "normalPush": {
+    "acceptedCodeHead": "43cde0d111d1c9fdd8f6454435b15ccf3f7541b1",
+    "retryExit": 0,
+    "wholeProjectTypeScriptErrors": 0,
+    "tscExit": 0,
+    "allMandatoryGatesPassed": true,
+    "log": "retry-push.txt",
+    "firstAttemptRejected": "implementation-push.txt; TS2345 test-wrapper optional service"
+  },
   "currentRecordedHashesMatch": true,
   "originalFrozenAssertionsAndFixturesUnchanged": true,
   "testTypingCorrection": {

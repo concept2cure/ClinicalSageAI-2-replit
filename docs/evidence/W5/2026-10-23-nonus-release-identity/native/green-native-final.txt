@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects the actual unbound organization applicant name until capture commits 270ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > blocks market-number and program changes while allowing unrelated tenant work 373ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > protects an explicitly bound sponsor without assigning its DUNS to the EU proof 175ms
+ ✓ server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts > non-US captured identity locks serialize actual PostgreSQL writes > refuses missing and cross-tenant parents instead of lending an anchor 4ms
+stderr | server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+{
+  "timestamp": "2026-10-23T17:41:07.360Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+{
+  "timestamp": "2026-10-23T17:41:11.609Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:41:11.610Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+{
+  "timestamp": "2026-10-23T17:41:11.610Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+(node:13439) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 68ms
+stdout | server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged
+{
+  "timestamp": "2026-10-23T17:41:12.331Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 447ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  17:41:00
+   Duration  11.59s (transform 4.79s, setup 351ms, import 8.75s, tests 1.71s, environment 0ms)
+

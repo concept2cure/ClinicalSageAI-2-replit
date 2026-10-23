@@ -44,9 +44,9 @@
  * is the sequence spine's own digest over the full leaf rows
  * (`BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST`).
  *
- * FDA coverage also requires the versioned applicant identity frozen into the
- * signed package to equal the current recorded application, bound sponsor,
- * DUNS and regulatory contact. An older intact snapshot without this proof
+ * Known-region coverage also requires the versioned applicant identity frozen
+ * into the signed package to equal the current recorded application and sponsor.
+ * FDA additionally binds DUNS and regulatory contact. An older intact snapshot without this proof
  * cannot establish coverage; it is not evidence of snapshot tampering.
  *
  * ## Why divergence is not `invalid`
@@ -70,7 +70,7 @@ import type { Pool } from 'pg';
 import { pool as defaultPool } from '../../db.js';
 import type { ECTDLeaf } from './ectd4-validator.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
+import { canonicalRegionOf, type CanonicalRegion } from '../../../shared/regulatory/region-identity.js';
 import {
   packageIdentityRefusal,
   readSubmissionPackageIdentity,
@@ -339,21 +339,17 @@ export async function signedManifestCoversSequence(params: SequenceCoverageParam
     };
   }
   const leaves = signedManifestCoversLeaves(comparableFromSignedLeaves(params.signedLeaves), live);
-  if (!('covers' in leaves) || !leaves.covers || canonicalRegionOf(params.region) !== 'US') return leaves;
-  return fdaApplicantCoverage(params, leaves);
+  if (!('covers' in leaves) || !leaves.covers) return leaves;
+  return recordedApplicantCoverage(params, leaves);
 }
 
-/** Extend the existing leaf correspondence with FDA's recorded applicant facts. */
-async function fdaApplicantCoverage(
+/** Extend leaf correspondence with the actual sequence's recorded regional facts. */
+async function recordedApplicantCoverage(
   params: SequenceCoverageParams,
   leaves: Extract<ManifestCoverage, { covers: true }>,
 ): Promise<ManifestCoverage> {
-  // A historical signature remains intact over its historical record. Its
-  // absence of applicant proof means it does not cover today's FDA identity;
-  // the existing sequence-signature fallback can authorize the current record.
-  if (!params.recordedPackageIdentity) {
-    return { covers: false, detail: 'the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts' };
-  }
+  const region = canonicalRegionOf(params.region);
+  if (!region) return { unknown: true, detail: 'the signed package region is not recognized, so current applicant identity coverage cannot be determined' };
   if (!Number.isInteger(params.submissionId) || Number(params.submissionId) <= 0) {
     return { unknown: true, detail: 'the submission was not resolved, so current applicant identity coverage cannot be determined' };
   }
@@ -367,22 +363,22 @@ async function fdaApplicantCoverage(
         WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
       [params.sequenceId, params.organizationId],
     );
-    const submissionId = Number(sequence.rows[0]?.submission_id);
-    if (!Number.isInteger(submissionId) || submissionId <= 0) {
-      return { unknown: true, detail: 'the sequence parent could not be resolved, so current applicant identity coverage cannot be determined' };
-    }
-    if (submissionId !== params.submissionId) {
-      return { covers: false, detail: 'the signed run and current sequence name different submissions; applicant facts from another submission cannot establish coverage' };
+    const context = sequenceIdentityCoverageContext(params, region, sequence.rows[0]);
+    if ('detail' in context) return context;
+    // Historical records retain their original integrity recipe, but absent or
+    // malformed proof cannot authorize the current sequence in any region.
+    if (!sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, params.recordedPackageIdentity)) {
+      return { covers: false, detail: 'the signed package has no intact recorded applicant identity snapshot; sign this sequence over its current applicant facts' };
     }
     const identity = await readSubmissionPackageIdentity(
       { query: (text, values) => db.query(text, values) },
       params.organizationId,
-      submissionId,
-      { region: typeof sequence.rows[0]?.region === 'string' ? sequence.rows[0].region : null },
+      context.submissionId,
+      { region: context.region },
     );
-    const refusal = packageIdentityRefusal(identity, 'No release covers these incomplete applicant facts.', { fda: true });
+    const refusal = packageIdentityRefusal(identity, 'No release covers these incomplete applicant facts.', { fda: region === 'US' });
     if (refusal) return { covers: false, detail: refusal.message };
-    if (!sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, recordedPackageIdentitySnapshot(identity))) {
+    if (!sameRecordedPackageIdentitySnapshot(params.recordedPackageIdentity, recordedPackageIdentitySnapshot(identity, { region }))) {
       return { covers: false, detail: 'the signed package applicant identity differs from the current recorded application, sponsor or regulatory contact; sign this sequence over the current facts' };
     }
     return leaves;
@@ -394,6 +390,30 @@ async function fdaApplicantCoverage(
     });
     return { unknown: true, detail: 'the current recorded applicant identity could not be read, so signed package coverage cannot be determined' };
   }
+}
+
+/** A caller's parent/region can only corroborate the sequence's actual row. */
+function sequenceIdentityCoverageContext(
+  params: SequenceCoverageParams,
+  signedRegion: CanonicalRegion,
+  sequence: { submission_id?: unknown; region?: unknown } | undefined,
+): { submissionId: number; region: string } | Exclude<ManifestCoverage, { covers: true }> {
+  const submissionId = Number(sequence?.submission_id);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return { unknown: true, detail: 'the sequence parent could not be resolved, so current applicant identity coverage cannot be determined' };
+  }
+  if (submissionId !== params.submissionId) {
+    return { covers: false, detail: 'the signed run and current sequence name different submissions; applicant facts from another submission cannot establish coverage' };
+  }
+  const region = typeof sequence?.region === 'string' ? sequence.region : null;
+  const actualRegion = canonicalRegionOf(region);
+  if (!actualRegion) {
+    return { unknown: true, detail: 'the actual sequence region is not recognized, so current applicant identity coverage cannot be determined' };
+  }
+  if (actualRegion !== signedRegion) {
+    return { covers: false, detail: 'the signed package and actual sequence name different regions; applicant facts from another region cannot establish coverage' };
+  }
+  return { submissionId, region: region! };
 }
 
 export default {

@@ -1,0 +1,115 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > preserves an intact historical EU proof-free record using its original digest 7ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports captured EU proof and detects tampered captured number (false) 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports captured EU proof and detects tampered captured number (true) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports the exact recorded applicant snapshot the signature binds 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > refuses an applicant contact altered inside an otherwise intact frozen record 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 3ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 4ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run
+{
+  "timestamp": "2026-10-23T17:29:42.356Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read
+{
+  "timestamp": "2026-10-23T17:29:42.391Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an identical manifest, and says how much the index-md5 corroborated 11ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a leaf the sequence now holds that nobody signed — the Module 3 placement case 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a signed leaf the sequence no longer holds 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses the same leaves when the bytes under one of them changed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > is case- and vocabulary-insensitive about the section code, on both sides 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > counts leaves, so dropping one of two identical leaves is caught 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > matches a leaf with no recorded checksum on its identity, and does NOT count it as corroborated 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > does not invent a mismatch when only one side recorded a checksum 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 4ms
+ × server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current 'unknown-agency' and signed 'US' records 17ms
+   → expected { verdict: 'signed', …(4) } to match object { verdict: 'undetermined', …(1) }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current undefined and signed 'US' records 2ms
+   → expected { verdict: 'signed', …(4) } to match object { verdict: 'undetermined', …(1) }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current 'fda' and signed 'unknown-agency' records 4ms
+   → expected { verdict: 'signed', …(4) } to match object { verdict: 'undetermined', …(1) }
+(3 matching properties omitted from actual)
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports changed current contact as no covering signature rather than snapshot tampering 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current 'unknown-agency' and signed 'US' records
+ FAIL  server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current undefined and signed 'US' records
+ FAIL  server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > never lends a region between unknown current 'fda' and signed 'unknown-agency' records
+AssertionError: expected { verdict: 'signed', …(4) } to match object { verdict: 'undetermined', …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "detail": StringMatching /region/i,
+-   "verdict": "undetermined",
++   "detail": "verified against run run-a for sequence 0001; its signed manifest is this sequence's 2 leaf/leaves (2 matched on their eCTD index-md5)",
++   "verdict": "signed",
+  }
+
+ ❯ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts:280:20
+    278|     const status = await resolveReleaseSignatureStatus({ submissionId:…
+    279|       sequenceNumber: THIS_SEQUENCE, sequenceId: SEQUENCE_ID, region: …
+    280|     expect(status).toMatchObject({ verdict: 'undetermined', detail: ex…
+       |                    ^
+    281|     expect(mockReadIdentity).not.toHaveBeenCalled();
+    282|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 44 passed (47)
+   Start at  17:29:31
+   Duration  10.73s (transform 3.88s, setup 144ms, import 9.89s, tests 98ms, environment 1ms)
+

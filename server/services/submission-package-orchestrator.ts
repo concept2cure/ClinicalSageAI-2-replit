@@ -829,7 +829,7 @@ export function computeBoundPayloadDigestFromComponents(params: {
     );
   }
   // Optional by design: historical frozen snapshots reproduce their original
-  // digest exactly. New recorded FDA packages bind the applicant/contact facts
+  // digest exactly. New recorded packages bind their captured regional facts
   // as part of the same signed record, with an explicit domain separator.
   if (params.recordedPackageIdentity !== undefined) {
     h.update('\0recorded-package-identity\0');
@@ -950,22 +950,26 @@ function stripLeafBytes(leaves: ECTDLeaf[]): ECTDLeaf[] {
   });
 }
 
-/** A new release cannot authorize an FDA package missing captured applicant facts.
+/** A new release cannot authorize a package missing captured regional applicant facts.
  * Historical completed signatures still verify with their original digest; an
  * unfinished sign step must reassemble with the recorded identity before signing.
  */
-function packageSignIdentityRefusal(assembly: AssembledPackage | undefined): string | null {
+export function packageSignIdentityRefusal(
+  assembly: Pick<AssembledPackage, 'region' | 'applicationNumber' | 'recordedPackageIdentity' | 'dryRun' | 'dryRunReason'> | undefined,
+): string | null {
   if (!assembly) return null;
   if (assembly.dryRun) {
     return `dry run, not a package: ${assembly.dryRunReason ?? 'its identity is not recorded.'} ` +
       'A release signature binds the recorded application number and applicant, so nothing was signed.';
   }
-  if (canonicalRegionOf(assembly.region) !== 'US') return null;
+  const region = canonicalRegionOf(assembly.region);
+  if (!region) return 'Reassemble this package with a recognized region before requesting a release signature.';
   const captured = assembly.recordedPackageIdentity;
   if (!sameRecordedPackageIdentitySnapshot(captured, captured) ||
-      packageIdentityRefusal(captured!.identity, '', { fda: true }) ||
+      !sameRecordedPackageIdentitySnapshot(captured, recordedPackageIdentitySnapshot(captured!.identity, { region })) ||
+      packageIdentityRefusal(captured!.identity, '', { fda: region === 'US' }) ||
       captured!.identity.applicationNumber !== assembly.applicationNumber) {
-    return 'Reassemble this FDA package with recorded applicant facts before requesting a release signature.';
+    return 'Reassemble this package with recorded applicant facts before requesting a release signature.';
   }
   return null;
 }

@@ -1,0 +1,84 @@
+[
+  {
+    "record": "core/final-inputs.json",
+    "inputCount": 19,
+    "moved": []
+  },
+  {
+    "record": "review/persisted-writer-inputs.json",
+    "inputCount": 15,
+    "moved": []
+  },
+  {
+    "record": "review/reviewed-source-inputs.json",
+    "inputCount": 14,
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "native/inputs-final.json",
+    "inputCount": 14,
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "verification/build-inputs.json",
+    "inputCount": 18,
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "verification/regional-boundary-inputs.json",
+    "inputCount": 21,
+    "moved": []
+  },
+  {
+    "record": "snapshots/continuation-green-inputs.sha256",
+    "inputCount": 8,
+    "moved": []
+  },
+  {
+    "record": "browser/result/result.json",
+    "inputCount": 20,
+    "moved": []
+  },
+  {
+    "record": "callers/verified-inputs.json",
+    "inputCount": 28,
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "capturedAfterExecution": true,
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "callers/ui/verified-inputs.json",
+    "inputCount": 9,
+    "moved": [
+      "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx"
+    ],
+    "capturedAfterExecution": false,
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "callers/post-refactor-inputs.json",
+    "inputCount": 28,
+    "moved": []
+  },
+  {
+    "record": "callers/ui/refactored-inputs.json",
+    "inputCount": 9,
+    "moved": []
+  },
+  {
+    "record": "verification/build-final-inputs.json",
+    "inputCount": 18,
+    "moved": []
+  }
+]

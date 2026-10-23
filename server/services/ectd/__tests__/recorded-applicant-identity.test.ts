@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, lockRecordedPackageIdentity, fdaContactsForPackageIdentity, type RecordedPackageIdentitySnapshot } from '../package-identity';
+import { readRecordedPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, lockRecordedPackageIdentity, lockSubmissionPackageIdentity, fdaContactsForPackageIdentity, type RecordedPackageIdentitySnapshot } from '../package-identity';
 import { buildPackagerInputFromCore } from '../core-to-packager';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -72,6 +72,27 @@ describe('canonical adapter reaches the existing FDA contact serializer', () => 
 
 
 describe('captured applicant identity proof', () => {
+  it('preserves the exact version 1 default and FDA capture bytes', async () => {
+    const { identity } = await read();
+    const expected = '{"version":1,"identity":{"programId":"11111111-1111-4111-8111-111111111111","applicationNumber":"000512","applicantSponsorId":"22222222-2222-4222-8222-222222222222","applicantName":"Recorded applicant","applicantId":"123456789","contact":{"name":"Regulatory contact","phone":"+1 212 555 0100","email":"ra@example.test"}}}';
+    expect(JSON.stringify(recordedPackageIdentitySnapshot(identity))).toBe(expected);
+    for (const region of ['US', 'FDA', 'fda']) {
+      expect(JSON.stringify(recordedPackageIdentitySnapshot(identity, { region }))).toBe(expected);
+    }
+  });
+  it.each(['EU', 'JP', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG', 'ema', 'pmda'])(
+    'captures %s identity without assigning FDA facts another regional meaning', async (region) => {
+      const { identity } = await read();
+      const snapshot = recordedPackageIdentitySnapshot(identity, { region });
+      expect(snapshot).toEqual({ version: 1, identity: {
+        programId: PROGRAM, applicationNumber: '000512', applicantSponsorId: SPONSOR,
+        applicantName: 'Recorded applicant', applicantId: null,
+        contact: { name: null, phone: null, email: null },
+      } });
+      expect(sameRecordedPackageIdentitySnapshot(snapshot, recordedPackageIdentitySnapshot(snapshot.identity))).toBe(true);
+      expect(identity.applicantId).toBe('123456789');
+      expect(identity.contact.email).toBe('ra@example.test');
+    });
   it('captures facts by value and compares only complete known fields', async () => {
     const { identity } = await read();
     const snapshot = recordedPackageIdentitySnapshot(identity);
@@ -101,6 +122,32 @@ describe('captured applicant identity proof', () => {
 });
 
 describe('recorded identity transaction locking', () => {
+  it('locks the organization before its same-tenant submission and returns the actual program anchor', async () => {
+    const query = vi.fn(async () => ({ rows: [{ program_id: PROGRAM }] }));
+    await expect(lockSubmissionPackageIdentity({ query }, 7, 9)).resolves.toEqual({ programId: PROGRAM });
+    expect(query.mock.calls).toEqual([
+      [expect.stringMatching(/FROM organizations WHERE id = \$1 FOR SHARE/), [7]],
+      [expect.stringMatching(/FROM submissions[\s\S]*id = \$1 AND organization_id = \$2[\s\S]*deleted_at IS NULL FOR SHARE/), [9, 7]],
+    ]);
+  });
+  it('takes one direct submission UPDATE lock for freeze, without a SHARE upgrade', async () => {
+    const query = vi.fn(async () => ({ rows: [{ program_id: PROGRAM }] }));
+    await expect(lockSubmissionPackageIdentity({ query }, 7, 9, { forUpdate: true })).resolves.toEqual({ programId: PROGRAM });
+    expect(query.mock.calls).toEqual([
+      [expect.stringMatching(/FROM organizations WHERE id = \$1 FOR SHARE/), [7]],
+      [expect.stringMatching(/FROM submissions[\s\S]*deleted_at IS NULL FOR UPDATE/), [9, 7]],
+    ]);
+  });
+  it('distinguishes a missing or foreign parent from a present unanchored submission', async () => {
+    const query = vi.fn(async (sql: string) => ({ rows: sql.includes('FROM submissions') ? [] : [{ id: 7 }] }));
+    await expect(lockSubmissionPackageIdentity({ query }, 7, 9)).resolves.toBeNull();
+    const unanchored = { query: vi.fn(async () => ({ rows: [{ program_id: null }] })) };
+    await expect(lockSubmissionPackageIdentity(unanchored, 7, 9)).resolves.toEqual({ programId: null });
+  });
+  it('propagates a submission lock failure instead of returning a guessed anchor', async () => {
+    const query = vi.fn(async () => { throw new Error('submission lock unavailable'); });
+    await expect(lockSubmissionPackageIdentity({ query }, 7, 9)).rejects.toThrow('submission lock unavailable');
+  });
   it('locks program before same-tenant sponsor, using the caller transaction', async () => {
     const query = vi.fn(async () => ({ rows: [{ applicant_sponsor_id: SPONSOR }] }));
     await lockRecordedPackageIdentity({ query }, 7, PROGRAM);
