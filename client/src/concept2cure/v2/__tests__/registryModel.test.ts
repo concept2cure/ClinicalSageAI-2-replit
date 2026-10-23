@@ -26,9 +26,17 @@ import {
   getSegment,
   surfacesByTier,
   getSegmentModules,
+  getSegmentContext,
 } from '../registryModel';
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
+  it('starts device and diagnostic quick actions and capability discovery in Projects', () => {
+    for (const segment of ['medtech', 'diagnostics']) {
+      expect(getSegmentContext(segment)?.actions).toHaveLength(1);
+      expect(getSegmentContext(segment)?.actions[0].surface).toBe('projects');
+      expect(getSegmentModules(segment)[0]).toEqual({ label: 'MDX project workflows', items: ['projects'] });
+    }
+  });
   it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
     // My work asks the task board for the person's own tasks as it opens it,
     // and Tasking (on the rail by founder request, 2026-10-16) asks it for

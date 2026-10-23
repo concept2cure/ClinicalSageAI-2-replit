@@ -494,7 +494,10 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // 2026-09-29: '/api/programs' added: /api/programs/:id/predicate-intel,
     // se-matrix and rtm are this app's (they were claimed by Projects).
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
+    // Project-first MDX, 2026-10-23: useK510 reads the existing document
+    // preview, candidate and SE-matrix routes. Keep the predicate claim to
+    // these endpoint families rather than the entire intelligence namespace.
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/510k/projects', '/api/predicate-intelligence/candidates', '/api/predicate-intelligence/se-matrix', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -510,7 +513,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'microscope',
     group: 'device',
     uiKit: null,
-    apiPrefixes: ['/api/cer', '/api/cerv2'],
+    // Existing CER GSPR and PMS/PMCF panes (useCerGspr/useCerPostMarket/
+    // useCerPmsFeeds); the program-scoped routes retain their own governance.
+    apiPrefixes: ['/api/cer', '/api/cerv2', '/api/gspr/catalog', '/api/gspr/programs', '/api/post-market/programs'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

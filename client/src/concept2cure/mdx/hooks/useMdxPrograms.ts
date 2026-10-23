@@ -60,10 +60,15 @@ interface ListPayload {
 }
 
 export function deriveKitPathway(programType: string, regulatoryPath: string | null): ProgramPathway | null {
+  const upper = (programType ?? '').toUpperCase();
+  // EU evaluation is a distinct filing even when the project also records a
+  // US route. Never render its CER/PER sections as that US filing's sections.
+  if (['CER', 'MDR', 'MDR_TD', 'IVDR', 'IVDR_TD'].includes(upper)) {
+    return PROGRAM_TYPE_TO_PATHWAY[upper] ?? null;
+  }
   if (regulatoryPath && REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()]) {
     return REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()] as ProgramPathway;
   }
-  const upper = (programType ?? '').toUpperCase();
   return (PROGRAM_TYPE_TO_PATHWAY[upper] ?? null) as ProgramPathway | null;
 }
 

@@ -1,6 +1,10 @@
 {
   "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition.",
   "symbols": {
+    "risk-data.RISK_ENUMS": "Risk strategy, status, control and source vocabulary only; no risk records. Reviewed for project-first MDX scope, 2026-10-23.",
+    "risk-data.SEV_LABELS": "Severity category labels only, from Negligible to Catastrophic; no risk scores or project records. Reviewed 2026-10-23.",
+    "risk-data.PROB_LABELS": "Probability category labels only, from Improbable to Frequent; no measured probabilities or project records. Reviewed 2026-10-23.",
+    "labeling-data.LABEL_ENUMS": "Label document kinds, lifecycle states and translation method/status labels only; no labeling records. Reviewed 2026-10-23.",
     "admin-data.ARTIFACT_FMT": "ARTIFACT_FMT: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
     "admin-data.AUDIT_KINDS": "AUDIT_KINDS: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
     "admin-data.PLATFORM_SERVICES": "PLATFORM_SERVICES: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",

@@ -29,6 +29,8 @@
  */
 
 import * as React from 'react';
+import { Button } from '@/components/ui/button';
+import { isIvdFamily } from '@shared/constants/domain/product-types';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
@@ -73,7 +75,7 @@ import './drafter.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './surface-text-ramp.css';
-import { publishShellProject } from '../v2/shellProject';
+import { publishShellProject, useShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
@@ -83,20 +85,14 @@ import { usePublishSurfaceContext } from '../v2/surfaceContext';
 export { MDX_SURFACE_IDS, type MdxSurfaceId } from './surfaceIds';
 
 /**
- * Which pathway a surface anchors to when the user has not picked a project.
- *
- * Carried over from `App.tsx`'s `programForContext`. Org-scoped surfaces map to
- * null deliberately: they read org-wide lists and anchoring them to an
- * arbitrary program would silently narrow what the user sees.
+ * Document type a pathway feature opens in the shared editor. This never
+ * selects a project; project identity comes only from the shell selection.
  */
 const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> = {
   'device-510k': 'k510',
   'device-pma': 'pma',
   'device-cer': 'cer',
   'device-diagnostics': 'ivdr',
-  // Software lifecycle is project-scoped; anchor to a device program so the
-  // completeness summary can load when nothing is selected.
-  'device-software': 'k510',
 };
 
 /**
@@ -183,6 +179,15 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
   'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
 ];
 
+const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
+  'device-udi', 'device-presub', 'device-tasks', 'device-validation', 'device-submission', 'device-analytics',
+]);
+
+function viewScopeNotice(nav: MdxSurfaceId): string | null {
+  if (nav === 'device-postmarket') return 'Mixed scope: organization-wide surveillance feeds; reporting clocks for this project';
+  return ORGANIZATION_VIEWS.has(nav) ? 'Organization-wide view' : null;
+}
+
 export interface MdxSurfaceHostProps extends SurfaceViewProps {
   /** Which surface to render. Supplied by the registry entry, not by state. */
   nav: MdxSurfaceId;
@@ -191,34 +196,21 @@ export interface MdxSurfaceHostProps extends SurfaceViewProps {
 export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   const liveProgramsResult = useMdxPrograms();
   const programs = liveProgramsResult.programs ?? [];
+  const selectedProject = useShellProject();
+  const selectedId = selectedProject?.id == null ? null : String(selectedProject.id);
+  const scopeNotice = viewScopeNotice(nav);
 
   /**
    * The open project, from the shell's selection.
    *
    * `window.C2C_PROJECT.id` is the `regulatory_programs` UUID, and MDX programs
    * come from `/api/regulatory-programs` — the same table — so the ids match
-   * directly. When nothing is selected the pathway anchor above stands in, which
-   * is what the surfaces did before via their own selection state.
+   * directly. A missing or unavailable selection never borrows another
+   * project's dossier, including another project on the same pathway.
    */
   const programForContext = React.useMemo<Program | null>(() => {
-    const selectedId = typeof window !== 'undefined' ? window.C2C_PROJECT?.id : undefined;
-    if (selectedId) {
-      const match = programs.find((p) => String(p.id) === String(selectedId));
-      if (match) return match;
-    }
-    const anchor = PATHWAY_ANCHOR[nav];
-    if (!anchor) return null;
-    const match = programs.find((p) => p.pathway === anchor);
-    if (match) return match;
-    // No `?? programs[0]`. An earlier version fell back to the first program of
-    // ANY pathway, so an org with no PMA opened the PMA surface showing a
-    // 510(k) program's modules and trial metrics — the wrong dossier under the
-    // right heading. Only `device-software` may borrow another program, because
-    // the software lifecycle is genuinely cross-pathway and its own comment in
-    // PATHWAY_ANCHOR says so; every other surface reports nothing rather than
-    // something false.
-    return nav === 'device-software' ? programs[0] ?? null : null;
-  }, [programs, nav]);
+    return selectedId ? programs.find(p => String(p.id) === selectedId) ?? null : null;
+  }, [programs, selectedId]);
 
   /** Hand a program off to the shell's project home — there is only one. */
   const openProgram = React.useCallback(
@@ -232,7 +224,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
         // matches it, and omits keys it cannot honestly supply rather than
         // inheriting stale ones.
-        publishShellProject({ id: String(prog.id), title: prog.title });
+        publishShellProject({ id: String(prog.id), title: prog.title, productType: prog.productType });
       }
       onNav('project-home');
     },
@@ -269,9 +261,10 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
         // REPLACE, never merge — same rule and same reason as openProgram above.
-        publishShellProject({ id: String(programForContext.id), title: programForContext.title });
+        publishShellProject({ id: String(programForContext.id), title: programForContext.title, productType: programForContext.productType });
       }
-      const docType = programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
+      const docType = nav === 'device-cer' || nav === 'device-diagnostics'
+        ? PATHWAY_ANCHOR[nav] ?? null : programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
       if (docType && section && (section.code != null || section.label)) {
         setEditorTarget({
           docType,
@@ -295,8 +288,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * be read" are different claims from "there are no programs", and publishing
    * the wrong one makes AnA confidently wrong. The program named in the
    * context comes only from `programForContext`, which already carries the
-   * honesty rule above: only `device-software` may borrow a program; every
-   * other surface reports nothing rather than something false. No leaf-level
+   * project-selection rule above: no feature may borrow a program. No leaf-level
    * counts are published — the host does not hold them.
    */
   const programCount = programs.length;
@@ -453,6 +445,29 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       break;
   }
 
+  // The project is the entry point for every MDX feature. Do not mount a leaf
+  // against a null program: several older leaves interpret null as org-wide.
+  // The portfolio remains the discovery view that opens the chosen project.
+  if (nav !== 'device-workstream') {
+    if (liveProgramsResult.loading) {
+      surface = <EmptyState busy title="Loading this project's MDX context" testId="mdx-project-loading" />;
+    } else if (liveProgramsResult.error) {
+      surface = <ErrorState variant="panel" title="Couldn't verify this project's MDX context" message={liveProgramsResult.error} retry={liveProgramsResult.refresh} testId="mdx-project-error" />;
+    } else if (!programForContext) {
+      surface = <section data-testid="mdx-project-required">
+        <EmptyState title={selectedId ? 'The selected device or diagnostic project is unavailable' : 'Open a project to continue'}
+          hint="Choose the client project from Projects to open its MDX workflow and evidence." />
+        <Button type="button" variant="outline" onClick={() => onNav('projects')}>Open projects</Button>
+      </section>;
+    } else if (nav === 'device-cer' && isIvdFamily(programForContext.productType)) {
+      surface = <section data-testid="mdx-per-required">
+        <EmptyState title="Diagnostics use a performance evaluation report"
+          hint="Open the diagnostic workflow for scientific validity, analytical performance, clinical performance and the IVDR PER." />
+        <Button type="button" variant="outline" onClick={() => onNav('device-diagnostics')}>Open diagnostic evidence</Button>
+      </section>;
+    }
+  }
+
   /*
    * The scope root. Not optional, and not decoration.
    *
@@ -472,7 +487,16 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   return (
     <div className="mdx-shell" data-surface="true">
       <div className="page">
-        <div className="page-inner">{surface}</div>
+        <div className="page-inner">
+          {nav !== 'device-workstream' && programForContext && !liveProgramsResult.loading && !liveProgramsResult.error && (
+            <nav aria-label="Project context" className="page-actions">
+              <Button type="button" variant="ghost" size="sm" onClick={() => onNav('project-home')}>Return to project workflow</Button>
+              <span>{programForContext.title}</span>
+              {scopeNotice && <span>{scopeNotice}</span>}
+            </nav>
+          )}
+          {surface}
+        </div>
       </div>
     </div>
   );

@@ -557,7 +557,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Specialist / device</div>
           <h1 className="ph-title">Risk management</h1>
-          <div className="ph-sub">ISO 14971 risk file — hazard analysis, 5x5 risk matrix, risk controls, residual risk and benefit-risk.</div>
+          <div className="ph-sub">Organization-wide risk register. ISO 14971 hazard analysis, 5x5 risk matrix, risk controls, residual risk and benefit-risk. Use the project’s evidence for its risk file.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk('Summarize the open risk evaluations')}>{I.sparkles} Ask AnA</button>

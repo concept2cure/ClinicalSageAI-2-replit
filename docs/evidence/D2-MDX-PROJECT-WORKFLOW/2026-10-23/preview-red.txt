@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > returns 403 when no organization context 1005ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > returns 422 when projectIdent is empty 87ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > returns 404 when project not found in tenant 62ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > assembles a Markdown document for a found project 61ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > emits k510_workflow.document_preview.read audit row 63ms
+ × server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > rejects an invalid requested document class rather than reading another filing 85ms
+   → expected 200 to be 422 // Object.is equality
+ × server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > reports an unreadable section store as unavailable rather than an empty project 59ms
+   → expected 200 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > rejects an invalid requested document class rather than reading another filing
+AssertionError: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/__tests__/routes/k510-document-preview.test.ts:144:24
+    142|     dbState.project = { id: 'p-1', title: 'X', status: 'active' };
+    143|     const res = await request(app).get('/api/510k/projects/OR-801/docu…
+    144|     expect(res.status).toBe(422);
+       |                        ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/__tests__/routes/k510-document-preview.test.ts > GET /api/510k/projects/:projectIdent/document-preview > reports an unreadable section store as unavailable rather than an empty project
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/__tests__/routes/k510-document-preview.test.ts:151:24
+    149|     dbState.failSections = true;
+    150|     const res = await request(app).get('/api/510k/projects/OR-801/docu…
+    151|     expect(res.status).toBe(503);
+       |                        ^
+    152|     expect(res.body.sections).toBeUndefined();
+    153|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  20:38:00
+   Duration  1.78s (transform 528ms, setup 58ms, import 112ms, tests 1.42s, environment 0ms)
+

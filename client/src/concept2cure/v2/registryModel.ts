@@ -619,6 +619,7 @@ export const getSurfaceActions = (id: string) =>
 /** Per-category workspace modules (complete capability inventory on the segment home) */
 export const SEGMENT_MODULES = {
   medtech: [
+    { label: 'MDX project workflows', items: ['projects'] },
     {
       label: 'Author & assemble',
       items: [
@@ -660,6 +661,7 @@ export const SEGMENT_MODULES = {
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
   diagnostics: [
+    { label: 'MDX project workflows', items: ['projects'] },
     {
       label: 'Author & assemble',
       items: [
@@ -874,12 +876,7 @@ export const SEGMENT_CONTEXT = {
     pathways: ['510(k)', 'De Novo', 'PMA', 'EU MDR / CER'],
     ana: 'Predicate & substantial-equivalence reasoning, eSTAR, ISO 14971 risk, EU MDR / CER.',
     actions: [
-      { id: 'estar', label: 'Build eSTAR', icon: 'fileCheck', surface: 'device-workstream' },
-      { id: 'predicate', label: 'Predicate search', icon: 'scale', surface: 'precedent-intelligence' },
-      { id: 'risk', label: 'Risk file (ISO 14971)', icon: 'alertTriangle', surface: 'risk' },
-      { id: 'dhf', label: 'Design controls (DHF)', icon: 'gitBranch', surface: 'design-controls' },
-      { id: 'hf', label: 'Human factors (62366)', icon: 'users', surface: 'human-factors' },
-      { id: 'cer', label: 'CER generator', icon: 'microscope', surface: 'device-cer' },
+      { id: 'project', label: 'Open a device project', icon: 'folder', surface: 'projects' },
     ],
   },
   biopharma: {
@@ -902,10 +899,7 @@ export const SEGMENT_CONTEXT = {
     pathways: ['510(k)', 'EU IVDR', 'CLIA', 'CDx'],
     ana: 'IVD analytical & clinical performance, IVDR Annex, companion-diagnostic linkage.',
     actions: [
-      { id: 'perf', label: 'Performance report', icon: 'barChart', surface: 'device-diagnostics' },
-      { id: 'gspr', label: 'IVDR GSPR checklist', icon: 'fileCheck', surface: 'device-cer' },
-      { id: 'evidence', label: 'Analytical validation', icon: 'search', surface: 'evidence-search' },
-      { id: 'predicate', label: 'Precedent search', icon: 'scale', surface: 'precedent-intelligence' },
+      { id: 'project', label: 'Open a diagnostic project', icon: 'folder', surface: 'projects' },
     ],
   },
   cro: {

@@ -60,7 +60,7 @@ export interface DraftProvenance {
 }
 
 export interface EstarRow {
-  id: number;
+  id: string | number;
   label: string;
   status: EstarStatus;
   blocker?: boolean;

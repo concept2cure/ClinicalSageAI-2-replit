@@ -98,7 +98,7 @@ function workflow(container: HTMLElement, id: string): HTMLElement & { open: boo
 
 function card(container: HTMLElement, name: string): HTMLElement {
   const title = within(container).getByText(name, { selector: '.launch-title' });
-  const result = title.closest<HTMLElement>('.launch');
+  const result = title.closest<HTMLElement>('[data-feature-id], .launch');
   expect(result, `${name} retains its actual catalog card`).not.toBeNull();
   if (!result) throw new Error(`Missing catalog card for ${name}`);
   return result;
@@ -238,7 +238,8 @@ describe('workflow discovery extends the live catalog', () => {
     const { container, onNav } = mount();
     await screen.findByText('510(k) workbench', { selector: '.launch-title' });
     expect(workflow(container, 'cmc')).toBeTruthy();
-    expect(workflow(container, 'additional')).toBeTruthy();
+    expect(screen.getByTestId('mdx-catalog-solution').closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(container.querySelector('[data-workflow="additional"]')).toBeNull();
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     for (const name of ['CMC / Module 3', '510(k) workbench']) {
       const locked = card(container, name);
