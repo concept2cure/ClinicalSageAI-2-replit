@@ -1,0 +1,22 @@
+{
+  "fourthPush": {
+    "commit": "d7bc6a5ac",
+    "allNormalGatesPassed": true,
+    "typeErrors": 0,
+    "exitCode": 1,
+    "reason": "remote advanced; ref lock rejected"
+  },
+  "incomingCanonical": "0b3aaa10c",
+  "mergedCommit": "ac64efcc8",
+  "sourceScope": "Existing Reporting legal workflow chooser plus upstream repository-health evidence; own auth/catalog/board transport and readers unchanged",
+  "tests": {
+    "suites": 12,
+    "passed": 147,
+    "failed": 0,
+    "note": "Bounded overlapping cohort; do not sum with earlier counts."
+  },
+  "buildExitCode": 0,
+  "typecheckExitCode": 0,
+  "typeErrors": 0,
+  "review": "No incompatibility: reporting retains captured company/session guards and canonical transport; selection callbacks check current owner before launch."
+}

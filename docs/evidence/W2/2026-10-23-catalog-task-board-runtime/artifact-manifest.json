@@ -1,11 +1,11 @@
 {
   "qualifiedCommit": "66110e1a7",
-  "finalIntegrationCommit": "77f1914ed8815c238ac75523257e10829c0557a6",
+  "finalIntegrationCommit": "ba41b4cac79f700b33299782c9512dff74d0141b",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 12782,
-      "sha256": "f54324fa097bc01db0b0ffe20173cbde59cb1166ef6503c3a5e85af18914b3bc"
+      "bytes": 14877,
+      "sha256": "cb0cec82dcee1330b8e15a40ddc937b2b4b3f108d9e154ec3b070175e7a91883"
     },
     {
       "path": "assembly-build.log.gz",
@@ -83,6 +83,11 @@
       "sha256": "aa9083f376946eb21e5436720e25c5e58ab53f188484591dffed78c2236f87f3"
     },
     {
+      "path": "browser-cross-tab-before-mdx.json",
+      "bytes": 1465,
+      "sha256": "15c85ddd40d7291b1973c90fe77080cde0de45baf9cf4ad9e193e059ca942f87"
+    },
+    {
       "path": "browser-cross-tab-current.json",
       "bytes": 1465,
       "sha256": "15c85ddd40d7291b1973c90fe77080cde0de45baf9cf4ad9e193e059ca942f87"
@@ -128,6 +133,16 @@
       "sha256": "e752e4e6cc63c89a029750b80f2c9729fa6c32421f14bdd21a8211bcab915985"
     },
     {
+      "path": "fourth-push.log.gz",
+      "bytes": 4484,
+      "sha256": "64feadecb2d7ba10e14e9c2048a8b76e1b396a56064457172f125102a72317cb"
+    },
+    {
+      "path": "http-before-mdx.json",
+      "bytes": 2341,
+      "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
+    },
+    {
       "path": "http-before-workflow.json",
       "bytes": 2341,
       "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
@@ -136,6 +151,26 @@
       "path": "http.json",
       "bytes": 2341,
       "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
+    },
+    {
+      "path": "mdx-build.log.gz",
+      "bytes": 4734,
+      "sha256": "8d48751af06f37a77fbeda151f32fe106629f31348b67bce90001ef64a6cf416"
+    },
+    {
+      "path": "mdx-catchup.json",
+      "bytes": 1262,
+      "sha256": "60aa88ac2c5f178fe6aa36289b1123be15738e5b9af1b4e65ce6680bf0d2ff2e"
+    },
+    {
+      "path": "mdx-tests.log.gz",
+      "bytes": 8161,
+      "sha256": "1cc68f260e6b0b82bc57b4c97a11fdea969ed03216ca27321e4029607bda16a4"
+    },
+    {
+      "path": "mdx-typecheck.log.gz",
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },
     {
       "path": "native-board.json",
@@ -156,6 +191,26 @@
       "path": "qualified-tests.log.gz",
       "bytes": 5941,
       "sha256": "db08a4fadcb9629a166ae5dcb6b1219fe369a995683f10726181090648721e4c"
+    },
+    {
+      "path": "reporting-build.log.gz",
+      "bytes": 4713,
+      "sha256": "af76f6e124c8196bc9bec7491979756218df78022b71e1978faa4b37198c8686"
+    },
+    {
+      "path": "reporting-catchup.json",
+      "bytes": 782,
+      "sha256": "265ec6f86bc0905eacff1b4a70d8980ec81744ce0b9d2fce00ad298195a2a080"
+    },
+    {
+      "path": "reporting-tests.log.gz",
+      "bytes": 6355,
+      "sha256": "a314714b51b0a532def7e37efc8257a3d80999a6d761faaf61a8d0c078715dc1"
+    },
+    {
+      "path": "reporting-typecheck.log.gz",
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },
     {
       "path": "second-push.log.gz",

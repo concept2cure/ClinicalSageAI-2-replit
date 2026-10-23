@@ -1,6 +1,6 @@
 # W2 / D1 — catalog and task-board runtime recovery
 
-Status: engineering correction qualified across canonical catch-ups, most recently `77f1914ed`; source change `bf47a6964`. Affected hosted deployment remains unverified. No deployed incident cause or deployment readiness claimed. Contract: `docs/design/CATALOG_TASK_BOARD_RUNTIME_2026-10-23.md`. Baseline `381a42fda`.
+Status: engineering correction qualified across canonical catch-ups, most recently `ba41b4cac`; source change `bf47a6964`. Affected hosted deployment remains unverified. No deployed incident cause or deployment readiness claimed. Contract: `docs/design/CATALOG_TASK_BOARD_RUNTIME_2026-10-23.md`. Baseline `381a42fda`.
 
 ## What already exists
 
@@ -57,10 +57,18 @@ The second normal push also passed all gates and a complete **0-error** compiler
 
 The final integration passed **220 tests / 18 suites**, including the prior cohort, current workflow discovery, shell navigation and command-palette licensing (`workflow-tests.log.gz`). Client/server/audit-verifier builds passed (`workflow-build.log.gz`). Fresh actual-app HTTP controls in `http.json` still return 200 with matching identity, 403 with stale organization and 401 unauthenticated; `http-before-workflow.json` preserves the first run.
 
-`browser-cross-tab-current.json` requalifies the actual **Workflows** screen and saved task board on this source: a second tab changes shared organization to100391 after bootstrap; the original session retains391, both product controls load data, actual APIs return200 under391 and shared storage remains100391. No uncaught errors. The first rerun used an expired synthetic session and correctly signed out; a fresh session was obtained through the existing local dev-login endpoint. No authentication/lifetime guard was changed. Final normal publication again requires the full compiler and all push gates.
+`browser-cross-tab-current.json` requalifies the actual **Workflows** screen and saved task board on this source: a second tab changes shared organization to 100391 after bootstrap; the original session retains 391, both product controls load data, actual APIs return 200 under 391 and shared storage remains 100391. No uncaught errors. The first rerun used an expired synthetic session and correctly signed out; a fresh session was obtained through the existing local dev-login endpoint. No authentication/lifetime guard was changed. Final normal publication again requires the full compiler and all push gates.
 
 ## Final assembly catch-up
 
 The third normal push passed all gates and a complete **0-error** compiler check (`third-push.log.gz`), then was refused because canonical advanced to `1eca721b1`. Merge `77f1914ed` retains that existing editor's searchable template selection and preserves both work-order rows. The auth, Workflows/catalog, board, transport and unified reader remain byte-identical to the browser-qualified `d6ce8f925`.
 
 `assembly-tests.log.gz`: **196 passed / 13 suites**, a bounded overlapping cohort of auth/catalog/board/workflow recovery plus the incoming picker/search/workbench integration. `assembly-build.log.gz`: client, server and audit-verifier builds pass. Independent review confirms assembly still uses captured-actor headers and its existing session/document/project guards. `assembly-catchup.json` records these results; final publication again uses all normal gates.
+
+## Reporting and device/diagnostics integration
+
+The fourth normal push passed every gate and the complete **0-error** compiler, then canonical advanced to `0b3aaa10c` (`fourth-push.log.gz`). Merge `ac64efcc8` preserves the existing Reporting legal-workflow chooser and upstream repository-health evidence. Its bounded cohort passed **147 tests / 12 suites**, the production build and a separate complete-program compiler with **0 errors** (`reporting-*.log.gz`, `reporting-catchup.json`). Independent review confirmed existing company/session ownership protections. These counts overlap earlier cohorts.
+
+Fresh canonical `62a8d5e7f` is preserved at `ba41b4cac`, integrating existing device and diagnostics work into Projects. Auth, canonical transport, board and request-scoped reader sources remain unchanged. The Workflows catalog changed, so it was requalified: **189 tests / 17 suites** passed, including catalog/discovery, the reported runtime failures, MDX catalog/Projects/host, preview access and launch scope (`mdx-tests.log.gz`). The production client/server/audit-verifier build passed (`mdx-build.log.gz`). Two read-only reviewers found no shared auth/startup incompatibility or new catalog fetch/store dependency; feature-level access remains governed.
+
+Fresh actual-app API controls in `http.json` preserve 200 / tenant-mismatch 403 / unauthenticated 401 behavior. `browser-cross-tab-current.json` proves the current Workflows UI and saved task board load after a second tab changes shared organization storage: all targeted requests use the original tab's bearer organization and return 200, with no uncaught errors or intercepted responses. Prior results are retained in `http-before-mdx.json` and `browser-cross-tab-before-mdx.json`. The local application and fixture database were stopped after verification, and the private synthetic session file was removed. The complete-program incremental compiler passed with **0 errors**, retaining the zero baseline (`mdx-typecheck.log.gz`). Normal publication gates repeat on the final push; no hosted deployment claim is made.
