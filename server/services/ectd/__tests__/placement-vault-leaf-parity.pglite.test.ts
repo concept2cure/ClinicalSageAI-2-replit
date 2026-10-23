@@ -13,19 +13,18 @@
  * assembly, submission-service.ts:1496).
  *
  * Seams, each explicit: object storage is an in-memory map; OCR, page count,
- * catalog and chunking are stubbed as in the FD5 carry test; and the HTML→PDF
- * ENGINE is a stand-in (pdf-lib over the export HTML) because no Chromium is
- * installed here — the "shipped engine" case below shows what happens without it.
- * Byte/text parity measured against the stand-in says nothing about Chromium's
- * output; what does not depend on the engine (pins, gates, lineage) is asserted
- * exactly.
+ * catalog and chunking are stubbed as in the FD5 carry test; and the strict Word→PDF
+ * converter is an explicit seam that reads actual rich Word and emits real
+ * PDF bytes with the existing leaf helper. Actual LibreOffice formatting is
+ * qualified separately. Pins, gates, source text and lineage run natively;
+ * a converter-failure case proves refusal before admission.
  */
 import { vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown,
   objects: new Map<string, Buffer>(), discard: vi.fn(),
-  engine: 'stand-in' as 'stand-in' | 'shipped',
+  engine: 'fixture' as 'fixture' | 'unavailable',
 }));
 vi.mock('../../../db', () => ({
   get db() { return h.db; },
@@ -59,16 +58,13 @@ vi.mock('../../vault/document-catalog.service', () => ({
   isDocumentCatalogEnabled: async () => false, recordExtractionOutcome: vi.fn(), buildExtractionOutcome: () => ({ status: 'none' }),
 }));
 vi.mock('../../vault/document-chunking.service', () => ({ isVaultChunkingEnabled: async () => false, chunkDocumentForIngest: vi.fn() }));
-vi.mock('../../../export/renderers', async (orig) => {
-  const actual = await orig<typeof import('../../../export/renderers')>();
-  const standIn = async (html: string) => (await import('../leaf-pdf-renderer')).renderLeafPdf(html, { title: 'stand-in HTML engine' });
-  return {
-    ...actual,
-    renderHtmlToPdf: async (html: string, o?: never) => (h.engine === 'shipped' ? actual.renderHtmlToPdf(html, o) : standIn(html)),
-    renderHtmlToPdfTracked: async (html: string, o?: never) =>
-      h.engine === 'shipped' ? actual.renderHtmlToPdfTracked(html, o) : { buffer: await standIn(html), usedFallback: false },
-  };
-});
+vi.mock('../../pdf-converter', () => ({
+  convertDocxToPdf: async (word: Buffer, options: { backend?: string }) => {
+    if (options.backend !== 'libreoffice') throw new Error('Expected the strict Word converter');
+    if (h.engine === 'unavailable') throw new Error('private unavailable converter /tmp/source.docx');
+    return (await import('../../../routes/__tests__/_authoring-pdf-converter-fixture')).convertedPdfFixture(word);
+  },
+}));
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
@@ -363,7 +359,7 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
   let cB: Awaited<ReturnType<typeof compile>>;
 
   beforeAll(async () => {
-    h.engine = 'stand-in';
+    h.engine = 'fixture';
     const docId = await authoringDocument('Clinical Overview parity', true);
     sourceDocId = docId;
     A = await placeAsCoauthorCopy(docId);
@@ -386,7 +382,7 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
     // (a) is re-rendered at EVERY compile from the copy's text by renderLeafPdf
     // (leaf-source-resolver.ts:507); (b) is the export rendered ONCE at filing and
     // staged raw (:717). Different inputs (the export adds its own title/notice
-    // matter), different engines in production (pdf-lib vs Chromium).
+    // matter), different engines in production (pdf-lib vs strict LibreOffice).
     expect(cA.bytes!.equals(cB.bytes!)).toBe(false);
     const [fa, fb] = [await pdfFacts(cA.bytes!), await pdfFacts(cB.bytes!)];
     for (const s of M25_SECTIONS) {
@@ -433,7 +429,7 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
 });
 
 it('keeps a retained draft filing receipt after the editable source changes', async () => {
-  h.engine = 'stand-in';
+  h.engine = 'fixture';
   const docId = await authoringDocument('Historical working draft receipt', false);
   const filed = await placeAsVaultVersion(docId);
   const before = await compile(filed.leaf);
@@ -449,7 +445,7 @@ it('keeps a retained draft filing receipt after the editable source changes', as
 
 describe('step 4 safety net: refusals agree, and where they do not', () => {
   it('a working draft blocks release on both paths, each naming why', async () => {
-    h.engine = 'stand-in';
+    h.engine = 'fixture';
     const docId = await authoringDocument('Clinical Overview draft', false);
     const A = await placeAsCoauthorCopy(docId);
     const B = await placeAsVaultVersion(docId);
@@ -461,23 +457,40 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
     expect(gB.resolution.notTransmittable).toBe('not reviewed');
   }, T);
 
-  it('OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place', async () => {
-    h.engine = 'shipped';
+  it('an ordinary rich-Word PDF files and places through the native Vault path without an HTML engine', async () => {
+    h.engine = 'fixture';
+    const docId = await authoringDocument('Clinical Overview ordinary PDF', true);
+    const B = await placeAsVaultVersion(docId);
+    expect(B.filed.approval.carried).toBe(true);
+    const compiled = await compile(B.leaf);
+    expect(compiled.materialized).toBe(1);
+    expect(compiled.unresolved).toEqual([]);
+    expect(sha(compiled.bytes!)).toBe(B.filed.sha256);
+    const gate = await gates(B.leaf, compiled);
+    expect(gate.transmitClear).toBe(true);
+  }, T);
+
+  it('an unavailable strict converter refuses before Vault admission and export recording', async () => {
+    const docId = await authoringDocument('Clinical Overview unavailable converter', true);
+    const count = async (table: string) => Number((await q<{ n: number }>(`SELECT count(*)::int AS n FROM ${table}`))[0].n);
+    const before = { vault: await count('vault.documents'), history: await count('authoring_export_history'), objects: h.objects.size };
+    h.engine = 'unavailable';
     try {
-      const docId = await authoringDocument('Clinical Overview shipped engine', true);
       const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
       expect(res.status, JSON.stringify(res.body)).toBe(503);
-      expect(JSON.stringify(res.body)).toContain('PDF_RENDERER_UNAVAILABLE');
-      // The coauthor path needs no HTML engine: pdf-lib renders it at compile.
+      expect(res.body.error.code).toBe('PDF_RENDERER_UNAVAILABLE');
+      expect(JSON.stringify(res.body)).not.toMatch(/private|\/tmp|source\.docx/);
+      expect(await count('vault.documents')).toBe(before.vault);
+      expect(await count('authoring_export_history')).toBe(before.history);
+      expect(h.objects.size).toBe(before.objects);
+      // The independent coauthor path remains usable and renders at compile.
       const A = await placeAsCoauthorCopy(docId);
       expect((await compile(A.leaf)).materialized).toBe(1);
-    } finally {
-      h.engine = 'stand-in';
-    }
+    } finally { h.engine = 'fixture'; }
   }, T);
 
   it('a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)', async () => {
-    h.engine = 'stand-in';
+    h.engine = 'fixture';
     const docId = await authoringDocument('Clinical Overview docx', true);
     const B = await placeAsVaultVersion(docId, 'docx');
     const cB = await compile(B.leaf);

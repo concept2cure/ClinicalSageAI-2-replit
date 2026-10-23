@@ -3,7 +3,7 @@
  * second POST. The Workbench mounts the real export action and history rail. */
 import React from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -92,4 +92,29 @@ it('recovers a recorded export through the existing history without creating ano
   expect(exports).toHaveLength(1);
   expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' && String(c[1]).endsWith('/export'))).toHaveLength(1);
   expect(screen.getByTestId('exports-verdict').getAttribute('data-verdict')).toBe('current');
+});
+
+it.each(['PDF_RENDERER_UNAVAILABLE', 'CONVERTER_BUSY'] as const)('keeps a definite %s refusal retryable without export reconciliation', async code => {
+  const previous = apiRequest.getMockImplementation()!;
+  const message = code === 'CONVERTER_BUSY' ? 'The document converter is busy. Try again in about 30 seconds.'
+    : 'The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.';
+  const payload = code === 'CONVERTER_BUSY' ? { error: code, message, retryAfterSeconds: 30 }
+    : { error: 'PDF rendering unavailable', code, message };
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'POST' && url.endsWith('/export')) throw new ApiRequestError(message, 503, payload, code);
+    return previous(method, url);
+  });
+  render(<DocumentAuthoring surface={{ id: 'document-authoring', label: 'Authoring' } as OwnedSurfaceViewProps['surface']} onNav={vi.fn()} segment="biotech" />);
+  await screen.findAllByText('Overview');
+  const controlledPdf = () => {
+    if (!screen.queryByRole('menu')) fireEvent.click(screen.getByRole('button', { name: /^Download/ }));
+    return screen.getByRole('menuitem', { name: 'Controlled export (PDF)' });
+  };
+  fireEvent.click(controlledPdf());
+  await screen.findByText(/Export refused/);
+  expect(controlledPdf().getAttribute('aria-disabled')).not.toBe('true');
+  expect(screen.queryByRole('button', { name: /Check export history/ })).toBeNull();
+  expect(exports).toHaveLength(0);
+  fireEvent.click(controlledPdf());
+  await waitFor(() => expect(apiRequest.mock.calls.filter(call => call[0] === 'POST' && String(call[1]).endsWith('/export'))).toHaveLength(2));
 });

@@ -12,8 +12,7 @@
  *                             recorded server-side); returns the persisted row
  *   • POST /docs/:id/export — export: streams the assembled document as a
  *                             binary attachment. Word (.docx), PDF (real PDF —
- *                             the server's pdf branch now renders through the
- *                             platform HTML→PDF engine), and XML are offered.
+ *                             the server's rich Word converter), and XML are offered.
  *   • POST /docs/:id/working-copy — a working copy of any status, marked
  *                             "DRAFT — uncontrolled copy" on every page.
  *
@@ -34,6 +33,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
+import { authoringPdfPrewriteRefusal } from '../authoringPdfRefusal';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
 import { useAuthoringCreation, type CreationKind, type CreationState } from '../editor/useAuthoringCreation';
@@ -321,8 +321,8 @@ function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToas
         ? 'Export not run — your session isn’t authenticated. Sign in and retry; no export was recorded.'
         : 'Export refused — ' + redactInternals(message, 'the server refused it') + '. No export was recorded.', 'error');
     };
-    const reportFailure = (status?: number, code?: string, message?: string) => {
-      const kind = exportFailureKind(status, recorded ? 'EXPORT_DELIVERY_FAILED' : code);
+    const reportFailure = (status?: number, code?: string, message?: string, body?: unknown) => {
+      const kind = exportFailureKind(status, recorded ? 'EXPORT_DELIVERY_FAILED' : code, body);
       if (kind === 'recorded') { recorded = true; reportUndelivered(); }
       else if (kind === 'refused') reportRefusal(status ?? 500, message);
       else reportUnconfirmed();
@@ -331,7 +331,7 @@ function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToas
       const result = await receiveAuthoringExport(docId, format);
       if (!current()) return;
       if (result.kind === 'failed') {
-        reportFailure(result.status, result.code, result.message);
+        reportFailure(result.status, result.code, result.message, result.body);
         return;
       }
       recorded = true;
@@ -378,10 +378,11 @@ function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToas
   };
 }
 
-function exportFailureKind(status?: number, code?: string): 'recorded' | 'refused' | 'unknown' {
+function exportFailureKind(status?: number, code?: string, body?: unknown): 'recorded' | 'refused' | 'unknown' {
   if (code === 'EXPORT_DELIVERY_FAILED') return 'recorded';
   if (code === 'EXPORT_OUTCOME_UNKNOWN') return 'unknown';
   if (code === 'EXPORT_NOT_RECORDED') return 'refused';
+  if (authoringPdfPrewriteRefusal(status, code, body)) return 'refused';
   if (typeof status === 'number' && [400, 401, 403, 404, 409, 422].includes(status)) return 'refused';
   return 'unknown';
 }
@@ -396,7 +397,7 @@ function ExportRecoveryNotice({ message, onCheck }: { message: string | null; on
 
 type ExportReceipt =
   | { kind: 'recorded'; blob: Blob | null; plainTextFallback?: boolean }
-  | { kind: 'failed'; status?: number; code?: string; message?: string };
+  | { kind: 'failed'; status?: number; code?: string; message?: string; body?: unknown };
 
 /**
  * What a delivered export says. QA 2026-10-08 (j4): with no PDF engine the
@@ -431,7 +432,7 @@ async function receiveAuthoringExport(docId: string, format: string): Promise<Ex
     const res = await apiRequest('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/export`, { format });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      return { kind: 'failed', status: res.status, code: json?.code, message: serverMessage(json) ?? undefined };
+      return { kind: 'failed', status: res.status, code: json?.code, message: serverMessage(json) ?? undefined, body: json };
     }
     const plainTextFallback = isPlainTextFallback(res);
     try {
@@ -440,6 +441,6 @@ async function receiveAuthoringExport(docId: string, format: string): Promise<Ex
     } catch { return { kind: 'recorded', blob: null, plainTextFallback }; }
   } catch (e) {
     const err = e as Partial<ApiRequestError> & { message?: string };
-    return { kind: 'failed', status: err?.status, code: err?.code, message: err?.message };
+    return { kind: 'failed', status: err?.status, code: err?.code, message: err?.message, body: err?.payload };
   }
 }
