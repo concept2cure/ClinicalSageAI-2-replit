@@ -1,0 +1,172 @@
+{
+  "scope": "W1 / D2; reporting library recovery integrated with current canonical source",
+  "canonicalBaseBeforeFinalEdits": "5ff6d225274079e9a08444409471394d9963970c",
+  "buildPinsUnchanged": true,
+  "backendArchivesHashVerified": 25,
+  "finalPushedRef": "Observed after normal pre-push outside this pre-publication packet; see final delivery receipt.",
+  "earlierBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:24:06.738784+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.503,
+    "finishedAt": "2026-10-23T20:24:30.242326+00:00"
+  },
+  "earlierSelectedBuildFiles": 10286,
+  "finalCanonicalBase": "e8b11ce0c19bcbd64c1104c90cc442dfd1e13000",
+  "typeOnlyBuiltAssetsComparison": {
+    "observedAt": "2026-10-23T20:33:28.334328+00:00",
+    "beforeAssets": 288,
+    "afterAssets": 288,
+    "allBuiltPublicAssetsUnchangedAcrossTypeOnlyFix": true,
+    "changedAssets": [],
+    "annotationDiff": "Import canonical type ApiResult; use ApiResult<unknown> for refusedWrite parameter after upstream optional-owner overload. No runtime behavior change."
+  },
+  "browserCaptures": {
+    "passed": 12,
+    "total": 12,
+    "scope": "Three serialized mounted artifact-pane states, two themes, two viewports; exact pre-annotation pins retained in browser packet."
+  },
+  "postApiBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:31:51.333252+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 36.427,
+    "finishedAt": "2026-10-23T20:32:27.760566+00:00"
+  },
+  "postApiSelectedFiles": 10293,
+  "workflowReview": "workflow-discovery-review.json.gz",
+  "compilerFirstRefusal": "compiler-first-refusal.json",
+  "correctedBackendFixture": "../backend/compiler-successor/README.md",
+  "postDiscoveryQualification": {
+    "passed": 115,
+    "files": 4,
+    "vitestSeconds": 15.76,
+    "sourcePins": 32,
+    "sourceStable": true,
+    "packet": "../client/post-discovery/README.md"
+  },
+  "postWorkflowBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:43:42.947606+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.537,
+    "finishedAt": "2026-10-23T20:44:06.484726+00:00"
+  },
+  "postWorkflowSelectedFiles": 10296,
+  "postAssemblySearch": {
+    "passed": 71,
+    "files": 3,
+    "vitestSeconds": 27.15,
+    "sourcePins": 18,
+    "preservedHashesStable": 11,
+    "packet": "../client/post-assembly-search/README.md"
+  },
+  "normalGateZeroTypeErrors": "zero-type-errors-cas-refusal.json",
+  "postAssemblyBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:54:18.285564+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.602,
+    "finishedAt": "2026-10-23T20:54:41.887713+00:00"
+  },
+  "postAssemblySelectedFiles": 10298,
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T21:13:26.617188+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 28.948,
+    "finishedAt": "2026-10-23T21:13:55.565184+00:00"
+  },
+  "selectedBuildFiles": 10322,
+  "postLegalChooser": {
+    "passed": 367,
+    "files": 35,
+    "vitestSeconds": 71.87,
+    "sourcePins": 55,
+    "sourceStable": true,
+    "packet": "../client/post-legal-chooser/README.md"
+  },
+  "secondNormalGateZeroTypeErrors": "second-zero-type-errors-cas-refusal.json",
+  "postLegalChooserBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T21:03:07.134505+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 24.766,
+    "finishedAt": "2026-10-23T21:03:31.901087+00:00"
+  },
+  "postLegalChooserSelectedFiles": 10300,
+  "postMdxProject": {
+    "passed": 135,
+    "files": 7,
+    "vitestSeconds": 23.82,
+    "sourcePins": 87,
+    "preservedReportingHashes": 55,
+    "sourceStable": true,
+    "packet": "../client/post-mdx-project/README.md"
+  },
+  "thirdNormalGateZeroTypeErrors": "third-zero-type-errors-cas-refusal.json",
+  "mdxProjectReview": "mdx-project-review.json.gz",
+  "postMdxServerShared": {
+    "passed": 108,
+    "files": 6,
+    "vitestSeconds": 8.19,
+    "processSeconds": 8.866,
+    "sourcePins": 23,
+    "sourceStable": true,
+    "packet": "../backend/post-mdx-project/README.md"
+  }
+}

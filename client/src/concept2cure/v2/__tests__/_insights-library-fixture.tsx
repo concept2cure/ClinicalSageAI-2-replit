@@ -60,6 +60,20 @@ export const BUNDLES = [
   },
 ];
 
+/** Mutation fixtures mirror the routes' 201 record / 200 desired-state receipts. */
+export function libraryWriteResponse(method: string, url: string, value: unknown): Response | null {
+  const body = value as Record<string, unknown>;
+  if (method === 'POST' && url === '/api/insights/subscriptions') {
+    return { ...ok({ data: { ...SUBS[0], ...body, id: 8, enabled: body.enabled ?? true, recipients: body.recipients ?? [] } }), status: 201 } as Response;
+  }
+  if (method === 'PATCH' && url === '/api/insights/subscriptions/7') return ok({ data: { ...SUBS[0], enabled: body.enabled } });
+  if (method === 'POST' && url === '/api/report-os/bundles') {
+    const runIds = body.runIds as number[];
+    return { ...ok({ data: { ...BUNDLES[0], name: body.name, runIds, items: RUNS.filter(run => runIds.includes(run.id)).map(run => ({ ...run, runId: run.id })) } }), status: 201 } as Response;
+  }
+  return null;
+}
+
 /** Routes this suite serves. Anything else answers an empty object, so a call
  *  to an unexpected route shows up as a missing assertion rather than a pass. */
 export function route(url: string): Response {

@@ -1,0 +1,140 @@
+{
+  "phase": "post-discovery-after-integration",
+  "head": "26a71d223ae20855157cc6cfed4214b47e7f74c3",
+  "testFiles": [
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx"
+  ],
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+      "sha256": "3c806c431581d575472dfabeafe8fa556ca36afeaf572443970c1860fd250b35"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "sha256": "50b09c99367d0ed46f51731f3865602cd4293c29f99b1c41f872820868bddb32"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "sha256": "855f56beaf014708b70079bf7ac0cd31d5a4a55cca4e6773341aa234c7dfaa9c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+      "sha256": "e9abbd171885a67438dc44dbdeadf37b31abc623d7f9a843062fd7c80ce6435c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "sha256": "e5e556fcf9203041b1ef03c3f344645ae1cf66a3a48974b2d00e742e4ec17ae0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx",
+      "sha256": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "sha256": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+      "sha256": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "sha256": "b6ef55d17f8b86de6ab74d49ebfab2330ce83f2495acd2f98a14a2b1fdb9422c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "sha256": "f1afed53b86559e22009b3383cf08d936193c0e4b6503adafc06c2f40883fbf1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "sha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/mutationOutcome.ts",
+      "sha256": "18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/Shell.tsx",
+      "sha256": "8b51a162f7f4538959e2d1b8171ce427b4ad86777f93727d1efa59234efb1da3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "sha256": "3903b0172f5b4b8328406c32b3065697ad08cdc4f299e94aa3301bad429bcf45"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "sha256": "fb27293457be5e8e0c60c70160f63530f4c17c8f2593d3710a24b78e78ba7349"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceContext.ts",
+      "sha256": "34c1c9de2db15bfefe23a63ac6197b5412657a1e317e8f00db71e9e533287bf5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceActions.ts",
+      "sha256": "bd33c6c4e23b436819d5aab944c5d6f5cb04e24dce859a18cdfcc28203b78d40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/catalogWorkflows.ts",
+      "sha256": "e4ed0f3c463d57ebe6ebe273664440a095af97c35b059f9688829e0d6af46a9d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/project-home-v2.css",
+      "sha256": "82443905c6f3c4985a0e4fa69804d03dad4416b2e33beea1eb7047639e57c006"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/insights-v2.css",
+      "sha256": "11d111ee902baeed760c984f75b093008c63f6b5b0e286a62306a2abf8e3e6b2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+      "sha256": "74bab1135577e20cdba893fb77560a4e531e398341e3eb419c17ac8fc2e65c07"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_insights-catalog-fixture.ts",
+      "sha256": "ba8e772b7b363afcbce075c71071f2fb3993ff87c01a9b747b24f39b9ff458fb"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "sha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "sha256": "71c5c490b81e6977087c837a59db22a71527ac2e0d1728ce903c4f2f3f95ee58"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "sha256": "0ba65caa586dcbdff851d10d37a7f56c1772e8c2e4cf4916965db850a00111e9"
+    },
+    {
+      "path": "shared/constants/launch-scope.ts",
+      "sha256": "dd7562241c298fc91dbc1dde703e413cc453fa908449bdf60ba7661f6a050aeb"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
+    }
+  ]
+}

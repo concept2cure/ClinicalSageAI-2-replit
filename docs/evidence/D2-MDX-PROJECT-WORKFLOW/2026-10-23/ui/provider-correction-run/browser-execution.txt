@@ -1,0 +1,26 @@
+PASS 1: 510(k) shows engineering/quality filing ownership, snapshot cadence and declared applicability without invented completion
+PASS 2: Native workstream disclosure is keyboard operable with visible focus; existing engineering route and AnA callback carry the actual synthetic project name, discipline and deliverables
+PASS 3: Specialist bench work uses project Evidence, writing uses Author, and eSTAR assembly reaches the existing 510(k) surface
+PASS 4: MDR CER has clinical ownership, qualified evaluation and literature contributors with its living-update cadence and existing CER destination
+PASS 5: IVDR PER uses analytical/clinical performance and PMPF with the diagnostic evidence route, distinct from MDR CER
+PASS 6: Recorded secondary MDR/IVDR filings share each evidence workstream once while retaining primary 510(k) and distinct evaluation destinations
+PASS 7: Expanded multi-filing workstreams and their action buttons fit a 390px viewport
+PASS 8: Dark workflow body and discipline-owner text meet 4.5:1 contrast; canonical v2 workflow action sizing is present
+PASS 9: De Novo submission assembly reaches existing project Author documents without relabeling the filing as 510(k)
+PASS 10: Unreadable additional filings are explicit and unavailable feature actions retain the project Evidence fallback
+PASS 11: One MDX solution sits inside Projects; six individually governed feature rows preserve the disabled feature but expose only Open projects
+PASS 12: Search retains nested MDX feature discovery without individual app launches, and Projects/MDX catalog fits 390px
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('pj-mdx-workflow') to be visible[22m
+
+    at start (/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-check.mjs:66:44)
+    at async file:///workspace/ClinicalSageAI-2-replit/docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-check.mjs:213:3 {
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.4

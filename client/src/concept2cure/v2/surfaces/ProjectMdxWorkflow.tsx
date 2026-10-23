@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { isDeviceFamily, isIvdFamily, productTypeForFilingType } from '@shared/constants/domain/product-types';
 import { compileWorkPackages, type Specialization, type WorkPackage } from '@shared/regulatory/work-packages';
 import '../styles/mdx-project-workflow.css';
@@ -71,7 +70,9 @@ function packageDestination(item: WorkPackage, primary: string | null): WorkDest
   const { id, filingSectionsSupported } = item;
   const pathway = PATHWAY_FEATURES[primary ?? ''];
   if (id === 'regulatory-strategy' && pathway) return { surface: pathway, label: 'Open pathway work' };
-  if (id === 'submission-assembly' && pathway) return { surface: pathway, label: primary === '510k' || primary === 'de_novo' ? 'Open eSTAR assembly' : 'Open filing documents' };
+  if (id === 'submission-assembly') return pathway
+    ? { surface: pathway, label: primary === '510k' ? 'Open eSTAR assembly' : 'Open filing documents' }
+    : DOCUMENT_DESTINATION;
   if (id === 'clinical-evidence') return filingSectionsSupported.some(section => section.startsWith('mdr:'))
     ? { surface: 'device-cer', label: 'Open clinical evaluation' } : { surface: 'device-clinical-studies', label: 'Open clinical studies' };
   if (['analytical-performance', 'clinical-performance', 'performance-evaluation'].includes(id)) return filingSectionsSupported.some(section => section.startsWith('ivdr:'))
@@ -106,15 +107,15 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName 
         <h3>Acceptance criteria</h3>
         <ul>{item.acceptanceCriteria.map(text => <li key={text}>{text}</li>)}</ul>
         <div className="pj-mdx-actions">
-          <Button type="button" variant="outline" size="sm" onClick={() => {
+          <button type="button" className="btn ghost" onClick={() => {
             if (destination.surface && canOpen) onNav(destination.surface);
             else onStage(destination.stage ?? 'evidence');
-          }}>{canOpen ? destination.label : 'Open project evidence'}</Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => onAsk(
+          }}>{canOpen ? destination.label : 'Open project evidence'}</button>
+          <button type="button" className="btn" onClick={() => onAsk(
             `For the open project ${projectName}, prepare the ${item.title.toLowerCase()} work with ${item.ownerDiscipline}. ` +
             `Use the project's recorded evidence to identify inputs, gaps, deliverables and review handoffs. ` +
             `Deliverables: ${item.deliverables.join('; ')}.`,
-          )}>Prepare this work with AnA</Button>
+          )}>Prepare this work with AnA</button>
         </div>
       </div>
     </details>

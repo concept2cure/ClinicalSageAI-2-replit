@@ -1,0 +1,148 @@
+{
+  "scope": "Selected server/shared compatibility after canonical MDX Projects integration",
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "shared/regulatory/__tests__/work-packages.test.ts",
+      "shared/constants/__tests__/mdx-project-features.test.ts",
+      "server/services/entitlements/__tests__/launch-scope.test.ts",
+      "server/__tests__/routes/k510-document-preview.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts",
+      "server/services/report-os/__tests__/entitlement-map.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/post-mdx-project/tests.json"
+    ],
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "startedAt": "2026-10-23T21:17:29.884402+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 8.866,
+    "finishedAt": "2026-10-23T21:17:38.750584+00:00"
+  },
+  "testFiles": 6,
+  "passed": 108,
+  "failed": 0,
+  "pending": 0,
+  "todo": 0,
+  "vitestDurationSeconds": 8.19,
+  "sourceBefore": {
+    "head": "e8b11ce0c19bcbd64c1104c90cc442dfd1e13000",
+    "files": {
+      "shared/regulatory/__tests__/work-packages.test.ts": "eb76d96c9fb3b93a0d76c320f5256ffc775df9e0fb19e5c422f14268b9eb7a42",
+      "shared/constants/__tests__/mdx-project-features.test.ts": "13713e2ff5ee2a6ac58c93ad43a3b61bb0212baa2568cbda5895e4a4b0129adc",
+      "server/services/entitlements/__tests__/launch-scope.test.ts": "68d0b3c32e8932f4d12c87464629d1281bcd116a7645e1b49176caabc4e9cfe7",
+      "server/__tests__/routes/k510-document-preview.test.ts": "2bf3ad598a106cb9192befc37593c47b4a4ccd9eec9bb3e8fee62ecb0677d37d",
+      "server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts": "f936fc18569f8937c839427af1b2f2aa21312a696790200f2c5f37ce8689614d",
+      "server/services/report-os/__tests__/entitlement-map.test.ts": "9993d228412f274fae63808868aee17c39004e9505dc69a8826866d3da5dc881",
+      "shared/constants/launch-scope.ts": "1ce4daaea6d6c0d8c98c5d52ff4a316e88fda4864012a8079cfc2d4b122291c5",
+      "shared/constants/mdx-project-features.ts": "743756372655d218ae03a82c4680f40b723e26117c3245f52a4a8a956e522d65",
+      "shared/constants/ui-surface-registry.ts": "dee11a1e5b08e6a2a3a8a670bef8800e8ed46684a7922035f5dc35c16750a7a0",
+      "shared/constants/ui-surface-registry.ui-v2.ts": "0ba65caa586dcbdff851d10d37a7f56c1772e8c2e4cf4916965db850a00111e9",
+      "shared/constants/mdx.ts": "21929aedf8648a77f883f5b84ed173afc18c19c3226c1a9c2813b5ab0655ccd3",
+      "shared/regulatory/work-packages.ts": "959830cf449e49446be6a667c8392f33512f78fc4341cccd05b712369da2c454",
+      "server/routes/k510-document-preview.ts": "fc7f093cddc58121e68ca26ec56b9f4dd0451d45ec4def7f7fce011452d77690",
+      "server/services/pathway-engines/estar/estar-content-leaves.ts": "25e1017f364947a9e035e065d43a18e49e805e518804dfcf4d6ff073697d1c50",
+      "server/services/report-os/entitlement-map.ts": "565508db10d8e15fc1170ae0460ebd66afc88dfb15abd53850e7036259a15318",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "server/services/entitlements/launch-scope.ts": "54cd89708b1ece9740c677b765ea9f4e8c61c6c0cd2a24ff025e891afb370218",
+      "server/services/entitlements/launch-scope-api.ts": "91687291e7aca83788462ded1ae44bbab9fdb1dc22a3256615dfdfd59e3f2320",
+      "server/services/entitlements/mdx-entitlements.ts": "9c0576020c64e3d1dc2aaabc890c11b59e5d29afe36f02619de3007d76a65613",
+      "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+      "server/routes/report-os-insights.ts": "66dd63654b12fd6a0cdd243c4a1f8b0a790b02a8e3cebcdcfd5ab7c1c6887384",
+      "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  },
+  "sourceAfter": {
+    "head": "e8b11ce0c19bcbd64c1104c90cc442dfd1e13000",
+    "files": {
+      "shared/regulatory/__tests__/work-packages.test.ts": "eb76d96c9fb3b93a0d76c320f5256ffc775df9e0fb19e5c422f14268b9eb7a42",
+      "shared/constants/__tests__/mdx-project-features.test.ts": "13713e2ff5ee2a6ac58c93ad43a3b61bb0212baa2568cbda5895e4a4b0129adc",
+      "server/services/entitlements/__tests__/launch-scope.test.ts": "68d0b3c32e8932f4d12c87464629d1281bcd116a7645e1b49176caabc4e9cfe7",
+      "server/__tests__/routes/k510-document-preview.test.ts": "2bf3ad598a106cb9192befc37593c47b4a4ccd9eec9bb3e8fee62ecb0677d37d",
+      "server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts": "f936fc18569f8937c839427af1b2f2aa21312a696790200f2c5f37ce8689614d",
+      "server/services/report-os/__tests__/entitlement-map.test.ts": "9993d228412f274fae63808868aee17c39004e9505dc69a8826866d3da5dc881",
+      "shared/constants/launch-scope.ts": "1ce4daaea6d6c0d8c98c5d52ff4a316e88fda4864012a8079cfc2d4b122291c5",
+      "shared/constants/mdx-project-features.ts": "743756372655d218ae03a82c4680f40b723e26117c3245f52a4a8a956e522d65",
+      "shared/constants/ui-surface-registry.ts": "dee11a1e5b08e6a2a3a8a670bef8800e8ed46684a7922035f5dc35c16750a7a0",
+      "shared/constants/ui-surface-registry.ui-v2.ts": "0ba65caa586dcbdff851d10d37a7f56c1772e8c2e4cf4916965db850a00111e9",
+      "shared/constants/mdx.ts": "21929aedf8648a77f883f5b84ed173afc18c19c3226c1a9c2813b5ab0655ccd3",
+      "shared/regulatory/work-packages.ts": "959830cf449e49446be6a667c8392f33512f78fc4341cccd05b712369da2c454",
+      "server/routes/k510-document-preview.ts": "fc7f093cddc58121e68ca26ec56b9f4dd0451d45ec4def7f7fce011452d77690",
+      "server/services/pathway-engines/estar/estar-content-leaves.ts": "25e1017f364947a9e035e065d43a18e49e805e518804dfcf4d6ff073697d1c50",
+      "server/services/report-os/entitlement-map.ts": "565508db10d8e15fc1170ae0460ebd66afc88dfb15abd53850e7036259a15318",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "server/services/entitlements/launch-scope.ts": "54cd89708b1ece9740c677b765ea9f4e8c61c6c0cd2a24ff025e891afb370218",
+      "server/services/entitlements/launch-scope-api.ts": "91687291e7aca83788462ded1ae44bbab9fdb1dc22a3256615dfdfd59e3f2320",
+      "server/services/entitlements/mdx-entitlements.ts": "9c0576020c64e3d1dc2aaabc890c11b59e5d29afe36f02619de3007d76a65613",
+      "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+      "server/routes/report-os-insights.ts": "66dd63654b12fd6a0cdd243c4a1f8b0a790b02a8e3cebcdcfd5ab7c1c6887384",
+      "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  },
+  "sourceUnchangedWithinRun": true,
+  "selectedPinCount": 23,
+  "interfaceReview": {
+    "range": "0b3aaa10c..62a8d5e7f",
+    "testedMergedHead": "e8b11ce0c19bcbd64c1104c90cc442dfd1e13000",
+    "verdict": "No reporting interface blocker found.",
+    "findings": [
+      {
+        "paths": [
+          "shared/constants/launch-scope.ts",
+          "shared/constants/mdx-project-features.ts",
+          "server/services/entitlements/__tests__/launch-scope.test.ts"
+        ],
+        "finding": "Projects reaches existing MDX features while its module list remains projects/tasks. Scope application preserves disabled and tier verdicts. The feature list is navigation and adds no module or report-engine grant."
+      },
+      {
+        "paths": [
+          "shared/constants/ui-surface-registry.ts",
+          "shared/constants/ui-surface-registry.ui-v2.ts"
+        ],
+        "finding": "Added API claims identify existing project-scoped MDX consumers. Reporting runtime, report type registry, report entitlement map and source-access policies are unchanged by the reviewed incoming range."
+      },
+      {
+        "paths": [
+          "shared/regulatory/work-packages.ts"
+        ],
+        "finding": "The pure compiler returns discipline expectations, contributors, conditional applicability, deliverables and acceptance criteria. These are plan guidance, not assigned people, completed work, scores, approvals or permission grants. MDR CER and IVDR PER remain distinct."
+      },
+      {
+        "paths": [
+          "server/routes/k510-document-preview.ts"
+        ],
+        "finding": "Preview resolves the recorded tenant/program anchor, requires canonical current program access before document content, selects the exact governed document class and returns503 on failed reads. Missing documents remain empty; completion percentages remain null."
+      },
+      {
+        "paths": [
+          "server/services/pathway-engines/estar/estar-content-leaves.ts"
+        ],
+        "finding": "Incoming change only exports the existing governed section loader; its tenant/program/document selection and readiness algorithms are unchanged."
+      },
+      {
+        "paths": [
+          "client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx",
+          "client/src/concept2cure/mdx/hooks/useAnalytics.ts"
+        ],
+        "finding": "Existing MDX analytics continues organization-scoped metric reads and the canonical saved-report register. Organization scope and unavailable metrics are explicit; no new reporting writer or engine is introduced."
+      }
+    ],
+    "qualifications": [
+      "The preview suite exercises real PGlite rows but mocks canonical access admission and audit persistence. It verifies that the route invokes admission and preserves denial; it does not independently qualify the access service or cryptographic audit chain.",
+      "Compiler/entitlement/loader fixtures verify existing deterministic and adapter contracts. They do not establish real clinical evidence, agency acceptance, production deployment, native multi-connection PostgreSQL or authenticated browser acceptance.",
+      "Incoming MDX source-qualification.json also explicitly sets live_deployment_verified:false and browser_verified:false.",
+      "No runtime edits, compiler, build, commit or push were performed for this review. Root owns integrated publication gates."
+    ]
+  },
+  "phaseBoundary": "This is a distinct108-case post-merge observation, not a rerun or relabeling of prior reporting phases."
+}

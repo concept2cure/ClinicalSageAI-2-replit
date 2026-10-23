@@ -1,0 +1,108 @@
+{
+  "kind": "synthetic local actual application HTTP",
+  "loginStatus": 200,
+  "rows": [
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "variant": "claim-org",
+      "status": 200,
+      "code": null,
+      "modules": 87
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "variant": "stale-org",
+      "status": 403,
+      "code": "TENANT_MISMATCH",
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "variant": "no-bearer",
+      "status": 401,
+      "code": "AUTH_001"
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "variant": "claim-org",
+      "status": 200,
+      "code": null
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "variant": "stale-org",
+      "status": 403,
+      "code": "TENANT_MISMATCH",
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "variant": "no-bearer",
+      "status": 401,
+      "code": "AUTH_001"
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "variant": "claim-org",
+      "status": 200,
+      "code": null
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "variant": "stale-org",
+      "status": 403,
+      "code": "TENANT_MISMATCH",
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "variant": "no-bearer",
+      "status": 401,
+      "code": "AUTH_001"
+    },
+    {
+      "path": "/api/task-management/board",
+      "variant": "claim-org",
+      "status": 200,
+      "code": null,
+      "tasks": 14,
+      "meta": {
+        "partial": false,
+        "unreadSources": []
+      }
+    },
+    {
+      "path": "/api/task-management/board",
+      "variant": "stale-org",
+      "status": 403,
+      "code": "TENANT_MISMATCH",
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    },
+    {
+      "path": "/api/task-management/board",
+      "variant": "no-bearer",
+      "status": 401,
+      "code": "AUTH_001"
+    }
+  ]
+}

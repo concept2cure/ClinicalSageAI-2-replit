@@ -1,0 +1,27 @@
+{
+  "qualifiedCommit": "66110e1a7",
+  "typecheck": {
+    "command": "TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental",
+    "exitCode": 0,
+    "errors": 0,
+    "baseline": 0
+  },
+  "tests": {
+    "command": "npx vitest run (12 scoped catalog, auth, board, rail and task-drawer suites)",
+    "exitCode": 0,
+    "suites": 12,
+    "passed": 141,
+    "failed": 0
+  },
+  "build": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exitCode": 0,
+    "notes": "Client, server and audit verifier built; existing chunk warnings."
+  },
+  "workerCohorts": {
+    "auth": "123 passed / 10 suites",
+    "board": "95 passed / 7 suites; final parameterization 6 passed",
+    "countsOverlap": "Do not add worker and root counts; cohorts overlap."
+  },
+  "review": "Independent source review: no remaining blocking findings; shared guard validation limits retained."
+}

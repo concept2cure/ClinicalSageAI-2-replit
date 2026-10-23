@@ -1,0 +1,32 @@
+{
+  "phase": "post-mdx-project-compatibility",
+  "cwd": "/workspace/ClinicalSageAI-2-replit",
+  "mergeHead": "e8b11ce0c19bcbd64c1104c90cc442dfd1e13000",
+  "incomingCanonical": "62a8d5e7f",
+  "nodeVersion": "v22.22.0",
+  "env": {
+    "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/registryModel.test.ts",
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-mdx-project/integration.json"
+  ],
+  "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-mdx-project/integration.txt",
+  "exitCode": 0,
+  "observedSuites": 7,
+  "observedPassedTests": 135
+}

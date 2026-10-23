@@ -1,0 +1,14 @@
+{
+  "incomingCanonical": "62613253e",
+  "mergedCommit": "313750faf1ae4c71eace55e498159a55a488afd0",
+  "scope": "Reporting library recovery only; own active-session, Workflows/catalog, board, shared transport and request reader are unchanged from browser-qualified ba41b4cac",
+  "tests": {
+    "passed": 251,
+    "suites": 12,
+    "failed": 0,
+    "note": "Bounded cohort, overlaps earlier counts; do not sum."
+  },
+  "buildExitCode": 0,
+  "review": "No blocking incompatibility; canonical transport, account/session read guards, server auth/tenant/write checks preserved. Transaction changes confined to Reporting outcome handling.",
+  "typecheck": "Final normal push checks complete merged program; preceding ba41b4cac full compiler passed zero errors."
+}

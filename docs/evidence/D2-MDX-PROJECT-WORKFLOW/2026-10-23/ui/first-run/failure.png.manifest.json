@@ -1,0 +1,33 @@
+{
+  "originalFile": "failure.png",
+  "originalBytes": 340617,
+  "originalSha256": "865d43421ca9a7084347b632c84354d4b325fb7289bc71267a09d5b4e78f9073",
+  "parts": [
+    {
+      "file": "failure.png.part-001",
+      "bytes": 80000,
+      "sha256": "4c1bf9a64456e11d30ae2e3e54669c6ab9113282f2b91ebe6df04f8eb961c1fb"
+    },
+    {
+      "file": "failure.png.part-002",
+      "bytes": 80000,
+      "sha256": "8f9a5f0db475f2f5487d5be7ea083221c964048f299c36003d85251f8704bd64"
+    },
+    {
+      "file": "failure.png.part-003",
+      "bytes": 80000,
+      "sha256": "63203cbabbf926adeb9d747d07ea74a43ba040c3e0c9774c2bacdff6deccf110"
+    },
+    {
+      "file": "failure.png.part-004",
+      "bytes": 80000,
+      "sha256": "d21ee5a24afaa33bf8caa8dfe5fa6d6e3a998bf92354123e4c42af6ab794e340"
+    },
+    {
+      "file": "failure.png.part-005",
+      "bytes": 20617,
+      "sha256": "602ab3cbefeaf6dd670f2c2803ba899a20707ac12e10cdd55e9b343bee8f9bd9"
+    }
+  ],
+  "reassemble": "cat failure.png.part-* > failure.png"
+}

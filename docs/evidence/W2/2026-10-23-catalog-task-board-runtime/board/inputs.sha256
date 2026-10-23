@@ -1,0 +1,4 @@
+662e7e4c2bc1de275eaa1a454c1408367d5c5f3d5f35b032a9c304802826a35c  server/routes/taskBoard.routes.ts
+67b1ab926e37493de2827a56691406e0d982bc4f5cd1a369a46201550336f2f2  client/src/concept2cure/v2/surfaces/TaskBoard.tsx
+18dcda1a2b386e85aa27244eeb201262a89df3cf899aba94e5d64b7553efc4c7  server/routes/__tests__/taskBoard-runtime-recovery.test.ts
+ae3565107a63856f98e548b326c9ffd0eb8db4c41de5569ff1d06cc98db969d2  client/src/concept2cure/v2/__tests__/taskBoardResponseShape.test.tsx

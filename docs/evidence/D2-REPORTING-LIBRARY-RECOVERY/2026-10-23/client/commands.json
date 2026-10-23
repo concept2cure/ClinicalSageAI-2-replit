@@ -1,0 +1,102 @@
+[
+  {
+    "phase": "product-red-corrected",
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "env": {
+      "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/red-corrected.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/red-corrected.txt",
+    "exitCode": 1
+  },
+  {
+    "phase": "same-batch-review-race-red",
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "env": {
+      "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+      "-t",
+      "invalidates earlier review",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/review-race-red.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/review-race-red.txt",
+    "exitCode": 1
+  },
+  {
+    "phase": "final-bounded-integration",
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "env": {
+      "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "client/src/concept2cure/v2/__tests__/insights",
+      "client/src/concept2cure/v2/__tests__/reporting",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/integration-final.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/integration-final.txt",
+    "exitCode": 0
+  },
+  {
+    "phase": "final-scoped-lint",
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "env": {
+      "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx",
+      "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+      "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+      "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+      "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "--format",
+      "json"
+    ],
+    "stdout": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/lint-final-scoped.json",
+    "exitCode": 0
+  },
+  {
+    "phase": "diff-check",
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0
+  }
+]

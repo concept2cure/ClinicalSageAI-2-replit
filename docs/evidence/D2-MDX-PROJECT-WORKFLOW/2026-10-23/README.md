@@ -70,3 +70,41 @@ data model.
 Builds and automated tests do not establish live deployment or human visual
 acceptance. No authenticated browser verification, production regulatory
 execution, external laboratory testing or agency transmission was performed.
+
+## Continuation: verify the visible project journey
+
+The browser follow-through reuses the existing actual-component Vite/Chromium
+pattern from `D2-WORKFLOW-NAVIGATION/2026-10-23/ui/`. Its MDX fixture and results
+live in [ui/](ui/). The shipped workflow, catalog and Project home are imported;
+only synthetic API records and callback observations belong to the fixture.
+This qualification remains separate from authenticated deployed acceptance.
+
+Browser inspection found that the shell reset erased the new utility-styled
+buttons' padding and border. The workstream now uses the shell's existing
+`.btn` / `.btn.ghost` recipe in `v2/styles/app-v2.css`. Review also caught De
+Novo assembly falling back to Evidence; it now opens the project's Author
+stage without converting the filing into a 510(k). The focused regression
+first failed on that handoff, then passed with the correction.
+
+The founder also reaffirmed that customers need project journeys, not a number
+of apps. The catalog's AnA grounding now describes project stages and feature
+access instead of app totals. Its project entry and the MDX host's return
+controls use the same native shell button recipe as the workstreams. Existing
+route/module identifiers continue to enforce access internally; they are not
+the customer-facing product model.
+
+Final combined qualification passed **16 files / 261 tests**, **14 real-browser
+checks**, a production build and the full pre-push gate with **zero TypeScript
+errors**. The browser held **38 source fingerprints** unchanged, made only
+explicitly intercepted GETs and reported no unexpected requests or page errors.
+The fixture has zero lint errors or warnings. Exact receipts and owned source
+fingerprints are in [continuation/qualification.json](continuation/qualification.json).
+These tests overlap earlier cohorts; no unique-test total is asserted. The
+newer canonical auth, reporting and task-board recovery changes were retained
+and included in the combined test selection.
+
+[release/release-audit.json](release/release-audit.json) records the separate,
+timestamped release observation for the initially published source. Queued
+checks and unverified runtime/reviewer setup are not deployment evidence.
+No release dispatch, production configuration change or agency action is
+performed by this follow-through.

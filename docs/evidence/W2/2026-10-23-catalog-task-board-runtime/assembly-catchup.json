@@ -1,0 +1,20 @@
+{
+  "thirdPush": {
+    "commit": "d1dc3bab8",
+    "allNormalGatesPassed": true,
+    "typeErrors": 0,
+    "exitCode": 1,
+    "reason": "remote advanced; ref lock rejected"
+  },
+  "incomingCanonical": "1eca721b1",
+  "mergedCommit": "77f1914ed8815c238ac75523257e10829c0557a6",
+  "sourceScope": "Assembly template search; catalog/auth/board/requestDB sources byte-identical to d6ce8f925",
+  "tests": {
+    "suites": 13,
+    "passed": 196,
+    "failed": 0,
+    "note": "Overlaps earlier220-test cohort; do not sum."
+  },
+  "buildExitCode": 0,
+  "review": "No incompatibility; assembly retains captured-actor headers and owner/session/document/project guards."
+}
