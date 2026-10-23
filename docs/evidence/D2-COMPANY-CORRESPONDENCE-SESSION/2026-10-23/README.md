@@ -1,6 +1,6 @@
 # Company filing-correspondence ownership — W1 / D2
 
-Discovery source `62a8d5e7f`; implementation complete; combined release checks and publication pending.
+Discovery source `62a8d5e7f`; implementation and combined release checks complete; normal push gates and publication pending.
 Contract: `docs/design/COMPANY_CORRESPONDENCE_SESSION_2026-10-23.md`.
 
 ## What already exists
@@ -54,8 +54,22 @@ deferred ownership need; its archived-history policy is not changed here.
 - All17discovered protected inputs remain unchanged (`protected-inputs.json`).
   No shared session/auth/transport/server/rendering/regulatory policy was changed.
 
-Combined affected-company/Reporting/server cohort, current merged build, whole
-TypeScript and normal push gates are pending. Evidence cohorts overlap; do not
+Fresh canonical Reporting changes through `62613253e` were reviewed and merged
+normally as `1ff8adb4d`, with no conflicts or overlap in the four company forms.
+`incoming-reporting-review.json` records incoming source/archive qualification
+without borrowing upstream test totals. The final root combined cohort includes
+all four recommended incoming Reporting regression files.
+
+The **final root combined cohort passed317/317 across20actual files**, exit0,
+0failed/0skipped, with selected inputs stable (`final-*`). It covers the three
+forms through the actual parent, company settings/legal/Reporting consumers,
+correspondence rendering/creation/identity services and incoming Reporting client
+and route regressions. This is one overlapping cohort, not317additional cases.
+The current merged production build passed, exit0, with112selected source/test
+inputs unchanged (`build-*`). Existing chunk-size notices are retained in raw
+output. All112qualified pins still match the working tree.
+
+Whole TypeScript and normal push gates remain pending. Evidence cohorts overlap; do not
 sum them. Selected pins are not a complete dependency closure. Mounted synthetic
 HTTP checks and Git publication do not establish hosted deployment, authenticated
 production acceptance or agency acceptance.
@@ -67,3 +81,11 @@ production acceptance or agency acceptance.
 inventory intentionally includes archived records and agency/handoff outcomes;
 Reporting export eligibility rules must not be applied there. This completion
 qualifies the3filing-correspondence forms, not every communications panel.
+
+A second separate follow-up was found while reviewing already-published incoming
+Reporting code: `insightsLibraryActions.tsx` / `useLibraryMutation` checks current
+account/context before dispatch but checks panel mountedness only after awaiting.
+A retained callback from an unmounted panel may still dispatch when that context
+is current again. This is source-reviewed, not functionally reproduced or fixed
+in this four-form completion. The exact pre-dispatch/unmount/ABA regression and
+sent-operation distinction are handed on in `incoming-reporting-review.json`.
