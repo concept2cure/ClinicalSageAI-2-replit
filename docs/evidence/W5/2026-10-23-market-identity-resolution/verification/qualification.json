@@ -34,7 +34,22 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "Five completed normal full compiler runs0errors; final direct push pending after docs-only sync.",
+  "fullCompilerAndPush": {
+    "acceptedCanonicalSource": "1a37dcc940955515b1b57bb4087d6c4e41a38bdf",
+    "remoteVerified": "1a37dcc940955515b1b57bb4087d6c4e41a38bdf",
+    "observedAt": "2026-10-23T19:59:17.888996+00:00",
+    "normalPushExitCode": 0,
+    "compilerErrors": 0,
+    "compilerExitCode": 0,
+    "baseline": 0,
+    "normalGatesPassed": true,
+    "noAddedLintWarnings": true,
+    "verifiedScopedInputs": 89,
+    "humanWitness": "unexecuted",
+    "agencyQualification": "unexecuted",
+    "overallCI": "not claimed; only local normal push/compiler and scoped receipts qualified",
+    "productionDeployment": "unexecuted"
+  },
   "humanWitness": "unexecuted",
   "agencyQualification": "unexecuted",
   "firstFullCompilerAndPush": {
