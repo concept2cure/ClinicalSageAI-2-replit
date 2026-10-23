@@ -18,6 +18,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { PDFDocument } from 'pdf-lib';
 import { buildPackagerInputFromCore, fdaSubmissionTypeFor, type CoreLeaf } from '../core-to-packager';
 import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
 import { resolveSubmissionTypeCode } from '../controlled-vocab';
@@ -123,14 +124,16 @@ describe('buildPackagerInputFromCore — the fda admin block', () => {
 });
 
 describe('us-regional.xml — the emitted submission-type follows the sequence', () => {
-  function pdf(label: string): Buffer {
-    return Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+  async function pdf(label: string): Promise<Buffer> {
+    const document = await PDFDocument.create();
+    document.addPage().drawText(label);
+    return Buffer.from(await document.save());
   }
 
   async function emittedAdmin(sequenceType: string, opts: { withFdaBlock: boolean }) {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-fda-admin-'));
     try {
-      const bytes = pdf('cover');
+      const bytes = await pdf('cover');
       const src = path.join(work, 'cover.pdf');
       await fs.writeFile(src, bytes);
       const { input } = buildPackagerInputFromCore({

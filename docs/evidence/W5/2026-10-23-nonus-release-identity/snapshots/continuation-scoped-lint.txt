@@ -1,0 +1,21 @@
+
+/workspace/concept2cure/server/routes/submission-sign-release.ts
+  147:80  warning  Async arrow function has too many lines (140). Maximum allowed is 100  max-lines-per-function
+  147:80  warning  Async arrow function has a complexity of 38. Maximum allowed is 15     complexity
+
+/workspace/concept2cure/server/services/submission-package-orchestrator.ts
+   948:21  warning  '_drop' is assigned a value but never used                                                 @typescript-eslint/no-unused-vars
+  1023:1   warning  File has too many lines (2166). Maximum allowed is 500                                     max-lines
+  1350:8   warning  Async function 'runOrchestrator' has too many lines (468). Maximum allowed is 100          max-lines-per-function
+  1350:8   warning  Async function 'runOrchestrator' has a complexity of 44. Maximum allowed is 15             complexity
+  2200:1   warning  Async function 'runPackageSignGate' has too many lines (129). Maximum allowed is 100       max-lines-per-function
+  2393:1   warning  Async function 'resumeOrchestratorRun' has too many lines (298). Maximum allowed is 100    max-lines-per-function
+  2393:1   warning  Async function 'resumeOrchestratorRun' has a complexity of 28. Maximum allowed is 15       complexity
+  2844:1   warning  Async function 'resumeAwaitingSignature' has too many lines (232). Maximum allowed is 100  max-lines-per-function
+  2844:1   warning  Async function 'resumeAwaitingSignature' has a complexity of 44. Maximum allowed is 15     complexity
+
+/workspace/concept2cure/tests/unit/submission-sign-release-route.test.ts
+  681:1  warning  File has too many lines (590). Maximum allowed is 500  max-lines
+
+✖ 12 problems (0 errors, 12 warnings)
+

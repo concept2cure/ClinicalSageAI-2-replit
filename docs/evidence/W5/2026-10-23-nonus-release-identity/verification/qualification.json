@@ -1,0 +1,620 @@
+{
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "headBeforeSourceCommit": "c9f20ed82ced0c2e2139302f53afe1b78e67b9f0",
+  "workingTreeImplementation": true,
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "productionDeployment": false,
+  "sourceInputs": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx",
+      "sha256": "e0b1baf0b9100f4ffe8a48f01680ea2f427145fb4eecd0b19cf4df5bc1f422e4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "sha256": "736681769e9f66d8e9a999aade06ac4b6450a1f9d08b6b2a4bc6b08a084a6839"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "sha256": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+    },
+    {
+      "path": "server/mcp/tools/catalog.ts",
+      "sha256": "a042b79f0bc89d5178727190accbcc0fa0f120926391978a521aae3ff649a31c"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+      "sha256": "17c5961d4dcf26a2a3c13fb2597fa6097675dd229e4bf9177f507cc7435ca524"
+    },
+    {
+      "path": "server/routes/ectd-compile.ts",
+      "sha256": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8"
+    },
+    {
+      "path": "server/routes/submission-sign-release.ts",
+      "sha256": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f"
+    },
+    {
+      "path": "server/services/__tests__/sign-payload-snapshot.test.ts",
+      "sha256": "84844bbfc16077f1ecf1a1a03967a3f81e2c33b604fea4f4c936705197339ff9"
+    },
+    {
+      "path": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+      "sha256": "70645c1e8ba5a8d05c590bf3d46a79e1d2928359a4f102f4ad9c9e7cd2cf990a"
+    },
+    {
+      "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "sha256": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851"
+    },
+    {
+      "path": "server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts",
+      "sha256": "39c481d87098a2819bbc4ff9cdbe172033b46a827719c1d548fbbfe5c41dd6fd"
+    },
+    {
+      "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "sha256": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2"
+    },
+    {
+      "path": "server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts",
+      "sha256": "2654ea3141684833f8e28622a1e7009009de800e79f995c950f4e67758f136e6"
+    },
+    {
+      "path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+      "sha256": "186f0e4da56746ec3e365555b19cd682be1926c4a290984311e8765111e8e1c1"
+    },
+    {
+      "path": "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts",
+      "sha256": "e622d1801542793eb35b5054202e3fba1d658ff8beb79d17383f1ff465a9ebd8"
+    },
+    {
+      "path": "server/services/ectd/__tests__/run-package-identity.test.ts",
+      "sha256": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7"
+    },
+    {
+      "path": "server/services/ectd/__tests__/sequence-release-signature.test.ts",
+      "sha256": "f7290e235c8ef038fc6014e2057b8586a017a4633a147488eba704cb9d3c0281"
+    },
+    {
+      "path": "server/services/ectd/__tests__/signed-package-export.test.ts",
+      "sha256": "94e3f06ada2443e07b56c49a9d427a827b9ce02e97fa315f47f7f8bd4abdb65d"
+    },
+    {
+      "path": "server/services/ectd/assemble-from-core.ts",
+      "sha256": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67"
+    },
+    {
+      "path": "server/services/ectd/package-from-core.ts",
+      "sha256": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212"
+    },
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5"
+    },
+    {
+      "path": "server/services/ectd/release-signature-status.ts",
+      "sha256": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8"
+    },
+    {
+      "path": "server/services/ectd/run-package-identity.ts",
+      "sha256": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31"
+    },
+    {
+      "path": "server/services/ectd/sequence-release-signature.ts",
+      "sha256": "fcc47ea41fc18b138e444e99096e9b21ae73df4e2c188040efe30507d89b3343"
+    },
+    {
+      "path": "server/services/ectd/signed-manifest-covers-sequence.ts",
+      "sha256": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248"
+    },
+    {
+      "path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts",
+      "sha256": "c753b530ba06e4b4d3238cf17734e2202b0e8839cd5cb3fd6b7764cdca6168cf"
+    },
+    {
+      "path": "server/services/part11/ectd-sequence-binding.ts",
+      "sha256": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e"
+    },
+    {
+      "path": "server/services/submission-orchestrator-continuation.ts",
+      "sha256": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97"
+    },
+    {
+      "path": "server/services/submission-package-orchestrator.ts",
+      "sha256": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "sha256": "d0d29f0158d589bf7f252b39f0b119234786ca5797bce0da5c900596c27f9a92"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "sha256": "3520f4777d8cdb96b41b7e032f24d845e261ed3c390bb721960c07b7c6b6826c"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts",
+      "sha256": "7dd72d6de2765535c946a2293a6987ab1413d62e973c0b1da9eea17bf909bf6f"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+      "sha256": "79105f6a4c310ef4fd32bd448ea68601e47d7b7e52379515e1857547ec47bfea"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "sha256": "2db3db830fcb2aad22879ca01b52ca42d559871f825d17c1f840292add1bd03f"
+    },
+    {
+      "path": "server/services/submission-service/submission-service.ts",
+      "sha256": "2e584a2b624e0abe6ec00ee703ecb4b57407bc0654459a9d7081fc1fb46414b1"
+    },
+    {
+      "path": "tests/routes/ectd-compile-spine.test.ts",
+      "sha256": "fc3f75d75b1b5e0d6f31eb397eca10d633b942d828817d2532254f820129d256"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+    },
+    {
+      "path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts",
+      "sha256": "0878b4f8ec50ec7ae1ce31a1064cf84151d1cad63e5225d98393582ad99fbe55"
+    },
+    {
+      "path": "tests/unit/submission-sign-release-route.test.ts",
+      "sha256": "a45e4adfde041a3fe9fb8a69a8d9663a61ce08d0bb2644491f279b11794c596a"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  ],
+  "outcomes": {
+    "core": {
+      "passed": 189,
+      "preExistingTodo": 1
+    },
+    "regionalBoundary": {
+      "passed": 223,
+      "files": 9
+    },
+    "callers": {
+      "passed": 119,
+      "files": 10
+    },
+    "compile": {
+      "passed": 49,
+      "files": 4
+    },
+    "ui": {
+      "passed": 38,
+      "files": 2
+    },
+    "persistedSignatureWriter": {
+      "passed": 15
+    },
+    "nativePostgres": {
+      "passed": 6,
+      "files": 2
+    },
+    "chromium": {
+      "passed": 10,
+      "pageErrors": 0
+    },
+    "build": {
+      "exitCode": 0,
+      "node": "v22.23.3",
+      "inputsUnchanged": true
+    }
+  },
+  "normalPushGates": "pending; no bypass or baseline change",
+  "countsAreOverlappingCohorts": true,
+  "knownLimits": [
+    "agency assets/vocab/conformance and real staging pilot not established",
+    "human checklist unexecuted",
+    "optional nonUS regional applicant identifiers retain existing input authority",
+    "pre-existing Vault supersession todo"
+  ],
+  "followupAfterSourceCommit": {
+    "sourceCommit": "7696a007b00c6e9a2dedb5c3e65ab38a20c29a94",
+    "reason": "Normal push warning gate refused two added complexity warnings. Same conditions extracted, no suppression or baseline change.",
+    "changedInputs": [
+      "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "finalSourceInputs": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4"
+      },
+      {
+        "path": "CLAUDE.md",
+        "sha256": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx",
+        "sha256": "e0b1baf0b9100f4ffe8a48f01680ea2f427145fb4eecd0b19cf4df5bc1f422e4"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+        "sha256": "47fdd4fef3750973074502971dee187e7db954b0adb6cb1087ae17d690604dd2"
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "sha256": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+      },
+      {
+        "path": "package.json",
+        "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+      },
+      {
+        "path": "server/mcp/tools/catalog.ts",
+        "sha256": "a042b79f0bc89d5178727190accbcc0fa0f120926391978a521aae3ff649a31c"
+      },
+      {
+        "path": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+        "sha256": "17c5961d4dcf26a2a3c13fb2597fa6097675dd229e4bf9177f507cc7435ca524"
+      },
+      {
+        "path": "server/routes/ectd-compile.ts",
+        "sha256": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8"
+      },
+      {
+        "path": "server/routes/submission-sign-release.ts",
+        "sha256": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f"
+      },
+      {
+        "path": "server/services/__tests__/sign-payload-snapshot.test.ts",
+        "sha256": "84844bbfc16077f1ecf1a1a03967a3f81e2c33b604fea4f4c936705197339ff9"
+      },
+      {
+        "path": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+        "sha256": "70645c1e8ba5a8d05c590bf3d46a79e1d2928359a4f102f4ad9c9e7cd2cf990a"
+      },
+      {
+        "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+        "sha256": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851"
+      },
+      {
+        "path": "server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts",
+        "sha256": "39c481d87098a2819bbc4ff9cdbe172033b46a827719c1d548fbbfe5c41dd6fd"
+      },
+      {
+        "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+        "sha256": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2"
+      },
+      {
+        "path": "server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts",
+        "sha256": "2654ea3141684833f8e28622a1e7009009de800e79f995c950f4e67758f136e6"
+      },
+      {
+        "path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+        "sha256": "186f0e4da56746ec3e365555b19cd682be1926c4a290984311e8765111e8e1c1"
+      },
+      {
+        "path": "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts",
+        "sha256": "e622d1801542793eb35b5054202e3fba1d658ff8beb79d17383f1ff465a9ebd8"
+      },
+      {
+        "path": "server/services/ectd/__tests__/run-package-identity.test.ts",
+        "sha256": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7"
+      },
+      {
+        "path": "server/services/ectd/__tests__/sequence-release-signature.test.ts",
+        "sha256": "f7290e235c8ef038fc6014e2057b8586a017a4633a147488eba704cb9d3c0281"
+      },
+      {
+        "path": "server/services/ectd/__tests__/signed-package-export.test.ts",
+        "sha256": "94e3f06ada2443e07b56c49a9d427a827b9ce02e97fa315f47f7f8bd4abdb65d"
+      },
+      {
+        "path": "server/services/ectd/assemble-from-core.ts",
+        "sha256": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67"
+      },
+      {
+        "path": "server/services/ectd/package-from-core.ts",
+        "sha256": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212"
+      },
+      {
+        "path": "server/services/ectd/package-identity.ts",
+        "sha256": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5"
+      },
+      {
+        "path": "server/services/ectd/release-signature-status.ts",
+        "sha256": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8"
+      },
+      {
+        "path": "server/services/ectd/run-package-identity.ts",
+        "sha256": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31"
+      },
+      {
+        "path": "server/services/ectd/sequence-release-signature.ts",
+        "sha256": "fcc47ea41fc18b138e444e99096e9b21ae73df4e2c188040efe30507d89b3343"
+      },
+      {
+        "path": "server/services/ectd/signed-manifest-covers-sequence.ts",
+        "sha256": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248"
+      },
+      {
+        "path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts",
+        "sha256": "c753b530ba06e4b4d3238cf17734e2202b0e8839cd5cb3fd6b7764cdca6168cf"
+      },
+      {
+        "path": "server/services/part11/ectd-sequence-binding.ts",
+        "sha256": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e"
+      },
+      {
+        "path": "server/services/submission-orchestrator-continuation.ts",
+        "sha256": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97"
+      },
+      {
+        "path": "server/services/submission-package-orchestrator.ts",
+        "sha256": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+        "sha256": "d0d29f0158d589bf7f252b39f0b119234786ca5797bce0da5c900596c27f9a92"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+        "sha256": "3520f4777d8cdb96b41b7e032f24d845e261ed3c390bb721960c07b7c6b6826c"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts",
+        "sha256": "7dd72d6de2765535c946a2293a6987ab1413d62e973c0b1da9eea17bf909bf6f"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+        "sha256": "79105f6a4c310ef4fd32bd448ea68601e47d7b7e52379515e1857547ec47bfea"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+        "sha256": "2db3db830fcb2aad22879ca01b52ca42d559871f825d17c1f840292add1bd03f"
+      },
+      {
+        "path": "server/services/submission-service/submission-service.ts",
+        "sha256": "739f4766105435cbf836ce16e57aabf9abf500286a0a6e786ab5c5e8265f68e0"
+      },
+      {
+        "path": "tests/routes/ectd-compile-spine.test.ts",
+        "sha256": "fc3f75d75b1b5e0d6f31eb397eca10d633b942d828817d2532254f820129d256"
+      },
+      {
+        "path": "tests/setup.ts",
+        "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+      },
+      {
+        "path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts",
+        "sha256": "0878b4f8ec50ec7ae1ce31a1064cf84151d1cad63e5225d98393582ad99fbe55"
+      },
+      {
+        "path": "tests/unit/submission-sign-release-route.test.ts",
+        "sha256": "a45e4adfde041a3fe9fb8a69a8d9663a61ce08d0bb2644491f279b11794c596a"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+      }
+    ],
+    "outcomes": {
+      "claimsPassed": 20,
+      "uiPassed": 38,
+      "buildExitCode": 0,
+      "warningRatchet": "passed: all 41 changed lintable files, no growth"
+    },
+    "earlierCohortsNotRerun": "119 caller / 49 compile / 6 native records retain their executed pre-refactor pins; actual freeze/lock/compile behavior was unchanged."
+  },
+  "typeCorrectionAfterSourceCommit": {
+    "sourceCommit": "958f099bf8432a2d2e3679f8654024f994fca692",
+    "diagnostic": "TS2345: governed binding digest is string | null; extracted predicate declared string.",
+    "correction": "Accept the existing nullable digest type. Equality against the required expected string keeps null refused. Type annotation only; emitted logic unchanged.",
+    "finalSourceInputs": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4"
+      },
+      {
+        "path": "CLAUDE.md",
+        "sha256": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx",
+        "sha256": "e0b1baf0b9100f4ffe8a48f01680ea2f427145fb4eecd0b19cf4df5bc1f422e4"
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+        "sha256": "47fdd4fef3750973074502971dee187e7db954b0adb6cb1087ae17d690604dd2"
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "sha256": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+      },
+      {
+        "path": "package.json",
+        "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+      },
+      {
+        "path": "server/mcp/tools/catalog.ts",
+        "sha256": "a042b79f0bc89d5178727190accbcc0fa0f120926391978a521aae3ff649a31c"
+      },
+      {
+        "path": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+        "sha256": "17c5961d4dcf26a2a3c13fb2597fa6097675dd229e4bf9177f507cc7435ca524"
+      },
+      {
+        "path": "server/routes/ectd-compile.ts",
+        "sha256": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8"
+      },
+      {
+        "path": "server/routes/submission-sign-release.ts",
+        "sha256": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f"
+      },
+      {
+        "path": "server/services/__tests__/sign-payload-snapshot.test.ts",
+        "sha256": "84844bbfc16077f1ecf1a1a03967a3f81e2c33b604fea4f4c936705197339ff9"
+      },
+      {
+        "path": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+        "sha256": "70645c1e8ba5a8d05c590bf3d46a79e1d2928359a4f102f4ad9c9e7cd2cf990a"
+      },
+      {
+        "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+        "sha256": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851"
+      },
+      {
+        "path": "server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts",
+        "sha256": "39c481d87098a2819bbc4ff9cdbe172033b46a827719c1d548fbbfe5c41dd6fd"
+      },
+      {
+        "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+        "sha256": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2"
+      },
+      {
+        "path": "server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts",
+        "sha256": "2654ea3141684833f8e28622a1e7009009de800e79f995c950f4e67758f136e6"
+      },
+      {
+        "path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+        "sha256": "186f0e4da56746ec3e365555b19cd682be1926c4a290984311e8765111e8e1c1"
+      },
+      {
+        "path": "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts",
+        "sha256": "e622d1801542793eb35b5054202e3fba1d658ff8beb79d17383f1ff465a9ebd8"
+      },
+      {
+        "path": "server/services/ectd/__tests__/run-package-identity.test.ts",
+        "sha256": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7"
+      },
+      {
+        "path": "server/services/ectd/__tests__/sequence-release-signature.test.ts",
+        "sha256": "f7290e235c8ef038fc6014e2057b8586a017a4633a147488eba704cb9d3c0281"
+      },
+      {
+        "path": "server/services/ectd/__tests__/signed-package-export.test.ts",
+        "sha256": "94e3f06ada2443e07b56c49a9d427a827b9ce02e97fa315f47f7f8bd4abdb65d"
+      },
+      {
+        "path": "server/services/ectd/assemble-from-core.ts",
+        "sha256": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67"
+      },
+      {
+        "path": "server/services/ectd/package-from-core.ts",
+        "sha256": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212"
+      },
+      {
+        "path": "server/services/ectd/package-identity.ts",
+        "sha256": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5"
+      },
+      {
+        "path": "server/services/ectd/release-signature-status.ts",
+        "sha256": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8"
+      },
+      {
+        "path": "server/services/ectd/run-package-identity.ts",
+        "sha256": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31"
+      },
+      {
+        "path": "server/services/ectd/sequence-release-signature.ts",
+        "sha256": "fcc47ea41fc18b138e444e99096e9b21ae73df4e2c188040efe30507d89b3343"
+      },
+      {
+        "path": "server/services/ectd/signed-manifest-covers-sequence.ts",
+        "sha256": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248"
+      },
+      {
+        "path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts",
+        "sha256": "c753b530ba06e4b4d3238cf17734e2202b0e8839cd5cb3fd6b7764cdca6168cf"
+      },
+      {
+        "path": "server/services/part11/ectd-sequence-binding.ts",
+        "sha256": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e"
+      },
+      {
+        "path": "server/services/submission-orchestrator-continuation.ts",
+        "sha256": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97"
+      },
+      {
+        "path": "server/services/submission-package-orchestrator.ts",
+        "sha256": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+        "sha256": "d0d29f0158d589bf7f252b39f0b119234786ca5797bce0da5c900596c27f9a92"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+        "sha256": "3520f4777d8cdb96b41b7e032f24d845e261ed3c390bb721960c07b7c6b6826c"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts",
+        "sha256": "7dd72d6de2765535c946a2293a6987ab1413d62e973c0b1da9eea17bf909bf6f"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+        "sha256": "79105f6a4c310ef4fd32bd448ea68601e47d7b7e52379515e1857547ec47bfea"
+      },
+      {
+        "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+        "sha256": "2db3db830fcb2aad22879ca01b52ca42d559871f825d17c1f840292add1bd03f"
+      },
+      {
+        "path": "server/services/submission-service/submission-service.ts",
+        "sha256": "ea60306b96ff7b151997452436072d76fd3ad6225ed16e1c7c12fc1724a86021"
+      },
+      {
+        "path": "tests/routes/ectd-compile-spine.test.ts",
+        "sha256": "fc3f75d75b1b5e0d6f31eb397eca10d633b942d828817d2532254f820129d256"
+      },
+      {
+        "path": "tests/setup.ts",
+        "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+      },
+      {
+        "path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts",
+        "sha256": "0878b4f8ec50ec7ae1ce31a1064cf84151d1cad63e5225d98393582ad99fbe55"
+      },
+      {
+        "path": "tests/unit/submission-sign-release-route.test.ts",
+        "sha256": "a45e4adfde041a3fe9fb8a69a8d9663a61ce08d0bb2644491f279b11794c596a"
+      },
+      {
+        "path": "vitest.config.ts",
+        "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+      }
+    ]
+  },
+  "currentRefilingMerge": {
+    "mergeCommit": "bd26986efa69169dca46c04f61a1592442ac89d7",
+    "upstream": "0ef71516c9efe22960a752a485b89ec208471bbc",
+    "fullCompilerZeroOn": "efd1f5d1b",
+    "priorPushFailure": "GitHub ref advanced after all local gates passed.",
+    "qualifiedLaneInputsUnchanged": 44,
+    "mergedBuildExitCode": 0,
+    "mergedCompatibilityPassed": 68,
+    "mergedCompatibilityTodo": 0,
+    "priorVaultTodo": "resolved by incoming governed refiling/versioning changes",
+    "browserEvidence": "Original executed CSS pins retained; company-preview-only stylesheet additions arrived later. Existing Dispatch/market-number component source unchanged."
+  }
+}

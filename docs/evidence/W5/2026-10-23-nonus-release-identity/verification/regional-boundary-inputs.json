@@ -1,0 +1,27 @@
+{
+  "headAtExecution": "c9f20ed82ced0c2e2139302f53afe1b78e67b9f0",
+  "reason": "Replay regional snapshot boundaries after canonical validator export/continuation completion and organization-first helper extension.",
+  "files": {
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "server/routes/submission-sign-release.ts": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f",
+    "server/services/__tests__/sign-payload-snapshot.test.ts": "84844bbfc16077f1ecf1a1a03967a3f81e2c33b604fea4f4c936705197339ff9",
+    "server/services/__tests__/submission-orchestrator-continuation.test.ts": "70645c1e8ba5a8d05c590bf3d46a79e1d2928359a4f102f4ad9c9e7cd2cf990a",
+    "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851",
+    "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts": "e622d1801542793eb35b5054202e3fba1d658ff8beb79d17383f1ff465a9ebd8",
+    "server/services/ectd/__tests__/run-package-identity.test.ts": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7",
+    "server/services/ectd/__tests__/signed-package-export.test.ts": "94e3f06ada2443e07b56c49a9d427a827b9ce02e97fa315f47f7f8bd4abdb65d",
+    "server/services/ectd/package-identity.ts": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5",
+    "server/services/ectd/release-signature-status.ts": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8",
+    "server/services/ectd/run-package-identity.ts": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31",
+    "server/services/ectd/signed-manifest-covers-sequence.ts": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248",
+    "server/services/ectd/signed-package-export.ts": "95d60a9c8e027e637fdf289cf07d4cb5e01e6449c359bd88cf07f6fc750c52d0",
+    "server/services/submission-orchestrator-continuation.ts": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97",
+    "server/services/submission-package-orchestrator.ts": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "tests/unit/orchestrator-dry-run-identity.test.ts": "239cd1fa55cd19760a74a595c6749cc981a40aad871a9a2e589c003612d72e26",
+    "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts": "0878b4f8ec50ec7ae1ce31a1064cf84151d1cad63e5225d98393582ad99fbe55",
+    "tests/unit/submission-sign-release-route.test.ts": "a45e4adfde041a3fe9fb8a69a8d9663a61ce08d0bb2644491f279b11794c596a",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

@@ -1,0 +1,1506 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:28:23.420Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:28:23.423Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:28:23.423Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-23T17:28:27.271Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-23T17:28:27.274Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-23T17:28:27.274Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none 794ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is refused by name — the program code is never an application number 12ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, is refused by name: no number is recorded for it 7ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-23T17:28:27.602Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-23T17:28:27.603Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-23T17:28:27.603Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-23T17:28:27.854Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-23T17:28:27.857Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-23T17:28:27.857Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used 299ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused 13ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename 3ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder 240ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > an organisation whose record has no usable name is refused by name 12ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses an unbound sponsor even when the organization name is present 12ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses a caller-supplied DUNS that differs from the bound sponsor 9ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses incomplete contact facts instead of producing a placeholder 13ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-23T17:28:28.173Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-23T17:28:28.174Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-23T17:28:28.175Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-23T17:28:28.408Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-23T17:28:28.447Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-23T17:28:28.447Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible 272ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object 273ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > refuses packaging inputs that disagree with the claimed FDA identity 32ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:28.822Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:28.823Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:28.824Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:29.050Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:29.051Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-23T17:28:29.051Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier 578ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.316Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.319Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.319Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.541Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.543Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.543Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes 276ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes 211ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.726Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.726Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:29.727Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes 183ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.054Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.056Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.056Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.275Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.276Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.276Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes 330ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes 218ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.487Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.487Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.488Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes 211ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.671Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.672Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.672Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes 185ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.876Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.877Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:30.877Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.079Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.079Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.079Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes 206ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes 201ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.268Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.269Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.269Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes 190ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.452Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.455Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes
+{
+  "timestamp": "2026-10-23T17:28:31.455Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes 211ms
+   → expected undefined to deeply equal { version: 1, identity: { …(6) } }
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.677Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.678Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.678Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.968Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.969Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging
+{
+  "timestamp": "2026-10-23T17:28:31.969Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging 204ms
+   → promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging 287ms
+   → promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging
+{
+  "timestamp": "2026-10-23T17:28:32.161Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging
+{
+  "timestamp": "2026-10-23T17:28:32.162Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging
+{
+  "timestamp": "2026-10-23T17:28:32.162Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging 190ms
+   → promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier
+{
+  "timestamp": "2026-10-23T17:28:32.350Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier
+{
+  "timestamp": "2026-10-23T17:28:32.352Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier
+{
+  "timestamp": "2026-10-23T17:28:32.352Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier 192ms
+   → expected { …(6) } to deeply equal { …(8) }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes
+AssertionError: expected undefined to deeply equal { version: 1, identity: { …(6) } }
+
+- Expected:
+{
+  "identity": {
+    "applicantId": null,
+    "applicantName": "Concept2Cure Therapeutics",
+    "applicantSponsorId": "44444444-4444-4444-8444-444444444444",
+    "applicationNumber": "MARKET-000512",
+    "contact": {
+      "email": null,
+      "name": null,
+      "phone": null,
+    },
+    "programId": "11111111-1111-4111-8111-111111111111",
+  },
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:278:38
+    276|         const result = await assembleSubmissionEctd({ submissionId: 1,…
+    277|           sequenceNumber: '0000', applicantId: 'REGIONAL-ORG-42' });
+    278|         expect(holder.exportedProof).toEqual({ version: 1, identity: {
+       |                                      ^
+    279|           programId: RECORDED, applicationNumber: 'MARKET-000512', app…
+    280|           applicantName: 'Concept2Cure Therapeutics', applicantId: nul…
+ ❯ withMarket server/services/ectd/__tests__/export-application-identity.pglite.test.ts:267:11
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:275:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging
+AssertionError: promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": false,
++     "persisted": true,
++   },
++   "bundle": {
++     "displayName": " · EMA Investigational New Drug Application #0000",
++     "dtdStatus": {
++       "missing": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "missingStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "present": [],
++       "presentStylesheets": [],
++       "required": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "requiredStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "selfContained": false,
++       "validation": {
++         "expectedFiles": [
++           "index.xml",
++           "m1/eu/eu-regional.xml",
++         ],
++         "files": [
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "index.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD eu-regional.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "m1/eu/eu-regional.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++         ],
++         "integrity": {
++           "mismatched": [],
++           "missingFiles": [],
++           "ok": true,
++           "unlistedFiles": [],
++           "verified": [],
++         },
++         "passed": false,
++         "version": 1,
++       },
++     },
++     "format": "ectd",
++     "leafManifest": [
++       {
++         "backbone": "index.xml",
++         "ctdSection": "m3.2.s.1",
++         "fileName": "3-2-coauthor-documents-300.pdf",
++         "href": "m3/3-2-s-1/3-2-coauthor-documents-300.pdf",
++         "leafId": "leaf-m3-2-s-1-3-2-coauthor-documents-300",
++         "md5": "7f35f9d43bc30d55b8a39e5580fee62d",
++         "operation": "new",
++         "sourceMd5": "6140696f05e09b2aa12a219592f928a4",
++         "title": "Drug Substance General",
++       },
++     ],
++     "path": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-EqKOTC/MARKET-000512-0000-ema.zip",
++     "regionalBackbone": {
++       "conformanceGap": "its Module 1 leaves are filed flat under <m1-eu> instead of under the EU Module 1 headings (1.0 cover letter … 1.10 paediatrics), and its envelope does not follow the eu-regional DTD structure",
++       "file": "m1/eu/eu-regional.xml",
++       "region": "ema",
++       "regionConformant": false,
++     },
++     "sha256": "15e8efe1b6cf3d371931640635994362e7463d3b3be003bbed7326fa4e32ba94",
++     "sizeBytes": 9232,
++     "submissionGrade": {
++       "agencyFormsAsIssued": [],
++       "allPdfA": true,
++       "notConverted": [],
++       "pdfLeaves": 1,
++       "pdfaConverted": 1,
++       "total": 1,
++     },
++   },
++   "cleanup": [Function cleanup],
++   "dryRun": false,
++   "governanceManifestPath": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-EqKOTC/package-governance.sha256.json",
++   "materialized": 1,
++   "priorSequence": null,
++   "priorState": "filed",
++   "recordedPackageIdentity": {
++     "identity": {
++       "applicantId": "123456789",
++       "applicantName": "Concept2Cure Therapeutics",
++       "applicantSponsorId": "44444444-4444-4444-8444-444444444444",
++       "applicationNumber": "MARKET-000512",
++       "contact": {
++         "email": "ra@example.test",
++         "name": "Regulatory Contact",
++         "phone": "+1 212 555 0100",
++       },
++       "programId": "22222222-2222-4222-8222-222222222222",
++     },
++     "version": 1,
++   },
++   "skipped": [],
++   "unfiledPriorSequences": [],
++   "unfinalized": 0,
++   "unfinalizedSections": [],
++   "unresolvedLeaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:304:11
+    302|           applicationId: 'MARKET-000512', sponsorId: 'EMA-ORG-42', spo…
+    303|           recordedPackageIdentity: snapshot,
+    304|         })).rejects.toThrow(/do not match the captured recorded applic…
+       |           ^
+    305|       });
+    306|     });
+ ❯ withMarket server/services/ectd/__tests__/export-application-identity.pglite.test.ts:267:11
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:297:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging
+AssertionError: promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": false,
++     "persisted": true,
++   },
++   "bundle": {
++     "displayName": " · EMA Investigational New Drug Application #0000",
++     "dtdStatus": {
++       "missing": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "missingStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "present": [],
++       "presentStylesheets": [],
++       "required": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "requiredStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "selfContained": false,
++       "validation": {
++         "expectedFiles": [
++           "index.xml",
++           "m1/eu/eu-regional.xml",
++         ],
++         "files": [
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "index.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD eu-regional.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "m1/eu/eu-regional.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++         ],
++         "integrity": {
++           "mismatched": [],
++           "missingFiles": [],
++           "ok": true,
++           "unlistedFiles": [],
++           "verified": [],
++         },
++         "passed": false,
++         "version": 1,
++       },
++     },
++     "format": "ectd",
++     "leafManifest": [
++       {
++         "backbone": "index.xml",
++         "ctdSection": "m3.2.s.1",
++         "fileName": "3-2-coauthor-documents-300.pdf",
++         "href": "m3/3-2-s-1/3-2-coauthor-documents-300.pdf",
++         "leafId": "leaf-m3-2-s-1-3-2-coauthor-documents-300",
++         "md5": "4e66ed47ae7204ece9ad854bb62f76d9",
++         "operation": "new",
++         "sourceMd5": "6140696f05e09b2aa12a219592f928a4",
++         "title": "Drug Substance General",
++       },
++     ],
++     "path": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-0n1sZZ/MARKET-000512-0000-ema.zip",
++     "regionalBackbone": {
++       "conformanceGap": "its Module 1 leaves are filed flat under <m1-eu> instead of under the EU Module 1 headings (1.0 cover letter … 1.10 paediatrics), and its envelope does not follow the eu-regional DTD structure",
++       "file": "m1/eu/eu-regional.xml",
++       "region": "ema",
++       "regionConformant": false,
++     },
++     "sha256": "2f8a06255336e7cd6da2c2275fe6ce168f6822d4eef9fb3076851af045665b37",
++     "sizeBytes": 9232,
++     "submissionGrade": {
++       "agencyFormsAsIssued": [],
++       "allPdfA": true,
++       "notConverted": [],
++       "pdfLeaves": 1,
++       "pdfaConverted": 1,
++       "total": 1,
++     },
++   },
++   "cleanup": [Function cleanup],
++   "dryRun": false,
++   "governanceManifestPath": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-0n1sZZ/package-governance.sha256.json",
++   "materialized": 1,
++   "priorSequence": null,
++   "priorState": "filed",
++   "recordedPackageIdentity": {
++     "identity": {
++       "applicantId": "123456789",
++       "applicantName": "Concept2Cure Therapeutics",
++       "applicantSponsorId": "44444444-4444-4444-8444-444444444444",
++       "applicationNumber": "contradictory-claimed-fact",
++       "contact": {
++         "email": "ra@example.test",
++         "name": "Regulatory Contact",
++         "phone": "+1 212 555 0100",
++       },
++       "programId": "11111111-1111-4111-8111-111111111111",
++     },
++     "version": 1,
++   },
++   "skipped": [],
++   "unfiledPriorSequences": [],
++   "unfinalized": 0,
++   "unfinalizedSections": [],
++   "unresolvedLeaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:304:11
+    302|           applicationId: 'MARKET-000512', sponsorId: 'EMA-ORG-42', spo…
+    303|           recordedPackageIdentity: snapshot,
+    304|         })).rejects.toThrow(/do not match the captured recorded applic…
+       |           ^
+    305|       });
+    306|     });
+ ❯ withMarket server/services/ectd/__tests__/export-application-identity.pglite.test.ts:267:11
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:297:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging
+AssertionError: promise resolved "{ bundle: { …(9) }, skipped: [], …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": false,
++     "persisted": true,
++   },
++   "bundle": {
++     "displayName": " · EMA Investigational New Drug Application #0000",
++     "dtdStatus": {
++       "missing": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "missingStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "present": [],
++       "presentStylesheets": [],
++       "required": [
++         "ich-ectd-3-2.dtd",
++         "eu-regional.dtd",
++       ],
++       "requiredStylesheets": [
++         "ectd-2-0.xsl",
++       ],
++       "selfContained": false,
++       "validation": {
++         "expectedFiles": [
++           "index.xml",
++           "m1/eu/eu-regional.xml",
++         ],
++         "files": [
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD ich-ectd-3-2.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "index.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++           {
++             "doctype": {
++               "errors": [],
++               "valid": true,
++             },
++             "dtd": {
++               "errors": [
++                 "Declared DTD eu-regional.dtd is missing from the package.",
++               ],
++               "mode": "dtd",
++               "ran": false,
++               "valid": false,
++             },
++             "relPath": "m1/eu/eu-regional.xml",
++             "wellFormed": {
++               "errors": [
++                 "xmllint not available",
++               ],
++               "mode": "well-formed",
++               "ran": false,
++               "valid": false,
++             },
++           },
++         ],
++         "integrity": {
++           "mismatched": [],
++           "missingFiles": [],
++           "ok": true,
++           "unlistedFiles": [],
++           "verified": [],
++         },
++         "passed": false,
++         "version": 1,
++       },
++     },
++     "format": "ectd",
++     "leafManifest": [
++       {
++         "backbone": "index.xml",
++         "ctdSection": "m3.2.s.1",
++         "fileName": "3-2-coauthor-documents-300.pdf",
++         "href": "m3/3-2-s-1/3-2-coauthor-documents-300.pdf",
++         "leafId": "leaf-m3-2-s-1-3-2-coauthor-documents-300",
++         "md5": "66fa6e13d8fff4c5f045f4eb714e5011",
++         "operation": "new",
++         "sourceMd5": "6140696f05e09b2aa12a219592f928a4",
++         "title": "Drug Substance General",
++       },
++     ],
++     "path": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-tdcPpb/MARKET-000512-0000-ema.zip",
++     "regionalBackbone": {
++       "conformanceGap": "its Module 1 leaves are filed flat under <m1-eu> instead of under the EU Module 1 headings (1.0 cover letter … 1.10 paediatrics), and its envelope does not follow the eu-regional DTD structure",
++       "file": "m1/eu/eu-regional.xml",
++       "region": "ema",
++       "regionConformant": false,
++     },
++     "sha256": "bde78c33c5fcd55c02a8193d227a95c3eae216e2ffee31dc8810b306baa93608",
++     "sizeBytes": 9234,
++     "submissionGrade": {
++       "agencyFormsAsIssued": [],
++       "allPdfA": true,
++       "notConverted": [],
++       "pdfLeaves": 1,
++       "pdfaConverted": 1,
++       "total": 1,
++     },
++   },
++   "cleanup": [Function cleanup],
++   "dryRun": false,
++   "governanceManifestPath": "/tmp/c2c-test-bundles-SQp95y/staging/ectd-assemble-11-tdcPpb/package-governance.sha256.json",
++   "materialized": 1,
++   "priorSequence": null,
++   "priorState": "filed",
++   "recordedPackageIdentity": {
++     "identity": {
++       "applicantId": "123456789",
++       "applicantName": "contradictory-claimed-fact",
++       "applicantSponsorId": "44444444-4444-4444-8444-444444444444",
++       "applicationNumber": "MARKET-000512",
++       "contact": {
++         "email": "ra@example.test",
++         "name": "Regulatory Contact",
++         "phone": "+1 212 555 0100",
++       },
++       "programId": "11111111-1111-4111-8111-111111111111",
++     },
++     "version": 1,
++   },
++   "skipped": [],
++   "unfiledPriorSequences": [],
++   "unfinalized": 0,
++   "unfinalizedSections": [],
++   "unresolvedLeaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:304:11
+    302|           applicationId: 'MARKET-000512', sponsorId: 'EMA-ORG-42', spo…
+    303|           recordedPackageIdentity: snapshot,
+    304|         })).rejects.toThrow(/do not match the captured recorded applic…
+       |           ^
+    305|       });
+    306|     });
+ ❯ withMarket server/services/ectd/__tests__/export-application-identity.pglite.test.ts:267:11
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:297:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier
+AssertionError: expected { …(6) } to deeply equal { …(8) }
+
+- Expected
++ Received
+
+  {
+-   "applicantId": null,
++   "applicantId": "123456789",
+    "applicantName": "Concept2Cure Therapeutics",
+    "applicantSponsorId": "44444444-4444-4444-8444-444444444444",
+    "applicationNumber": "MARKET-000512",
+    "contact": {
+-     "email": null,
+-     "name": null,
+-     "phone": null,
++     "email": "ra@example.test",
++     "name": "Regulatory Contact",
++     "phone": "+1 212 555 0100",
+    },
+-   "homeAgency": undefined,
+-   "market": undefined,
+    "programId": "11111111-1111-4111-8111-111111111111",
+  }
+
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:317:58
+    315|       snapshot.identity.applicantName = 'changed after capture';
+    316|       try {
+    317|         expect(result.recordedPackageIdentity?.identity).toEqual({ ...…
+       |                                                          ^
+    318|           applicantName: 'Concept2Cure Therapeutics', applicantId: nul…
+    319|           contact: { name: null, phone: null, email: null }, homeAgenc…
+ ❯ withMarket server/services/ectd/__tests__/export-application-identity.pglite.test.ts:267:11
+ ❯ server/services/ectd/__tests__/export-application-identity.pglite.test.ts:309:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 15 passed (30)
+   Start at  17:28:14
+   Duration  17.45s (transform 4.67s, setup 127ms, import 8.11s, tests 8.64s, environment 0ms)
+

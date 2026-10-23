@@ -213,15 +213,6 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     });
   }
 
-  // A stored signature is evidence of a prior ceremony, not authority for this
-  // request to resume the run. Check standing and factors now, including on an
-  // active-signature hit, before any continuation or new signature write.
-  const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
-  if (!reverified.ok) {
-    const error = reverified.status === 401 ? 'invalid_credentials' : reverified.code.toLowerCase();
-    return res.status(reverified.status).json({ error, code: reverified.code });
-  }
-
   // ── Recompute the bound digest from the persisted run ───────────────────
   let boundPayloadDigest: string;
   try { boundPayloadDigest = await prepareOrchestratorRelease(run, signerId); }
@@ -233,6 +224,15 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     // The sign step lacks a persisted digest — unexpected if run.status
     // is awaiting-signature, but defensive.
     return res.status(409).json({ error: 'run_payload_digest_missing' });
+  }
+
+  // A usable frozen record must be established before asking for a ceremony.
+  // A stored signature still gives no current authority: recheck standing and
+  // factors, including on an active-signature hit, before continuation or write.
+  const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
+  if (!reverified.ok) {
+    const error = reverified.status === 401 ? 'invalid_credentials' : reverified.code.toLowerCase();
+    return res.status(reverified.status).json({ error, code: reverified.code });
   }
 
   // ── Refuse to attach a second signature for the same active payload ─────

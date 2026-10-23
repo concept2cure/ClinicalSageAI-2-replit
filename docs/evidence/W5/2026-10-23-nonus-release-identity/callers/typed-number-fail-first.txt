@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 18ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses fda recorded number changed while waiting for the claim, before assembly 24ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses jp recorded number changed while waiting for the claim, before assembly 4ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses fda applicant changed during assembly and releases the pre-wire claim 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses jp applicant changed during assembly and releases the pre-wire claim 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 4ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > transmits regional recorded identity without any FDA DUNS or contact 2ms
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses fda typed number A when a later valid signature/claim captures number B 11ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses jp typed number A when a later valid signature/claim captures number B 3ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > locks the actual submission before sequence, then program/sponsor for a regional claim 4ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a missing parent/anchor at the claim before assembly 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a swapped parent/anchor at the claim before assembly 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a program parent/anchor at the claim before assembly 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a known non-US binding without captured proof before assembly 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong regional proof echo and releases the claim 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing regional proof echo and releases the claim 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses fda typed number A when a later valid signature/claim captures number B
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses jp typed number A when a later valid signature/claim captures number B
+AssertionError: expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+
+- Expected
++ Received
+
+- {
+-   "code": "GOVERNED_REQUIRED",
++ Error {
++   "message": "wire checkpoint reached The signature given for this transmit is now void; sign again for a new attempt.",
+  }
+
+ ❯ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts:155:30
+    153|   it.each(['fda', 'jp'])('refuses %s typed number A when a later valid…
+    154|     h.region = region; h.changeAfterInitialRead = true;
+    155|     expect(await transmit()).toMatchObject({ code: 'GOVERNED_REQUIRED'…
+       |                              ^
+    156|     expect(h.assemble).not.toHaveBeenCalled(); expect(h.gateway).not.t…
+    157|     expect(h.dispatchStatus).toBe('pending');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  17:39:06
+   Duration  4.02s (transform 2.38s, setup 112ms, import 3.38s, tests 91ms, environment 0ms)
+

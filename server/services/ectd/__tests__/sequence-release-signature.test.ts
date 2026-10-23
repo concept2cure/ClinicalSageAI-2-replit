@@ -97,8 +97,29 @@ describe('FDA identity staleness preserves the existing content-tamper refusal',
     return signatureRow({ signature_manifest: manifest, signature_hash: manifestSignatureHash(manifest), ...overRow });
   }
   it('allows fresh authorization for an intact historical FDA leaf-only signature', async () => {
-    changedIdentity(); rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST, signature_manifest: { actionId: 'historical' } }));
+    const manifest = { actionId: 'historical' };
+    changedIdentity(); rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST,
+      signature_manifest: manifest, signature_hash: manifestSignatureHash(manifest) }));
     expect((await probe()).verdict).toBe('unsigned');
+  });
+  it.each(['FDA', 'EU'])('permits renewal for an intact legacy %s signature with a verified manifest hash', async (region) => {
+    const proof = identityProof();
+    if (region !== 'FDA') Object.assign(proof.identity, { applicantId: null, contact: { name: null, phone: null, email: null } });
+    changedIdentity({ recordedPackageIdentity: proof });
+    const manifest = { actionId: `historical-${region}` };
+    rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST, signature_manifest: manifest,
+      signature_hash: manifestSignatureHash(manifest) }));
+    expect((await probe()).verdict).toBe('unsigned');
+  });
+  it.each([
+    ['FDA', undefined], ['FDA', 'damaged'], ['EU', undefined], ['EU', 'damaged'],
+  ])('refuses legacy %s identity renewal when its manifest hash is %s', async (region, hash) => {
+    const proof = identityProof();
+    if (region !== 'FDA') Object.assign(proof.identity, { applicantId: null, contact: { name: null, phone: null, email: null } });
+    changedIdentity({ recordedPackageIdentity: proof });
+    rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST,
+      signature_manifest: { actionId: `historical-${region}` }, signature_hash: hash }));
+    expect((await probe()).verdict).toBe('invalid');
   });
   it('allows fresh authorization when only the recorded applicant identity changed', async () => {
     changedIdentity(); rowsAre(modernRow());
