@@ -66,3 +66,12 @@ production code and policy are unchanged. Original frozen/source manifests are
 historical at `a36245bc48c865fdb3ca5cd5d238ac52ba06043b`; current manifest copies
 explicitly identify the correction. Current full regression, lint and normal
 push outcomes are recorded separately. No type or warning baseline was raised.
+
+Current corrected-source qualification passed **330 tests / 34 suites**, zero
+failures/skips, with zero lint errors or warning growth. The retry pushed
+`4718e17cb1224022684829a0e45f92f5048b5850` normally; whole-tree TypeScript passed with zero errors.
+A fresh fetch verified all 551 current selected inputs, all 86 code-head
+evidence files and all 52 retained ancestors; local/remote matched with no
+unmerged entries. [Current qualification](root/current-qualification.json) and
+[remote verification](root/code-verification.json) retain the exact current and
+historical scopes. Final publication proof follows on the same canonical branch.
