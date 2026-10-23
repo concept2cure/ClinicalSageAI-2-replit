@@ -219,10 +219,18 @@ async function changeSession(change: SessionChange) {
 }
 
 async function expectQuietExportCompletion() {
-  await waitFor(() => expect((screen.getByRole('button', { name: /Export reports PDF/ }) as HTMLButtonElement).disabled).toBe(false));
-  expect((screen.getByRole('button', { name: /Export manifest PDF/ }) as HTMLButtonElement).disabled).toBe(false);
+  // Retirement withdraws the whole prior-owner library. The stale export must
+  // not restore it; a current account explicitly reopens a fresh library read.
+  await waitFor(() => expect(screen.queryByRole('button', { name: /Export reports PDF/ })).toBeNull());
   expect(downloadBlob).not.toHaveBeenCalled();
   expect(document.querySelector('.de-toast')).toBeNull();
+  if (authService.getUser()) {
+    await openTab(/Bundles/);
+    expect((await screen.findByRole('button', { name: /Export reports PDF/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: /Export manifest PDF/ }) as HTMLButtonElement).disabled).toBe(false);
+  } else {
+    expect(screen.getByText('Sign in to read reporting')).toBeTruthy();
+  }
 }
 
 describe('bundle export session revisions — delayed transport', () => {

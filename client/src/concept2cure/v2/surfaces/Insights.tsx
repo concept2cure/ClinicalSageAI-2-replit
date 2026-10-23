@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearch } from 'wouter';
 import { I } from '../icons';
 import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import { authService, useAuthUser } from '@/services/portal/authService';
+import { captureAuthoringSession, useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
 import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
@@ -39,6 +40,9 @@ const RO_TIERS: Tier[] = [
 ];
 
 const REPORT_PLAN_UNVERIFIED = "Your organization's plan could not be verified. Running reports is unavailable until it can be verified.";
+const REPORT_ACCESS_CHANGED = 'Your reporting session or access changed. Reopen the report from Run history before continuing.';
+const REPORT_WRITE_UNCONFIRMED = 'The report request outcome could not be confirmed. It may have completed. Check Run history before starting another request.';
+const REPORT_NOT_SAVED_CODES = new Set(['REPORT_RUN_NOT_RECORDED', 'PROJECT_ACCESS_UNAVAILABLE', 'PROJECT_ACCESS_CHANGED']);
 
 /** A tier's display name. */
 function tierLabel(id: string): string {
@@ -1001,7 +1005,7 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
   return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
 }
 
-function ROReport({ report, onExport, onFinalize, seal, runId }: {
+function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   /** Offered only to a role that may finalize, on a run that is not final. */
@@ -1014,6 +1018,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId }: {
    *  caller, so a sealed report re-opened from the history showed no evidence
    *  at all (see InsightsRunEvidence.tsx). */
   runId?: number | null;
+  exporting?: boolean;
 }) {
   if (!report) return null;
   const { fam, scope } = reportHeading(report);
@@ -1048,7 +1053,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId }: {
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />
+      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} exporting={exporting} />
       {runId != null && <RunEvidence runId={runId} />}
     </div>
   );
@@ -1232,7 +1237,12 @@ function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
 /** What the canvas says when POST /runs refuses. A plan refusal carries
  *  requiredTier; the write gate's does not. Every 403 read as "needs a higher
  *  plan" before the write gate existed, and would have told a viewer to upgrade. */
+function unconfirmedRunOutcome(status: unknown, payload: unknown): boolean {
+  return typeof status === 'number' && (status === 0 || status >= 500) && !REPORT_NOT_SAVED_CODES.has(errorCodeOf(payload) ?? '');
+}
+
 function runRefusalNote(label: string, status: unknown, payload: unknown): string {
+  if (unconfirmedRunOutcome(status, payload)) return REPORT_WRITE_UNCONFIRMED;
   const p = payload as { requiredTier?: unknown; tier?: unknown } | null;
   const tier = p?.requiredTier;
   /* 2026-10-15: a plan the server could not read (tier: null, requiredTier still
@@ -1285,12 +1295,12 @@ async function requestRun(type: ReportType, program: ProgramCtx | null, programI
     // structurally, not by instanceof (see finalizeRefusalNote's callers).
     const err = e as { status?: unknown; payload?: unknown } | null;
     if (typeof err?.status === 'number') return { note: runRefusalNote(type.label, err.status, err.payload) };
-    return { note: `Couldn't reach the report engine — ${e instanceof Error ? e.message : String(e)}.` };
+    return { note: REPORT_WRITE_UNCONFIRMED };
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) return { note: runRefusalNote(type.label, res.status, body) };
   const runId = body?.data?.run?.id;
-  return runId == null ? { note: 'The run started but returned no id — reload and retry.' } : { runId: Number(runId) };
+  return typeof runId === 'number' && Number.isSafeInteger(runId) && runId > 0 ? { runId } : { note: REPORT_WRITE_UNCONFIRMED };
 }
 
 /** GET /runs/:id/rendered, adopted as the canvas's report; null when it did not come back. */
@@ -1308,19 +1318,24 @@ async function fetchRenderedRun(runId: number, type: ReportType, program: Progra
 }
 
 /** GET /runs/:id/export.pdf through the canonical downloadBlob: what was saved, or why nothing was. */
-async function downloadRunPdf(runId: number, rep: RenderedReport): Promise<{ ok: boolean; text: string }> {
+async function downloadRunPdf(runId: number, rep: RenderedReport, current: () => boolean): Promise<{ ok: boolean; text: string } | null> {
   try {
+    if (!current()) return null;
     const res = await apiRequest('GET', `/api/report-os/runs/${runId}/export.pdf`);
+    if (!current()) return null;
     if (!res.ok) {
       const body = await res.json().catch(() => null);
+      if (!current()) return null;
       return { ok: false, text: `No file saved — ${serverMessage(body) ?? 'the export service did not say why'}.` };
     }
     const blob = await res.blob();
+    if (!current()) return null;
     const filename = `${safeFileName(rep.reportTypeLabel || rep.reportTypeId, 'report')}_run${runId}.pdf`;
     return downloadBlob(filename, blob)
       ? { ok: true, text: `Saved ${filename}.` }
       : { ok: false, text: 'No file saved — this browser refused the download.' };
   } catch (e) {
+    if (!current()) return null;
     return { ok: false, text: `No file saved — ${e instanceof Error ? e.message : String(e)}.` };
   }
 }
@@ -1497,17 +1512,19 @@ async function finalizeRun(
    reason, the account password and the authenticator code when one is
    enrolled. The server re-verifies them inside the transaction that seals the
    run (services/part11/governed-signature-ceremony.ts). Export only reads. */
-function ReportFinalizeModal({ runId, report, onClose, onSealed }: {
+function ReportFinalizeModal({ runId, report, onClose, onSealed, current }: {
   runId: number;
   report: RenderedReport;
   onClose: () => void;
   onSealed: (seal: ReportSeal) => void;
+  current: () => boolean;
 }) {
   const authUser = useAuthUser();
   const signer = esignSignerOf(authUser);
   const onSign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
+    if (!current()) throw new Error(REPORT_ACCESS_CHANGED);
     const sealed = await finalizeRun(runId, input);
-    onSealed({ ...sealed, signer: signer?.name ?? null });
+    if (current()) onSealed({ ...sealed, signer: signer?.name ?? null });
     return { meaning: input.meaning, reason: input.reason, signedAt: sealed.signedAt, ...(sealed.hash ? { hash: sealed.hash } : {}) };
   };
   return (
@@ -1519,6 +1536,7 @@ function ReportFinalizeModal({ runId, report, onClose, onSealed }: {
       defaultMeaning="authorship"
       meanings={REPORT_FINALIZE_MEANINGS}
       signer={signer}
+      commitRefusal={current() ? null : REPORT_ACCESS_CHANGED}
       requireMfa={authUser?.mfaEnabled === true}
       onClose={onClose}
       onSign={onSign}
@@ -1540,14 +1558,15 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
 }
 
 /** Export reads; Finalize, when offered, signs. */
-function ROReportActions({ report, onExport, onFinalize }: {
+function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   onFinalize?: () => void;
+  exporting?: boolean;
 }) {
   return (
     <div className="ro-rep-actions">
-      <button className="sp-primary" onClick={() => onExport(report)}>{I.download || I.fileText} Export PDF</button>
+      <button type="button" className="sp-primary" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
     </div>
   );
@@ -1558,7 +1577,22 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
   pharma: 'pharma', biotech: 'biotech', device: 'medtech', ivd: 'diagnostics', cro: 'cro',
 };
 
-export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
+/** Reuse the canonical account/revision owner, retaining ordinary bearer refresh. */
+export function InsightsCanvas(props: OwnedSurfaceViewProps) {
+  const session = useAuthoringReadSession(authService.getUser());
+  const changed = session.key > 1;
+  if (changed && !authService.getUser()) return <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+    <ReportingRecoveryNotice ended />
+    <EmptyState icon={I.lock} title="Sign in to read reporting" hint="Your previous reporting data has been withdrawn. Sign in again to reopen Run history." />
+  </div></div>;
+  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={changed} />;
+}
+
+function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
+  return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed; check Run history for their stored outcome.</div>;
+}
+
+function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: boolean }) {
   const search = useSearch();
   const tabsId = React.useId();
 
@@ -1643,6 +1677,8 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // disabled for this bundle, including when the reader returns to the tab.
   const bundleExportsInFlight = useRef(new Set<string>());
   const [pendingBundleExports, setPendingBundleExports] = useState<ReadonlySet<string>>(new Set());
+  const reportExportsInFlight = useRef(new Set<number>());
+  const [pendingReportExports, setPendingReportExports] = useState<ReadonlySet<number>>(new Set());
   const contextKey = `${openProgramId ?? ''}|${data?.organizationId ?? ''}|${program?.scope ?? ''}|${program?.scopeId ?? ''}|${seg}`;
   const activeContext = useRef(contextKey);
   activeContext.current = contextKey;
@@ -1650,6 +1686,16 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const hadReportingContext = useRef(hasReportingContext);
   const requestSequence = useRef(0);
   const linkedRead = useRef<string | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; requestSequence.current += 1; };
+  }, []);
+  const reportAccessCurrent = () => mounted.current && owner.sameRevision() && activeContext.current === contextKey;
+  const retainOwner = (event: React.SyntheticEvent) => {
+    if (!reportAccessCurrent()) { event.preventDefault(); event.stopPropagation(); }
+  };
+  const ownerEvents = { onClickCapture: retainOwner, onSubmitCapture: retainOwner };
   useEffect(() => {
     const initialized = hadReportingContext.current;
     hadReportingContext.current = hasReportingContext;
@@ -1672,9 +1718,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      exported and finalized. Any failure surfaces as an honest message — nothing
      is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
-    if (!program && !(type.runScopeType && type.runScopeId)) { setRunNote(type.availabilityReason || 'Choose a program or document for this report.'); return; }
+    if (!reportAccessCurrent()) return;
+    if (!reportTarget(type, program)) { setRunNote(type.availabilityReason || 'Choose a program or document for this report.'); return; }
     const request = ++requestSequence.current;
-    const isCurrent = () => request === requestSequence.current && contextKey === activeContext.current;
+    const isCurrent = () => reportAccessCurrent() && request === requestSequence.current;
     /* The result said "Running the …" when the run began. Once the run ends it
        says what happened, so it never reports as current a run that finished or
        never started. A run that produced no report drops the result's sentence
@@ -1714,6 +1761,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   /* A suggestion (an opener prompt, a result's choice) fills the field with the
      words it searches for, so the field always shows what the result answers. */
   const findReport = async (raw?: string) => {
+    if (!reportAccessCurrent()) return;
     const text = (raw == null ? query : raw).trim();
     if (!text || busy || !program || !data) return;
     if (raw != null) setQuery(raw);
@@ -1738,6 +1786,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      TYPES from RO_PRESETS in this file — nothing curates it at runtime (and no
      server bulk-run endpoint exists). Each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
+    if (!reportAccessCurrent()) return;
     if (!preset) return;
     setRunNote(null);
     setFound({ text: `${preset.label}: ${preset.why} ${tierResolved ? 'Each tile runs a governed report against the live record; pick one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.' : REPORT_PLAN_UNVERIFIED}` });
@@ -1749,6 +1798,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
 
   /* Run a report from a pack tile (states it as the result, then generates). */
   const runFromTile = (type: ReportType) => {
+    if (!reportAccessCurrent()) return;
     setFound({ text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.` });
     void runReport(type);
   };
@@ -1762,9 +1812,21 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      through the canonical downloadBlob, whose false return is reported, never
      swallowed. Finalizing is its own signed act (ReportFinalizeModal). */
   const exportRep = async (rep: RenderedReport) => {
+    if (!reportAccessCurrent()) return;
     if (reportRunId == null) { fireToast('Only a freshly-run governed report can be exported — run one first.', 'error'); return; }
-    const saved = await downloadRunPdf(reportRunId, rep);
-    fireToast(saved.text, saved.ok ? undefined : 'error');
+    const runId = reportRunId;
+    const session = captureAuthoringSession();
+    const current = () => session.sameRevision() && reportAccessCurrent() && displayedRun.current === runId;
+    if (!current() || reportExportsInFlight.current.has(runId)) return;
+    reportExportsInFlight.current.add(runId);
+    setPendingReportExports(new Set(reportExportsInFlight.current));
+    try {
+      const saved = await downloadRunPdf(runId, rep, current);
+      if (saved && current()) fireToast(saved.text, saved.ok ? undefined : 'error');
+    } finally {
+      reportExportsInFlight.current.delete(runId);
+      if (mounted.current) setPendingReportExports(new Set(reportExportsInFlight.current));
+    }
   };
 
   const onSealed = (sealed: ReportSeal) => {
@@ -1811,13 +1873,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      the previous report's signature beside another report's document would
      attribute a signature to a record nobody signed. */
   const openRunFromHistory = async (row: ReportRunRow) => {
+    if (!reportAccessCurrent()) return;
     const request = ++requestSequence.current;
     setBusy(true);
     setRunNote(null);
     displayedRun.current = null;
     setReport(null); setReportRunId(null); setSeal(null); setSigning(false);
     const result = await fetchRenderedRunRow(row, catalog);
-    if (request !== requestSequence.current || contextKey !== activeContext.current) return;
+    if (!reportAccessCurrent() || request !== requestSequence.current) return;
     setBusy(false);
     if ('note' in result) {
       setPaneView('report');
@@ -1836,13 +1899,15 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   };
 
   const exportBundle = async (bundleId: string, name: string, content: BundlePdfContent) => {
+    if (!reportAccessCurrent()) return;
     if (bundleExportsInFlight.current.has(bundleId)) return;
     bundleExportsInFlight.current.add(bundleId);
     setPendingBundleExports(new Set(bundleExportsInFlight.current));
-    const session = authService.captureSessionReadGuard();
+    const session = captureAuthoringSession();
+    const current = () => session.sameRevision() && reportAccessCurrent();
     try {
-      const out = await downloadBundlePdf(bundleId, name, content, session.sameRevision);
-      if (out && session.sameRevision()) fireToast(out.text, out.ok ? undefined : 'error');
+      const out = await downloadBundlePdf(bundleId, name, content, current);
+      if (out && current()) fireToast(out.text, out.ok ? undefined : 'error');
     } finally {
       bundleExportsInFlight.current.delete(bundleId);
       setPendingBundleExports(new Set(bundleExportsInFlight.current));
@@ -1852,6 +1917,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   /* A report run from the catalog shows its document, as a run from the find
      box does. */
   const runFromCatalog = (t: LibraryReportType) => {
+    if (!reportAccessCurrent()) return;
     const type = catalog.find((c) => c.typeId === t.typeId);
     if (!type) return;
     setPaneView('report');
@@ -1864,12 +1930,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     if (linkedRead.current === linkedRun) return;
     linkedRead.current = linkedRun;
     const request = ++requestSequence.current;
-    const isCurrent = () => requestSequence.current === request && activeContext.current === contextKey;
+    const isCurrent = () => reportAccessCurrent() && requestSequence.current === request;
     displayedRun.current = null;
     setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); setSigning(false); setRunNote(null); setPaneView('report'); setBusy(true);
     let cancelled = false;
     void (async () => {
       try {
+        if (!isCurrent()) return;
         const response = await apiRequest('GET', `/api/report-os/runs/${linkedRun}`);
         const row = (await response.json().catch(() => null))?.data as ReportRunRow | undefined;
         if (cancelled || !isCurrent()) return;
@@ -1887,6 +1954,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   }, [overview.loading, contextKey, linkedRun]);
 
   const openPortfolioProgram = (row: PortfolioRow) => {
+    if (!reportAccessCurrent()) return;
     if (!row.programId) return;
     publishShellProject({ id: row.programId, title: row.label, code: row.code });
     onNav?.('project-home');
@@ -1896,21 +1964,24 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite} />
     : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} onSaved={fireToast} />
     : paneView === 'bundles' ? <BundlesPanel pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} onSaved={fireToast} onClearPending={() => setBundlePicks([])} /> : null;
-  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined} seal={seal} runId={reportRunId} /> : null;
+  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
   const visibleGeneration = requestSequence.current;
+  const displayedReportCurrent = () => reportAccessCurrent() && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration;
   const sealForDisplayedRun = (sealed: ReportSeal) => {
-    if (activeContext.current === contextKey && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration) onSealed(sealed);
+    if (displayedReportCurrent()) onSealed(sealed);
   };
   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
-  const withoutProgram = (content: React.ReactNode) => <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />}</div></div>;
+  const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
+  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
   const snapshotMatchesProgram = !openProgramId || !data?.openProgram || data.openProgram.programId === openProgramId;
   if (overview.loading || !snapshotMatchesProgram) {
     return (
-      <div className="rc">
+      <div className="rc" {...ownerEvents}>
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          {recoveryNotice}
           <EmptyState busy icon={I.barChart} title="Loading the reporting canvas…" />
         </div>
       </div>
@@ -1918,8 +1989,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   }
   if (overview.error) {
     return (
-      <div className="rc">
+      <div className="rc" {...ownerEvents}>
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          {recoveryNotice}
           <ErrorState
             title="Couldn't load the reporting canvas"
             message="Your organization's plan, program readiness and portfolio rollup could not be read. Nothing is shown in their place."
@@ -1997,7 +2069,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const p = program; // narrowed non-null past the guards above
 
   return (
-    <div className="rc">
+    <div className="rc" {...ownerEvents}>
       {/* -- Left: report routing pane --
            This column called itself "AnA -- Reporting analyst" and spoke in the
            first person, while what answered was `roRouteReply`: a deterministic
@@ -2125,6 +2197,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
            who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
         {libraryTabs}
+        {recoveryNotice}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
         {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
@@ -2161,7 +2234,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         </div>
       </div>
       {signing && report && reportRunId != null && (
-        <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />
+        <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />
       )}
       <C2CToast msg={toast} />
     </div>
