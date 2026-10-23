@@ -1,8 +1,8 @@
 {
-  "qualifiedCommit": "e9bfbe3a8713164346687f9a6f68731de5357128",
-  "comparisonBase": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
-  "generatedAt": "2026-10-23T15:38:42.720513+00:00",
-  "scope": "Current company-document source after reconciling retained Authoring filing derivation. Original 1976-case qualification pins are retained separately; 218 focused integration cases and current mandatory push gates cover reconciliation. Incoming task delegation modifies none of these company paths.",
+  "qualifiedCommit": "e87c01595db9e2f1dc300b1858522f3d2f646510",
+  "comparisonBase": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+  "generatedAt": "2026-10-23T16:08:59.996257+00:00",
+  "scope": "Current company-document source after current-access Authoring integration. Four prior pins changed: canonical Workbench and its two saved-source fixtures plus the packaging current-request fixture. Original 1976-case qualification and subsequent focused integration counts remain separate.",
   "originalQualificationPins": "concurrent/original-company-source-pins-2026-10-23.json",
   "filingIntegrationEvidence": "concurrent/filing-derivation-2026-10-23.json",
   "deletedPaths": [
@@ -138,7 +138,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-      "sha256": "5b15412b24e2f9de672ea6f01596298b21501bef91ab299de53288209635c33c"
+      "sha256": "2c1532f428ef5cff2afb4cce01bd6751d8d1075db62894e049a6ea8d065c32ce"
     },
     {
       "path": "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
@@ -154,11 +154,11 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
-      "sha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910"
+      "sha256": "f5dd21f4cefcda71d1ac165e2e849c529db8e2e0d79e2ea8d52b5528fc765fa0"
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
-      "sha256": "552316ca06f4c81181d55ee3645dc4c27a73f396f8f538a1b04e462207b9e311"
+      "sha256": "a4db4737b18707fb101893ed5b8cf6c9080754a383d35f392dee9cf44cfe21b1"
     },
     {
       "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
@@ -806,7 +806,7 @@
     },
     {
       "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
-      "sha256": "3d216ed23bf38310f295a5355e45e38346836e925c55d2d715c5048d31741c80"
+      "sha256": "de9bbb00940869e553dae0d2263aa3670407df95654c193de5c51e3a53d691b1"
     },
     {
       "path": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
@@ -1204,5 +1204,6 @@
       "path": "shared/types/communication-center.ts",
       "sha256": "4433c56c5b9b49a9c92997d1ce6a2d1ba3f6ae2d341477e8d52665695a568130"
     }
-  ]
+  ],
+  "currentAuthoringIntegrationEvidence": "concurrent/current-authoring-integration-2026-10-23.json"
 }

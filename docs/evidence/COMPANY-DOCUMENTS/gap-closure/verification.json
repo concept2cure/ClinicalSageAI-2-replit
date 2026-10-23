@@ -23,7 +23,7 @@
     "newEslintWarnings": 0,
     "prepushTranscriptSha256": "2302107697e6cb54b5108a903af04106e73673716d53aaa88aabd9fc3d3168a7",
     "buildTranscriptSha256": "f8fe9e462c070f7e28f5d50748aaec187391c1d54235c38b5d17623acdaab260",
-    "liveBrowser": "browser/2026-10-23-final-updated/README.md",
+    "liveBrowser": "browser/2026-10-23-current-authoring/README.md",
     "realHistoricalWordAndPdf": "correspondence/2026-10-23-updated/verification.json",
     "database": "database/verification-2026-10-23.json",
     "environment": "environment/verification-2026-10-21.json",
@@ -73,7 +73,7 @@
     "combinedBuildPassed": true,
     "originalCompanyCountsNotInflated": true
   },
-  "currentCompanySourceCommit": "e9bfbe3a8713164346687f9a6f68731de5357128",
+  "currentCompanySourceCommit": "e87c01595db9e2f1dc300b1858522f3d2f646510",
   "originalCompanySourcePins": "concurrent/original-company-source-pins-2026-10-23.json",
   "postTaskIntegration": {
     "evidence": "concurrent/task-integration-2026-10-23.json",
@@ -96,5 +96,20 @@
     "combinedBuildPassed": true,
     "actualFinalBrowser": "browser/2026-10-23-final-updated/README.md",
     "profileRevisionUnchanged": 2
+  },
+  "postAuthoringAccessIntegration": {
+    "evidence": "concurrent/current-authoring-integration-2026-10-23.json",
+    "sourceCommit": "e87c01595db9e2f1dc300b1858522f3d2f646510",
+    "upstream": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+    "focusedPassed": 512,
+    "focusedFiles": 35,
+    "inheritedTodo": 1,
+    "failed": 0,
+    "skipped": 0,
+    "companySourcePins": 298,
+    "changedPriorCompanyPins": 4,
+    "combinedBuildPassed": true,
+    "fullTypecheckErrors": 0,
+    "originalCompanyCountsNotInflated": true
   }
 }

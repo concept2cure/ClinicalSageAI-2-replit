@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T16:08:59.996257+00:00",
+  "sourceCommit": "e87c01595db9e2f1dc300b1858522f3d2f646510",
+  "upstream": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+  "whatAlreadyExists": [
+    "Canonical Authoring document reads retain server companyCorrespondence provenance for current whole-document readers; section-only projections withhold document-wide provenance.",
+    "Canonical coauthor snapshots now use the current request-owned executor and recheck actor/project/source access.",
+    "Company correspondence still enters canonical Authoring, reopens the exact saved document in its program, retains reviewed presentation and filing identity, and files through existing Vault admission.",
+    "Existing company-original packaging retains sourceIntegrity alongside admitted filing derivation; its parity fixture retains both current request access and company registry migrations.",
+    "Shared Shell changes the selected Tasks/My Work rail item while keeping the existing Admin and Account company entry points."
+  ],
+  "checks": {
+    "runs": [
+      {
+        "report": "race-current-authoring-oct23.json",
+        "sha256": "062ba7589e0ba5f24e36039cc792d8105b6ac83b5db52f1b7d5ba49b9017be68",
+        "files": 16,
+        "cases": {
+          "passed": 272
+        }
+      },
+      {
+        "report": "resume-authoring-ui-tests.json",
+        "sha256": "c0069ec4cbc0b40862a11f5d56576dde8fa0f92e9366ba7ac88a96ac5c3c4c06",
+        "files": 13,
+        "cases": {
+          "passed": 170
+        }
+      },
+      {
+        "report": "resume-source-first-ui-tests.json",
+        "sha256": "3e492efc15c3d2a22ce87f0c9f87e29845eba87a93929c3dbad6d9adc24f46d7",
+        "files": 1,
+        "cases": {
+          "passed": 11
+        }
+      },
+      {
+        "report": "race-current-auth-packaging-oct23.json",
+        "sha256": "28b421991f865a5a6fd866382d5cf969e4174d13c3bc6b70afc71a7abe442f17",
+        "files": 5,
+        "cases": {
+          "passed": 59,
+          "todo": 1
+        }
+      }
+    ],
+    "uniqueFiles": 35,
+    "cases": {
+      "passed": 512,
+      "todo": 1
+    },
+    "companySourcePins": 298,
+    "changedCompanyPins": [
+      {
+        "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "beforeSha256": "5b15412b24e2f9de672ea6f01596298b21501bef91ab299de53288209635c33c",
+        "afterSha256": "2c1532f428ef5cff2afb4cce01bd6751d8d1075db62894e049a6ea8d065c32ce"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+        "beforeSha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910",
+        "afterSha256": "f5dd21f4cefcda71d1ac165e2e849c529db8e2e0d79e2ea8d52b5528fc765fa0"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+        "beforeSha256": "552316ca06f4c81181d55ee3645dc4c27a73f396f8f538a1b04e462207b9e311",
+        "afterSha256": "a4db4737b18707fb101893ed5b8cf6c9080754a383d35f392dee9cf44cfe21b1"
+      },
+      {
+        "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+        "beforeSha256": "3d216ed23bf38310f295a5355e45e38346836e925c55d2d715c5048d31741c80",
+        "afterSha256": "de9bbb00940869e553dae0d2263aa3670407df95654c193de5c51e3a53d691b1"
+      }
+    ],
+    "companyProductionChanges": [
+      "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx"
+    ],
+    "companyPackagingProductionUnchanged": true,
+    "combinedBuildPassed": true,
+    "buildTranscriptSha256": "96e6ec17a7e2c72a461d81a15ca2849dd99a998b46170537b7ff7ff10893c270",
+    "fullTypecheckErrors": 0,
+    "typecheckTranscriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "liveBrowser": "browser/2026-10-23-current-authoring/README.md",
+    "originalCompanyCountsNotInflated": true
+  },
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx",
+      "sha256": "6012f52bc07bc715672d2e6f45e37036e634842417ec7a5d4e8298f140b5a638",
+      "cases": {
+        "passed": 23
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx",
+      "sha256": "ee7693a847517700c8e7a404b673ae2d12d9bc6931bee6e3e84c49a56b7d4118",
+      "cases": {
+        "passed": 4
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "sha256": "3dc210ed9dd273f61e8136f8e094015713a54a4c2ed9a2128000ac19a230b347",
+      "cases": {
+        "passed": 7
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+      "sha256": "b775f6e8c0255afc79960dd61420ddd0a8546891dd734f5e6efd199258097a9c",
+      "cases": {
+        "passed": 16
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
+      "sha256": "529fbd15020f02a9dbccd5c24a75075cce93ae4d394cdbd66f30af2a1d5f7f81",
+      "cases": {
+        "passed": 1
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "sha256": "dfa5f6296f9ba65aa079d72980ae6aca720ed09e2c4f55f69062358cadb55af4",
+      "cases": {
+        "passed": 14
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx",
+      "sha256": "89634aa6828dfb9426b5096d3d2811b5bb6d25d461c8fe88cc33a6bf4fe2616b",
+      "cases": {
+        "passed": 11
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "sha256": "570caf6e8757e719a461eba023de363a4bf9ed32c7b63099b32d5e477b177ba8",
+      "cases": {
+        "passed": 27
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+      "sha256": "6e309836761a93faf499207cac52113d2d044c8943ff5a59a2d5cb7d98238b73",
+      "cases": {
+        "passed": 1
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "sha256": "7a60af4b407816bf4df689f86a3c381469ee77074f1aaadce114dc6ba3388240",
+      "cases": {
+        "passed": 16
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+      "sha256": "f5dd21f4cefcda71d1ac165e2e849c529db8e2e0d79e2ea8d52b5528fc765fa0",
+      "cases": {
+        "passed": 15
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+      "sha256": "a4db4737b18707fb101893ed5b8cf6c9080754a383d35f392dee9cf44cfe21b1",
+      "cases": {
+        "passed": 11
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "sha256": "1b8f10f2439b0b8edaab18326602939de134755c38a34a59df4b4b4fffe4112e",
+      "cases": {
+        "passed": 10
+      }
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "sha256": "10309c502837a3d66031f0efcb40f5cf44de6181300fd405850b68a71e47fcbe",
+      "cases": {
+        "passed": 25
+      }
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+      "sha256": "692d3232edf33454ab8c0450f4355c5acf02e7a48afcba8ab7513f713dcac027",
+      "cases": {
+        "passed": 32
+      }
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "e45beba53bab27e3667352e4ed76f525480eb5bc9792d429110b7cbe6d46ac19",
+      "cases": {
+        "passed": 12
+      }
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsByConversation.test.ts",
+      "sha256": "f761b8ba2043f4df814c9cc71a3eccbd0b5816868c8045e22b0fc9bb830efefa",
+      "cases": {
+        "passed": 4
+      }
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsStatusFilter.test.ts",
+      "sha256": "1cec547bbe0754bb09cdb4fbe0467478379a326300de2824481ccf54327e36f0",
+      "cases": {
+        "passed": 6
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "sha256": "caf40cc18e2d9ea1f6f82d4004dadd1b17038be5a92f3a109d86d501a04dd563",
+      "cases": {
+        "passed": 23
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+      "sha256": "f995cc8efa4d4b67e6ef665d2bb196ea0394dc0d8918278f43beb6c234b2aae1",
+      "cases": {
+        "passed": 54
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+      "sha256": "06ccf4406ffb72d78a5f513ee702b64fa90a6adfb8e372f3beb7c386ae419e33",
+      "cases": {
+        "passed": 7
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+      "sha256": "be4b8aabd812053c83bb0defd43b742055c897997df214f4d5edced936f6a614",
+      "cases": {
+        "passed": 7
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+      "sha256": "bc7b8fdf715f2bf2c293a74cb678bbb227d113bed9832c5c3d4c4d8cd65b9f10",
+      "cases": {
+        "passed": 5
+      }
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "sha256": "6de21c11a1396aa4bd3bb870cdd57196a29e8b51a55a2605d79fc12055679ad0",
+      "cases": {
+        "passed": 11
+      }
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "sha256": "373c5960c2420f3a8ed149b34e3d6c7c6a958bf318de419ea486cf8b2f123a9d",
+      "cases": {
+        "passed": 17
+      }
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "b7d6ac5fbeba280c7ad6cf5c1d7d9a40a8966f7056a69038508fb9c77a59d9df",
+      "cases": {
+        "passed": 32
+      }
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+      "sha256": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb",
+      "cases": {
+        "passed": 23
+      }
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "sha256": "0d234ca488e1846758e65beae4f3a1cbc9dfa8ece4420dec0ebea065dd7476f8",
+      "cases": {
+        "passed": 10
+      }
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence.test.ts",
+      "sha256": "0c201d86735541522b8635b8f899534e8969706b13413d0b951cb1cf60ae3a1e",
+      "cases": {
+        "passed": 13
+      }
+    },
+    {
+      "path": "server/services/company-documents/__tests__/identity.pglite.test.ts",
+      "sha256": "788240e4b0067c5e9733e8716949fde3b1969d5835a93de32200dcf0b1518f90",
+      "cases": {
+        "passed": 16
+      }
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "sha256": "f6911985a80d24fcea37a7e954cadf1481476d973e82ad6ac076a002db329a46",
+      "cases": {
+        "passed": 4
+      }
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "sha256": "5f284a97e8ba4bedd7858a34438ed6eca6e883246a6692606022dce096d21009",
+      "cases": {
+        "passed": 4
+      }
+    },
+    {
+      "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152",
+      "cases": {
+        "passed": 28
+      }
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "de9bbb00940869e553dae0d2263aa3670407df95654c193de5c51e3a53d691b1",
+      "cases": {
+        "passed": 15,
+        "todo": 1
+      }
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "sha256": "456824383e699e316a400c6ba2cbf77202d42de5cde6ee12be2d0dac997cad93",
+      "cases": {
+        "passed": 8
+      }
+    }
+  ],
+  "limits": [
+    "These focused current-access SQL/PGlite and component runs are separate from the original 1976-case qualification; overlapping prior cases are not added to its count.",
+    "One inherited upstream re-filing/supersedesDocumentId parity TODO remains unexecuted.",
+    "The actual read-only browser run records mounted settings, proof download and retry behavior without persisted company changes; it does not claim live agency acceptance or transmission.",
+    "Mandatory full push hooks must complete on the final combined tree before Git publication."
+  ]
+}
