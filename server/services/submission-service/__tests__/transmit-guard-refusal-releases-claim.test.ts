@@ -100,8 +100,9 @@ vi.mock('../../../db', () => {
       poolCalls.push({ text, params });
       if (/FROM ectd_sequences.*FOR UPDATE/.test(text)) {
         if (state.spendAfterLock) state.signatureSpent = true;
-        return { rowCount: 1, rows: [{ id: 1 }] };
+        return { rowCount: 1, rows: [{ id: 1, submission_id: 1 }] };
       }
+      if (/FROM submissions/.test(text)) return { rowCount: 1, rows: [{ program_id: 'p-1', primary_region: 'fda' }] };
       if (/FROM audit_logs/.test(text)) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
       const mutation = applyDispatchMutation(text, params);
       if (mutation) return mutation;

@@ -1,0 +1,6 @@
+{
+  "reviewer": "unicode_read_properties_audit",
+  "finding": "Whole-or-nothing host protection is keyed by deferred receipt map; historical/nohost/ineligible windows have no entry",
+  "contractClarification": "Host intact-dispatch/settlement guarantees explicitly limited to current receipt-eligible reads; historical handler/no-newreceipt behavior stays unchanged",
+  "codeChangeRequested": false
+}

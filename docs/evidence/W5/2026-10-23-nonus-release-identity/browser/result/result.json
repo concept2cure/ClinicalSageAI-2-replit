@@ -1,0 +1,340 @@
+{
+  "passed": true,
+  "syntheticRecords": true,
+  "humanWitnessed": false,
+  "liveSignatureExecuted": false,
+  "liveTransmissionExecuted": false,
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "sha256": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+      "sha256": "c901474fba23318e4535beb4a6205aa0fddcfbd56262e0d06ff882bcea26d257"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts",
+      "sha256": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/C2CForm.tsx",
+      "sha256": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "sha256": "9c979f80c158a485ed9aec34fd019fcf30d3f3b78df0391b64e9f0dd583f70e1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "sha256": "3e2727dcfbe4d5b1499a59cbf1d44c21cd6c96c8456a96dd3e7a19467ad83647"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "sha256": "5de39b9fa3d594254ca0b9a1f7f632e17ad32e31007f26c0198622ddff4cfa40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/submission-v2.css",
+      "sha256": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-nonus-release-identity/browser/probe.tsx",
+      "sha256": "1b3d302285af56d3046cedcd99dae1a4543c9f4457e8a1411a03b26adba08b77"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-nonus-release-identity/browser/check.mjs",
+      "sha256": "4ee2478cf00f6013153a4ef2033616b161600f433381ddcf3145fec47eedaed3"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-nonus-release-identity/browser/index.html",
+      "sha256": "535bf71f5d8ebcb5cd5eeef007c2b00358832b47a82749ebe7c99a0d0e9890e1"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-nonus-release-identity/browser/server.mjs",
+      "sha256": "69ff534f88d745ef95ae4de25979d589ffbee41e3a48921918045646ebe3724f"
+    }
+  ],
+  "checks": [
+    {
+      "check": "EU recorded market number and existing governed renewal callback",
+      "passed": true,
+      "callback": {
+        "sequenceId": 7,
+        "region": "ema",
+        "action": "dispatch"
+      }
+    },
+    {
+      "check": "JP recorded market number and existing governed renewal callback",
+      "passed": true,
+      "callback": {
+        "sequenceId": 7,
+        "region": "jp",
+        "action": "dispatch"
+      }
+    },
+    {
+      "check": "ema/attempted withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "jp/inflight withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "ema/unknown withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "unknown/unknown-region withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "ema/withheld withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "jp/outage withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "ema/author withholds renewal and callback",
+      "passed": true
+    },
+    {
+      "check": "jp/gate-blocked withholds renewal and callback",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/sequences/7/dispatch-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/sequences/7/governed-precheck"
+    }
+  ],
+  "browserErrors": []
+}

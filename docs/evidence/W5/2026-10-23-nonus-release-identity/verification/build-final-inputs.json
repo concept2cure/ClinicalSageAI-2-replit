@@ -1,0 +1,26 @@
+{
+  "headAtExecution": "7696a007b00c6e9a2dedb5c3e65ab38a20c29a94",
+  "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+  "node": "v22.23.3",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf",
+    "server/mcp/tools/catalog.ts": "a042b79f0bc89d5178727190accbcc0fa0f120926391978a521aae3ff649a31c",
+    "server/routes/ectd-compile.ts": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8",
+    "server/routes/submission-sign-release.ts": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f",
+    "server/services/ectd/assemble-from-core.ts": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67",
+    "server/services/ectd/package-from-core.ts": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212",
+    "server/services/ectd/package-identity.ts": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5",
+    "server/services/ectd/release-signature-status.ts": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8",
+    "server/services/ectd/run-package-identity.ts": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31",
+    "server/services/ectd/sequence-release-signature.ts": "fcc47ea41fc18b138e444e99096e9b21ae73df4e2c188040efe30507d89b3343",
+    "server/services/ectd/signed-manifest-covers-sequence.ts": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248",
+    "server/services/part11/ectd-sequence-binding.ts": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e",
+    "server/services/submission-orchestrator-continuation.ts": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97",
+    "server/services/submission-package-orchestrator.ts": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83",
+    "server/services/submission-service/submission-service.ts": "739f4766105435cbf836ce16e57aabf9abf500286a0a6e786ab5c5e8265f68e0",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4"
+  },
+  "reason": "Rebuild after lint-only claim predicate extraction; earlier build record retained."
+}

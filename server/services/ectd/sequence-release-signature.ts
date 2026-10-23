@@ -224,9 +224,10 @@ function identityOnlyStaleness(row: CandidateRow, current: CurrentManifest, sign
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return false;
   const proof = manifest as Record<string, unknown>;
   const modern = Object.hasOwn(proof, 'recordedPackageIdentity') || Object.hasOwn(proof, 'sequenceContentDigest');
-  // A pre-integration FDA signature covered exactly this sequence and leaves,
+  // A pre-integration signature covered exactly this sequence and leaves,
   // but never covered applicant facts. Retain it intact and require renewal.
-  if (!modern) return signedDigest === current.sequenceContentDigest;
+  if (!modern) return signedDigest === current.sequenceContentDigest
+    && row.signature_hash === manifestSignatureHash(manifest);
   const old = proof.recordedPackageIdentity as RecordedPackageIdentitySnapshot | undefined;
   return proof.boundPayloadDigest === signedDigest
     && proof.sequenceContentDigest === current.sequenceContentDigest

@@ -1,0 +1,33 @@
+{
+  "file": "server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+  "sha256": "3301ea94ef24ef5adc49b4bc229344fe839ed1e52fc28a86d548237b427e7e9d",
+  "cases": 20,
+  "propertyWindows": 180,
+  "status": "Authored from published contract before production changes; execution and freeze owned by root",
+  "realComponents": [
+    "registered read_project_document handler",
+    "generic fitReadWindow (observed, not replaced)",
+    "readReceiptContext and private snapshot deferral",
+    "coverageAfter and canonical computeCoverage"
+  ],
+  "syntheticSeams": [
+    "Existing in-memory read-delivery Vault",
+    "Explicit actor/program admission fixture",
+    "Historical source projection override"
+  ],
+  "criticalAssertions": [
+    "Backward splitstart and inward splitend",
+    "Wholepair2units for max_chars1",
+    "Actual spans can differ from nominal fit.size",
+    "Selected result vs rejected last rendercandidate",
+    "Deferred span/sourceSnapshot/result hash/prospective coverage equal actual returnedwindow",
+    "Escaped/control-heavy serialized shrink and comprehension withholding",
+    "Codeunit-correct max1walk and180window deterministic validtext corpus"
+  ],
+  "limitations": [
+    "No DB persistence/nativeRLS/liveprovider proof",
+    "No copied/mirrored splitting algorithm",
+    "Fitter observation logs actual render invocations through unchanged real fitter",
+    "No tests/lint/compiler/Git run by author"
+  ]
+}

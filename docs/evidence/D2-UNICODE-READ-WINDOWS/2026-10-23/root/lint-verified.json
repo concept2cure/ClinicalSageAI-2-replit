@@ -1,0 +1,57 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/ana/document-catalog-tools.ts",
+    "server/services/ana/document-catalog-tool-defs.ts",
+    "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-windows.test.ts"
+  ],
+  "exit": 0,
+  "errors": 0,
+  "warnings": 0,
+  "warningGrowth": 0,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-catalog-tool-defs.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-catalog-tools.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

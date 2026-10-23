@@ -17,3 +17,7 @@ Discovery covered read_project_document, readWindowBounds, fitDocumentReadWindow
 ## Reproduced need
 
 For source A🧬B, offset0/max_chars2 currently returns A plus a high surrogate; offset2/max_chars1 returns a lone low surrogate; offset1/max_chars1 returns a lone high surrogate. A budget-shrunk candidate can make the same cut even when the initial request was safe. JSON can escape a lone surrogate but does not turn it into the intact source character.
+
+## Existing host-scope limitation
+
+Whole-or-nothing protection follows the deferred receipt map. Historical/no-host/ineligible reads do not create that entry and may still receive ordinary result truncation when a host round is squeezed. This increment qualifies intact handler windows for those controls, and exact host dispatch/settlement for current receipt-eligible reads; it does not silently widen host budgeting or receipt eligibility.

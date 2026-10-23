@@ -1,0 +1,16 @@
+{
+  "README.md": "2aa8e8e1eaaa464cf6286cfe2e3c3292d970912e270a598c25a14461a2000e9b",
+  "fail-first-capture-binding.txt": "9435e39a8289de4dd8051547cb913740cf9a1e3c779c39048ef6a2817b1339e1",
+  "fail-first-export-proof.txt": "9966195d29133364bca62f9dccb755660eddefb1ee8068ccf0059f5434f78a26",
+  "fail-first-legacy-integrity.txt": "8bf82c88534c7d0f0d8b10001a4aa266f6b6ed95e8aaa38131bc8d5f8e68e9a6",
+  "fail-first-organization-lock.txt": "c5c4f238fd233735f3d6afbfee386e83731cb62fb9969b69d03825704b46d6e0",
+  "fail-first-submission-lock.txt": "5739b509016d8b2e4daba6b7554993ab0450d62e3aac42b2a4d29edcde197569",
+  "final-green.txt": "24b9c9d8568b347618479d76212d151612903f79ccac266193f293f378e5825a",
+  "final-inputs.json": "820d19dc638de4e2806f5a86c334c4027d2c6f4fc8c3aa83d388edafe6e70920",
+  "final-lint.txt": "86f8dc04e2c3f38750d8189543fc7a4c79b5d50384ec13d3905bfe664fa2b5fb",
+  "first-integration-test-vocabulary.txt": "9779bbc7843ddcdda7ee6892706cb83fb5fe021e6e34f0d55d0e18499b3560ed",
+  "focused-green.txt": "749f01a123a56473738f4f8a6ba9a56ec6afb9db02fe186def16340f067d73c8",
+  "lint.txt": "81aefa4caf64db4c218d41057987c1d000bb7baea85ad4df78bdc264d1c46bfc",
+  "regression-invalid-pdf-fixture-inputs.json": "1ecba24d8aac06a39fc049e934945bb6cfe199d27e22d3dfe9c62f8abc0a3e38",
+  "regression-invalid-pdf-fixture.txt": "b2dbd93bcb8c95240a3aa6a9bbba9f54ca2e01defc3bbf6f02918249bcc127f4"
+}

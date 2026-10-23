@@ -1,0 +1,11 @@
+
+/workspace/concept2cure/server/services/ectd/assemble-from-core.ts
+  241:8  warning  Async function 'assembleSequence' has too many lines (144). Maximum allowed is 100        max-lines-per-function
+  601:8  warning  Async function 'assembleSubmissionEctd' has too many lines (117). Maximum allowed is 100  max-lines-per-function
+
+/workspace/concept2cure/server/services/ectd/package-from-core.ts
+  283:8  warning  Async function 'packageSequenceFromCore' has too many lines (220). Maximum allowed is 100  max-lines-per-function
+  283:8  warning  Async function 'packageSequenceFromCore' has a complexity of 47. Maximum allowed is 15     complexity
+
+✖ 4 problems (0 errors, 4 warnings)
+
