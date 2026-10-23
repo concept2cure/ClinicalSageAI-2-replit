@@ -1,0 +1,30 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh; NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts <requested files> --reporter=json --outputFile=<private final-results.json>",
+  "sourceCommit": "a3acbbbb1c6327aa24d819ebb3beed50b982f939",
+  "actualFiles": [
+    "client/src/concept2cure/v2/__tests__/apiCall.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx"
+  ],
+  "passed": 180,
+  "failed": 0,
+  "skipped": 0,
+  "sourcePinsStable": true,
+  "selectionCorrection": "The initial requested workbench file used the wrong directory, so Vitest executed 19 existing files. The actual missing editor workbench suite is run separately, with its own result; no overlapping count is added."
+}

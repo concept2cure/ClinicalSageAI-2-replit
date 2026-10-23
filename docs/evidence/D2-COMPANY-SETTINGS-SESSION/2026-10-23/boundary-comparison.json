@@ -1,0 +1,105 @@
+{
+  "base": "035ee6854a77e60d3cb9d08d61c8cd796921bb58",
+  "protectedUnchanged": 13,
+  "reviewedExceptions": 1,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "sha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "afterSha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "afterSha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "sha256": "6933f994c06ead80fcab0f1aa701bf96ebba7d50565a070d352c764b637d416f",
+      "afterSha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+      "unchanged": false,
+      "approvedException": true
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+      "afterSha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/routes/company-documents.ts",
+      "sha256": "0b2f35028e6c28a6c6f6482af4bc4c1d53ad38805285736513259699a0db267a",
+      "afterSha256": "0b2f35028e6c28a6c6f6482af4bc4c1d53ad38805285736513259699a0db267a",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/routes/company-legal-workflows.ts",
+      "sha256": "3bc81af6a293d12ca48f43ab4d890848d50bb5a5bebeac82b939dabea6c8276d",
+      "afterSha256": "3bc81af6a293d12ca48f43ab4d890848d50bb5a5bebeac82b939dabea6c8276d",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/services/company-documents/profile.ts",
+      "sha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+      "afterSha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/services/company-documents/legal-workflow.ts",
+      "sha256": "7920ad70f461bf8a9e8d75ea3a98b213bfc828b478949bd1c3a3f58257486292",
+      "afterSha256": "7920ad70f461bf8a9e8d75ea3a98b213bfc828b478949bd1c3a3f58257486292",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/services/company-documents/legal-inventory.ts",
+      "sha256": "4fb64b71f443cf004969ae2b39b9806310bd8048e6b06b65bcc307c78f26cb1f",
+      "afterSha256": "4fb64b71f443cf004969ae2b39b9806310bd8048e6b06b65bcc307c78f26cb1f",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "shared/company-documents.ts",
+      "sha256": "bf68cc6955dcfb1f88050d9542d6410a8a45affa790367347e9a876429adb3ff",
+      "afterSha256": "bf68cc6955dcfb1f88050d9542d6410a8a45affa790367347e9a876429adb3ff",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "shared/company-legal-workflows.ts",
+      "sha256": "d246bfb95bff0c258cfc2784789e7081ddd4f5e1d7c0feec9dde6d3b783e4fbe",
+      "afterSha256": "d246bfb95bff0c258cfc2784789e7081ddd4f5e1d7c0feec9dde6d3b783e4fbe",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/services/report-os/pdf/company-branding.ts",
+      "sha256": "b99280474c881c90ac4f634efdeba18ed2246f7cfc5e9f25c2fe8493741cfc3a",
+      "afterSha256": "b99280474c881c90ac4f634efdeba18ed2246f7cfc5e9f25c2fe8493741cfc3a",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "sha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "afterSha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "unchanged": true,
+      "approvedException": false
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "eb06070042fca50f66008f1920fbf80073c575e86b51f56e39ed474b5dcdab57",
+      "afterSha256": "eb06070042fca50f66008f1920fbf80073c575e86b51f56e39ed474b5dcdab57",
+      "unchanged": true,
+      "approvedException": false
+    }
+  ]
+}

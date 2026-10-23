@@ -1,0 +1,30 @@
+{
+  "scope": "Reviewed incoming selected-source Authoring starts and canonical eSTAR refresh, changed suites plus direct actor/access/recovery/build/attachment consumers",
+  "upstream": "5ff6d2252",
+  "tests": [
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts",
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts",
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "tests/routes/estar-official-pdf.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+  ],
+  "production": [
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+    "client/src/concept2cure/v2/editorTarget.ts",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "recordedAt": "2026-10-23T20:10:54.428128+00:00",
+  "sourceCommit": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+  "primaryCompany": {
+    "passed": 180,
+    "files": 19,
+    "failed": 0,
+    "skipped": 0,
+    "sourceCommit": "a3acbbbb1c6327aa24d819ebb3beed50b982f939"
+  },
+  "separateWorkbench": {
+    "passed": 25,
+    "files": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "incomingBackfill": {
+    "passed": 27,
+    "files": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "incomingMarket": {
+    "passed": 135,
+    "files": 9,
+    "failed": 0,
+    "skipped": 0,
+    "sourcePinsStable": true
+  },
+  "selectedSourcePins": 82,
+  "feature55PinsUnchangedAfterMerge": true,
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "warningGrowth": 0
+  },
+  "build": {
+    "finishedAt": "2026-10-23T20:05:19.226043+00:00",
+    "processExit": 0,
+    "sourceCommit": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+    "transcriptSha256": "61c243b366028bde5013b9a439a38242bf3677e1e2f1053f5aaf857e3d4e9aa5"
+  },
+  "typecheck": {
+    "finishedAt": "2026-10-23T20:10:26.308711+00:00",
+    "processExit": 0,
+    "sourceCommitAtStart": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+    "sourceCommitAtFinish": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+    "transcriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+  },
+  "publication": "pending normal mandatory push; no bypass",
+  "limits": [
+    "Local controlled transport and owner-mode PGlite; no production deployment or agency acceptance.",
+    "Distinct correspondence component ownership remains outside this completion.",
+    "Overlapping test cohorts and upstream historical counts are not summed."
+  ]
+}

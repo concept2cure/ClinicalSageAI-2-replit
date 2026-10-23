@@ -1,0 +1,5 @@
+{
+  "sourceCommit": "fc6f213ab0630c8b0640bb9acfac6a56cfe9e142",
+  "qualifiedPinsUnchanged": 82,
+  "note": "New Authoring/eSTAR callers are qualified separately; previous shared helper and company source/test pins remain exact."
+}
