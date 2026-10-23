@@ -1,0 +1,21 @@
+{
+  "reviewer": "backfill_basis_consumer_audit",
+  "verdict": "CLEAR",
+  "checks": {
+    "testsPassed": 219,
+    "testFiles": 19,
+    "failuresOrSkips": 0,
+    "selectedInputs": 55,
+    "frozenTestFiles": 3,
+    "historicalBaselineInputs": 24,
+    "initialAuthoringInputs": 4,
+    "codeEvidenceFiles": 37,
+    "retainedAncestors": 110,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "wholeProjectTypeScriptErrors": 0
+  },
+  "acceptedPrecisionEdit": "SQL UTF-8 bytes retain initial BOM (probe SELECT $1, not a table-storage probe)",
+  "limits": "OwnerSQL/controlled initialBOM/provider seams, catalogcounts, historicalreindex, indexingawait, latency/deployment/agency boundaries explicit",
+  "remainingAtReview": "root adds this receipt and manifest, normal evidence-only push, final read-only remote check"
+}

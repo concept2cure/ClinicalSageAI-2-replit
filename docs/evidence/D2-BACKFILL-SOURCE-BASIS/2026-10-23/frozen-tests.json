@@ -1,0 +1,17 @@
+{
+  "baselineHead": "164b062b2fbbd3427f22e29b712627126147e4f6",
+  "productionSha256": "11348ae7375f8c2f6ab95a3321a0d33708209fcac252df9d4f12ad9ea51b3042",
+  "sha256": {
+    "server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts": "05a1da7e0554b1586843fa902d334e78d2883cee9dedbc0dfbad8362eebeefe2",
+    "server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts": "b437486716ce7af4b4150185abab10470bdb1f054b045a55ba1c41a9067ddd1d",
+    "server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts": "264501759f74521e5f7fad09f795f6a34fbb59b84045895f1499710b984c2cdb"
+  },
+  "qualifiedBaseline": {
+    "tests": 27,
+    "semanticFailures": 10,
+    "passingControls": 17,
+    "skips": 0
+  },
+  "baselineResult": "root/red-qualified*",
+  "initialAuthoringRun": "root/red* (unqualified: three leading-BOM transport fixture failures); root/pglite-leading-bom-probe.json records SQL byte proof; fixture correction precedes freeze"
+}

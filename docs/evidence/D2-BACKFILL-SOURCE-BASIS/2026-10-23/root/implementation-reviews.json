@@ -1,0 +1,5 @@
+{
+  "backfill_basis_inventory": "CLEAR: only raw argument and equivalent blank predicate; other23 selected baseline inputs and all frozen tests unchanged",
+  "backfill_basis_validation": "CLEAR: exact slices/context, cap and provider boundary tests meaningful; SQL/writer/count conventions unchanged; BOM scope honest",
+  "backfill_basis_consumer_audit": "CLEAR: existing retrieval/context/AnA/reference path consumes persisted raw coordinates without tool/schema changes"
+}
