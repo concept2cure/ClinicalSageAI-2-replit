@@ -1,6 +1,6 @@
 {
   "base": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
-  "capturedAt": "2026-10-23T15:10:50.196249+00:00",
+  "capturedAt": "2026-10-23T15:22:29.898987+00:00",
   "files": {
     "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx": "260c8c83b81a03551818f264d40031df56a3b2b03ada5b29fa51967625d2bcd0",
     "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts": "7f3c15f3df261dee4793bf16b36f92957ed28adc1ee128a6005d85d5b5168250",
@@ -10,7 +10,7 @@
     "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56",
     "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "f241f832d8314beeae08be032b0217b35d76c4bc4fb67721963be2b78999e23a",
     "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts": "6c3f3779eb701eeefbde88ffc8eb63327ecacb4b0aa0f30a1f6bfc241228170f",
-    "docs/evidence/D2-PM-DELEGATION/2026-10-21/browser-check.mjs": "de6c9e58f2ad39792499b28e2ffa768a941f81cebc36848637db79010379928b",
+    "docs/evidence/D2-PM-DELEGATION/2026-10-21/browser-check.mjs": "7d17de794de2f30d4a61c41fdf41b0ed6bce64d14b27b5923467de306005942e",
     "migrations/20260921_audit_logs_chain_seq.sql": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
     "server/db/drizzle-queryable.ts": "0e2ac9713c4326739921c88beb832737e2350e210a0c92e926789acbeda13399",
     "server/db/fixtures/governed-signing-pglite.ts": "cfa8a85a94c3aed6d041e716ceb19c11782730e7c3925cf32f6e990c7384843c",

@@ -72,7 +72,7 @@ try{
     await page.getByText('Current assignee:',{exact:false}).filter({hasText:'two@example.test'}).waitFor();
     await page.getByText('Saved assignee: Account #9.',{exact:false}).waitFor();
     await page.screenshot({path:out+`assignment-saved-${width}.png`,fullPage:true});
-    const layout=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(layout.scroll<=layout.viewport,JSON.stringify(layout));
+    const layout=await page.evaluate(()=>({viewport:window.innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(layout.scroll<=layout.viewport,JSON.stringify(layout));
     await page.goto(origin+'/?mode=reader');await page.getByRole('button',{name:'Change assignee',exact:true}).click();
     await page.getByText('This task cannot currently be reassigned.',{exact:false}).waitFor();assert.equal(await page.getByRole('combobox',{name:/^New assignee/}).count(),0);
     await page.goto(origin+'/?mode=empty');await page.getByRole('button',{name:'Change assignee',exact:true}).click();
