@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/ana/document-catalog-tools.ts",
+    "server/services/ana/document-catalog-tool-defs.ts"
+  ],
+  "exit": 0,
+  "errors": 0,
+  "warnings": 0,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-catalog-tool-defs.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/document-catalog-tools.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

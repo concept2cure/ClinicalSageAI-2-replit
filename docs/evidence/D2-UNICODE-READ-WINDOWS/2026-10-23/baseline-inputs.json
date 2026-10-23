@@ -1,0 +1,23 @@
+{
+  "head": "26d85015640a87dc06fda9209f4eef678970c279",
+  "scope": "Selected baseline inputs, not an exhaustive dependency graph",
+  "files": {
+    "AGENTS.md": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+    "CLAUDE.md": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "server/services/ana/document-catalog-tools.ts": "0d0c37947e4a7aa971cd140f42930285bc37cfdb8666118c7a7e1d718b6c3716",
+    "server/services/ana/document-catalog-tool-defs.ts": "a4c1337e4d2f56e40720a4b39a3dbcce35c688e8fb7e947612de76e33f0ff820",
+    "server/services/ana/read-receipts.ts": "41327c0cd6cabb31eaa82e4ff057caa253548541c38b5b55e48cf63612fa87aa",
+    "server/services/ana/source-read-receipt.ts": "acb08a8e5a05334e005f4452b88ee1fd2d487b0bd18147288af137d047558097",
+    "server/services/ana/agentic-loop.ts": "714ed98dcaa554e9d3e5a4c50ba4ed7f2716eefc03ab8fd54c5f1395f3d04f8a",
+    "server/services/ana/document-tools-shared.ts": "7d0b0e6b8f8b5efc09aa05a2702f8e3b263d09a7c0e9681131a18109d2bf99ae",
+    "server/services/authoring/authoring-read-render.ts": "f5da0266059d8177bb3170b9c816f84c215aa349575cf93b43207122e6b0211e",
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": "5aaac109f5da2a242fadffcb5dfcf73cf810b05c53fb183e23144fb7c71589bc",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3a8a51ec5a30603924131e9ef1600e9be831175605c46154519079d3d76174c4"
+  }
+}
