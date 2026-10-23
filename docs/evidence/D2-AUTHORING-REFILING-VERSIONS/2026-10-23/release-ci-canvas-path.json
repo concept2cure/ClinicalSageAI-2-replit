@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:canvas-path"
+  ],
+  "startedAt": "2026-10-23T17:38:02Z",
+  "elapsedSeconds": 0.138,
+  "exitCode": 0,
+  "output": "release-ci-canvas-path.log.gz",
+  "outputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

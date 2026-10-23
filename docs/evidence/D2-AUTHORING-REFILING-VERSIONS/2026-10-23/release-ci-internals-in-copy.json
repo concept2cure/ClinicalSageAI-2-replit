@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:internals-in-copy"
+  ],
+  "startedAt": "2026-10-23T17:38:02Z",
+  "elapsedSeconds": 0.614,
+  "exitCode": 0,
+  "output": "release-ci-internals-in-copy.log.gz",
+  "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

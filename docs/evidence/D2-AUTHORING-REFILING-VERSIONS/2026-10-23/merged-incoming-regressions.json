@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts",
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+    "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/merged-incoming-regressions-tests.json"
+  ],
+  "startedAt": "2026-10-23T17:49:11Z",
+  "elapsedSeconds": 14.407,
+  "exitCode": 0,
+  "output": "merged-incoming-regressions.log.gz",
+  "outputSha256": "57a2ff67514a48e34c103546d75a5eb7079c3781cb394b546b7f90cda684c6e6",
+  "sourceFreeze": "merged-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

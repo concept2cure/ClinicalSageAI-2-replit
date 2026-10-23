@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-cascade"
+  ],
+  "startedAt": "2026-10-23T17:39:24Z",
+  "elapsedSeconds": 0.143,
+  "exitCode": 0,
+  "output": "qualified-ci-token-cascade.log.gz",
+  "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+  "sourceFreeze": "qualified-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

@@ -1,0 +1,84 @@
+{
+  "at": "2026-10-23T17:47:36.877710+00:00",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "branch": "concept2cure-v2",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "regressions": {
+    "report": "pdf-integrated-regressions-tests.json",
+    "files": 32,
+    "passed": 489,
+    "failed": 0,
+    "todo": 0
+  },
+  "checks": "pdf-integrated-checks.json",
+  "staticGates": 16,
+  "typecheck": {
+    "report": "pdf-integrated-typecheck.json",
+    "errors": 0,
+    "baselineUnchanged": true
+  },
+  "build": "pdf-integrated-build.json",
+  "lint": {
+    "report": "final-eslint.json",
+    "errors": 0,
+    "existingWarnings": 23,
+    "warningGrowth": 0,
+    "integrationDelta": "pdf-integrated-eslint.json"
+  },
+  "browser": {
+    "report": "browser/component-browser-review.json",
+    "layouts": 8,
+    "horizontalOverflow": false,
+    "scope": "Serialized mounted dialog DOM with built CSS, no live-app or human acceptance"
+  },
+  "review": "independent-review.json",
+  "humanCases": {
+    "count": 72,
+    "status": "Not run"
+  },
+  "limits": [
+    "Legacy hash-labelled and all-retired families require review; no automatic migration",
+    "Identical retained bytes remain refused, including compensated versions",
+    "Existing sealed Authoring revision policy unchanged",
+    "No native multi-writer phantom prevention, human acceptance, provider readiness, deployment or agency transmission qualification"
+  ],
+  "canonicalIntegration": {
+    "head": "7909171a2",
+    "incomingHead": "4718e17cb",
+    "checks": "merged-checks.json",
+    "incomingPassed": 82,
+    "incomingFiles": 7,
+    "typecheckErrors": 0,
+    "buildPassed": true,
+    "authoringSourceHashesUnchanged": true,
+    "countsAreSeparate": true
+  },
+  "earlierRegressions": {
+    "report": "final-regressions-tests.json",
+    "files": 23,
+    "passed": 384,
+    "failed": 0,
+    "todo": 0
+  },
+  "pdfIntegration": {
+    "mergeHead": "64e668e35",
+    "incomingHead": "121eadf05",
+    "review": "pdf-integration-review.json",
+    "conflictResolution": "Retain version-lineage and legal-registry migrations",
+    "fixtureDelta": "Align two existing refiling cases to canonical converter fixture mode",
+    "firstPushHooksPassed": true,
+    "firstPushRejected": "Concurrent canonical advancement; retained canonical-push.json"
+  },
+  "publicationDelta": {
+    "kind": "Test group organization only; product code unchanged",
+    "parityTestsPassed": 18,
+    "parityReport": "publication-parity-green-tests.json",
+    "warningGrowth": 0,
+    "warningReport": "publication-warning-ratchet.json",
+    "failedHookRetained": "canonical-push-retry.json",
+    "fileSha256": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18"
+  },
+  "publishedCommit": "8ba496f6989dfee0c92d5bb994fb2ac817faac97",
+  "publicationReceipt": "canonical-publication-attempt-1.json"
+}

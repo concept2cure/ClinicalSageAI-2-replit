@@ -1,0 +1,47 @@
+{
+  "recordedAt": "2026-10-23T17:36:03.065792+00:00",
+  "baseHead": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "node": "22.23.4",
+  "sourceFiles": {
+    "server/services/vault/vault-version-checkin.ts": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "83e66292657318b02608db5af724440a703feef2430a4df9570e9836f538372e",
+    "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "690c43cca33400535b75bd372a65e63bad59b2c0156bbb9fe205240fb01b9d2a",
+    "server/services/authoring/authoring-vault-version-plan.ts": "5d045c7b9460ccabb4c09cfe50c685d5d25a14af68097c9be7b63b5ebaaccafc",
+    "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts": "077a8e15c854c731e26e46bc3d2d952513f22db1f17137250299dc70426c0491",
+    "server/services/authoring/authoring-file-to-vault.ts": "f2df8e736949fa80aeab48a3d6bd55b983d2431351dbcc562e28c0242464b760",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "12107cab8dda657ebfb70ec9397f61fa45ca6f1aa29ca61625e711edb84bf5b7"
+  },
+  "results": [
+    {
+      "report": "red-vault-checkin.json",
+      "exitCode": 1,
+      "passed": 12,
+      "failed": 4,
+      "sha256": "455c32ab2871575c01066e6e92ab0704df9c64ec037d027fed342bef3c3d099e"
+    },
+    {
+      "report": "red-inherited-metadata.json",
+      "exitCode": 1,
+      "passed": 3,
+      "failed": 10,
+      "sha256": "079a012f483b39287aeb56f3c488c3f87e4d46034539194ea71af7cfad2f5f10"
+    },
+    {
+      "report": "green-backend-final.json",
+      "exitCode": 0,
+      "passed": 129,
+      "failed": 0,
+      "sha256": "76fc724968e0f1004c611c11173d30a85c3fc9b5c75f5aad05bbf3f2d57507bf"
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "limits": [
+    "Local PGlite and explicit storage/renderer/clock seams do not qualify native PostgreSQL concurrency, production infrastructure, human acceptance or agency transmission.",
+    "Legacy hash-label rows, ambiguous/unverified/all-retired families require review; no migration or label rewrite occurs.",
+    "Same bytes as any retained family version remain refused, including compensated/tombstoned versions. Retired-slot recovery permits changed-byte retries.",
+    "Commit-time source-plan recheck catches observed storage interleavings; it does not serialize arbitrary later independent-root inserts."
+  ]
+}

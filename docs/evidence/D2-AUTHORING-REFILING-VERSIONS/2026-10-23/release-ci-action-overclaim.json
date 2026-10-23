@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:action-overclaim"
+  ],
+  "startedAt": "2026-10-23T17:38:03Z",
+  "elapsedSeconds": 0.303,
+  "exitCode": 0,
+  "output": "release-ci-action-overclaim.log.gz",
+  "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

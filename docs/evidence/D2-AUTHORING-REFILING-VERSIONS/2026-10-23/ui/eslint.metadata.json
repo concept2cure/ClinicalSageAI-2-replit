@@ -1,0 +1,14 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx"
+  ],
+  "errorCount": 0,
+  "warningCount": 0
+}

@@ -91,6 +91,42 @@ afterEach(() => {
   delete (window as any).C2C_VAULT_TARGET;
 });
 
+describe('DocumentWorkbench — File to vault version receipts', () => {
+  it('explains separate rendition versions and explicit sequence replacement before filing', async () => {
+    const dlg = await openDialog();
+    const policy = within(dlg).getByTestId('ftv-version-policy');
+    expect(policy.textContent).toContain('PDF and Word are versioned separately');
+    expect(policy.textContent).toContain('earlier bytes are preserved');
+    expect(policy.textContent).toContain('Existing sequence placements stay pinned');
+    expect(policy.textContent).toContain('replace them explicitly');
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it.each([
+    ['1.0', null],
+    ['3.0', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'],
+  ])('shows the server-confirmed Vault version %s and its recorded predecessor', async (version, supersedesDocumentId) => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, version, supersedesDocumentId } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const result = await within(dlg).findByTestId('ftv-result');
+    expect(result.textContent).toContain(`Vault version ${version}.`);
+    if (supersedesDocumentId) expect(result.textContent).toContain(`Supersedes Vault id ${supersedesDocumentId}.`);
+    else expect(result.textContent).not.toContain('Supersedes');
+    expect(apiRequest).toHaveBeenCalledWith('POST', `/api/authoring/docs/${DOC}/file-to-vault`, { format: 'pdf' });
+  });
+
+  it('shows the server legacy-family refusal without claiming a new version', async () => {
+    const message = 'Earlier Authoring filings use retained legacy version labels. Review the existing Vault records before filing another version.';
+    fileToVault = () => { throw new ApiRequestError(message, 409, { success: false, error: { code: 'AUTHORING_VAULT_VERSION_REVIEW_REQUIRED' } }, 'AUTHORING_VAULT_VERSION_REVIEW_REQUIRED'); };
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    expect((await within(dlg).findByTestId('ftv-error')).textContent).toBe(message);
+    expect(within(dlg).queryByTestId('ftv-result')).toBeNull();
+    expect(within(dlg).queryByTestId('ftv-open-vault')).toBeNull();
+  });
+});
+
 describe('DocumentWorkbench — File to vault', () => {
   it('calls the route with the chosen format and renders the server’s folder, hash and id', async () => {
     fileToVault = () => ok({ ...FILED, data: { ...FILED.data, format: 'docx' } }, 201);
