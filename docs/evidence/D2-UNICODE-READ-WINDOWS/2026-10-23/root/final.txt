@@ -1,0 +1,1288 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 6ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > refuses a cursor it did not issue 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > caps a window at 4000 characters whatever is asked for 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > an offset past the end reads nothing and ends the walk 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 41ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > matches section codes and titles too 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > treats % and _ in the query as literal characters, not wildcards 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > keeps snippets short in a long section 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > honours the limit and says the list was cut 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > says so when more sections matched than are ranked 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > pages by offset: the pages together are every match once, in CTD order 6ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > refuses a query too short to mean anything 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program and another tenant are invisible to the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program's and another tenant's sections are not found by id 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > search never returns another program's or tenant's text 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 36ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 28ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 27ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 31ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 28ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 37ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 75ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > refuses a cursor it did not issue 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 29ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > caps a window at 4000 characters whatever is asked for 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 27ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > an offset past the end reads nothing and ends the walk 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 60ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 28ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 29ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > matches section codes and titles too 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > treats % and _ in the query as literal characters, not wildcards 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > keeps snippets short in a long section 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > honours the limit and says the list was cut 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > says so when more sections matched than are ranked 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > pages by offset: the pages together are every match once, in CTD order 31ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 33ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > refuses a query too short to mean anything 17ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program and another tenant are invisible to the outline 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program's and another tenant's sections are not found by id 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > search never returns another program's or tenant's text 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > sectionDepth > counts dotted segments of a numeric-led code, and calls anything else depth 1 0ms
+stdout | server/services/ana/__tests__/authoring-read-tools.test.ts
+{
+  "timestamp": "2026-10-23T18:24:46.314Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:24:46.316Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-tools.test.ts
+{
+  "timestamp": "2026-10-23T18:24:46.316Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > defines and registers exactly the three read tools 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > names no input like model-written prose 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > says what it reads, that it is read-only and project-scoped, and where the Vault tools fit 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > says what a pending change means: deleted text is still in the document, inserted text is not yet 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > takes no program or project id as input — the scope is the conversation's open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > imports only types from the executor (no runtime import cycle) 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline refuses verbatim with no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline refuses a project of another organization as no open project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline never returns a top-level status (the stream would persist status:'generated' as a draft) 6ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section refuses verbatim with no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section refuses a project of another organization as no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section never returns a top-level status (the stream would persist status:'generated' as a draft) 9ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections refuses verbatim with no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections refuses a project of another organization as no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections never returns a top-level status (the stream would persist status:'generated' as a draft) 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section: another program's and another tenant's sections are not found in this project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline: another program's or tenant's document is not found in this project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > the open program decides, not the tenant alone: program B sees only its own document 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections never surfaces another program's or tenant's text 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > another organization cannot open this project's program, so cannot read its sections 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section returns the section with pending changes labelled and its base for a later proposal 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section fits 5000 serialized characters on escape-heavy text, titles clipped, and its offsets skip nothing 42ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget 10ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > four parallel full-window reads pass the per-round budget untouched 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > search_authoring_sections results > search_authoring_sections returns snippets with where each hit lives 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > search_authoring_sections results > search_authoring_sections at its maximum limit fits 5000 characters, in walk order, and pages through every match once 12ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > list_authoring_outline results > an outline page fits 5000 characters with its cursor, and the cursor walks every section 82ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > list_authoring_outline results > an outline over many long-titled documents pages the documents too: every one listed once, every page under 5000 4ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > titles > no tool result carries the label delimiters in a document or section title 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline refuses verbatim with no open project 27ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline refuses a project of another organization as no open project 28ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline never returns a top-level status (the stream would persist status:'generated' as a draft) 31ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section refuses verbatim with no open project 21ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section refuses a project of another organization as no open project 21ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section never returns a top-level status (the stream would persist status:'generated' as a draft) 24ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections refuses verbatim with no open project 19ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections refuses a project of another organization as no open project 22ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections never returns a top-level status (the stream would persist status:'generated' as a draft) 29ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section: another program's and another tenant's sections are not found in this project 28ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline: another program's or tenant's document is not found in this project 26ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > the open program decides, not the tenant alone: program B sees only its own document 30ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections never surfaces another program's or tenant's text 28ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > another organization cannot open this project's program, so cannot read its sections 19ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section returns the section with pending changes labelled and its base for a later proposal 25ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section fits 5000 serialized characters on escape-heavy text, titles clipped, and its offsets skip nothing 73ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget 92ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits 32ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > four parallel full-window reads pass the per-round budget untouched 32ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > search_authoring_sections results > search_authoring_sections returns snippets with where each hit lives 27ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > search_authoring_sections results > search_authoring_sections at its maximum limit fits 5000 characters, in walk order, and pages through every match once 84ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > list_authoring_outline results > an outline page fits 5000 characters with its cursor, and the cursor walks every section 499ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > list_authoring_outline results > an outline over many long-titled documents pages the documents too: every one listed once, every page under 5000 57ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > titles > no tool result carries the label delimiters in a document or section title 37ms
+stdout | server/services/ana/__tests__/source-read-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:24:50.717Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:24:50.718Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/source-read-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:24:50.718Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/source-read-scope.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > filters organization-wide programs by viewer public/share/owner/review access 20ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > preserves viewer private use-sharing reads without a write role allow-list 15ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > preserves custom_analyst private use-sharing reads without a write role allow-list 14ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses an unrelated member when a private program is explicitly requested 12ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > allows the private project creator and owner without explicit member rows 16ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > removes a revoked sharing grant despite stale JSON membership 20ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > removes a finished review assignment instead of caching its access 15ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refreshes an administrator role after downgrade 17ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses organization-wide removed_membership instead of reporting empty discovery 9ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses organization-wide suspended_user instead of reporting empty discovery 10ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses organization-wide inactive_org instead of reporting empty discovery 8ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses organization-wide duplicate_membership instead of reporting empty discovery 7ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > refuses organization-wide blank_role instead of reporting empty discovery 10ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source reads use the current canonical actor and sharing policy > distinguishes a real empty permitted scope from failed policy reads 11ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > admits equivalent server-resolved scope {"projectRef":"10000000-0000-4000-8000-000000000012"} 11ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > admits equivalent server-resolved scope {"projectRef":"12"} 12ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > admits equivalent server-resolved scope {"projectRef":"proj_12"} 13ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > admits equivalent server-resolved scope {"projectId":12} 11ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > admits equivalent server-resolved scope {"projectId":12,"projectRef":"10000000-0000-4000-8000-000000000012","requestedProgramId":"10000000-0000-4000-8000-000000000012"} 12ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > preserves an explicit numeric legacy project with an empty Vault program scope 12ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"userId":0} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"userId":null} without querying source policy 7ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"organizationId":0} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"userId":2147483648} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"projectId":"12"} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"projectRef":""} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"projectRef":"bogus"} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"projectRef":"2147483648"} without querying source policy 7ms
+stderr | server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > excludes a public/private duplicate even when only the public anchor is accessible
+{
+  "timestamp": "2026-10-23T18:24:52.730Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "10000000-0000-4000-8000-000000000011",
+    "projectIds": [
+      11,
+      17
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"requestedProgramId":""} without querying source policy 6ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects missing or malformed pinned input {"requestedProgramId":"bogus"} without querying source policy 8ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > rejects contradictory numeric/ref and named-program scope 14ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > excludes a public/private duplicate even when only the public anchor is accessible 11ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > excludes unanchored, foreign-parent and deleted programs while requested defects refuse 15ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > does not create a program allow-list from a foreign program linked by an owned project 9ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > returns frozen private scope values and rejects a source outside that scope 10ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > snapshots actor and scope primitives before the first await 11ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > source scope retains exact identifiers and all-anchor uniqueness > names malformed stored identity as unavailable instead of laundering a list 8ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > read scope revalidation is current and cannot broaden pinned delivery > returns a fresh immutable equivalent scope when policy is unchanged 13ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > read scope revalidation is current and cannot broaden pinned delivery > refuses an organization-wide roster change before source result delivery 13ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > read scope revalidation is current and cannot broaden pinned delivery > refuses a still-readable role change instead of carrying its stale role onward 14ms
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts > read scope revalidation is current and cannot broaden pinned delivery > refuses malformed or mutated DTOs rather than reading a broader organization 10ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 9ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 12ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+stdout | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+{
+  "timestamp": "2026-10-23T18:24:56.483Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:24:56.484Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+{
+  "timestamp": "2026-10-23T18:24:56.485Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 0 / max_chars 2 119ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 1 / max_chars 1 42ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 2 / max_chars 1 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > walks by actual UTF-16 ends without splitting, skipping or duplicating source text 20ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > uses the intact actual start for a round-withheld retry and records no span for it 24ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > keeps pre-handoff cancellation from dispatching or recording a Unicode window 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > withholds changed source text at the handoff without a receipt 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > preserves the existing exact ASCII read and response budget 13ms
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-23T18:25:05.249Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:05.250Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-23T18:25:05.250Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 116ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 47ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 31ms
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal)
+{
+  "timestamp": "2026-10-23T18:25:07.039Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission)
+{
+  "timestamp": "2026-10-23T18:25:07.056Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Synthetic receipt INSERT permission denied"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > withdraws changed exact source text before the follow-up gateway and writes no span 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > does not send a new follow-up request or write a span when cancellation occurs at handoff 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal) 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission) 20ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 4ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: an actor-filtered accessible library, or a named accessible program 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > requires the upstream request executor before source admission 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > refuses a role change between canonical source and request program admission 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 7ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > ends before a split pair when preceding text still fits 5ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > moves a requested low-surrogate start backward rather than skipping its character 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset1 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset2 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual shortened bounds when nominal fit.size is larger 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual expanded bounds when one whole pair exceeds nominal fit.size 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > retains UTF-16 totals and offsets for Japanese and scientific supplementary text 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > walks by actual end at max_chars1 without gaps, code-point reindexing or stalled progress 4ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > keeps escaped Unicode text intact after budget-driven candidate shrinking 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > fits control-heavy text by serialized size without losing the actual source span 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > records the selected span even when the fitter last rendered a rejected larger candidate 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > withholds oversized comprehension through the same fitter and retains an intact useful window 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for ABCDEFGH 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for 日本語αβ測定値 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps finite flooring, negative-offset clamping and minimum requested size 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps nonfinite request defaults and a short source verbatim 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > refuses a past-end offset without returning text or deferring a receipt 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > outside a settling host returns intact text but no prospective new coverage 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > historical reads stay disclosed and earn no current-source receipt 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves complete source characters across a deterministic 180-window corpus 48ms
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target)
+{
+  "timestamp": "2026-10-23T18:25:09.583Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for function is_vault_program_owner"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity)
+{
+  "timestamp": "2026-10-23T18:25:09.585Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "unexpected integrity failure"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero)
+{
+  "timestamp": "2026-10-23T18:25:09.585Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor)
+{
+  "timestamp": "2026-10-23T18:25:09.586Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws
+{
+  "timestamp": "2026-10-23T18:25:09.591Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt settlement notification failed",
+  "context": {
+    "toolUseId": "server-tool"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback
+{
+  "timestamp": "2026-10-23T18:25:09.592Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence
+{
+  "timestamp": "2026-10-23T18:25:09.593Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count
+{
+  "timestamp": "2026-10-23T18:25:09.594Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry 4ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > does not reuse one admission ID for two different tool deferrals 0ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > refuses direct durable writing without a genuine server deferral identity 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "0" 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "true" 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "" 0ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > records exact viewer source/slice/payload identities with the fresh role after actual COMMIT 10ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > keeps a custom reader role without promoting stale request/model role claims 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target) 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves stable ID on identical retry and distinguishes it from a new row 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > logs only explicit recovery IDs from an unconfirmed error, never attached payload or secret fields 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > cancellation after actual COMMIT retains the committed count 1ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:10.767Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:10.769Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:10.769Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:10.908Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 10ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 6ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 6ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 7ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses facts without explicit preview mode before catalog persistence 4ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field document_kind instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field purpose instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field summary instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field key_data instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field user_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field actor instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field reviewState instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field organization_id instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field program_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > is off by default and makes no document or preview call 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > keeps the catalog gate and write-role gate on preview 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > requires an identified actor and open project 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > uses serving actor/project context and reports diagnostic checks without scientific approval 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > a failed verification is a refusal, never an empty successful result 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > reports an unconfirmed preview exception without leaking SQL or private metadata 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses an oversized complete preview rather than clipping diagnostic results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > rejects an unknown operation 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > legacy descriptions retain suggestion attribution and disclose value-only checks 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > tool schema advertises the same explicit mutually exclusive branches 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > a stale metadata undercount does not clip the source or claim a complete read 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > identifies stored text and bytes without minting a read receipt 1ms
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned
+{
+  "timestamp": "2026-10-23T18:25:16.734Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload
+{
+  "timestamp": "2026-10-23T18:25:16.747Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested start' 20ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'one-unit whole-character minimum' 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested end' 7ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > fits escaped text without a split and persists every selected actual span 27ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > retains an ordinary ASCII result and exact legacy SQL span 6ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a amended host result 3ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a withheld host result 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload 7ms
+stdout | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:17.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:17.580Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:17.580Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:17.667Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a requested low-surrogate start backward and settles the dispatched actual span 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > takes a complete two-unit character for max_chars1 and records the actual end 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a split end inward and settles only the complete prefix 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > keeps an ordinary budget-shrunk scientific window intact and byte-identical at dispatch 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > walks by actual ends at max_chars1 without gaps, split characters or code-point offset substitution 4ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > uses the normalized safe start when round allocation withholds later reads 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > withholds a minimum envelope above the host ceiling without settling its proposed Unicode span 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > preserves exact ASCII and BMP windows with no optional observer 1ms
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:19.995Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:19.996Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:19.997Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:25:20.081Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+{
+  "timestamp": "2026-10-23T18:25:21.729Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000032",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body 11ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation 42ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran 11ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > CONTROL: a fitting native read remains exact and writes its existing legacy receipt 1ms
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-23T18:25:22.456Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:22.457Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-23T18:25:22.457Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 14ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays 1ms
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+{
+  "timestamp": "2026-10-23T18:25:23.381Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+{
+  "timestamp": "2026-10-23T18:25:23.383Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+{
+  "timestamp": "2026-10-23T18:25:23.384Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+{
+  "timestamp": "2026-10-23T18:25:23.386Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+{
+  "timestamp": "2026-10-23T18:25:23.386Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+{
+  "timestamp": "2026-10-23T18:25:23.387Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+{
+  "timestamp": "2026-10-23T18:25:23.388Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero)
+{
+  "timestamp": "2026-10-23T18:25:23.393Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor)
+{
+  "timestamp": "2026-10-23T18:25:23.394Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error)
+{
+  "timestamp": "2026-10-23T18:25:23.394Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "internal insert failed"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT
+{
+  "timestamp": "2026-10-23T18:25:23.396Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check
+{
+  "timestamp": "2026-10-23T18:25:23.397Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it
+{
+  "timestamp": "2026-10-23T18:25:23.398Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure
+{
+  "timestamp": "2026-10-23T18:25:23.398Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT permission denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count
+{
+  "timestamp": "2026-10-23T18:25:23.399Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts
+{
+  "timestamp": "2026-10-23T18:25:23.399Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal
+{
+  "timestamp": "2026-10-23T18:25:23.401Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > uses fresh read authority and only legacy storage columns for a mocked successful INSERT 4ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > clears a pre-cancelled round without opening a receipt connection 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > retains the actual committed count when cancellation arrives after COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > canonical withdrawal after observed source refusal does not invent a receipt rollback outcome 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > keeps an unchanged admitted read without writing or claiming provider service 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (source_changed) 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (private_revoked) 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > preserves an existing budget replacement and drops its receipt candidate without a source query 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > does not accept a post-deferral amended payload 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > withholds a pending source read when cancellation occurs during verification 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > late cancellation also withdraws earlier amended/budget-safe source results 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > rejects mutation through the publicly visible deferred map value 1ms
+stderr | server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+{
+  "timestamp": "2026-10-23T18:25:24.209Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000002",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 4ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > cancellation after strict allocation withdraws source context and settles no new receipt 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome 4ms
+stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-10-23T18:25:25.087Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "30000000-0000-4000-8000-000000000005",
+    "error": "database unavailable"
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > with nothing deferred, writes nothing and touches no database 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > without any, a squeezed round is exactly what it was 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > reads are placed first and whole; the cuttable results share what is left, never below the floor 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > a read larger than the per-result cap is replaced, never cut 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > the replacement says where to read again from, in the shape the design names 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > is the recorded spans plus this window 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > with nothing recorded, is this window alone 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > fitReadWindow > keeps a window that fits, and shrinks one that does not to the largest that does 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so 3ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > records only one real exact INSERT RETURNING row, with no source or payload body 15ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > an identical stable-ID retry acknowledges existing history without an UPDATE 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: zero 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: missing_rows 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: ambiguous 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: unknown_count 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: returned_without_insert 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable actor cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable program cannot be accepted 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable document cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable original cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable extraction cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable payload cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable ranges cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable role cannot be accepted 6ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable thread cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable tool cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > wrong INSERT RETURNING identity is unconfirmed even if its independent fingerprint is valid 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: fingerprint 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: range_shape 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: unknown_range_field 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: missing_context 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: bad_checkpoint 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > foreign/inaccessible same-ID conflict has the same safe refusal and no exposed row 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: body 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: accepted_at 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: sparse_ranges 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: bad_actor 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: overlap 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: unknown_id 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > input mutation during async fingerprinting cannot rewrite the inserted immutable identity 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > returned row mutation during fingerprint verification cannot alter projected history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > SQL errors cannot disclose sensitive driver detail or fabricate empty success 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 2ms
+stdout | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+{
+  "timestamp": "2026-10-23T18:25:26.975Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:26.976Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+{
+  "timestamp": "2026-10-23T18:25:26.976Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > uses canonical admission and actor/program filters before window counts and LIMIT 7ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > exact document/receipt selections remain filters rather than authorizing scope 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > historical metadata survives removed source and preserves the original admitted role 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned actor metadata refuses without exposing a page 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned tenant metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned private_program metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned wrong_document metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned wrong_receipt metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger fingerprint is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger shape is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger invalid_time is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger normalized_time is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger unknown_count is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger unsafe_count is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger mismatched_count is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"documentId":""} 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"receiptId":"model-invented"} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"documentId":null} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":201} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":1.5} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"actorId":8} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > scope revocation after query prevents returning the loaded private context 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > true authenticated empty actor scope is zero without widening the query 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unknown SQL/policy state is unavailable and does not expose driver detail 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > input/filter mutation before asynchronous scope resolution cannot change selected history 1ms
+stdout | server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts
+{
+  "timestamp": "2026-10-23T18:25:27.788Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:27.789Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts
+{
+  "timestamp": "2026-10-23T18:25:27.789Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > legacy keeps before_commit unconfirmed and discards the owned client 6ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > legacy keeps after_commit unconfirmed and discards the owned client 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > legacy returns a known success only after confirmed COMMIT 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > legacy rolls back a pre-commit write refusal 2ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > durable keeps before_commit unconfirmed and discards the owned client 2ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > durable keeps after_commit unconfirmed and discards the owned client 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > durable returns a known success only after confirmed COMMIT 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > durable rolls back a pre-commit write refusal 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > discards on failed rollback while preserving the original pre-commit refusal 1ms
+ ✓ server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts > receipt transaction completion and physical connection ownership > read-only handoff verification also discards an uncertain completed transaction 1ms
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-23T18:25:28.601Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:28.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-23T18:25:28.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > loads full text only within canonical allowed programs on the admitted executor 3ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-document 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-org 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-program 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: unknown-current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: invalid-bytes 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: catalog-hash-mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > same-length extraction replacement before return cannot return the old text 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > historical by-ID read is explicit and cannot earn a new current-source receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > keep_data serves retained text with original unavailable, without binary access 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > metadata-only reads do not claim a delivered extraction or earn a receipt 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > legacy readable text without a coherent recorded catalog cannot earn a new receipt 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > an authenticated empty source scope remains empty 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > list queries use admitted scope before pagination and retain exact counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > returned source rows outside the admitted scope are unavailable, never post-filtered pages 0ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > current body delivery survives its metadata-only final guard, whose receipt projection is false 9ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > historical text remains readable without current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > stored legacy text is readable without a backfill write 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > same-length extraction mutation during coverage withdraws content even outside settling host 0ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > access revocation during coverage withdraws content even outside settling host 1ms
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:25:30.296Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:30.297Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:25:30.297Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:25:30.513Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > reads the real saved record for an active private-project member, including a read-only organization role 45ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a project member revoked after the conversation was admitted 30ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses organization membership removed after an earlier successful tool call 29ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a disabled account before reading saved authoring data 17ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses an unidentified actor even with a valid organization and program 18ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > fails closed when the current project sharing policy cannot be read 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses contradictory project identifiers before reading saved authoring data 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > uses the supplied request executor instead of checking out an alternate pool 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > checks fresh access on the isolated executor when no request executor is supplied 34ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > reads the real saved record for an active private-project member, including a read-only organization role 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a project member revoked after the conversation was admitted 27ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses organization membership removed after an earlier successful tool call 29ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a disabled account before reading saved authoring data 18ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses an unidentified actor even with a valid organization and program 16ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > fails closed when the current project sharing policy cannot be read 18ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses contradictory project identifiers before reading saved authoring data 17ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > uses the supplied request executor instead of checking out an alternate pool 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > checks fresh access on the isolated executor when no request executor is supplied 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > reads the real saved record for an active private-project member, including a read-only organization role 26ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a project member revoked after the conversation was admitted 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses organization membership removed after an earlier successful tool call 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a disabled account before reading saved authoring data 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses an unidentified actor even with a valid organization and program 16ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > fails closed when the current project sharing policy cannot be read 17ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses contradictory project identifiers before reading saved authoring data 17ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > uses the supplied request executor instead of checking out an alternate pool 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > checks fresh access on the isolated executor when no request executor is supplied 21ms
+stdout | server/services/ana/__tests__/document-catalog-safe-errors.test.ts
+{
+  "timestamp": "2026-10-23T18:25:33.808Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:25:33.809Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-catalog-safe-errors.test.ts
+{
+  "timestamp": "2026-10-23T18:25:33.810Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-catalog-safe-errors.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of catalog_project_document results 2ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of read_project_document results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of list_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of search_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > does not claim rollback when an exception occurs after a persistence receipt 1ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > passes an explicit structured refusal through unchanged 0ms
+
+ Test Files  26 passed (26)
+      Tests  517 passed (517)
+   Start at  18:24:41
+   Duration  52.31s (transform 9.09s, setup 388ms, import 34.98s, tests 13.48s, environment 2ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/final.results.json

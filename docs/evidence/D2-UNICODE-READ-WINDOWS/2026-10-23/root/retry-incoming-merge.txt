@@ -1,0 +1,31 @@
+Merge made by the 'ort' strategy.
+ .../D2-CROSS-SECTOR-AUTHORING/2026-10-23/README.md |  14 +-
+ .../2026-10-23/canonical-prepush-fetch.json        |   5 +
+ .../2026-10-23/canonical-push.json                 |  15 ++
+ .../2026-10-23/canonical-push.log.gz               | Bin 0 -> 4469 bytes
+ .../2026-10-23/publication-artifact-manifest.json  | 227 +++++++++++++++++++++
+ .../2026-10-23/publication-retry-1-fetch.json      |  16 ++
+ .../2026-10-23/publication-retry-1-merge.json      |  16 ++
+ .../2026-10-23/publication-retry-1-merge.log.gz    | Bin 0 -> 351 bytes
+ .../2026-10-23/publication-retry-1-push.json       |  17 ++
+ .../2026-10-23/publication-retry-1-push.log.gz     | Bin 0 -> 4372 bytes
+ .../publication-source-verification.json           | 170 +++++++++++++++
+ .../2026-10-23/publication.md                      |  72 +++++++
+ .../2026-10-23/successful-push-reference.json      |   5 +
+ .../2026-10-23/unicode-evidence-commit.json        |  15 ++
+ .../2026-10-23/unicode-evidence-commit.log.gz      | Bin 0 -> 386 bytes
+ 15 files changed, 568 insertions(+), 4 deletions(-)
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-prepush-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-push.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-push.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-artifact-manifest.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-fetch.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-merge.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-merge.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-push.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-push.log.gz
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-source-verification.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication.md
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/successful-push-reference.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-evidence-commit.json
+ create mode 100644 docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-evidence-commit.log.gz

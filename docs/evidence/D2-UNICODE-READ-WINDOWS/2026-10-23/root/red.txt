@@ -1,0 +1,727 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > ends before a split pair when preceding text still fits 11ms
+   → expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > moves a requested low-surrogate start backward rather than skipping its character 1ms
+   → expected { start: 2, end: 4, text: '�B' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset1 1ms
+   → expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset2 1ms
+   → expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual shortened bounds when nominal fit.size is larger 1ms
+   → expected 2 to be 1 // Object.is equality
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual expanded bounds when one whole pair exceeds nominal fit.size 1ms
+   → expected { start: +0, end: 1, text: '�' } to deeply equal { start: +0, end: 2, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > retains UTF-16 totals and offsets for Japanese and scientific supplementary text 1ms
+   → expected { start: 2, end: 5, text: '𝛼�' } to deeply equal { start: 2, end: 4, text: '𝛼' }
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > walks by actual end at max_chars1 without gaps, code-point reindexing or stalled progress 3ms
+   → expected '\ufffd' to be '�' // Object.is equality
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > keeps escaped Unicode text intact after budget-driven candidate shrinking 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > fits control-heavy text by serialized size without losing the actual source span 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > records the selected span even when the fitter last rendered a rejected larger candidate 3ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > withholds oversized comprehension through the same fitter and retains an intact useful window 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for ABCDEFGH 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for 日本語αβ測定値 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps finite flooring, negative-offset clamping and minimum requested size 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps nonfinite request defaults and a short source verbatim 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > refuses a past-end offset without returning text or deferring a receipt 0ms
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > outside a settling host returns intact text but no prospective new coverage 1ms
+   → expected '\ufffd' to be '�' // Object.is equality
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > historical reads stay disclosed and earn no current-source receipt 1ms
+   → expected '\ufffd' to be '�' // Object.is equality
+ × server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves complete source characters across a deterministic 180-window corpus 1ms
+   → expected 'A\ufffd' to be 'A�' // Object.is equality
+stdout | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+{
+  "timestamp": "2026-10-23T18:23:05.199Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:23:05.200Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+{
+  "timestamp": "2026-10-23T18:23:05.200Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 0 / max_chars 2 122ms
+   → expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+ × server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 1 / max_chars 1 40ms
+   → expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 2 / max_chars 1 14ms
+   → expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > walks by actual UTF-16 ends without splitting, skipping or duplicating source text 23ms
+   → expected '\ufffd' to be '�' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > uses the intact actual start for a round-withheld retry and records no span for it 22ms
+   → expected { delivered: false, …(2) } to match object { delivered: false, readAgainFrom: 1 }
+(1 matching property omitted from actual)
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > keeps pre-handoff cancellation from dispatching or recording a Unicode window 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > withholds changed source text at the handoff without a receipt 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > preserves the existing exact ASCII read and response budget 14ms
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned
+{
+  "timestamp": "2026-10-23T18:23:14.670Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload
+{
+  "timestamp": "2026-10-23T18:23:14.683Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ × server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested start' 24ms
+   → expected { start: 2, end: 4, text: '�B' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'one-unit whole-character minimum' 9ms
+   → expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested end' 8ms
+   → expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > fits escaped text without a split and persists every selected actual span 28ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > retains an ordinary ASCII result and exact legacy SQL span 7ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a amended host result 3ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a withheld host result 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload 7ms
+stdout | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:23:15.893Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:23:15.894Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:23:15.894Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/document-read-unicode-executor.test.ts
+{
+  "timestamp": "2026-10-23T18:23:16.028Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a requested low-surrogate start backward and settles the dispatched actual span 16ms
+   → expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > takes a complete two-unit character for max_chars1 and records the actual end 3ms
+   → expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '𠮷' }
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a split end inward and settles only the complete prefix 2ms
+   → expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > keeps an ordinary budget-shrunk scientific window intact and byte-identical at dispatch 3ms
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > walks by actual ends at max_chars1 without gaps, split characters or code-point offset substitution 7ms
+   → expected '\ufffd' to be '�' // Object.is equality
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > uses the normalized safe start when round allocation withholds later reads 6ms
+   → expected { delivered: false, …(2) } to match object { delivered: false, readAgainFrom: 1 }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > withholds a minimum envelope above the host ceiling without settling its proposed Unicode span 1ms
+   → expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+ ✓ server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > preserves exact ASCII and BMP windows with no optional observer 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 0 / max_chars 2
+AssertionError: expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+
+- Expected
++ Received
+
+  {
+-   "end": 1,
++   "end": 2,
+    "start": 0,
+-   "text": "A",
++   "text": "A�",
+  }
+
+ ❯ expectExactDelivery server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:106:26
+    104|   const result = parsed(body);
+    105|   expect(result?.ok).toBe(true);
+    106|   expect(result?.window).toEqual(expected);
+       |                          ^
+    107|   expect(result?.totalChars).toBe(source.length);
+    108|   expect(expected.text).toBe(source.slice(expected.start, expected.end…
+ ❯ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 1 / max_chars 1
+AssertionError: expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
++   "end": 2,
+    "start": 1,
+-   "text": "🧬",
++   "text": "�",
+  }
+
+ ❯ expectExactDelivery server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:106:26
+    104|   const result = parsed(body);
+    105|   expect(result?.ok).toBe(true);
+    106|   expect(result?.window).toEqual(expected);
+       |                          ^
+    107|   expect(result?.totalChars).toBe(source.length);
+    108|   expect(expected.text).toBe(source.slice(expected.start, expected.end…
+ ❯ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > keeps whole source characters at offset 2 / max_chars 1
+AssertionError: expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+    "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "start": 2,
++   "text": "�",
+  }
+
+ ❯ expectExactDelivery server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:106:26
+    104|   const result = parsed(body);
+    105|   expect(result?.ok).toBe(true);
+    106|   expect(result?.window).toEqual(expected);
+       |                          ^
+    107|   expect(result?.totalChars).toBe(source.length);
+    108|   expect(expected.text).toBe(source.slice(expected.start, expected.end…
+ ❯ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > streamed Unicode reads retain the exact delivered span > walks by actual UTF-16 ends without splitting, skipping or duplicating source text
+AssertionError: expected '\ufffd' to be '�' // Object.is equality
+
+Expected: "�"
+Received: "�"
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:152:65
+    150|       expect(window.end).toBeGreaterThan(window.start);
+    151|       expect(window.text).toBe(source.slice(window.start, window.end));
+    152|       expect(Buffer.from(window.text, 'utf8').toString('utf8')).toBe(w…
+       |                                                                 ^
+    153|       offset = window.end;
+    154|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts > stream Unicode bounds preserve host admission controls > uses the intact actual start for a round-withheld retry and records no span for it
+AssertionError: expected { delivered: false, …(2) } to match object { delivered: false, readAgainFrom: 1 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "delivered": false,
+-   "readAgainFrom": 1,
++   "readAgainFrom": 2,
+  }
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts:170:20
+    168|     await turn(app, { message: 'Read the six source windows.' });
+    169|     const target = parsed(sentThisTurn().get('many5'));
+    170|     expect(target).toMatchObject({ delivered: false, readAgainFrom: 1 …
+       |                    ^
+    171|     expect(receiptsFor(docs[5])).toEqual([]);
+    172|     expect(model.writes.some(write => parsed(write.result)?.documentId…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a requested low-surrogate start backward and settles the dispatched actual span
+AssertionError: expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+    "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "start": 2,
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:107:20
+    105|     const { body, payload, window } = delivered('read1');
+    106|     expect(body).toBe(raw);
+    107|     expect(window).toEqual({ start: 1, end: 3, text: '🧬' });
+       |                    ^
+    108|     expect(payload.totalChars).toBe(4);
+    109|     expectExact(source, window);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > takes a complete two-unit character for max_chars1 and records the actual end
+AssertionError: expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '𠮷' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
++   "end": 2,
+    "start": 1,
+-   "text": "𠮷",
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:119:20
+    117|     await run();
+    118|     const { window } = delivered('read1');
+    119|     expect(window).toEqual({ start: 1, end: 3, text: '𠮷' });
+       |                    ^
+    120|     expectExact(source, window);
+    121|     expect(receiptsFor(DOC)).toEqual([{ start: 1, end: 3 }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor dispatches intact Unicode windows and exact synthetic receipts > moves a split end inward and settles only the complete prefix
+AssertionError: expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+
+- Expected
++ Received
+
+  {
+-   "end": 1,
++   "end": 2,
+    "start": 0,
+-   "text": "A",
++   "text": "A�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:128:39
+    126|     oneRead({ max_chars: 2 });
+    127|     await run();
+    128|     expect(delivered('read1').window).toEqual({ start: 0, end: 1, text…
+       |                                       ^
+    129|     expect(receiptsFor(DOC)).toEqual([{ start: 0, end: 1 }]);
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > walks by actual ends at max_chars1 without gaps, split characters or code-point offset substitution
+AssertionError: expected '\ufffd' to be '�' // Object.is equality
+
+Expected: "�"
+Received: "�"
+
+ ❯ expectExact server/services/ana/__tests__/document-read-unicode-executor.test.ts:85:61
+     83|   expect(window.text).toBe(source.slice(window.start, window.end));
+     84|   expect(window.text.length).toBe(window.end - window.start);
+     85|   expect(Buffer.from(window.text, 'utf8').toString('utf8')).toBe(windo…
+       |                                                             ^
+     86| }
+     87|
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:166:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > uses the normalized safe start when round allocation withholds later reads
+AssertionError: expected { delivered: false, …(2) } to match object { delivered: false, readAgainFrom: 1 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "delivered": false,
+-   "readAgainFrom": 1,
++   "readAgainFrom": 2,
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:188:56
+    186|     }
+    187|     for (let index = 4; index < 6; index++) {
+    188|       expect(JSON.parse(sent().get(`round${index}`)!)).toMatchObject({…
+       |                                                        ^
+    189|       expect(receiptsFor(docs[index])).toEqual([]);
+    190|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-executor.test.ts > executor Unicode continuation and unchanged host withholding > withholds a minimum envelope above the host ceiling without settling its proposed Unicode span
+AssertionError: expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+    "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "start": 2,
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-executor.test.ts:199:53
+    197|     await run({ onToolExecution: (_name, _input, result) => { raw = re…
+    198|     expect(raw.length).toBeGreaterThan(8000);
+    199|     expect((JSON.parse(raw) as ReadPayload).window).toEqual({ start: 1…
+       |                                                     ^
+    200|     expect(JSON.parse(sent().get('read1')!)).toMatchObject({ delivered…
+    201|     expect(receiptsFor(DOC)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested start'
+AssertionError: expected { start: 2, end: 4, text: '�B' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "end": 4,
++   "start": 2,
++   "text": "�B",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts:129:32
+    127|     expect(saved.count).toBe(1);
+    128|     expect(saved.write).toHaveBeenCalledOnce();
+    129|     expect(result.body.window).toEqual({ start, end, text });
+       |                                ^
+    130|     expect(receipt.span).toEqual({ start, end });
+    131|     expect(receipt.sourceSnapshot.span).toEqual({ start, end });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'one-unit whole-character minimum'
+AssertionError: expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
++   "end": 2,
+    "start": 1,
+-   "text": "🧬",
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts:129:32
+    127|     expect(saved.count).toBe(1);
+    128|     expect(saved.write).toHaveBeenCalledOnce();
+    129|     expect(result.body.window).toEqual({ start, end, text });
+       |                                ^
+    130|     expect(receipt.span).toEqual({ start, end });
+    131|     expect(receipt.sourceSnapshot.span).toEqual({ start, end });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested end'
+AssertionError: expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+
+- Expected
++ Received
+
+  {
+-   "end": 1,
++   "end": 2,
+    "start": 0,
+-   "text": "A",
++   "text": "A�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts:129:32
+    127|     expect(saved.count).toBe(1);
+    128|     expect(saved.write).toHaveBeenCalledOnce();
+    129|     expect(result.body.window).toEqual({ start, end, text });
+       |                                ^
+    130|     expect(receipt.span).toEqual({ start, end });
+    131|     expect(receipt.sourceSnapshot.span).toEqual({ start, end });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > ends before a split pair when preceding text still fits
+AssertionError: expected { start: +0, end: 2, text: 'A�' } to deeply equal { start: +0, end: 1, text: 'A' }
+
+- Expected
++ Received
+
+  {
+-   "end": 1,
++   "end": 2,
+    "start": 0,
+-   "text": "A",
++   "text": "A�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:103:32
+    101|     addDocument(DOC, 'A🧬B');
+    102|     const call = await read({ max_chars: 2 });
+    103|     expect(call.result.window).toEqual({ start: 0, end: 1, text: 'A' }…
+       |                                ^
+    104|     expectExact('A🧬B', call.result); expectDeferred(call);
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > moves a requested low-surrogate start backward rather than skipping its character
+AssertionError: expected { start: 2, end: 4, text: '�B' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "end": 4,
++   "start": 2,
++   "text": "�B",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:110:32
+    108|     addDocument(DOC, 'A🧬B');
+    109|     const call = await read({ offset: 2, max_chars: 2 });
+    110|     expect(call.result.window).toEqual({ start: 1, end: 3, text: '🧬' …
+       |                                ^
+    111|     expectExact('A🧬B', call.result); expectDeferred(call);
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset1
+AssertionError: expected { start: 1, end: 2, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 3,
++   "end": 2,
+    "start": 1,
+-   "text": "🧬",
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:117:32
+    115|     addDocument(DOC, 'A🧬B');
+    116|     const call = await read({ offset, max_chars: 1 });
+    117|     expect(call.result.window).toEqual({ start: 1, end: 3, text: '🧬' …
+       |                                ^
+    118|     expectExact('A🧬B', call.result); expectDeferred(call);
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset2
+AssertionError: expected { start: 2, end: 3, text: '�' } to deeply equal { start: 1, end: 3, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+    "end": 3,
+-   "start": 1,
+-   "text": "🧬",
++   "start": 2,
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:117:32
+    115|     addDocument(DOC, 'A🧬B');
+    116|     const call = await read({ offset, max_chars: 1 });
+    117|     expect(call.result.window).toEqual({ start: 1, end: 3, text: '🧬' …
+       |                                ^
+    118|     expectExact('A🧬B', call.result); expectDeferred(call);
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual shortened bounds when nominal fit.size is larger
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:125:63
+    123|     const call = await read({ max_chars: 2 });
+    124|     expect(call.fit?.size).toBe(2);
+    125|     expect(call.result.window.end - call.result.window.start).toBe(1);
+       |                                                               ^
+    126|     expectDeferred(call);
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual expanded bounds when one whole pair exceeds nominal fit.size
+AssertionError: expected { start: +0, end: 1, text: '�' } to deeply equal { start: +0, end: 2, text: '🧬' }
+
+- Expected
++ Received
+
+  {
+-   "end": 2,
++   "end": 1,
+    "start": 0,
+-   "text": "🧬",
++   "text": "�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:133:32
+    131|     const call = await read({ max_chars: 1 });
+    132|     expect(call.fit?.size).toBe(1);
+    133|     expect(call.result.window).toEqual({ start: 0, end: 2, text: '🧬' …
+       |                                ^
+    134|     expect(call.result.coverage.complete).toBe(true);
+    135|     expectDeferred(call);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > retains UTF-16 totals and offsets for Japanese and scientific supplementary text
+AssertionError: expected { start: 2, end: 5, text: '𝛼�' } to deeply equal { start: 2, end: 4, text: '𝛼' }
+
+- Expected
++ Received
+
+  {
+-   "end": 4,
++   "end": 5,
+    "start": 2,
+-   "text": "𝛼",
++   "text": "𝛼�",
+  }
+
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:141:32
+    139|     const source = '𠮷𝛼🧬B'; addDocument(DOC, source);
+    140|     const call = await read({ offset: 2, max_chars: 3 });
+    141|     expect(call.result.window).toEqual({ start: 2, end: 4, text: '𝛼' …
+       |                                ^
+    142|     expect(call.result.totalChars).toBe(7);
+    143|     expectExact(source, call.result); expectDeferred(call);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > walks by actual end at max_chars1 without gaps, code-point reindexing or stalled progress
+AssertionError: expected '\ufffd' to be '�' // Object.is equality
+
+Expected: "�"
+Received: "�"
+
+ ❯ expectExact server/services/ana/__tests__/document-read-unicode-windows.test.ts:82:68
+     80|   expect(result.window.text).toBe(source.slice(result.window.start, re…
+     81|   expect(result.window.text.length).toBe(result.window.end - result.wi…
+     82|   expect(Buffer.from(result.window.text, 'utf8').toString('utf8')).toB…
+       |                                                                    ^
+     83| }
+     84|
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:151:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > outside a settling host returns intact text but no prospective new coverage
+AssertionError: expected '\ufffd' to be '�' // Object.is equality
+
+Expected: "�"
+Received: "�"
+
+ ❯ expectExact server/services/ana/__tests__/document-read-unicode-windows.test.ts:82:68
+     80|   expect(result.window.text).toBe(source.slice(result.window.start, re…
+     81|   expect(result.window.text.length).toBe(result.window.end - result.wi…
+     82|   expect(Buffer.from(result.window.text, 'utf8').toString('utf8')).toB…
+       |                                                                    ^
+     83| }
+     84|
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:240:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > historical reads stay disclosed and earn no current-source receipt
+AssertionError: expected '\ufffd' to be '�' // Object.is equality
+
+Expected: "�"
+Received: "�"
+
+ ❯ expectExact server/services/ana/__tests__/document-read-unicode-windows.test.ts:82:68
+     80|   expect(result.window.text).toBe(source.slice(result.window.start, re…
+     81|   expect(result.window.text.length).toBe(result.window.end - result.wi…
+     82|   expect(Buffer.from(result.window.text, 'utf8').toString('utf8')).toB…
+       |                                                                    ^
+     83| }
+     84|
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:248:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/25]⎯
+
+ FAIL  server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves complete source characters across a deterministic 180-window corpus
+AssertionError: expected 'A\ufffd' to be 'A�' // Object.is equality
+
+Expected: "A�"
+Received: "A�"
+
+ ❯ expectExact server/services/ana/__tests__/document-read-unicode-windows.test.ts:82:68
+     80|   expect(result.window.text).toBe(source.slice(result.window.start, re…
+     81|   expect(result.window.text.length).toBe(result.window.end - result.wi…
+     82|   expect(Buffer.from(result.window.text, 'utf8').toString('utf8')).toB…
+       |                                                                    ^
+     83| }
+     84|
+ ❯ server/services/ana/__tests__/document-read-unicode-windows.test.ts:261:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/25]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  25 failed | 20 passed (45)
+   Start at  18:23:00
+   Duration  17.74s (transform 8.43s, setup 96ms, import 14.95s, tests 2.12s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-UNICODE-READ-WINDOWS/2026-10-23/root/red.results.json
