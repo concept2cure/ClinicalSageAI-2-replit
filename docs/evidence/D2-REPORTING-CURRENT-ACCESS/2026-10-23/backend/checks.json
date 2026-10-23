@@ -1,0 +1,340 @@
+{
+  "sourceBase": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "recordedAt": "2026-10-23T17:41:00.680883+00:00",
+  "initialRedPins": {
+    "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+    "files": {
+      "server/services/report-os/scheduling/generate-deliver.ts": "e01781bdd13e229d1f890b2801ebd5d61b54611c90170911ffd0d3005d96c074",
+      "server/routes/report-os.ts": "d0c0d239860a39561d86ee9a7ada27f717ac0a9658bb6d58f10a9f2b722b41af",
+      "server/services/report-os/__tests__/project-access-integration.test.ts": "b95f42017c10fec1cdf471e3f1af12a2c4b0b8ed5b3bfe270c96545c32af012a",
+      "server/routes/__tests__/report-os-current-run-access.test.ts": "23e90a3b4be8eff663c0c0da42c9a39843331b1ae283ae653a14fe44ee70af64"
+    }
+  },
+  "finalPins": {
+    "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+    "recordedAt": "2026-10-23T17:36:56.811493+00:00",
+    "boundary": "Final executed sources captured after the final bounded run and compared again before handoff; no whole-program/transitive source claim.",
+    "files": {
+      "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+      "server/services/report-os/scheduling/generate-deliver.ts": "a4d809dc5e798ecf639676b4dc010c241783dceb62e0a82da0d4fb41491b616c",
+      "server/services/report-os/__tests__/project-access-integration.test.ts": "5f838db371c47c1e79b981db3ca5d32e56a17a49fa89104f33b6b4f0056be017",
+      "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts": "97acf83c21519b58db337cb1f472122f09bc29451deb5d19e0bd95ee3281848f",
+      "server/routes/__tests__/report-os-current-run-access.test.ts": "432a2069b4793c1a2766f65dc04ea4bfc327e94c3b5993b7e0ea00efd11a768e",
+      "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts": "b75501ec4c7999b214fbbd542259b7fc78eb760ce9c3568cfd674fb8a9263e66",
+      "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts": "c20aeb2040b34f7a1b611316f58fe81b64c677a371cda71b1f18989d846075b5",
+      "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+      "server/routes/__tests__/report-os-run-engine.test.ts": "508de4ab1acb7bdd14c8f92161c36ec5a355217fae6b7da2c8aee51991a70f7f",
+      "server/routes/__tests__/report-os-regional-context.test.ts": "5e03b84507b654729f4ea3aaa055fc04c5d57ccc5984f18687b380e6199c03d0",
+      "server/services/report-os/__tests__/persistence.test.ts": "56f8f274cd351f904e974a8f15a743a6fc9b5034d69b4c91a965b97a8ce89ea5",
+      "server/services/report-os/__tests__/scope-ownership.test.ts": "be3ee032c2f40ac5f75764c905cc8c2445883f7a1eeb1cf298538583cc6b3466",
+      "server/services/report-os/scheduling/__tests__/configuration.test.ts": "05b99ffdb2c7d6e4532be8433c226c64321c83def4a18a8189fc5848452bc92d",
+      "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "server/services/report-os/scope-ownership.ts": "c3646eb7e3df8a75e98d5222f8f98652df3e270563993ee169778260db4edb97",
+      "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "server/services/csr/project-scope.ts": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092",
+      "server/services/report-os/persistence.ts": "d7aa8921c6ee7007ccc4b8d76bd41eb1e4cbc9d315d34b828c5adacd9ad96365",
+      "server/services/report-os/compute-run.ts": "224cafbf18c179bf146773a2f3bdf59602e1b5ac4d22339d55c665270ee30845"
+    }
+  },
+  "handoffSourceDrift": [],
+  "phases": {
+    "red": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/__tests__/project-access-integration.test.ts",
+          "server/routes/__tests__/report-os-current-run-access.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/red.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/red.txt"
+      },
+      "exitCode": 1,
+      "files": 2,
+      "passed": 14,
+      "failed": 11,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 10.04,
+      "status": "RED retained"
+    },
+    "red-atomic": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/red-atomic.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/red-atomic.txt"
+      },
+      "exitCode": 1,
+      "files": 1,
+      "passed": 3,
+      "failed": 3,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 13.11,
+      "status": "RED retained"
+    },
+    "red-ownership": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "server/routes/__tests__/report-os-current-run-access.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/red-ownership.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/red-ownership.txt"
+      },
+      "exitCode": 1,
+      "files": 2,
+      "passed": 3,
+      "failed": 12,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 25.07,
+      "status": "RED retained"
+    },
+    "successor-core": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/__tests__/project-access-integration.test.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "server/routes/__tests__/report-os-current-run-access.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/successor-core.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/successor-core.txt"
+      },
+      "exitCode": 1,
+      "files": 3,
+      "passed": 32,
+      "failed": 3,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 28.63,
+      "status": "RED retained"
+    },
+    "successor": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/__tests__/project-access-integration.test.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "server/routes/__tests__/report-os-current-run-access.test.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+          "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+          "server/routes/__tests__/report-os-audit-recording.test.ts",
+          "server/routes/__tests__/report-os-run-engine.test.ts",
+          "server/routes/__tests__/report-os-regional-context.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/successor.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/successor.txt"
+      },
+      "exitCode": 1,
+      "files": 8,
+      "passed": 113,
+      "failed": 1,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 43.82,
+      "status": "RED retained"
+    },
+    "final": {
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/services/report-os/__tests__/project-access-integration.test.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+          "server/routes/__tests__/report-os-current-run-access.test.ts",
+          "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+          "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+          "server/routes/__tests__/report-os-audit-recording.test.ts",
+          "server/routes/__tests__/report-os-run-engine.test.ts",
+          "server/routes/__tests__/report-os-regional-context.test.ts",
+          "server/services/report-os/__tests__/persistence.test.ts",
+          "server/services/report-os/__tests__/scope-ownership.test.ts",
+          "server/services/report-os/scheduling/__tests__/configuration.test.ts",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/backend/final.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/backend/final.txt"
+      },
+      "exitCode": 0,
+      "files": 12,
+      "passed": 164,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 54.93,
+      "status": "GREEN"
+    }
+  },
+  "lint": {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "server/routes/__tests__/report-os-audit-recording.test.ts",
+      "server/routes/__tests__/report-os-current-run-access.test.ts",
+      "server/routes/__tests__/report-os-regional-context.test.ts",
+      "server/routes/__tests__/report-os-run-engine.test.ts",
+      "server/routes/report-os.ts",
+      "server/services/report-os/__tests__/project-access-integration.test.ts",
+      "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+      "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+      "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+      "server/services/report-os/scheduling/generate-deliver.ts",
+      "--format",
+      "json"
+    ],
+    "note": "Exact ten scoped file arguments are the warning-comparison rows; raw CLI report retained losslessly.",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 5
+  },
+  "warningComparison": {
+    "base": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+    "scope": "Ten changed backend source/test files; same ESLint config and original file paths for both versions.",
+    "rows": [
+      {
+        "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/routes/__tests__/report-os-current-run-access.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/routes/__tests__/report-os-regional-context.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/routes/__tests__/report-os-run-engine.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/routes/report-os.ts",
+        "beforeWarnings": 5,
+        "afterWarnings": 5,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/services/report-os/__tests__/project-access-integration.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      },
+      {
+        "file": "server/services/report-os/scheduling/generate-deliver.ts",
+        "beforeWarnings": 0,
+        "afterWarnings": 0,
+        "beforeErrors": 0,
+        "afterErrors": 0
+      }
+    ],
+    "beforeWarnings": 5,
+    "afterWarnings": 5,
+    "afterErrors": 0,
+    "netWarnings": 0
+  },
+  "warningCommand": [
+    "node",
+    "/workspace/.codex-notes/reporting-current-access-20261023/backend/compare-lint.mjs"
+  ],
+  "scope": "Two existing runtime files and eight tests, including one new manual-access regression. Shared harness, persistence, policy and ownership services unchanged. Final164/12 is one GREEN execution; all earlier RED phases remain separately recorded."
+}

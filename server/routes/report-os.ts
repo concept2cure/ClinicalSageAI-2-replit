@@ -519,12 +519,17 @@ async function createRunOnChain(
   try {
     return await persistReportRun(rows, {
       userId: getUserId(req), ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined,
-    }, rows.run.reportTypeId === 'lifecycle.obligation_calendar' ? async client => {
+    }, async client => {
       const actor = await readCurrentProgramActor(client, { organizationId: rows.run.organizationId, userId: getUserId(req), forShare: true });
       if (!GOVERNED_WRITE_ROLES.has(actor.role) || !await canAccessReportScope(rows.run.organizationId, actor, rows.run, client)) {
         throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current report source access and writing permission are required. Nothing was saved.');
       }
-    } : undefined);
+      // A fresh run must still belong to its active exact scope/workspace.
+      // The earlier project proof cannot substitute for this enlisted read.
+      await resolveOwnedReportScope({ organizationId: rows.run.organizationId,
+        scopeType: rows.run.scopeType, scopeId: rows.run.scopeId,
+        clientWorkspaceId: rows.run.clientWorkspaceId }, client);
+    });
   } catch (error) {
     if (!(error instanceof ReportRunRecordingError)) throw error;
     logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });

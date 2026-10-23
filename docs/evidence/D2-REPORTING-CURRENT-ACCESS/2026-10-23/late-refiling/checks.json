@@ -1,0 +1,169 @@
+{
+  "recordedAt": "2026-10-23T18:09:12.951725+00:00",
+  "retainedReportingCommit": "4f3ebaf73",
+  "retainedNativeReconciliationCommit": "1a76da4ca",
+  "retainedAuthoringReconciliationCommit": "9eba8a7dc",
+  "incomingCanonical": "8ba496f69",
+  "mergedHead": "d8ef73f279dbaf84b6143fc66f410538930509f5",
+  "sourceDelta": {
+    "from": "0a7abf314",
+    "to": "8ba496f69",
+    "changedApplicationAndTestPaths": 15,
+    "applicationSourceEditsMadeDuringReview": false
+  },
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-refiling/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-refiling/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "testFiles": 7,
+    "passedTests": 170,
+    "failedTests": 0,
+    "pendingTests": 0,
+    "todoTests": 0,
+    "durationSeconds": 39.97
+  },
+  "sourceBefore": {
+    "head": "d8ef73f279dbaf84b6143fc66f410538930509f5",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "e4e2c091a91c0f930e0629424fff0fecfa86fadf6ae70ae16bb78ce22b8149d8",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "b865e2643f596fbc74ada2b2d171c0b6ff7793be0298e0092c63eef4f8c293d9",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "dee56cc02e50b864f5489f89f15fdd3d04bf60d7a714c4016586fe2143b3728f",
+      "client/src/concept2cure/v2/styles/surface-text-ramp.css": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts": "d9f34c996eb9af3b006fdc084452cad8544f39d70a315601e88f30139a12eff7",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts": "68ad7f4b45d01f536d191d4c6364ad9bd03e09dba46845329a62eaf7f3927bc8",
+      "server/routes/authoring.router.ts": "547cf5b33f00c23ce9df5e0bf828aadbc6ee548391eafbc873eac9d8ca675bc4",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "b2c30fe9837ec234cd92b4ca2a1e197239efe090afc63f1d71dd006fabce3deb",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts": "077a8e15c854c731e26e46bc3d2d952513f22db1f17137250299dc70426c0491",
+      "server/services/authoring/authoring-file-to-vault.ts": "41afd5a251f38e70c62e7b81ba1b069fe7d31940c8abee111aaf2f23bfadda6a",
+      "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+      "server/services/authoring/authoring-vault-version-plan.ts": "5d045c7b9460ccabb4c09cfe50c685d5d25a14af68097c9be7b63b5ebaaccafc",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "690c43cca33400535b75bd372a65e63bad59b2c0156bbb9fe205240fb01b9d2a",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "83e66292657318b02608db5af724440a703feef2430a4df9570e9836f538372e",
+      "server/services/vault/vault-ingest.service.ts": "be522c7ceb8b5fc118f9e0402591599cd837850bec553decb58f680547056586",
+      "server/services/vault/vault-version-checkin.ts": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f",
+      "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526"
+    }
+  },
+  "sourceFinal": {
+    "head": "d8ef73f279dbaf84b6143fc66f410538930509f5",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "e4e2c091a91c0f930e0629424fff0fecfa86fadf6ae70ae16bb78ce22b8149d8",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "b865e2643f596fbc74ada2b2d171c0b6ff7793be0298e0092c63eef4f8c293d9",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "dee56cc02e50b864f5489f89f15fdd3d04bf60d7a714c4016586fe2143b3728f",
+      "client/src/concept2cure/v2/styles/surface-text-ramp.css": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts": "d9f34c996eb9af3b006fdc084452cad8544f39d70a315601e88f30139a12eff7",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts": "68ad7f4b45d01f536d191d4c6364ad9bd03e09dba46845329a62eaf7f3927bc8",
+      "server/routes/authoring.router.ts": "547cf5b33f00c23ce9df5e0bf828aadbc6ee548391eafbc873eac9d8ca675bc4",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "b2c30fe9837ec234cd92b4ca2a1e197239efe090afc63f1d71dd006fabce3deb",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts": "077a8e15c854c731e26e46bc3d2d952513f22db1f17137250299dc70426c0491",
+      "server/services/authoring/authoring-file-to-vault.ts": "41afd5a251f38e70c62e7b81ba1b069fe7d31940c8abee111aaf2f23bfadda6a",
+      "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+      "server/services/authoring/authoring-vault-version-plan.ts": "5d045c7b9460ccabb4c09cfe50c685d5d25a14af68097c9be7b63b5ebaaccafc",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "690c43cca33400535b75bd372a65e63bad59b2c0156bbb9fe205240fb01b9d2a",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "83e66292657318b02608db5af724440a703feef2430a4df9570e9836f538372e",
+      "server/services/vault/vault-ingest.service.ts": "be522c7ceb8b5fc118f9e0402591599cd837850bec553decb58f680547056586",
+      "server/services/vault/vault-version-checkin.ts": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f",
+      "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526"
+    },
+    "sourceDrift": []
+  },
+  "priorPins": {
+    "backend": {
+      "checks": "../backend/checks.json",
+      "verifiedFiles": 20,
+      "sourceDrift": []
+    },
+    "client": {
+      "checks": "../client/checks.json",
+      "verifiedFiles": 36,
+      "sourceDrift": []
+    },
+    "late-native": {
+      "checks": "../late-native/checks.json",
+      "verifiedFiles": 12,
+      "sourceDrift": []
+    }
+  },
+  "priorAuthoringPins": {
+    "checks": "../late-authoring/checks.json",
+    "totalPriorPins": 22,
+    "unchangedPins": 14,
+    "supersededByIncomingRefiling": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+        "priorSha256": "ac95fc3ce7a6421157b8d75834f098d1f2dba5d63b8c25735155b401e910ceba",
+        "currentSha256": "e4e2c091a91c0f930e0629424fff0fecfa86fadf6ae70ae16bb78ce22b8149d8"
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+        "priorSha256": "8e97c08d10edac6ed0f0f06b1dff007c238aae7aa2e7ec50732a39951d6e550e",
+        "currentSha256": "dee56cc02e50b864f5489f89f15fdd3d04bf60d7a714c4016586fe2143b3728f"
+      },
+      {
+        "path": "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+        "priorSha256": "21dd1e17ef1a7ac4072d8aef2c793da94c276582a48ee2406561123a8df1b71e",
+        "currentSha256": "d9f34c996eb9af3b006fdc084452cad8544f39d70a315601e88f30139a12eff7"
+      },
+      {
+        "path": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+        "priorSha256": "9795d7c865b2a213a6a7762237301a26d66c301e4ad14aab6d1e50ee283a34ca",
+        "currentSha256": "68ad7f4b45d01f536d191d4c6364ad9bd03e09dba46845329a62eaf7f3927bc8"
+      },
+      {
+        "path": "server/routes/authoring.router.ts",
+        "priorSha256": "fb2e16e9e6387e59f1f57368ba7bd9a739d2c5d214c0d4fa3ce0e2c1f315cbec",
+        "currentSha256": "547cf5b33f00c23ce9df5e0bf828aadbc6ee548391eafbc873eac9d8ca675bc4"
+      },
+      {
+        "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+        "priorSha256": "3f4dee11f69dceae484b8c6cc82a06969a18e7c55d1fc2a3907b0cc9acd78aa0",
+        "currentSha256": "b2c30fe9837ec234cd92b4ca2a1e197239efe090afc63f1d71dd006fabce3deb"
+      },
+      {
+        "path": "server/services/authoring/authoring-file-to-vault.ts",
+        "priorSha256": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515",
+        "currentSha256": "41afd5a251f38e70c62e7b81ba1b069fe7d31940c8abee111aaf2f23bfadda6a"
+      },
+      {
+        "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+        "priorSha256": "fe46636df74a407fc1669e7034fb1d6612ba8233941ed84c29d70e44c82cdb47",
+        "currentSha256": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18"
+      }
+    ],
+    "status": "The earlier 115-pass / one-TODO result retains its original 5482e9b75 source epoch; it is not relabelled as a current whole-packet rerun."
+  },
+  "review": {
+    "whatAlreadyExists": "Canonical Vault explicit-head check-in, scoped version lineage, source-bound Authoring filing receipt verification, ingest preview/commit admission, placement inheritance, retained submission leaf pins and client uncertainty holds. Incoming work reuses those paths.",
+    "finding": "No integration blocker found. New per-format numeric families require exact source receipts before explicit-head check-in; legacy, ambiguous or unverifiable families require review. Source plan repeats at canonical admission, and locked check-in rechecks inherited metadata and retained numeric slots. Existing leaves and historical bytes remain unchanged. Client accepts only coherent server-confirmed lineage.",
+    "inheritedTodo": "The earlier refiling TODO is replaced by executable numeric-successor and separate-rendition parity cases. The current selected seven-suite run has no TODO.",
+    "existingEvidence": "../../../D2-AUTHORING-REFILING-VERSIONS/2026-10-23/README.md",
+    "historicalEvidence": "Incoming evidence separately retains fail-first refiling/storage-interleaving proofs, 489-test PDF-integrated qualification, 18-case publication parity and eight component layout observations. Those overlapping counts/layout/native artifact checks are not added to or described as rerun in this packet.",
+    "currentRunLimits": "Existing deterministic renderer/storage seams and local SQL-backed PGlite checks qualify the tested orchestration. They do not establish native multi-connection PostgreSQL serialization, arbitrary independent-root insert serialization, native LibreOffice typography, deployed browser acceptance, sealed-source revision policy, live provider or agency transmission.",
+    "publication": "Root owns refreshed build, full compiler, normal commit/push gates and canonical publication."
+  }
+}
