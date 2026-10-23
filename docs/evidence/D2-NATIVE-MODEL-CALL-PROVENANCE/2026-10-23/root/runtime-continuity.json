@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-10-23T17:37:53.459843+00:00",
+  "transientToolFailure": "No usable execution environment is available.",
+  "recovery": "Subsequent environment context restored workspace access; original push/compiler processes survived, so no duplicate push or compiler was started.",
+  "head": "a36245bc48c865fdb3ca5cd5d238ac52ba06043b",
+  "selectedSourceFilesStillMatch": 551,
+  "qualifiedArtifactFilesStillMatch": 70,
+  "pushStatusAtRecovery": "Original normal push in whole-tree TypeScript gate; actual outcome recorded separately.",
+  "runtimeObservation": "Current connected/running observation; unrestricted HTTP policy enforced; no runtime failure reported."
+}

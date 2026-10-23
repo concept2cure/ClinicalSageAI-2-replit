@@ -11,8 +11,9 @@
  *
  * What these doors can report is less than the stream can: the loop gives the
  * first call's input, every tool call with its input and result, and the final
- * response — not the rounds, nor what each later model call was sent. The
- * record says so in its warnings rather than leaving the gap to be inferred.
+ * response, and each model the gateway reports as having returned a call —
+ * not tool-step round assignments, nor what each later model call was sent.
+ * The record says so in its warnings rather than leaving the gap to be inferred.
  *
  * @compliance 21 CFR Part 11 §11.10(e); EU Annex 11 §9.
  * @module server/services/ana/turn-record-loop
@@ -24,6 +25,7 @@ import {
   writeTurnRecordSafely,
   type TurnOutcome,
   type TurnRecordStatus,
+  type TurnRecorder,
 } from './turn-record.js';
 
 /** One tool call the loop reported through `onToolExecution`. */
@@ -34,15 +36,36 @@ export interface LoopToolCall {
   latencyMs: number;
 }
 
-/** Collects the loop's tool calls; pass `onToolExecution` to executeAgenticLoop. */
+/** A returned gateway call, not a requested model or a failed dispatch. */
+export interface LoopServedCall {
+  round: number;
+  provider: string | null;
+  model: string | null;
+  requestId: string | null;
+}
+
+/** The existing rule for metadata the native door can actually name. */
+function statedString(value: unknown): string | null {
+  return typeof value === 'string' && value ? value : null;
+}
+
+/** Collect the loop's tools and returned model metadata through its existing hooks. */
 export function loopToolCollector(): {
   calls: LoopToolCall[];
+  servedCalls: LoopServedCall[];
+  onModelResponse: (response: { provider?: unknown; model?: unknown; requestId?: unknown }, round: number) => void;
   onToolExecution: (tool: string, input: Record<string, unknown>, result: string) => void;
 } {
   const calls: LoopToolCall[] = [];
+  const servedCalls: LoopServedCall[] = [];
   let since = Date.now();
   return {
     calls,
+    servedCalls,
+    onModelResponse: (response, round) => {
+      // Copy primitives now: later response mutation cannot rewrite authorship.
+      servedCalls.push({ round, provider: statedString(response.provider), model: statedString(response.model), requestId: statedString(response.requestId) });
+    },
     onToolExecution: (tool, input, result) => {
       const now = Date.now();
       calls.push({ tool, input, result, latencyMs: now - since });
@@ -64,6 +87,15 @@ function errorOf(result: string): string | null {
 const LOOP_DOOR_LIMITS =
   'This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call\'s input, every tool call and the answer.';
 
+const LOOP_MODEL_CALL_LIMITS =
+  'This turn reports its served model calls and raw tool calls; tool-step round assignments and later model inputs are not reported by this door.';
+
+/** Retain returned calls, and state the limits of the metadata actually available. */
+function recordServedCalls(recorder: TurnRecorder, calls: readonly LoopServedCall[] | undefined): string {
+  for (const call of calls ?? []) recorder.addServed(call.round, call);
+  return calls?.length ? LOOP_MODEL_CALL_LIMITS : LOOP_DOOR_LIMITS;
+}
+
 type ConnectablePool = Parameters<typeof writeTurnRecordSafely>[0];
 
 /** Record a turn that ran through executeAgenticLoop. Never throws. */
@@ -79,6 +111,8 @@ export async function recordLoopTurn(
     typed: string;
     messages: Array<{ role: string; content: unknown }>;
     calls: LoopToolCall[];
+    /** Only calls the gateway returned, in observer order; absent for legacy callers. */
+    servedCalls?: readonly LoopServedCall[];
     response?: { content?: unknown; thinking?: unknown; model?: unknown; provider?: unknown } | null;
     outcome: TurnOutcome;
     error?: unknown;
@@ -109,11 +143,11 @@ export async function recordLoopTurn(
       });
     }
     const r = turn.response ?? null;
-    const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
-    recorder.setModel({ provider: str(r?.provider), model: str(r?.model) });
-    recorder.setReasoning(str(r?.thinking));
-    recorder.setAnswer({ streamed: str(r?.content) });
-    recorder.warn(LOOP_DOOR_LIMITS);
+    recorder.setModel({ provider: statedString(r?.provider), model: statedString(r?.model) });
+    const modelCallLimits = recordServedCalls(recorder, turn.servedCalls);
+    recorder.setReasoning(statedString(r?.thinking));
+    recorder.setAnswer({ streamed: statedString(r?.content) });
+    recorder.warn(modelCallLimits);
     if (turn.outcome === 'failed' && turn.error !== undefined) {
       const message = turn.error instanceof Error ? turn.error.message : String(turn.error);
       recorder.warn(`The turn ended with an error: ${message.slice(0, 500)}`);

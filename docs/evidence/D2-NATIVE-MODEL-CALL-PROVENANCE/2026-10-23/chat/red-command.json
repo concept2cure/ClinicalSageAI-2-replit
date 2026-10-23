@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red-results.json"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "startedAt": "2026-10-23T17:29:00.497874+00:00",
+  "testSha256": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+}

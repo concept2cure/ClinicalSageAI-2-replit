@@ -1,0 +1,20 @@
+{
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "contractCommit": "f158bf3f00a7fc898e78ed376787eb523458e36d",
+  "frozenAt": "2026-10-23T17:30:39.890510+00:00",
+  "tests": {
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "3a8947e2200c2abbde23f891ea0948180c18d1cb80fd4ab581038496e128a9f1",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+  },
+  "newTests": 43,
+  "intendedSemanticFailures": 30,
+  "passingNewControls": 13,
+  "existingAdapterAuthorControls": 35,
+  "skips": 0,
+  "all26SelectedBaselineInputsUnchangedBeforeProduction": true,
+  "all31ExistingRegressionTestsUnchanged": true,
+  "includedTestLint": "All3 files:0errors0warnings before freeze.",
+  "failureReason": "Only missing recorded model-call facts/unknown author qualification/accurate new limitation; no missingexport/method/fixture errors.",
+  "ownership": "Root owns all frozen tests and production after this submission; original red bytes/logs retained."
+}

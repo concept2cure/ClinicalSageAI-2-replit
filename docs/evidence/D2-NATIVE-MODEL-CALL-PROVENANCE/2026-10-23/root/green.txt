@@ -1,0 +1,2759 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-10-23T17:31:33.046Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:33.047Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-10-23T17:31:33.048Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-10-23T17:31:33.317Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope 61ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals 9ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence. 6ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence. 6ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {} 4ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"} 4ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history 16ms
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:31:41.416Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:31:41.766Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:41.767Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:31:41.767Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] AI Gateway call failed: PRIVATE_LATE_PROVIDER_DIAGNOSTIC
+
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model 60ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification 7ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author 4ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed 4ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call 16ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call 7ms
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call 4ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model 4ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation 7ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an invalid message opens neither an executor nor a turn record 2ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:31:42.730Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:31:42.957Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:42.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:31:42.957Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:31:46.998Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:31:47.044Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Intelligence] Agent error: synthetic late gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:31:47.071Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic late gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 72ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 21ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 20ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:31:47.253Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:31:47.274Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 194ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:31:47.293Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:31:47.310Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+[Claude Intelligence] Agent error: synthetic first gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:31:47.330Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic first gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:31:47.340Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:31:47.354Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:31:47.366Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:31:47.377Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws
+{
+  "timestamp": "2026-10-23T17:31:47.393Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 19ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 14ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested 15ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call 14ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 17ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested 13ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 15ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns
+{
+  "timestamp": "2026-10-23T17:31:47.406Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+{
+  "timestamp": "2026-10-23T17:31:47.425Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws 13ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns 15ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool 8ms
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-23T17:31:48.308Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:48.310Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-23T17:31:48.310Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.389Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.394Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.401Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.404Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.410Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.415Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.425Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.428Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.433Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.435Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.441Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-23T17:31:48.443Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database rejection"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 27ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 6ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 6ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 7ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 3ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request
+{
+  "timestamp": "2026-10-23T17:31:48.496Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private delayed database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row
+{
+  "timestamp": "2026-10-23T17:31:48.502Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known
+{
+  "timestamp": "2026-10-23T17:31:48.558Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request 56ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps HTML and forged frame delimiters inside JSON events with a non-sniffable SSE response 4ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error
+{
+  "timestamp": "2026-10-23T17:31:48.563Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error
+{
+  "timestamp": "2026-10-23T17:31:48.566Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "private streaming database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt
+{
+  "timestamp": "2026-10-23T17:31:48.619Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "private batch database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation
+{
+  "timestamp": "2026-10-23T17:31:48.624Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed
+[Claude Intelligence] Draft error: private drafting refusal
+{
+  "timestamp": "2026-10-23T17:31:48.629Z",
+  "level": "error",
+  "message": "[ana-intelligence] drafting failed",
+  "context": {
+    "err": "private drafting refusal",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known 52ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports recorded without turning generated content into a stream error 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt 55ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > does not invent an AI generation or an aggregate audit outcome when every section failed 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed 3ms
+stdout | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-23T17:31:49.360Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:49.361Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-23T17:31:49.361Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+{
+  "timestamp": "2026-10-23T17:31:50.129Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-23T17:32:50.944Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-23T17:32:50.954Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-23T17:32:50.956Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): session_ended",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s
+{
+  "timestamp": "2026-10-23T17:32:50.958Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): tenant_inactive",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight
+{
+  "timestamp": "2026-10-23T17:32:50.964Z",
+  "level": "warn",
+  "message": "[socket-session-recheck] [ana-realtime] Ending socket s-ana (org 7, user 42): membership_revoked",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s 10ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > re-verifies the handshake token itself, without counting as activity 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member in good standing is left alone 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight 2ms
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-23T17:31:52.987Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:52.988Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-23T17:31:52.988Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-23T17:31:53.469Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":"11111111-2222-4333-8444-555555555555"} despite stale token admin role 35ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":42} despite stale token admin role 9ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 6ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 8ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval 6ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn 16ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads 3ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > rejects another member’s unbound file_id before thread or model work 9ms
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts
+{
+  "timestamp": "2026-10-23T17:31:59.766Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:31:59.767Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts
+{
+  "timestamp": "2026-10-23T17:31:59.767Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the recorded reference' and retained raw execution
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the recorded reference' and retained raw execution
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the recorded reference' and retained raw execution
+[AnA] AI Gateway call failed: The request is about 26,000 tokens (≈24,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 16,000 tokens (anthropic/fixture-large). Reduce the input by about 10,000 tokens (≈50,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the explicit not-recorded outcome' and retained raw execution
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the explicit not-recorded outcome' and retained raw execution
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the explicit not-recorded outcome' and retained raw execution
+[AnA] AI Gateway call failed: The request is about 26,000 tokens (≈24,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 16,000 tokens (anthropic/fixture-large). Reduce the input by about 10,000 tokens (≈50,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps canonical context guidance without an output reserve and without reported tools
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps canonical context guidance without an output reserve and without reported tools
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps canonical context guidance without an output reserve and without reported tools
+[AnA] AI Gateway call failed: The request is about 13,000 tokens. The largest context window available to it is 12,000 tokens (openai/fixture-zero-reserve). Reduce the input by about 1,000 tokens (≈5,000 characters) or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > preserves the existing raw-body refusal 422 carrier byte for byte
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > preserves the existing raw-body refusal 422 carrier byte for byte
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > preserves the existing raw-body refusal 422 carrier byte for byte
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps an ordinary provider error on its existing 503 path
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps an ordinary provider error on its existing 503 path
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps an ordinary provider error on its existing 503 path
+[AnA] AI Gateway call failed: PRIVATE_PROVIDER_DETAIL
+
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the recorded reference' and retained raw execution 82ms
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > returns measured 413 guidance with 'the explicit not-recorded outcome' and retained raw execution 7ms
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps canonical context guidance without an output reserve and without reported tools 5ms
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > preserves the existing raw-body refusal 422 carrier byte for byte 4ms
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > does not admit a copied context name, code and message as canonical class identity
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > does not admit a copied context name, code and message as canonical class identity
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > does not admit a copied context name, code and message as canonical class identity
+[AnA] AI Gateway call failed: The request is about 26,000 tokens (≈24,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 16,000 tokens (anthropic/fixture-large). Reduce the input by about 10,000 tokens (≈50,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps provider-wrapped token failures on the generic path even when the shared classifier returns the token code
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps provider-wrapped token failures on the generic path even when the shared classifier returns the token code
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps provider-wrapped token failures on the generic path even when the shared classifier returns the token code
+[AnA] AI Gateway call failed: PRIVATE_PROVIDER_CONTEXT: token context length exceeded
+
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps an ordinary provider error on its existing 503 path 4ms
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > does not admit a copied context name, code and message as canonical class identity 4ms
+ ✓ server/routes/chat/__tests__/send-message-context-window.test.ts > classic chat carries canonical context admission refusal > keeps provider-wrapped token failures on the generic path even when the shared classifier returns the token code 3ms
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-23T17:32:00.818Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:00.819Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-23T17:32:00.819Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-23T17:32:00.903Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a child cannot start an agent (depth) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > no live run, no agent 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > the switch: off when set false; off in production unless set true (ADR-0015 §2) 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: no scope is refused (D24) 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: the system scope '0' is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: another tenant is refused (D24) 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: a host of another organization is refused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a blank text_to_check is refused up front (D5) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a verify agent with no checker offered is refused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 9ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError', code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' } gives AGENT_FAILED MODEL_NOT_APPROVED 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError' } gives AGENT_FAILED RATE_OR_POLICY_LIMIT 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'Error' } gives AGENT_FAILED ERROR 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > a failure after a call says it could not finish 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 31ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > an organization has at most 8 live agents per process; the next is busy 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the budgets a child stops at > the token budget stops the child, at most two calls past it (D23) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the budgets a child stops at > the round limit stops the child as incomplete 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a pause before the start delays the first call; a run that will not resume starts nothing 22ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a run cancelled while the child waits between rounds is cancelled, not a time budget 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a Stop mid-call is cancelled, not a failure 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > an expired hold stops the child, and says so 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a call still running at the active-time limit is aborted: incomplete, time budget 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > the active-time timer excludes time held for a person 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > a refused read is recorded not-ok, and is not evidence for the answer 18ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > control: a real result is recorded ok, and is evidence 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's own gateway calls are attributed to the child (review 2026-10-11) > a tool running inside the child sees the child run, with the parent named 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:32:03.375Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:03.377Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:32:03.377Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:32:03.473Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:32:05.012Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:05.012Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:32:05.013Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:32:05.013Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds 6ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes 3ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before 1ms
+stdout | server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:05.850Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:05.851Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:05.851Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:05.876Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > recordMayVouch — RULE 2 over the models a record names > admits a record every one of whose models the rule allows 3ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > recordMayVouch — RULE 2 over the models a record names > refuses one unadmitted model among several 0ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > recordMayVouch — RULE 2 over the models a record names > refuses a record that names NO model: an empty list is not approval 0ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > recordMayVouch — RULE 2 over the models a record names > refuses a served entry with no model name — the registry can hold no entry for it 1ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > credits a claim an admitted record holds, and names its contributor 27ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > refuses a claim from an unadmitted record, and names the models for the row 10ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > refuses an unverifiable claim WITHOUT naming a model — there is none to name 8ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > a record the rule refuses does not raise the duplicate cap 15ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > refuses claims past the record-read bound, naming it, and credits the rest 57ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > claims nothing and reads nothing when the save carried no claim 1ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > creditMachineClaims > refuses every claim as unverifiable where there is no turn-record store 1286ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > what the record and the saver are told > discloses a machine author that was claimed and not credited 0ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > what the record and the saver are told > the saver is told the reason and the length, never the record’s internals 9ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > what the record and the saver are told > the refusal names every model, counts the passages, and promises nothing it cannot keep 7ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > what the record and the saver are told > says a model is unnamed rather than leaving a gap where its name goes 8ms
+ ✓ server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts > decoded explicit remedy attribution > credits decoded remedy words from an intact qualified turn, but never unrelated or malformed JSON 25ms
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:09.963Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:09.964Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:09.965Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:10.057Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+{
+  "timestamp": "2026-10-23T17:32:11.691Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000032",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body 10ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation 42ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran 11ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > CONTROL: a fitting native read remains exact and writes its existing legacy receipt 1ms
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-23T17:32:13.356Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:13.357Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-23T17:32:13.357Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] AI Gateway call failed: Synthetic provider failure
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] AI Gateway call failed: Untrusted copied code
+
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage 56ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal 5ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path 4ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal 3ms
+stdout | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+{
+  "timestamp": "2026-10-23T17:32:14.330Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:14.331Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+{
+  "timestamp": "2026-10-23T17:32:14.331Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+{
+  "timestamp": "2026-10-23T17:32:14.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > answers a context-window refusal with 413 TOKEN_LIMIT_EXCEEDED and the actionable sentence
+[Claude Intelligence] Draft error: The request is about 240,000 tokens. The largest context window available to it is 200,000 tokens (anthropic/claude-opus-4-8). Reduce the input by about 40,000 tokens (≈200,000 characters) or split the work into smaller sections.
+{
+  "timestamp": "2026-10-23T17:32:14.455Z",
+  "level": "warn",
+  "message": "[ana-intelligence] drafting: the AI gateway declined the request",
+  "context": {
+    "code": "TOKEN_LIMIT_EXCEEDED"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > still answers a fault of ours with 500 INTERNAL_ERROR and withholds the internals
+[Claude Intelligence] Draft error: relation "prompt_versions" does not exist
+{
+  "timestamp": "2026-10-23T17:32:14.464Z",
+  "level": "error",
+  "message": "[ana-intelligence] drafting failed",
+  "context": {
+    "err": "relation \"prompt_versions\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.470Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "tenantId": 7,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.475Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.476Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.478Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:471:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (/workspace/Concept2Cure/server/lib/tamper-proof-audit.ts:504:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (/workspace/Concept2Cure/server/services/auditService.ts:473:9)
+    at recordAuditRow (/workspace/Concept2Cure/server/services/audit/audit-write-outcome.ts:185:14)
+    at recordModelProvenance (/workspace/Concept2Cure/server/routes/ana-model-provenance.ts:20:12)
+    at async Promise.all (index 0)
+    at /workspace/Concept2Cure/server/routes/ana-intelligence.ts:452:32
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.478Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+{
+  "timestamp": "2026-10-23T17:32:14.478Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+stderr | server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > answers a whole-batch gateway refusal with 413, not 500
+[Claude Intelligence] Batch error: The request is about 240,000 tokens. The largest context window available to it is 200,000 tokens (anthropic/claude-opus-4-8). Reduce the input by about 40,000 tokens (≈200,000 characters) or split the work into smaller sections.
+{
+  "timestamp": "2026-10-23T17:32:14.486Z",
+  "level": "warn",
+  "message": "[ana-intelligence] drafting the batch: the AI gateway declined the request",
+  "context": {
+    "code": "TOKEN_LIMIT_EXCEEDED"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > answers a context-window refusal with 413 TOKEN_LIMIT_EXCEEDED and the actionable sentence 35ms
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > still answers a fault of ours with 500 INTERNAL_ERROR and withholds the internals 5ms
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it 18ms
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > answers a whole-batch gateway refusal with 413, not 500 4ms
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:15.317Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:15.318Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:15.318Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:15.410Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer 35ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > tool output reaches the model framed as untrusted data > a tool result that carries an instruction is fenced, labelled, and cannot close its frame 2ms
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-23T17:32:18.137Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:18.138Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-23T17:32:18.139Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-23T17:32:18.249Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > pins server call identity and exact framed-request body, keeping raw result and public trace boundaries 17ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > records call-order admission when workers finish in another order; withheld raw citations never enter grounding 9ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > correlates a reused id independently in different rounds 2ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > does not assign one ambiguous same-round call id to two different tools 3ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > CONTROL: the currently offered passage tool really executes and its raw data stays in the record 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > uses a recorded withheld body rather than full raw source text 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > takes the staged bodies of a mixed private-read round without inferring receipts or replay order 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":null,"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"","modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"   ","modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":7,"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":null} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":7} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":null} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > an empty staged body does not revive raw evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > rejects duplicate same-round ids even under different tools 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > allows the same id in separate rounds without merging their evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > a partly modern round contributes only valid staged rows, never its legacy sibling 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > even an invalid modern field marks its round; legacy siblings cannot downgrade it to replay 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy search_document_passages round or its other calls 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy read_project_document round or its other calls 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: a failed modern step contributes no evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: payload-nested staging fields remain data, never the trace authority 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: ordinary legacy replay still budgets failed siblings before filtering successes 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: malformed top-level result has no trace evidence 0ms
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:32:20.974Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:20.975Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:32:20.975Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:32:21.015Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > copies only primitive metadata immediately, without retaining or mutating the response 4ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > keeps first-round zero, later rounds and repeated-model calls with their distinct request IDs in callback order 1ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":"","model":"","requestId":""} 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":42,"model":false,"requestId":{"not":"a request id"}} 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {} 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves nonempty strings exactly, including whitespace under the existing helper rule 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves the existing raw tool collector without a model observer 2ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models 25ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known 9ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known 9ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known 8ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late failed turn without inventing a call from its error 9ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late stopped turn without inventing a call from its error 6ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the omitted observation-list legacy fallback and exact warning 7ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the empty observation-list legacy fallback and exact warning 7ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > names no served model when the first call fails without returning a response 8ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an unbound turn unrecorded despite observed models 0ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:23.926Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:23.927Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:23.928Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-23T17:32:24.013Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 9ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 5ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 4ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 7ms
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:26.518Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:26.519Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:26.520Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:26.541Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash 32ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails 12ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it 12ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed' 9ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records 9ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records 8ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0 8ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs 9ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs 9ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own 2ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain 16ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it 1ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:29.203Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:29.322Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:29.323Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+{
+  "timestamp": "2026-10-23T17:32:29.323Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+{
+  "timestamp": "2026-10-23T17:32:32.844Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+{
+  "timestamp": "2026-10-23T17:32:32.865Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+{
+  "timestamp": "2026-10-23T17:32:32.882Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report 30ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status 45ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId 16ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool 7ms
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Intelligence] Agent error: gateway down
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+{
+  "timestamp": "2026-10-23T17:32:32.893Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "gateway down",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+{
+  "timestamp": "2026-10-23T17:32:32.917Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+{
+  "timestamp": "2026-10-23T17:32:32.931Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+{
+  "timestamp": "2026-10-23T17:32:32.945Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done 35ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted 14ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error 10ms
+stdout | server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:33.735Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:33.736Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:33.736Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:33.759Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > names every model that served the turn, each with RULE 2’s verdict 29ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > admits a turn every one of whose models the rule allows (negative control) 9ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > a record that names no model returns an empty list, not an error 7ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > an empty list is not approval: a door reading only `.some(unqualified)` would admit it 7ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > refuses an id that is not a record id, without touching the store 1ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > refuses a record of another organisation: a turn id is not a capability 13ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > refuses a record that no longer verifies whole 12ms
+ ✓ server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > refuses a record id that names nothing 2ms
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:32:36.381Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:36.382Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:32:36.382Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:32:36.464Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves an initial canonical refusal without running a tool, staging results or writing receipts 9ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves a follow-up refusal after exact framed staging, raw callbacks and an admitted source receipt 7ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > CONTROL: a fitting follow-up still completes normally with its exact source receipt 1ms
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-23T17:32:38.829Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:38.830Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-23T17:32:38.830Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-23T17:32:38.911Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 1 active lanes 8ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 4 active lanes 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > an uninterrupted queued tool round > still runs each handler and carries its result into the next model turn 2ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > is each distinct model in the order it first served, not the first call alone 7ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > keeps a call whose model the gateway did not report: an unknown author is still an author 1ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > falls back to the turn's one model where the door records no calls, and is empty where it names none 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > outside production: approved for high-risk work, whatever its PQ, and the facts it rests on 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > in production: only a passed PQ, so a PQ-pending approved model is not qualified 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > tolerates a `calls` that is not an array 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > falls back to the turn’s own model when `calls` is unusable 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > skips a call that is not an object instead of throwing on it 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > a call whose model the gateway did not report still counts as an unknown author 0ms
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-23T17:32:41.855Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:41.856Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-23T17:32:41.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-10-23T17:32:42.647Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token)
+{
+  "timestamp": "2026-10-23T17:32:43.487Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_challenge) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token)
+{
+  "timestamp": "2026-10-23T17:32:43.489Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_partial) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token)
+{
+  "timestamp": "2026-10-23T17:32:43.489Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (refresh) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all
+{
+  "timestamp": "2026-10-23T17:32:43.491Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (missing_token_type) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked
+{
+  "timestamp": "2026-10-23T17:32:43.492Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate
+{
+  "timestamp": "2026-10-23T17:32:43.493Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership indeterminate",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active
+{
+  "timestamp": "2026-10-23T17:32:43.494Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined for org 7 — tenant not active",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 5ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 0ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 1ms
+stdout | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+{
+  "timestamp": "2026-10-23T17:32:44.257Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:44.258Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+{
+  "timestamp": "2026-10-23T17:32:44.258Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+{
+  "timestamp": "2026-10-23T17:32:44.337Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > the handler is never called, and the model reads the lost-input result 5ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > a tool outside the allowlist is still answered TOOL_NOT_OFFERED, not lost input 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > control: a call with no parse error and empty input still runs 2ms
+stdout | server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:46.706Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:46.708Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:46.708Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:46.730Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > is filed once: a fault after the draft was filed files no second record 39ms
+ ✓ server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > a check that could not run is recorded as not run, never as an empty check 15ms
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-23T17:32:49.265Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:49.266Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-23T17:32:49.266Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-10-23T17:32:50.012Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits thinking then done for a completed turn 2ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > barges in: a new message cancels the in-flight turn and suppresses its output 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > cancel interrupts the current turn and suppresses its done 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits ana:error when the runner throws 0ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > dispose aborts silently (no client to notify) 0ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 7ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > says plainly what it does not know: no request id, no sent facts, no routing 0ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > records what was sent, never the tool schemas, and no thinking as none 0ms
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:32:52.403Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:52.404Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:32:52.404Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:32:52.483Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+{
+  "timestamp": "2026-10-23T17:32:52.514Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached
+{
+  "timestamp": "2026-10-23T17:32:52.526Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant
+{
+  "timestamp": "2026-10-23T17:32:52.530Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 29ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 5ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 24ms
+stdout | server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:53.356Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:53.358Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:53.358Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+{
+  "timestamp": "2026-10-23T17:32:53.382Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > every model that served a call, each with RULE 2’s verdict and the facts it rests on 19ms
+ ✓ server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > a turn whose record names no model says so: an empty list, which no reader may take as approved 8ms
+ ✓ server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > a turn that was not filed names no models (negative control: unchanged) 1ms
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-23T17:32:55.925Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:55.926Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-23T17:32:55.926Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined
+{
+  "timestamp": "2026-10-23T17:32:56.045Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording 24ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'zero' before service or recording 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'fraction' before service or recording 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'null' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'false' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'true' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'numeric string' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'empty string' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'array' before service or recording 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'object' before service or recording 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined 17ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 1 3ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 3 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 5 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 99 2ms
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts
+{
+  "timestamp": "2026-10-23T17:32:56.866Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:56.867Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts
+{
+  "timestamp": "2026-10-23T17:32:56.867Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.968Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.968Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.973Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.973Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.975Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:471:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (/workspace/Concept2Cure/server/lib/tamper-proof-audit.ts:504:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (/workspace/Concept2Cure/server/services/auditService.ts:473:9)
+    at recordAuditRow (/workspace/Concept2Cure/server/services/audit/audit-write-outcome.ts:185:14)
+    at recordModelProvenance (/workspace/Concept2Cure/server/routes/ana-model-provenance.ts:20:12)
+    at async Promise.all (index 0)
+    at /workspace/Concept2Cure/server/routes/ana-intelligence.ts:452:32
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.975Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context
+{
+  "timestamp": "2026-10-23T17:32:56.975Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: {"status":"loaded","sources":[{"documentId":"00000000-0000-4000-8000-000000000001","version":2,"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","spanSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":0,"end":25,"totalChars":25},"text":"FAKE_SERVER_LOADED_RESULTS"}]} 20ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: {"status":"unassessed","sources":[]} 6ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > refuses a reserved context before generation or turn recording: null 3ms
+ ✓ server/routes/__tests__/ana-intelligence-source-context.test.ts > HTTP batch reserves sourceContext for admitted server code > preserves ordinary drafting and server-derived identity without an internal context 24ms
+stdout | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts
+{
+  "timestamp": "2026-10-23T17:32:57.799Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:57.800Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts
+{
+  "timestamp": "2026-10-23T17:32:57.800Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /draft returns the generated output with a contained missing-audit outcome
+{
+  "timestamp": "2026-10-23T17:32:57.878Z",
+  "level": "warn",
+  "message": "[ana-intelligence] Model provenance audit unavailable",
+  "context": {
+    "action": "ai_generation",
+    "surface": "draft",
+    "code": "AUDIT_ROW_NOT_PERSISTED"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /batch returns the generated output with a contained missing-audit outcome
+{
+  "timestamp": "2026-10-23T17:32:57.890Z",
+  "level": "warn",
+  "message": "[ana-intelligence] Model provenance audit unavailable",
+  "context": {
+    "action": "ai_generation",
+    "surface": "batch",
+    "code": "AUDIT_ROW_NOT_PERSISTED"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /batch returns the generated output with a contained missing-audit outcome
+{
+  "timestamp": "2026-10-23T17:32:57.891Z",
+  "level": "warn",
+  "message": "[ana-intelligence] Model provenance audit unavailable",
+  "context": {
+    "action": "ai_generation",
+    "surface": "batch",
+    "code": "AUDIT_ROW_NOT_PERSISTED"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /draft/stream returns the generated output with a contained missing-audit outcome
+{
+  "timestamp": "2026-10-23T17:32:57.896Z",
+  "level": "warn",
+  "message": "[ana-intelligence] Model provenance audit unavailable",
+  "context": {
+    "action": "ai_generation",
+    "surface": "draft/stream",
+    "code": "AUDIT_ROW_NOT_PERSISTED"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /draft returns the generated output with a contained missing-audit outcome 22ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /batch returns the generated output with a contained missing-audit outcome 9ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts > an unexpected lazy audit module failure after generation > /draft/stream returns the generated output with a contained missing-audit outcome 4ms
+stdout | server/routes/__tests__/ana-intelligence-quick-provenance.test.ts
+{
+  "timestamp": "2026-10-23T17:32:58.712Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:32:58.713Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-quick-provenance.test.ts
+{
+  "timestamp": "2026-10-23T17:32:58.714Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-quick-provenance.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-quick-provenance.test.ts > POST /api/claude/quick provenance > the audit row names the model the gateway served and hashes the content returned
+{
+  "timestamp": "2026-10-23T17:32:58.797Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-quick-provenance.test.ts > POST /api/claude/quick provenance > the audit row names the model the gateway served and hashes the content returned 27ms
+
+ Test Files  34 passed (34)
+      Tests  330 passed (330)
+   Start at  17:31:30
+   Duration  88.19s (transform 10.22s, setup 448ms, import 63.00s, tests 20.20s, environment 3ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/green-results.json

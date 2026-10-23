@@ -483,6 +483,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           typed: typeof message === 'string' ? message : String(message ?? ''),
           messages: loopMessages,
           calls: loopCalls.calls,
+          servedCalls: loopCalls.servedCalls,
           response: response as Parameters<typeof recordLoopTurn>[1]['response'],
           outcome,
           error,
@@ -855,6 +856,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       loopMessages = baseRequest.messages as Array<{ role: string; content: unknown }>;
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
+        onModelResponse: loopCalls.onModelResponse,
         toolContext: {
           readOnly,
           sqlClient: requestPgClient(req),

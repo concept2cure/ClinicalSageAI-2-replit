@@ -1,0 +1,79 @@
+{
+  "qualifiedAt": "2026-10-23T17:45:45.520824+00:00",
+  "scope": "Current D2/W2 native returned-model provenance after erased test-fixture cast correction; selected regression cohort, not whole repository suite.",
+  "supersedesForCurrentSource": "root/qualification.json remains original historical qualification at a362; current fixture correction preserves byte-identical runtime JavaScript.",
+  "tests": {
+    "passed": 330,
+    "files": 34,
+    "failed": 0,
+    "skipped": 0,
+    "newCases": 43
+  },
+  "includedLint": {
+    "errors": 0,
+    "existingWarnings": 22,
+    "warningGrowth": 0,
+    "files": 7
+  },
+  "selectedInputs": 551,
+  "productionHashes": {
+    "server/services/ana/turn-record-loop.ts": "64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893",
+    "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+    "server/routes/ana-intelligence.ts": "7495cc668f701daac9292f7cccd4aa95fcb0bc69c8272c6882dc6e180aca518d",
+    "server/services/ana/ana-realtime.ts": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0"
+  },
+  "testHashes": {
+    "server/services/ana/__tests__/turn-record-draft.pglite.test.ts": "bc36996a4264ffdfea1a14f0f0f448d5072d11ef723b6b03870057cfae72659f",
+    "server/services/ana/__tests__/turn-record-loop.test.ts": "45709368d2a005056408e4a622e57e8daa5f460224acd8caf4ff86efd2068961",
+    "server/services/ana/__tests__/turn-record-sent.test.ts": "16bde25065a174f3bdd20dad3a713575ad1aa7de185b4c5d49db1a1682e9aeb5",
+    "server/services/ana/__tests__/turn-record-served-by.pglite.test.ts": "492d07f0d7913008a74c33f4a5bcb21fe88980cf31b00e29ea1cbeac0e1f536f",
+    "server/services/ana/__tests__/turn-record-served-models.test.ts": "2e131cb902fa8cf0f181ec35acc07f1b01253fde07fb4fe7af8c31f27ee7e0bb",
+    "server/services/ana/__tests__/turn-record.pglite.test.ts": "3e42188953e0c2a25cb170e4342a3ed0dafbd941afb3329ee3604c6848fb8703",
+    "server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts": "8124a47a8cc8460421a822f41f1948549b592f6beba6d21dfb5efc6d451efa58",
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts": "0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6",
+    "server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts": "232822bfc1697a0cbb851bd15468f12b3ab3861f155e81f95e4eaeab288cc509",
+    "server/services/ana/__tests__/executor-agentic-loop.test.ts": "1910c6f976321256f8ce8352bcc9cee6b75398e0fa675b56413d9fb91debd7b5",
+    "server/services/ana/__tests__/ana-realtime-auth.test.ts": "cdade54dbf2ed12f071ba5a4daa076717c98159216260ba753209c36d127798e",
+    "server/services/ana/__tests__/ana-realtime-session-recheck.test.ts": "08f10a7a25908c692aa7a78a35c6c755e3fbdcd7d7fb8a2606fa616562f688e1",
+    "server/services/ana/__tests__/ana-realtime.test.ts": "69d8e6b090c3b16eaac807a904dadd209442c7711e56360e5c888efe304a21d6",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts": "bd43234ea5eebb87585f554dd5082467713e9ab445b01a60556c01e66850b86a",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9",
+    "server/routes/chat/__tests__/send-message-result-budget.test.ts": "c65f2f63632dc965f4da22e08f5fe5a64ba1ddbab3e425452c71504cad4912bd",
+    "server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts": "29ec76efbb0191587eeeb9b417c474ca4522422435925797d2489012cf133dcd",
+    "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts": "0d51801e394e7bae8e2231f5f6c36d76672ae706a84001e236453f9273b074ef",
+    "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts": "b8d8b05482e6676ede265ca046a95b627c38cc5b4470dda6679943344512a087",
+    "server/routes/__tests__/ana-intelligence-gateway-errors.test.ts": "ee456eedbff9d6c84b297de72df1bd1f663363ec3a84025d948d14c6152b4584",
+    "server/routes/__tests__/ana-intelligence-identity.test.ts": "43a8daf052df76a983ad237de2685f2a0684c0eb4385310be79ea73c690aae2d",
+    "server/routes/__tests__/ana-intelligence-quick-provenance.test.ts": "ade5a47ca1f322359d4a66beee8b2c5352f0bc99ebc843b40443999cdcdc6146",
+    "server/routes/__tests__/ana-intelligence-source-context.test.ts": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182",
+    "server/services/authoring/__tests__/turn-served-models.pglite.test.ts": "2c4ae2ddcbc314bcf024da1eb33ae9b20c088527abb1727ddecb855de9a70819",
+    "server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts": "daef1106e900de8930c2effe516f695d0f6494f36149ba3aec0c925800e753cc",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0",
+    "server/services/ana/__tests__/strict-round-body-executor.test.ts": "cd1a1fa98028dfbde595fb448dd525dced57906ccb58434b2e7b7ee314fa15d3",
+    "server/services/ana/__tests__/read-delivery-executor.test.ts": "c0bc0db4ef1502203633f5c5730635b6bc48b7c046d9ca4c3bf4cb0673a166d3",
+    "server/services/ana/__tests__/sub-agent.test.ts": "b7da96e494b8bf184ea033b82b39032701207c0a441023c8886389a780b7c412",
+    "server/services/ana/__tests__/sub-agent-passage-staging.test.ts": "a677a4f47dadb4e5d4d3fb7be8ad1d46a3efbcafd2c1ba4a7053e30e06bdc73a",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+  },
+  "currentFrozenTests": {
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+  },
+  "evidenceHashes": {
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/verified-command.json": "4723b077afd617a5b88b377b77ff80e269142252ba28b3563da85df32ee23301",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/verified-results.json": "0c586d3498d0ed47b7c345c96a2b9c7e2bbfd54bbe59f61369639cfe762b9859",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/verified-exit.json": "a0c4e3293148bb8ec050f0ef343d878a03abfa7860660d2f4a7294fc50a4cb87",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/verified.txt": "d31bdaeeb15a806ed2e1ece631d98b34203304510f81e78f5ec419aa888d860a",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-verified.json": "04db80a0dd906615f4a51057cccc5854e94d758da18a76897fecb339ef57fce6",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/typecheck-runtime-equivalence.json": "4c2fd930a6ce81631b1df35b3c341d85e12ad542d6d33cbeaaef7e7cca15609c",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/qualification-source-manifest-current.json": "01f70b00d98387125582971d40c87a91a075121f1bf634513527e8a8124300d5",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/frozen-tests-current.json": "cebf129dc61f707314866e1c625b5e347823c2cb0e0ac88fd75fedca8ef57554"
+  },
+  "originalTestAssertionsAndFixturesUnchanged": true,
+  "productionUnchangedByTypingCorrection": true,
+  "publication": "Normal retry outcome and fresh remote checks recorded separately; no bypass or baseline increase."
+}

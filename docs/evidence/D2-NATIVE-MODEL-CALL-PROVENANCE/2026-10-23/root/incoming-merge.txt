@@ -1,0 +1,7 @@
+Merge made by the 'ort' strategy.
+ ...NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md | 127 +++++++++++++++++++++
+ .../W5/2026-10-23-nonus-release-identity/README.md |  48 ++++++++
+ docs/work-orders/README.md                         |   1 +
+ 3 files changed, 176 insertions(+)
+ create mode 100644 docs/design/NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/README.md

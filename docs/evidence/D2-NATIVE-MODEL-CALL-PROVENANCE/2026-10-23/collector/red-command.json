@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-results.json",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts"
+  ],
+  "cwd": "/workspace/Concept2Cure",
+  "env": {
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "nodeVersion": "v22.23.3",
+  "startedAt": "2026-10-23T17:29:07.162309+00:00",
+  "testSha256": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6"
+}
