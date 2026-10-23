@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-23T19:37:33.420472+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "mergeExitCode": 1,
+  "before": "4ee96c450cfce386a302d39751f6239540fd7b16",
+  "after": "5f07946c09f3f0593026641aa6ace4e37f7a8a16",
+  "conflictsResolved": [
+    "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
+  ],
+  "humanResolution": "Preserved incoming cases1\u201383; appended original source cases76\u201383 as84\u201391; preserved explicit workspace step3 and source contract notes. All91 Not run.",
+  "changedPriorPins": [
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+    "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx",
+    "scripts/ci/check-sql-interpolation.selftest.mjs"
+  ],
+  "rawGzipSha256": "ce220e17f9c3b9ce9c9df74dc8bc821238ee5e92e0dbbbfbc742d93eb2f52b73"
+}

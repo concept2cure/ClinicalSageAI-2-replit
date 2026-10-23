@@ -1,0 +1,61 @@
+{
+  "startedAt": "2026-10-23T18:45:17.044120+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "client/src/concept2cure/v2/__tests__/editorTarget.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 6.242,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "channel/initial-green-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editorTarget.ts": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "77000318cb3e8c6b0556f7b85face2b5941b80f40cee96d6e8d4e30ebd12f711",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx": "9aae4670f11efcb9113a949012ffec6fe8145958f66ab5321eb64f18201df2e8",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "dda4527875c56a24ed3f08920c8e6b2e7295de9439878ce7f3307075f4890378",
+    "client/src/concept2cure/v2/__tests__/editorTarget.test.ts": "f6aee727584303788e5b31490cf46efe1a05297e13f219bb0e3737099aac03c9",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editorTarget.ts": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "77000318cb3e8c6b0556f7b85face2b5941b80f40cee96d6e8d4e30ebd12f711",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx": "9aae4670f11efcb9113a949012ffec6fe8145958f66ab5321eb64f18201df2e8",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "dda4527875c56a24ed3f08920c8e6b2e7295de9439878ce7f3307075f4890378",
+    "client/src/concept2cure/v2/__tests__/editorTarget.test.ts": "f6aee727584303788e5b31490cf46efe1a05297e13f219bb0e3737099aac03c9",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26"
+  },
+  "sourceDrift": [],
+  "rawOutput": "initial-green.log.gz",
+  "rawGzipSha256": "a312f285733d2db1d4742ee0b8d892e42bb8769f0874746a234e387a23f8d60b",
+  "testSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  64 passed (64)",
+    "Duration  5.79s (transform 1.85s, setup 244ms, import 2.42s, tests 1.53s, environment 1.22s)"
+  ]
+}

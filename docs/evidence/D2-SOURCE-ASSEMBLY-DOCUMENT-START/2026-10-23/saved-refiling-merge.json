@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-23T19:16:04.851578+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "implementationCommit": "58e10011677f47dbfb9ee43d305976bdbd3790db",
+  "incomingOrigin": "7184fb1fdb25a549bbf623d54f2d51783ae0d498",
+  "after": "92dbe0c6b63e407267efb881c67e66094384c265",
+  "changedPriorPins": [
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "server/routes/authoring.router.ts"
+  ],
+  "rawGzipSha256": "7753602c0912fef3dcf3c93ecfee7fc69fbc369d2f99b8dac2e923d01ff45ec5"
+}

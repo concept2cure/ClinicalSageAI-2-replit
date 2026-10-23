@@ -1,0 +1,15 @@
+{
+  "frozenAt": "2026-10-23T18:54:52.589319+00:00",
+  "scope": "Four authorized creation-owned files frozen after meaningful RED, final 9-suite/176-case GREEN and strict 4-file lint. Root-only Workbench/channel changes are not pinned or qualified by this worker. No further worker source edits.",
+  "files": {
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "2653f46d099d006ac5257caa8147d6a2ca31c0d43fdb661d7cfdd91d9b6bd23d",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "fec3aacb866b35dfe9028f58be7b9c952a488302eba7fffad74d821dcb58f951",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx": "3e8866f91e129110951c3d23ae234833de2bba086b2f230834ec1a64918331b6",
+    "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx": "2c9af4ceb63450eb8727722432684d442b640dd9f384e57278b8e474a4500cb8"
+  },
+  "qualifiedReceipts": {
+    "green-qualified-final.json": "1737e40dd8eddd5fb094bb2af436efd472718fb03066388830c1ca0761cc85f3",
+    "lint-qualified-final.json": "e1493005c012afdfdeb6624955b38cda62ed244066f96f0a3fd64b4dc11af0f1"
+  },
+  "qualificationFreeze": "qualified-final-freeze.json"
+}

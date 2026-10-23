@@ -1,4 +1,4 @@
-import type { EditorTarget } from '../editorTarget';
+import { captureEditorSourceDocumentStartOwner, type EditorTarget } from '../editorTarget';
 import { readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import { captureEditorDraftGuard } from './authoringDraftTransport';
 
@@ -12,4 +12,18 @@ export function captureAssemblySourceIntent(target: EditorTarget, admitted: () =
   if (!sources) return null;
   const current = captureEditorDraftGuard({ programId: target.programId, isCurrent: admitted });
   return { docId: target.docId, programId: target.programId, sources, current };
+}
+
+export interface AssemblySourceDocumentStartIntent {
+  programId: string; sources: AssemblySourceSelector[]; current: () => boolean;
+}
+/** Source starts have no document UUID until the canonical creator confirms one. */
+export function captureSourceDocumentStartIntent(target: EditorTarget, admitted: () => boolean): AssemblySourceDocumentStartIntent | null {
+  const owner = captureEditorSourceDocumentStartOwner(target);
+  const sources = readAssemblySourceSelectors(target.sourceDocumentStart?.sources);
+  if (!owner || !sources || !target.programId) return null;
+  const snapshot = JSON.stringify(sources);
+  const current = captureEditorDraftGuard({ programId: target.programId,
+    isCurrent: () => owner() && admitted() && JSON.stringify(readAssemblySourceSelectors(sources)) === snapshot });
+  return { programId: target.programId, sources, current };
 }
