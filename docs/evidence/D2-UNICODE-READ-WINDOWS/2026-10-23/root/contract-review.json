@@ -1,0 +1,9 @@
+{
+  "reviewer": "read_window_contract_review",
+  "verdict": "CLEAR boundary contract",
+  "clarificationsApplied": [
+    "Distinguish handler RESULT_BUDGET from host per-result/round/context budgets",
+    "Limit cancellation no-new-receipt promise to before admission/commit; retain unconfirmed latewrite outcomes"
+  ],
+  "acceptedScope": "Valid pair boundaries, actual span equality, untouched genericfitter and guardedwriter; no malformed-original repair/refusal claim"
+}
