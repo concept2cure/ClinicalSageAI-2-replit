@@ -1,0 +1,18 @@
+{
+  "originalPath": "docs/evidence/D2-VAULT-PASSAGE-FRESHNESS/2026-10-23/root/first-qualified-source.ts.txt",
+  "originalSha256": "0eca393839d7d36834adb615e3a212dc896d1441b1890c703e4513334c938e4d",
+  "originalBytes": 100018,
+  "reconstruction": "Concatenate part1 and part2 bytes in that order; no separators.",
+  "parts": [
+    {
+      "path": "first-qualified-source.part1.txt",
+      "bytes": 49960,
+      "sha256": "96597653e24c51e54679a0e430f58447cc8688a4ffa865f85210f31a56a5a1dd"
+    },
+    {
+      "path": "first-qualified-source.part2.txt",
+      "bytes": 50058,
+      "sha256": "a2966fa3248fe07619151f416c5b4daea5633f95b96c245978876fda7bf4dece"
+    }
+  ]
+}

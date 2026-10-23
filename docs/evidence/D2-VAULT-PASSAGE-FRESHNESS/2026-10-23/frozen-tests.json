@@ -1,0 +1,18 @@
+{
+  "baselineHead": "526e86cba58dcca26e4b42b536e8315d45bdd9d1",
+  "productionSha256": "994fc4c396f088beb1c3803b113c481ebdcef63c0f15c9507c6fd1edcc3d10f6",
+  "sha256": {
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts": "893204d8034c840a3aaefeeb1c203fc87c2ebef755f46aebd040595ff840fc00",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts": "67e2be1e1996597285b8bb9e0e13e18180d7b1c341a18ba14e6be8400a75d587",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts": "4d1a258f025cc4fc77cdc6bd20677a24d0fa00360550b4375f0e113ed813c6f1",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts": "3b761c6ea7a93d75fe815dad362b1c101c33ef0baee64345793d0da4833b297b"
+  },
+  "baseline": {
+    "tests": 55,
+    "failed": 41,
+    "passed": 14,
+    "skips": 0,
+    "runtimeErrors": 0
+  },
+  "note": "All failed cases are semantic assertions. Source hashes match red command after execution."
+}

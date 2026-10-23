@@ -1,0 +1,14 @@
+{
+  "typescriptVersion": "5.6.3",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext"
+  },
+  "file": "server/services/__tests__/rag-vault-freshness-mapping.test.ts",
+  "change": "Exactly two erased non-null assertions on parameters of already-selected SQL mock calls; no value, fixture or assertion changed.",
+  "beforeSha256": "4d1a258f025cc4fc77cdc6bd20677a24d0fa00360550b4375f0e113ed813c6f1",
+  "afterSha256": "28decbf647853a4a6d06ab1fc40200ee03dd1178ade8566b21a7a8ea2feaa51f",
+  "emittedJavaScriptSha256": "803412963a4cd732e120e52983727eeac287ddd3f633dd9c6b8ec56035303878",
+  "emittedJavaScriptByteIdentical": true,
+  "baselineChanged": false
+}

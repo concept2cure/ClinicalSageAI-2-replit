@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { AdvancedRAGPipeline, type RetrievedDocument } from '../advancedRAGPipeline.js';
 import { buildRagGenerationRequest, buildRagSourceText } from '../rag-generation-request.js';
 
@@ -6,7 +7,10 @@ const sources: RetrievedDocument[] = [
   { id: 'chunk-1', documentId: 'document-1', title: 'Compressed', content: 'Raw one', expandedContent: 'Expanded one', compressedContent: 'Compressed one', atomType: 'vault_chunk', initialScore: 1, finalScore: 1 },
   { id: 'chunk-2', documentId: 'document-2', title: 'Expanded', content: 'Raw two', expandedContent: 'Expanded two', compressedContent: '', atomType: 'vault_chunk', initialScore: 1, finalScore: 1 },
   { id: 'chunk-3', documentId: 'document-3', title: 'Raw', content: 'Raw three', atomType: 'vault_chunk', initialScore: 1, finalScore: 1 },
-];
+].map(d => ({ ...d, vaultPassageSnapshot: {
+  extractedTextSha256: createHash('sha256').update(d.content, 'utf8').digest('hex'),
+  charStart: null, charEnd: null,
+} }));
 const expectedSourceText = '[Source 1: Compressed]\nCompressed one\n\n---\n\n[Source 2: Expanded]\nExpanded two\n\n---\n\n[Source 3: Raw]\nRaw three';
 // Literal snapshot of the pre-extraction production request, not inferred from the builder.
 const expectedRequest = {
@@ -29,6 +33,8 @@ function pipeline(documents = sources) {
   const context = { documents, totalCandidates: documents.length, retrievalStrategy: 'basic', processingTimeMs: 0, tokensUsed: 0 };
   const query = vi.fn(async () => ({ rows: documents.map(d => ({
     id: d.id, document_id: d.documentId, title: d.title, original_file_available: true,
+    chunk_text: d.content, char_start: null, char_end: null,
+    extracted_text_sha256: d.vaultPassageSnapshot?.extractedTextSha256, chunk_in_extraction: true,
   })) }));
   const client = { query, release: vi.fn() };
   Object.assign(instance, {
