@@ -1494,8 +1494,8 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'apps',
     label: 'Show or hide the admin controls',
     description:
-      'On the Apps catalog, show or hide the administrator controls — the per-module enable/disable ' +
-      'switches on the app cards. This only changes what is displayed: switching a module on or off ' +
+      'In Workflows, show or hide the administrator controls — the per-module enable/disable ' +
+      'switches on the feature cards. This only changes what is displayed: switching a module on or off ' +
       'for the organisation stays an administrator\'s own click on the switch this reveals (a ' +
       'persisted, admin-only write). Refuses honestly when the catalog has not loaded, failed, is ' +
       'empty, or when no module on screen has a switch at all (plan or industry-mode locks have no ' +

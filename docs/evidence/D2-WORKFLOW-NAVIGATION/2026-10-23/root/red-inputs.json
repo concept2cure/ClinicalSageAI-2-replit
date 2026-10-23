@@ -1,0 +1,31 @@
+{
+  "baseline": "381a42fda6488914e6f1562927dcf89d1ca527df",
+  "tests": {
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx": "e605cbf833764bd7d5f91d6b22a6a018b1aef3badaf0c3b27c58fe50fd044dee",
+    "client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx": "458b97c33174d3a0e0aa25b70821f8a1c39a723a8b8b1a5ab5e93d2a8d648817",
+    "client/src/concept2cure/v2/__tests__/appsLive.test.tsx": "6f49880efeaa421b640af234104d8678766b66413b902a44d5cd586ba7bfc123",
+    "client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx": "3bf63572455adaae9f3aa03a5f1a942324d814a2c5327679a21f92b355cb43e9",
+    "client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx": "60f0e470ba99d4b255eecd6d7a8e0894877b386be2488d1ef3e94144d79fb3ea",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "50b09c99367d0ed46f51731f3865602cd4293c29f99b1c41f872820868bddb32",
+    "client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx": "441a1231ebc9658d2d5ff80150d6cdbb542b3082c8fbd8514970155c602cac6e",
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx": "984bbf98ad61575d168391c2f3ae69a8987f0ad40d52bacf197b9ad8483de6b3"
+  },
+  "production": {
+    "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx": "b3b650b7f511ba84826131937d5f37de41233377a14aac131128c0969cf55d4d",
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx": "ada4564fab7ed2b741cbc88cb514fe1d3bffbce243968b72ba62b79233110e0b",
+    "client/src/concept2cure/v2/surfaces/Surfaces.tsx": "77b2249a3f781c0e354a482b77acd605e6e1e0e9c4310da93afbcf10583df1cd",
+    "client/src/concept2cure/v2/registryModel.ts": "f4ed5c5bc1fb1a16932b9336f7c2262126564436a646b3b6a4f52c9bb1734542",
+    "client/src/concept2cure/v2/Shell.tsx": "a81229c9722c911c1758d772b689d866d84e8fe1c1ccd91585d84bacf5b5997e",
+    "shared/constants/ui-surface-registry.ts": "457a175de39fd3fd5b95424c4b4ab5ffac42f43937aa280a2f39927af0ee6513",
+    "client/src/concept2cure/v2/navEntitlements.tsx": "e7a42882fcd23b58af4e46d104b541263cf264a1e7171d1923da7a5385b12e14",
+    "shared/constants/launch-scope.ts": "dd7562241c298fc91dbc1dde703e413cc453fa908449bdf60ba7661f6a050aeb"
+  },
+  "notes": [
+    "legacy-red: six requested label/error changes fail; 27 existing controls pass",
+    "workflows-red: 12 requested workflow behaviors fail on unchanged catalog",
+    "home-red: original 15 expected Home/label/overlay failures",
+    "home-final-red: two added CmdK selectors also matched Ask AnA rows (test authoring issue); corrected to anchored destination names before first-green. Not 17 production regressions.",
+    "Catalog logic extracted into WorkflowCatalog.tsx only after red runs; AdminSurfaces reexports stable Apps."
+  ],
+  "homeAfterSelectorCorrectionSha256": "a2745680af16b9bb8aa76389d167dabb1a4bf2012c646b49cef7d932ecadb16f"
+}

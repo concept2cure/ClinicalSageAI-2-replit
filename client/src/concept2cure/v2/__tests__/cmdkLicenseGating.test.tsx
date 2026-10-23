@@ -320,7 +320,7 @@ describe('⌘K licence gating', () => {
   /* CONTRACT 7 — THE DEFAULT LIST GATES TOO, AND AN UNKNOWN ID NEVER LOCKS.
      Two rules in one mount because they need the same payload. The empty-query
      "Jump to" list is a separate code path from a search hit and was equally
-     ungated. And the Apps catalog carries no catalog row on purpose — absent
+     ungated. And Workflows carries no catalog row on purpose — absent
      from the payload must mean unconditionally available, which is what keeps
      the surface that RESOLVES a lock reachable from a locked palette. */
   it('gates the default list without ever locking a surface the catalog has no row for', async () => {
@@ -343,7 +343,7 @@ describe('⌘K licence gating', () => {
     // An admin switched it off; the reason is that, not a plan gap.
     expect(locked.querySelector('.hint')?.textContent).toBe('turned off for this workspace');
 
-    const apps = screen.getByRole('button', { name: /^Apps/ });
+    const apps = screen.getByRole('button', { name: /^Workflows/ });
     expect(apps.getAttribute('data-locked')).toBeNull();
     expect(apps.getAttribute('aria-label')).toBeNull();
     fireEvent.click(apps);

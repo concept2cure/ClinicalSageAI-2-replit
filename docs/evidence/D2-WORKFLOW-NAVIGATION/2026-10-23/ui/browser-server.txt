@@ -1,0 +1,3 @@
+Synthetic existing Apps component at http://127.0.0.1:5201
+8:10:37 PM [vite] (client) ✨ new dependencies optimized: react/jsx-dev-runtime
+8:10:37 PM [vite] (client) ✨ optimized dependencies changed. reloading

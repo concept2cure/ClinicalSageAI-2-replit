@@ -29,7 +29,7 @@ import { ApiRequestError } from '@/lib/queryClient';
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Apps catalog', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Workflows', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -72,6 +72,19 @@ function mockLive(onPut?: (url: string, body: unknown) => Promise<Response>) {
   });
 }
 
+/** Open the feature list as a person does before asserting its controls. */
+async function findFeature(label: string) {
+  const title = await screen.findByText(label);
+  const disclosures: HTMLDetailsElement[] = [];
+  for (let parent = title.parentElement; parent; parent = parent.parentElement) {
+    if (parent.tagName === 'DETAILS') disclosures.push(parent as HTMLDetailsElement);
+  }
+  for (const details of disclosures.reverse()) {
+    if (!details.open) fireEvent.click(details.querySelector('summary')!);
+  }
+  return title;
+}
+
 const noop = () => {};
 const REASON = 'Not used by this team this quarter';
 
@@ -90,11 +103,11 @@ afterEach(() => {
 });
 
 describe('Apps — live module subscriptions (fixture-free)', () => {
-  it('adopts /catalog + /license: live names, category groups, tiers, quotas', async () => {
+  it('adopts /catalog + /license: live names, retained additional categories, tiers, quotas', async () => {
     mockLive();
     mount();
-    // live module names and grouped-by-category headers
-    expect(await screen.findByText('CMC Wizard')).toBeTruthy();
+    // Unclassified live rows retain their original category headings in Additional capabilities.
+    expect(await findFeature('CMC Wizard')).toBeTruthy();
     expect(screen.getByText('Insight Synthesis')).toBeTruthy();
     expect(screen.getByText('Authoring')).toBeTruthy();
     expect(screen.getByText('Intelligence')).toBeTruthy();
@@ -132,7 +145,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     const put = vi.fn(async () => ok({ moduleId: 'cmc-wizard', enabled: false }));
     mockLive(put);
     mount();
-    await screen.findByText('CMC Wizard');
+    await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module')); // the enabled within-plan module
     confirmReason();
@@ -152,7 +165,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
       throw new ApiRequestError('Admin access required', 403, { error: 'Admin access required' });
     });
     mount();
-    await screen.findByText('CMC Wizard');
+    await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module'));
     confirmReason();
@@ -167,7 +180,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     const put = vi.fn(async () => ok({ moduleId: 'cmc-wizard', enabled: false, auditTrail: { persisted: true, chained: true } }));
     mockLive(put);
     mount();
-    await screen.findByText('CMC Wizard');
+    await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module'));
     const dialog = await screen.findByRole('dialog');
@@ -187,7 +200,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
   it('says so when the server reports the audit row was not written', async () => {
     mockLive(async () => ok({ moduleId: 'cmc-wizard', enabled: false, auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'x' } }));
     mount();
-    await screen.findByText('CMC Wizard');
+    await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module'));
     confirmReason();
@@ -198,7 +211,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount();
     // Honest error for the catalog; license band degrades to the honest note.
-    expect(await screen.findByText("Couldn't load the apps catalog")).toBeTruthy();
+    expect(await screen.findByText("Couldn't load workflows")).toBeTruthy();
     expect(screen.getByText(/License & entitlement details are unavailable/)).toBeTruthy();
     // No fixture content and no sample markers leak through.
     expect(screen.queryByText('CMC Wizard')).toBeNull();
