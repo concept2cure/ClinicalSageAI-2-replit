@@ -1,0 +1,74 @@
+{
+  "observedAt": "2026-10-23T20:38:32.928626+00:00",
+  "review": "Independent read-only final component review CLEAR; root read final structural extraction. No test/browser/global gate claim from reviewer.",
+  "reviewedFiles": {
+    "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx": "5eb940dc17f4c7cd92d6e41979fe32e310591667ba26a210ea0de5d809ebe48a",
+    "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx": "c80ca3360335144014e13c1e7bfa2531b7db829547859acd2cc0dad00eb38d12",
+    "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx": "5b2a083217e2c277ec20204191da5be2562ef1dca51ac8be76a5a39f6e59b3b7"
+  },
+  "checks": [
+    "explicit controlled selection; same-frame aggregate cap and refusals; off-page removal; unchanged default mapping policy",
+    "canonical company owner; monotonic bundle/chooser/page visit; same-owner bearer refresh; delayed response/body/error/finally retirement",
+    "optional stationery admission from loaded published records with four explicit null scope fields",
+    "distinct sibling visit keys after functional refresh failure"
+  ],
+  "unchangedBoundaries": {
+    "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": {
+      "sha256": "5d49d619ccacf5fa7c7daf19d5584ba756b8e4baca9fe6459ef273b9931d69d9",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts": {
+      "sha256": "40f523f58260df8f4694579002c7a164c5643ae419869904022e7ef06946aa51",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts": {
+      "sha256": "a260ff641e4f73e9ba7ece650ea3ee6ca4ba7078738cf2225851a9bf64781df7",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/apiCall.ts": {
+      "sha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": {
+      "sha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "unchanged": true
+    },
+    "client/src/lib/queryClient.ts": {
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+      "unchanged": true
+    },
+    "shared/company-documents.ts": {
+      "sha256": "bf68cc6955dcfb1f88050d9542d6410a8a45affa790367347e9a876429adb3ff",
+      "unchanged": true
+    },
+    "server/routes/company-legal-inventory.ts": {
+      "sha256": "65da9bcd99031e97d9954c1fa55d60e5fd3ae76a2409abdc2a6ed7929fb9d605",
+      "unchanged": true
+    },
+    "server/services/company-documents/legal-inventory.ts": {
+      "sha256": "4fb64b71f443cf004969ae2b39b9806310bd8048e6b06b65bcc307c78f26cb1f",
+      "unchanged": true
+    },
+    "server/services/company-documents/profile.ts": {
+      "sha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+      "unchanged": true
+    },
+    "server/routes/report-os.ts": {
+      "sha256": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+      "unchanged": true
+    },
+    "server/services/report-os/report-package.ts": {
+      "sha256": "3a08a1482cc89d0877a154a556411c3468ac9625c0950270eb96df7bc297ca21",
+      "unchanged": true
+    },
+    "server/services/report-os/report-package-legal.ts": {
+      "sha256": "6cc156c395b89577c4c52cf2a007dfe2c11c5f02d9a0892868fdbdce6d2da5c5",
+      "unchanged": true
+    },
+    "client/src/services/portal/authService.tsx": {
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "unchanged": true
+    }
+  },
+  "scopeLimit": "Selected source inputs, not a complete transitive dependency closure. No server export/auth/shared hook policy changes or deployment proof."
+}

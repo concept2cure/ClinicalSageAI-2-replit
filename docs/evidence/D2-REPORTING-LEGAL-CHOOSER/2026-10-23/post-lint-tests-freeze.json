@@ -1,0 +1,10 @@
+{
+  "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+  "testedSha256": "016436123ae6043ccb8fc73c391a3e6e65ea852780098e6364ecaf236f88f8d3",
+  "currentSha256": "8de75b944a569aac0a6d91c479ab26c4183acccb852eb458dfe3eab1b9ce1b31",
+  "lines": 198,
+  "onlyDescribeBoundaryAdded": true,
+  "caseBodiesAndAssertionsUnchanged": true,
+  "qualification": "Prior41-case run remains bound to its captured pre-split source; root final13-file cohort will qualify current refactored source.",
+  "noAdditionalNodeRun": true
+}

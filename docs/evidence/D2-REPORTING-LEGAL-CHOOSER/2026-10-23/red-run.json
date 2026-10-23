@@ -1,0 +1,19 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/red-results.json",
+  "startedAt": "2026-10-23T20:31:56.645103+00:00",
+  "finishedAt": "2026-10-23T20:31:59.710404+00:00",
+  "exitCode": 1,
+  "passed": 0,
+  "failed": 2,
+  "files": 2,
+  "failures": [
+    {
+      "name": "Reporting legal chooser captured account ownership refuses a retained ZIP click in the same frame as account replacement",
+      "message": "AssertionError: expected [ [ 'POST', \u2026(2) ] ] to have a length of +0 but got 1\n    at Proxy.<anonymous> (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx:65:21\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:19"
+    },
+    {
+      "name": "Reporting legal chooser reaches paged exact-version selection keeps the first page choice while adding an original from the next page, then posts only those IDs",
+      "message": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name \"Next legal versions\"\n\nHere are the accessible roles:\n\n  button:\n\n  Name \"Refresh legal companions\":\n  \u001b[36m<button\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"rl-card-run\"\u001b[39m\n    \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  Name \"Choose published stationery (optional)\":\n  \u001b[36m<button\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"rl-card-run\"\u001b[39m\n    \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  Name \"Download reports and 1 selected legal original (ZIP)\":\n  \u001b[36m<button\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"btn primary\"\u001b[39m\n    \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n  "
+    }
+  ]
+}
