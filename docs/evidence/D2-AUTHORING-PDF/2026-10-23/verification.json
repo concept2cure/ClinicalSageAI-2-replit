@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T17:46:14.146274+00:00",
+  "qualifiedSourceCommit": "07617e6b3cef1232115051084a9c690c5eeb523b",
+  "implementationCommit": "34942873dbc19830c5af0e1b1f7a2b5ef38c8358",
+  "scope": "W1 / D2, existing ordinary Authoring export/working-copy/Vault PDF completion",
+  "status": "Locally qualified; mandatory push hooks protect publication. No production deployment or remote CI observation claimed.",
+  "tests": {
+    "files": 38,
+    "passed": 522,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 1,
+    "selection": "test-files.json",
+    "results": "tests.json",
+    "originalCompanyQualificationCountsNotInflated": true
+  },
+  "redProof": {
+    "ordinaryRenderer": {
+      "failed": 6,
+      "passed": 1,
+      "report": "authoring-pdf/service-red.json",
+      "sha256": "417f73e6304ae3a9b3d8b1bddd121d59c63ab29b57c70e67ed77f27b3d44efc7"
+    },
+    "httpAndUi": "routes-and-ui.json; includes functional failures before route/UI corrections and separates the initial fixture parse error."
+  },
+  "fixtureCorrections": [
+    "Approval-carry fixture now applies the actual existing company legal registry migration; production policy was not weakened.",
+    "The signature PDF fixture uses the strict Word/converter seam instead of assuming the optional HTML engine. Its final signature assertions are stronger."
+  ],
+  "checks": {
+    "productionBuildPassed": true,
+    "buildTranscriptSha256": "1b1cf4809aaaec1c3a6c3c8ac295717c0bd0775e77d85db1eb085f715a2fa907",
+    "fullTypecheckErrors": 0,
+    "typecheckTranscriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "ownedLintErrors": 0,
+    "newOwnedLintWarnings": 0,
+    "genericSubmissionMutationPolicyUnchanged": true,
+    "actualOrdinaryPdfPages": 5,
+    "actualWorkingCopyPdfPages": 5,
+    "workingCopyHeaderAndFooterEveryPage": true,
+    "actualVisiblePendingRevisions": true,
+    "actualFootnotesFiguresTablesAndCrossReferences": true,
+    "coveringAndStaleSignatureVerdictsPreserved": true,
+    "historicalCompanyPdfMatchesPriorQualifiedBytes": true,
+    "historicalCompanyPdfSha256": "0dd9da5744064bae6e16f9330c10c7066f34ed4fad695929083c1609ed04c60f",
+    "originalPdfPreservationRegressionsPassed": true,
+    "authenticatedLocalAppInventory200": true,
+    "browserDownloadExercised": false,
+    "compilerProcessExitConfirmed": 0
+  },
+  "limits": [
+    "Local authenticated Authoring inventory had no visible documents; no browser PDF download or persisted synthetic content creation was attempted.",
+    "Actual converter artifacts use explicit synthetic fixture executors/signatures. SQL/HTTP/components qualify admission and outcome handling separately; the artifact fixture does not assert live document approval.",
+    "One inherited historical hash-version re-filing/supersession TODO remains, outside the PDF boundary.",
+    "No agency acceptance, live transmission, production deployment or remote CI result is claimed."
+  ],
+  "qualificationNotes": [
+    "The full compiler was independently repeated with explicit process exit 0 on unchanged source; an earlier combined shell returned 1 despite its zero-error compiler report. No code correction was needed."
+  ]
+}
