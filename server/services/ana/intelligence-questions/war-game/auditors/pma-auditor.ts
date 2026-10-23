@@ -102,7 +102,7 @@ const rules: AuditRule[] = [
           this.question,
           'No bench testing or performance testing data is provided.',
           '21 CFR 814.20(b)(6)(i) requires the results of non-clinical laboratory studies, including bench performance testing, to support device safety and effectiveness.',
-          '21 CFR 814.20(b)(6)(i); FDA Guidance: Recommended Content and Format of Non-Clinical Bench Performance Testing Information in PMA Submissions',
+          '21 CFR 814.20(b)(6)(i); FDA Guidance: Recommended Content and Format of Non-Clinical Bench Performance Testing Information in Premarket Submissions',
           'Include bench testing results covering mechanical, electrical, chemical, and biological performance characteristics as applicable. Test methods should follow recognized consensus standards.',
           ['bench_testing_summary', 'mechanical_testing'],
         );
@@ -148,7 +148,7 @@ const rules: AuditRule[] = [
           this.question,
           'Proposed labeling per 21 CFR 814.20(b)(10) has not been prepared.',
           'Labeling specimens are a required PMA component per 21 CFR 814.20(b)(10), including all labels, instructions for use, and promotional materials.',
-          '21 CFR 814.20(b)(10); 21 CFR 801; FDA Guidance: Device Labeling Guidance (2018)',
+          '21 CFR 814.20(b)(10); 21 CFR Part 801; FDA: Labeling - Regulatory Requirements for Medical Devices (FDA 89-4203)',
           'Provide complete proposed labeling including device description, indications for use, contraindications, warnings, precautions, adverse events, instructions for use, and patient labeling as applicable.',
           ['labeling_prepared', 'labeling_components', 'indications_for_use'],
         );
@@ -171,7 +171,7 @@ const rules: AuditRule[] = [
           this.question,
           'No comprehensive device description is provided in the submission.',
           'A complete device description is required per 21 CFR 814.20(b)(4)(i), including pictorial representations, descriptions of each functional component or ingredient, and the principles of operation (the summary device description is 21 CFR 814.20(b)(3)(ii)).',
-          '21 CFR 814.20(b)(3)(i)',
+          '21 CFR 814.20(b)(4)(i)',
           'Provide a complete device description including materials of construction, design features, principles of operation, power source, accessories, component specifications, and photographs or engineering drawings.',
           ['device_description', 'patient_contacting_materials', 'structural_materials'],
         );
@@ -224,7 +224,7 @@ const rules: AuditRule[] = [
             this.question,
             `Potential discrepancy detected between IFU parameters ("${ifuDose[0]}") and clinical protocol parameters ("${protocolDose[0]}").`,
             'Labeling must be consistent with the conditions under which the device was clinically evaluated per 21 CFR 814.20(b)(10) and 21 CFR 801.4.',
-            '21 CFR 814.20(b)(10); 21 CFR 801.4; FDA Guidance: Device Labeling Guidance (2018)',
+            '21 CFR 814.20(b)(10); 21 CFR 801.4; 21 CFR Part 801',
             'Reconcile all numerical parameters (dose, duration, frequency, depth, etc.) between the IFU and clinical protocol. Clearly document any approved deviations and their justification.',
             ['instructions_for_use', 'clinical_protocol_summary', 'labeling_draft'],
           );
@@ -415,7 +415,7 @@ const rules: AuditRule[] = [
           this.question,
           'No documentation of GCP compliance or IRB oversight is referenced for the pivotal clinical investigation sites.',
           'Clinical investigations supporting a PMA must comply with GCP requirements per 21 CFR 812, 21 CFR 50, and 21 CFR 56.',
-          '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R3)',
+          '21 CFR 812; 21 CFR 50; 21 CFR 56; ISO 14155 (Clinical investigation of medical devices for human subjects — Good clinical practice)',
           'Provide documentation of GCP compliance for all clinical sites, including IRB approval letters, monitoring reports, and a statement of compliance with 21 CFR Parts 50 and 56.',
           ['gcp_compliance', 'irb_approval', 'clinical_study_conducted'],
         );
@@ -758,7 +758,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No FMEA, FTA, or equivalent systematic risk analysis technique is documented in the PMA.',
-          'Systematic risk analysis including techniques such as FMEA and FTA is required per ISO 14971:2019 and ISO 13485:2016 Sections 7.1 and 7.3.7 (via 21 CFR 820.10, QMSR) as part of design validation.',
+          'Systematic risk analysis including techniques such as FMEA and FTA is expected per ISO 14971:2019, and risk management throughout product realization is required by ISO 13485:2016 Section 7.1 (via 21 CFR 820.10, QMSR), with risk management outputs serving as design inputs (Section 7.3.3).',
           'ISO 14971:2019; IEC 60812 (FMEA); IEC 61025 (FTA); 21 CFR 820.10 (QMSR)',
           'Perform a comprehensive risk analysis using FMEA, FTA, or equivalent systematic technique. Document the risk management file per ISO 14971 including hazard identification, risk estimation, risk evaluation, risk controls, and residual risk assessment.',
           ['risk_analysis_methods', 'iso_14971_applied'],

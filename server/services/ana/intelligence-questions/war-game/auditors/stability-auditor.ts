@@ -1,10 +1,10 @@
 /**
  * Stability Auditor -- simulates FDA CMC reviewer scrutiny of a stability
- * study program per ICH Q1A-Q1F.
+ * study program per ICH Q1A(R2)-Q1E (Q1F was withdrawn in 2006) and the WHO stability guideline.
  *
  * Generates adversarial questions across seven audit dimensions, referencing
- * ICH Q1A(R2), Q1B, Q1C, Q1D, Q1E, Q1F, Q5C, 21 CFR 211.166,
- * 21 CFR 314.81(b)(2), and FDA Guidance on Stability Data (2004).
+ * ICH Q1A(R2), Q1B, Q1C, Q1D, Q1E, Q5C, WHO TRS 1010 Annex 10, 21 CFR 211.166
+ * and 21 CFR 314.81(b)(2).
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/stability-auditor
  */
@@ -301,7 +301,7 @@ const rules: AuditRule[] = [
           this.question,
           'The stability program does not conform to ICH Q1A(R2) requirements or conformance has not been documented.',
           'ICH Q1A(R2) is the foundational guideline for stability testing of new drug substances and products. FDA expects compliance per 21 CFR 211.166.',
-          'ICH Q1A(R2); 21 CFR 211.166; FDA Guidance for Industry: Stability Testing (2004)',
+          'ICH Q1A(R2); 21 CFR 211.166; FDA Guidance for Industry: Q1A(R2) Stability Testing of New Drug Substances and Products (2003)',
           'Conduct a gap analysis against ICH Q1A(R2) and develop a remediation plan addressing all deficiencies including study design, storage conditions, testing parameters, and data evaluation.',
           ['ich_q1a_compliance', 'stability_protocol'],
         );
@@ -326,7 +326,7 @@ const rules: AuditRule[] = [
           this.question,
           `Proposed shelf life of ${shelfLife} months is more than double the available long-term data (${dataMonths} months), exceeding ICH Q1E extrapolation limits.`,
           'ICH Q1E Sections 2.3 and 2.4 (and Appendix A) limit shelf-life extrapolation to no more than twice the period covered by long-term data, and no more than 12 months beyond it, and only when long-term data are supported by statistical analysis and no significant change is observed at accelerated conditions.',
-          'ICH Q1E Sections 2.3-2.4, Appendix A; FDA Guidance for Industry: Stability Testing (2004)',
+          'ICH Q1E Sections 2.3-2.4, Appendix A; FDA Guidance for Industry: Q1E Evaluation of Stability Data (2004)',
           'Limit the proposed shelf life to a period supportable by ICH Q1E statistical analysis. Submit additional long-term data in annual reports to support future shelf-life extensions.',
           ['proposed_shelf_life_months', 'long_term_data_available_months', 'statistical_approach'],
         );
@@ -338,7 +338,7 @@ const rules: AuditRule[] = [
     id: rid('q1f_climatic_zone_not_considered'),
     dimension: 'regulatory_alignment',
     title: 'Climatic Zone Not Considered for Target Markets',
-    question: 'The stability program does not appear to address climatic zone requirements for all intended markets. ICH Q1F and WHO guidelines require storage conditions appropriate to the distribution climate. How does the sponsor ensure stability in Zone III/IVa/IVb markets?',
+    question: 'The stability program does not appear to address climatic zone requirements for all intended markets. The WHO stability guideline and regional authorities require storage conditions appropriate to the distribution climate (ICH Q1F was withdrawn in 2006). How does the sponsor ensure stability in Zone III/IVa/IVb markets?',
     check(answers) {
       // The interview asks the target climatic zones directly (climatic_zone, a
       // multi-select) and the long-term condition (long_term_condition, a select).
@@ -357,8 +357,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `Target climatic zones include ${hot.join(', ')} but the long-term condition (${lt}) does not cover them and no zone-specific conditions are used.`,
-          'ICH Q1F (withdrawn but referenced by WHO) and WHO Technical Report Series No. 953 require long-term stability testing at 30 ± 2 °C / 35 ± 5% RH (Zone III), 30 ± 2 °C / 65 ± 5% RH (Zone IVa) or 30 ± 2 °C / 75 ± 5% RH (Zone IVb) for hot and tropical markets.',
-          'ICH Q1F; WHO TRS 953 Annex 2; ICH Q1A(R2) Section 2.2.7',
+          'The WHO stability testing guideline (WHO Technical Report Series No. 953 Annex 2, since superseded by TRS No. 1010 Annex 10; ICH Q1F was withdrawn in 2006) specifies long-term stability testing at 30 ± 2 °C / 35 ± 5% RH (Zone III), 30 ± 2 °C / 65 ± 5% RH (Zone IVa) or 30 ± 2 °C / 75 ± 5% RH (Zone IVb) for hot and tropical markets.',
+          'WHO TRS 1010 Annex 10 (replaced TRS 953 Annex 2); ICH Q1A(R2) Section 2.2.7',
           'Include long-term stability studies at conditions appropriate for the highest climatic zone among target markets. For Zone IVb markets, conduct studies at 30 ± 2 °C / 75 ± 5% RH.',
           ['climatic_zone', 'long_term_condition', 'zone_specific_conditions'],
         );
@@ -382,7 +382,7 @@ const rules: AuditRule[] = [
           this.question,
           'The product is a biological product, but compliance with ICH Q5C is not documented.',
           'ICH Q5C requires stability testing of biotechnological/biological products to include potency assays, purity (e.g., SEC, CE-SDS), and characterization of degradation products (aggregates, fragments, charge variants).',
-          'ICH Q5C; 21 CFR 211.166; FDA Guidance: Content and Format of Chemistry, Manufacturing and Controls Information for a Therapeutic Recombinant DNA-Derived Product (1996)',
+          'ICH Q5C; 21 CFR 211.166; FDA Guidance for Industry: Submission of Chemistry, Manufacturing, and Controls Information for a Therapeutic Recombinant DNA-Derived Product or a Monoclonal Antibody Product for In Vivo Use (1996)',
           'Design the stability program per ICH Q5C, including bioassay/potency, size variants (SEC), charge variants (IEX/iCIEF), subvisible and visible particles, and container closure integrity testing at each time point.',
           ['is_biologic', 'q5c_compliance', 'biologic_potency_assay', 'aggregation_monitoring'],
         );
@@ -457,7 +457,7 @@ const rules: AuditRule[] = [
           this.question,
           'Statistical analysis of stability data per ICH Q1E has not been performed.',
           'ICH Q1E requires regression analysis of quantitative stability attributes to determine the time at which the 95% one-sided confidence limit intersects the acceptance criterion.',
-          'ICH Q1E Section 2, Appendices A-B; FDA Guidance for Industry: Stability Testing (2004)',
+          'ICH Q1E Section 2, Appendices A-B; FDA Guidance for Industry: Q1E Evaluation of Stability Data (2004)',
           'Perform regression analysis per ICH Q1E on quantitative stability attributes (e.g., assay, degradation products). Evaluate whether data from multiple batches can be pooled or require individual analysis. Report the statistical shelf life with 95% confidence.',
           ['statistical_approach', 'development_stage', 'proposed_shelf_life_months', 'long_term_data_available_months'],
         );
@@ -580,8 +580,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Shipping/transportation validation or stress studies simulating distribution conditions are not provided.',
-          'FDA expects that the stability program address distribution conditions. 21 CFR 211.150 requires appropriate storage during distribution, and cycling studies may be appropriate to simulate temperature fluctuations.',
-          '21 CFR 211.150; ICH Q1A(R2) Section 2.2.7; USP <1079>',
+          'FDA expects that the stability program address distribution conditions. 21 CFR 211.142 requires storage under appropriate conditions of temperature, humidity and light, and 21 CFR 211.150 requires written distribution procedures, and cycling studies may be appropriate to simulate temperature fluctuations.',
+          '21 CFR 211.142; 21 CFR 211.150; ICH Q1A(R2) Section 2.2.7; USP <1079>',
           'Conduct shipping/transportation validation studies including thermal cycling, vibration, and duration representative of the worst-case distribution chain. For cold-chain products, validate the shipping configuration.',
           ['shipping_validation', 'storage_conditions', 'cold_chain_required'],
         );
@@ -631,7 +631,7 @@ const rules: AuditRule[] = [
           this.question,
           'No post-approval stability commitment is documented (21 CFR 211.166; 21 CFR 314.81(b)(2)).',
           '21 CFR 314.50(d)(1) requires the application to include stability data supporting the proposed expiration dating, and 21 CFR 211.166 requires a written stability testing program; FDA expects the applicant to provide a post-approval stability commitment, including the number of batches per year to be placed on long-term stability and the protocol to be followed, with ongoing results reported in the annual report under 21 CFR 314.81(b)(2).',
-          '21 CFR 314.50(d)(1); 21 CFR 211.166; 21 CFR 314.81(b)(2); FDA Guidance for Industry: Stability Testing (2004)',
+          '21 CFR 314.50(d)(1); 21 CFR 211.166; 21 CFR 314.81(b)(2); FDA Guidance for Industry: Q1A(R2) Stability Testing of New Drug Substances and Products (2003)',
           'Include a stability commitment specifying: (1) number of batches per year to be placed on stability (typically 1 per strength per year until 3 production batches are tested), (2) the protocol to follow, and (3) commitment to report results in annual reports.',
           ['post_approval_protocol_submitted', 'annual_batches', 'stability_data_ctd_location'],
         );
@@ -654,7 +654,7 @@ const rules: AuditRule[] = [
           this.question,
           'No plan for reporting ongoing stability data in NDA/ANDA annual reports.',
           '21 CFR 314.81(b)(2) requires that annual reports include results from stability studies and any changes to the stability protocol.',
-          '21 CFR 314.81(b)(2); FDA Guidance for Industry: Stability Testing (2004)',
+          '21 CFR 314.81(b)(2); FDA Guidance for Industry: Q1A(R2) Stability Testing of New Drug Substances and Products (2003)',
           'Document a plan for including stability data summaries and trend analyses in annual reports, covering both ongoing and post-approval commitment batches. Include out-of-specification/out-of-trend investigation procedures.',
           ['annual_report_plan', 'stability_commitment'],
         );
@@ -706,9 +706,9 @@ const rules: AuditRule[] = [
             this.title,
             this.question,
             `Significant change was observed at accelerated conditions but ${!hasIntermediate ? 'intermediate condition data (30 °C/65% RH) are missing' : 'root cause investigation is not documented'}.`,
-            'ICH Q1A(R2) Section 2.2.7.1 states that when significant change occurs at accelerated conditions, additional testing at intermediate conditions (30 ± 2 °C / 65 ± 5% RH) must be conducted, and the shelf life should be based on long-term data without extrapolation.',
+            'ICH Q1A(R2) Section 2.2.7.1 states that when significant change occurs at accelerated conditions, additional testing at intermediate conditions (30 ± 2 °C / 65 ± 5% RH) must be conducted, and the data should be evaluated per ICH Q1E: limited extrapolation (up to 1.5x, and not more than 6 months beyond the long-term data) may be proposed only if no significant change occurs at intermediate conditions; if significant change also occurs at intermediate, the shelf life should be based on long-term data without extrapolation.',
             'ICH Q1A(R2) Section 2.2.7.1; ICH Q1E Appendix A',
-            'Conduct testing at intermediate conditions (30 ± 2 °C / 65 ± 5% RH) for 12 months minimum. Investigate the degradation mechanism causing significant change. Limit shelf life to available long-term data without extrapolation.',
+            'Conduct testing at intermediate conditions (30 ± 2 °C / 65 ± 5% RH) for 12 months minimum. Investigate the degradation mechanism causing significant change. If significant change also occurs at intermediate conditions, limit shelf life to available long-term data; otherwise any extrapolation must stay within the ICH Q1E limits (up to 1.5x, no more than 6 months beyond).',
             ['accelerated_significant_change', 'intermediate_condition_included', 'significant_change_investigation'],
           );
         }
@@ -733,7 +733,7 @@ const rules: AuditRule[] = [
           this.question,
           `Proposed shelf life (${shelfLife} months) exceeds 2x the available long-term data (${dataMonths} months). This extrapolation is ${((shelfLife / dataMonths) * 100).toFixed(0)}% of available data.`,
           'ICH Q1E Section 2.3 (with Section 2.4 and Appendix A) generally limits extrapolation to no more than twice (but no more than 12 months beyond) the period covered by long-term data, conditional on supporting statistical analysis and absence of significant change at accelerated conditions.',
-          'ICH Q1E Sections 2.3-2.4, Appendix A; FDA Guidance for Industry: Stability Testing (2004)',
+          'ICH Q1E Sections 2.3-2.4, Appendix A; FDA Guidance for Industry: Q1E Evaluation of Stability Data (2004)',
           'Reduce the proposed shelf life to align with ICH Q1E limits, or provide additional long-term data. Commit to updating the shelf life in annual reports as more data become available.',
           ['proposed_shelf_life_months', 'long_term_data_available_months'],
         );
@@ -757,7 +757,7 @@ const rules: AuditRule[] = [
           this.question,
           'No post-approval stability monitoring commitment is included in the submission.',
           '21 CFR 211.166 requires a continuing written stability program, and ongoing stability results are reported in the annual report under 21 CFR 314.81(b)(2). FDA expects annual stability batches to be placed on the approved stability protocol as part of ongoing quality assurance.',
-          '21 CFR 211.166; ICH Q1A(R2) Sections 2.1.8 and 2.2.8 (Stability Commitment); FDA Guidance for Industry: Stability Testing (2004)',
+          '21 CFR 211.166; ICH Q1A(R2) Sections 2.1.8 and 2.2.8 (Stability Commitment); FDA Guidance for Industry: Q1A(R2) Stability Testing of New Drug Substances and Products (2003)',
           'Commit to placing at least one batch per year per strength on the approved stability protocol. Define triggers for additional stability studies (e.g., process changes, raw material supplier changes, site transfers).',
           ['annual_batches', 'post_approval_protocol_submitted'],
         );
@@ -776,7 +776,7 @@ export function createStabilityAuditor(): WarGameAuditor {
     category: 'stability',
     name: 'FDA CMC Stability Reviewer',
     description:
-      'Simulates an FDA CMC reviewer performing a stability program assessment per ICH Q1A-Q1F, ' +
+      'Simulates an FDA CMC reviewer performing a stability program assessment per ICH Q1A(R2)-Q1E and the WHO stability guideline, ' +
       'evaluating batch selection, storage conditions, testing parameters, statistical analysis, ' +
       'container closure, photostability, regulatory compliance, and post-approval commitments.',
     rules,

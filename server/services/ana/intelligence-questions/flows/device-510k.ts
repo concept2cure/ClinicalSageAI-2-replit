@@ -341,7 +341,7 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'critical',
             title: 'A split predicate is not a permissible basis',
             message:
-              'FDA\u2019s 2014 substantial-equivalence guidance states that a split predicate — taking the indications for use from one device and the technological characteristics from another — is not a permissible basis for a 510(k). A submission resting on one invites a finding of not substantially equivalent. If the indications and the technology genuinely come from different devices, the routes are a De Novo request or a 510(k) for the new intended use.',
+              'FDA\u2019s 2014 substantial-equivalence guidance states that a split predicate — taking the indications for use from one device and the technological characteristics from another — is not a permissible basis for a 510(k). A submission resting on one invites a finding of not substantially equivalent. If the indications and the technology genuinely come from different devices, the routes are a 510(k) against a predicate (or predicates, each with the same intended use) that has both the intended use and comparable technological characteristics, or a De Novo request where no such predicate exists; a new intended use cannot be cleared through a 510(k).',
             reference: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014)',
           },
           {
@@ -351,7 +351,7 @@ export function createDevice510kFlow(): FlowDefinition {
             title: 'This is not a 510(k)',
             message:
               'A 510(k) is a comparison to a legally marketed device, and you have said there is none to compare to — or that FDA has already found this device not substantially equivalent. Each is one of the two conditions for a De Novo request, which asks FDA to classify the device and to hold it to special controls you propose. AnA will keep answering these questions, but what they produce is not a premarket notification.',
-            reference: 'FD&C Act 513(f)(2)(A); 21 CFR 860.220(a)',
+            reference: 'FD&C Act 513(f)(2)(A); 21 CFR 860.200',
           },
         ],
         defaultNext: 'predicate_info',
@@ -700,7 +700,7 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Extended Contact Duration Requires Full Biocompatibility',
             message:
-              'Devices with patient contact >24 hours require a comprehensive biocompatibility evaluation including systemic toxicity, genotoxicity, and (for implants) implantation and chronic toxicity testing per ISO 10993-1 Table A.1.',
+              'Devices with patient contact >24 hours need a biocompatibility evaluation of the endpoints that ISO 10993-1 Table A.1 assigns to their contact category and duration. Depending on the category, these can include systemic toxicity and genotoxicity (for example, for breached-surface, externally communicating and implant devices), implantation, and, for long-term (>30 days) contact, chronic toxicity. Surface devices on intact skin require only cytotoxicity, sensitization and irritation.',
             reference: 'ISO 10993-1:2018, Table A.1',
           },
         ],

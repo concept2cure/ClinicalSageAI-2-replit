@@ -801,7 +801,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the primary efficacy results?',
         guidance:
-          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.5, the primary analysis should be fully pre-specified in the statistical analysis plan (SAP).',
+          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.1 (Prespecification of the Analysis), the primary analysis should be fully pre-specified in the protocol and statistical analysis plan (SAP).',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1426,7 +1426,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Describe Adverse Events of Special Interest (AESIs) identified in this study.',
         guidance:
-          'AESIs are pre-defined events warranting focused monitoring based on the drug\'s mechanism of action, pharmacological class effects, or pre-clinical/early clinical signals; the AESI concept comes from CIOMS VI and the study protocol rather than ICH E3, which addresses comparable events as other significant adverse events in Section 12.3 and displays adverse events in Section 12.2.2. Per FDA Guidance "Safety Reporting Requirements for INDs and BA/BE Studies" (2012), AESIs should be defined in the protocol and monitored via Standardized MedDRA Queries (SMQs) or Customized MedDRA Queries (CMQs). Time-to-onset and dose-response analyses are critical for assessing causal relationship.',
+          'AESIs are pre-defined events warranting focused monitoring based on the drug\'s mechanism of action, pharmacological class effects, or pre-clinical/early clinical signals; the AESI concept comes from CIOMS VI and the study protocol rather than ICH E3, which addresses comparable events as other significant adverse events in Section 12.3 and displays adverse events in Section 12.2.2. In line with CIOMS VI and common industry practice (not a requirement of FDA\'s 2012 guidance "Safety Reporting Requirements for INDs and BA/BE Studies", which addresses expedited reporting under 21 CFR 312.32), AESIs should be defined in the protocol and monitored via Standardized MedDRA Queries (SMQs) or Customized MedDRA Queries (CMQs). Time-to-onset and dose-response analyses are critical for assessing causal relationship.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1557,7 +1557,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the analysis population sizes?',
         guidance:
-          'ICH E3 Section 11.1 requires documentation of all analysis populations. The ITT (all randomized), mITT (randomized and treated/assessed), per-protocol (PP), and safety populations should be clearly defined with the number of subjects in each and the reasons for exclusion from each set. Per ICH E9 Section 5.2, the ITT population should be the primary analysis population for superiority trials, while the PP population is preferred for non-inferiority and equivalence trials.',
+          'ICH E3 Section 11.1 requires documentation of all analysis populations. The ITT (all randomized), mITT (randomized and treated/assessed), per-protocol (PP), and safety populations should be clearly defined with the number of subjects in each and the reasons for exclusion from each set. Per ICH E9 Section 5.2, the ITT population should be the primary analysis population for superiority trials, while in non-inferiority and equivalence trials the full analysis set is generally not conservative, so both the ITT and PP analyses should be presented and the conclusions should be consistent across them.',
         fields: [
           {
             id: 'itt_population_size',

@@ -19,7 +19,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
     question:
       'Let\'s begin with the device details. What is the device name, manufacturer, and current CE marking status?',
     guidance:
-      'The CER must include a complete description of the device per MEDDEV 2.7/1 Rev 4 Section A1. Include the GMDN code for standardized nomenclature and the UDI-DI for traceability across the European market. Under EU MDR 2017/745, the CER must reference the device\'s classification per Annex VIII classification rules. The description should be sufficiently detailed that the device can be unambiguously identified, including all models, sizes, variants, and accessories covered by the CER scope. MDCG 2020-13 provides additional guidance on clinical evaluation scoping.',
+      'The CER must include a complete description of the device per MEDDEV 2.7/1 Rev 4 Appendix A3 (device description – typical contents). Include the GMDN code for standardized nomenclature and the UDI-DI for traceability across the European market. Under EU MDR 2017/745, the CER must reference the device\'s classification per Annex VIII classification rules. The description should be sufficiently detailed that the device can be unambiguously identified, including all models, sizes, variants, and accessories covered by the CER scope. MDCG 2020-13 provides additional guidance on clinical evaluation scoping.',
     fields: [
       {
         id: 'cer_device_name',
@@ -93,7 +93,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
         label: 'Device Description Summary',
         type: 'textarea',
         required: true,
-        helpText: 'Comprehensive description of the device including principles of operation, materials, components, accessories, and all variants/models covered by this CER. Per MEDDEV 2.7/1 Rev 4 Section A1.',
+        helpText: 'Comprehensive description of the device including principles of operation, materials, components, accessories, and all variants/models covered by this CER. Per MEDDEV 2.7/1 Rev 4 Appendix A3.',
         validation: { minLength: 50 },
       },
       {
@@ -101,7 +101,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
         label: 'Is the device implantable?',
         type: 'yes_no',
         required: true,
-        helpText: 'Implantable as defined by EU MDR Article 2(5) — intended to be totally or partially introduced into the human body',
+        helpText: 'Implantable as defined by EU MDR Article 2(5) — intended to be totally introduced into the human body (or to replace an epithelial surface or the surface of the eye) by clinical intervention and to remain in place after the procedure; a device partially introduced by clinical intervention qualifies if intended to remain in place for at least 30 days',
       },
       {
         id: 'is_novel_device',
@@ -114,7 +114,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
         id: 'notified_body_name',
         label: 'Notified Body',
         type: 'text',
-        helpText: 'Name and NB number of the Notified Body (e.g. BSI 0086, TUV SUD 0123)',
+        helpText: 'Name and NB number of the Notified Body (e.g. BSI Group The Netherlands 2797, TÜV SÜD 0123)',
       },
       {
         id: 'notified_body_feedback_received',
@@ -159,7 +159,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
     question:
       'What is the intended purpose of this device, and who is the target patient population?',
     guidance:
-      'The intended purpose is a critical element of the CER and determines the scope of clinical evaluation. Per EU MDR Article 2(12), the intended purpose includes the medical condition, target patient population, and clinical benefits. Contraindications must also be clearly identified. The intended purpose must be consistent with the labeling and IFU. Per MEDDEV 2.7/1 Rev 4 Section A1, the scope of the clinical evaluation is directly defined by the intended purpose. All claimed clinical benefits must be substantiated by clinical evidence in the CER.',
+      'The intended purpose is a critical element of the CER and determines the scope of clinical evaluation. Per EU MDR Article 2(12), the intended purpose is the use for which the device is intended according to the manufacturer\'s label, IFU, promotional or sales materials and clinical evaluation; MDR Annex II Section 1.1 requires the device description to state the intended purpose together with the intended patient population, medical conditions and indications, and the clinical evaluation plan (Annex XIV Part A) must specify the intended clinical benefits. Contraindications must also be clearly identified. The intended purpose must be consistent with the labeling and IFU. Per MEDDEV 2.7/1 Rev 4 Section 7 (definition of the scope of the clinical evaluation), the scope of the clinical evaluation is directly defined by the intended purpose. All claimed clinical benefits must be substantiated by clinical evidence in the CER.',
     fields: [
       {
         id: 'cer_intended_purpose',
@@ -240,7 +240,7 @@ export const deviceDescriptionNodes: QuestionNode[] = [
     question:
       'Provide the detailed classification justification and regulatory pathway information.',
     guidance:
-      'EU MDR Annex VIII contains 22 classification rules. The manufacturer must document which rule(s) apply and justify the resulting classification. For devices where multiple rules apply, the strictest classification prevails per Article 51(7). The classification determines the conformity assessment route (Annex IX, X, or XI) and the depth of clinical evidence required. MDCG 2021-24 provides guidance on classification of medical devices.',
+      'EU MDR Annex VIII contains 22 classification rules. The manufacturer must document which rule(s) apply and justify the resulting classification. For devices where multiple rules apply, the strictest rule resulting in the higher classification applies per Annex VIII, Chapter II, Section 3.5. The classification determines the conformity assessment route (Annex IX, X, or XI) and the depth of clinical evidence required. MDCG 2021-24 provides guidance on classification of medical devices.',
     fields: [
       {
         id: 'classification_justification',

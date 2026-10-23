@@ -50,3 +50,25 @@ describe('confirmed regulatory errors are gone from what AnA tells clients', () 
     expect(hits).toEqual([]);
   });
 });
+
+/*
+ * Second pass, same day (docs/evidence/D2-ANA-KNOWLEDGE-AUDIT/2026-10-22-pass2/):
+ * 249 candidates over 63 files (the 31 above, the CER node files, the core
+ * interview helpers and pathway-cautions), each put to an adversarial
+ * verifier; 232 confirmed, several of them corrections the first pass made
+ * from recall. Measured at 258a84cbf before the change, 229 quotes were
+ * present verbatim.
+ */
+const PASS2: Array<{ file: string; line: number; quote: string; verbatim: boolean }> = JSON.parse(
+  readFileSync(path.join(ROOT, 'docs/evidence/D2-ANA-KNOWLEDGE-AUDIT/2026-10-22-pass2/confirmed-findings.json'), 'utf8'),
+);
+
+describe('second pass: confirmed regulatory errors are gone', () => {
+  it('the fixture is the full verified set', () => {
+    expect(PASS2.length).toBe(232);
+  });
+  it('no quoted wrong statement remains in its file', () => {
+    const remaining = PASS2.filter((f) => f.verbatim && read(f.file).includes(f.quote)).map((f) => `${f.file}:${f.line} ${f.quote.slice(0, 90)}`);
+    expect(remaining).toEqual([]);
+  });
+});

@@ -127,7 +127,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             id: 'fda_review_division',
             label: 'FDA Review Division',
             type: 'text',
-            placeholder: 'e.g., Division of Oncology Products 1, CDER',
+            placeholder: 'e.g., Division of Oncology 1, Office of Oncologic Diseases, CDER',
             helpText: 'Identify the review division to align your briefing document with their expectations and prior precedents.',
           },
         ],
@@ -196,7 +196,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             id: 'fda_briefing_document_expected',
             label: 'Has FDA Indicated They Will Publish Their Own Briefing Document?',
             type: 'yes_no',
-            helpText: 'FDA typically publishes its own briefing document 1-2 business days before the meeting. Anticipating FDA\'s framing helps prepare the sponsor\'s presentation strategy.',
+            helpText: 'FDA typically publishes its own briefing document no later than 2 business days before the meeting. Anticipating FDA\'s framing helps prepare the sponsor\'s presentation strategy.',
           },
           {
             id: 'patient_representative_expected',
@@ -509,7 +509,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             type: 'number',
             required: true,
             validation: { min: 1 },
-            helpText: 'Per ICH E1, FDA expects at least 1,500 patients exposed for chronic-use drugs, with at least 300-600 exposed for 6 months and 100 for 12 months.',
+            helpText: 'Per ICH E1, for drugs intended for long-term treatment (beyond 6 months) of non-life-threatening conditions, the safety database is generally about 1,500 patients exposed in total, 300-600 exposed for 6 months and at least 100 exposed for 1 year; these figures do not apply to life-threatening indications.',
           },
           {
             id: 'total_patient_years',
@@ -726,7 +726,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Present the benefit-risk assessment. This is the most critical section of the briefing document — the Advisory Committee\'s vote hinges on this analysis.',
         guidance:
-          'FDA uses the Benefit-Risk Framework described in the PDUFA VI commitment letter and its implementation plan, "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018), and in FDA\'s 2023 draft guidance on benefit-risk assessment for new drug and biological products. The framework evaluates four dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, and (4) Risk and Risk Management, followed by an overall benefit-risk conclusion. Present a structured benefit-risk summary table. For each dimension, provide a concise evidence-based assessment. The benefit-risk conclusion should directly support the regulatory action being sought.',
+          'FDA uses the Benefit-Risk Framework described in the PDUFA VI commitment letter and its implementation plan, "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018), and in FDA\'s final guidance on benefit-risk assessment for new drug and biological products (October 2023). The framework evaluates four dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, and (4) Risk and Risk Management, followed by an overall benefit-risk conclusion. Present a structured benefit-risk summary table. For each dimension, provide a concise evidence-based assessment. The benefit-risk conclusion should directly support the regulatory action being sought.',
         provideExpertFeedback: true,
         fields: [
           {

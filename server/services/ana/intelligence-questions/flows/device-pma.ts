@@ -680,7 +680,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'preparing', label: 'Preparing for Inspection' },
               { value: 'not_ready', label: 'Not Yet Ready' },
             ],
-            helpText: 'FDA conducts a pre-approval inspection for most PMA applications per 21 CFR 814.20(b)(4)',
+            helpText: 'FDA conducts a pre-approval inspection for most PMA applications; approval may be denied if the manufacturing methods, facilities or controls do not conform to 21 CFR Part 820 (21 CFR 814.45(a)(3))',
           },
         ],
         issueChecks: [
@@ -705,7 +705,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the biocompatibility evaluation performed for this device.',
         guidance:
-          'Biocompatibility evaluation per ISO 10993-1 is required for all PMA devices that contact the patient per 21 CFR 814.20(b)(3)(v). The evaluation must consider the nature and duration of patient contact, the materials used, and applicable ISO 10993 test standards. FDA\'s guidance on ISO 10993-1 (Use of International Standard ISO 10993-1, revised September 2023) emphasizes a risk-based approach starting with chemical characterization (ISO 10993-18) before biological testing. For implantable devices, chronic toxicity, implantation, and degradation studies are typically required. The biological evaluation plan and report should follow the structure in ISO 10993-1 Annex A.',
+          'Biocompatibility evaluation per ISO 10993-1 is required for all PMA devices that contact the patient per 21 CFR 814.20(b)(3)(v). The evaluation must consider the nature and duration of patient contact, the materials used, and applicable ISO 10993 test standards. FDA\'s guidance on ISO 10993-1 (Use of International Standard ISO 10993-1, revised September 2023) emphasizes a risk-based approach starting with chemical characterization (ISO 10993-18) before biological testing. For implantable devices, chronic toxicity, implantation, and degradation studies are typically required. The biological evaluation plan and report should address the endpoints identified in ISO 10993-1 Annex A (Table A.1), with the evaluation conducted within a risk management process as described in ISO 10993-1 Annex B.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1464,7 +1464,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'not_evaluated', label: 'Not Evaluated' },
               { value: 'not_applicable', label: 'Not Applicable' },
             ],
-            helpText: 'MRI labeling per ASTM F2503 is required for implantable devices',
+            helpText: 'FDA guidance recommends MR safety testing and labeling (MR Safe, MR Conditional or MR Unsafe, using the terms in the FDA-recognized standard ASTM F2503) for implantable devices that may enter the MR environment',
           },
         ],
         issueChecks: [

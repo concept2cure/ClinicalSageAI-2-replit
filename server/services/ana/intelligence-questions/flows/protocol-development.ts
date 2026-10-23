@@ -115,7 +115,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           "Let's begin with the study identity. What is the working title, therapeutic area, target indication, and study phase for this trial?",
         guidance:
-          'Per ICH E6(R3) Appendix B, the protocol should include a descriptive title. ICH E8(R1) Section 4 recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
+          'Per ICH E6(R3) Appendix B, the protocol should include a descriptive title. The ICH M11 structured protocol template recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
         fields: [
           {
             id: 'study_title',
@@ -527,7 +527,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'How many treatment arms will the study have, and what is the planned treatment duration and dosing regimen?',
         guidance:
-          'The number of arms and treatment duration affect sample size calculations, study logistics, and regulatory review. ICH E9 Section 3.3 requires each arm to be adequately powered if formal pairwise comparisons are planned. Consider dose-response per ICH E4 for dose selection rationale.',
+          'The number of arms and treatment duration affect sample size calculations, study logistics, and regulatory review. ICH E9 Section 3.5 (Sample Size) expects the sample size to be justified for the planned primary comparisons, including any formal pairwise comparisons between arms. Consider dose-response per ICH E4 for dose selection rationale.',
         fields: [
           {
             id: 'number_of_arms',
@@ -582,8 +582,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Multiple Arms — Multiplicity Concern',
             message:
-              'Studies with more than 3 treatment arms require careful multiplicity adjustment to control the family-wise type I error rate. Per ICH E9 Section 2.2.5, pre-specify pairwise comparisons and the adjustment method in the SAP.',
-            reference: 'ICH E9 Section 2.2.5 — Multiplicity',
+              'Studies with more than 3 treatment arms require careful multiplicity adjustment to control the family-wise type I error rate. Per ICH E9 Section 5.6 (Adjustment of Significance and Confidence Levels), pre-specify pairwise comparisons and the adjustment method in the SAP.',
+            reference: 'ICH E9 Section 5.6 — Adjustment of Significance and Confidence Levels',
           },
         ],
         defaultNext: 'population_criteria',
@@ -755,7 +755,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Large Trial — Enhanced Infrastructure Required',
             message:
-              'Trials exceeding 5,000 subjects require robust safety monitoring infrastructure, centralized statistical monitoring, and potentially a larger DSMB per FDA Guidance on Clinical Trial DSMBs (2006).',
+              'Trials exceeding 5,000 subjects warrant robust safety monitoring infrastructure and an independent Data Monitoring Committee; FDA Guidance on Establishment and Operation of Clinical Trial Data Monitoring Committees (2006) identifies large, multicenter trials with mortality or major morbidity endpoints as those where a DMC is generally advisable, and centralized statistical monitoring may be considered under a risk-based monitoring approach (ICH E6(R3)).',
             reference:
               'FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
           },
@@ -1260,7 +1260,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               value: ['phase_1', 'phase_1b_2a'],
             },
             helpText:
-              'For Phase 1 dose-escalation studies, specify the design per FDA Guidance on Oncology Dose Optimization (2023).',
+              'For Phase 1 dose-escalation studies, specify the design per FDA Guidance for Industry: Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (final, August 2024).',
             options: [
               { value: '3_plus_3', label: '3+3 Design' },
               { value: 'crm', label: 'Continual Reassessment Method (CRM)' },
@@ -1578,7 +1578,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe planned or completed regulatory agency interactions and submission timeline.',
         guidance:
-          'FDA offers Pre-IND (Type B), End-of-Phase 2 (Type B), and Pre-NDA/BLA (Type B) meetings per FDA Guidance on Formal Meetings Between CDER and Sponsors (2017). Type A meetings (30-day response) are for stalled programs. Type C meetings (75-day response) address specific issues. EMA Scientific Advice (Article 57 of Regulation 726/2004) provides non-binding guidance on development plans. Consider joint FDA-EMA parallel scientific advice for global programs.',
+          'FDA offers Pre-IND (Type B), End-of-Phase 2 (Type B), and Pre-NDA/BLA (Type B) meetings per FDA draft guidance on Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (revised September 2023, PDUFA VII). Type A meetings (30-day response) are for stalled programs. Type C meetings (75-day response) address specific issues. EMA Scientific Advice (Article 57 of Regulation 726/2004) provides non-binding guidance on development plans. Consider joint FDA-EMA parallel scientific advice for global programs.',
         fields: [
           {
             id: 'fda_meeting_type',
@@ -2200,7 +2200,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per FDORA Section 3601 (with FDA draft guidance, June 2024), Diversity Action Plans are required for Phase 3 and other pivotal studies unless an exemption is granted.',
+              'Per FDORA Section 3601 (FD&C Act 505(z)), Diversity Action Plans will be required for Phase 3 and other pivotal studies whose enrollment begins 180 days or more after FDA publishes final Diversity Action Plan guidance (issued in draft, June 2024). Until then a plan is voluntary but recommended.',
           },
           {
             id: 'race_ethnicity_targets',
@@ -2276,7 +2276,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'No Diversity Action Plan — Regulatory Expectation',
             message:
-              'FDORA Section 3601 (explained in FDA draft guidance on Diversity Action Plans, June 2024) requires Phase 3 and pivotal trials to submit a Diversity Action Plan. Sponsors must provide justification if a plan is not submitted.',
+              'FDORA Section 3601 (FD&C Act 505(z) and 520(g)(9)) requires Diversity Action Plans for Phase 3 and other pivotal studies whose enrollment begins 180 days or more after FDA publishes final Diversity Action Plan guidance (issued in draft, June 2024). Until that requirement applies, a plan is voluntary but recommended; once it applies, a sponsor that does not submit one must obtain a waiver from FDA.',
             reference:
               'FDORA Section 3601; FDA Draft Guidance: Diversity Action Plans to Improve Enrollment of Participants from Underrepresented Populations in Clinical Studies (June 2024)',
           },
@@ -2316,7 +2316,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder:
               'e.g., Continuous glucose monitor (Dexcom G7), actigraphy (ActiGraph), smart pill bottle (Proteus)',
             helpText:
-              'Per FDA Guidance on Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (2024), DHTs must be fit for purpose with established verification and validation.',
+              'Per FDA Guidance on Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (final, December 2023), DHTs must be fit for purpose with established verification and validation.',
           },
           {
             id: 'hybrid_visit_schedule',
@@ -2485,7 +2485,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: false,
             helpText:
-              'EMA requires an EU Risk Management Plan per Directive 2001/83/EC Article 104a. FDA may require a REMS under FD&C Act section 505-1.',
+              'The EU requires a Risk Management Plan with the marketing authorisation application under Directive 2001/83/EC Article 8(3)(iaa) and Article 104(3)(c) (Regulation (EC) No 726/2004 for centrally authorised products; see GVP Module V). FDA may require a REMS under FD&C Act section 505-1.',
             options: [
               { value: 'not_applicable', label: 'Not Applicable at This Stage' },
               { value: 'rmp_draft', label: 'EU RMP Draft in Progress' },
@@ -2500,7 +2500,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per ICH E2A and FDA Guidance on Safety Reporting (2015), pregnancies in study subjects or partners must be reported and followed to outcome.',
+              'Per ICH E2A and FDA guidance on IND safety reporting (21 CFR 312.32), pregnancies in study subjects or partners must be reported and followed to outcome.',
           },
         ],
         defaultNext: null,
