@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:check-shell-css-collisions"
+  ],
+  "startedAt": "2026-10-23T17:45:18Z",
+  "elapsedSeconds": 0.159,
+  "exitCode": 0,
+  "output": "final-ci-check-shell-css-collisions.log.gz",
+  "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+  "sourceFreeze": "final-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

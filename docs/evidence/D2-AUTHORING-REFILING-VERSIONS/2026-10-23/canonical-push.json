@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "head": "93ee0299bf902dbe4489ac2b3f1b610c0204a480",
+  "startedAt": "2026-10-23T17:51:10Z",
+  "elapsedSeconds": 51.978,
+  "exitCode": 1,
+  "log": "canonical-push.log.gz",
+  "rawOutputSha256": "e304e4bd143ef1bb0e8e25a3c291df35a187877c39237a83e2cfa225f8c4cec7",
+  "headAfter": "93ee0299bf902dbe4489ac2b3f1b610c0204a480",
+  "trackingAfter": "2148660b951a857b288c6b438de51153932abfe1",
+  "hooks": "normal; no bypass"
+}
