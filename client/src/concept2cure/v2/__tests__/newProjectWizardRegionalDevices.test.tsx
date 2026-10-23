@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args) }));
 vi.mock('@/utils/authToken', async (original) => ({ ...(await original<typeof import('@/utils/authToken')>()), getAuthToken: () => 'synthetic-test-session' }));
 import { NewProjectWizard } from '../surfaces/Projects';
 import { getSubmissionTypeContext } from '../surfaces/RegistryBridge';
@@ -30,11 +31,12 @@ async function configure(id: string) {
   const title = getSubmissionTypeContext(id)!.displayName;
   fireEvent.click(await screen.findByRole('button', { name: (name: string) => name === title || (name.startsWith(title) && /^\s/.test(name.slice(title.length))) }));
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  await waitForIntakeWorkspace();
   fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Device identity verification' } });
 }
 async function submit() {
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-  fireEvent.click(screen.getByRole('button', { name: /create project/i }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
   const posted = () => apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/c2c/projects');
   await vi.waitFor(() => expect(posted()).toBeDefined());
   return posted()![2];
@@ -90,6 +92,7 @@ describe('existing registry search reaches exact regional authoring projects', (
     const title = getSubmissionTypeContext(id)!.displayName;
     fireEvent.click(await screen.findByRole('button', { name: (accessibleName: string) => accessibleName === title || (accessibleName.startsWith(title) && /^\s/.test(accessibleName.slice(title.length))) }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    await waitForIntakeWorkspace();
     fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Regional device preparation' } });
     if (agency !== 'FDA') {
       expect(screen.queryByRole('combobox', { name: /^device class/i })).toBeNull();
@@ -97,7 +100,7 @@ describe('existing registry search reaches exact regional authoring projects', (
       expect(screen.queryAllByRole('textbox', { name: /predicate/i })).toHaveLength(0);
     }
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /create project/i }));
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
     const posted = () => apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/c2c/projects');
     await vi.waitFor(() => expect(posted()).toBeDefined());
     expect(posted()![2]).toMatchObject({ programType: type, productType: product, submissionTypeId: id, primaryAgency: agency });

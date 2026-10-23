@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps use-only, public and pending-review admission read-only in explicit edit mode 38ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > denies an unassigned same-organization member and viewer while allowing owner and explicit use members 13ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > retains public-project and pending-review access without admitting another organization 9ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses a writing creator who has no actual access to the private project 19ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > permits scheduling by an explicit project member and delivery to an authorized viewer 13ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > honors project-membership revocation on the next delivery validation 22ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses an unauthorized same-organization recipient before computing or persisting any output 12ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > requires access to every private project referenced by a program-group schedule 10ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps genuine organization registers governed by their existing organization policy 2ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > guards saved account reports by their actual source projects and rechecks a schedule recipient after compute 17ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > rechecks actual source-project recipient access inside the persistence transaction before cursor or delivery effects 37ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence null on direct account reads 1ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence {"invalid":true} on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence "11" on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses a readiness creator demoted while computing without optional source-project evidence 19ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses a private-project recipient revoked while computing without optional source-project evidence 24ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses an organization-register recipient deactivated while computing 17ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence null before scheduled persistence 11ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence {"invalid":true} before scheduled persistence 6ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence "11" before scheduled persistence 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > retains an authorized non-manager program group using its actual computed project set 35ms
+stdout | server/routes/__tests__/report-os-current-run-access.test.ts
+{
+  "timestamp": "2026-10-23T18:57:12.758Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:57:12.760Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-current-run-access.test.ts
+{
+  "timestamp": "2026-10-23T18:57:12.761Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-current-run-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-current-run-access.test.ts
+{
+  "timestamp": "2026-10-23T18:57:13.190Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > keeps an authorized counterexample and checks membership on the same tenant transaction 63ms
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > refuses demoted authority changed during computation and rolls back the entire run 31ms
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > refuses inactive authority changed during computation and rolls back the entire run 30ms
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > refuses project-revoked authority changed during computation and rolls back the entire run 23ms
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > refuses unavailable authority changed during computation and rolls back the entire run 20ms
+ ✓ server/routes/__tests__/report-os-current-run-access.test.ts > every manual report retains current authority at persistence > refuses project-archived authority changed during computation and rolls back the entire run 15ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  18:56:59
+   Duration  18.82s (transform 6.87s, setup 443ms, import 12.18s, tests 5.32s, environment 0ms)

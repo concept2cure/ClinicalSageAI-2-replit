@@ -1,0 +1,98 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains a Japanese supplementary character across the default hard end 72ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains the complete overlap character and attributes the adjusted start to its actual page 23ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > replaces the old chunk set through the existing writer and verifies the new Unicode text 37ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > keeps keyless BMP text, token counts and absent page/vector metadata intact 20ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a legacy chunk whose split character was replaced in UTF-8 storage 11ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses malformed original text instead of issuing a verified identity 6ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a foreign organization without replacing the existing chunks 20ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still honors the existing binary-disposition fence before replacing chunks 18ms
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T18:21:38.923Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:21:38.925Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T18:21:38.925Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > scientific symbol at minimum hard end 3ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > supplementary Japanese at default hard end 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > mathematical letter at odd hard end 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > moves an overlap start past the whole character without increasing overlap 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > reduces a one-unit overlap to zero instead of repeating half a character 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing half-size overlap clamp 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps negative overlap clamped to zero while retaining the boundary character 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > protects the default 400-unit overlap start 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 500 and overlap 0 4ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 0 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 1 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 999 and overlap 499 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing 500-unit minimum chunk size 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > continues reporting UTF-16 offsets rather than code-point indices 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred paragraph cut 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred sentence cut 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred word cut 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > retains paragraph priority over a later sentence and word boundary 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the exact existing ASCII chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the exact existing BMP chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > does not normalize malformed source unit "\ud800" into verified evidence 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > does not normalize malformed source unit "\udc00" into verified evidence 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > is deterministic and gap-free across mixed scientific text and option combinations 7ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > keeps an empty source empty and preserves a short BOM/whitespace source verbatim 0ms
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T18:21:40.110Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:21:40.112Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T18:21:40.114Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+[database] Database connection successful
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases
+Unicode chunk property census {"cases":2688,"totalChunks":8080,"violations":{},"examples":[]}
+
+ ✓ server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases 701ms
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  18:21:29
+   Duration  11.14s (transform 1.72s, setup 324ms, import 4.96s, tests 4.23s, environment 0ms)

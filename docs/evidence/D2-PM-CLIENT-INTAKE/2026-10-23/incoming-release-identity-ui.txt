@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 663ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 649ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 288ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 507ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature 485ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record 454ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder 121ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 462ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature 176ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void 373ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 89ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 439ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 460ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new fda release verdict after a confirmed dispatched to dispatched act 372ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new ema release verdict after a confirmed dispatched to dispatched act 512ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new jp release verdict after a confirmed dispatched to dispatched act 1257ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the ema release gates again before taking a new signature 460ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the jp release gates again before taking a new signature 472ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved fda verdict when the governed act has no confirmed receipt 612ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved ema verdict when the governed act has no confirmed receipt 520ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved jp verdict when the governed act has no confirmed receipt 372ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded fda facts 429ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded ema facts 85ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded jp facts 61ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides fda renewal without explicit server authorization 34ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides ema renewal without explicit server authorization 36ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides jp renewal without explicit server authorization 41ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides unknown renewal without explicit server authorization 34ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows a refused ema renewal without asking for a signature 40ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows a refused jp renewal without asking for a signature 36ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not infer renewal from eligibility alone 29ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer fda renewal while another dispatch gate blocks 28ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer ema renewal while another dispatch gate blocks 36ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer jp renewal while another dispatch gate blocks 31ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer unnecessary renewal for a currently valid release 29ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a fda renewal 47ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a ema renewal 27ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a jp renewal 38ms
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  18:44:43
+   Duration  17.88s (transform 2.46s, setup 358ms, import 3.79s, tests 10.83s, environment 2.11s)

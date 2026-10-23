@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 1129ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 449ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 309ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 296ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 362ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 321ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 273ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 729ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 699ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 678ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 697ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 704ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 706ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 688ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 686ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 587ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 545ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 234ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 591ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 704ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 591ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  17:37:35
+   Duration  14.98s (transform 1.21s, setup 258ms, import 1.51s, tests 11.99s, environment 862ms)

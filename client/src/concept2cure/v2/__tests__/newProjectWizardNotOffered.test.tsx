@@ -14,13 +14,14 @@
  * out, "Choose another filing", which returns to step 1 without sending again.
  */
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest,
+  apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 vi.mock('../surfaces/AnaVerbs', () => ({
   RegistryPicker: ({ onChange }: { onChange: (id: string) => void }) => (
@@ -42,6 +43,7 @@ const REASON = 'Health Canada has no governed NDA outline here, so a project wou
 async function advanceToCreate() {
   fireEvent.click(screen.getByRole('button', { name: /pick nds/i }));
   fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
+  await waitForIntakeWorkspace();
   fireEvent.change(await screen.findByRole('textbox', { name: /project name/i }), { target: { value: 'BX-204 Canada' } });
   fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
   return screen.findByRole('button', { name: /create project/i });
@@ -56,7 +58,8 @@ describe('New project wizard — a filing creation refuses', () => {
   it('states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again', async () => {
     apiRequest.mockRejectedValue(new ApiRequestError(REASON, 422, { error: 'FILING_NOT_OFFERED', message: REASON }, 'FILING_NOT_OFFERED'));
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
     const outcome = await screen.findByTestId('new-project-outcome');
     expect(outcome.textContent).toContain('This filing is not offered here');
     expect(outcome.textContent).toContain(REASON);
@@ -68,10 +71,11 @@ describe('New project wizard — a filing creation refuses', () => {
     expect(apiRequest.mock.calls.filter(([method, path]) => method === 'POST' && path === '/api/c2c/projects').length).toBe(sent);
   });
 
-  it('any other failure keeps "Try again"', async () => {
-    apiRequest.mockRejectedValue(new ApiRequestError('That service is temporarily unavailable. Try again shortly.', 503));
+  it('another confirmed refusal keeps "Try again"', async () => {
+    apiRequest.mockRejectedValue(new ApiRequestError('The project name is already in use.', 409));
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    fireEvent.click(await advanceToCreate());
+    const create = await advanceToCreate();
+    await act(async () => { fireEvent.click(create); });
     await screen.findByTestId('new-project-outcome');
     expect(screen.getByRole('button', { name: /try again/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Choose another filing' })).toBeNull();

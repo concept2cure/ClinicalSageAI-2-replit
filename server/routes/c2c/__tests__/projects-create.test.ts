@@ -178,10 +178,11 @@ describe('POST /api/c2c/projects', () => {
       // workspace) → no existing anchor → INSERT INTO projects RETURNING id.
       .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55 }] })
       .mockResolvedValueOnce({ rows: [] })                                            // anchor: no existing project
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] })
       .mockResolvedValueOnce({ rows: [{ id: 9001 }] })                                // anchor: INSERT INTO projects
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select (post-commit, on the pool)
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select (post-commit, on the pool)
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(201);
     expect(res.body.meta.created).toBe(true);
@@ -196,10 +197,8 @@ describe('POST /api/c2c/projects', () => {
     const params = insert![1];
     // org, program_type, product_type persisted as given
     expect(params[0]).toBe(7);
-    expect(params).toContain('nda');
-    expect(params).toContain('drug');
-    // lead_user_id = the creating user
-    expect(params).toContain(3);
+    // Filing, product class and creating lead persist together.
+    expect(params).toEqual(expect.arrayContaining(['nda', 'drug', 3]));
   });
 
   it('derives product_type from program_type when the client omits it', async () => {
@@ -207,10 +206,10 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (bla = drug)
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const { productType, ...noProduct } = validBody;
     void productType;
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...noProduct, programType: 'bla' });
@@ -227,10 +226,10 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN (fresh txn)
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // retry INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(201);
     const inserts = query.mock.calls.filter((c) => String(c[0]).includes('INSERT INTO regulatory_programs'));
@@ -249,10 +248,10 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(201);
     const order = sqlCalls();
@@ -278,7 +277,7 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockRejectedValueOnce(new Error('audit_logs write failed'));                   // audit INSERT fails
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(500);
@@ -316,10 +315,10 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [shapedRow()] });
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.body.meta.documentId).toBe('doc_test');
     expect(res.body.meta.scaffoldedSections).toBe(24);
@@ -406,7 +405,8 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
       .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 2, workspace_id: 55, default_workspace_id: null }] })
-      .mockResolvedValueOnce({ rows: [] });                                           // anchor: none yet
+      .mockResolvedValueOnce({ rows: [] })                                           // anchor: none yet
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Alpha' }, { id: 56, name: 'Beta' }] });
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ error: 'PROJECT_RECORD_UNAVAILABLE', reason: 'AMBIGUOUS_CLIENT_WORKSPACE' });
@@ -437,10 +437,10 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (no match)
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
   };
 
   it('creates the submissions row transactionally for a drug program (nda)', async () => {
@@ -496,10 +496,10 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
       .mockResolvedValueOnce({ rows: [{ id: 55 }] })                                  // anchored-spine SELECT → this program's spine
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(201);
     expect(createSubmissionTx).not.toHaveBeenCalled();
@@ -520,10 +520,10 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (no spine slot)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const res = await request(appWith(7, 3))
       .post('/api/c2c/projects')
       .send({ ...validBody, name: 'CGM Sensor 510(k)', programType: '510k', productType: 'device' });
@@ -537,10 +537,10 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (no spine slot)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
-      .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
     const res = await request(appWith(7, 3))
       .post('/api/c2c/projects')
       .send({ ...validBody, name: 'CGM CER', programType: 'cer', productType: 'device' });

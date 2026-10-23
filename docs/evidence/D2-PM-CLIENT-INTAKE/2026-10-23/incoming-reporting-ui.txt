@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws an open report and rereads the overview for a replacement account in the same organization 798ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws private data on a current account-role replacement even when its ids stay the same 456ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws private results when the server refreshes the current role without rotating the session revision 555ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards an earlier overview that resolves after a replacement account has started its read 111ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > does not continue a sent run under replacement credentials or imply that it was rolled back 540ms
+stderr | client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > refuses a stale Run click in the same frame that the current actor changes
+An update to ReportingCanvasForSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > refuses a stale Run click in the same frame that the current actor changes 140ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards rendered JSON that finishes after a session ends 199ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards a saved-history document that returns after account replacement 427ms
+stderr | client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale Finalize click in the same frame as replacement credentials
+An update to ReportingCanvasForSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule save in the same frame as replacement credentials
+An update to ReportingCanvasForSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale Finalize click in the same frame as replacement credentials 323ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule save in the same frame as replacement credentials 194ms
+stderr | client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule PATCH in the same frame as replacement credentials
+An update to ReportingCanvasForSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule PATCH in the same frame as replacement credentials 174ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain network creation outcome as a failed write 108ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain missing-id creation outcome as a failed write 144ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain boolean-id creation outcome as a failed write 188ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain status-zero creation outcome as a failed write 144ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain server-error creation outcome as a failed write 153ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain returned-unavailable creation outcome as a failed write 133ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > preserves a known recorded rollback in the nested error code 132ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > preserves a known recorded rollback in the root error code 120ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not finalize after the account changes during password verification 320ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > withdraws a sent finalization without attributing its delayed seal to a replacement account 304ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after logout 259ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after replacement 247ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after organization 317ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF body that finishes after the current account changes 362ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards an earlier report PDF body when the selected program changes 293ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > suppresses an old export refusal that arrives after a current-session change 320ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > dispatches one PDF read for duplicate clicks and disables its export while pending 162ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > allows a pending PDF body and retains the report across normal bearer refresh in the same session 286ms
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  18:57:01
+   Duration  11.59s (transform 1.73s, setup 367ms, import 2.11s, tests 7.93s, environment 856ms)

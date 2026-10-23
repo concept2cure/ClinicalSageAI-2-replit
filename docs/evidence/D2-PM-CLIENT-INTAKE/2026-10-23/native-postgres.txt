@@ -1,0 +1,140 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-23T17:43:22.107Z","pid":12469,"hostname":"d2bfc5cf7ebb","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-23T17:43:22.108Z","pid":12469,"hostname":"d2bfc5cf7ebb","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-23T17:43:22.108Z","pid":12469,"hostname":"d2bfc5cf7ebb","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > lists only current active organization choices and refuses a freshly revoked creator 786ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > saves the selected sponsor, real outline and both ledger paths in one native transaction 631ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice null with no partial rows 300ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 0 with no partial rows 484ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 71 with no partial rows 383ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 73 with no partial rows
+{
+  "timestamp": "2026-10-23T17:43:32.799Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "079874a6-42a3-4f13-9b1f-a874d2d5b552",
+    "orgId": 9,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 73 with no partial rows 314ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 81 with no partial rows
+{
+  "timestamp": "2026-10-23T17:43:33.168Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "86175b00-6a9a-4d3c-a965-209be9794826",
+    "orgId": 9,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 81 with no partial rows 376ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 999 with no partial rows
+{
+  "timestamp": "2026-10-23T17:43:33.673Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "0cb27b61-4e02-4f8a-aea3-79017b5205a6",
+    "orgId": 9,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses invalid, inactive or foreign explicit choice 999 with no partial rows 494ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > keeps the canonical medicinal submission linked to the selected sponsor through the saved program 412ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses omitted multi-client intent despite the marked default and contradictory header
+{
+  "timestamp": "2026-10-23T17:43:34.487Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "f86f6c54-2fdb-4ee2-a970-827a89e26077",
+    "orgId": 9,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses omitted multi-client intent despite the marked default and contradictory header
+{
+  "timestamp": "2026-10-23T17:43:34.539Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "7b150778-981f-4250-abd8-ba4a24a724f0",
+    "orgId": 9,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > refuses omitted multi-client intent despite the marked default and contradictory header 455ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > keeps the one-active-workspace compatibility path honest 412ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > rolls back the real 510k program, outline, anchor, submission and scaffold audit if creation audit fails
+{
+  "timestamp": "2026-10-23T17:43:35.258Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "new row for relation \"audit_logs\" violates check constraint \"synthetic_intake_ledger_failure\"",
+    "correlationId": null,
+    "code": "23514"
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > rolls back the real 510k program, outline, anchor, submission and scaffold audit if creation audit fails 310ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > rolls back the real ind program, outline, anchor, submission and scaffold audit if creation audit fails
+{
+  "timestamp": "2026-10-23T17:43:35.691Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "new row for relation \"audit_logs\" violates check constraint \"synthetic_intake_ledger_failure\"",
+    "correlationId": null,
+    "code": "23514"
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > rolls back the real ind program, outline, anchor, submission and scaffold audit if creation audit fails 433ms
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > retains the selected active workspace lock through all creation writes 389ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > discards a connection after lost actual COMMIT acknowledgement and reports uncertainty without claiming rollback
+{
+  "timestamp": "2026-10-23T17:43:36.414Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "0a3e1d09-a6fb-417d-afaf-ed1600fdc897",
+    "orgId": 9,
+    "err": {}
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > discards a connection after lost actual COMMIT acknowledgement and reports uncertainty without claiming rollback 333ms
+stderr | tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > reports confirmed creation separately when the committed card projection is unavailable
+{
+  "timestamp": "2026-10-23T17:43:36.749Z",
+  "level": "error",
+  "message": "[c2c-projects] Project committed but details unavailable",
+  "context": {
+    "correlationId": "5085aff9-4c3b-433f-96e4-a02605add4fe",
+    "orgId": 9,
+    "err": {}
+  }
+}
+
+ ✓ tests/db/project-client-workspace-intake.dbtest.ts > PM-05 current client selection with actual creation transaction and RLS > reports confirmed creation separately when the committed card projection is unavailable 337ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  17:43:16
+   Duration  20.50s (transform 5.98s, setup 226ms, import 535ms, tests 18.57s, environment 0ms)
