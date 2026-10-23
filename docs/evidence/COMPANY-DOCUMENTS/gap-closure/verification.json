@@ -72,5 +72,17 @@
     "failed": 0,
     "combinedBuildPassed": true,
     "originalCompanyCountsNotInflated": true
+  },
+  "currentCompanySourceCommit": "e9bfbe3a8713164346687f9a6f68731de5357128",
+  "originalCompanySourcePins": "concurrent/original-company-source-pins-2026-10-23.json",
+  "postTaskIntegration": {
+    "evidence": "concurrent/task-integration-2026-10-23.json",
+    "sourceCommit": "6ecf9b07e2bf7226724cdb741d34a75007c13ba4",
+    "upstream": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+    "focusedPassed": 172,
+    "focusedFiles": 14,
+    "failed": 0,
+    "companySourcePinsUnchanged": 298,
+    "combinedBuildPassed": true
   }
 }

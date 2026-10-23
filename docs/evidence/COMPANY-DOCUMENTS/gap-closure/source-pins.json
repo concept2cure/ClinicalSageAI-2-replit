@@ -1,8 +1,10 @@
 {
-  "qualifiedCommit": "a207dbbb62cdd67a355b74a63e3941e5d4572507",
-  "comparisonBase": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
-  "generatedAt": "2026-10-23T15:17:36.753644+00:00",
-  "scope": "Existing company-document source pins, final selected regression suites and changed source/configuration paths against synchronized upstream. Canonical identity and converter dependencies included. Evidence files excluded to avoid self-referential hashes.",
+  "qualifiedCommit": "e9bfbe3a8713164346687f9a6f68731de5357128",
+  "comparisonBase": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
+  "generatedAt": "2026-10-23T15:38:42.720513+00:00",
+  "scope": "Current company-document source after reconciling retained Authoring filing derivation. Original 1976-case qualification pins are retained separately; 218 focused integration cases and current mandatory push gates cover reconciliation. Incoming task delegation modifies none of these company paths.",
+  "originalQualificationPins": "concurrent/original-company-source-pins-2026-10-23.json",
+  "filingIntegrationEvidence": "concurrent/filing-derivation-2026-10-23.json",
   "deletedPaths": [
     "client/src/concept2cure/v2/surfaces/company-documents/CompanyVaultPicker.tsx"
   ],
@@ -536,7 +538,11 @@
     },
     {
       "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
-      "sha256": "7cdafbf39cb15d37d55ad7285d1ae03b56cced546a0cad93874fb4be8b7f7859"
+      "sha256": "b7d6ac5fbeba280c7ad6cf5c1d7d9a40a8966f7056a69038508fb9c77a59d9df"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+      "sha256": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb"
     },
     {
       "path": "server/services/authoring/authoring-export.ts",
@@ -544,7 +550,7 @@
     },
     {
       "path": "server/services/authoring/authoring-file-to-vault.ts",
-      "sha256": "ac0d6472020efd1095d0a85d7759ba66407de9d70ec186cfd4b66f5ebbd40973"
+      "sha256": "26dc6831b082a336b9e57f3b654e2d48ee33da44d5fe9d9b30fad5ea43003cfc"
     },
     {
       "path": "server/services/authoring/authoring-from-draft.ts",
@@ -553,6 +559,10 @@
     {
       "path": "server/services/authoring/authoring-saved-assembly-sources.ts",
       "sha256": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5"
+    },
+    {
+      "path": "server/services/authoring/authoring-vault-filing-receipt.ts",
+      "sha256": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829"
     },
     {
       "path": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
@@ -724,7 +734,7 @@
     },
     {
       "path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
-      "sha256": "b669077d8263ed05c289d533406c97d683d3fff0913e43ef5424aee83e74a7ae"
+      "sha256": "d4810da5f6ed03a45a8a7a0415ef5b5031ccc8716b0e29cdb9f5ae6432818dd2"
     },
     {
       "path": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
@@ -749,6 +759,10 @@
     {
       "path": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
       "sha256": "5f284a97e8ba4bedd7858a34438ed6eca6e883246a6692606022dce096d21009"
+    },
+    {
+      "path": "server/services/ectd/__tests__/core-to-packager.test.ts",
+      "sha256": "7cbb3ba52610baf4a358d1b54e497a825a174230e73a0e5b89cb783691fdc803"
     },
     {
       "path": "server/services/ectd/__tests__/dtd-bundler.test.ts",
@@ -779,12 +793,20 @@
       "sha256": "000e6859d0363d8c9a22250cf2b95509b33c6c7e278b0fdeaa254c57e4835a90"
     },
     {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver.test.ts",
+      "sha256": "66c1d3c2e17b1c73d14cac9c70931cfc6823c19900b21b8d014edd64fa14bae3"
+    },
+    {
       "path": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
       "sha256": "53e8f3f57acaa189e15d7df3ebfbd55513d8e056a06d7e0730d1cfc0a8de7e65"
     },
     {
       "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
       "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "3d216ed23bf38310f295a5355e45e38346836e925c55d2d715c5048d31741c80"
     },
     {
       "path": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
@@ -820,7 +842,7 @@
     },
     {
       "path": "server/services/ectd/assemble-from-core.ts",
-      "sha256": "1d4bc6444c4db355005ce09da250b207294abb70eceaec30feea289730a32276"
+      "sha256": "1a34f863539e827f06ec32ba50ae082846e9d9d4f214e6f8d88281938b993f89"
     },
     {
       "path": "server/services/ectd/assess-dispatch-readiness.ts",
@@ -828,11 +850,11 @@
     },
     {
       "path": "server/services/ectd/core-to-packager.ts",
-      "sha256": "764ad389349309fb28db04e8be45a1b0351f22701af31052b80c18572db8afb1"
+      "sha256": "8e701a3d7317b53d263967deb870aa5f428475ef7640600b4ef592e249681a94"
     },
     {
       "path": "server/services/ectd/leaf-source-resolver.ts",
-      "sha256": "26f2ab3da2e7a7e17e2f8e3df954a0849b0c11a04cffcb13a3f84382683993fc"
+      "sha256": "9016278808333f0ae4d3fca9e6b43d46b988a1a86db41030ff83f5707ff78afc"
     },
     {
       "path": "server/services/ectd/original-pdf-contract.ts",
@@ -1135,12 +1157,20 @@
       "sha256": "fce7f36605a3a64c2e72ebdae781d62ac4ff0207b19f495b22039226d96c7e89"
     },
     {
+      "path": "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+      "sha256": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+    },
+    {
       "path": "server/services/vault/vault-ingest.service.ts",
       "sha256": "be522c7ceb8b5fc118f9e0402591599cd837850bec553decb58f680547056586"
     },
     {
       "path": "server/services/vault/vault-lifecycle.ts",
       "sha256": "85a56b5671d224fbe1a4c7d2ce448118d5e5cec661694668e41b13178e1f1237"
+    },
+    {
+      "path": "server/services/vault/vault-version-checkin.ts",
+      "sha256": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e"
     },
     {
       "path": "shared/__tests__/company-documents.test.ts",

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:39:49.679317+00:00",
+  "sourceCommit": "6ecf9b07e2bf7226724cdb741d34a75007c13ba4",
+  "upstream": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+  "whatAlreadyExists": [
+    "Canonical unified-task assignment and raw task-audit overload share the existing pinned request executor and governed ledger.",
+    "Company legal renewals retain the existing c2c_project_work_items projection and company-settings transaction; they do not depend on the new unified_tasks assignment writer.",
+    "TaskBoard and assignment controls reuse existing admission/CAS transport and add only six task-prefixed CSS selectors."
+  ],
+  "checks": {
+    "runs": [
+      {
+        "report": "race-task-backend-oct23.json",
+        "files": 4,
+        "passed": 75,
+        "sha256": "f6783099d3f17c83691617aefb9405269117baca08f42980286d86868545d098"
+      },
+      {
+        "report": "race-task-audit-oct23.json",
+        "files": 3,
+        "passed": 20,
+        "sha256": "ef677b14dbdee0ccf0861d5799c97a0606f2714b2fe83e47ead5fa049538a4b2"
+      },
+      {
+        "report": "race-task-ui-oct23.json",
+        "files": 4,
+        "passed": 48,
+        "sha256": "6d180f084cbeeb311c776b8501ef2d736b3a7e598ce9ffdcac345c4019f82232"
+      },
+      {
+        "report": "race-task-legal-oct23.json",
+        "files": 3,
+        "passed": 29,
+        "sha256": "e8643062891cc2fa34a3c864bb7ebf657d439683835544e636fdc6515ee9b186"
+      }
+    ],
+    "uniqueFiles": 14,
+    "uniqueCaseResults": {
+      "passed": 172
+    },
+    "currentCompanyPinsUnchanged": 298,
+    "combinedProductionBuildPassed": true,
+    "buildTranscriptSha256": "1de5ff9f74bc0fadd491ee0c8b2e415777b108d2a7f42395733c7409d2284eac",
+    "companyCountsNotInflated": true
+  },
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx",
+      "sha256": "260c8c83b81a03551818f264d40031df56a3b2b03ada5b29fa51967625d2bcd0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+      "sha256": "7f3c15f3df261dee4793bf16b36f92957ed28adc1ee128a6005d85d5b5168250"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx",
+      "sha256": "c96042bc9c8d11ac1185d71cb6af0c0e81691859fa6a60d2885dadba56368d4e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+      "sha256": "dd5d4f8afc90335de3e2e7c46ff16df06b2747c7c13f4aca78377bdff4d3030c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx",
+      "sha256": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "sha256": "f241f832d8314beeae08be032b0217b35d76c4bc4fb67721963be2b78999e23a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+      "sha256": "6c3f3779eb701eeefbde88ffc8eb63327ecacb4b0aa0f30a1f6bfc241228170f"
+    },
+    {
+      "path": "server/routes/__tests__/_task-management-governed-harness.ts",
+      "sha256": "07aabddc3dc32cfc68e10bfcb82386e89a330e55a70e4136fff522c4e2f13d61"
+    },
+    {
+      "path": "server/routes/__tests__/task-assignment.pglite.test.ts",
+      "sha256": "f0544dd2a2da2e567fde3b9751ff08e994be20c9471c1209ce0e7335a96edea1"
+    },
+    {
+      "path": "server/routes/__tests__/task-management-governed-writes-review.test.ts",
+      "sha256": "3a39e8d35817994fc6280f014ab4f939ac7083209e0c9014501407cddd7fcdf7"
+    },
+    {
+      "path": "server/routes/__tests__/taskBoard-assignees-labels.test.ts",
+      "sha256": "60f6181ab29846ed3eb94db71f75fa6639f78b9428efe1fe85c1c7addfb860bb"
+    },
+    {
+      "path": "server/routes/taskBoard.routes.ts",
+      "sha256": "6d8d96c8a22d4eeca60936b4532aea400d6568c7c3fe0c7f98c36d041825e005"
+    },
+    {
+      "path": "server/routes/taskManagement.routes.ts",
+      "sha256": "3c801e2595186a2aafed7ae69cefef86c04e3a9739ff02e8db7ddb21306c1bd7"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/legal-renewal.pglite.test.ts",
+      "sha256": "59948966e9699c12d32dad23476718ffddbe91b33eda8fe766eed3c74fa0f5cc"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/legal-workflow.test.ts",
+      "sha256": "5297370d0ea6177e026ee72bd55ce8b29a1ed92e068613b946cdebbefbb5afd1"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/managed-settings.test.ts",
+      "sha256": "7fd345ce616ad9adbd2df7d6909bd7134f62560333f29d999cb450fdf5ddc2e5"
+    },
+    {
+      "path": "server/services/company-documents/legal-workflow.ts",
+      "sha256": "7920ad70f461bf8a9e8d75ea3a98b213bfc828b478949bd1c3a3f58257486292"
+    },
+    {
+      "path": "server/services/company-documents/profile.ts",
+      "sha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-audit-outcome.test.ts",
+      "sha256": "97dbc65bc43d3e5fdd9a0bb3a85d5ab57705e914aa2ceb0553bea51160c67059"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-audit-transaction.test.ts",
+      "sha256": "246db1672297c7567ebd31934531b9b2dc39d3e25bc7d4292c69cf089c39a64a"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-audit.test.ts",
+      "sha256": "08c2ba34fdefb58d22b54221256a47301aa04d7ccd51a873a65e39f9dc267a86"
+    },
+    {
+      "path": "server/services/tasking/task-assignment.ts",
+      "sha256": "8c6e7c6ffb671c2704e647c91fe7fc70b30a74ce0ec5fc6880daf23501af64aa"
+    },
+    {
+      "path": "server/services/tasking/task-audit.ts",
+      "sha256": "d7189a01ddd38e8a5da4b28167d8319202dc9fffe5b5d78651dddb4fbcc58543"
+    },
+    {
+      "path": "server/services/tasking/task-planning.ts",
+      "sha256": "c338dfb937e6296607b608b03f795857538efcc2a494ecb02b53eb592eba116c"
+    },
+    {
+      "path": "shared/__tests__/task-assignment.test.ts",
+      "sha256": "467f157b36b3bfa8897419bff7a5395742c7652a59bee0360f9d3098fc22b61d"
+    },
+    {
+      "path": "shared/task-assignment.ts",
+      "sha256": "f21f8113f3d34e81250f8889b88e35d64e4616f476816dd83a9a3016dfe3b3f7"
+    },
+    {
+      "path": "tests/db/task-assignment-delegation.dbtest.ts",
+      "sha256": "0440e0ac26ff2ea7132b5263cb6313dedf58a64cdd52416301929950b5f95c60"
+    }
+  ],
+  "boundaries": [
+    "Dedicated real-PostgreSQL task-assignment delegation suite was not run against the application database; the selected native-SQL fixtures use PGlite.",
+    "Current legal-renewal owner/project admission, work-queue visibility, deduplication and atomic audit/projection/notice rollback passed.",
+    "Publication requires the complete mandatory push hooks, including current full typechecking."
+  ]
+}
