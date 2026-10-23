@@ -12,8 +12,10 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
 - `server/services/ectd/package-identity.ts` already reads same-tenant program,
   sponsor and P-44 submission/market application numbers; its version-1 snapshot,
   equality check and program/sponsor share-lock helper are canonical. Snapshot
-  projection currently carries FDA facts; it has no region projection or
-  submission-number lock. DUNS/contact are FDA facts, not other agencies' IDs.
+  projection currently carries FDA facts and has no region projection. The
+  governed transition already locks submission before sequence, then program and
+  sponsor; transmit and waiver/disposition currently start at sequence. DUNS and
+  contact are FDA facts, not other agencies' IDs.
 - `server/services/submission-service/market-application-number.ts`, the existing
   `/api/submissions/:id/application-number` routes and `ProjectMarkets.tsx` /
   `MarketApplicationNumber.tsx` already record the market number with reason,
@@ -79,14 +81,20 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
    against actual package scalars for all regions. Keep FDA ID/contact checks
    FDA-only. Optional non-FDA regional IDs retain their current contract and
    cannot be filled from the FDA DUNS. No contact/ID authority is invented.
-6. Extend the existing `lockRecordedPackageIdentity` helper with optional fourth
-   argument `{ submissionId?: number }`: under the caller's sequence lock, lock
-   the same-tenant submission FOR SHARE before program/sponsor, validate its
-   program anchor against the captured program, then keep program/sponsor order.
-   Real freeze/dispatch/claim capture passes actual submissionId. The market
-   writer already takes submission FOR UPDATE and makes only plain sequence
-   reads; preserve that writer and its fixed-number policy, avoiding reverse
-   row-lock ordering. No transaction is held across gateway network work.
+6. Preserve the existing freeze order: submission, then sequence, then program,
+   then sponsor. Add `lockSubmissionPackageIdentity(q, organizationId,
+   submissionId): Promise<{ programId: string | null } | null>` in the existing
+   identity module. It takes the same-tenant, non-deleted submission FOR SHARE,
+   returns its actual program anchor, and returns null for a missing/foreign
+   parent. Keep `lockRecordedPackageIdentity(q, organizationId, programId)` and
+   its program-then-sponsor locks unchanged. Real claims and waiver/disposition
+   acts take the submission lock before the sequence lock, validate the locked
+   sequence parent and actual program anchor, then lock program/sponsor before
+   re-deriving binding. Freeze already takes submission FOR UPDATE before
+   sequence FOR UPDATE; retain that order. The market writer takes submission
+   FOR UPDATE and makes only plain sequence reads; preserve its fixed-number
+   policy. A sequence-first submission lock would deadlock against freeze and is
+   expressly excluded. No transaction is held across gateway network work.
 7. Governed packageability judges captured recorded facts for every known
    region. Explicit user test-package/dry-run paths remain clearly dry. Real
    transmit requires the claim-captured identity, packages it, checks proof echo

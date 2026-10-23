@@ -10,8 +10,10 @@ Baseline `dd749f3e56f1d9055b19067e90680d70bf9a9fb9`. Contract `docs/design/NONUS
 - `server/services/ectd/package-identity.ts` already reads same-tenant program,
   sponsor and P-44 submission/market application numbers; its version-1 snapshot,
   equality check and program/sponsor share-lock helper are canonical. Snapshot
-  projection currently carries FDA facts; it has no region projection or
-  submission-number lock. DUNS/contact are FDA facts, not other agencies' IDs.
+  projection currently carries FDA facts and has no region projection. The
+  governed transition already locks submission before sequence, then program and
+  sponsor; transmit and waiver/disposition currently start at sequence. DUNS and
+  contact are FDA facts, not other agencies' IDs.
 - `server/services/submission-service/market-application-number.ts`, the existing
   `/api/submissions/:id/application-number` routes and `ProjectMarkets.tsx` /
   `MarketApplicationNumber.tsx` already record the market number with reason,
