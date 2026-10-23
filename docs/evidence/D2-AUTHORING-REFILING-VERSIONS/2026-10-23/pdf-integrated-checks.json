@@ -1,0 +1,371 @@
+[
+  {
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+      "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+      "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "server/services/vault/__tests__/vault-version-compare.test.ts",
+      "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx",
+      "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts",
+      "server/routes/__tests__/authoringExportPdf.test.ts",
+      "server/routes/__tests__/authoringExportSignatureManifest.test.ts",
+      "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringWorkingCopy.test.ts",
+      "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts",
+      "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringExports.test.tsx",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/pdf-integrated-regressions-tests.json"
+    ],
+    "startedAt": "2026-10-23T17:54:15Z",
+    "elapsedSeconds": 61.118,
+    "exitCode": 0,
+    "output": "pdf-integrated-regressions.log.gz",
+    "outputSha256": "ad181cbec2e107beefc955cb79341615d4885136f9914bff416464586e80b1b0",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:single-native-canvas"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.12,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-single-native-canvas.log.gz",
+    "outputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:canvas-path"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.129,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-canvas-path.log.gz",
+    "outputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.292,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:class-vocabulary"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.601,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-class-vocabulary.log.gz",
+    "outputSha256": "b8ddc546d1c5628945b1caf75c8a73c7d1b1cb7339b5f0f6eda3fc0f8d51fbc2",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:filing-exit-agreement"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.397,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-filing-exit-agreement.log.gz",
+    "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:internals-in-copy"
+    ],
+    "startedAt": "2026-10-23T17:55:16Z",
+    "elapsedSeconds": 0.582,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-internals-in-copy.log.gz",
+    "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:empty-state-honesty"
+    ],
+    "startedAt": "2026-10-23T17:55:17Z",
+    "elapsedSeconds": 0.635,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-empty-state-honesty.log.gz",
+    "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:action-overclaim"
+    ],
+    "startedAt": "2026-10-23T17:55:17Z",
+    "elapsedSeconds": 0.376,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-action-overclaim.log.gz",
+    "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:success-before-ok"
+    ],
+    "startedAt": "2026-10-23T17:55:17Z",
+    "elapsedSeconds": 0.309,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-success-before-ok.log.gz",
+    "outputSha256": "b529e879a6806ab1c0e8b1c586beecc88a09ed3d6ac1f47e7363c64ecb525a73",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "startedAt": "2026-10-23T17:55:17Z",
+    "elapsedSeconds": 0.144,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.123,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.149,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.308,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-surface-text-ramp.log.gz",
+    "outputSha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:check-shell-css-collisions"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.165,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-check-shell-css-collisions.log.gz",
+    "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:vault-document-writers"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.338,
+    "exitCode": 0,
+    "output": "pdf-integrated-ci-vault-document-writers.log.gz",
+    "outputSha256": "36ff550d2ef40fb1213fc6cd1544d2ef3b07361ba158ee7daf21a420e58e5b3e",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "audit:repo-health:ceiling"
+    ],
+    "startedAt": "2026-10-23T17:55:18Z",
+    "elapsedSeconds": 0.695,
+    "exitCode": 0,
+    "output": "pdf-integrated-audit-repo-health-ceiling.log.gz",
+    "outputSha256": "bc006650bac33421593d4c6dc620fbd7811a731fdcd343594639a1259aa2dde7",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "--format=json"
+    ],
+    "startedAt": "2026-10-23T17:55:19Z",
+    "elapsedSeconds": 0.586,
+    "exitCode": 0,
+    "output": "pdf-integrated-eslint.log.gz",
+    "outputSha256": "aa0c5011e03676705a981abb196170152e13bff85b93161f25f1908c6fc1ae3c",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "--since",
+      "64e668e35044e7bccab2facdb78fccfa5da31419",
+      "--gate"
+    ],
+    "startedAt": "2026-10-23T17:55:20Z",
+    "elapsedSeconds": 1.217,
+    "exitCode": 0,
+    "output": "pdf-integrated-warning-ratchet.log.gz",
+    "outputSha256": "2859667b9d0c29313bc206d5d403fc7e2e85b7db9c2e73095465f7fcef9d5d4f",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "startedAt": "2026-10-23T17:55:21Z",
+    "elapsedSeconds": 13.151,
+    "exitCode": 0,
+    "output": "pdf-integrated-build.log.gz",
+    "outputSha256": "8361be3b9caba1dcf44ffa678d881e0262de74d085f62b827cd85ba61cf04155",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/typecheck-no-regression.mjs",
+      "--incremental"
+    ],
+    "startedAt": "2026-10-23T17:55:34Z",
+    "elapsedSeconds": 189.141,
+    "exitCode": 0,
+    "output": "pdf-integrated-typecheck.log.gz",
+    "outputSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "sourceFreeze": "pdf-integrated-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  }
+]

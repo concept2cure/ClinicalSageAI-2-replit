@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:surface-text-ramp"
+  ],
+  "startedAt": "2026-10-23T17:38:04Z",
+  "elapsedSeconds": 0.269,
+  "exitCode": 1,
+  "output": "release-ci-surface-text-ramp.log.gz",
+  "outputSha256": "db231ddfe4415c7fc6cd7f6119732dec0da923f46658734c9d988cfe9aa09ccf",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

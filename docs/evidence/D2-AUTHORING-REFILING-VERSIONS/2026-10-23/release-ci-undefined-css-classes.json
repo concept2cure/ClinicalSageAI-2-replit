@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:undefined-css-classes"
+  ],
+  "startedAt": "2026-10-23T17:38:04Z",
+  "elapsedSeconds": 0.14,
+  "exitCode": 0,
+  "output": "release-ci-undefined-css-classes.log.gz",
+  "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

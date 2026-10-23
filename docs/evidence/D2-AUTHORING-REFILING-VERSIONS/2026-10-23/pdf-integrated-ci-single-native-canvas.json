@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:single-native-canvas"
+  ],
+  "startedAt": "2026-10-23T17:55:16Z",
+  "elapsedSeconds": 0.12,
+  "exitCode": 0,
+  "output": "pdf-integrated-ci-single-native-canvas.log.gz",
+  "outputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}
