@@ -1,0 +1,103 @@
+{
+  "phase": "post-assembly-search-before-integration",
+  "head": "9392d896a7ffd7c89c2327d8a9b0dd748e998cf6",
+  "incomingCanonical": "1eca721b1",
+  "testFiles": [
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+  ],
+  "preservedSourceMatchesPostDiscovery": true,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+      "sha256": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+      "sha256": "1001df1fa05fd59eff1e2d5e120b1ec15e8ae194b36613fa59f2d2b1922cd215",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+      "sha256": "eeb88f565923d24e1dad4abf29065c1088a3d3bbf2989c3ea49adb37f77af434",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx",
+      "sha256": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+      "sha256": "55b9c0be33f54b216766056c09777cefbc2d84b3a2ff766f481f4796e818a49e",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+      "category": "incoming-assembly-search"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "sha256": "e5e556fcf9203041b1ef03c3f344645ae1cf66a3a48974b2d00e742e4ec17ae0",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx",
+      "sha256": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "sha256": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+      "sha256": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "sha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "sha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "client/src/concept2cure/v2/Shell.tsx",
+      "sha256": "8b51a162f7f4538959e2d1b8171ce427b4ad86777f93727d1efa59234efb1da3",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "sha256": "71c5c490b81e6977087c837a59db22a71527ac2e0d1728ce903c4f2f3f95ee58",
+      "category": "preserved-reporting-shared"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "sha256": "0ba65caa586dcbdff851d10d37a7f56c1772e8c2e4cf4916965db850a00111e9",
+      "category": "preserved-reporting-shared"
+    }
+  ]
+}

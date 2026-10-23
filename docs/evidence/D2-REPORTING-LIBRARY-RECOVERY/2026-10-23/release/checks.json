@@ -21,7 +21,7 @@
     "finishedAt": "2026-10-23T20:24:30.242326+00:00"
   },
   "earlierSelectedBuildFiles": 10286,
-  "finalCanonicalBase": "26a71d223ae20855157cc6cfed4214b47e7f74c3",
+  "finalCanonicalBase": "9392d896a7ffd7c89c2327d8a9b0dd748e998cf6",
   "typeOnlyBuiltAssetsComparison": {
     "observedAt": "2026-10-23T20:33:28.334328+00:00",
     "beforeAssets": 288,
@@ -52,7 +52,18 @@
     "finishedAt": "2026-10-23T20:32:27.760566+00:00"
   },
   "postApiSelectedFiles": 10293,
-  "build": {
+  "workflowReview": "workflow-discovery-review.json.gz",
+  "compilerFirstRefusal": "compiler-first-refusal.json",
+  "correctedBackendFixture": "../backend/compiler-successor/README.md",
+  "postDiscoveryQualification": {
+    "passed": 115,
+    "files": 4,
+    "vitestSeconds": 15.76,
+    "sourcePins": 32,
+    "sourceStable": true,
+    "packet": "../client/post-discovery/README.md"
+  },
+  "postWorkflowBuild": {
     "argv": [
       "npm",
       "run",
@@ -68,16 +79,31 @@
     "elapsedSeconds": 23.537,
     "finishedAt": "2026-10-23T20:44:06.484726+00:00"
   },
-  "selectedBuildFiles": 10296,
-  "workflowReview": "workflow-discovery-review.json.gz",
-  "compilerFirstRefusal": "compiler-first-refusal.json",
-  "correctedBackendFixture": "../backend/compiler-successor/README.md",
-  "postDiscoveryQualification": {
-    "passed": 115,
-    "files": 4,
-    "vitestSeconds": 15.76,
-    "sourcePins": 32,
-    "sourceStable": true,
-    "packet": "../client/post-discovery/README.md"
-  }
+  "postWorkflowSelectedFiles": 10296,
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:54:18.285564+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.602,
+    "finishedAt": "2026-10-23T20:54:41.887713+00:00"
+  },
+  "selectedBuildFiles": 10298,
+  "postAssemblySearch": {
+    "passed": 71,
+    "files": 3,
+    "vitestSeconds": 27.15,
+    "sourcePins": 18,
+    "preservedHashesStable": 11,
+    "packet": "../client/post-assembly-search/README.md"
+  },
+  "normalGateZeroTypeErrors": "zero-type-errors-cas-refusal.json"
 }

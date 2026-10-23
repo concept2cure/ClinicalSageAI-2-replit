@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-23T20:54:18.386772+00:00",
+  "headChecked": "752d8fb2c03b96f5deb395981595b59e4c5a8596",
+  "attempt": 2,
+  "allNormalPrePushGatesPassed": true,
+  "wholeTreeTypeScriptErrors": 0,
+  "typeScriptExitCode": 0,
+  "baseline": 0,
+  "pushExitCode": 1,
+  "published": false,
+  "reason": "Git compare-and-swap refusal: canonical advanced from aef1b6a15456b9d3911753790a610a23487fa4c5 to1eca721b1081d1fe1ef2491b70b726cc0f083fad during qualification.",
+  "incomingReview": "Authoring template/assembly search only; no reporting/API/session overlap. Normally merged; selected external tests and finalmergedbuild follow."
+}

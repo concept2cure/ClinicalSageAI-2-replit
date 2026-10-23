@@ -44,3 +44,5 @@ These tests exercise the real client canvas and request/response handling with b
 The separate [shared API compatibility phase](post-api-merge/README.md) records verification after canonical commit `9f8cae7f0` introduced the optional fourth `apiCall` callback. It preserves this phase’s 323/32 result and pins; its own 335/33 result covers the same reporting files plus the existing API helper tests after an explicit non-null parameter type reconciliation.
 
 The later [workflow discovery reconciliation](post-discovery/README.md) records a bounded 115/4 pass after canonical workflow discovery/navigation merged. It makes no implementation changes and retains its own before/after shared-registry, Shell, API and reporting pins.
+
+The separate [incoming Authoring template-search compatibility phase](post-assembly-search/README.md) records a 71/3 pass after preserving newer canonical Authoring work. It confirms unchanged reporting/shared source hashes and does not repeat or pool the earlier reporting results.

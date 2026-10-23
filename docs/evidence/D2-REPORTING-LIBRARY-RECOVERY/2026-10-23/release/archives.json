@@ -182,6 +182,55 @@
       "sha256": "3ceb132304180aa44783ebef4e0a9e9663c73c4dd8b3aa8c60ae7b05af0234c9",
       "uncompressedBytes": 14697,
       "uncompressedSha256": "dc60ccd9d7600e9f41a8f3fe030d140f508aa43cee1bada4919ee24c9621e81e"
+    },
+    {
+      "file": "push-attempt-2-zero-type-errors-cas-refusal.txt.gz",
+      "bytes": 4485,
+      "sha256": "7b48baa3dad6a9fb79843a960a1f059b5c0417c4456652e0a129295e61e2dcca",
+      "uncompressedBytes": 14092,
+      "uncompressedSha256": "ba53b162842eaf4485f31335500af4bd2eb3f6ae594f1639b7f682ad3666030f"
+    },
+    {
+      "file": "final-assembly-reconciled-build.txt.gz",
+      "bytes": 4713,
+      "sha256": "b2ad26b74933a75b82c53b01390462c6ecfe7f73cd8a7c46de4608ae7faa1789",
+      "uncompressedBytes": 16493,
+      "uncompressedSha256": "05880405fdfb26d914c0b74dff3351174c64886f4e0d3958c925771b001e1faa"
+    },
+    {
+      "file": "final-assembly-reconciled-build-command.json.gz",
+      "bytes": 296,
+      "sha256": "a45b5872eb4a3999dc9e90b2e37b6e25e10780216f36bcb8c690e39a32b46675",
+      "uncompressedBytes": 404,
+      "uncompressedSha256": "9fab47dfc20172a5a5be336f7e66aed4247a637890c00de8b4dda67df5fefde5"
+    },
+    {
+      "file": "final-assembly-reconciled-build-source-before.json.gz",
+      "bytes": 522688,
+      "sha256": "5bff96c02e092557d4572b5019e222da92e61141c07bbeba49fc5459f0c10e37",
+      "uncompressedBytes": 1353343,
+      "uncompressedSha256": "0355d47a07fc53f8458987f7ae7f9458df9dcad433ff9e36e15a2496c17c3361"
+    },
+    {
+      "file": "final-assembly-reconciled-build-source-after.json.gz",
+      "bytes": 522688,
+      "sha256": "5bff96c02e092557d4572b5019e222da92e61141c07bbeba49fc5459f0c10e37",
+      "uncompressedBytes": 1353343,
+      "uncompressedSha256": "0355d47a07fc53f8458987f7ae7f9458df9dcad433ff9e36e15a2496c17c3361"
+    },
+    {
+      "file": "assembly-search-review.json.gz",
+      "bytes": 535,
+      "sha256": "58912341dc57b4c41e2713d07fe19ecd68db217ca6e3dbd5ae84fb1ba0774601",
+      "uncompressedBytes": 1105,
+      "uncompressedSha256": "9243ca7a381cc65ca7b235759299a847f87874237f4644b9b049b8d326fa9691"
+    },
+    {
+      "file": "assembly-search-merge.txt.gz",
+      "bytes": 2291,
+      "sha256": "85f17a0d0b64efadbf47a0c5ccc16f6e20c4a0a4db190c0d1135c3d05a8e8cd7",
+      "uncompressedBytes": 22809,
+      "uncompressedSha256": "c0036f41a5fb790e6910854c3c843b41e852ea85a6757a0e3ef22e4a486001c1"
     }
   ]
 }
