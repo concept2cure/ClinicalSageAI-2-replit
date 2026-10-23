@@ -13,17 +13,20 @@
  *   + tier precedence, single-tier set/clear, and the getOrgId /
  *     x-organization-id header contract.
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getAuthToken,
   setAuthToken,
   clearAuthToken,
   getAuthHeaders,
   getOrgId,
+  getJwtOrgId,
   capturedActorHeaders,
 } from '../authToken';
 
 const TOKEN_KEY = 'trialsage_access_token';
+const organizationToken = (organizationId: string | number, revision = 'fixture') =>
+  `fixture.${btoa(JSON.stringify({ userId: 7, organizationId }))}.${revision}`;
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -32,6 +35,7 @@ beforeEach(() => {
   // each other.
   clearAuthToken();
 });
+afterEach(() => vi.restoreAllMocks());
 
 describe('captured actor headers for governed ceremonies', () => {
   const token = (claims: unknown, nonce = 'fixture') => `fixture.${btoa(JSON.stringify(claims))}.${nonce}`;
@@ -194,6 +198,65 @@ describe('legacy fallback — read only', () => {
 });
 
 describe('getOrgId / x-organization-id header contract', () => {
+  it('keeps a tab-scoped bearer and its organization together despite another tab changing shared selection', () => {
+    const bearer = organizationToken(12);
+    sessionStorage.setItem(TOKEN_KEY, bearer);
+    localStorage.setItem(TOKEN_KEY, organizationToken(99));
+    localStorage.setItem('currentOrganizationId', '99');
+    localStorage.setItem('currentOrganization', '99');
+    localStorage.setItem('trialsage_user', JSON.stringify({ organizationId: 99 }));
+
+    expect(getOrgId()).toBe('12');
+    expect(getJwtOrgId()).toBe('12');
+    expect(getAuthHeaders()).toEqual({ Authorization: `Bearer ${bearer}`, 'x-organization-id': '12' });
+    // Resolving a request must not repair shared storage out from under the other tab.
+    expect(localStorage.getItem('currentOrganizationId')).toBe('99');
+    expect(localStorage.getItem(TOKEN_KEY)).toBe(organizationToken(99));
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBe(bearer);
+  });
+
+  it('uses a remembered bearer organization without moving its token into session storage', () => {
+    const bearer = organizationToken('42');
+    localStorage.setItem(TOKEN_KEY, bearer);
+    localStorage.setItem('currentOrganizationId', '99');
+
+    expect(getAuthHeaders()).toEqual({ Authorization: `Bearer ${bearer}`, 'x-organization-id': '42' });
+    expect(localStorage.getItem(TOKEN_KEY)).toBe(bearer);
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+  });
+
+  it('follows a replaced session on the next read and returns to legacy selection after logout', () => {
+    localStorage.setItem('currentOrganizationId', '99');
+    sessionStorage.setItem(TOKEN_KEY, organizationToken(12));
+    expect(getOrgId()).toBe('12');
+    const rotated = organizationToken(42, 'rotated');
+    sessionStorage.setItem(TOKEN_KEY, rotated);
+    expect(getAuthHeaders()).toEqual({ Authorization: `Bearer ${rotated}`, 'x-organization-id': '42' });
+
+    clearAuthToken();
+    expect(getOrgId()).toBe('99');
+    expect(getJwtOrgId()).toBe('99');
+    expect(getAuthHeaders()).toEqual({ 'x-organization-id': '99' });
+  });
+
+  it.each(['unreadable-token', 'fixture.e30.fixture'])('preserves persisted fallback for a token without a readable organization: %s', bearer => {
+    sessionStorage.setItem(TOKEN_KEY, bearer);
+    localStorage.setItem('currentOrganizationId', '42');
+    expect(getOrgId()).toBe('42');
+    expect(getJwtOrgId()).toBe('42');
+  });
+
+  it('retains the default when browser privacy settings refuse local-storage reads', () => {
+    const getItem = Storage.prototype.getItem;
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+      if (this === localStorage) throw new DOMException('Storage unavailable', 'SecurityError');
+      return getItem.call(this, key);
+    });
+    expect(getOrgId()).toBe('1');
+    expect(getJwtOrgId()).toBe('1');
+    expect(getAuthHeaders()).toEqual({ 'x-organization-id': '1' });
+  });
+
   it('reads currentOrganizationId as the primary org source', () => {
     localStorage.setItem('currentOrganizationId', '42');
     expect(getOrgId()).toBe('42');

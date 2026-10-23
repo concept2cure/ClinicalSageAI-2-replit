@@ -76,15 +76,16 @@ export const getAuthToken = (): string | null => {
   return memoryToken;
 };
 
-export const getOrgId = (): string => {
-  const fromCurrent = localStorage.getItem('currentOrganizationId');
+/** Legacy selection for a request without a readable bearer organization. */
+const getStoredOrgId = (): string => {
+  const fromCurrent = readLocalStorage(ORG_ID_KEY);
   if (fromCurrent && fromCurrent.trim()) return fromCurrent.trim();
 
-  const fromLegacy = localStorage.getItem('currentOrganization');
+  const fromLegacy = readLocalStorage('currentOrganization');
   if (fromLegacy && fromLegacy.trim()) return fromLegacy.trim();
 
   try {
-    const rawUser = localStorage.getItem('trialsage_user');
+    const rawUser = readLocalStorage('trialsage_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser) as { organizationId?: string | number };
       const orgId = parsed?.organizationId;
@@ -100,12 +101,13 @@ export const getOrgId = (): string => {
 };
 
 /**
- * The organization id from the verified JWT's own claim — the authoritative
- * source for "my own org" operations. Server-side tenant guards
+ * The organization id from the active bearer's own claim. This is a client
+ * consistency hint; only the server verifies the token. Server-side tenant guards
  * (validateOrgOwnership, requireTenantContext) resolve the org from this same
  * claim, so a URL/body built from it can never mismatch the token the way a
  * stale `currentOrganizationId` localStorage value can. Falls back to
- * getOrgId() when no token is present or the payload can't be read.
+ * the legacy persisted selection when no token is present or the payload can't
+ * be read.
  */
 export const getJwtOrgId = (): string => {
   const token = getAuthToken();
@@ -130,8 +132,13 @@ export const getJwtOrgId = (): string => {
       // malformed token — fall through to the localStorage resolver
     }
   }
-  return getOrgId();
+  return getStoredOrgId();
 };
+
+/** The bearer can be per-tab while browser organization selection is shared.
+ * Keep generic URLs and headers with that bearer, even after another tab signs
+ * into a different organization. Resolving it never changes stored selection. */
+export const getOrgId = (): string => getJwtOrgId();
 
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();

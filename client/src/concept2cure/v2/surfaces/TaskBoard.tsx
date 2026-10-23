@@ -9,7 +9,7 @@ import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
@@ -449,10 +449,11 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      see after an action is what the server actually stored — no client-built
      rows, no window.C2C write-back. */
   const [reloadKey, setReloadKey] = useState(0);
-  const liveTasks = useLiveRows<TaskItem>('/api/task-management/board', [
+  const liveTasks = useLiveRows<TaskItem>(
     '/api/task-management/board',
-    reloadKey,
-  ]);
+    ['/api/task-management/board', reloadKey],
+    isRowsWith<TaskItem>('taskId', 'title', 'project', 'moduleType', 'status', 'priority'),
+  );
   const tasks: TaskItem[] = liveTasks.rows;
   /* Which stores the board could not read. The board reads every task store
      (its own, the schedule's, correspondence's, filings'); one it could not
@@ -990,13 +991,15 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
 
       {liveTasks.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
-      ) : liveTasks.error ? (
+      ) : liveTasks.error || (liveTasks.empty && unreadStores.length > 0) ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
           retry={() => setReloadKey((k) => k + 1)}
-          hint="The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
+          hint={liveTasks.error
+            ? "The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
+            : `The board is incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read. Retry to load the missing work.`}
         />
       ) : liveTasks.empty ? (
         <EmptyState

@@ -1,0 +1,167 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > pins a refreshed same-actor bearer without trusting the organization storage fallback 4ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":8,"organizationId":12} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":13} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":"7garbage","organizationId":12} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":"12garbage"} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":null,"organizationId":12} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses missing or unreadable bearer instead of falling back to persisted identity 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > reads the canonical trialsage_access_token key fresh on every call 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > prefers sessionStorage over localStorage (tier precedence) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > falls back to localStorage when sessionStorage has no token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > does NOT mutate storage on read (no lazy migration) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > returns null when no token is present anywhere 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D2 — remember-me (localStorage) token survives the first API call > reading the token never deletes the persisted localStorage copy 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D3 — a token refresh propagates > a refreshed trialsage_access_token is seen on the next read 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > clearAuthToken wipes the token from both tiers so getAuthToken returns null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > no leftover mirror in either tier can revive the bearer after logout 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken keeps the token in exactly one tier (session) and clears the other 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken clears legacy keys from both tiers 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > resolves a legacy "token" key but never migrates or deletes it 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > prefers the canonical key over a legacy key 0ms
+ × client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > keeps a tab-scoped bearer and its organization together despite another tab changing shared selection 8ms
+   → expected '99' to be '12' // Object.is equality
+ × client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > uses a remembered bearer organization without moving its token into session storage 4ms
+   → expected { …(2) } to deeply equal { …(2) }
+ × client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > follows a replaced session on the next read and returns to legacy selection after logout 1ms
+   → expected '99' to be '12' // Object.is equality
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: unreadable-token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: fixture.e30.fixture 0ms
+ × client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > retains the default when browser privacy settings refuse local-storage reads 2ms
+   → Storage unavailable
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > reads currentOrganizationId as the primary org source 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to legacy currentOrganization 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to the persisted user payload organizationId 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > defaults to "1" when nothing is persisted 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders always carries x-organization-id, and the bearer when present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders still sends x-organization-id when no token is present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > a legacy bearer left in either tier cannot outlive clearAuthToken 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > the authService logout key list stays in sync with the legacy fallback 14ms
+ × client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > catalog request uses the per-tab bearer organization ahead of another tab’s shared organization 13ms
+   → expected '99' to be '12' // Object.is equality
+ × client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > task-board request uses the per-tab bearer organization ahead of another tab’s shared organization 1ms
+   → expected '99' to be '12' // Object.is equality
+ × client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > multipart upload uses the per-tab bearer organization ahead of another tab’s shared organization 7ms
+   → expected '99' to be '12' // Object.is equality
+ × client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > default query function uses the per-tab bearer organization ahead of another tab’s shared organization 2ms
+   → expected '99' to be '12' // Object.is equality
+ × client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > keeps remember-me, refresh and logout headers current without migrating token storage 1ms
+   → expected '99' to be '12' // Object.is equality
+ ✓ client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > preserves explicit captured-actor headers and refuses a subsequently replaced actor 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > catalog request uses the per-tab bearer organization ahead of another tab’s shared organization
+ FAIL  client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > task-board request uses the per-tab bearer organization ahead of another tab’s shared organization
+ FAIL  client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > multipart upload uses the per-tab bearer organization ahead of another tab’s shared organization
+ FAIL  client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > default query function uses the per-tab bearer organization ahead of another tab’s shared organization
+AssertionError: expected '99' to be '12' // Object.is equality
+
+Expected: "12"
+Received: "99"
+
+ ❯ client/src/lib/__tests__/api-request-active-organization.test.ts:48:46
+     46|     const headers = new Headers(outgoing.mock.calls[0][1]?.headers);
+     47|     expect(headers.get('Authorization')).toBe(`Bearer ${active}`);
+     48|     expect(headers.get('x-organization-id')).toBe('12');
+       |                                              ^
+     49|     expect(outgoing.mock.calls[0][1]?.credentials).toBe('include');
+     50|     expect(localStorage.getItem('currentOrganizationId')).toBe('99');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/lib/__tests__/api-request-active-organization.test.ts > the active bearer scopes shared API transports > keeps remember-me, refresh and logout headers current without migrating token storage
+AssertionError: expected '99' to be '12' // Object.is equality
+
+Expected: "12"
+Received: "99"
+
+ ❯ client/src/lib/__tests__/api-request-active-organization.test.ts:58:86
+     56|     localStorage.setItem(TOKEN_KEY, remembered);
+     57|     await apiRequest('GET', '/api/module-subscriptions/catalog');
+     58|     expect(new Headers(outgoing.mock.calls[0][1]?.headers).get('x-orga…
+       |                                                                                      ^
+     59|     expect(localStorage.getItem(TOKEN_KEY)).toBe(remembered);
+     60|     expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > keeps a tab-scoped bearer and its organization together despite another tab changing shared selection
+AssertionError: expected '99' to be '12' // Object.is equality
+
+Expected: "12"
+Received: "99"
+
+ ❯ client/src/utils/__tests__/authToken.test.ts:209:24
+    207|     localStorage.setItem('trialsage_user', JSON.stringify({ organizati…
+    208|
+    209|     expect(getOrgId()).toBe('12');
+       |                        ^
+    210|     expect(getJwtOrgId()).toBe('12');
+    211|     expect(getAuthHeaders()).toEqual({ Authorization: `Bearer ${bearer…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > uses a remembered bearer organization without moving its token into session storage
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "Authorization": "Bearer fixture.eyJ1c2VySWQiOjcsIm9yZ2FuaXphdGlvbklkIjoiNDIifQ==.fixture",
+-   "x-organization-id": "42",
++   "x-organization-id": "99",
+  }
+
+ ❯ client/src/utils/__tests__/authToken.test.ts:223:30
+    221|     localStorage.setItem('currentOrganizationId', '99');
+    222|
+    223|     expect(getAuthHeaders()).toEqual({ Authorization: `Bearer ${bearer…
+       |                              ^
+    224|     expect(localStorage.getItem(TOKEN_KEY)).toBe(bearer);
+    225|     expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > follows a replaced session on the next read and returns to legacy selection after logout
+AssertionError: expected '99' to be '12' // Object.is equality
+
+Expected: "12"
+Received: "99"
+
+ ❯ client/src/utils/__tests__/authToken.test.ts:231:24
+    229|     localStorage.setItem('currentOrganizationId', '99');
+    230|     sessionStorage.setItem(TOKEN_KEY, organizationToken(12));
+    231|     expect(getOrgId()).toBe('12');
+       |                        ^
+    232|     const rotated = organizationToken(42, 'rotated');
+    233|     sessionStorage.setItem(TOKEN_KEY, rotated);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > retains the default when browser privacy settings refuse local-storage reads
+SecurityError: Storage unavailable
+ ❯ Proxy.<anonymous> client/src/utils/__tests__/authToken.test.ts:252:40
+    250|     const getItem = Storage.prototype.getItem;
+    251|     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function…
+    252|       if (this === localStorage) throw new DOMException('Storage unava…
+       |                                        ^
+    253|       return getItem.call(this, key);
+    254|     });
+ ❯ getOrgId client/src/utils/authToken.ts:80:36
+ ❯ client/src/utils/__tests__/authToken.test.ts:255:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 18, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 32 passed (41)
+   Start at  20:09:33
+   Duration  2.10s (transform 175ms, setup 287ms, import 154ms, tests 96ms, environment 1.19s)
+
