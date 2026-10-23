@@ -1,0 +1,182 @@
+{
+  "sourceBase": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+  "recordedAt": "2026-10-23T16:01:25.742623+00:00",
+  "regressionCommand": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "client/src/concept2cure/v2/__tests__/reportEngineHonesty.test.tsx",
+      "client/src/concept2cure/v2/__tests__/reportEngineNoFixtures.test.tsx",
+      "client/src/concept2cure/v2/__tests__/reportEngineTabRendersItsDocument.test.tsx",
+      "tests/ui-readiness/ui-surface-registry.test.ts",
+      "tests/ui/surface-registry-coverage.test.ts",
+      "shared/navigation/__tests__/navigation.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-alignment-20261023/regressions.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-alignment-20261023/regressions.txt"
+  },
+  "regressionResult": {
+    "exitCode": 0,
+    "suites": 6,
+    "passed": 45,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSecondsFromRawLog": 6.17,
+    "sourcePinCount": 9,
+    "sourceDrift": [],
+    "command": "regression-command.json",
+    "output": "regressions.txt",
+    "json": "regressions.json",
+    "changedFiles": 3,
+    "applicationBehaviorEdits": 0
+  },
+  "sourceBefore": {
+    "head": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+    "files": {
+      "shared/constants/ui-surface-registry.ts": "a14d1e185a8627d60392541761fa95d308874c8d98298811eef9a777e8412bc1",
+      "shared/navigation/index.ts": "d3f182e824821c013b9cbcb07bda95d2c299cc6c4eea442ea41b2fb2e76f07f1",
+      "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98"
+    }
+  },
+  "finalPins": {
+    "head": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+    "files": {
+      "shared/constants/ui-surface-registry.ts": "457a175de39fd3fd5b95424c4b4ab5ffac42f43937aa280a2f39927af0ee6513",
+      "shared/navigation/index.ts": "e6721296c5735fbc416f5c6e56c9ecac7eab1e7ab36b7be99d8db2f528f77048",
+      "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "5612d39e5df4c36e8040bc7d11db7cb78a4701924685e8ae142d76b8d2da6633",
+      "client/src/concept2cure/v2/__tests__/reportEngineHonesty.test.tsx": "de019fc64181abbb811052f87f4bb33c1e98d5d28e6ee32beb895c88d07124df",
+      "client/src/concept2cure/v2/__tests__/reportEngineNoFixtures.test.tsx": "3e1f553be06610d08e30ff2e121414b7f4806d0c85617c04ad650a7cc36cffd4",
+      "client/src/concept2cure/v2/__tests__/reportEngineTabRendersItsDocument.test.tsx": "d5b45f4ca9558f8bf88ab6c98563d7001bdb5a21ed7e2e3cf54e41056a818651",
+      "tests/ui-readiness/ui-surface-registry.test.ts": "c147a53b6e35cd1acffa17dbefd3c987dec3d8e99629e507733598cdfcec21a6",
+      "tests/ui/surface-registry-coverage.test.ts": "4220c51c0423a90e431300c32cd902ec4a2f582f3c5459db755b13c7c464abf8",
+      "shared/navigation/__tests__/navigation.test.ts": "b49f9e21ea11117ab7cc929e9ca3df53170ef3713c075ece8e25754c33b07461"
+    },
+    "sourceDrift": []
+  },
+  "build": {
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin"
+    },
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "clientSeconds": 19.18,
+    "server": "passed",
+    "auditVerifier": "passed"
+  },
+  "lint": {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+      "shared/constants/ui-surface-registry.ts",
+      "shared/navigation/index.ts"
+    ],
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 10,
+    "warningComparison": "normal pre-push gate"
+  },
+  "copyChecks": [
+    {
+      "argv": [
+        "npm",
+        "run",
+        "--silent",
+        "check:catalog-copy"
+      ],
+      "exitCode": 0
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "--silent",
+        "ci:internals-in-copy"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "priorPublishedDelivery": {
+    "published": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+    "remoteObserved": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+    "retainedAncestors": [
+      "cc1607c3a",
+      "70a3db998872d1b790cfdbcaac30d30580f4bbbe",
+      "944735c720e0b75b393b22ed8e830da51a6c98c3",
+      "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+      "7895e36ce",
+      "d8082acfaddf2ff8a93c4be4de55ef45eacd84f7",
+      "9d122d8d540524e3cc6f9a68e3a42591927352a8"
+    ],
+    "workingTree": "clean",
+    "normalPushExitCode": 0,
+    "typecheckErrors": 0,
+    "prePushGates": "all passed"
+  },
+  "priorPublishedHostedCI": [
+    {
+      "conclusion": "",
+      "databaseId": 39982545235,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "queued",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982545235",
+      "workflowName": "CodeQL"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 39982544934,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "queued",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982544934",
+      "workflowName": "Semgrep"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 39982546252,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "pending",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982546252",
+      "workflowName": "Repo Health Baseline Refresh"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 39982544978,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "queued",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982544978",
+      "workflowName": "Tier 5 Browser Smoke"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 39982544851,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "queued",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982544851",
+      "workflowName": "C2C Agent \u2014 Validate & Audit"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 39982545310,
+      "headSha": "9d122d8d540524e3cc6f9a68e3a42591927352a8",
+      "status": "queued",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39982545310",
+      "workflowName": "CI"
+    }
+  ],
+  "scope": "Three existing files; labels, heading and descriptions only. Stable launch scope, API claims, IDs and behavior."
+}

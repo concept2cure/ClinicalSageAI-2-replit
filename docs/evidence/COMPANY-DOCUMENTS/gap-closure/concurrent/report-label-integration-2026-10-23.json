@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T16:15:16.102206+00:00",
+  "checkedOutParent": "dbd471eb96db8f5557ebfded0bb51596b6baabf6",
+  "mergeParent": "827ceb953b438e7591499bd41e26da0e30419c46",
+  "whatAlreadyExists": "Existing protocol-analysis/report-engine surface and its existing navigation entries; this incoming change clarifies three display strings without changing routes, IDs, data or company-report export behavior.",
+  "productionDiffReviewed": [
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+    "shared/constants/ui-surface-registry.ts",
+    "shared/navigation/index.ts"
+  ],
+  "companySourcePinsUnchanged": 298,
+  "tests": {
+    "report": "report-label-integration-oct23.json",
+    "sha256": "1341dcb4a74e1a975c22b6190a46a91a1c42ff78c570cee596a3f1b3a7a201ae",
+    "files": 3,
+    "cases": {
+      "passed": 37
+    },
+    "selection": [
+      "shared/navigation/__tests__/navigation.test.ts",
+      "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "client/src/concept2cure/v2/__tests__/reportEngineHonesty.test.tsx"
+    ]
+  },
+  "checks": {
+    "combinedBuildPassed": true,
+    "buildTranscriptSha256": "55d7931d95a89ae622414b44a161a463fde6c87d9c97fb129d135fdb0add5472",
+    "fullTypecheckErrors": 0,
+    "typecheckTranscriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+  },
+  "source": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+      "sha256": "5612d39e5df4c36e8040bc7d11db7cb78a4701924685e8ae142d76b8d2da6633"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "sha256": "457a175de39fd3fd5b95424c4b4ab5ffac42f43937aa280a2f39927af0ee6513"
+    },
+    {
+      "path": "shared/navigation/index.ts",
+      "sha256": "e6721296c5735fbc416f5c6e56c9ecac7eab1e7ab36b7be99d8db2f528f77048"
+    }
+  ],
+  "limits": [
+    "These 37 focused reporting/navigation cases are separate from company qualification counts.",
+    "The current company browser evidence remains pinned to its recorded source; this display-copy-only change does not alter any of its 31 checked source files.",
+    "Final mandatory push hooks run on the combined tree before publication."
+  ]
+}

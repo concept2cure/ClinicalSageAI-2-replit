@@ -865,7 +865,7 @@ export const UI_SURFACES: UiSurface[] = [
   // would offer two RBM destinations with one of them a strict subset.
   {
     id: 'report-engine',
-    label: 'Report engine',
+    label: 'Protocol analysis',
     navTier: 'specialist',
     layoutMode: 'report-engine',
     icon: 'barChart',
@@ -878,7 +878,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Immutable report records, cryptographic seal, and the provenance behind every figure.',
+    notes: 'Protocol-derived drafts: design recommendations, statistical insights and IND-readiness notes, with organization-scoped CSR-library aggregates and a handoff to Authoring.',
     engineering: 'See INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md.',
   },
   {

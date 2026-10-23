@@ -111,5 +111,15 @@
     "combinedBuildPassed": true,
     "fullTypecheckErrors": 0,
     "originalCompanyCountsNotInflated": true
+  },
+  "postReportLabelIntegration": {
+    "evidence": "concurrent/report-label-integration-2026-10-23.json",
+    "upstream": "827ceb953b438e7591499bd41e26da0e30419c46",
+    "focusedPassed": 37,
+    "focusedFiles": 3,
+    "failed": 0,
+    "companySourcePinsUnchanged": 298,
+    "combinedBuildPassed": true,
+    "fullTypecheckErrors": 0
   }
 }
