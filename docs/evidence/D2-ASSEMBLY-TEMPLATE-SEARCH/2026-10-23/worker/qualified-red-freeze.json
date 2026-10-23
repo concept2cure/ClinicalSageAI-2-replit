@@ -1,0 +1,18 @@
+{
+  "scope": "Qualified behavior RED before owned production edits; native toggle dispatch and complete invalid-row table corrected first.",
+  "files": {
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "8ecb02f925ad5060cb38fbf7e0e16309e5ea6e060dbdb341320fe9afbd3b68b6",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "eddb3ce2af8a393b6fb21a069a4fbccc1acd561ddb3f5d1df683904ba9df0192",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx": "4b53c57fabfc49d4f14451061bf58594c8af10916c3eafbe393e1813910ba0c3",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "526f06509355b3defe84c00b4318548325cd8c4618b4da85dd13a46351e7b806",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  }
+}

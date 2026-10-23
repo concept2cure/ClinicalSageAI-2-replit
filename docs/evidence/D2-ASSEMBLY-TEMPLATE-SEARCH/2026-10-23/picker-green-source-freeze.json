@@ -1,0 +1,15 @@
+{
+  "scope": "Shared picker final purpose/disabled implementation and creation regression; parallel worker production files intentionally excluded until combined freeze.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "aab750f5acda4c9dca58c25a2f2bcd778c1350a432138bd614551b757df11c9b",
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+    "client/src/concept2cure/v2/C2CForm.tsx": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/run-check.py": "d169a249b567bd046bf78d3259c5ab8925e0602ce76e1bd9247b0ac1e648fb04",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  }
+}
