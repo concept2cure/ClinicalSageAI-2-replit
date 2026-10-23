@@ -51,10 +51,12 @@ const { recordedRunIdentity } = vi.hoisted(() => ({
     recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
     applicantId: i.region === 'US' ? '123456789' : null,
     contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
-    ...(i.region === 'US' && !hoisted.omitApplicantProof ? { recordedPackageIdentity: { version: 1 as const, identity: {
+    ...(!hoisted.omitApplicantProof ? { recordedPackageIdentity: { version: 1 as const, identity: {
       programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
       applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
-      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+      applicantId: i.region === 'US' ? '123456789' : null,
+      contact: i.region === 'US' ? { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' }
+        : { name: null, phone: null, email: null },
     } } } : {}),
   }),
 }));
@@ -758,6 +760,26 @@ describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () =
 // every other pool.query invocation.
 
 function registerPackageOrchestrationCases5() {
+  it('refuses preparing a fresh EU release without captured recorded applicant proof', async () => {
+    hoisted.omitApplicantProof = true;
+    const { run } = await runOrchestrator(baseInputs({ region: 'EU', submissionType: 'MAA' }));
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('skipped');
+    expect(step?.outputRef).toMatch(/reassemble.*recorded applicant/i);
+    expect(step?.outputRef).not.toMatch(/payloadDigest/);
+    expect(run.status).toBe('partial');
+  });
+
+  it('prepares a fresh EU release with projected proof and no FDA DUNS/contact', async () => {
+    const { run, outputs } = await runOrchestrator(baseInputs({ region: 'EU', submissionType: 'MAA' }));
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('awaiting-signature');
+    expect(outputs.assembly?.recordedPackageIdentity?.identity).toMatchObject({
+      applicantId: null, contact: { name: null, phone: null, email: null },
+    });
+    expect(JSON.parse(step!.outputRef!).signedSnapshot.recordedPackageIdentity).toEqual(outputs.assembly?.recordedPackageIdentity);
+  });
+
   it('refuses preparing a fresh FDA release without the captured recorded applicant proof', async () => {
     hoisted.omitApplicantProof = true;
     const { run } = await runOrchestrator(baseInputs({ submissionType: 'IND' }));

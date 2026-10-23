@@ -1,0 +1,99 @@
+{
+  "capturedAt": "2026-10-23T17:44:06.230165+00:00",
+  "head": "c9f20ed82ced0c2e2139302f53afe1b78e67b9f0",
+  "workingTree": true,
+  "sourcePinsCapturedAfterExecution": true,
+  "productionChangesAfterFinalCallerRun": false,
+  "sourceSha256": {
+    "server/services/submission-service/submission-service.ts": "2e584a2b624e0abe6ec00ee703ecb4b57407bc0654459a9d7081fc1fb46414b1",
+    "server/routes/ectd-compile.ts": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8",
+    "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts": "2db3db830fcb2aad22879ca01b52ca42d559871f825d17c1f840292add1bd03f",
+    "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts": "d0d29f0158d589bf7f252b39f0b119234786ca5797bce0da5c900596c27f9a92",
+    "server/services/submission-service/__tests__/packageability-dry-run.test.ts": "3520f4777d8cdb96b41b7e032f24d845e261ed3c390bb721960c07b7c6b6826c",
+    "server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts": "7dd72d6de2765535c946a2293a6987ab1413d62e973c0b1da9eea17bf909bf6f",
+    "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts": "79105f6a4c310ef4fd32bd448ea68601e47d7b7e52379515e1857547ec47bfea",
+    "tests/routes/ectd-compile-spine.test.ts": "fc3f75d75b1b5e0d6f31eb397eca10d633b942d828817d2532254f820129d256",
+    "server/services/ectd/package-identity.ts": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5",
+    "server/services/part11/ectd-sequence-binding.ts": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e",
+    "server/services/ectd/assemble-from-core.ts": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67",
+    "server/services/ectd/package-from-core.ts": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212",
+    "server/services/submission-service/__tests__/_freeze-gate-fixture.ts": "9c1545e56009cafc3535e7966526e10c12df7f8bdbd8bfa632fbb63829d5520f",
+    "server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts": "34f0302ab6c838023aefb6506f4ad235d272633b9e523ad29c4d5d914bf40b0c",
+    "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc",
+    "server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts": "f95150e703d17bc043ac98cb3768ae43155a05531ee0c46277eaf9d723cb6f32",
+    "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts": "6d04bb6d50e9c3c44c85b755f59fe3c8fb29aef0669c66f080e86d321526ed87",
+    "server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts": "23839e6a82cc3ef39a2f7f7b2c41ad117094519c95d746e41a91cdf9beca780a",
+    "server/services/submission-service/__tests__/transmit-refusals.test.ts": "007268fd2eaaaf0c18956e828d8d3889edea56521446415e88dc946bf3b54e6a",
+    "tests/routes/ectd-compile-spine.harness.ts": "a3eaf9edf8b413696846eb8e013447a5d2356251d1d7e5e9939ab84fc2dd20d3",
+    "tests/routes/ectd-compile-sequence.test.ts": "02b7ac7c621ade7ea193a0efc0a1377d6f206e412d6f70dcbb176da56b8060e1",
+    "tests/routes/ectd-compile-recorded-type.test.ts": "c20e0c91aeb51fed0773999a86113fb8c696531f94e15cefe384e060a0fc8d4a",
+    "server/services/__tests__/conversion-capacity-compile-http.test.ts": "6ce70f962e827918c2c736fb54f789793520a225d4751d00a31049ef2bb21630",
+    "shared/regulatory/region-identity.ts": "7c596268954c5c65e48280a354539bd368acc6af77df6bba6976057e411dabe2",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "runs": [
+    {
+      "result": "verified-caller-cohort.txt",
+      "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/submission-service/__tests__/transmit-recorded-identity.test.ts server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts server/services/submission-service/__tests__/packageability-dry-run.test.ts server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts server/services/submission-service/__tests__/transmit-refusals.test.ts server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "exitCode": 0,
+      "testFiles": 10,
+      "passed": 119,
+      "startedAt": "2026-10-23T17:39:52Z",
+      "seconds": 102.13,
+      "resultSha256": "8ce92ae938627d787743dc4afc298c6d14fb5cdd6b5d94323841cb0028340eaf"
+    },
+    {
+      "result": "verified-compile-cohort.txt",
+      "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts tests/routes/ectd-compile-spine.test.ts tests/routes/ectd-compile-sequence.test.ts tests/routes/ectd-compile-recorded-type.test.ts server/services/__tests__/conversion-capacity-compile-http.test.ts",
+      "exitCode": 0,
+      "testFiles": 4,
+      "passed": 49,
+      "startedAt": "2026-10-23T17:40:46Z",
+      "seconds": 21.0,
+      "resultSha256": "bc7d317d4cca0ea294d580680ce040272fea81dac4e9da6fc59941183decf0ae"
+    },
+    {
+      "result": "native-freeze-lock.txt",
+      "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55439/applicant_identity npx vitest run --config vitest.config.ts server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts",
+      "exitCode": 0,
+      "testFiles": 1,
+      "passed": 2,
+      "startedAt": "2026-10-23T17:37:17Z",
+      "seconds": 8.91,
+      "limits": "Executed before the later typed-number transmit race correction; freeze/lock functions unchanged. Root archives current integrated native replay separately.",
+      "resultSha256": "852b46ae7fcb403ac34a98c3a410c30f8796199f40f7292a38c2879033787779"
+    },
+    {
+      "result": "verified-lint.txt",
+      "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH npx eslint server/services/submission-service/submission-service.ts server/routes/ectd-compile.ts server/services/submission-service/__tests__/transmit-recorded-identity.test.ts server/services/submission-service/__tests__/packageability-dry-run.test.ts server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 16,
+      "resultSha256": "476f363f943508c498bc84f80466dd60450deb9ed6674e8fe80344f8ebab4dfe"
+    },
+    {
+      "result": "verified-compile-lint.txt",
+      "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH npx eslint tests/routes/ectd-compile-spine.test.ts",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0,
+      "resultSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "ui": {
+    "manifest": "ui/verified-inputs.json",
+    "passed": 38,
+    "testFiles": 2,
+    "limits": "Vitest/jsdom component and workflow tests; production comment-only."
+  },
+  "excludedClaims": [
+    "full test suite",
+    "full remote CI",
+    "agency qualification",
+    "human witnessing",
+    "real agency transmission"
+  ]
+}

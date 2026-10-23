@@ -369,12 +369,16 @@ async function resolveOrchestratorReleaseSignature(params: {
          longer holds is skipped exactly as one over another sequence is: it
          is not evidence about this package in either direction. */
       if (sequenceId !== null) {
+        if (region === undefined || signedRegion === undefined) {
+          return { verdict: 'undetermined', runId,
+            detail: 'the current or signed package region is not recognized, so release coverage for this sequence cannot be determined' };
+        }
         const coverage = await signedManifestCoversSequence({
           signedLeaves: result.descriptor.leaves ?? [],
           sequenceId,
           submissionId,
           organizationId,
-          region: region ?? signedRegion,
+          region: signedRegion,
           recordedPackageIdentity: result.descriptor.recordedPackageIdentity,
         });
         if ('unknown' in coverage) {

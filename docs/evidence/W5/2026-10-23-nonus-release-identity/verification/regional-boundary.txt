@@ -1,0 +1,392 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | tests/unit/submission-sign-release-route.test.ts
+{
+  "timestamp": "2026-10-23T17:41:37.560Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:41:37.562Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts
+{
+  "timestamp": "2026-10-23T17:41:37.562Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all
+{
+  "timestamp": "2026-10-23T17:41:38.054Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 401 when no JWT principal is present 31ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 403 when JWT principal is present but org context is missing 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when getRun returns null (collapsed miss-or-cross-org) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when URL submissionId does not match the run's submissionId 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 409 when run.status is not awaiting-signature 10ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a 'locked' account before resuming an already signed release 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a 'inactive' account before resuming an already signed release 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a 'newly MFA-enrolled' account before resuming an already signed release 3ms
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure
+{
+  "timestamp": "2026-10-23T17:41:38.093Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "disk on fire"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed)
+{
+  "timestamp": "2026-10-23T17:41:38.100Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "signatureMeaning"
+        ],
+        "code": "invalid_literal"
+      }
+    ]
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation)
+{
+  "timestamp": "2026-10-23T17:41:38.104Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "reason"
+        ],
+        "code": "too_small"
+      }
+    ]
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > keeps the recorded signature successful when continuation is temporarily unavailable
+{
+  "timestamp": "2026-10-23T17:41:38.110Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Release signature recorded; continuation refused or unavailable",
+  "context": {
+    "runId": "run-123",
+    "organizationId": 100,
+    "code": "CONTINUATION_UNAVAILABLE"
+  }
+}
+
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > rejects a wrong password before resuming an already signed release 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns the existing signatureId without creating a duplicate when one already exists (idempotent) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > resolves a concurrent-signing race idempotently on a 23505 unique violation 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 422 when no documentId anchor can be resolved (lineage unresolved) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > keeps the recorded signature successful when continuation is temporarily unavailable 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > refuses unavailable release verification before a signing ceremony, insertion or continuation 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > refuses a source withdrawn during password/MFA after the same-transaction source guard runs 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > release route refuses unusable captured identity before a new signing ceremony > returns a regenerate refusal for a valid-hash 'EU' snapshot with missing/malformed proof 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > release route refuses unusable captured identity before a new signing ceremony > returns a regenerate refusal for a valid-hash 'JP' snapshot with missing/malformed proof 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > release route refuses unusable captured identity before a new signing ceremony > returns a regenerate refusal for a valid-hash 'EU' snapshot with missing/malformed proof 3ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 1 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=40
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2032:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1448:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1985:7)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:281:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 330ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 136ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 123ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 22ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 3ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 5ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 109ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > preserves the exact paused Module 3 narrative on async resume without repeating AI or enqueue 100ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 2ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 101ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 84ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 92ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 3ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh EU release without captured recorded applicant proof 9ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > prepares a fresh EU release with projected proof and no FDA DUNS/contact 6ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh FDA release without the captured recorded applicant proof 82ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all
+[Orchestrator] run failed: ValidationError: Cannot build the FDA regional backbone: no application type was supplied, and "510(k)" is not one. The eCTD Module 1 application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master files; device pathways (510(k), De Novo, PMA) and non-US pathways (MAA, CTA) have no code in it and must not be filed on this backbone. Pass fda.applicationType. Defaulting to fdaat1 would declare this package a New Drug Application, which is a statement about the filing, not a formatting detail.
+    at buildFdaBackbone (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:611:11)
+    at Object.fda (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1306:17)
+    at packageEctdSubmission (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1323:46)
+    at assembleRealPackage (/workspace/concept2cure/server/services/ectd/orchestrator-real-package.ts:191:26)
+    at assembleForValidation (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:649:16)
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:1951:42
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1448:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1950:5)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:809:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [],
+  errorClass: 'validation'
+}
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 5ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 89ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 72ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 74ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > uses only verified persisted inputs and the original run id, then releases the claim 8ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not run any downstream effect if another connection already holds the run 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > returns an already finished run after the claim without repeating its effects 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > releases the claim even when downstream persistence fails 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > allows only one of two overlapping continuation requests to execute the driver 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed snapshot before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed hash before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed seal before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed identity before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed program before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > collapses a foreign or missing run before loading any source inputs 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > rechecks current program authority, ignoring the original actor role 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a program lead downgraded to viewer before build/resume effects 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not guess original inputs for older asynchronous work 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > hydrates an older frozen signature record using its scoped submission identity 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a forged frozen release before creating any signature 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > waits for async jobs without running downstream work, then resumes with exact paused outputs 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses closed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses changed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses replacing the paused job id with another same-organization job 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a CSR job whose persisted project has changed from the original program anchor 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > continues dependent work on CSR completion using only its stored tenant and original actor 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting EU record 4ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting JP record 6ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting US record 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 4ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a proof-bearing unknown region before a ceremony can be prepared 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > prepares complete captured EU facts without FDA DUNS/contact 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > prepares complete captured JP facts without FDA DUNS/contact 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a legacy proof-free record before source lookup or continuation 3ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > builds the backbone with the recorded applicant and application number, and proceeds to signature 350ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > says it is a dry run, and package.sign refuses it, when the project records no application number 145ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names an application number the record does not 127ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names no submission on record 155ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"duns":null} 108ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"duns":"12-345-6789"} 108ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"contactEmail":null} 107ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys 5ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof 5ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > does not complete a historical proof-free EU authorization under its intact original digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > hydrates captured non-US number/name without requiring FDA DUNS/contact 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses malformed, inconsistent or unprojected captured non-US facts 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > refuses an unknown snapshot region even with otherwise complete captured facts 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > non-US frozen applicant proof at the sign boundary > detects a changed captured non-US application number under the original digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 463ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+stderr | server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read
+{
+  "timestamp": "2026-10-23T17:41:51.322Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] recorded applicant read failed; coverage cannot be determined",
+  "context": {
+    "err": "database unavailable",
+    "sequenceId": 3,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > keeps a historical signature intact but refuses coverage without its applicant snapshot 4ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > covers identical leaves and the identical current recorded identity 3ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicationNumber 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantName 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantId 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantSponsorId 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not borrow applicant facts from a different submission with identical leaves 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed contact details 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not establish coverage from an unsupported stored identity version 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > refuses coverage when current required FDA facts were cleared 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read 2ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'EU' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'JP' recorded number/name without FDA DUNS or contact 3ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CA' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'UK' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CN' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'AU' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'CH' recorded number/name without FDA DUNS or contact 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'BR' recorded number/name without FDA DUNS or contact 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'IN' recorded number/name without FDA DUNS or contact 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'KR' recorded number/name without FDA DUNS or contact 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > covers 'SG' recorded number/name without FDA DUNS or contact 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > requires proof for current EU coverage while preserving the historical record 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicationNumber despite identical leaves 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantName despite identical leaves 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US applicantSponsorId despite identical leaves 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses changed non-US programId despite identical leaves 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicationNumber 2ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses missing current non-US applicantName 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > does not bind non-US coverage to mutable FDA-only facts 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > refuses malformed or unprojected non-US proof 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'EU' for an actual 'fda' sequence 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'US' for an actual 'ema' sequence 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow region 'JP' for an actual 'ema' sequence 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > cannot borrow another non-US submission with the same leaves and facts 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region undefined 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region GLOBAL 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved caller region unknown-agency 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region null 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > known-region signed manifest identity coverage > reports unknown for unresolved actual sequence region unknown-agency 0ms
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run
+{
+  "timestamp": "2026-10-23T17:41:53.683Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read
+{
+  "timestamp": "2026-10-23T17:41:53.693Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an identical manifest, and says how much the index-md5 corroborated 4ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a leaf the sequence now holds that nobody signed — the Module 3 placement case 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a signed leaf the sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses the same leaves when the bytes under one of them changed 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > is case- and vocabulary-insensitive about the section code, on both sides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > counts leaves, so dropping one of two identical leaves is caught 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > matches a leaf with no recorded checksum on its identity, and does NOT count it as corroborated 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > does not invent a mismatch when only one side recorded a checksum 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > release coverage requires readable regions on both records > never lends a region between unknown current 'unknown-agency' and signed 'US' records 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > release coverage requires readable regions on both records > never lends a region between unknown current undefined and signed 'US' records 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > release coverage requires readable regions on both records > never lends a region between unknown current 'fda' and signed 'unknown-agency' records 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports changed current contact as no covering signature rather than snapshot tampering 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > regional proof in the existing signed export > preserves an intact historical EU proof-free record using its original digest 8ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > regional proof in the existing signed export > exports captured EU proof and detects tampered captured number (false) 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > regional proof in the existing signed export > exports captured EU proof and detects tampered captured number (true) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports the exact recorded applicant snapshot the signature binds 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > refuses an applicant contact altered inside an otherwise intact frozen record 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 3ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'EU' proof without borrowing FDA DUNS/contact 6ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'JP' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CA' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'UK' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CN' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'AU' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'CH' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'BR' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'IN' proof without borrowing FDA DUNS/contact 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'KR' proof without borrowing FDA DUNS/contact 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > captures 'SG' proof without borrowing FDA DUNS/contact 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > projects FDA facts out of an otherwise recorded non-US package 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps missing non-US applicationNumber a dry run 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps missing non-US applicantName a dry run 0ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region undefined a dry run without reading guessed facts 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region GLOBAL a dry run without reading guessed facts 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps unresolved region unknown-agency a dry run without reading guessed facts 1ms
+ ✓ server/services/ectd/__tests__/run-package-identity.test.ts > run package identity uses the captured regional projection > keeps the FDA proof byte-compatible and requires FDA DUNS/contact 1ms
+
+ Test Files  9 passed (9)
+      Tests  223 passed (223)
+   Start at  17:41:30
+   Duration  25.66s (transform 4.69s, setup 236ms, import 20.16s, tests 3.41s, environment 1ms)
+

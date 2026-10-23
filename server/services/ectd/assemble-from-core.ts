@@ -668,7 +668,8 @@ export async function assembleSubmissionEctd(
     applicationId: identity.applicationNumber as string,
     sponsorId,
     sponsorName: identity.applicantName as string,
-    ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
+    recordedPackageIdentity: recordedPackageIdentitySnapshot(identity, { region: sequence.region }),
+    ...(fda ? { contacts: fdaContactsForPackageIdentity(identity) } : {}),
     priorState: params.priorState,
   });
 

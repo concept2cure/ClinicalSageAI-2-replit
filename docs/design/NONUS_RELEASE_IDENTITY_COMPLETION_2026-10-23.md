@@ -12,8 +12,10 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
 - `server/services/ectd/package-identity.ts` already reads same-tenant program,
   sponsor and P-44 submission/market application numbers; its version-1 snapshot,
   equality check and program/sponsor share-lock helper are canonical. Snapshot
-  projection currently carries FDA facts; it has no region projection or
-  submission-number lock. DUNS/contact are FDA facts, not other agencies' IDs.
+  projection currently carries FDA facts and has no region projection. The
+  governed transition already locks submission before sequence, then program and
+  sponsor; transmit and waiver/disposition currently start at sequence. DUNS and
+  contact are FDA facts, not other agencies' IDs.
 - `server/services/submission-service/market-application-number.ts`, the existing
   `/api/submissions/:id/application-number` routes and `ProjectMarkets.tsx` /
   `MarketApplicationNumber.tsx` already record the market number with reason,
@@ -39,6 +41,14 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
 - `SubmissionSeqWorkspaces.tsx` and `SubmissionCenter.tsx` already reach the
   server-owned renewal eligibility through the existing Part 11 sign-and-act
   chain. Text is generic; no new approval control is required.
+- `submission-orchestrator-continuation.ts` already verifies frozen digest,
+  seal and signer envelope before the existing release ceremony; it does not
+  ask the canonical package identity sign-refusal before signing an older run.
+  `server/mcp/tools/catalog.ts` reaches the release resolver but omits the known
+  sequence region. Both callers are completed in this same identity lane.
+- The legacy identity-staleness branch of `sequence-release-signature.ts`
+  compares unchanged content but omits the attribution-hash check already used
+  by modern proof. It must prove the original manifest intact before renewal.
 - P-44 explicitly hands non-US application-number signature coverage to this
   identity lane (`docs/evidence/D2-ONE-ANA/2026-10-22/p44-market-application-number/README.md`).
   EMA slash handling and the unknown-region home-number heuristic are separate.
@@ -68,25 +78,37 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
    classification permits a new independent authorization only with unchanged
    sequence/leaf content and intact proof. Leaf changes, bad hashes, malformed
    proof, wrong parent/region or unexplained mismatches remain invalid/refused.
+   Legacy renewal also requires the existing canonical manifest attribution hash;
+   an absent or damaged hash cannot prove an intact historical signature.
 4. Require captured identity for new and resumed real known-region orchestrator
    releases; incomplete/mismatched facts require reassembly. Reuse the current
    dry-run refusal. Snapshot coverage compares actual sequence parent AND region
    and projected current identity. FDA-only completeness rules apply only to US;
    other regions require existing recorded number/name rules. Unknown region is
-   unreadable coverage, never positive leaf-only coverage.
+   unreadable coverage, never positive leaf-only coverage. The existing release
+   preparation calls the same canonical sign-identity refusal before ceremony;
+   the MCP status caller supplies the actual sequence region already read.
 5. Thread captured proof through existing export/assembly/package functions for
    all known regions. When proof is supplied, verify program/application/name
    against actual package scalars for all regions. Keep FDA ID/contact checks
    FDA-only. Optional non-FDA regional IDs retain their current contract and
    cannot be filled from the FDA DUNS. No contact/ID authority is invented.
-6. Extend the existing `lockRecordedPackageIdentity` helper with optional fourth
-   argument `{ submissionId?: number }`: under the caller's sequence lock, lock
-   the same-tenant submission FOR SHARE before program/sponsor, validate its
-   program anchor against the captured program, then keep program/sponsor order.
-   Real freeze/dispatch/claim capture passes actual submissionId. The market
-   writer already takes submission FOR UPDATE and makes only plain sequence
-   reads; preserve that writer and its fixed-number policy, avoiding reverse
-   row-lock ordering. No transaction is held across gateway network work.
+6. Lock every source of recorded identity, including `organizations.name` for
+   an unbound non-US applicant. Extend `lockSubmissionPackageIdentity(q,
+   organizationId, submissionId, options?: { forUpdate?: boolean }):
+   Promise<{ programId: string | null } | null>` in the existing identity module.
+   First take organization FOR SHARE, then the same-tenant non-deleted submission
+   FOR SHARE (default) or directly FOR UPDATE (`forUpdate:true`). Return its
+   actual program anchor or null for a missing/foreign parent. Preserve the
+   three-argument `lockRecordedPackageIdentity` program-then-sponsor locks.
+   Global order is organization, submission, sequence, program, sponsor, matching
+   company governance's organization-first order. Freeze replaces its inline
+   submission UPDATE lock with the staged helper in UPDATE mode; never take
+   submission SHARE and then upgrade (concurrent freezes could deadlock).
+   Claims and waiver/disposition take the staged SHARE locks before sequence,
+   validate locked parent/anchor, then program/sponsor before deriving binding.
+   Preserve the market writer's submission UPDATE and plain sequence reads,
+   fixed-number policy, and release all capture locks before gateway network work.
 7. Governed packageability judges captured recorded facts for every known
    region. Explicit user test-package/dry-run paths remain clearly dry. Real
    transmit requires the claim-captured identity, packages it, checks proof echo

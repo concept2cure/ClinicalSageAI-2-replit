@@ -2,18 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const m = vi.hoisted(() => ({ query: vi.fn(), lockQuery: vi.fn(), release: vi.fn(), getRun: vi.fn(), resume: vi.fn(), ready: vi.fn(), scope: vi.fn(), actor: vi.fn(), digest: vi.fn(), kms: vi.fn(), cmc: vi.fn() }));
 vi.mock('../../db.js', () => ({ pool: { query: m.query, connect: async () => ({ query: m.lockQuery, release: m.release }) }, db: {} }));
 vi.mock('../csr/project-scope.js', () => ({ readCsrProjectActor: m.actor, resolveCsrScope: m.scope }));
-vi.mock('../submission-package-orchestrator.js', () => ({ getRun: m.getRun, runOrchestrator: m.resume, getRunResumeReadiness: m.ready, computeBoundPayloadDigestFromComponents: m.digest }));
+vi.mock('../submission-package-orchestrator.js', async (original) => ({ ...await original<typeof import('../submission-package-orchestrator.js')>(), getRun: m.getRun, runOrchestrator: m.resume, getRunResumeReadiness: m.ready, computeBoundPayloadDigestFromComponents: m.digest }));
 vi.mock('../cmc/load-approved-cmc-sources-for-project.js', () => ({ loadApprovedCmcSourcesForProject: m.cmc }));
 vi.mock('../ectd/sign-payload-seal.js', async (original) => ({ ...await original<typeof import('../ectd/sign-payload-seal')>(), verifySignPayloadSignature: m.kms, isKmsSignerConfigured: () => false }));
-import { continueOrchestratorRun, prepareOrchestratorRelease, continueOrchestratorRunsForCsrJob } from '../submission-orchestrator-continuation';
+import { continueOrchestratorRun, prepareOrchestratorRelease, continueOrchestratorRunsForCsrJob, verifyAwaitingReleasePayload } from '../submission-orchestrator-continuation';
 import { orchestratorInputDigest } from '../submission-orchestrator-inputs';
 import { sealSignPayloadDigest } from '../ectd/sign-payload-seal';
 const ORG = 42, USER = 7, PROGRAM = '672d578b-8f27-4b15-8b40-5484a4996ace', RUN = '22e4f86d-4b76-48ac-87e3-8bce8804c324';
 let run: any, receipt: any;
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubEnv('AUDIT_HMAC_KEY', 'unit-only-receipt-seal');
-  const inputs = { organizationId: ORG, programId: PROGRAM, userId: USER, submissionId: '91', submissionFk: 91, applicationNumber: 'IND-123', region: 'US', submissionType: 'IND', cmcSources: [], csrInputs: [], clinicalStudyData: [], nonclinicalStudies: [] };
-  const snapshot = { leaves: [], backboneXml: '', validatorOutcome: {}, ...inputs, sequenceNumber: '0000', totalSizeBytes: 0 };
+  const inputs = { organizationId: ORG, programId: PROGRAM, userId: USER, submissionId: '91', submissionFk: 91, applicationNumber: '123456', region: 'US', submissionType: 'IND', cmcSources: [], csrInputs: [], clinicalStudyData: [], nonclinicalStudies: [] };
+  const recordedPackageIdentity = { version: 1, identity: { programId: PROGRAM, applicationNumber: inputs.applicationNumber,
+    applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Recorded Sponsor',
+    applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' } } };
+  const snapshot = { leaves: [], backboneXml: '', validatorOutcome: {}, ...inputs, sequenceNumber: '0000', totalSizeBytes: 0, recordedPackageIdentity };
   const payload = { signedSnapshot: snapshot, payloadDigest: 'verified-release-digest', payloadSeal: sealSignPayloadDigest('verified-release-digest', ORG) };
   run = { runId: RUN, ...inputs, status: 'awaiting-signature', steps: [{ key: 'package.sign', status: 'awaiting-signature', outputRef: JSON.stringify(payload) }] };
   receipt = { program_id: PROGRAM, input_snapshot: inputs, input_digest: orchestratorInputDigest(inputs), input_seal: sealSignPayloadDigest(orchestratorInputDigest(inputs), ORG) };
@@ -148,4 +151,60 @@ function registerOrchestratorContinuationCases2() {
 describe('guarded persisted continuation', () => {
   registerOrchestratorContinuationCases1();
   registerOrchestratorContinuationCases2();
+});
+
+async function captureRegionalRelease(region: string, proof: unknown) {
+  const actual = await vi.importActual<typeof import('../submission-package-orchestrator.js')>('../submission-package-orchestrator.js');
+  m.digest.mockImplementation(actual.computeBoundPayloadDigestFromComponents);
+  const oldSnapshot = JSON.parse(run.steps[0].outputRef).signedSnapshot;
+  const snapshot = { ...oldSnapshot, region, recordedPackageIdentity: proof };
+  const payloadDigest = actual.computeBoundPayloadDigestFromComponents(snapshot);
+  run.region = region;
+  run.steps[0].outputRef = JSON.stringify({ signedSnapshot: snapshot, payloadDigest, payloadSeal: sealSignPayloadDigest(payloadDigest, ORG) });
+  receipt.input_snapshot.region = region;
+  receipt.input_digest = orchestratorInputDigest(receipt.input_snapshot);
+  receipt.input_seal = sealSignPayloadDigest(receipt.input_digest, ORG);
+  return payloadDigest;
+}
+
+describe('release preparation reuses the canonical captured identity sign boundary', () => {
+  const proof = { version: 1, identity: { programId: PROGRAM, applicationNumber: '123456',
+    applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Recorded Sponsor',
+    applicantId: null, contact: { name: null, phone: null, email: null } } };
+
+  it.each(['EU', 'JP', 'US'])('refuses an intact hash/seal on a proof-free awaiting %s record', async (region) => {
+    await captureRegionalRelease(region, undefined);
+    await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObject({ code: 'SIGNATURE_PACKAGE_IDENTITY_REQUIRED', status: 409 });
+    expect(m.kms).toHaveBeenCalled();
+  });
+
+  it.each([
+    { ...proof, version: 2 },
+    { ...proof, identity: { ...proof.identity, applicationNumber: '654321' } },
+    { ...proof, identity: { ...proof.identity, applicantName: null } },
+    { ...proof, identity: { ...proof.identity, contact: null } },
+    { ...proof, identity: { ...proof.identity, applicantId: '123456789' } },
+  ])('refuses malformed or unprojected proof despite a valid hash and seal', async (captured) => {
+    await captureRegionalRelease('EU', captured);
+    await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObject({ code: 'SIGNATURE_PACKAGE_IDENTITY_REQUIRED', status: 409 });
+  });
+
+  it('refuses a proof-bearing unknown region before a ceremony can be prepared', async () => {
+    await captureRegionalRelease('unknown-agency', proof);
+    await expect(prepareOrchestratorRelease(run, USER)).rejects.toMatchObject({ code: 'SIGNATURE_PACKAGE_IDENTITY_REQUIRED', status: 409 });
+    expect(m.resume).not.toHaveBeenCalled();
+  });
+
+  it.each(['EU', 'JP'])('prepares complete captured %s facts without FDA DUNS/contact', async (region) => {
+    const payloadDigest = await captureRegionalRelease(region, proof);
+    expect(await prepareOrchestratorRelease(run, USER)).toBe(payloadDigest);
+  });
+
+  it('refuses a legacy proof-free record before source lookup or continuation', async () => {
+    await captureRegionalRelease('EU', undefined);
+    receipt = null;
+    await expect(prepareOrchestratorRelease(run, USER)).rejects.toMatchObject({ code: 'SIGNATURE_PACKAGE_IDENTITY_REQUIRED', status: 409 });
+    expect(m.query.mock.calls.some(call => String(call[0]).includes('FROM submissions'))).toBe(false);
+    expect(m.resume).not.toHaveBeenCalled();
+  });
 });

@@ -1,0 +1,154 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:33:20.273Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:33:20.274Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:33:20.274Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+[database] Database connection successful
+
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > reads one tenant-scoped joined statement and uses the explicitly bound legal name
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > preserves the organization name only when no sponsor binding was recorded
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > never falls back to the organization for a broken or foreign explicit binding
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"application_number":"IND000512"}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"duns":"12-345-6789"}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_phone":"not a telephone"}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_email":"not an email"}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_name":"\u0000"}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > does not silently turn a failed identity read into an unbound record
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > accepts complete recorded FDA facts
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > canonical adapter reaches the existing FDA contact serializer > threads recorded contacts only to the FDA admin block
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > preserves the exact version 1 default and FDA capture bytes
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures EU identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures JP identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CA identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CN identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures KR identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures UK identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures AU identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CH identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures BR identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures IN identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures SG identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures ema identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures pmda identity without assigning FDA facts another regional meaning
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures facts by value and compares only complete known fields
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed programId is different proof
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicationNumber is different proof
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantSponsorId is different proof
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantName is different proof
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantId is different proof
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: undefined
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: null
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":2}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{}}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{"contact":null}}
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > does not invent a partial regulatory contact
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > locks the organization before its same-tenant submission and returns the actual program anchor 18ms
+   → expected [ [ …(2) ] ] to deeply equal [ [ StringMatching{…}, [ 7 ] ], …(1) ]
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > takes one direct submission UPDATE lock for freeze, without a SHARE upgrade 3ms
+   → expected [ [ …(2) ] ] to deeply equal [ [ StringMatching{…}, [ 7 ] ], …(1) ]
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > distinguishes a missing or foreign parent from a present unanchored submission
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > propagates a submission lock failure instead of returning a guessed anchor
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > locks program before same-tenant sponsor, using the caller transaction
+ ↓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > does not invent a sponsor lock for an unbound program
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > locks the organization before its same-tenant submission and returns the actual program anchor
+AssertionError: expected [ [ …(2) ] ] to deeply equal [ [ StringMatching{…}, [ 7 ] ], …(1) ]
+
+- Expected
++ Received
+
+@@ -1,14 +1,9 @@
+  [
+    [
+-     StringMatching /FROM organizations WHERE id = \$1 FOR SHARE/,
+-     [
+-       7,
+-     ],
+-   ],
+-   [
+-     StringMatching /FROM submissions[\s\S]*id = \$1 AND organization_id = \$2[\s\S]*deleted_at IS NULL FOR SHARE/,
++     "SELECT program_id FROM submissions
++       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE",
+      [
+        9,
+        7,
+      ],
+    ],
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:128:30
+    126|     const query = vi.fn(async () => ({ rows: [{ program_id: PROGRAM }]…
+    127|     await expect(lockSubmissionPackageIdentity({ query }, 7, 9)).resol…
+    128|     expect(query.mock.calls).toEqual([
+       |                              ^
+    129|       [expect.stringMatching(/FROM organizations WHERE id = \$1 FOR SH…
+    130|       [expect.stringMatching(/FROM submissions[\s\S]*id = \$1 AND orga…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > takes one direct submission UPDATE lock for freeze, without a SHARE upgrade
+AssertionError: expected [ [ …(2) ] ] to deeply equal [ [ StringMatching{…}, [ 7 ] ], …(1) ]
+
+- Expected
++ Received
+
+@@ -1,14 +1,9 @@
+  [
+    [
+-     StringMatching /FROM organizations WHERE id = \$1 FOR SHARE/,
+-     [
+-       7,
+-     ],
+-   ],
+-   [
+-     StringMatching /FROM submissions[\s\S]*deleted_at IS NULL FOR UPDATE/,
++     "SELECT program_id FROM submissions
++       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE",
+      [
+        9,
+        7,
+      ],
+    ],
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:136:30
+    134|     const query = vi.fn(async () => ({ rows: [{ program_id: PROGRAM }]…
+    135|     await expect(lockSubmissionPackageIdentity({ query }, 7, 9, { forU…
+    136|     expect(query.mock.calls).toEqual([
+       |                              ^
+    137|       [expect.stringMatching(/FROM organizations WHERE id = \$1 FOR SH…
+    138|       [expect.stringMatching(/FROM submissions[\s\S]*deleted_at IS NUL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 43 skipped (45)
+   Start at  17:33:17
+   Duration  4.89s (transform 2.68s, setup 112ms, import 4.39s, tests 26ms, environment 0ms)
+

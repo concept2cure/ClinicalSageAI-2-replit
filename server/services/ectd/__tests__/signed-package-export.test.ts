@@ -179,6 +179,38 @@ beforeEach(() => {
 
 // ── Happy path ──────────────────────────────────────────────────────────────
 
+describe('regional proof in the existing signed export', () => {
+  it('preserves an intact historical EU proof-free record using its original digest', async () => {
+    const snapshot = { ...SNAPSHOT, region: 'EU' as const };
+    const payloadDigest = computeBoundPayloadDigestFromComponents(snapshot);
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: { payloadDigest,
+      payloadSeal: sealSignPayloadDigest(payloadDigest, ORG, SEALED_ENV), signatureId: 7,
+      awaitingSince: '2026-09-01T00:05:00Z', signedSnapshot: snapshot } }));
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+    expect(result).toMatchObject({ ok: true, descriptor: { region: 'EU', payloadDigest } });
+    if (result.ok) expect(result.descriptor.recordedPackageIdentity).toBeUndefined();
+  });
+
+  it.each([false, true])('exports captured EU proof and detects tampered captured number (%s)', async (tamper) => {
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: null, contact: { name: null, phone: null, email: null },
+    } };
+    const snapshot = { ...SNAPSHOT, region: 'EU' as const, recordedPackageIdentity };
+    const payloadDigest = computeBoundPayloadDigestFromComponents(snapshot);
+    const signedSnapshot = tamper ? { ...snapshot, recordedPackageIdentity: { ...recordedPackageIdentity,
+      identity: { ...recordedPackageIdentity.identity, applicationNumber: '654321' } } } : snapshot;
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: { payloadDigest,
+      payloadSeal: sealSignPayloadDigest(payloadDigest, ORG, SEALED_ENV), signatureId: 7,
+      awaitingSince: '2026-09-01T00:05:00Z', signedSnapshot } }));
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+    expect(result).toMatchObject(tamper ? { ok: false, refusal: 'digest-drift' }
+      : { ok: true, descriptor: { region: 'EU', recordedPackageIdentity } });
+  });
+
+});
+
 describe('resolveSignedPackageForExport — accepts an intact signed package', () => {
   it('exports the exact recorded applicant snapshot the signature binds', async () => {
     const recordedPackageIdentity = { version: 1 as const, identity: {

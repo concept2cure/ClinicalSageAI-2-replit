@@ -1,0 +1,304 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:27:22.837Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:22.838Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-23T17:27:22.839Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > reads one tenant-scoped joined statement and uses the explicitly bound legal name 6ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > preserves the organization name only when no sponsor binding was recorded 3ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > never falls back to the organization for a broken or foreign explicit binding 4ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"application_number":"IND000512"} 4ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"duns":"12-345-6789"} 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_phone":"not a telephone"} 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_email":"not an email"} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_name":"\u0000"} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > does not silently turn a failed identity read into an unbound record 2ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > accepts complete recorded FDA facts 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > canonical adapter reaches the existing FDA contact serializer > threads recorded contacts only to the FDA admin block 2ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > preserves the exact version 1 default and FDA capture bytes 1ms
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures EU identity without assigning FDA facts another regional meaning 12ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures JP identity without assigning FDA facts another regional meaning 2ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CA identity without assigning FDA facts another regional meaning 2ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CN identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures KR identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures UK identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures AU identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CH identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures BR identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures IN identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures SG identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures ema identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures pmda identity without assigning FDA facts another regional meaning 1ms
+   → expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures facts by value and compares only complete known fields 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed programId is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicationNumber is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantSponsorId is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantName is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantId is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: undefined 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: null 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":2} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{}} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{"contact":null}} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > does not invent a partial regulatory contact 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > locks program before same-tenant sponsor, using the caller transaction 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > does not invent a sponsor lock for an unbound program 0ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures the exact canonical identity read on the signing client 7ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicationNumber changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantName changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantSponsorId changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantId changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.name changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.phone changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.email changes 0ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > retains the captured proof when the mutable record later changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > binds absent facts too, so recording them changes the approval 1ms
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures ema proof alongside the unchanged sequence-content digest 6ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures pmda proof alongside the unchanged sequence-content digest 2ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CA proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CN proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures KR proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures UK proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures AU proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CH proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures BR proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures IN proof alongside the unchanged sequence-content digest 1ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures SG proof alongside the unchanged sequence-content digest 0ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when programId changes 2ms
+   → expected 'f17e5adb09fc94e7f30341f09f3a82976a724…' not to be 'f17e5adb09fc94e7f30341f09f3a82976a724…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicationNumber changes 1ms
+   → expected 'f17e5adb09fc94e7f30341f09f3a82976a724…' not to be 'f17e5adb09fc94e7f30341f09f3a82976a724…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicantName changes 1ms
+   → expected 'f17e5adb09fc94e7f30341f09f3a82976a724…' not to be 'f17e5adb09fc94e7f30341f09f3a82976a724…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicantSponsorId changes 1ms
+   → expected 'f17e5adb09fc94e7f30341f09f3a82976a724…' not to be 'f17e5adb09fc94e7f30341f09f3a82976a724…' // Object.is equality
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > does not make non-US approval stale for FDA-only DUNS or contact changes 2ms
+   → expected { …(3) } to have property "recordedPackageIdentity.identity.applicantId" with value null
+ × server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > refuses unknown regional semantics through the honest ledger fallback 4ms
+   → expected { …(3) } to match object { digest: null, …(1) }
+(1 matching property omitted from actual)
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > propagates a failed identity read rather than signing a guessed record 2ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > retains the existing honest ledger-only fallback when the sequence store is absent 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 30 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures EU identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures JP identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CA identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CN identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures KR identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures UK identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures AU identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures CH identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures BR identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures IN identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures SG identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures ema identity without assigning FDA facts another regional meaning
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures pmda identity without assigning FDA facts another regional meaning
+AssertionError: expected { version: 1, identity: { …(6) } } to deeply equal { version: 1, identity: { …(6) } }
+
+- Expected
++ Received
+
+  {
+    "identity": {
+-     "applicantId": null,
++     "applicantId": "123456789",
+      "applicantName": "Recorded applicant",
+      "applicantSponsorId": "22222222-2222-4222-8222-222222222222",
+      "applicationNumber": "000512",
+      "contact": {
+-       "email": null,
+-       "name": null,
+-       "phone": null,
++       "email": "ra@example.test",
++       "name": "Regulatory contact",
++       "phone": "+1 212 555 0100",
+      },
+      "programId": "11111111-1111-4111-8111-111111111111",
+    },
+    "version": 1,
+  }
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:87:24
+     85|       const { identity } = await read();
+     86|       const snapshot = recordedPackageIdentitySnapshot(identity, { reg…
+     87|       expect(snapshot).toEqual({ version: 1, identity: {
+       |                        ^
+     88|         programId: PROGRAM, applicationNumber: '000512', applicantSpon…
+     89|         applicantName: 'Recorded applicant', applicantId: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/30]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures ema proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures pmda proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CA proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CN proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures KR proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures UK proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures AU proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures CH proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures BR proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures IN proof alongside the unchanged sequence-content digest
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures SG proof alongside the unchanged sequence-content digest
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Number of calls: 0
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:84:24
+     82|     const recordedPackageIdentity = { version: 1, identity: { ...state…
+     83|       applicantId: null, contact: { name: null, phone: null, email: nu…
+     84|     expect(state.read).toHaveBeenCalledWith(client, 7, 9, { region });
+       |                        ^
+     85|     expect(result).toMatchObject({ recordedPackageIdentity,
+     86|       sequenceContentDigest: sha256CanonicalJson({ sequence: { ...sequ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/30]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when programId changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicationNumber changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicantName changes
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires renewed non-US approval when applicantSponsorId changes
+AssertionError: expected 'f17e5adb09fc94e7f30341f09f3a82976a724…' not to be 'f17e5adb09fc94e7f30341f09f3a82976a724…' // Object.is equality
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:95:44
+     93|       const before = await binding();
+     94|       state.identity[field] = `${String(state.identity[field])}-change…
+     95|       expect((await binding()).digest).not.toBe(before.digest);
+       |                                            ^
+     96|     });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/30]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > does not make non-US approval stale for FDA-only DUNS or contact changes
+AssertionError: expected { …(3) } to have property "recordedPackageIdentity.identity.applicantId" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:104:20
+    102|     state.identity.contact = { name: 'Another contact', phone: '+1 212…
+    103|     expect((await binding()).digest).toBe(before.digest);
+    104|     expect(before).toHaveProperty('recordedPackageIdentity.identity.ap…
+       |                    ^
+    105|   });
+    106|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/30]⎯
+
+ FAIL  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > refuses unknown regional semantics through the honest ledger fallback
+AssertionError: expected { …(3) } to match object { digest: null, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "basis": "governed-action-sha256-chain",
+-   "digest": null,
++   "basis": "ectd-sequence-leaf-manifest-sha256",
++   "digest": "7ab31f0ac97d75d09abb70bd683b46ca1dc64a16bdc889db205bb03e7a572fad",
+  }
+
+ ❯ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts:110:20
+    108|     region = 'unknown-agency';
+    109|     const result = await binding();
+    110|     expect(result).toMatchObject({ digest: null, basis: BINDING_BASIS.…
+       |                    ^
+    111|     expect(result.note).toMatch(/region/i);
+    112|     expect(state.read).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/30]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  30 failed | 40 passed (70)
+   Start at  17:27:19
+   Duration  5.31s (transform 2.56s, setup 128ms, import 4.47s, tests 107ms, environment 0ms)
+

@@ -1,0 +1,12 @@
+
+/workspace/concept2cure/client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx
+   688:1  warning  File has too many lines (1936). Maximum allowed is 500                             max-lines
+  1249:8  warning  Function 'ValidationWorkspace' has too many lines (161). Maximum allowed is 100    max-lines-per-function
+  1249:8  warning  Function 'ValidationWorkspace' has a complexity of 28. Maximum allowed is 15       complexity
+  1456:8  warning  Function 'ShadowReviewWorkspace' has too many lines (198). Maximum allowed is 100  max-lines-per-function
+  1456:8  warning  Function 'ShadowReviewWorkspace' has a complexity of 23. Maximum allowed is 15     complexity
+  2021:8  warning  Function 'DispatchWorkspace' has too many lines (315). Maximum allowed is 100      max-lines-per-function
+  2021:8  warning  Function 'DispatchWorkspace' has a complexity of 92. Maximum allowed is 15         complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+

@@ -5,7 +5,7 @@ import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership.js';
 import { canMutateProgram } from './c2c/program-access.js';
 import { readCsrProjectActor, resolveCsrScope } from './csr/project-scope.js';
 import {
-  getRun, getRunResumeReadiness, runOrchestrator, computeBoundPayloadDigestFromComponents,
+  getRun, getRunResumeReadiness, runOrchestrator, computeBoundPayloadDigestFromComponents, packageSignIdentityRefusal,
   type OrchestratorRun, type OrchestratorInputs, type OrchestratorOutputs, type SignedPackageSnapshot,
 } from './submission-package-orchestrator.js';
 import { verifyOrchestratorReceipt, orchestratorInputDigest } from './submission-orchestrator-inputs.js';
@@ -59,6 +59,8 @@ export async function verifyAwaitingReleasePayload(run: OrchestratorRun): Promis
   if (signature === 'failed' || (signature === 'unsigned' && isKmsSignerConfigured())) {
     throw new OrchestratorContinuationRefusal('SIGNATURE_PAYLOAD_INVALID', 409, 'The release record signature envelope did not verify.');
   }
+  const identityRefusal = packageSignIdentityRefusal(snap);
+  if (identityRefusal) throw new OrchestratorContinuationRefusal('SIGNATURE_PACKAGE_IDENTITY_REQUIRED', 409, identityRefusal);
   return digest;
 }
 

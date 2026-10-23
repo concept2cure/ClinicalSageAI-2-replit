@@ -251,19 +251,41 @@ const SIGNED_LEAVES = [
 
 function liveRows(rows: Array<[string, string, string | null]>) {
   mockPoolQuery.mockImplementation(async (sql: string) => /FROM ectd_sequences/i.test(sql)
-    ? { rows: [{ submission_id: SUBMISSION }] }
+    ? { rows: [{ submission_id: SUBMISSION, region: 'fda' }] }
     : { rows: rows.map(([section_code, lifecycle_op, checksum]) => ({ section_code, lifecycle_op, checksum })) });
 }
 
-describe('resolveReleaseSignatureStatus — the signature must cover the sequence that ships', () => {
-  beforeEach(() => {
-    mockResolveSignedPackageForExport.mockReset();
-    mockDbExecute.mockReset();
-    mockSequenceSpine.mockReset();
-    mockPoolQuery.mockReset();
-    mockReadIdentity.mockReset().mockResolvedValue(RECORDED_IDENTITY);
-    mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
+function resetReleaseResolver() {
+  mockResolveSignedPackageForExport.mockReset();
+  mockDbExecute.mockReset();
+  mockSequenceSpine.mockReset();
+  mockPoolQuery.mockReset();
+  mockReadIdentity.mockReset().mockResolvedValue(RECORDED_IDENTITY);
+  mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
+}
+
+describe('release coverage requires readable regions on both records', () => {
+  beforeEach(resetReleaseResolver);
+  it.each([
+    { current: 'unknown-agency', signed: 'US' },
+    { current: undefined, signed: 'US' },
+    { current: 'fda', signed: 'unknown-agency' },
+  ])('never lends a region between unknown current $current and signed $signed records', async ({ current, signed }) => {
+    runsAre('run-a');
+    const result = signedOver(THIS_SEQUENCE, 'run-a', SIGNED_LEAVES);
+    result.descriptor.region = signed;
+    mockResolveSignedPackageForExport.mockResolvedValue(result);
+    liveRows([['1.us.cover', 'new', 'md5-cover'], ['2.3', 'new', 'md5-qos']]);
+    const status = await resolveReleaseSignatureStatus({ submissionId: SUBMISSION, organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE, sequenceId: SEQUENCE_ID, region: current });
+    expect(status).toMatchObject({ verdict: 'undetermined', detail: expect.stringMatching(/region/i) });
+    expect(mockReadIdentity).not.toHaveBeenCalled();
   });
+
+});
+
+describe('resolveReleaseSignatureStatus — the signature must cover the sequence that ships', () => {
+  beforeEach(resetReleaseResolver);
 
   it('treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback', async () => {
     runsAre('historical');
@@ -302,6 +324,7 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
       sequenceId: SEQUENCE_ID,
+      region: 'fda',
     });
 
     expect(status.verdict, String(status.detail)).toBe('signed');
@@ -326,6 +349,7 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
       sequenceId: SEQUENCE_ID,
+      region: 'fda',
     });
 
     expect(status.verdict, 'a signature over different content cleared the dispatch').toBe('unsigned');
@@ -346,6 +370,7 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
       sequenceId: SEQUENCE_ID,
+      region: 'fda',
     });
 
     // `invalid` would accuse an intact signature of tampering AND stop the
@@ -367,6 +392,7 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
       sequenceId: SEQUENCE_ID,
+      region: 'fda',
     });
 
     expect(status.verdict).toBe('undetermined');
@@ -404,6 +430,7 @@ describe('resolveReleaseSignatureStatus — picking among runs, and saying what 
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
       sequenceId: SEQUENCE_ID,
+      region: 'fda',
     });
 
     expect(status.verdict, String(status.detail)).toBe('signed');
