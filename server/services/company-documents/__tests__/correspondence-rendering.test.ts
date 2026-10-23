@@ -7,7 +7,7 @@ vi.mock('../history', () => ({ readCompanyPresentationRevision: mocks.history })
 vi.mock('../../../export/renderers', () => ({ renderHtmlToPdfTracked: mocks.pdf }));
 vi.mock('../../pdf-converter', () => ({ convertDocxToPdf: mocks.convert }));
 import { companyProfileHash } from '../provenance';
-import { renderAuthoringExport, sectionsDigest } from '../../authoring/authoring-export';
+import { AuthoringPdfRenderingError, renderAuthoringExport, sectionsDigest } from '../../authoring/authoring-export';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -71,8 +71,13 @@ describe('correspondence uses its retained presentation through canonical Author
   });
 
   it('fails closed when the strict converter is unavailable instead of dropping the letterhead', async () => {
-    mocks.convert.mockRejectedValue(new Error('LibreOffice unavailable'));
-    await expect(renderAuthoringExport({ ...args(), format: 'pdf' })).rejects.toThrow('LibreOffice unavailable');
+    const cause = new Error('LibreOffice unavailable');
+    mocks.convert.mockRejectedValue(cause);
+    const failure = await renderAuthoringExport({ ...args(), format: 'pdf' }).catch(error => error);
+    expect(failure).toBeInstanceOf(AuthoringPdfRenderingError);
+    expect(failure).toMatchObject({ status: 503, code: 'PDF_RENDERER_UNAVAILABLE',
+      message: 'The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.' });
+    expect(failure.cause).toBe(cause);
     expect(mocks.pdf).not.toHaveBeenCalled();
   });
 

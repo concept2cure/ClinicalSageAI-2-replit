@@ -27,8 +27,10 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { convertedPdfFixture, wordBody } from './_authoring-pdf-converter-fixture';
 
-const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
+const { mockQuery, convertDocxToPdf } = vi.hoisted(() => ({ mockQuery: vi.fn(), convertDocxToPdf: vi.fn() }));
+vi.mock('../../services/pdf-converter', () => ({ convertDocxToPdf }));
 
 vi.mock('../../db', () => ({
   pool: { query: (...a: unknown[]) => mockQuery(...a) },
@@ -127,6 +129,7 @@ let bearerSync = '';
 
 beforeEach(async () => {
   mockQuery.mockReset();
+  convertDocxToPdf.mockReset(); convertDocxToPdf.mockImplementation(convertedPdfFixture);
   bearerSync = await bearer();
 });
 
@@ -207,7 +210,7 @@ describe('§11.50(b) — XML carries the manifestation, and is well-formed', () 
 });
 
 describe('§11.50(b) — PDF carries the manifestation', () => {
-  it('renders the signature block into the PDF html', async () => {
+  it('passes the complete manifestation to the strict Word converter and delivers its PDF', async () => {
     mockRows([SIGNED]);
     const res = await raw('pdf');
     expect(res.status).toBe(200);
@@ -215,6 +218,13 @@ describe('§11.50(b) — PDF carries the manifestation', () => {
     // %PDF- — real bytes, not an error page under a PDF content type.
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     expect(buf.length).toBeGreaterThan(500);
+    expect(convertDocxToPdf).toHaveBeenCalledWith(expect.any(Buffer), { backend: 'libreoffice' });
+    const text = await wordBody(convertDocxToPdf.mock.calls[0][0] as Buffer);
+    expect(text).toContain('Rita Okafor');
+    expect(text).toContain('Approval');
+    expect(text).toContain('2026-08-14 09:31:00 UTC');
+    expect(text).toContain('frozen version v3');
+    expect(buf).toEqual((await convertDocxToPdf.mock.results[0].value).pdf);
   });
 });
 

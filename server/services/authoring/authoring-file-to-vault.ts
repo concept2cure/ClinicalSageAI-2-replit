@@ -25,14 +25,10 @@
  *     Part 11 filing-artifact gate stays where it is; the project vault holds
  *     working files as well as sealed ones, and lying about which is which is
  *     the only thing refused.
- *   • no PDF engine      503 PDF_RENDERER_UNAVAILABLE — 2026-10-08 (QA walk 2,
- *                          j4): where Puppeteer is absent the PDF renderer falls
- *                          back to a plain-text stand-in whose first line says
- *                          not to file it, and this filed it as the governed
- *                          Vault copy, silently. No decision allows filing it
- *                          with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md,
- *                          docs/design), so it fails closed before ingest. DOCX
- *                          does not use that engine and is unaffected.
+ *   • PDF conversion     503 PDF_RENDERER_UNAVAILABLE — strict canonical Word
+ *                          conversion must finish before admission. A failed
+ *                          conversion never substitutes a plain-text PDF. DOCX
+ *                          remains available without that converter.
  *
  * Rendering writes nothing. Only a proven new admission may be placed or
  * recorded. A failed filing compensates that row with a scoped tombstone and
@@ -46,7 +42,7 @@ import { writeChainedAuditRow } from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
-import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
+import { AuthoringPdfRenderingError, renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
 import { filingAgreesWithEditing } from '../c2c/filing-section-target.js';
 import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
@@ -483,6 +479,7 @@ async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections
           'No frozen snapshot or signature manifest certifies this content.',
     }), args.actor);
   } catch (err) {
+    if (err instanceof AuthoringPdfRenderingError) return refuse(err.status, err.code, err.message);
     if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
     if (err instanceof WorkflowImportGovernanceError) return refuse(err.status, err.code, err.message);
     throw err;

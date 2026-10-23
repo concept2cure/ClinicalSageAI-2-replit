@@ -1,0 +1,60 @@
+{
+  "syntheticFixture": true,
+  "actualRenderer": "canonical Authoring renderDocx -> strict canonical LibreOffice converter",
+  "ordinaryDocumentWithoutCompanyPresentation": true,
+  "noProviderCalled": true,
+  "noPersistedRecordsCreated": true,
+  "fixtureExecutor": true,
+  "deliveredHashesCorrect": true,
+  "controlledPages": 5,
+  "workingCopyPages": 5,
+  "workingCopyHeaderAndFooterOnEveryPage": true,
+  "workingCopyDoesNotPrintSignatures": true,
+  "coveringAndStaleSignatureVerdictsPreserved": true,
+  "realTableInWord": true,
+  "footnotePreserved": true,
+  "embeddedPdfImages": 2,
+  "pendingInsertionAndDeletionPreserved": true,
+  "pendingRevisionNoticePreserved": true,
+  "currentCrossReferenceInsteadOfCachedText": true,
+  "sourceFiles": [
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "sha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d"
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515"
+    },
+    {
+      "path": "server/services/pdf-converter.ts",
+      "sha256": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230"
+    }
+  ],
+  "artifacts": {
+    "ordinary-review.docx": {
+      "bytes": 11025,
+      "sha256": "73e16c2ac3141d5add53f77462d9a58b85415ce26eef70ff9922b24623a71d49"
+    },
+    "ordinary-review.pdf": {
+      "bytes": 66350,
+      "sha256": "0b71e163efe2bbb76ba94eb65f1ba119817d991dbccd2a3db4fafddfc1f27f75"
+    },
+    "ordinary-working-copy.pdf": {
+      "bytes": 67932,
+      "sha256": "2b1577534b825d77a1a7f579b7217379de376f69863186724410406d0a2f5ad3"
+    },
+    "ordinary-stale-signature.pdf": {
+      "bytes": 66506,
+      "sha256": "642590ee23af4d48a1747708b936c9eb9c829e174a5d2930b2fadbde5f42ba9f"
+    },
+    "ordinary-review.txt": {
+      "bytes": 16313,
+      "sha256": "4fb255581c912994e91a01f77ed185cbbb2edaae397ec42fabb082cf236b48d6"
+    },
+    "ordinary-working-copy.txt": {
+      "bytes": 16597,
+      "sha256": "44a209f96062109c920e6e7f2cc41dd4a7392b6d70d7fed56e841637af01e4cd"
+    }
+  }
+}

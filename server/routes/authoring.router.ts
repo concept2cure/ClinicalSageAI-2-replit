@@ -75,7 +75,7 @@ import {
   type ConsistencySection,
   type DocumentConsistencyCheck,
 } from '../services/authoring/document-figure-consistency';
-import { serverError } from '../lib/api-response';
+import { respondIfConverterBusy, serverError } from '../lib/api-response';
 import {
   verifyLedger,
   type RevisionOrigin,
@@ -133,6 +133,7 @@ import { isTruncated } from '../services/ai-gateway/finish-reason';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
+  AuthoringPdfRenderingError,
   renderAuthoringExport,
   logExport,
   computeDocHash as computeDocHashOn,
@@ -6294,6 +6295,14 @@ function exportFailureVerdict(recordConfirmed: boolean, recordAttempted: boolean
   };
 }
 
+/** Converter refusals apply only before a write/delivery outcome can be uncertain. */
+function sendPdfRenderingFailure(error: unknown, res: Response): boolean {
+  if (respondIfConverterBusy(res, error)) return true;
+  if (!(error instanceof AuthoringPdfRenderingError)) return false;
+  res.status(error.status).json({ error: 'PDF rendering unavailable', code: error.code, message: error.message });
+  return true;
+}
+
 function sendExportFailure(error: unknown, res: Response, recordConfirmed: boolean, recordAttempted: boolean): void {
   if (workflowGovernanceReply(error, res)) return;
   if (error instanceof SavedDraftSourceError) {
@@ -6306,6 +6315,7 @@ function sendExportFailure(error: unknown, res: Response, recordConfirmed: boole
   res.removeHeader('Content-Disposition');
   res.removeHeader('Content-Type');
   res.removeHeader('Content-Length');
+  if (!recordAttempted && !recordConfirmed && sendPdfRenderingFailure(error, res)) return;
   res.status(500).json({ error: 'Export failed', ...exportFailureVerdict(recordConfirmed, recordAttempted) });
 }
 
@@ -6419,8 +6429,6 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       const current = await lockedSigningContent(executor, req, String(docId), tenantId);
       if (sectionsDigest(current.sections) !== fileHash) throw new WorkflowImportGovernanceError(409, 'DOCUMENT_CHANGED_DURING_EXPORT', 'The content changed before export; review the current document and retry.');
       await assertWorkflowImportRelease(executor, current);
-      await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options }, executor);
-
       /* The rendering — the §11.50(b) manifest, figures, cross-references,
          citations and captions resolved once, and the XML / DOCX / PDF branches —
          is services/authoring/authoring-export.ts renderAuthoringExport, shared
@@ -6435,6 +6443,11 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
         actor: { id: String(getActorId(req) ?? ''), email: exportedBy },
       });
 
+      // A converter refusal is not a successful export. For an ordinary manual
+      // document the source reservation calls work(pool) without a transaction,
+      // so even its EXPORT audit must wait until rendering has succeeded.
+      await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options }, executor);
+
       /* §11.10(b): the record carries a hash of the SOURCE section rows
          (doc_sha256, for content_changed_since_last_export) AND of the DELIVERED
          ARTIFACT BYTES (artifactSha256), so it can attest that a re-download is
@@ -6447,8 +6460,8 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
         exportedBy: exportedBy as string,
         fileName: output.fileName,
         fileSize: output.fileContent.length,
-        // How the file was rendered: a plain-text PDF fallback is part of the
-        // record of what was exported (QA 2026-10-08, j4).
+        // Keep the actual rendering and delivered-byte hash in export history.
+        // Authoring PDFs require the rich Word converter; they have no fallback.
         metadata: { options, exportId, artifactSha256: output.artifactSha256, rendering: output.rendering },
         tenantId,
       });
@@ -6553,6 +6566,7 @@ router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => 
     if (error instanceof SavedDraftSourceError) {
       return res.status(409).json({ error: 'Saved source references require review', code: error.code, message: error.message });
     }
+    if (sendPdfRenderingFailure(error, res)) return;
     return serverError(res, logger, 'rendering a working copy', error);
   }
 });

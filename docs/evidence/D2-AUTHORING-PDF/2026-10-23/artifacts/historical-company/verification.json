@@ -1,0 +1,48 @@
+{
+  "syntheticFixture": true,
+  "actualRenderer": "canonical Authoring DOCX -> strict LibreOffice PDF converter",
+  "noProviderCalled": true,
+  "historicalReads": 3,
+  "retainedVariantId": "44444444-4444-4444-8444-444444444444",
+  "retainedRevision": 4,
+  "explicitSelectionOverridesAutomaticDefault": true,
+  "pageCount": 5,
+  "originalLogoBytesInWord": true,
+  "embeddedLogoImageInPdf": true,
+  "mandatorySignatureStatementPreserved": true,
+  "currentBrandingNeverRead": true,
+  "historicalTextGeometryAndLogoStableAfterCurrentBrandChange": true,
+  "repeatedPdfBinaryIdentical": true,
+  "repeatedPdfSha256": "0dd9da5744064bae6e16f9330c10c7066f34ed4fad695929083c1609ed04c60f",
+  "pageGeometryAndImageHashes": {
+    "pages": [
+      {
+        "width": 841.889763779528,
+        "height": 595.303937007874
+      },
+      {
+        "width": 841.889763779528,
+        "height": 595.303937007874
+      },
+      {
+        "width": 841.889763779528,
+        "height": 595.303937007874
+      },
+      {
+        "width": 841.889763779528,
+        "height": 595.303937007874
+      },
+      {
+        "width": 841.889763779528,
+        "height": 595.303937007874
+      }
+    ],
+    "images": [
+      "0d439b745da0cda3023627c019adc7f533acfc5398fd875b04371958d4cf47e7",
+      "8d44fe3a789e7a531c294215233df32b5ad20434d3bedc261d063f5476f898a8"
+    ]
+  },
+  "wordSha256": "24041217eb95220af0d39b1837823357cfcf199e3d9dca75ba67afcdf6539931",
+  "pdfSha256": "0dd9da5744064bae6e16f9330c10c7066f34ed4fad695929083c1609ed04c60f",
+  "pdfBytes": 49203
+}
