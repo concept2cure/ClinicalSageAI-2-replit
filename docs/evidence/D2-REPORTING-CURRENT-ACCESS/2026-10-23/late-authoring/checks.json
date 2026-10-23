@@ -1,0 +1,136 @@
+{
+  "recordedAt": "2026-10-23T18:00:05.369780+00:00",
+  "retainedReportingCommit": "4f3ebaf73",
+  "priorNativeReconciliationCommit": "1a76da4ca",
+  "incomingCanonical": "0a7abf314",
+  "mergedHead": "5482e9b751756002cbb6989545b7e76d67ac9002",
+  "sourceDelta": {
+    "from": "2148660b9",
+    "to": "0a7abf314",
+    "runtimeFiles": [
+      "client/src/concept2cure/v2/authoringPdfRefusal.ts",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+      "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "server/routes/authoring.router.ts",
+      "server/services/authoring/authoring-export.ts",
+      "server/services/authoring/authoring-file-to-vault.ts"
+    ],
+    "applicationSourceEditsMadeDuringReview": false
+  },
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts",
+      "server/routes/__tests__/authoringExportPdf.test.ts",
+      "server/routes/__tests__/authoringWorkingCopy.test.ts",
+      "server/routes/__tests__/authoringExportSignatureManifest.test.ts",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-authoring/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-authoring/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "testFiles": 8,
+    "passedTests": 115,
+    "failedTests": 0,
+    "pendingTests": 0,
+    "todoTests": 1,
+    "durationSeconds": 44.67,
+    "todo": "Inherited Vault re-filing supersedes_id / historical hash-version semantics; retained, not counted as passed."
+  },
+  "sourceBefore": {
+    "head": "5482e9b751756002cbb6989545b7e76d67ac9002",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "ac95fc3ce7a6421157b8d75834f098d1f2dba5d63b8c25735155b401e910ceba",
+      "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx": "60dbf36718a9edbd140bd68c1af49ccc560c1185465d85f6a0c7c16bebf7b123",
+      "client/src/concept2cure/v2/authoringPdfRefusal.ts": "e3dfeef0e58d8fdf8930ebbbcc242d3e1b388b60ecc6f8217dfa3eb0122ef983",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "8e97c08d10edac6ed0f0f06b1dff007c238aae7aa2e7ec50732a39951d6e550e",
+      "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "0e5277ef35299a5bfdd1e61bed305c4f8115cd3680fc8f46a5b2773912995921",
+      "server/routes/__tests__/_authoring-pdf-converter-fixture.ts": "d2446c6b9d5c12b86d6d6dd5d4fc4324aa04321358ed37d03a01b6538d2bb849",
+      "server/routes/__tests__/authoringExportPdf.test.ts": "ff1a540cb2e277defaefce7cba5180f980bebcd736432172b46a2ca25df2d445",
+      "server/routes/__tests__/authoringExportSignatureManifest.test.ts": "a247052e18aa86373c130d4ffba120b03bf0f8a757279e8edb4277dc2e7060f1",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts": "21dd1e17ef1a7ac4072d8aef2c793da94c276582a48ee2406561123a8df1b71e",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts": "9795d7c865b2a213a6a7762237301a26d66c301e4ad14aab6d1e50ee283a34ca",
+      "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts": "b3a71971b3f49b7c3e77a01606454b39c10eb434bb8bd06a7208dd863fc3d123",
+      "server/routes/__tests__/authoringWorkingCopy.test.ts": "9849f7bd064e8c0e0d5c69855e9e286a5aa56a8318c62e9c195b2cf4cbe2e3d9",
+      "server/routes/authoring.router.ts": "fb2e16e9e6387e59f1f57368ba7bd9a739d2c5d214c0d4fa3ce0e2c1f315cbec",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "3f4dee11f69dceae484b8c6cc82a06969a18e7c55d1fc2a3907b0cc9acd78aa0",
+      "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts": "e041949ca36c67d326903c2a2897593b508b23f91626c24507a4448fd65f2f3e",
+      "server/services/authoring/authoring-export.ts": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "server/services/authoring/authoring-file-to-vault.ts": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515",
+      "server/services/company-documents/__tests__/correspondence-rendering.test.ts": "02185f2f304a09c5f613dc2a88d9ea0bf8f210fdaad5a94fcba3f66ba45d1513",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "fe46636df74a407fc1669e7034fb1d6612ba8233941ed84c29d70e44c82cdb47",
+      "server/services/pdf-converter.ts": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230",
+      "server/services/conversion-slots.ts": "ebcf63905a6a16096bf06b136f33aefebbc65d08ae3d891d743c1710c64272b8",
+      "server/services/company-documents/correspondence-rendering.ts": "bef580d0015021bf3b64fba8fb98ceee3995ef52faf51aad403bc184718395b4"
+    }
+  },
+  "sourceFinal": {
+    "head": "5482e9b751756002cbb6989545b7e76d67ac9002",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "ac95fc3ce7a6421157b8d75834f098d1f2dba5d63b8c25735155b401e910ceba",
+      "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx": "60dbf36718a9edbd140bd68c1af49ccc560c1185465d85f6a0c7c16bebf7b123",
+      "client/src/concept2cure/v2/authoringPdfRefusal.ts": "e3dfeef0e58d8fdf8930ebbbcc242d3e1b388b60ecc6f8217dfa3eb0122ef983",
+      "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "8e97c08d10edac6ed0f0f06b1dff007c238aae7aa2e7ec50732a39951d6e550e",
+      "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "0e5277ef35299a5bfdd1e61bed305c4f8115cd3680fc8f46a5b2773912995921",
+      "server/routes/__tests__/_authoring-pdf-converter-fixture.ts": "d2446c6b9d5c12b86d6d6dd5d4fc4324aa04321358ed37d03a01b6538d2bb849",
+      "server/routes/__tests__/authoringExportPdf.test.ts": "ff1a540cb2e277defaefce7cba5180f980bebcd736432172b46a2ca25df2d445",
+      "server/routes/__tests__/authoringExportSignatureManifest.test.ts": "a247052e18aa86373c130d4ffba120b03bf0f8a757279e8edb4277dc2e7060f1",
+      "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts": "21dd1e17ef1a7ac4072d8aef2c793da94c276582a48ee2406561123a8df1b71e",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts": "9795d7c865b2a213a6a7762237301a26d66c301e4ad14aab6d1e50ee283a34ca",
+      "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts": "b3a71971b3f49b7c3e77a01606454b39c10eb434bb8bd06a7208dd863fc3d123",
+      "server/routes/__tests__/authoringWorkingCopy.test.ts": "9849f7bd064e8c0e0d5c69855e9e286a5aa56a8318c62e9c195b2cf4cbe2e3d9",
+      "server/routes/authoring.router.ts": "fb2e16e9e6387e59f1f57368ba7bd9a739d2c5d214c0d4fa3ce0e2c1f315cbec",
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "3f4dee11f69dceae484b8c6cc82a06969a18e7c55d1fc2a3907b0cc9acd78aa0",
+      "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts": "e041949ca36c67d326903c2a2897593b508b23f91626c24507a4448fd65f2f3e",
+      "server/services/authoring/authoring-export.ts": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "server/services/authoring/authoring-file-to-vault.ts": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515",
+      "server/services/company-documents/__tests__/correspondence-rendering.test.ts": "02185f2f304a09c5f613dc2a88d9ea0bf8f210fdaad5a94fcba3f66ba45d1513",
+      "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "fe46636df74a407fc1669e7034fb1d6612ba8233941ed84c29d70e44c82cdb47",
+      "server/services/pdf-converter.ts": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230",
+      "server/services/conversion-slots.ts": "ebcf63905a6a16096bf06b136f33aefebbc65d08ae3d891d743c1710c64272b8",
+      "server/services/company-documents/correspondence-rendering.ts": "bef580d0015021bf3b64fba8fb98ceee3995ef52faf51aad403bc184718395b4"
+    },
+    "sourceDrift": []
+  },
+  "priorPins": {
+    "backend": {
+      "checks": "../backend/checks.json",
+      "verifiedFiles": 20,
+      "sourceDrift": []
+    },
+    "client": {
+      "checks": "../client/checks.json",
+      "verifiedFiles": 36,
+      "sourceDrift": []
+    },
+    "late-native": {
+      "checks": "../late-native/checks.json",
+      "verifiedFiles": 12,
+      "sourceDrift": []
+    }
+  },
+  "review": {
+    "whatAlreadyExists": "Authoring rich DOCX builder, strict canonical PDF converter, controlled export recording/delivery boundary, working-copy disclaimers, company correspondence, Vault filing transaction and existing UI reconciliation holds. Incoming source reuses those paths.",
+    "finding": "No integration blocker found in the six incoming runtime files. Ordinary Authoring PDF now uses the existing rich Word builder and strict converter; safe definite renderer/capacity refusals occur before export recording or Vault admission. Unknown recording/delivery outcomes retain reconciliation holds. Retained company rendering remains on the canonical converter.",
+    "existingEvidence": "../../../D2-AUTHORING-PDF/2026-10-23/README.md",
+    "historicalEvidence": "Incoming packet separately records actual rich five-page and working-copy PDF artifacts and historical company PDF same-byte verification. Those native converter/artifact checks were not rerun here. Its 522-test per-file qualification is not added to this bounded run.",
+    "currentRunLimits": "Route/service/UI tests use existing deterministic converter/provider seams; PGlite tests exercise local SQL-backed admission/parity. This run does not qualify native LibreOffice typography, a deployed browser flow, live agency acceptance, or complete platform compliance.",
+    "publication": "Root owns refreshed build, full compiler, commit, normal push gates and canonical publication."
+  }
+}

@@ -1,0 +1,788 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+{
+  "timestamp": "2026-10-23T18:47:53.282Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:47:53.284Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+{
+  "timestamp": "2026-10-23T18:47:53.284Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a changed extraction basis even when the own hit text still survives 4ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a previously indexed own text absent from the current extraction 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects same-ID chunk text replacement without refreshing old ranked content 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived expandedContent before reranking 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived compressedContent before reranking 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after reranking before embedding candidates for MMR 2ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after MMR before sending a selected source to compression 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > does not return cached compression when the extraction changes during its await 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rejects changed coordinates after compression even with unchanged text and extraction 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > keeps unchanged own text through real reranking, MMR and cached compression 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > keeps a current plain legacy hit and pins the checked basis before later work 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > does not apply Vault extraction rules to guidance, project atoms or memories 2ms
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-23T18:47:54.606Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:47:54.608Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-23T18:47:54.608Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > the SELECT fixture maps complete literal columns > retains a terminal cast, case-insensitive column name and output alias 3ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > the SELECT fixture maps complete literal columns > does not treat a longer column or computed expression as the selected column 0ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > selects chunk ids, indices and offsets, and the extracted text on the hit row only 6ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > pins the content hash when the hit carries one, even without a source read scope 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > is the exact source span: the overlap once, no invented seam, an identity that verifies 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > legacy chunks without offsets keep the hit text alone and say why 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > offsets that do not address the current text are refused, never shifted 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > a re-chunked document contributes no neighbours from the new chunk set 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > drops a vault candidate whose neighbour query returns no rows 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > rag_chunk expansion still joins its window and gains no passage context 1ms
+stdout | server/services/__tests__/rag-reranker.test.ts
+{
+  "timestamp": "2026-10-23T18:47:55.615Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:47:55.616Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-reranker.test.ts
+{
+  "timestamp": "2026-10-23T18:47:55.616Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-reranker.test.ts
+[database] Database connection successful
+
+stdout | server/services/__tests__/rag-reranker.test.ts > crossEncoderConfigFromEnv / getReranker > selects the cross-encoder when fully configured
+{
+  "timestamp": "2026-10-23T18:47:55.791Z",
+  "level": "info",
+  "message": "[rag-reranker] using cross-encoder reranker (cohere:rerank-v3.5)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/rag-reranker.test.ts > AdvancedRAGPipeline.applyReranker > keeps embedding order when the reranker throws
+[RAG] reranker failed; keeping embedding order: boom Error: provider down
+    at Object.score (/workspace/Concept2Cure/server/services/__tests__/rag-reranker.test.ts:197:15)
+    at AdvancedRAGPipeline.applyReranker (/workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:1136:36)
+    at /workspace/Concept2Cure/server/services/__tests__/rag-reranker.test.ts:202:25
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | server/services/__tests__/rag-reranker.test.ts > AdvancedRAGPipeline.applyReranker > falls back when the provider returns the wrong number of scores
+[RAG] reranker "mismatch" returned 1 scores for 2 docs; keeping embedding order
+
+ ✓ server/services/__tests__/rag-reranker.test.ts > LlmJudgeReranker > normalizes 0-100 judge scores to [0,1] aligned to input order 2ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > LlmJudgeReranker > defaults missing indices to neutral 0.5 1ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > LlmJudgeReranker > returns neutral scores (not a throw) when the judge output is unparseable 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > LlmJudgeReranker > handles an empty candidate set without calling the model 1ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > CrossEncoderReranker > scatters ranked results back into input order and clamps to [0,1] 25ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > CrossEncoderReranker > throws on a non-OK HTTP response (so the pipeline can fall back) 2ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > CrossEncoderReranker > throws when the response is missing the results array 1ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > CrossEncoderReranker > rejects an unknown provider with no endpoint 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > crossEncoderConfigFromEnv / getReranker > returns null unless provider + key + model are all set 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > crossEncoderConfigFromEnv / getReranker > falls back to the LLM judge when env is unset 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > crossEncoderConfigFromEnv / getReranker > selects the cross-encoder when fully configured 1ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > AdvancedRAGPipeline.applyReranker > blends rerank with embedding score, re-sorts, and preserves passthrough fields 1ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > AdvancedRAGPipeline.applyReranker > keeps embedding order when the reranker throws 5ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > AdvancedRAGPipeline.applyReranker > falls back when the provider returns the wrong number of scores 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the LLM judge > routes as regulatory_review when the score decides a verdict, structured_output otherwise 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the LLM judge > an unreadable score throws instead of defaulting to 0.5 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the LLM judge > a partial score throws instead of filling the gaps with 0.5 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the LLM judge > a complete score is used as scored 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the pipeline > tells the reranker the score decides a verdict 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the pipeline > a failed rerank fails the retrieval instead of keeping embedding order 0ms
+ ✓ server/services/__tests__/rag-reranker.test.ts > governed verdicts: the pipeline > a wrong score count fails the retrieval 0ms
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:47:56.547Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:47:56.548Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:47:56.549Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > pins the extraction hash and UTF-16 coordinates in actual lexical mapper output 52ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-original-file re-extraction after initial selection 37ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects a changed extraction even when the complete hit still occurs in it 28ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects an already-stale stored chunk absent from the current extraction 25ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-ID chunk text replacement without replacing candidate text silently 22ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects in-place coordinate replacement under unchanged text and extraction 22ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > retains an unchanged literal Unicode/regex-like hit without normalization 18ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves NULL-offset hits with unavailable context rather than fabricating spans 23ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves trimmed-backfill own text without inventing corrected coordinates 24ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > allows an unchanged NULL extraction only as legacy own text without context 20ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction appearance after a NULL extraction was selected 25ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction disappearance after source text was selected 25ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > refuses a valid current candidate under another organization UUID 42ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > keeps retained extracted data clearly labelled, then refuses later withdrawal 174ms
+stdout | server/services/__tests__/rag-disposition-revalidation.test.ts
+{
+  "timestamp": "2026-10-23T18:48:00.016Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:00.018Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-disposition-revalidation.test.ts
+{
+  "timestamp": "2026-10-23T18:48:00.018Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-disposition-revalidation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > does not send a candidate withdrawn after initial retrieval to the reranker 5ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > rechecks after reranking before missing candidate vectors are embedded 2ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > rechecks after MMR before compression and does not return stale grounding 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > does not publish compressed grounding withdrawn while compression awaited 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > refuses generation when the returned retrieval snapshot is already withdrawn 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > withholds the entire generated answer when one of its sources changes during generation 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > keeps stored text usable and marks retained data in the generation input 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > withdrawal is rechecked at RAG provider and grounding boundaries > refuses on a failed policy lookup before a provider sees candidate content 2ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > checks each corpus once, binds the atom project, and does not accept an identity mismatch 3ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > preserves database-verified public guidance without a tenant-wide fallback 1ms
+ ✓ server/services/__tests__/rag-disposition-revalidation.test.ts > batched candidate checks bind their actual corpus identities > refuses private sources without a valid tenant and rejects unknown corpus types 0ms
+stdout | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+{
+  "timestamp": "2026-10-23T18:48:00.949Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:00.950Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+{
+  "timestamp": "2026-10-23T18:48:00.950Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > dense retrieval pins the same-statement extraction fingerprint and UTF-16 coordinates 4ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > lexical retrieval pins its own snapshot even without an embedding provider 2ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > pins explicit NULL extraction and coordinates without inventing source identity 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing chunk text rather than interpreting absent proof as legacy NULL 2ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses non-text chunk rather than interpreting absent proof as legacy NULL 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing extraction fingerprint rather than interpreting absent proof as legacy NULL 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses malformed extraction fingerprint rather than interpreting absent proof as legacy NULL 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing start rather than interpreting absent proof as legacy NULL 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string start rather than interpreting absent proof as legacy NULL 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses nonfinite end rather than interpreting absent proof as legacy NULL 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing membership fact rather than interpreting absent proof as legacy NULL 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string membership fact rather than interpreting absent proof as legacy NULL 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > first-pins a plain current legacy candidate after comparing its text 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > preserves unchanged NULL-extraction and NULL-offset own text without a span claim 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > retains a current literal hit with shifted backfill coordinates, without inventing a remap 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > does not confuse an unavailable neighboring context with stale own-hit text 0ms
+stdout | server/services/__tests__/rag-vault-freshness-generation.test.ts
+{
+  "timestamp": "2026-10-23T18:48:01.824Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:01.825Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-generation.test.ts
+{
+  "timestamp": "2026-10-23T18:48:01.825Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-generation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses an already stale retrieval snapshot before dispatching a generator 4ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses same-ID chunk text replacement even when original bytes and extraction hash match 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual corrective grading await before answer generation 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > withholds the entire answer when one source changes during generator dispatch 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual faithfulness await before returning the answer 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rejects an obsolete available-context fingerprint even without expandedContent 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy compressedContent rather than inventing a derivation basis 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy expandedContent rather than inventing a derivation basis 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > keeps unchanged pinned compressedContent usable with the existing precedence 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > keeps unchanged pinned expandedContent usable with the existing precedence 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > retains a current available-context reference when no expanded text is requested 1ms
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:48:02.790Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:02.791Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:48:02.791Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > expandedContent is extracted_text.slice(span) read from the same row set, never joined chunk text 46ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > reports the context as available with a reference the existing identity helper re-derives 22ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > legacy chunks with NULL offsets: no_offsets, and no expandedContent at all 18ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a backfill-style basis (chunked from the trimmed text, stored untrimmed): basis_mismatch, not approximated 17ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a re-chunked document (the hit id is gone, its neighbours are not): chunk_set_changed 23ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > the hit's own content hash pins the read even without a source read scope 21ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > another organization's document of the same shape, asked for under this organization's uuid 38ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a document whose data was withdrawn (remove_data), while keep_data retains it 170ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a superseded version 21ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a content hash that is not the stored version, under a source read scope 18ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > preserves an admitted viewer and keyless positive read 5ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not return old text/counts after access is revoked during meaning embedding 17ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rechecks old lexical identities when the optional provider becomes unavailable 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > withholds stale totals even when the changed source was outside the selected page 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not swallow changed actor authority as optional meaning unavailability 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rejects contradictory actor/source organisation before a source read 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > pins scope arrays before an asynchronous callback can mutate them 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42703') and preserves the authorised lexical result 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42704') and preserves the authorised lexical result 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > uses actor-filtered outside-index captures and current permitted programmes 3ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses UUID/integer tenant mismatch before retrieval 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > withholds passage content and coverage when actor scope changes during retrieval 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses a returned passage whose recorded programme is outside the allowed set 0ms
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-23T18:48:06.578Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:06.579Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-23T18:48:06.579Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > passage context constants > extends 1000 characters on each side and caps at the 12000-character identity span 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > fixture: the real chunker splits them into chunks 4, 5 and 6 with real overlap 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > the context is T.slice of the window: overlap once, no invented seam, verified identity 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > keeps a paragraph break only where the source has one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > chunk_set_changed: the hit id is gone, sits at another index, or nothing came back 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > no_offsets: no extracted text, or any chunk (neighbour or hit) without offsets 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets cut from backfill-trimmed text never shift onto the raw text 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: same-hash re-extraction changed the text under a chunk 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets that slice() would quietly accept are still refused 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > not_contiguous: a missing index, a duplicate index, a gap, or a start that does not advance 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > touching chunks (start equal to the previous end) are contiguous 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > budget: a hit chunk longer than the cap is refused with its own hitSpan 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > a hit of exactly the cap is the whole context, clipped 3ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > chunk_set_changed beats no_offsets 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > no_offsets beats basis_mismatch 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > basis_mismatch beats not_contiguous 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > not_contiguous beats budget, and leaves hitSpan null 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > budget beats encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > extends at most SIDE characters on each side of the hit 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > a hit at the start of the document extends only to the right 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > the hit alone is its own unclipped context 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trims the side farther from the hit first 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming that reaches both sides keeps the hit whole and the farther side no longer farther 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming with equal sides keeps the hit whole 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a left edge that splits a pair moves outward by one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a right edge that splits a pair moves outward by one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the first chunk start cannot move outward: encoding 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the last chunk end cannot move outward: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a lone surrogate anywhere in the text is refused by the identity helper: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a MAX cut inside an astral run never yields an over-budget or split-pair span 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > returns the same result for any input order, without reordering the caller array 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > is deterministic 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot replace current actor admission with a supplied allowlist 3ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot widen canonical scope by adding a private allowed program 2ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > recognises the missing optional vector type, while preserving other undefined objects as unavailable 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds the allowed set before the lexical count and page limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not promote an empty allowed set into all programmes 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > bounds meaning counts and candidates before rank and limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > uses the caller executor for meaning SQL rather than a different pool 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds passage ledger to the current byte version, live parent and allowed programmes 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > propagates allowed programmes to the existing passage router 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > retains SQL failures as unknown coverage rather than zero 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not fabricate zero coverage from an absent ledger aggregate row 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > preserves allowed set through the router filter merge 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds array filters in the canonical SQL helper 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > refuses an actor programme constraint on a corpus without programme identity 0ms
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:48:08.042Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:08.043Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:48:08.043Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-disposition.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > expands only public guidance or the supplied integer or verified UUID tenant 308ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > keeps scoped guidance and refuses foreign private rows and identities without a tenant 133ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > marks retained Vault, RAG and atom text, then excludes it after the later withdrawal without deleting history 264ms
+ ✓ server/services/__tests__/rag-disposition.pglite.integration.test.ts > RAG candidate policy checks execute against canonical disposition SQL > withholds a generated answer when a real disposition commits during the provider await 236ms
+stdout | server/services/__tests__/rag-actor-programme-scope.test.ts
+{
+  "timestamp": "2026-10-23T18:48:11.686Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:11.688Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-actor-programme-scope.test.ts
+{
+  "timestamp": "2026-10-23T18:48:11.688Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-actor-programme-scope.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > passes source authority and allowed filters through the existing router 2ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > constrains dense materialisation and sparse candidates before ranking/limit 3ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > re-admits actor access after the query embedding resolves 2ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > recovers the lexical branch after missing vector SQL ('42883') instead of querying an aborted transaction 2ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > recovers the lexical branch after missing vector SQL ('42704') instead of querying an aborted transaction 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > context expansion preserves programme, exact byte hash, currentness and live-parent fences 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > source revalidation retains the allowed set after asynchronous processing 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > actor-scoped retrieval refuses a selected source when its byte identity changes 1ms
+ ✓ server/services/__tests__/rag-actor-programme-scope.test.ts > existing RAG actor programme filtering > refuses source actor authority on a corpus that cannot apply its programme constraint 1ms
+stdout | server/services/__tests__/rag-vault-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-23T18:48:12.557Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:12.558Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-23T18:48:12.558Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-tenant-scope.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-tenant-scope.test.ts > searchVaultSimilar — refusal without a tenant > returns nothing and issues no vault query when organizationUuid is absent 3ms
+ ✓ server/services/__tests__/rag-vault-tenant-scope.test.ts > searchVaultSimilar — refusal without a tenant > refuses a malformed organization id rather than letting ::uuid raise 1ms
+ ✓ server/services/__tests__/rag-vault-tenant-scope.test.ts > searchVaultSimilar — explicit tenant predicate > constrains organization_id on the dense arm and binds the org uuid 1ms
+ ✓ server/services/__tests__/rag-vault-tenant-scope.test.ts > searchVaultSimilar — explicit tenant predicate > constrains organization_id on the sparse arm too 1ms
+ ✓ server/services/__tests__/rag-vault-tenant-scope.test.ts > searchVaultSimilar — explicit tenant predicate > constrains every vault statement it issues, with no exceptions 0ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an available context through with its hit span and content hash 4ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > a hit that was never expanded says not_expanded, with no span 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an unavailable reason through unchanged, with the hit span when the expansion had one 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > text stays the hit chunk content, never the expanded window 0ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > keeps the existing locator fields 1ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateStepBackQuery > returns the broader question and routes a reasoning request 2ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateStepBackQuery > strips wrapping quotes and a "Step-back question:" echo prefix 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateStepBackQuery > returns null when the model just echoes the original (case-insensitive) 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateStepBackQuery > returns null on an empty model response 1ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateSubQuestions > parses a JSON array of sub-questions and caps the fan-out 1ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateSubQuestions > accepts an object-wrapped array and drops blank entries 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateSubQuestions > returns an empty array for an atomic question ([]) 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateSubQuestions > treats a single echo of the original as no decomposition 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > generateSubQuestions > returns an empty array on unparseable output 2ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > extractQueryFilters > maps documentType->atomType, source, and a date range 1ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > extractQueryFilters > omits absent fields and returns {} for an unconstrained query 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > extractQueryFilters > drops the date range when an endpoint does not parse 0ms
+ ✓ server/services/__tests__/rag-query-transforms.test.ts > extractQueryFilters > returns empty filters on unparseable output 0ms
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-23T18:48:14.296Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:14.297Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-23T18:48:14.298Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails
+[RAG] MMR embedding failed for uncarried candidates, using lexical fallback: Error: embedding down
+    at Object.<anonymous> (/workspace/Concept2Cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:134:13)
+    at Object.Mock [as embedBatch] (file:///workspace/Concept2Cure/node_modules/@vitest/spy/dist/index.js:332:34)
+    at AdvancedRAGPipeline.applyMmr (/workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:1209:49)
+    at /workspace/Concept2Cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:141:25
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > parses the pgvector text form 2ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > accepts an already-parsed numeric array 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > returns undefined for malformed or empty input 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > dot of unit vectors equals cosine similarity 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > maps a zero vector to zeros (no NaN) 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > reuses carried vectors without calling the embedding service 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > embeds only the candidates that arrive without a carried vector 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails 5ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > reciprocalRankFusion > scores a single list as 1/(k + rank), rank 1-based 1ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > reciprocalRankFusion > sums contributions for ids that appear in multiple lists 1ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > reciprocalRankFusion > ranks an item agreed on by both retrievers above either list-leader 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > reciprocalRankFusion > honours a custom k and ignores empty ids 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > reciprocalRankFusion > returns an empty map for no lists 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > normalizeToUnit > min-max scales into [0,1] 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > normalizeToUnit > maps a uniform set to 1 (no relative signal to discount) 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > normalizeToUnit > handles an empty map 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > fuseHybrid > puts the doc both arms agree on first and normalizes scores to [0,1] 1ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > fuseHybrid > dedupes by id, preferring the dense payload, and trims to the limit 1ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > mergeByMaxScore > keeps the highest-scoring copy of each id, sorted by finalScore desc 0ms
+ ✓ server/services/__tests__/rag-fusion.test.ts > mergeByMaxScore > returns an empty array unchanged 0ms
+stdout | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-23T18:48:15.331Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:15.332Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-generation-request.test.ts
+{
+  "timestamp": "2026-10-23T18:48:15.332Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-generation-request.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves source numbering, separators and compressed/expanded/raw precedence exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > preserves the pre-extraction prompt, task, sampling and token budget exactly 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > the actual production generation method sends that exact canonical request 3ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the explicit generator pin while reusing the canonical request 1ms
+ ✓ server/services/__tests__/rag-generation-request.test.ts > one canonical RAG generation request for production and controlled qualification > retains the existing empty-source refusal without calling a model 1ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > hydeRetrieval > searches on the hypothetical document, not the raw query 2ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > multiQueryRetrieval > retrieves on the original plus parsed alternatives and pre-warms one batch embed 2ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > multiQueryRetrieval > falls back to the original query when expansion output is unparseable 1ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > stepBackRetrieval > retrieves on the original and the step-back question 1ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > stepBackRetrieval > degrades to original-only when the step-back echoes the query 0ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > decomposeRetrieval > retrieves on the original plus each sub-question 1ms
+ ✓ server/services/__tests__/rag-retrieval-strategies.test.ts > decomposeRetrieval > degrades to original-only when the question is atomic ([]) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > returns empty and touches no params when filters is undefined 2ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > appends ILIKE predicates with placeholders sequential after existing params 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > respects an existing org-filter placeholder (filters start at $5) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > expands a date range into >= and <= bounds 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > skips filters with no backing column on the corpus (vault has no source) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > never applies domain (no corpus has a column for it) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > the vault corpus filters on the document's program, as a bound uuid 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > a corpus with no program column refuses the scope rather than searching wider 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > survives the merge with self-query filters, alone or beside them 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > returns undefined when neither side contributes anything 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > lets explicit filters win field-by-field over extracted ones 0ms
+stdout | server/services/__tests__/rag-cache-tenant-key.test.ts
+{
+  "timestamp": "2026-10-23T18:48:16.520Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:16.521Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-cache-tenant-key.test.ts
+{
+  "timestamp": "2026-10-23T18:48:16.521Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-cache-tenant-key.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > the same request from a second tenant is routed for that tenant, not served from the first tenant’s entry 4ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a repeat from the same tenant is still served from the cache 2ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a change to the tenant’s placement policy is a new key 2ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a policy that cannot be read bypasses the cache 1ms
+stdout | server/services/__tests__/rag-context-expansion.test.ts
+{
+  "timestamp": "2026-10-23T18:48:17.374Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:17.375Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-context-expansion.test.ts
+{
+  "timestamp": "2026-10-23T18:48:17.375Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-context-expansion.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > refuses the stale chunk when the neighbour query fails
+[RAG] context expansion unavailable; refusing the stale chunk: Error: db down
+    at Object.<anonymous> (/workspace/Concept2Cure/server/services/__tests__/rag-context-expansion.test.ts:82:13)
+    at Object.Mock [as query] (file:///workspace/Concept2Cure/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:1322:46
+    at Array.map (<anonymous>)
+    at AdvancedRAGPipeline.expandContext (/workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:1288:17)
+    at /workspace/Concept2Cure/server/services/__tests__/rag-context-expansion.test.ts:84:43
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > expands a rag_chunk to its ±window neighbours, joined in order 3ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > does not annotate when the window adds no neighbours (single row) 0ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > skips the query entirely when window <= 0 0ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > passes through documents without a chunk index (project atoms, memory) 0ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > refuses the stale chunk when the neighbour query fails 5ms
+ ✓ server/services/__tests__/rag-context-expansion.test.ts > AdvancedRAGPipeline.expandContext > drops a chunk whose policy-filtered neighbour query no longer finds it 0ms
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-23T18:48:18.253Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:48:18.254Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-23T18:48:18.254Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > serves an identical request from cache without a second route call 2ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > evicts the least-recently-used entry; a hit refreshes recency 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > drops expired entries instead of serving them 1ms
+ ✓ server/services/__tests__/rag-runtime-metrics.test.ts > rag-metrics > counts retrievals keyed by corpus/intent/strategy/outcome 1ms
+ ✓ server/services/__tests__/rag-runtime-metrics.test.ts > rag-metrics > does not record a top score for empty or error outcomes 1ms
+ ✓ server/services/__tests__/rag-runtime-metrics.test.ts > rag-metrics > renders valid Prometheus text with the expected metric names 1ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > gradeContextSufficiency > parses the sufficiency verdict and counts tokens 2ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > gradeContextSufficiency > defaults to sufficient=true on unparseable output (no spurious re-retrieval) 0ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > rewriteQuery > returns the rewritten query, stripped of wrapping quotes 0ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > rewriteQuery > falls back to the original query when the model returns nothing 0ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > verifyGroundedness > parses the groundedness verdict 0ms
+ ✓ server/services/__tests__/rag-corrective-loop.test.ts > verifyGroundedness > defaults to grounded=true on unparseable output (no false flagging) 0ms
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > refuses a following chunk that ends before the hit chunk does 2ms
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > never returns an available context that does not contain the whole hit 4ms
+
+ Test Files  27 passed (27)
+      Tests  269 passed (269)
+   Start at  18:47:51
+   Duration  27.25s (transform 1.62s, setup 373ms, import 15.63s, tests 7.73s, environment 3ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-VAULT-PASSAGE-FRESHNESS/2026-10-23/root/final.results.json

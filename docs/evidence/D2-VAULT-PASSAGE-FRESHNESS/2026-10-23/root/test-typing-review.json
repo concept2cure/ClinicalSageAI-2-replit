@@ -1,0 +1,6 @@
+{
+  "reviewer": "stale_passage_inventory",
+  "verdict": "CLEAR",
+  "changes": "exactly two params! erased assertions; already-selected mock calls; original SHA matches freeze, current SHA matches equivalence; no fixture/value/assertion/runtime behavior change",
+  "reviewMode": "read-only byte/text inspection; did not rerun compiler/tests"
+}

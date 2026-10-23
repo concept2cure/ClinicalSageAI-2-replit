@@ -1,0 +1,1171 @@
+      return this.searchProjectAtoms(query, limit, threshold, artifactScope);
+    }
+    if (scope?.corpus === 'rag_chunks') {
+      return this.searchRagChunksSimilar(
+        query,
+        limit,
+        threshold,
+        scope.organizationId,
+        scope.needEmbeddings,
+        scope.hybrid,
+        scope.filters
+      );
+    }
+    if (scope?.corpus === 'client_memory') {
+      return this.searchClientMemorySimilar(query, limit, threshold, scope);
+    }
+    if (scope?.corpus === 'project_memory') {
+      return this.searchProjectMemorySimilar(query, limit, threshold, scope);
+    }
+    return this.searchVaultSimilar(
+      query,
+      limit,
+      threshold,
+      organizationUuid,
+      scope?.needEmbeddings,
+      scope?.hybrid,
+      scope?.filters,
+      scope?.vaultRead,
+      scope?.sourceReadScope,
+    );
+  }
+
+  /**
+   * Project-scoped initial retrieval using the same hybrid (vector + BM25)
+   * path as enhancedEmbeddingService.searchHybrid, with the project_id
+   * filter pushed into SQL so cross-project chunks never appear in the
+   * candidate set. Maps results into RetrievedDocument so downstream
+   * reranking / MMR / compression all work transparently.
+   */
+  private async searchProjectAtoms(
+    query: string,
+    limit: number,
+    threshold: number,
+    artifactScope: NonNullable<RetrievalOptions['artifactScope']>
+  ): Promise<RetrievedDocument[]> {
+    // No floor here: the pipeline applies its own threshold to the combined score below.
+    const hits = await this.embeddingService.searchHybrid(query, {
+      limit,
+      semanticWeight: 0.7,
+      organizationUuid: artifactScope.organizationUuid,
+      projectId: String(artifactScope.projectId),
+    });
+    return hits
+      .filter(h => Number.isFinite(h.score) && h.score >= threshold)
+      .map(h => ({
+        id: h.id,
+        chunkId: h.id,
+        content: h.content || '',
+        title: h.title || 'Untitled',
+        atomType: 'project_atom',
+        initialScore: h.score,
+        finalScore: h.score,
+        // Kept so the passage can be cited back to its Data Room source; the
+        // hybrid search already carries it, this map used to drop it.
+        sourceArtifactId: h.sourceId ?? null,
+      }));
+  }
+
+  /**
+   * LLM-based reranking (LLM-as-judge).
+   *
+   * An LLM scores each candidate's relevance to the query. This is NOT a
+   * cross-encoder model and performs no cross-attention; it is a prompted
+   * relevance score combined with the embedding score. Cheap to run, but
+   * non-deterministic at temperature > 0 (we use 0 here for stability).
+   */
+  private async applyReranker(
+    query: string,
+    documents: RetrievedDocument[],
+    governedVerdict = false
+  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
+    if (documents.length === 0) {
+      return { documents: [], tokensUsed: 0 };
+    }
+
+    let result;
+    try {
+      result = await this.reranker.score(
+        query,
+        documents.map(d => ({ title: d.title, content: d.content })),
+        { governedVerdict }
+      );
+    } catch (error) {
+      // For a governed verdict the failure is the caller's to report.
+      if (governedVerdict) throw error;
+      // Otherwise a reranker failure must never break retrieval — keep the embedding order.
+      console.warn('[RAG] reranker failed; keeping embedding order:', this.reranker.name, error);
+      return { documents, tokensUsed: 0 };
+    }
+
+    // Defensive: a provider that returns the wrong count can't be trusted to
+    // align with documents, so fall back rather than mis-rank.
+    if (result.scores.length !== documents.length) {
+      if (governedVerdict) {
+        throw new Error(
+          `reranker "${this.reranker.name}" returned ${result.scores.length} scores for ${documents.length} docs`
+        );
+      }
+      console.warn(
+        `[RAG] reranker "${this.reranker.name}" returned ${result.scores.length} scores for ${documents.length} docs; keeping embedding order`
+      );
+      return { documents, tokensUsed: result.tokensUsed };
+    }
+
+    // Combine the rerank score with the embedding score (same blend as before),
+    // preserving every other field on the document (embedding, sourceRow, …).
+    const reranked = documents.map((doc, idx) => {
+      const rerankScore = result.scores[idx];
+      return {
+        ...doc,
+        rerankScore,
+        finalScore: (doc.initialScore + rerankScore) / 2,
+      };
+    });
+
+    reranked.sort((a, b) => b.finalScore - a.finalScore);
+
+    return { documents: reranked, tokensUsed: result.tokensUsed };
+  }
+
+  /**
+   * Maximal Marginal Relevance for diversity.
+   *
+   * Diversity is measured as cosine similarity in embedding space (the same
+   * space retrieval ranks in), not word overlap. Vectors are reused from the
+   * vector store where the candidates were just retrieved (carried on
+   * `RetrievedDocument.embedding`); only candidates that arrived without one are
+   * embedded via the embedding service. If that embedding fails we fall back to
+   * lexical Jaccard similarity so MMR still degrades gracefully.
+   */
+  private async applyMmr(
+    documents: RetrievedDocument[],
+    limit: number,
+    lambda: number,
+    embeddingService: EnhancedEmbeddingService = this.embeddingService
+  ): Promise<RetrievedDocument[]> {
+    if (documents.length <= limit) return documents;
+
+    // Reuse the index-time vectors carried out of the vector store; only embed
+    // the stragglers (e.g. project atoms via searchHybrid) that didn't carry
+    // one. This avoids re-embedding the whole candidate set — those contents are
+    // never query cache hits, so the old path paid a full OpenAI batch call on
+    // every MMR query.
+    const vectors: Array<number[] | null> = documents.map(d => d.embedding ?? null);
+    const missing: number[] = [];
+    for (let i = 0; i < vectors.length; i++) {
+      if (!vectors[i]) missing.push(i);
+    }
+    if (missing.length > 0) {
+      try {
+        const embedded = await embeddingService.embedBatch(
+          missing.map(i => documents[i].content || ''),
+          'text-embedding-3-small'
+        );
+        missing.forEach((docIdx, k) => {
+          vectors[docIdx] = embedded[k]?.embedding ?? null;
+        });
+      } catch (error) {
+        console.warn(
+          '[RAG] MMR embedding failed for uncarried candidates, using lexical fallback:',
+          error
+        );
+      }
+    }
+
+    // Normalize once so each pairwise diversity check is a single dot product
+    // rather than recomputing both vector norms on every comparison.
+    const unit: Array<number[] | null> = vectors.map(v => (v ? this.normalize(v) : null));
+
+    const similarity = (i: number, j: number): number => {
+      const a = unit[i];
+      const b = unit[j];
+      if (a && b) {
+        return this.dotProduct(a, b);
+      }
+      return this.calculateTextSimilarity(documents[i].content, documents[j].content);
+    };
+
+    const selectedIdx: number[] = [];
+    const remainingIdx = documents.map((_, i) => i);
+
+    while (selectedIdx.length < limit && remainingIdx.length > 0) {
+      let bestPos = 0;
+      let bestScore = -Infinity;
+
+      for (let pos = 0; pos < remainingIdx.length; pos++) {
+        const i = remainingIdx[pos];
+        const relevance = documents[i].finalScore;
+
+        // Diversity component: max similarity to anything already selected.
+        let maxSimilarity = 0;
+        for (const j of selectedIdx) {
+          maxSimilarity = Math.max(maxSimilarity, similarity(i, j));
+        }
+
+        const mmrScore = lambda * relevance - (1 - lambda) * maxSimilarity;
+        if (mmrScore > bestScore) {
+          bestScore = mmrScore;
+          bestPos = pos;
+        }
+      }
+
+      selectedIdx.push(remainingIdx[bestPos]);
+      remainingIdx.splice(bestPos, 1);
+    }
+
+    return selectedIdx.map(i => documents[i]);
+  }
+
+  /**
+   * Small-to-big context expansion. Replaces each vault / rag_chunks result's
+   * text with the chunk plus its ±window neighbours in the same document, so
+   * generation sees the surrounding context the precise chunk omits (the chunk
+   * stays the unit we *rank* on; the window is the unit we *read*). Results
+   * without a chunk index (project atoms, memory) pass through unchanged, and a
+   * missing or unreadable window drops the candidate: retaining the old chunk
+   * would defeat a withdrawal confirmed after initial retrieval. Both windows
+   * are backed by a (document_id, chunk_index) index.
+   */
+  private async expandContext(
+    documents: RetrievedDocument[],
+    window: number,
+    organizationUuid?: string,
+    organizationId?: number,
+    sourceOptions: { filters?: QueryFilters; sourceReadScope?: AdmittedAnaSourceReadScope; vaultRead?: VerifiedVaultRead } = {},
+  ): Promise<RetrievedDocument[]> {
+    const { filters, sourceReadScope, vaultRead } = sourceOptions;
+    if (window <= 0) return documents;
+    const expanded = await Promise.all(
+      documents.map(async doc => {
+        if (doc.chunkIndex == null || !doc.documentId) return doc;
+        const lo = doc.chunkIndex - window;
+        const hi = doc.chunkIndex + window;
+        try {
+          let texts: string[];
+          if (doc.atomType === 'vault_chunk') {
+            return await this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, async client => {
+              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid ?? null, doc.chunkId ?? doc.id ?? null];
+              const filter = buildDocFilterClause(filters, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
+              const identity = sourceReadScope || doc.contentHash
+                ? `AND d.content_hash = $${params.push(doc.contentHash ?? '')}` : '';
+              // Tenant, actor and exact source constraints precede the window.
+              // The document text rides on the hit's row only, so the span is
+              // cut from the same snapshot the neighbours were read in.
+              const { rows } = await client.query(
+                `SELECT c.id, c.chunk_index, c.char_start, c.char_end, c.chunk_text,
+                        CASE WHEN c.id::text = $5::text THEN d.extracted_text END AS extracted_text
+                   FROM vault.document_chunks c
+                   JOIN vault.documents d ON d.id = c.document_id
+                 WHERE c.document_id = $1 AND c.chunk_index BETWEEN $2 AND $3
+                   AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${filter} ${identity}
+                   AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$4::uuid)
+                   AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id=d.program_id
+                     AND p.organization_id=d.organization_id AND p.deleted_at IS NULL)
+                   AND NOT ${supersededSql('d')}
+                 ORDER BY c.chunk_index`,
+                params,
+              );
+              return withVaultSpan(doc, rows);
+            });
+          } else if (doc.atomType === 'rag_chunk') {
+            // rag_chunks has no RLS; permit explicit public guidance or the
+            // supplied integer/verified UUID tenant, even without prior retrieval.
+            const { rows } = await this.pool.query<{ content: string | null }>(
+              `SELECT rc.content FROM rag_chunks rc
+               JOIN rag_documents rd ON rd.id = rc.document_id
+               WHERE rc.document_id = $1 AND rc.chunk_index BETWEEN $2 AND $3
+                 AND (rd.organization_id IS NULL OR rd.organization_id = $4::int
+                   OR rd.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $5::uuid))
+                 AND ${ragDataEligibleSql('rd')}
+               ORDER BY rc.chunk_index`,
+              [doc.documentId, lo, hi, organizationId ?? null,
+                isTenantUuid(organizationUuid) ? organizationUuid : null]
+            );
+            texts = rows.map(r => r.content || '').filter(Boolean);
+          } else {
+            return doc;
+          }
+          if (!texts.length) return null;
+          // Only annotate when the window actually added neighbours.
+          return texts.length > 1 ? { ...doc, expandedContent: texts.join('\n\n') } : doc;
+        } catch (error) {
+          if (sourceReadScope || vaultRead) throw error;
+          console.warn('[RAG] context expansion unavailable; refusing the stale chunk:', error);
+          return null;
+        }
+      })
+    );
+    return expanded.filter((doc): doc is RetrievedDocument => doc !== null);
+  }
+
+  /**
+   * Contextual compression - extract relevant passages
+   */
+  private async compressContexts(
+    query: string,
+    documents: RetrievedDocument[]
+  ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
+    let totalTokens = 0;
+
+    const compressedDocs = await Promise.all(
+      documents.map(async doc => {
+        // Compress the expanded window when present (small-to-big), else the chunk.
+        const text = doc.expandedContent || doc.content;
+        if (text.length < 500) {
+          // Too short to compress
+          return { ...doc, compressedContent: text };
+        }
+
+        const compressResponse = await this.routeCached({
+          taskType: 'document_analysis',
+          messages: [
+            {
+              role: 'system',
+              content: `Extract ONLY the passages from the document that are directly relevant to answering the query. Include exact quotes with context. If nothing is relevant, respond with "NO_RELEVANT_CONTENT".`,
+            },
+            {
+              role: 'user',
+              content: `Query: "${query}"\n\nDocument:\n${text}`,
+            },
+          ],
+          maxTokens: 400,
+          temperature: 0,
+        });
+
+        totalTokens += compressResponse.usage.totalTokens;
+
+        const compressed = compressResponse.content;
+        if (compressed === 'NO_RELEVANT_CONTENT') {
+          return { ...doc, compressedContent: '', finalScore: doc.finalScore * 0.5 };
+        }
+
+        return { ...doc, compressedContent: compressed };
+      })
+    );
+
+    // Filter out documents with no relevant content
+    const filtered = compressedDocs.filter(d => d.compressedContent !== '');
+
+    return {
+      documents: filtered,
+      tokensUsed: totalTokens,
+    };
+  }
+
+  /** The query as a pgvector literal, or null when no embedder will embed it (no key, or egress refused). */
+  private async queryVectorOrNull(query: string, embeddingService = this.embeddingService): Promise<string | null> {
+    try {
+      const queryResult = await embeddingService.embed(query, 'text-embedding-3-small');
+      return `[${queryResult.embedding.join(',')}]`;
+    } catch (error) {
+      console.warn(
+        '[RAG] vault query not embedded; answering from the text index alone:',
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
+  }
+
+  /**
+   * The vault's full-text arm over vault.document_chunks.chunk_text (GIN index,
+   * migrations/20260905b_vault_document_chunks.sql). Two uses:
+   *   - the sparse half of hybrid retrieval (keyless false): every term, scores
+   *     left to reciprocal-rank fusion;
+   *   - the whole search when there is no query vector (keyless true): ANY of
+   *     the terms, ranked by ts_rank_cd normalised to 0..1, each hit marked
+   *     lexicalOnly. A chunk written without an embedding is found either way.
+   */
+  private async vaultLexicalArm(
+    client: TenantKeyQueryable,
+    args: {
+      query: string;
+      limit: number;
+      organizationUuid: string;
+      filters?: QueryFilters;
+      keyless: boolean;
+      needEmbeddings?: boolean;
+      vaultRead?: VerifiedVaultRead;
+    },
+  ): Promise<RetrievedDocument[]> {
+    const withVectors = Boolean(args.needEmbeddings) && !args.keyless;
+    const tsquery = args.keyless ? anyTermsQuery(args.query) : args.query;
+    if (!tsquery.trim()) return [];
+    const params: unknown[] = [tsquery, args.limit, args.organizationUuid];
+    const filter = buildDocFilterClause(args.filters, params, VAULT_FILTER_COLUMNS, args.vaultRead?.verifiedScope.programIds);
+    // tenant-isolation-safe: explicit organization predicate ($3), as the dense arm.
+    const { rows } = await client.query(
+      `
+      SELECT
+        c.id AS chunk_id,
+        c.document_id AS document_id,
+        d.program_id::text AS program_id, d.content_hash,
+        COALESCE(d.document_title, d.file_name, '') ||
+          CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+          ELSE ' [original file unavailable; retained extracted data]' END AS title,
+        c.chunk_text AS content,
+        c.page_number AS page_number,
+        c.section_title AS section_title,
+        c.chunk_index AS chunk_index,
+        c.char_start, c.char_end,
+        encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256,
+        ${withVectors ? 'c.embedding::text AS embedding,' : ''}
+        ${args.keyless
+          ? "ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1), 32)::float8"
+          : '0::float8'} AS similarity
+      FROM vault.document_chunks c
+      JOIN vault.documents d ON d.id = c.document_id
+      WHERE ${withVectors ? 'c.embedding IS NOT NULL' : 'TRUE'}${filter}
+        AND d.deleted_at IS NULL
+        AND ${vaultDataEligibleSql('d')}
+        AND NOT ${supersededSql('d')}
+        AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
+        AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
+        AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
+      ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
+      LIMIT $2
+    `,
+      params
+    );
+    const adapted = rows.map(readVaultChunkRow);
+    return adapted.map(row => ({ ...vaultChunkToDoc(row, withVectors), ...(args.keyless ? { lexicalOnly: true } : {}) }));
+  }
+
+  private async searchVaultSimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    organizationUuid?: string,
+    needEmbeddings?: boolean,
+    hybrid?: boolean,
+    filters?: QueryFilters,
+    vaultRead?: VerifiedVaultRead,
+    sourceReadScope?: AdmittedAnaSourceReadScope,
+  ): Promise<RetrievedDocument[]> {
+    // Metadata pre-filters on the joined documents table. Each arm has its own
+    // param array, so each gets its own clause with arm-local placeholders.
+    /* REFUSE WITHOUT A TENANT, rather than searching every tenant's vault.
+       `organizationUuid` is optional on this path and `withTenantContext` simply
+       does not set `app.current_org_id` when it is absent — so the two comments
+       below that called these queries "RLS-scoped" were describing a boundary
+       that, with no org, was never established. Both queries also carried no org
+       predicate of their own, delegating entirely to RLS on vault.documents and
+       vault.document_chunks, which are ENABLE ROW LEVEL SECURITY without FORCE
+       (db/migrations/044c_gcc_vault_schema.sql:112,
+       migrations/20260905b_vault_document_chunks.sql:76). Postgres does not
+       apply ENABLE-only policies to the table OWNER, and
+       server/db/getDatabaseUrl.ts:77-83 falls back to the owner URL when
+       APP_DATABASE_URL is unset — the default single-role deployment. So on that
+       shape there was no tenant boundary on vault retrieval at all.
+       Returning nothing is the honest answer to "search this tenant's vault"
+       asked with no tenant. */
+    if (!organizationUuid || !UUID_RE.test(organizationUuid)) {
+      if (sourceReadScope) throw new Error('The source organization identity could not be verified. Nothing was searched.');
+      /* A malformed value is refused rather than passed to `$N::uuid`, which
+         raises 22P02 and would surface as a retrieval failure rather than as
+         the authorization refusal it actually is. */
+      console.warn(
+        '[RAG] vault retrieval skipped: no usable organizationUuid on the request. ' +
+          'Refusing rather than searching across tenants.'
+      );
+      return [];
+    }
+
+    /* KEYLESS BY DEFAULT. With no embedding provider (no key, or a tenant whose
+       placement policy refuses egress) the query cannot be embedded, and this
+       arm used to throw, so AnA could not search the Vault at all. The text
+       index on chunk_text answers instead (vaultLexicalArm), and every passage
+       found that way says so (`lexicalOnly`), so a caller can state how the
+       search was ranked. An embedding, when there is one, only adds the
+       meaning-based arm. Embedded after the tenant refusal above, so a refused
+       call sends nothing to a provider. */
+    const vector = await this.queryVectorOrNull(query, this.embeddingsForVaultRead(vaultRead));
+    if (vector === null) {
+      return this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, client =>
+        this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true, vaultRead }));
+    }
+
+    const denseParams: unknown[] = [vector, threshold, limit, organizationUuid];
+    const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
+
+    // Ship the stored vector (as text) only when MMR will reuse it. SELECT-list
+    // columns take no params, so this doesn't shift the $1..$3 placeholders.
+    const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
+
+    const toDoc = (row: VaultChunkRow) => vaultChunkToDoc(row, needEmbeddings);
+
+    return this.withVaultReadExecutor(organizationUuid, vaultRead, sourceReadScope, async client => {
+      /* ── Scope to the tenant FIRST, then rank exactly ──────────────────────
+         This arm used to be one query: `ORDER BY c.embedding <=> $1 LIMIT $3`
+         with the tenant and distance predicates in the same WHERE. Once the
+         planner chose the approximate index on vault.document_chunks
+         (ivfflat, probes = 1 by default), the scan took its candidates from
+         ONE list and the WHERE then filtered them — so when that list held
+         another tenant's chunks, or none above the threshold, the arm
+         returned nothing while this tenant's matching passages sat in lists
+         it never probed. search_document_passages then said "No passage
+         matched" beside a coverage line saying every document was indexed: a
+         miss presented as an exhaustive search. It depends on table
+         statistics, which is why it passed on near-empty test databases and
+         is exactly the shape production reaches with every tenant's chunks in
+         one table (tests/db/vault-passage-search.dbtest.ts forces that plan).
+
+         The MATERIALIZED CTE fixes the order of operations: the tenant's
+         chunks are selected through the btree indexes, and only then ordered
+         by distance — exactly, over rows that are all this tenant's. The
+         approximate index cannot short-circuit a sort over a materialized
+         CTE. For a regulatory answer, recall is not a tunable; the cost is a
+         distance computation per chunk the tenant holds. */
+      // tenant-isolation-safe: the WHERE carries an explicit organization
+      // predicate ($4 -> organizations.uuid -> organizations.id ->
+      // vault.documents.organization_id). RLS is defence in depth here, not the
+      // boundary — see the refusal above for why it could not be relied on.
+      let denseRows: VaultChunkRow[];
+      const savepoint = await optionalVaultSavepoint(client);
+      try {
+        const { rows } = await client.query(
+        `
+        WITH scoped AS MATERIALIZED (
+          SELECT
+            c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
+            c.chunk_index, c.char_start, c.char_end, c.embedding, d.program_id, d.content_hash,
+            COALESCE(d.document_title, d.file_name, '') ||
+              CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+              ELSE ' [original file unavailable; retained extracted data]' END AS title
+          FROM vault.document_chunks c
+          JOIN vault.documents d ON d.id = c.document_id
+          WHERE c.embedding IS NOT NULL${denseFilter}
+            AND d.deleted_at IS NULL
+            AND ${vaultDataEligibleSql('d')}
+            AND NOT ${supersededSql('d')}
+            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
+            -- Explicit tenant predicate. A document with a NULL organization_id is
+            -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
+            -- and this predicate excludes it, which is the intended refusal: an
+            -- orphan document belongs to no tenant and is returned to none.
+            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
+        ), ranked AS MATERIALIZED (
+        SELECT
+          s.id AS chunk_id,
+          s.document_id AS document_id,
+          s.program_id::text AS program_id, s.content_hash,
+          s.title AS title,
+          s.chunk_text AS content,
+          s.page_number AS page_number,
+          s.section_title AS section_title,
+          s.chunk_index AS chunk_index,
+          s.char_start, s.char_end,
+          ${embeddingCol.replace('c.embedding', 's.embedding')}
+          1 - (s.embedding <=> $1::vector) AS similarity
+        FROM scoped s
+        -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+        -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+        -- from the integer literal, and a float threshold like 0.65 then
+        -- fails with 22P02 before the query ever runs.
+        WHERE (s.embedding <=> $1::vector) < 1 - $2::float8
+        ORDER BY s.embedding <=> $1::vector
+        LIMIT $3
+        )
+        SELECT ranked.*,
+               encode(sha256(convert_to(d.extracted_text, 'UTF8')), 'hex') AS extracted_text_sha256
+          FROM ranked JOIN vault.documents d ON d.id = ranked.document_id
+         ORDER BY ranked.similarity DESC
+      `,
+        denseParams
+      );
+        denseRows = rows.map(readVaultChunkRow);
+        if (savepoint) await client.query('RELEASE SAVEPOINT vault_dense_search');
+      } catch (error) {
+        await recoverVaultSavepoint(client, savepoint);
+        // 42703 / 42883: no embedding column or no vector operator on this
+        // database (no pgvector). The index, not the corpus, is absent.
+        if (!missingVectorIndex(error)) throw error;
+        return this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true, vaultRead });
+      }
+      const dense = denseRows.map(toDoc);
+      if (!hybrid) return dense;
+
+      // Sparse arm: Postgres full-text over chunk_text (vaultLexicalArm). A
+      // lexical failure must not break retrieval: fall back to the dense arm.
+      let lexical: RetrievedDocument[];
+      try {
+        lexical = await this.vaultLexicalArm(client, {
+          query, limit, organizationUuid, filters, keyless: false, needEmbeddings, vaultRead,
+        });
+      } catch (error) {
+        if (vaultRead || sourceReadScope) throw error;
+        console.warn('[RAG] vault lexical arm failed; using dense-only retrieval:', error);
+        return dense;
+      }
+
+      return fuseHybrid(dense, lexical, limit);
+    });
+  }
+
+  /**
+   * Initial retrieval against the rag_chunks corpus (the registered hot-path
+   * chunk store, also used by the biotech surface). Mirrors searchVaultSimilar
+   * but reads rag_chunks / rag_documents and scopes by the integer
+   * organization_id. rag_chunks is not RLS-scoped, so the org filter is applied
+   * explicitly — when organizationId is omitted, all tenants' chunks are
+   * eligible, so callers serving a single tenant must pass it.
+   *
+   * Same embedding space as the vault path (text-embedding-3-small, 1536d) per
+   * embedding-corpus-policy, so query embedding and similarity are identical.
+   */
+  private async searchRagChunksSimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    organizationId?: number,
+    needEmbeddings?: boolean,
+    hybrid?: boolean,
+    filters?: QueryFilters
+  ): Promise<RetrievedDocument[]> {
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number | Date> = [vector, threshold, limit];
+    let orgFilter = '';
+    if (organizationId !== undefined && organizationId !== null) {
+      params.push(organizationId);
+      orgFilter = `AND d.organization_id = $${params.length}`;
+    }
+    // Metadata pre-filters follow the org filter so placeholders stay sequential.
+    const denseFilter = buildDocFilterClause(filters, params, RAG_FILTER_COLUMNS);
+
+    // Ship the stored vector (as text) only when MMR will reuse it.
+    const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
+
+    const toDoc = (row: VaultChunkRow): RetrievedDocument => ({
+      id: row.chunk_id,
+      chunkId: row.chunk_id,
+      documentId: row.document_id,
+      content: row.content || '',
+      title: row.title || 'Untitled',
+      atomType: 'rag_chunk',
+      initialScore: Number(row.similarity),
+      finalScore: Number(row.similarity),
+      pageNumber: row.page_number ?? undefined,
+      sectionTitle: row.section_title,
+      chunkIndex: row.chunk_index ?? undefined,
+      locator: buildLocator(row),
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
+    });
+
+    // tenant-isolation-safe: org filter is interpolated via ${orgFilter} (AND d.organization_id = $N) when organizationId is supplied — the static scanner can't see interpolated predicates; single-tenant callers must pass organizationId (see method doc).
+    const { rows: denseRows } = await this.pool.query<VaultChunkRow>(
+      `
+        SELECT
+          c.id AS chunk_id,
+          c.document_id AS document_id,
+          COALESCE(d.title, '') || CASE WHEN ${ragOriginalFileAvailableSql('d')} THEN ''
+            ELSE ' [original file unavailable; retained extracted data]' END AS title,
+          c.content AS content,
+          c.page_number AS page_number,
+          c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
+          ${embeddingCol}
+          1 - (c.embedding <=> $1::vector) AS similarity
+        FROM rag_chunks c
+        JOIN rag_documents d ON d.id = c.document_id
+        WHERE c.embedding IS NOT NULL
+          AND ${ragDataEligibleSql('d')}
+          ${orgFilter}${denseFilter}
+          -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+          -- Uses the same bare <=> operator as ORDER BY so the planner reuses
+          -- the distance and the predicate matches the indexed cosine operator.
+          -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+          -- from the integer literal, and a float threshold like 0.65 then
+          -- fails with 22P02 before the query ever runs.
+          AND (c.embedding <=> $1::vector) < 1 - $2::float8
+        ORDER BY c.embedding <=> $1::vector
+        LIMIT $3
+      `,
+      params
+    );
+    const dense = denseRows.map(toDoc);
+    if (!hybrid) return dense;
+
+    // Sparse arm: same RRF hybrid as the vault path. The org filter reuses the
+    // $N placeholder already bound above; the lexical query takes the raw query
+    // text as $1 and limit as $2, so its own org placeholder (if any) is $3.
+    const lexParams: Array<string | number | Date> = [query, limit];
+    let lexOrgFilter = '';
+    if (organizationId !== undefined && organizationId !== null) {
+      lexParams.push(organizationId);
+      lexOrgFilter = `AND d.organization_id = $${lexParams.length}`;
+    }
+    const lexFilter = buildDocFilterClause(filters, lexParams, RAG_FILTER_COLUMNS);
+    let lexical: RetrievedDocument[];
+    try {
+      // tenant-isolation-safe: org filter is interpolated via ${lexOrgFilter} (AND d.organization_id = $N) when organizationId is supplied — mirrors the dense arm; the static scanner can't see interpolated predicates.
+      const { rows: lexRows } = await this.pool.query<VaultChunkRow>(
+        `
+        SELECT
+          c.id AS chunk_id,
+          c.document_id AS document_id,
+          COALESCE(d.title, '') || CASE WHEN ${ragOriginalFileAvailableSql('d')} THEN ''
+            ELSE ' [original file unavailable; retained extracted data]' END AS title,
+          c.content AS content,
+          c.page_number AS page_number,
+          c.section_title AS section_title,
+          c.chunk_index AS chunk_index,
+          ${embeddingCol}
+          0::float8 AS similarity
+        FROM rag_chunks c
+        JOIN rag_documents d ON d.id = c.document_id
+        WHERE c.embedding IS NOT NULL
+          AND ${ragDataEligibleSql('d')}
+          ${lexOrgFilter}${lexFilter}
+          AND to_tsvector('english', c.content) @@ websearch_to_tsquery('english', $1)
+        ORDER BY ts_rank_cd(to_tsvector('english', c.content), websearch_to_tsquery('english', $1)) DESC
+        LIMIT $2
+      `,
+        lexParams
+      );
+      lexical = lexRows.map(toDoc);
+    } catch (error) {
+      console.warn('[RAG] rag_chunks lexical arm failed; using dense-only retrieval:', error);
+      return dense;
+    }
+
+    return fuseHybrid(dense, lexical, limit);
+  }
+
+  /**
+   * Wrap a memory row (SELECT *, similarity) as a RetrievedDocument, carrying the
+   * full row in sourceRow so the memory shims reconstruct their rich entry type.
+   */
+  private memoryRowToDocument(
+    row: Record<string, any>,
+    atomType: 'client_memory' | 'project_memory',
+    needEmbeddings?: boolean
+  ): RetrievedDocument {
+    const similarity = Number(row.similarity);
+    return {
+      id: String(row.id),
+      documentId: String(row.id),
+      content: typeof row.content === 'string' ? row.content : String(row.content ?? ''),
+      title: typeof row.title === 'string' ? row.title : String(row.title ?? ''),
+      atomType,
+      initialScore: similarity,
+      finalScore: similarity,
+      sourceRow: row,
+      // `SELECT *` already returns the vector; only spend the parse when MMR
+      // will use it (memory corpora normally run MMR-off, so this stays unset).
+      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
+    };
+  }
+
+  /**
+   * Initial retrieval against the client_memory_entries corpus. Byte-for-byte the
+   * same query (and param order) as the legacy searchMemoryEntriesSemantic, now
+   * reached through the single router. Invoke with strategy 'basic' and
+   * reranking/MMR/compression off so ranking stays pure similarity.
+   */
+  private async searchClientMemorySimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    scope: CorpusScope
+  ): Promise<RetrievedDocument[]> {
+    const organizationId = scope.organizationId;
+    if (organizationId === undefined || organizationId === null) return [];
+    const profileId = scope.memory?.profileId ?? null;
+    const category = scope.memory?.category;
+
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number> = profileId
+      ? [vector, organizationId, profileId, threshold]
+      : [vector, organizationId, threshold];
+    const profileClause = profileId ? 'AND profile_id = $3' : '';
+    const thresholdIdx = profileId ? 4 : 3;
+    let categoryClause = '';
+    if (category) {
+      params.push(category);
+      categoryClause = `AND category = $${params.length}`;
+    }
+    params.push(limit);
+
+    const { rows } = await this.pool.query(
+      `SELECT
+         *,
+         1 - (embedding <=> $1::vector) AS similarity
+       FROM client_memory_entries
+       WHERE organization_id = $2
+         ${profileClause}
+         AND status = 'active'
+         AND embedding IS NOT NULL
+         AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
+         ${categoryClause}
+       ORDER BY embedding <=> $1::vector
+       LIMIT $${params.length}`,
+      params
+    );
+
+    return rows.map(row => this.memoryRowToDocument(row, 'client_memory', scope.needEmbeddings));
+  }
+
+  /**
+   * Initial retrieval against the project_memory_entries corpus. Mirror of the
+   * legacy searchProjectMemoryEntriesSemantic query and param order.
+   */
+  private async searchProjectMemorySimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    scope: CorpusScope
+  ): Promise<RetrievedDocument[]> {
+    const organizationId = scope.organizationId;
+    const projectId = scope.memory?.projectId;
+    if (organizationId === undefined || organizationId === null) return [];
+    if (projectId === undefined || projectId === null) return [];
+    const projectProfileId = scope.memory?.projectProfileId ?? null;
+    const category = scope.memory?.category;
+
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    const params: Array<string | number> = projectProfileId
+      ? [vector, organizationId, projectId, projectProfileId, threshold]
+      : [vector, organizationId, projectId, threshold];
+    const profileClause = projectProfileId ? 'AND project_profile_id = $4' : '';
+    const thresholdIdx = projectProfileId ? 5 : 4;
+    let categoryClause = '';
+    if (category) {
+      params.push(category);
+      categoryClause = `AND category = $${params.length}`;
+    }
+    params.push(limit);
+
+    const { rows } = await this.pool.query(
+      `SELECT
+         *,
+         1 - (embedding <=> $1::vector) AS similarity
+       FROM project_memory_entries
+       WHERE organization_id = $2
+         AND project_id = $3
+         ${profileClause}
+         AND status = 'active'
+         AND source_document_type IS DISTINCT FROM 'report_os_state'
+         AND embedding IS NOT NULL
+         AND 1 - (embedding <=> $1::vector) >= $${thresholdIdx}
+         ${categoryClause}
+       ORDER BY embedding <=> $1::vector
+       LIMIT $${params.length}`,
+      params
+    );
+
+    return rows.map(row => this.memoryRowToDocument(row, 'project_memory', scope.needEmbeddings));
+  }
+
+  private async persistEvidenceCitations(
+    client: pg.PoolClient,
+    organizationUuid: string,
+    query: string,
+    citations: Array<{
+      documentId?: string;
+      chunkId?: string;
+      quote: string;
+      locator?: string;
+      confidence: number;
+    }>
+  ): Promise<void> {
+    const filtered = citations.filter(c => c.documentId && c.chunkId);
+    if (!filtered.length) {
+      return;
+    }
+
+    const quantize = (value: number) => Math.round(value * 1e6) / 1e6;
+
+    for (const citation of filtered) {
+      const citationId = randomUUID();
+      await client.query(
+        `
+        INSERT INTO vault.evidence_citations (
+          id,
+          source_document_id,
+          source_chunk_id,
+          claim_text,
+          evidence_document_id,
+          evidence_chunk_id,
+          evidence_text,
+          relevance_score,
+          support_type,
+          citation_context,
+          created_at
+        ) SELECT
+          $1,
+          $2,
+          $3,
+          $4,
+          $2,
+          $3,
+          $5,
+          $6,
+          'SUPPORTS',
+          $7,
+          now()
+          FROM vault.document_chunks c JOIN vault.documents d ON d.id=c.document_id
+         WHERE c.id=$3 AND d.id=$2 AND d.deleted_at IS NULL
+           AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$8::uuid)
+           AND ${vaultDataEligibleSql('d')}
+      `,
+        [
+          citationId,
+          citation.documentId,
+          citation.chunkId,
+          query,
+          citation.quote,
+          quantize(citation.confidence),
+          citation.locator ?? null,
+          organizationUuid,
+        ]
+      );
+    }
+  }
+
+  /**
+   * Merge and deduplicate documents from multiple sources
+   */
+  /**
+   * Lexical fallback similarity (Jaccard on words). Only used when embedding
+   * the candidates for MMR fails; the primary path is cosine in embedding space.
+   */
+  private calculateTextSimilarity(text1: string, text2: string): number {
+    const words1 = new Set(text1.toLowerCase().split(/\s+/));
+    const words2 = new Set(text2.toLowerCase().split(/\s+/));
+
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
+
+    return union.size === 0 ? 0 : intersection.size / union.size;
+  }
+
+  /**
+   * Scale a vector to unit length once, up front. Cosine similarity between two
+   * unit vectors is then just their dot product, so MMR's inner loop avoids
+   * recomputing norms on every pairwise comparison. A zero vector maps to zero
+   * (yields 0 similarity), matching the old guard.
+   */
+  private normalize(v: number[]): number[] {
+    let norm = 0;
+    for (let i = 0; i < v.length; i++) norm += v[i] * v[i];
+    norm = Math.sqrt(norm);
+    if (norm === 0) return new Array<number>(v.length).fill(0);
+    const out = new Array<number>(v.length);
+    for (let i = 0; i < v.length; i++) out[i] = v[i] / norm;
+    return out;
+  }
+
+  /**
+   * Dot product of two vectors. On unit-normalized inputs this equals cosine
+   * similarity; on zero vectors it returns 0.
+   */
+  private dotProduct(a: number[], b: number[]): number {
+    const len = Math.min(a.length, b.length);
+    let dot = 0;
+    for (let i = 0; i < len; i++) dot += a[i] * b[i];
+    return dot;
+  }
+
+  /**
+   * Route an auxiliary LLM call through an in-memory TTL cache keyed by the
+   * request shape. Identical HyDE / expansion / rerank / compression calls
+   * within the TTL reuse the prior result instead of paying for another
+   * round-trip. The final answer generation does NOT use this.
+   */
+  private async routeCached(request: AIRequest): Promise<AIResponse> {
+    // A cache hit is model output served without a call: refused where a
+    // model may not be called, before the lookup (row 74, S5c).
+    await refuseModelCallHere('RAG response cache');
+    // The tenant and its placement policy are part of the key. The pipeline is
+    // a process singleton, and until 2026-09-26 the key was the request shape
+    // alone: a hit served one tenant another tenant's model output, produced
+    // under that tenant's placement, with no placement check and no ledger row
+    // for the tenant that got it — and outlived a policy change by the full TTL
+    // (docs/evidence/D6/2026-09-26-refusals-are-final/). A policy that cannot be
+    // read bypasses the cache, so the gateway decides.
+    const tenant = getTenantScope()?.tenantId ?? null;
+    let placement: string;
+    try {
+      placement = JSON.stringify((await getOrgPlacementResolver().resolve(tenant ?? undefined)) ?? null);
+    } catch {
+      return this.aiRouter.route(request);
+    }
+    const key = createHash('sha256')
+      .update(
+        JSON.stringify({
+          tenant,
+          placement,
+          taskType: request.taskType,
+          messages: request.messages,
+          maxTokens: request.maxTokens,
+          temperature: request.temperature,
+          jsonMode: request.jsonMode,
+        })
+      )
+      .digest('hex');
+
+    const now = Date.now();
+    const hit = this.llmCallCache.get(key);
+    if (hit) {
+      if (hit.expiresAt > now) {
+        // Live hit: re-insert so it becomes the most-recently-used entry. A
+        // Map preserves insertion order, so this makes eviction true LRU (the
+        // key returned by keys().next() is the least-recently-used).
+        this.llmCallCache.delete(key);
+        this.llmCallCache.set(key, hit);
+        return { ...hit.value, cached: true };
+      }
+      // Expired: drop it so it doesn't linger as a stale eviction candidate.
+      this.llmCallCache.delete(key);
+    }
+
+    const value = await this.aiRouter.route(request);
+    this.llmCallCache.set(key, { value, expiresAt: now + this.llmCacheTtlMs });
+
+    // Bound the cache: drop the least-recently-used entry once over capacity.
+    if (this.llmCallCache.size > this.llmCacheMaxEntries) {
+      const lru = this.llmCallCache.keys().next().value as string | undefined;
+      if (lru) this.llmCallCache.delete(lru);
+    }
+
+    return value;
+  }
+
+  /** Assemble the `[Source N: title]` block fed to generation and the self-checks. */
+  private buildSourceText(documents: RetrievedDocument[]): string {
+    return buildRagSourceText(documents);
+  }
+
+  private async correctContext(
+    query: string, context: RAGContext, options: RetrievalOptions,
+  ): Promise<RAGContext> {
+    if (!options.useCorrectiveLoop) return context;
+    const route = (req: AIRequest) => this.routeCached(req);
+    const grade = await gradeContextSufficiency(route, query, this.buildSourceText(context.documents));
+    context.tokensUsed += grade.tokensUsed;
+    if (grade.sufficient) return context;
+    const rewrite = await rewriteQuery(route, query);
+    context.tokensUsed += rewrite.tokensUsed;
+    if (rewrite.query === query) return context;
+    const retried = await this.retrieve(rewrite.query, options);
+    if (!retried.documents.length) return context;
+    retried.tokensUsed += context.tokensUsed;
+    return retried;
+  }
+
+  async queryWithGeneration(
+    query: string,
+    options: RetrievalOptions = { strategy: 'advanced', useReranking: true, useMmr: true }
+  ): Promise<{
+    answer: string;
+    sources: RetrievedDocument[];
+    context: RAGContext;
+    /** Faithfulness verdict; only present when useCorrectiveLoop is set. */
+    grounded?: boolean;
+  }> {
+    if (options.vaultRead) {
+      throw new ProgramReadAccessError(403, 'VAULT_SCOPED_GENERATION_UNSUPPORTED',
+        'The verified Vault read scope is available for retrieval only.');
+    }
+    // Retrieve relevant documents
+    let context = await this.retrieve(query, options);
+    const refuse = () => {
+      context = { ...context, documents: [] };
+      return { answer: RAG_EMPTY_CONTEXT_REFUSAL, sources: [], context };
+    };
+    context.documents = await this.revalidateCandidates(context.documents, options);
+
+    if (context.documents.length === 0) {
+      return refuse();
+    }
+
+    const route = (req: AIRequest) => this.routeCached(req);
+
+    // Corrective pre-generation (CRAG): grade whether the retrieved sources can
+    // answer the question; if not, rewrite the query and retrieve once more,
+    // keeping the new context when it returns results. Bounded to a single retry.
+    context = await this.correctContext(query, context, options);
+
+    context.documents = await this.revalidateCandidates(context.documents, options);
+    if (!context.documents.length) return refuse();
+    // Build context for generation
+    const sourceText = this.buildSourceText(context.documents);
+
+    // Generate answer. `options.model`, when set, pins WHICH model answers so
+    // the run can be attributed to it (a PQ requirement); unset keeps the
+    // gateway's task-type selection, which is every existing caller.
+    const response = await this.aiRouter.route({
+      ...buildRagGenerationRequest(query, sourceText),
+      ...(options.model ? { model: options.model } : {}),
+    });
+
+    // A withdrawal during generation invalidates the answer's entire grounding;
+    // dropping only its citation would still return claims derived from it.
+    const stillCurrent = async () => {
+      const previous = context.documents;
+      const current = await this.revalidateCandidates(previous, options);
+      const unchanged = current.length === previous.length && current.every((d, i) =>
+        d.id === previous[i].id && d.atomType === previous[i].atomType &&
+        d.originalFileAvailable === previous[i].originalFileAvailable);
+      context.documents = current;
+      return unchanged;
+    };
+    if (!await stillCurrent()) return refuse();
+
+    if (options.persistCitations && options.organizationUuid) {
+      const citations = context.documents.map(doc => ({
+        documentId: doc.documentId,
+        chunkId: doc.chunkId,
+        quote: doc.compressedContent || doc.expandedContent || doc.content,
+        locator: doc.locator,
+        confidence: doc.finalScore,
+      }));
+
+      try {
+        await withTenantContext(this.pool, options.organizationUuid, async client => {
+          await this.persistEvidenceCitations(client, options.organizationUuid!, query, citations);
+        });
+      } catch (error) {
+        console.warn('[RAG] Citation persistence failed:', error);
+      }
+    }
+
+    // Corrective post-generation: groundedness / faithfulness guard. Opt-in, and
+    // it annotates the result (a `grounded` flag the caller can act on) rather
+    // than withholding the answer.
+    let grounded: boolean | undefined;
+    if (options.useCorrectiveLoop) {
+      if (!await stillCurrent()) return refuse();
+      const check = await verifyGroundedness(route, response.content, sourceText);
+      context.tokensUsed += check.tokensUsed;
+      grounded = check.grounded;
+    }
+    if (!await stillCurrent()) return refuse();
+
+    return {
+      answer: response.content,
+      sources: context.documents,
+      context,
+      ...(grounded === undefined ? {} : { grounded }),
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//                          SINGLETON INSTANCE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let ragPipeline: AdvancedRAGPipeline | null = null;
+
+export function getRAGPipeline(pool: pg.Pool): AdvancedRAGPipeline {
+  if (!ragPipeline) {
+    ragPipeline = new AdvancedRAGPipeline(pool);
+  }
+  return ragPipeline;
+}

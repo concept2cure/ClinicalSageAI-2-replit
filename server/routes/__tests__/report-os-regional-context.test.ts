@@ -41,7 +41,9 @@ beforeEach(() => {
     if (metrics.test(sql)) return { rows: [] };
     throw new Error('Unexpected regional computation query');
   });
-  h.respond.fn = (_sql, arrayMode) => !arrayMode ? [] : /"report_runs"/.test(_sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(_sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
+  h.respond.fn = (_sql, arrayMode) => !arrayMode ? _sql.includes('SELECT ou.role') ? [{ role: 'manager' }]
+    : _sql.includes('SELECT id FROM projects WHERE') ? [{ id: 11 }] : []
+    : /"report_runs"/.test(_sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(_sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
 });
 describe('current regional filing is admitted before retained report writes', () => {
   it('the positive fixture genuinely reaches the regional engine, retention transaction and audit', async () => {

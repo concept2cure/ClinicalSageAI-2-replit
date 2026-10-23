@@ -1,0 +1,100 @@
+{
+  "recordedAt": "2026-10-23T18:16:39.727389+00:00",
+  "retainedRefilingReconciliationCommit": "7e0a8332c",
+  "incomingCanonical": "70e5ea3bb",
+  "mergedHead": "41c39279a1d5ab90ce46aca8ce63810accf5019c",
+  "sourceDelta": {
+    "from": "8ba496f69",
+    "to": "70e5ea3bb",
+    "runtimeFiles": [
+      "server/services/vault/document-chunking.service.ts"
+    ],
+    "changedSuites": 3,
+    "applicationSourceEditsMadeDuringReview": false
+  },
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+      "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+      "server/services/vault/__tests__/document-chunking-unicode.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-unicode/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-unicode/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "testFiles": 3,
+    "passedTests": 33,
+    "failedTests": 0,
+    "pendingTests": 0,
+    "todoTests": 0,
+    "durationSeconds": 9.53,
+    "deterministicCorpus": {
+      "cases": 2688,
+      "totalChunks": 8080,
+      "violations": {},
+      "examples": []
+    }
+  },
+  "sourceBefore": {
+    "head": "41c39279a1d5ab90ce46aca8ce63810accf5019c",
+    "files": {
+      "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts": "517e92a5a0296735aa9b617db982d447beaf2f94deed7bdcb7a2def566e24b78",
+      "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+      "server/services/vault/__tests__/document-chunking-unicode.test.ts": "745e91904101a74ce2544415fa2ccfdc98c10ee554963be6c96064b13ba501a3",
+      "server/services/vault/document-chunking.service.ts": "be3c168333f00d315050b5a4f46bfc17919bb81af2c62cce9d36923dc27674ca"
+    }
+  },
+  "sourceFinal": {
+    "head": "41c39279a1d5ab90ce46aca8ce63810accf5019c",
+    "files": {
+      "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts": "517e92a5a0296735aa9b617db982d447beaf2f94deed7bdcb7a2def566e24b78",
+      "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+      "server/services/vault/__tests__/document-chunking-unicode.test.ts": "745e91904101a74ce2544415fa2ccfdc98c10ee554963be6c96064b13ba501a3",
+      "server/services/vault/document-chunking.service.ts": "be3c168333f00d315050b5a4f46bfc17919bb81af2c62cce9d36923dc27674ca"
+    },
+    "sourceDrift": []
+  },
+  "priorPins": {
+    "backend": {
+      "checks": "../backend/checks.json",
+      "verifiedFiles": 20,
+      "sourceDrift": []
+    },
+    "client": {
+      "checks": "../client/checks.json",
+      "verifiedFiles": 36,
+      "sourceDrift": []
+    },
+    "late-native": {
+      "checks": "../late-native/checks.json",
+      "verifiedFiles": 12,
+      "sourceDrift": []
+    },
+    "late-refiling": {
+      "checks": "../late-refiling/checks.json",
+      "verifiedFiles": 18,
+      "sourceDrift": []
+    }
+  },
+  "review": {
+    "whatAlreadyExists": "One canonical chunkExtractedText implementation, exact UTF-16 source spans, overlap clamp/forward progress, atomic tenant-fenced chunk writer, UTF-8 SQL storage and exact-source context/identity verifier. Incoming correction reuses all existing paths.",
+    "finding": "No integration blocker found. A split hard end moves inward one UTF-16 unit; a split overlap start moves forward one. Bounded integer options retain progress, nonempty chunks, maximum lengths and gap-free coverage. Existing writer, source identity and policy fences are unchanged.",
+    "existingEvidence": "../../../D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/README.md",
+    "historicalEvidence": "Incoming proof records frozen 19-fail/14-pass RED, a separate 331-test/25-file qualification and an 82-input source manifest. Those overlapping counts are not added to this three-suite run.",
+    "limits": "Local deterministic corpus and SQL/UTF-8 PGlite fixtures qualify intact surrogate-pair boundaries for new or explicitly reindexed chunks. They do not repair legacy corruption, preserve complete grapheme clusters, qualify native PostgreSQL RLS or live providers, or resolve separate retrieval/backfill/source-cache issues. MAX_CHUNKS fail-closed refusal remains unchanged.",
+    "publication": "Root owns refreshed build, full compiler, normal commit/push gates and canonical publication."
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "retainedReportingCommit": "4f3ebaf73",
+  "incomingCanonical": "2148660b9",
+  "mergedHead": "484ed08fc6ac516f04102ef439f6fb47d28875cc",
+  "recordedAt": "2026-10-23T17:53:02.232997+00:00",
+  "sourceDelta": "Seven incoming paths: four runtime files and three model-call/host test files. No reporting application source overlap.",
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+      "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+      "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+      "server/routes/chat/__tests__/send-message-read-only.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-native/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-native/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 4,
+    "passed": 50,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 36.51
+  },
+  "sourceBefore": {
+    "head": "484ed08fc6ac516f04102ef439f6fb47d28875cc",
+    "files": {
+      "server/routes/ana-intelligence.ts": "7495cc668f701daac9292f7cccd4aa95fcb0bc69c8272c6882dc6e180aca518d",
+      "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+      "server/services/ana/ana-realtime.ts": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0",
+      "server/services/ana/turn-record-loop.ts": "64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893",
+      "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b",
+      "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+      "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+      "server/routes/chat/__tests__/send-message-read-only.test.ts": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9",
+      "server/services/ana/AnaToolExecutor.ts": "29a42cbf3bea8212cf10ab802533debe4b6711bc248c16973fd69c0eaeb2e42c",
+      "server/services/ana/turn-record.ts": "1d0cabdfa63d05f0cd27684553acd99735c314de550a6ff2b18b149dd9eb740f",
+      "server/services/ana/turn-record-models.ts": "cab96729510306ef57ada2b6fc1a23ecc3051131a6572c85383d3be8fc92d2c5",
+      "server/services/ai-governance/approved-models.ts": "51c3e9406a899391ffcd3297fc330a78e8a11fcfb79584bc31c418f37971683c"
+    }
+  },
+  "sourceFinal": {
+    "head": "484ed08fc6ac516f04102ef439f6fb47d28875cc",
+    "files": {
+      "server/routes/ana-intelligence.ts": "7495cc668f701daac9292f7cccd4aa95fcb0bc69c8272c6882dc6e180aca518d",
+      "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+      "server/services/ana/ana-realtime.ts": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0",
+      "server/services/ana/turn-record-loop.ts": "64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893",
+      "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b",
+      "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+      "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+      "server/routes/chat/__tests__/send-message-read-only.test.ts": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9",
+      "server/services/ana/AnaToolExecutor.ts": "29a42cbf3bea8212cf10ab802533debe4b6711bc248c16973fd69c0eaeb2e42c",
+      "server/services/ana/turn-record.ts": "1d0cabdfa63d05f0cd27684553acd99735c314de550a6ff2b18b149dd9eb740f",
+      "server/services/ana/turn-record-models.ts": "cab96729510306ef57ada2b6fc1a23ecc3051131a6572c85383d3be8fc92d2c5",
+      "server/services/ai-governance/approved-models.ts": "51c3e9406a899391ffcd3297fc330a78e8a11fcfb79584bc31c418f37971683c"
+    },
+    "sourceDrift": []
+  },
+  "priorReportingPins": {
+    "backend": {
+      "targetPinCount": 20,
+      "sourceDrift": [],
+      "qualification": "Previously executed targeted reporting checks retained; no test rerun or summed result."
+    },
+    "client": {
+      "targetPinCount": 36,
+      "sourceDrift": [],
+      "qualification": "Previously executed targeted reporting checks retained; no test rerun or summed result."
+    }
+  },
+  "review": "Only existing gateway-return observer metadata is collected. Model approval registry, pinned qualification and read-only/current-project suppression are unchanged. Unknown and earlier unqualified returned authors stay in the canonical qualification input; failed requested models are not recorded as served. Synthetic tests make no gateway/provider calls."
+}

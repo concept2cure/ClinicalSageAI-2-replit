@@ -1,0 +1,12 @@
+{
+  "tests.txt.gz": {
+    "decodedBytes": 12982,
+    "decodedSha256": "d74a27b7518a3563848a9fef5c5e885b02ba69df646e01ab7196506c9d8b1c1c",
+    "archiveSha256": "cf52a885b3c010c6dbf709414b7775f4194515ac50c28705177d017271360116"
+  },
+  "tests.json.gz": {
+    "decodedBytes": 19052,
+    "decodedSha256": "76c4e0e5a294e8d3081e5a68d4430bf6504841a8df8ce8a56f9e5a6dda1b4a4a",
+    "archiveSha256": "46f8435721a4eb90a29683f0576dcdbab0fc39bb3a8320a30d20fd1ef58fdb2e"
+  }
+}

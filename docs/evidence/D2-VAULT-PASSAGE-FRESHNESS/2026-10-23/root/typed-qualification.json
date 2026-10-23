@@ -1,0 +1,45 @@
+{
+  "tests": 269,
+  "files": 27,
+  "failed": 0,
+  "skipped": 0,
+  "newTests": 55,
+  "baselineSemanticFailures": 41,
+  "baselinePassingControls": 14,
+  "sourceHashesStableDuringRun": true,
+  "frozenTestsUnchanged": false,
+  "selectedInputCount": 65,
+  "productionFilesChanged": [
+    "server/services/advancedRAGPipeline.ts"
+  ],
+  "typecheck": "pending normal push",
+  "limits": [
+    "SQL/PGlite runs owner mode, no native RLS",
+    "scripted provider replies only",
+    "literal own-text membership is not exact span proof",
+    "NULL extraction remains legacy hit-only",
+    "point-in-time checks cannot recall provider inputs",
+    "historical citation write race/reindex/backfill untouched"
+  ],
+  "currentRun": "root/typed*",
+  "currentManifest": "qualification-source-manifest-typed.json",
+  "lint": {
+    "errors": 0,
+    "warnings": 9,
+    "preexistingProductionWarnings": 9,
+    "newTestWarnings": 0,
+    "growth": 0,
+    "report": "root/lint-typed.json"
+  },
+  "initialRun": "root/final*; initial source archived in root/first-qualified-source.ts.txt",
+  "publication": "normal c0f535753 push refused by two new-test TS18048 errors before publication; two erased assertions corrected and independently reviewed; final normal retry pending",
+  "initialSourceArchive": "root/first-qualified-source.parts.json",
+  "frozenTestsRuntimeUnchanged": true,
+  "testSourceChange": {
+    "unchangedFiles": 3,
+    "erasedTypingOnlyFiles": 1,
+    "originalFreeze": "frozen-tests.json",
+    "currentFreeze": "frozen-tests-typed.json",
+    "runtimeProof": "root/test-typing-equivalence.json"
+  }
+}

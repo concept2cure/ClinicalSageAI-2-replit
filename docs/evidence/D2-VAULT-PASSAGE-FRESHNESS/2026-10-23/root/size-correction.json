@@ -1,0 +1,9 @@
+{
+  "cause": "advancedRAGPipeline.ts crossed 100000-byte production ceiling (100382 bytes); historical .txt archive was not in the scanner production-file count",
+  "beforeBytes": 100382,
+  "afterBytes": 99547,
+  "beforeSha256": "41d7bf4ca3e6497948c69288467965a57e2318fb9b453fccc3d931b1a2e2ea4b",
+  "afterSha256": "af0fb02c578e42ba43282e9e53afc019b36b97abac0c006ebe29e9d05e320786",
+  "change": "Consolidate repeated tenant-refusal historical explanation into three comments that retain the owner-RLS caveat and original proof path. No executable code changed. Split historical source archive remains byte-exact evidence.",
+  "gateBaselineChanged": false
+}
