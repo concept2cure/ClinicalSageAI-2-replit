@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-23T21:17:52.403428+00:00",
+  "headChecked": "c4ac89c5cac5cb0bf83fe24ed381a80285b07894",
+  "attempt": 4,
+  "allNormalGatesPassed": true,
+  "wholeTreeTypeScriptErrors": 0,
+  "typeScriptExitCode": 0,
+  "baseline": 0,
+  "pushExitCode": 1,
+  "published": false,
+  "reason": "Concurrent canonical ref advance: expected 0b3aaa10cbbe46aa19f5041e5c6f50bf0d8d6935, actual 62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e.",
+  "sourceReview": "MDX project workflow integrated by normal merge; bounded UI/server/shared compatibility and fresh build follow."
+}

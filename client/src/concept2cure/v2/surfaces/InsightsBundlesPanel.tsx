@@ -20,7 +20,8 @@
 import React, { useMemo, useState } from 'react';
 import { InsightsLegalPackage } from './InsightsLegalPackage';
 
-import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
+import { EmptyState, ErrorState } from '../dataConnect';
+import { LibraryRecovery, useLibraryActions, useLibraryMutation, useLibraryConfirmed, useLibraryRegister, type LibraryActions } from './insightsLibraryActions';
 import { I } from '../icons';
 import {
   BUNDLE_NEEDS_PROJECT_NOTE,
@@ -28,11 +29,12 @@ import {
   BUNDLE_REPORTS_PDF_NOTE,
   bundleRegisterCaveat,
   createBundle,
+  isBundleList,
   whenText,
   type BundlePdfContent,
   type BundleRow,
 } from './insightsLibraryModel';
-import { PanelAlert, PanelHead, StatusTag, isRowList, readFailureOf, rowsOf } from './insightsLibraryShared';
+import { PanelAlert, PanelHead, StatusTag } from './insightsLibraryShared';
 
 function BundleCard({ bundle, exporting, onExport }: {
   bundle: BundleRow;
@@ -72,6 +74,7 @@ function BundleForm({
   name,
   setName,
   saving,
+  locked,
   onSave,
   onClear,
 }: {
@@ -79,6 +82,7 @@ function BundleForm({
   name: string;
   setName: (v: string) => void;
   saving: boolean;
+  locked: boolean;
   onSave: () => void;
   onClear: () => void;
 }) {
@@ -90,6 +94,7 @@ function BundleForm({
           <label className="gov-label" htmlFor={nameId}>Bundle name</label>
           <input
             id={nameId}
+            disabled={locked}
             className="rl-input"
             value={name}
             placeholder="e.g. Pre-approval inspection pack"
@@ -99,10 +104,10 @@ function BundleForm({
       </div>
       <p className="rl-sub">{count} report{count === 1 ? '' : 's'} chosen in Run history.</p>
       <div className="rl-head-acts">
-        <button type="button" className="btn primary" disabled={!name.trim() || saving} onClick={onSave}>
+        <button type="button" className="btn primary" disabled={!name.trim() || locked} onClick={onSave}>
           {saving ? 'Creating…' : 'Create bundle'}
         </button>
-        <button type="button" className="btn ghost" onClick={onClear}>Clear selection</button>
+        <button type="button" className="btn ghost" disabled={locked} onClick={onClear}>Clear selection</button>
       </div>
     </div>
   );
@@ -115,6 +120,9 @@ export function BundlesPanel({
   onExport,
   onSaved,
   onClearPending,
+  actions: ownerActions,
+  context = 'library',
+  accessCurrent = () => true,
 }: {
   pendingRunIds: number[];
   canWrite: boolean;
@@ -122,32 +130,33 @@ export function BundlesPanel({
   onExport: (bundleId: string, name: string, content: BundlePdfContent) => void;
   onSaved: (msg: string) => void;
   onClearPending: () => void;
+  actions?: LibraryActions;
+  context?: string;
+  accessCurrent?: () => boolean;
 }) {
-  const [attempt, setAttempt] = useState(0);
-  const bundles = useLiveData<unknown>('/api/report-os/bundles', ['/api/report-os/bundles', attempt], isRowList);
-  const rows = useMemo(() => rowsOf<BundleRow>(bundles.data), [bundles.data]);
-  /* A bounded register read that does not say it was bounded is a silent cap
-     on a governed register. Null — and so no note — whenever it was not. */
-  const registerCaveat = useMemo(() => bundleRegisterCaveat(bundles.meta), [bundles.meta]);
+  const fallbackActions = useLibraryActions();
+  const actions = ownerActions ?? fallbackActions;
+  const mutate = useLibraryMutation(actions, context, accessCurrent);
+  const register = useLibraryRegister<BundleRow>('/api/report-os/bundles', 'your bundles');
+  const registerCaveat = useMemo(() => bundleRegisterCaveat(register.meta), [register.meta]);
 
-  const [name, setName] = useState('');
+  const creating = actions.get(context, 'bundle:create');
+  const retained = creating?.payload.kind === 'bundle-create' ? creating.payload : null;
+  const [name, setName] = useState(retained?.name ?? '');
   const [note, setNote] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const saving = creating?.phase === 'pending';
+  const locked = !!creating;
+  const selectedIds = retained?.runIds ?? pendingRunIds;
 
-  const save = async () => {
-    if (!name.trim() || pendingRunIds.length === 0) return;
-    setSaving(true);
+  const created = () => { setName(''); onClearPending(); register.refresh(); onSaved('Bundle created.'); };
+  useLibraryConfirmed(actions, context, 'bundles', accessCurrent, created);
+  const save = () => {
+    if (!canWrite || !name.trim() || selectedIds.length === 0) return;
     setNote(null);
-    const res = await createBundle(name.trim(), pendingRunIds);
-    setSaving(false);
-    if (!res.ok) {
-      setNote(res.message ?? 'The bundle was not created.');
-      return;
-    }
-    setName('');
-    onClearPending();
-    setAttempt((n) => n + 1);
-    onSaved('Bundle created.');
+    void mutate('bundle:create', 'bundles', { kind: 'bundle-create', name: name.trim(), runIds: [...selectedIds] }, () => createBundle(name.trim(), selectedIds), res => {
+      if (!res.ok) { if (!res.unconfirmed) setNote(res.message ?? 'The bundle was not created.'); return; }
+      created();
+    });
   };
 
   return (
@@ -168,33 +177,45 @@ export function BundlesPanel({
       )}
 
       <PanelAlert note={note} />
+      <LibraryRecovery actions={actions} context={context} section="bundles" current={accessCurrent} path="/api/report-os/bundles" guard={isBundleList} onChecked={register.onChecked} />
 
-      {canWrite && pendingRunIds.length > 0 && (
+      {canWrite && selectedIds.length > 0 && (
         <BundleForm
-          count={pendingRunIds.length}
+          count={selectedIds.length}
           name={name}
           setName={setName}
           saving={saving}
+          locked={locked}
           onSave={() => void save()}
           onClear={onClearPending}
         />
       )}
 
-      {bundles.loading ? (
+      <BundleRegister register={register} pendingExports={pendingExports} onExport={onExport} />
+    </div>
+  );
+}
+
+function BundleRegister({ register, pendingExports, onExport }: {
+  register: ReturnType<typeof useLibraryRegister<BundleRow>>;
+  pendingExports: ReadonlySet<string>;
+  onExport: (id: string, name: string, content: BundlePdfContent) => void;
+}) {
+  return <>{register.loading ? (
         <EmptyState busy icon={I.layers} title="Reading your bundles…" />
-      ) : bundles.error ? (
+      ) : register.failure ? (
         (() => {
-          const f = readFailureOf(bundles, 'your bundles');
+          const f = register.failure!;
           return (
             <ErrorState
               title={f.title}
               message={f.message}
-              {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
+              {...(f.retryable ? { retry: register.retry } : {})}
               testId="rl-bundles-error"
             />
           );
         })()
-      ) : rows.length === 0 ? (
+      ) : register.rows.length === 0 ? (
         <EmptyState
           icon={I.layers}
           title="No bundles yet"
@@ -203,11 +224,9 @@ export function BundlesPanel({
         />
       ) : (
         <div className="rl-grid">
-          {rows.map((b) => (
+          {register.rows.map((b) => (
             <BundleCard key={b.bundleId} bundle={b} exporting={pendingExports.has(b.bundleId)} onExport={(content) => onExport(b.bundleId, b.name, content)} />
           ))}
         </div>
-      )}
-    </div>
-  );
+      )}</>;
 }

@@ -6,6 +6,7 @@ import express from 'express';
 import request from 'supertest';
 import { createHash } from 'node:crypto';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { PGlite } from '@electric-sql/pglite';
 
 const access = vi.hoisted(() => ({ projectIds: [11, 12], projectReads: 0, actorReads: 0, scopeReads: 0,
   revokedActor: false, revokeActorAfterRead: false, revokeProjectAfterRead: false, revokeScopeAfterRead: false }));
@@ -74,6 +75,70 @@ beforeEach(() => {
   vi.mocked(canAccessReportScope).mockClear();
   requestOverride = undefined;
 });
+
+const BUNDLE_SQL_FIXTURE = `
+  CREATE TABLE project_intelligence_profiles (id serial PRIMARY KEY, project_id integer, organization_id integer);
+  INSERT INTO project_intelligence_profiles (id, project_id, organization_id) VALUES (101, 11, 7), (102, 12, 7);
+  CREATE TABLE project_memory_entries (
+    id serial PRIMARY KEY, project_profile_id integer, project_id integer, organization_id integer,
+    category text, subcategory text, title text, content text, source_document_name text,
+    source_document_type text, confidence_score real, importance_level text,
+    is_verified_by_user boolean DEFAULT false, embedding text, status text DEFAULT 'active',
+    extracted_by text, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now()
+  );
+  CREATE TABLE bundle_audit_test (resource_id text, action text);
+`;
+type BundleSqlFailure = 'none' | 'audit' | 'rollback' | 'commit-after' | 'release-after';
+
+function bundleSqlClient(database: PGlite, failure: BundleSqlFailure) {
+  const statements: string[] = [];
+  const errors = {
+    commit: new Error('COMMIT acknowledgement lost SENSITIVE_BUNDLE_MEMORY_PARAMETER'),
+    rollback: new Error('ROLLBACK unavailable SENSITIVE_BUNDLE_MEMORY_PARAMETER'),
+    release: new Error('release unavailable SENSITIVE_BUNDLE_MEMORY_PARAMETER'),
+  };
+  const release = vi.fn((reason?: Error) => {
+    if (failure === 'release-after' && !reason) throw errors.release;
+  });
+  const client = {
+    query: async (query: string | { text: string; rowMode?: string }, values?: unknown[]) => {
+      const text = typeof query === 'string' ? query : query.text;
+      statements.push(text);
+      if (failure === 'rollback' && text === 'ROLLBACK') throw errors.rollback;
+      const result = await database.query<Record<string, unknown>>(text, values);
+      if (failure === 'commit-after' && text === 'COMMIT') throw errors.commit;
+      return { rows: typeof query !== 'string' && query.rowMode === 'array' ? result.rows.map(Object.values) : result.rows,
+        rowCount: result.affectedRows ?? result.rows.length };
+    },
+    release,
+  };
+  return { client, statements, release, errors };
+}
+
+/** Actual SQL copies and enlisted audit marker; the existing chain-writer seam stays explicit. */
+async function withBundleSql(failure: BundleSqlFailure,
+  verify: (fixture: ReturnType<typeof bundleSqlClient> & { database: PGlite }) => Promise<void>) {
+  const database = new PGlite();
+  await database.exec(BUNDLE_SQL_FIXTURE);
+  const fixture = bundleSqlClient(database, failure);
+  const connection = vi.spyOn(h.pool, 'connect').mockResolvedValue(fixture.client as unknown as Awaited<ReturnType<typeof h.pool.connect>>);
+  h.audit.mockImplementation(async (client: typeof fixture.client, event: { resourceId: string; action: string }) => {
+    await client.query('INSERT INTO bundle_audit_test (resource_id, action) VALUES ($1, $2)', [event.resourceId, event.action]);
+    if (failure === 'audit' || failure === 'rollback') throw new Error('audit unavailable SENSITIVE_BUNDLE_MEMORY_PARAMETER');
+  });
+  try { await verify({ ...fixture, database }); }
+  finally {
+    connection.mockRestore();
+    if (failure === 'rollback') await database.exec('ROLLBACK');
+    await database.close();
+  }
+}
+
+async function storedBundleSqlCounts(database: PGlite) {
+  return (await database.query<{ copies: number; audit: number }>(
+    'SELECT (SELECT count(*) FROM project_memory_entries)::integer AS copies, (SELECT count(*) FROM bundle_audit_test)::integer AS audit',
+  )).rows[0];
+}
 
 function storedPack(index: number, projectId = 11) {
   const bundleId = `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
@@ -145,6 +210,66 @@ describe('saved report packs are complete and atomically recorded', () => {
   });
 
 
+});
+
+describe('saved report pack receipts distinguish SQL rollback from lost acknowledgements', () => {
+  it('confirms ordinary SQL persistence only after both copies and the audit marker commit', async () => {
+    ready([]);
+    await withBundleSql('none', async fixture => {
+      const result = await post();
+      expect(result.status).toBe(201);
+      expect(result.body.data).toMatchObject({ name: 'Two-project review pack', runIds: [41, 42], projectIds: [11, 12] });
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 2, audit: 1 });
+      const rows = (await fixture.database.query<{ content: string; organization_id: number }>('SELECT content, organization_id FROM project_memory_entries')).rows;
+      expect(rows.every(row => row.organization_id === 7 && JSON.parse(row.content).bundleRecord.bundleId === result.body.data.bundleId)).toBe(true);
+      expect(fixture.statements).toContain(tenantStampSql());
+      expect(fixture.statements.at(-1)).toBe('COMMIT');
+      expect(fixture.release).toHaveBeenCalledExactlyOnceWith();
+    });
+  });
+
+  it.each(['commit-after', 'release-after'] as const)('keeps an actual committed pack unconfirmed after %s fails', async failure => {
+    ready([]);
+    await withBundleSql(failure, async fixture => {
+      const result = await post();
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 2, audit: 1 });
+      expect(result.status).toBe(503);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'REPORT_BUNDLE_OUTCOME_UNKNOWN' }, recordingOutcome: 'unconfirmed', retryAllowed: false });
+      expect(result.body.data).toBeUndefined();
+      expect(result.body.error.message).toMatch(/check.*bundles/i);
+      expect(result.text).not.toMatch(/nothing was saved|SENSITIVE_BUNDLE_MEMORY_PARAMETER/i);
+      expect(fixture.statements).not.toContain('ROLLBACK');
+      expect(fixture.release).toHaveBeenLastCalledWith(failure === 'commit-after' ? fixture.errors.commit : fixture.errors.release);
+    });
+  });
+
+  it('states absence only after a pre-COMMIT audit failure is rolled back in SQL', async () => {
+    ready([]);
+    await withBundleSql('audit', async fixture => {
+      const result = await post();
+      expect(result.status).toBe(503);
+      expect(result.body).toMatchObject({ error: { code: 'REPORT_BUNDLE_NOT_RECORDED' }, recordingOutcome: 'not-recorded', retryAllowed: true });
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 0, audit: 0 });
+      expect(fixture.statements.at(-1)).toBe('ROLLBACK');
+      expect(fixture.statements).not.toContain('COMMIT');
+      expect(fixture.release).toHaveBeenCalledExactlyOnceWith();
+      expect(result.text).not.toContain('SENSITIVE_BUNDLE_MEMORY_PARAMETER');
+    });
+  });
+
+  it('never claims absence when the pre-COMMIT rollback acknowledgement fails', async () => {
+    ready([]);
+    await withBundleSql('rollback', async fixture => {
+      const result = await post();
+      expect(result.status).toBe(503);
+      expect(result.body).toMatchObject({ error: { code: 'REPORT_BUNDLE_OUTCOME_UNKNOWN' }, recordingOutcome: 'unconfirmed', retryAllowed: false });
+      expect(result.body.data).toBeUndefined();
+      expect(fixture.statements.at(-1)).toBe('ROLLBACK');
+      expect(fixture.statements).not.toContain('COMMIT');
+      expect(fixture.release).toHaveBeenCalledExactlyOnceWith(fixture.errors.rollback);
+      expect(result.text).not.toMatch(/nothing was saved|SENSITIVE_BUNDLE_MEMORY_PARAMETER/i);
+    });
+  });
 });
 
 describe('report pack register admits before counting or limiting', () => {
@@ -241,6 +366,7 @@ describe('report pack register refuses incomplete records', () => {
     const result = await post();
     expect(result.status).toBe(413);
     expect(result.body.error.code).toBe('REPORT_BUNDLE_TOO_LARGE');
+    expect(result.body).toMatchObject({ recordingOutcome: 'not-recorded', retryAllowed: true });
     expect(h.statements).toEqual([]);
     expect(h.audit).not.toHaveBeenCalled();
   });

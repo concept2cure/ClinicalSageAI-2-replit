@@ -439,24 +439,51 @@ interface ReportAuditEvent {
   details: Record<string, unknown>;
 }
 
-/**
- * Run `fn` in one transaction on one connection, stamped with the
- * organization. Commits when `fn` resolves; rolls back and rethrows otherwise.
- */
-async function inTenantTransaction<T>(organizationId: number, fn: (client: PoolClient) => Promise<T>): Promise<T> {
+type ReportRecordingOutcome = 'not-recorded' | 'unconfirmed';
+interface ReportTransactionOutcome { recordingOutcome: ReportRecordingOutcome }
+
+/** One stamped connection. Only acknowledged pre-COMMIT rollback proves absence.
+ * Optional outcome knowledge does not replace the original caller's error. */
+async function inTenantTransaction<T>(organizationId: number, fn: (client: PoolClient) => Promise<T>,
+  outcome?: ReportTransactionOutcome): Promise<T> {
+  if (outcome) outcome.recordingOutcome = 'unconfirmed';
   const client = await getPool().connect();
+  let commitAttempted = false;
+  let failure: { error: unknown } | undefined;
+  let result!: T;
+  let discard: Error | undefined;
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, organizationId);
-    const out = await fn(client);
+    result = await fn(client);
+    commitAttempted = true;
     await client.query('COMMIT');
-    return out;
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw error;
+    failure = { error };
+    if (commitAttempted) discard = error instanceof Error ? error : new Error('Report COMMIT acknowledgement unavailable');
+    else {
+      try {
+        await client.query('ROLLBACK');
+        if (outcome) outcome.recordingOutcome = 'not-recorded';
+      } catch (rollbackError) {
+        discard = rollbackError instanceof Error ? rollbackError : new Error('Report rollback acknowledgement unavailable');
+      }
+    }
   } finally {
-    client.release();
+    try {
+      if (discard) client.release(discard);
+      else client.release();
+    } catch (releaseError) {
+      const reason = releaseError instanceof Error ? releaseError : new Error('Report connection cleanup unavailable');
+      try { client.release(reason); }
+      catch { logger.error('report transaction connection could not be discarded', { organizationId, commitAttempted }); }
+      // Cleanup must not replace an authorization or other original failure.
+      // After COMMIT it still cannot prove absence.
+      failure ??= { error: releaseError };
+    }
   }
+  if (failure) throw failure.error;
+  return result;
 }
 
 /** The chained audit row for `event`, on `client`'s open transaction. */
@@ -907,15 +934,17 @@ function resolveProjectsForBundleRuns(runs: Array<{ scopeType: string; scopeId: 
 }
 
 class ReportBundleError extends Error {
-  constructor(message: string, readonly code: string, readonly status = 503) { super(message); }
+  constructor(message: string, readonly code: string, readonly status = 503,
+    readonly recordingOutcome?: ReportRecordingOutcome) { super(message); }
 }
 
 async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
   const content = JSON.stringify({ bundleRecord: bundle });
   if (Buffer.byteLength(content, 'utf8') > 2 * 1024 * 1024) {
-    throw new ReportBundleError('This pack exceeds the 2 MiB saved manifest limit. Use fewer reports; nothing was saved.', 'REPORT_BUNDLE_TOO_LARGE', 413);
+    throw new ReportBundleError('This pack exceeds the 2 MiB saved manifest limit. Use fewer reports; nothing was saved.', 'REPORT_BUNDLE_TOO_LARGE', 413, 'not-recorded');
   }
   const projectIds = bundle.projectIds ?? [];
+  const outcome: ReportTransactionOutcome = { recordingOutcome: 'unconfirmed' };
   try {
     await inTenantTransaction(bundle.organizationId, async client => {
       const tx = onTransaction(client);
@@ -938,11 +967,14 @@ async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
       await writeReportEvent(client, req, { organizationId: bundle.organizationId, action: 'report_os.bundle_created',
         resourceType: 'report_bundle', resourceId: bundle.bundleId,
         details: { runIds: bundle.runIds, projectIds, byteLength: Buffer.byteLength(content, 'utf8'), payloadHash: createHash('sha256').update(content).digest('hex') } });
-    });
+    }, outcome);
   } catch {
     // SQL errors can contain the manifest in their parameters. The client and
-    // logs receive a safe refusal; the transaction has already rolled back.
-    throw new ReportBundleError('The report pack could not be saved and recorded. Nothing was saved.', 'REPORT_BUNDLE_NOT_RECORDED');
+    // logs receive no bound values. A lost acknowledgement is not a rollback.
+    if (outcome.recordingOutcome === 'not-recorded') {
+      throw new ReportBundleError('The report pack could not be saved and recorded. Nothing was saved.', 'REPORT_BUNDLE_NOT_RECORDED', 503, 'not-recorded');
+    }
+    throw new ReportBundleError('The report pack outcome could not be confirmed. It may have been saved. Check Bundles before starting another request.', 'REPORT_BUNDLE_OUTCOME_UNKNOWN', 503, 'unconfirmed');
   }
 }
 
@@ -2374,7 +2406,10 @@ router.post('/bundles', async (req: Request, res: Response) => {
     await persistBundleRecord(req, bundle);
     return res.status(201).json({ data: bundle });
   } catch (error: any) {
-    if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    if (error instanceof ReportBundleError) return res.status(error.status).json({
+      success: false, error: { code: error.code, message: error.message },
+      ...(error.recordingOutcome ? { recordingOutcome: error.recordingOutcome, retryAllowed: error.recordingOutcome === 'not-recorded' } : {}),
+    });
     return serverError(res, logger, 'saving bundles', error);
   }
 });

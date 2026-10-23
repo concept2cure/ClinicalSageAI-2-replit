@@ -18,6 +18,7 @@ import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { BundlesPanel } from './InsightsBundlesPanel';
+import { useLibraryActions } from './insightsLibraryActions';
 import { CatalogPanel } from './InsightsCatalogPanel';
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
@@ -1589,7 +1590,7 @@ export function InsightsCanvas(props: OwnedSurfaceViewProps) {
 }
 
 function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
-  return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed; check Run history for their stored outcome.</div>;
+  return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed. In the original account, check Run history, Schedules and Bundles for their stored outcomes.</div>;
 }
 
 function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: boolean }) {
@@ -1673,6 +1674,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   /* Runs chosen in Run history, waiting to be bundled. Held here so the choice
      survives moving between the Runs and Bundles panels. */
   const [bundlePicks, setBundlePicks] = useState<number[]>([]);
+  const libraryActions = useLibraryActions();
   // The ref closes same-frame duplicate clicks; state keeps both export controls
   // disabled for this bundle, including when the reader returns to the tab.
   const bundleExportsInFlight = useRef(new Set<string>());
@@ -1961,9 +1963,9 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
   const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
-    : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite} />
-    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} onSaved={fireToast} />
-    : paneView === 'bundles' ? <BundlesPanel pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} onSaved={fireToast} onClearPending={() => setBundlePicks([])} /> : null;
+    : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
+    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
+    : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
   const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
   const visibleGeneration = requestSequence.current;
   const displayedReportCurrent = () => reportAccessCurrent() && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration;

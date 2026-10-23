@@ -1,0 +1,283 @@
+{
+  "scope": "Serialized actual mounted reporting artifact pane with the built CSS at the retained capture pins. This is not full-shell, event, network, authentication or hosted acceptance.",
+  "capture": {
+    "command": {
+      "cwd": "/workspace/ClinicalSageAI-2-replit",
+      "argv": [
+        "python3",
+        "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/review-layout.py"
+      ],
+      "environmentOverrides": {
+        "DEBUG": "pw:browser"
+      },
+      "startedAt": "2026-10-23T20:28:45.205618+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 20.298,
+      "finishedAt": "2026-10-23T20:29:05.504210+00:00"
+    },
+    "captures": 12,
+    "passed": 12,
+    "failed": [],
+    "sourceBefore": {
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff",
+      "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9",
+      "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts": "26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4",
+      "client/src/concept2cure/v2/dataConnect.tsx": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d",
+      "client/src/concept2cure/v2/apiCall.ts": "6933f994c06ead80fcab0f1aa701bf96ebba7d50565a070d352c764b637d416f",
+      "client/src/concept2cure/v2/mutationOutcome.ts": "18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86",
+      "dist/public/assets/VaultLibraryResults-Cnlcxs1z.css": "8df0d408c091d1efb590e89aa790e1044cb75f2facc0876e543d5c49fafb29ec",
+      "dist/public/assets/commcenter-v2-DdJzkzwC.css": "e89d3737f2afd5c5a14c4e7255fe196ad10ca7137d401b9da2663635a1237644",
+      "dist/public/assets/V2App-B1Ncx2Ue.css": "9c18e26ecd6d9823f9169839b2af9ae3fc5af9eed0d09e40210d2bdfc1863b82",
+      "dist/public/assets/AdminAccess-xhPEI8Z8.css": "81148c9f7926be9f9b55394f1469d6e27103aa9fcd1849c84987955080cc2cf1",
+      "dist/public/assets/RichSectionEditor-CsLGNfpk.css": "63acf2c486ae2285f3bb3368a35b428d2d4d7e1fb07bcec18eb052c6a2b24c00",
+      "dist/public/assets/Intelligence-Cn63MxwQ.css": "c9bbcb0afd15636786dbe6c5c962c552ff6a6574dae546447a1145eb1c60f8a9",
+      "dist/public/assets/ana-v2-B_qTrbu9.css": "3669b5f6b8318929f43db3b2940228e8a1cec7d01342118dddc11791c16667f4",
+      "dist/public/assets/company-documents-ozlLbCYb.css": "99d18df1e60ad4f2f12d8e079214add5c27ee63a586ba50f06e30cefc84a8c38",
+      "dist/public/assets/QualityModule-7idVffPF.css": "74eb26166ad94784a5c5fa27495eb2deecf39c67095318ca307574f4df9b5f62",
+      "dist/public/assets/OnboardingIngest--f7BZU_h.css": "b78da74a0cef983e192a839bb1eb6bff71d8eb63aafaf52b5b0837d4a7ec97ce",
+      "dist/public/assets/ana-skills-Gc2BKvST.css": "6969b50e3fb6330b0d6e5e626030cfe8ee22947f329dd09033d554804a37a5dd",
+      "dist/public/assets/project-home-v2-BRi5JHo-.css": "1f8ba33d2169dcc4f56af973ff7f328cdafa7178e885b102285a4f85f542a5b5",
+      "dist/public/assets/GovernedConfirmDialog-BAvPP0yZ.css": "f4973efb81a35803e67bc811c949ecba69be67cd826edb5944230f04626f2783",
+      "dist/public/assets/EsignModal-DY4l-xU8.css": "41b6eba0e8277c02f5e375ce711b2833e1e0b6d245152b0b497fc135229fc249",
+      "dist/public/assets/SessionPolicySetting-DlIRNv18.css": "a61872019c59da104ea971993869c3b4d54d65f1a80bc096965b1d223e6e442f",
+      "dist/public/assets/PdevRoute-BvTaZFQ6.css": "54e70f1c9a747e2dd8593d2e308ecf96ed5e0e58e24d1f7cae818a1d3c04f630",
+      "dist/public/assets/workDock-Dq695-ka.css": "cdfd082a5bdb249215e20308ce742ab418ec17bfd9eda6d2edba72960d2c4964",
+      "dist/public/assets/SubmissionCenter-DK_y2NA8.css": "68f16be8765d4faf99494919732f62f70d4caa4a14c13429d0b6f4a764988a1c",
+      "dist/public/assets/ClientPortal-Df7niGAt.css": "9a81e351a624fb3ae840e72036c26c0896565bc2724efae3e5ff1d42dd9f61e8",
+      "dist/public/assets/Onboarding-1aQVXd4a.css": "e229a234f04a02504d41d6a06de0ca24074558f41f8a23d7119344fd1683b02e",
+      "dist/public/assets/MasterLicensing-CSgZ4t6r.css": "e4271d0122480eac6299b178cc83a1da85f1eb516b0351aa8ba05e60ae2901c4",
+      "dist/public/assets/EctdCoauthor-WxR4wiGp.css": "77d4ff9516b79a6c49ddb8f873f2f81d846f4891ff19fffd94c71da8596decbb",
+      "dist/public/assets/index-CQkeOtwt.css": "1121dc817dbf0ab774046f13777dde03848f803c0206e68f8b9e7e0788bbdde7",
+      "dist/public/assets/ProtocolDev-CzvCduh-.css": "2f3b8258a4e713c1c25bc87fe4df064b5c19c1d2b97ff5ec3854b7e7765b6d4b",
+      "dist/public/assets/Rbm-BfE-ugYt.css": "6a9801993d0f1027d9de7e377483669e8b27ff06b6a99a5b16dfe6644becb73e",
+      "dist/public/assets/Insights-DugMOhtx.css": "b97e6c58608a599cb86214dd9a0ecc01d3da4e10fe3219beef2e434ff0f32798",
+      "dist/public/assets/Pyramid-CbR3Xx2c.css": "3563f341dfdbed84cb830e5dcd20cd7258d63399dc18684359441e3b77a90f61",
+      "dist/public/assets/RedlineText-DBgVI_xu.css": "808b96578ca90405a1f5bb29a0347ff0eee0e1069ea0cb2006dd15e340fb9e3a",
+      "dist/public/assets/MdxSurfaceHost-B03qnq2W.css": "e7ae1a8b21db9c138714489c56abbfe3ea41429c25e67babaebbe3a66982f5cb",
+      "dist/public/assets/Review-CGMT1O2r.css": "bc51beba0a431f03d0d941a12da80b1281674871bdd9dbada7f3cdaabf5e6af5",
+      "dist/public/assets/ZenRouter-BbLT-fZv.css": "a7497d679da763df659cca84360638c75933dabbefc008795ea22b7689f209e0",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/review-layout.py": "3ec4c4b2424b5d1ce7e05e5f71f1cc1e3808480f68f9b77084dba06021d776bc",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/capture-layout.py": "95ab60362c0c6a825ccbe69fb4b9d75658e51c6712c5bb02fe52f5790d84aae2",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/schedules-uncertain.html": "e33b6d24c69b2c28e913f56ffdd8fe3635b9f3877b009b90d109c99d08fdb2d1",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/schedules-review.html": "bf19fe1f537977d3048d83d90acc9fa8f345c0336da84653a34176bbb3ee48f5",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/bundles-uncertain.html": "9401587a66b6de6940d2a38ddc3a7786025d04b0aeebb0d4a774cd69a133bc51"
+    },
+    "sourceAfter": {
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff",
+      "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9",
+      "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts": "26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4",
+      "client/src/concept2cure/v2/dataConnect.tsx": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d",
+      "client/src/concept2cure/v2/apiCall.ts": "6933f994c06ead80fcab0f1aa701bf96ebba7d50565a070d352c764b637d416f",
+      "client/src/concept2cure/v2/mutationOutcome.ts": "18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86",
+      "dist/public/assets/VaultLibraryResults-Cnlcxs1z.css": "8df0d408c091d1efb590e89aa790e1044cb75f2facc0876e543d5c49fafb29ec",
+      "dist/public/assets/commcenter-v2-DdJzkzwC.css": "e89d3737f2afd5c5a14c4e7255fe196ad10ca7137d401b9da2663635a1237644",
+      "dist/public/assets/V2App-B1Ncx2Ue.css": "9c18e26ecd6d9823f9169839b2af9ae3fc5af9eed0d09e40210d2bdfc1863b82",
+      "dist/public/assets/AdminAccess-xhPEI8Z8.css": "81148c9f7926be9f9b55394f1469d6e27103aa9fcd1849c84987955080cc2cf1",
+      "dist/public/assets/RichSectionEditor-CsLGNfpk.css": "63acf2c486ae2285f3bb3368a35b428d2d4d7e1fb07bcec18eb052c6a2b24c00",
+      "dist/public/assets/Intelligence-Cn63MxwQ.css": "c9bbcb0afd15636786dbe6c5c962c552ff6a6574dae546447a1145eb1c60f8a9",
+      "dist/public/assets/ana-v2-B_qTrbu9.css": "3669b5f6b8318929f43db3b2940228e8a1cec7d01342118dddc11791c16667f4",
+      "dist/public/assets/company-documents-ozlLbCYb.css": "99d18df1e60ad4f2f12d8e079214add5c27ee63a586ba50f06e30cefc84a8c38",
+      "dist/public/assets/QualityModule-7idVffPF.css": "74eb26166ad94784a5c5fa27495eb2deecf39c67095318ca307574f4df9b5f62",
+      "dist/public/assets/OnboardingIngest--f7BZU_h.css": "b78da74a0cef983e192a839bb1eb6bff71d8eb63aafaf52b5b0837d4a7ec97ce",
+      "dist/public/assets/ana-skills-Gc2BKvST.css": "6969b50e3fb6330b0d6e5e626030cfe8ee22947f329dd09033d554804a37a5dd",
+      "dist/public/assets/project-home-v2-BRi5JHo-.css": "1f8ba33d2169dcc4f56af973ff7f328cdafa7178e885b102285a4f85f542a5b5",
+      "dist/public/assets/GovernedConfirmDialog-BAvPP0yZ.css": "f4973efb81a35803e67bc811c949ecba69be67cd826edb5944230f04626f2783",
+      "dist/public/assets/EsignModal-DY4l-xU8.css": "41b6eba0e8277c02f5e375ce711b2833e1e0b6d245152b0b497fc135229fc249",
+      "dist/public/assets/SessionPolicySetting-DlIRNv18.css": "a61872019c59da104ea971993869c3b4d54d65f1a80bc096965b1d223e6e442f",
+      "dist/public/assets/PdevRoute-BvTaZFQ6.css": "54e70f1c9a747e2dd8593d2e308ecf96ed5e0e58e24d1f7cae818a1d3c04f630",
+      "dist/public/assets/workDock-Dq695-ka.css": "cdfd082a5bdb249215e20308ce742ab418ec17bfd9eda6d2edba72960d2c4964",
+      "dist/public/assets/SubmissionCenter-DK_y2NA8.css": "68f16be8765d4faf99494919732f62f70d4caa4a14c13429d0b6f4a764988a1c",
+      "dist/public/assets/ClientPortal-Df7niGAt.css": "9a81e351a624fb3ae840e72036c26c0896565bc2724efae3e5ff1d42dd9f61e8",
+      "dist/public/assets/Onboarding-1aQVXd4a.css": "e229a234f04a02504d41d6a06de0ca24074558f41f8a23d7119344fd1683b02e",
+      "dist/public/assets/MasterLicensing-CSgZ4t6r.css": "e4271d0122480eac6299b178cc83a1da85f1eb516b0351aa8ba05e60ae2901c4",
+      "dist/public/assets/EctdCoauthor-WxR4wiGp.css": "77d4ff9516b79a6c49ddb8f873f2f81d846f4891ff19fffd94c71da8596decbb",
+      "dist/public/assets/index-CQkeOtwt.css": "1121dc817dbf0ab774046f13777dde03848f803c0206e68f8b9e7e0788bbdde7",
+      "dist/public/assets/ProtocolDev-CzvCduh-.css": "2f3b8258a4e713c1c25bc87fe4df064b5c19c1d2b97ff5ec3854b7e7765b6d4b",
+      "dist/public/assets/Rbm-BfE-ugYt.css": "6a9801993d0f1027d9de7e377483669e8b27ff06b6a99a5b16dfe6644becb73e",
+      "dist/public/assets/Insights-DugMOhtx.css": "b97e6c58608a599cb86214dd9a0ecc01d3da4e10fe3219beef2e434ff0f32798",
+      "dist/public/assets/Pyramid-CbR3Xx2c.css": "3563f341dfdbed84cb830e5dcd20cd7258d63399dc18684359441e3b77a90f61",
+      "dist/public/assets/RedlineText-DBgVI_xu.css": "808b96578ca90405a1f5bb29a0347ff0eee0e1069ea0cb2006dd15e340fb9e3a",
+      "dist/public/assets/MdxSurfaceHost-B03qnq2W.css": "e7ae1a8b21db9c138714489c56abbfe3ea41429c25e67babaebbe3a66982f5cb",
+      "dist/public/assets/Review-CGMT1O2r.css": "bc51beba0a431f03d0d941a12da80b1281674871bdd9dbada7f3cdaabf5e6af5",
+      "dist/public/assets/ZenRouter-BbLT-fZv.css": "a7497d679da763df659cca84360638c75933dabbefc008795ea22b7689f209e0",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/review-layout.py": "3ec4c4b2424b5d1ce7e05e5f71f1cc1e3808480f68f9b77084dba06021d776bc",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/capture-layout.py": "95ab60362c0c6a825ccbe69fb4b9d75658e51c6712c5bb02fe52f5790d84aae2",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/schedules-uncertain.html": "e33b6d24c69b2c28e913f56ffdd8fe3635b9f3877b009b90d109c99d08fdb2d1",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/schedules-review.html": "bf19fe1f537977d3048d83d90acc9fa8f345c0336da84653a34176bbb3ee48f5",
+      "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/bundles-uncertain.html": "9401587a66b6de6940d2a38ddc3a7786025d04b0aeebb0d4a774cd69a133bc51"
+    },
+    "sourceUnchangedWithinCapture": true,
+    "selectedPins": 44,
+    "loadedThrough": "Installed Python Playwright drives /usr/bin/chromium and sets the exact local serialized HTML bytes in an in-memory page. No browser policy or global environment changes.",
+    "measurement": "Existing geometry script is reevaluated after document.fonts.ready and before viewport PNG capture.",
+    "cssResourceURLs": {
+      "count": 3,
+      "allInlineDataSVG": true
+    }
+  },
+  "actualMountedDomCapture": {
+    "command": {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingLibraryLayoutCapture.capture.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/browser/dom-capture.json"
+      ],
+      "cwd": "/workspace/ClinicalSageAI-2-replit",
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "startedAt": "2026-10-23T20:24:47.338801+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 2.982,
+      "sourceUnchanged": true
+    },
+    "testFiles": 1,
+    "passed": 2,
+    "failed": 0,
+    "sourceBefore": {
+      "client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx": "82e48a4c26ec45b5e0e621cf32428926192f89dc02ff397f877d015b628470e7",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts": "26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4",
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff",
+      "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9",
+      "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7",
+      "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx": "74bab1135577e20cdba893fb77560a4e531e398341e3eb419c17ac8fc2e65c07",
+      "client/src/concept2cure/v2/__tests__/reportingLibraryLayoutCapture.capture.test.tsx": "80661538ec66bbb6b9cd62628ea6d67fdac18c9bd3754d8586c09fcf08370089"
+    },
+    "sourceAfter": {
+      "client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx": "82e48a4c26ec45b5e0e621cf32428926192f89dc02ff397f877d015b628470e7",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts": "26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43",
+      "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx": "87bb2fefa334421df375314cd935469f7f16615c47ef0ce8f6bee029d441f6f4",
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "2f192f80187851ff2209fefa8d398a39dbcab3cc2261887c4d5a64ab57e22dff",
+      "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx": "aea3646a234d595f75a7b7ba8695d2bcfaba9d526c08715e4644213f402666a9",
+      "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": "bcf6265d913f91c4dcde1e83310f046da6addee574349f7f79c91d9b2cf7c3f7",
+      "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx": "74bab1135577e20cdba893fb77560a4e531e398341e3eb419c17ac8fc2e65c07",
+      "client/src/concept2cure/v2/__tests__/reportingLibraryLayoutCapture.capture.test.tsx": "80661538ec66bbb6b9cd62628ea6d67fdac18c9bd3754d8586c09fcf08370089"
+    },
+    "sourceUnchangedWithinCapture": true,
+    "temporaryTestRemoved": true,
+    "sourceArchive": "capture-library-dom.test.tsx.gz"
+  },
+  "subsequentCanonicalObservation": {
+    "description": "After capture, root merged canonical9f8cae7f0, including the shared apiCall optional owner callback. Capture pins retain their actual earlier values. Root records any later type-only annotation adjustment separately; these captures are not relabeled as observations of later source.",
+    "changedSinceCaptureAtPacketFreeze": [
+      {
+        "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+        "capturedSha256": "26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43",
+        "observedSubsequentSha256": "e5e556fcf9203041b1ef03c3f344645ae1cf66a3a48974b2d00e742e4ec17ae0"
+      },
+      {
+        "path": "client/src/concept2cure/v2/apiCall.ts",
+        "capturedSha256": "6933f994c06ead80fcab0f1aa701bf96ebba7d50565a070d352c764b637d416f",
+        "observedSubsequentSha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1"
+      }
+    ]
+  },
+  "probes": {
+    "singleProcessCLI": {
+      "command": [
+        "/usr/lib/chromium/chromium",
+        "--headless=new",
+        "--no-sandbox",
+        "--disable-gpu",
+        "--single-process",
+        "--no-zygote",
+        "--disable-dev-shm-usage",
+        "--disable-background-networking",
+        "--disable-extensions",
+        "--disable-component-update",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--no-proxy-server",
+        "--user-data-dir=/tmp/c2c-chromium-single-wjbdwoce",
+        "--dump-dom",
+        "about:blank"
+      ],
+      "environmentOverrides": {
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/dev/null"
+      },
+      "exitCode": 124,
+      "elapsedSeconds": 20.043,
+      "stdoutBytes": 0,
+      "dom": ""
+    },
+    "debugPortCLI": {
+      "command": [
+        "/usr/lib/chromium/chromium",
+        "--headless",
+        "--no-sandbox",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-dev-shm-usage",
+        "--disable-background-networking",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--no-proxy-server",
+        "--user-data-dir=/tmp/c2c-chromium-cdp-5ga434kc",
+        "--remote-debugging-port=0",
+        "--timeout=3000",
+        "--dump-dom",
+        "data:text/html,<h1>browser-probe</h1>"
+      ],
+      "exitCode": 124,
+      "elapsedSeconds": 15.029,
+      "stdoutBytes": 0,
+      "dom": "",
+      "devtoolsListening": true
+    },
+    "installedPlaywright": {
+      "command": [
+        "python3",
+        "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/playwright-probe.py"
+      ],
+      "environmentOverrides": {
+        "DEBUG": "pw:browser"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 1.159,
+      "stdout": "{\"title\": \"browser-probe\", \"screenshot\": true}\n",
+      "stderrTail": "ss: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\n2026-10-23T20:25:50.161Z pw:browser [pid=47965][err] [47965:47965:1023/202550.160359:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n2026-10-23T20:25:50.161Z pw:browser [pid=47965][err] [47965:47993:1023/202550.160661:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\n2026-10-23T20:25:50.161Z pw:browser [pid=47965][err] [47965:47965:1023/202550.160856:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n2026-10-23T20:25:50.428Z pw:browser [pid=47965] <gracefully close start>\n2026-10-23T20:25:50.487Z pw:browser [pid=47965] <process did exit: exitCode=0, signal=null>\n2026-10-23T20:25:50.487Z pw:browser [pid=47965] starting temporary directories cleanup\n2026-10-23T20:25:50.499Z pw:browser [pid=47965] finished temporary directories cleanup\n2026-10-23T20:25:50.499Z pw:browser [pid=47965] <gracefully close end>\n"
+    },
+    "firstFixtureFileNavigation": {
+      "command": {
+        "argv": [
+          "python3",
+          "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/capture-layout.py",
+          "--width",
+          "1440",
+          "--height",
+          "900",
+          "--screenshot",
+          "/workspace/.codex-notes/reporting-library-recovery-20261023/browser/wrapper-debug.png",
+          "file:///workspace/.codex-notes/reporting-library-recovery-20261023/browser/schedules-uncertain-light-1440.html"
+        ],
+        "exitCode": 1,
+        "elapsedSeconds": 2.244
+      },
+      "error": "Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR for file:// fixture navigation. No layout measurement ran.",
+      "classification": "instrumentation setup failure; not product RED"
+    }
+  },
+  "visualReview": {
+    "tool": "view_image",
+    "captures": [
+      "schedules-review-light-390.png",
+      "schedules-review-dark-390.png"
+    ],
+    "observation": "Recovery copy and both controls remain visible within the pane. Controls stack/wrap with the existing theme and no horizontal overflow observed.",
+    "productEdits": false
+  },
+  "metricsFile": "component-layout.json",
+  "rawLogArchive": "chromium.raw.log.gz"
+}

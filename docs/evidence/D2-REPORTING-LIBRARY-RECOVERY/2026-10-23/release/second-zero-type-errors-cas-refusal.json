@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-23T21:03:07.225375+00:00",
+  "headChecked": "173b948454475d0374dd6974e7cf81b9fd1c72dc",
+  "attempt": 3,
+  "allNormalGatesPassed": true,
+  "wholeTreeTypeScriptErrors": 0,
+  "typeScriptExitCode": 0,
+  "baseline": 0,
+  "pushExitCode": 1,
+  "published": false,
+  "reason": "Concurrent canonical ref advance: expected1eca721b1081d1fe1ef2491b70b726cc0f083fad, actual0b3aaa10cbbe46aa19f5041e5c6f50bf0d8d6935.",
+  "sourceReview": "Reporting legal chooser extends existing company pagination/session ownership. No owned-file overlap; childofBundlesPanel changed, so broad current reporting integration and finalmergedbuild follow."
+}

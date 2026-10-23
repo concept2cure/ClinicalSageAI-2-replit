@@ -31,7 +31,9 @@
  *
  * @module client/src/concept2cure/v2/surfaces/insightsLibraryModel
  */
-import { apiCall, apiErrorText } from '../apiCall';
+import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
+import { errorCodeOf } from '@/lib/queryClient';
+import { mutationUnconfirmed } from '../mutationOutcome';
 
 /* ══════════════════════════════════════════════════════════════════
    Runs
@@ -504,28 +506,100 @@ export interface WriteOutcome<T = unknown> {
   message?: string;
   data?: T;
   status: number;
+  unconfirmed?: boolean;
+  code?: string;
+}
+
+const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+const positiveId = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const timestamp = (value: unknown): value is string => text(value) && Number.isFinite(Date.parse(value));
+const uuid = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+function sameMembers<T>(left: T[], right: T[]): boolean {
+  return left.length === right.length && new Set(left).size === left.length && new Set(right).size === right.length && left.every(value => right.includes(value));
+}
+
+const integerBetween = (value: unknown, min: number, max: number): boolean => typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+function isReportSchedule(value: unknown): value is ReportSchedule {
+  if (!record(value)) return false;
+  return ['daily', 'weekly', 'monthly'].includes(String(value.cadence)) && integerBetween(value.hour, 0, 23)
+    && (value.minute === undefined || integerBetween(value.minute, 0, 59))
+    && (value.cadence !== 'weekly' || integerBetween(value.dayOfWeek, 0, 6))
+    && (value.cadence !== 'monthly' || integerBetween(value.dayOfMonth, 1, 28))
+    && (value.timeZone === undefined || text(value.timeZone))
+    && (value.timeZoneOffsetMinutes === undefined || integerBetween(value.timeZoneOffsetMinutes, -840, 840));
+}
+function isSubscriptionDelivery(value: Record<string, unknown>): boolean {
+  return (value.recipients === null || (Array.isArray(value.recipients) && value.recipients.every(text)))
+    && ['pdf', 'in_app'].includes(String(value.format)) && ['platform', 'external'].includes(String(value.channel))
+    && typeof value.enabled === 'boolean' && timestamp(value.createdAt)
+    && (value.lastRunAt === null || timestamp(value.lastRunAt)) && (value.nextRunAt === null || timestamp(value.nextRunAt));
+}
+/** Also guards recovery reads: a malformed/absent list cannot authorize review. */
+export function isSubscriptionRow(value: unknown): value is SubscriptionRow {
+  return record(value) && positiveId(value.id) && text(value.reportTypeId) && text(value.scopeType) && text(value.scopeId)
+    && isReportSchedule(value.schedule) && isSubscriptionDelivery(value);
+}
+export const isSubscriptionList = (value: unknown): value is SubscriptionRow[] => Array.isArray(value) && value.every(isSubscriptionRow) && new Set(value.map(row => row.id)).size === value.length;
+
+export function isBundleRow(value: unknown): value is BundleRow {
+  return record(value) && uuid(value.bundleId) && text(value.name) && timestamp(value.createdAt)
+    && Array.isArray(value.projectIds) && value.projectIds.length > 0 && value.projectIds.every(positiveId)
+    && new Set(value.projectIds).size === value.projectIds.length
+    && Array.isArray(value.runIds) && value.runIds.length > 0 && value.runIds.every(positiveId)
+    && Array.isArray(value.items) && value.items.every(item => record(item) && positiveId(item.runId) && uuid(item.runUuid)
+      && text(item.reportTypeId) && text(item.reportTypeLabel) && text(item.scopeType) && text(item.scopeId)
+      && text(item.status) && timestamp(item.createdAt) && (item.confidence === null || (typeof item.confidence === 'number' && Number.isFinite(item.confidence))))
+    && sameMembers(value.runIds, value.items.map(item => item.runId))
+    && new Set(value.items.map(item => item.runUuid)).size === value.items.length;
+}
+export const isBundleList = (value: unknown): value is BundleRow[] => Array.isArray(value) && value.every(isBundleRow) && new Set(value.map(row => row.bundleId)).size === value.length;
+
+function coherentPositive(body: unknown): body is { data: unknown } {
+  return record(body) && (body.success === undefined || body.success === true) && body.error == null && body.code == null && body.recordingOutcome == null && body.retryAllowed == null && 'data' in body;
+}
+function unknownWrite<T>(status: number, noun: string, code?: string): WriteOutcome<T> {
+  return { ok: false, status, code, unconfirmed: true, message: `The ${noun} request may have completed. Check current ${noun === 'bundle' ? 'bundles' : 'schedules'} and review them before allowing another request.` };
+}
+function knownBundleRollback(status: number, body: unknown, code?: string): boolean {
+  return status === 503 && record(body) && body.success === false && code === 'REPORT_BUNDLE_NOT_RECORDED'
+    && body.recordingOutcome === 'not-recorded' && body.retryAllowed === true && body.data == null;
+}
+function contradictoryRefusal(body: unknown): boolean {
+  return record(body) && (body.data != null || body.success === true || body.recordingOutcome === 'unconfirmed' || body.retryAllowed === false);
+}
+function refusedWrite<T>(res: ApiResult<unknown>, noun: string, fallback: string): WriteOutcome<T> {
+  const code = errorCodeOf(res.body);
+  const rollbackKnown = noun === 'bundle' && knownBundleRollback(res.status, res.body, code);
+  const sizeKnown = noun === 'bundle' && res.status === 413 && code === 'REPORT_BUNDLE_TOO_LARGE';
+  const unknown = mutationUnconfirmed(res.status, code === 'REPORT_BUNDLE_OUTCOME_UNKNOWN' ? 'OUTCOME_UNKNOWN' : code);
+  if (contradictoryRefusal(res.body) || (code === 'REPORT_BUNDLE_NOT_RECORDED' && !rollbackKnown)
+    || (unknown && !rollbackKnown && !sizeKnown)) return unknownWrite(res.status, noun, code);
+  return { ok: false, status: res.status, code, unconfirmed: false, message: apiErrorText(res, fallback) };
+}
+function matchesSubscription(row: SubscriptionRow, body: CreateSubscriptionBody): boolean {
+  return Object.entries(body.schedule).every(([key, value]) => row.schedule[key as keyof ReportSchedule] === value)
+    && row.reportTypeId === body.reportTypeId && row.scopeType === body.scopeType && row.scopeId === body.scopeId
+    && row.enabled === (body.enabled ?? true) && row.format === (body.format ?? 'in_app') && row.channel === (body.channel ?? 'platform')
+    && sameMembers(row.recipients ?? [], body.recipients ?? []);
 }
 
 /** Create a schedule. The creator and the org come from the session. */
 export async function createSubscription(body: CreateSubscriptionBody): Promise<WriteOutcome<SubscriptionRow>> {
-  const res = await apiCall<{ data: SubscriptionRow }>('POST', '/api/insights/subscriptions', body);
-  if (!res.ok) {
-    return { ok: false, status: res.status, message: apiErrorText(res, 'The schedule was not saved.') };
-  }
-  return { ok: true, status: res.status, data: res.body?.data };
+  const res = await apiCall<unknown>('POST', '/api/insights/subscriptions', body);
+  if (!res.ok) return refusedWrite(res, 'schedule', 'The schedule was not saved.');
+  const row = coherentPositive(res.body) ? res.body.data : null;
+  if (res.status !== 201 || !isSubscriptionRow(row) || !matchesSubscription(row, body)) return unknownWrite(res.status, 'schedule', errorCodeOf(res.body));
+  return { ok: true, status: res.status, data: row };
 }
 
 /** Pause or resume a schedule. */
 export async function setSubscriptionEnabled(id: number, enabled: boolean): Promise<WriteOutcome<SubscriptionRow>> {
-  const res = await apiCall<{ data: SubscriptionRow }>('PATCH', `/api/insights/subscriptions/${id}`, { enabled });
-  if (!res.ok) {
-    return {
-      ok: false,
-      status: res.status,
-      message: apiErrorText(res, enabled ? 'The schedule was not resumed.' : 'The schedule was not paused.'),
-    };
-  }
-  return { ok: true, status: res.status, data: res.body?.data };
+  const res = await apiCall<unknown>('PATCH', `/api/insights/subscriptions/${id}`, { enabled });
+  if (!res.ok) return refusedWrite(res, 'schedule', enabled ? 'The schedule was not resumed.' : 'The schedule was not paused.');
+  const row = coherentPositive(res.body) ? res.body.data : null;
+  if (res.status !== 200 || !positiveId(id) || !isSubscriptionRow(row) || row.id !== id || row.enabled !== enabled) return unknownWrite(res.status, 'schedule', errorCodeOf(res.body));
+  return { ok: true, status: res.status, data: row };
 }
 
 /** Bundle chosen runs into one governed pack. */
@@ -534,7 +608,7 @@ export async function createBundle(
   runIds: number[],
   description?: string,
 ): Promise<WriteOutcome<BundleRow>> {
-  const res = await apiCall<{ data: BundleRow }>('POST', '/api/report-os/bundles', {
+  const res = await apiCall<unknown>('POST', '/api/report-os/bundles', {
     name,
     runIds,
     ...(description && description.trim() ? { description: description.trim() } : {}),
@@ -542,9 +616,12 @@ export async function createBundle(
   if (!res.ok) {
     // 422 is the "no project to file it under" case, which has its own reason.
     const fallback = res.status === 422 ? BUNDLE_NEEDS_PROJECT_NOTE : 'The bundle was not created.';
-    return { ok: false, status: res.status, message: apiErrorText(res, fallback) };
+    return refusedWrite(res, 'bundle', fallback);
   }
-  return { ok: true, status: res.status, data: res.body?.data };
+  const row = coherentPositive(res.body) ? res.body.data : null;
+  if (res.status !== 201 || !isBundleRow(row) || row.name !== name.trim() || !sameMembers(row.runIds, runIds)
+    || (description?.trim() && row.description !== description.trim())) return unknownWrite(res.status, 'bundle', errorCodeOf(res.body));
+  return { ok: true, status: res.status, data: row };
 }
 
 /* ══════════════════════════════════════════════════════════════════
