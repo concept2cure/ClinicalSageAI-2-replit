@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-10-23T21:50:06.293563+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "--format",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.073,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "tests-in-progress-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx": "b912e9548797ad209fed79b0c164aa0e44c1cb9866ea338100d37e205ab8817d",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx": "f4b206167781dd1b043aa099b1806a23c83f6c340a66a8b020d0faba190f4ac3",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "5b34cb098f98e94e879e635e521f68f873a5a1a4197379bd1a34e8f3c07306f1",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx": "22e380bad23f739207604689e3d95270ca425e20c2633f5e1144572b6d7f9482"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx": "b912e9548797ad209fed79b0c164aa0e44c1cb9866ea338100d37e205ab8817d",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx": "f4b206167781dd1b043aa099b1806a23c83f6c340a66a8b020d0faba190f4ac3",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "5b34cb098f98e94e879e635e521f68f873a5a1a4197379bd1a34e8f3c07306f1",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx": "22e380bad23f739207604689e3d95270ca425e20c2633f5e1144572b6d7f9482"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-tests-initial.log.gz",
+  "rawGzipSha256": "69d2b6747950124c4de087dead3ca2fc27562755f6790cb134a0b7c9bdcdd9d9",
+  "testSummary": []
+}

@@ -1,0 +1,10 @@
+{
+  "migrationListByteIdentical": true,
+  "migrationListSha256": "e5b78b2d74bb13d9d275b03b6052f5eaaa7e80bce8ef5637463f79c8c011df7c",
+  "beforeAllFixtureIdenticalExceptLazyPoolInjection": true,
+  "recoveryCasesByteIdenticalExceptLazyFixtureBindings": true,
+  "recoveryCasesOriginalSha256": "694bf1d9d9efdec177ed275bdb709c15313d44bfa5953b4f941f33ee6c23f59b",
+  "originalTestLines": 528,
+  "newTestLines": 484,
+  "helperLines": 75
+}

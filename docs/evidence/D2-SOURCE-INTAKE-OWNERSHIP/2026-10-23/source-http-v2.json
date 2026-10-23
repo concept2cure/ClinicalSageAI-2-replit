@@ -1,0 +1,57 @@
+{
+  "startedAt": "2026-10-23T21:53:36.920256+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 10.876,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "http-freeze-v2.json",
+  "sourcesBefore": {
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "cb4c112ed8ad3ea929db7b7101a2634008fb423743ba793df13edc2c91e76dc8",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "server/routes/authoring.router.ts": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43",
+    "server/services/authoring/authoring-source-import.ts": "0887be348a5c76ef9d0ffe0cdd6c02918334fc83bc7946a395514558a6168192",
+    "server/services/authoring/authoring-documents.ts": "e470af59d5e3b469144320a01a1f64e04b2e6951a9d6271771f27dd3ba450510",
+    "server/services/authoring/authoring-from-draft.ts": "166444e48fd43769ed4409b035ec18bedf6e57d2e8897d1f0aae2bf76f94d308",
+    "server/services/authoring/authoring-create-outcome.ts": "04003e0687ab8398b8c319db10ce27162d491273530604b7703758af58bd73dc",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "server/services/authoring/authoring-document-read.ts": "91a661a6cfa42703cbf7587bded8942749567ed558ecd441a2f8165ca3d23e83",
+    "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd"
+  },
+  "sourcesAfter": {
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "cb4c112ed8ad3ea929db7b7101a2634008fb423743ba793df13edc2c91e76dc8",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "server/routes/authoring.router.ts": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43",
+    "server/services/authoring/authoring-source-import.ts": "0887be348a5c76ef9d0ffe0cdd6c02918334fc83bc7946a395514558a6168192",
+    "server/services/authoring/authoring-documents.ts": "e470af59d5e3b469144320a01a1f64e04b2e6951a9d6271771f27dd3ba450510",
+    "server/services/authoring/authoring-from-draft.ts": "166444e48fd43769ed4409b035ec18bedf6e57d2e8897d1f0aae2bf76f94d308",
+    "server/services/authoring/authoring-create-outcome.ts": "04003e0687ab8398b8c319db10ce27162d491273530604b7703758af58bd73dc",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "server/services/authoring/authoring-document-read.ts": "91a661a6cfa42703cbf7587bded8942749567ed558ecd441a2f8165ca3d23e83",
+    "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd"
+  },
+  "sourceDrift": [],
+  "rawOutput": "source-http-v2.log.gz",
+  "rawGzipSha256": "3f8186a4cc8919103e3f6d69e433dcf3891010678f8cb50b366a2412406383d8",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  4 failed | 16 passed (20)",
+    "Duration  10.15s (transform 4.07s, setup 73ms, import 650ms, tests 9.21s, environment 0ms)"
+  ]
+}

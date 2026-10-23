@@ -1,0 +1,53 @@
+{
+  "scope": "All artifacts in this extraction packet, excluding this manifest.",
+  "files": {
+    "README.md": {
+      "bytes": 1623,
+      "sha256": "d3ed098b7609759869245f1bac34acccb48d48be3d07a0344fb656f69e8bf71d"
+    },
+    "_source-import-recovery-qualification.ts.gz": {
+      "bytes": 1795,
+      "sha256": "c382dd0ca0112eaf1f4538295ae26aca1a67716b4597bcd856a52d60eebea7fa"
+    },
+    "authoringSourceImport.pglite.integration.test.ts.gz": {
+      "bytes": 8096,
+      "sha256": "edeee63ad0e047321f6f094a85e381f95d20cd29458c19c2858f5c31da84ef4f"
+    },
+    "pre-extraction.json": {
+      "bytes": 363,
+      "sha256": "c74594d70fd0f500ec119fe6ee2a86b68a9cc2d277a013255b5d61bacb0cdf81"
+    },
+    "preservation.json": {
+      "bytes": 430,
+      "sha256": "f61fe7fe3a8cdca071d8df227a3213400174317c4401737d2e051c859d7e6bf5"
+    },
+    "run-check.py": {
+      "bytes": 2348,
+      "sha256": "4eb8f0f313cc617a28564e16a463a60c01ecea8ca2c7abfd21679ead896efd9e"
+    },
+    "source-freeze.json": {
+      "bytes": 1900,
+      "sha256": "22399db3c4632237d2ee656c64609d7a8d3f16734211a8f3ce930021072e8418"
+    },
+    "source-http-pre-extraction.test.ts.gz": {
+      "bytes": 8809,
+      "sha256": "72d0c9bc5db0693c0ccaab8acdce4992deafe56e4d3e5c21e3cf084b58abb6f7"
+    },
+    "source-http.json": {
+      "bytes": 4344,
+      "sha256": "d00da0819b47f64d0f73b662e74bfabcc62c8f622f75b0f96e130dd10a27bad9"
+    },
+    "source-http.log.gz": {
+      "bytes": 3311,
+      "sha256": "49d68592baea998a45e2ce8425052de880943856ebac5ed12fe35c228e8789ce"
+    },
+    "strict-lint.json": {
+      "bytes": 4189,
+      "sha256": "3ea37e70a0135c42df772e9df972be5ddf8471899551c698168cf161e57d4c67"
+    },
+    "strict-lint.log.gz": {
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    }
+  }
+}

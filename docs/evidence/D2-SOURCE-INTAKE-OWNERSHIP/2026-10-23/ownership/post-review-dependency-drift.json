@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-23T21:59:59.022015+00:00",
+  "qualification": "review-green and review-lint both had sourceDrift=[] during their executions",
+  "observation": "A dependency changed after qualification; final-current freeze paused pending root coordination",
+  "changes": [
+    {
+      "path": "client/src/utils/authToken.ts",
+      "qualifiedSha256": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+      "currentSha256": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ const preview: AuthoringSourceImportPreviewData = { preview: true, origin, finge
   sections: origin.sectionOrigins.map(s => ({ code: s.code, title: s.code, contentSha256: s.contentSha256 })), gaps: [], warnings: [],
   target: { programId, projectId: 42 }, association: { mode: 'recorded', required: false, reasonRequired: false,
     sourceProgramId: null, sourceProjectId: 42, targetProgramId: programId } };
-const section = (code: string, index: number) => ({ id: `section-${index}`, doc_id: docId, tenant_id: 7, code,
+const section = (code: string, index: number) => ({ id: `33333333-3333-4333-8333-${String(index).padStart(12, '0')}`, doc_id: docId, tenant_id: 7, code,
   title: `Working section ${code}`, content: `<p>Reviewed work for ${code}.</p>`, order_index: index });
 function copy(): AuthoringSourceImportData {
   return { doc: { id: docId, title: 'Edited working CSR', client_program_id: programId, tenant_id: 7,

@@ -1,0 +1,9 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx": "a66aa15a42910d879c0187f01c2996cf28ea69e230051bfc991f5602117e7538",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "2fb465847ecf605b9a87e156eadf9b051614588c11d4528141a4097743619c63",
+    "client/src/concept2cure/v2/editor/useSourceIntake.ts": "e6a8459fd96cd3161c3dff7953c7861068e075f5ed76d302a0eb015d873f8523",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "4063ee05ba6f52673ca2883459720e1e302d22096ae07a5ad4161610b102d7c8",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+  }
+}

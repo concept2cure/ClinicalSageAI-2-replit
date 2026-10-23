@@ -1,0 +1,37 @@
+{
+  "reviewedAt": "2026-10-23T21:52:21.162057+00:00",
+  "range": "1eca721b1..62a8d5e7f",
+  "mode": "Bounded read-only code/diff and prior evidence review; no incoming integration check run by this worker",
+  "verdict": "No material overlap or blocker for source intake ownership completion found",
+  "findings": [
+    "MDX requires the exact selected shell project and retains setEditorTarget \u2192 document-authoring section/program/docType handoff; no replacement editor",
+    "ProjectMdxWorkflow authoring routes into the existing project Author stage; ProjectHome source intake call unchanged",
+    "Reporting reuses PagedCompanyLegalPicker and canonical company leases for exact registered legal versions; no source-intake writer or authentication service changes"
+  ],
+  "reviewedCurrentFiles": {
+    "client/src/concept2cure/mdx/MdxSurfaceHost.tsx": "5b33f949d0d364cbd3757ac96758a6e5b8d154b77debacd41f462a8441c8619d",
+    "client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx": "c5904464d17cc8bbd9eb8239c6caa8e9f7d9b82b68256125d891b36c02b3a9ac",
+    "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx": "0975993d4367e3d9bb62cf61cc7aff2517a654b5ba065c7506d06cf380e113f7",
+    "client/src/concept2cure/v2/surfaces/MdxCatalogSolution.tsx": "dff6b69e323b6265b8e78c86321c04d7192b801e9e67d2848bdf6788eb9761d5",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "3c2d5e02c05f70940717c4cbedb16f1591f2c2b46db41a0c7bd66fb7ea2f8336",
+    "client/src/concept2cure/mdx/hooks/useDossier.ts": "2d25a59d3a61391a63e20b3c934ae1152afa0146319c19cdd2a2841bf957b68c",
+    "client/src/concept2cure/mdx/hooks/useK510.ts": "973cdc7b5f5b0e0c5aa29d14116a93f02fe3502e8bbe3c937f123719ef2dd0bd",
+    "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx": "f6943e48292ce2d4539856a7e846bef82b14740e794fbe0c41a453981d742032",
+    "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx": "c80ca3360335144014e13c1e7bfa2531b7db829547859acd2cc0dad00eb38d12",
+    "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx": "5b2a083217e2c277ec20204191da5be2562ef1dca51ac8be76a5a39f6e59b3b7"
+  },
+  "recommendedRootSuites": [
+    "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+    "client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx"
+  ],
+  "optionalReadAdapterSuites": [
+    "client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx",
+    "client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts",
+    "server/__tests__/routes/k510-document-preview.test.ts"
+  ]
+}

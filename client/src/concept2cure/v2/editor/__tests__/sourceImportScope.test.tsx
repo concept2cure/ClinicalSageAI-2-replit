@@ -9,16 +9,23 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 vi.mock('../../download', async original => ({ ...(await original<typeof import('../../download')>()), downloadBlob }));
 import { SourceImportDialog } from '../SourceImportDialog';
 import { ProjectFilesPanel } from '../ProjectFilesPanel';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
+import { clearShellProject, publishShellProject } from '../../shellProject';
 
 const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
 const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
 const source = { kind: 'data-room' as const, sourceId: 42 };
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
-const saved = (programId = PROGRAM_A, id = '42', kind = 'data-room') => ok({ success: true, data: {
-  doc: { id: 'working-copy-a', title: 'Source A working copy' }, sections: [],
-  origin: { kind, id, programId, sha256: 'ab'.repeat(32), conversion: 'extracted-text' },
-  warnings: [], reused: false,
-} });
+const DOC = '33333333-3333-4333-8333-333333333333';
+const saved = (programId = PROGRAM_A, id = '42', kind = 'data-room') => {
+  const origin = { kind, id, programId, title: 'Source A working copy', fileName: 'Source A.pdf', mimeType: 'application/pdf',
+    documentType: 'Report', sectionCode: null, sha256: 'ab'.repeat(32), conversion: 'extracted-text' };
+  return ok({ success: true, data: { doc: { id: DOC, title: 'Source A working copy', tenant_id: 12, client_program_id: programId,
+    created_by: 7, status: 'DRAFT', provenance: { source: 'import', importSource: { ...origin, reason: 'Review the saved source', warnings: [] } } },
+    sections: [{ id: '44444444-4444-4444-8444-444444444444', doc_id: DOC, tenant_id: 12, code: 'source.1', title: 'Source A', content: 'Recorded text', order_index: 0 }],
+    origin, warnings: [], reused: false } });
+};
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>(done => { resolve = done; });
@@ -28,12 +35,17 @@ function createCopy() {
   fireEvent.change(screen.getByLabelText('Reason for creating a working copy'), { target: { value: 'Review the saved source' } });
   fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
 }
-const upload = { id: 'upload-a', docId: 'upload-a', title: 'Source A.pdf', src: 'upload', num: '', type: 'Report',
+const upload = { id: '55555555-5555-4555-8555-555555555555', docId: '55555555-5555-4555-8555-555555555555', title: 'Source A.pdf', src: 'upload', num: '', type: 'Report',
   status: 'unfiled', pct: null, owner: '', ver: '', updated: '', preview: '' };
 const vault = (tree: unknown[]) => ok({ success: true, data: { tree } });
 const panelProps = { programName: 'Current program', fireToast: vi.fn(), onOpenDocument: vi.fn() };
-beforeEach(() => { apiRequest.mockReset(); downloadBlob.mockClear(); panelProps.fireToast.mockClear(); panelProps.onOpenDocument.mockClear(); });
-afterEach(() => cleanup());
+beforeEach(() => {
+  authService.endSession(null); clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`,
+    { id: '7', organizationId: '12', roles: ['admin'], permissions: ['governed:write'] }, 'fixture-refresh', 3600);
+  publishShellProject({ id: PROGRAM_A }); apiRequest.mockReset(); downloadBlob.mockClear(); panelProps.fireToast.mockClear(); panelProps.onOpenDocument.mockClear();
+});
+afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('source working copies stay in their selected scope', () => {
   it('discards a completed result and reason when the selected source changes', async () => {
@@ -53,6 +65,7 @@ describe('source working copies stay in their selected scope', () => {
     apiRequest.mockReturnValueOnce(old.promise).mockResolvedValueOnce(saved(PROGRAM_B));
     const view = render(<SourceImportDialog programId={PROGRAM_A} source={source} title="Source" onClose={() => {}} />);
     createCopy();
+    act(() => publishShellProject({ id: PROGRAM_B }));
     view.rerender(<SourceImportDialog programId={PROGRAM_B} source={source} title="Source" onClose={() => {}} />);
     await act(async () => { old.resolve(saved()); await old.promise; });
     expect(screen.queryByTestId('source-import-result')).toBeNull();
@@ -68,6 +81,7 @@ describe('source working copies stay in their selected scope', () => {
     fireEvent.click(await screen.findByText(upload.title));
     fireEvent.click(screen.getByRole('button', { name: 'Work on document' }));
     createCopy();
+    act(() => publishShellProject({ id: PROGRAM_B }));
     view.rerender(<ProjectFilesPanel programId={PROGRAM_B} {...panelProps} />);
     expect(screen.queryByTestId('source-import-dialog')).toBeNull();
     expect(screen.queryByText(upload.title)).toBeNull();
@@ -82,6 +96,7 @@ describe('source working copies stay in their selected scope', () => {
     const view = render(<ProjectFilesPanel programId={PROGRAM_A} {...panelProps} />);
     fireEvent.click(await screen.findByText(upload.title));
     fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    act(() => publishShellProject({ id: PROGRAM_B }));
     view.rerender(<ProjectFilesPanel programId={PROGRAM_B} {...panelProps} />);
     await act(async () => {
       old.resolve({ ok: true, status: 200, headers: new Headers({ 'Content-Type': 'text/plain' }), arrayBuffer: async () => new TextEncoder().encode('Source A text').buffer });

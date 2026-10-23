@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-23T22:15:43.871337+00:00",
+  "qualifiedBaseCommit": "17fd82f7f0bb32f72b811ec89f4e64fa8b8d5489",
+  "checks": [
+    "qualified-editor",
+    "qualified-canonical",
+    "production-build",
+    "lint-new-and-aligned",
+    "lint-existing-handoff",
+    "single-native-canvas",
+    "canvas-path",
+    "editor-integrity",
+    "design-system",
+    "shell-css-collisions",
+    "surface-text-ramp",
+    "repo-health-ceiling"
+  ],
+  "sourceFreeze": "source-freeze.json",
+  "declaredInputCount": 92,
+  "declaredInputsMatch": true,
+  "rawHashesVerify": true,
+  "testCounts": {
+    "editor": 336,
+    "canonical": 313,
+    "totalDisjoint": 649
+  },
+  "humanCasesNotRun": 102,
+  "compilerAndDirectPublication": "pending normal push hook",
+  "limits": [
+    "Bounded input closure",
+    "Synthetic client HTTP and PGlite are not native PostgreSQL concurrency/RLS or live provider/agency proof"
+  ]
+}

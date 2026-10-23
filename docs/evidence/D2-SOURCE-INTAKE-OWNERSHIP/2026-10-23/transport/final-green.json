@@ -1,0 +1,59 @@
+{
+  "startedAt": "2026-10-23T21:54:39.186040+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.568,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "source-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "c51c406971bc550140739c3b1aa4bd13ba8c17a4ee048265ac30718af17a404c",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts": "8cd84deb8c08c65a557b07b3505528bd998051a07245a6731b1d9a919bed2bd1",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts": "b2a946d611b6ce088f52209e0458da4577219f6c7c6feb03870f470624eaf0ed",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "shared/canonical-json.ts": "06ac6544f1422fead32f85b6ead22b3efe4571cf046d335006440dca7366a4c4",
+    "client/src/concept2cure/v2/authoringHandoffRecovery.ts": "83255d578e56f7ebffa1dda4a2e0c8a7df7a7504ccd1c2f5048ebcb585f0e37c",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "c51c406971bc550140739c3b1aa4bd13ba8c17a4ee048265ac30718af17a404c",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts": "8cd84deb8c08c65a557b07b3505528bd998051a07245a6731b1d9a919bed2bd1",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts": "b2a946d611b6ce088f52209e0458da4577219f6c7c6feb03870f470624eaf0ed",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "shared/canonical-json.ts": "06ac6544f1422fead32f85b6ead22b3efe4571cf046d335006440dca7366a4c4",
+    "client/src/concept2cure/v2/authoringHandoffRecovery.ts": "83255d578e56f7ebffa1dda4a2e0c8a7df7a7504ccd1c2f5048ebcb585f0e37c",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc"
+  },
+  "sourceDrift": [],
+  "rawOutput": "final-green.log.gz",
+  "rawGzipSha256": "c14cc12a5a513cd7ee2b5e8f34fb0ea66b46e397548d9b5cf53fab1c855701b0",
+  "testSummary": [
+    "Test Files  2 passed (2)",
+    "Tests  82 passed (82)",
+    "Duration  1.97s (transform 711ms, setup 173ms, import 783ms, tests 95ms, environment 607ms)"
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "scope": "All retained transport artifacts except this self-referential manifest.",
+  "files": {
+    "README.md": {
+      "bytes": 3859,
+      "sha256": "a0b415833419e5d5caf58ec011750a447a257dc5011cbe99c9352a69d297bd4f"
+    },
+    "final-authoringHandoff.ts.gz": {
+      "bytes": 8008,
+      "sha256": "bc0c840cec6fd010929243196ecb4b2f5d3de785e8a0c5af910b1660f17f1b3f"
+    },
+    "final-green.json": {
+      "bytes": 4193,
+      "sha256": "7e0c95b6b2bc342805166d4f6800fa7cb402e45e7fbffe5e922dffa40082c31b"
+    },
+    "final-green.log.gz": {
+      "bytes": 1801,
+      "sha256": "c14cc12a5a513cd7ee2b5e8f34fb0ea66b46e397548d9b5cf53fab1c855701b0"
+    },
+    "final-lint.json": {
+      "bytes": 4018,
+      "sha256": "bc0090df44b126260ffe76d20df76cae1a5a1a18da97ae21831bdd1dffa42b33"
+    },
+    "final-lint.log.gz": {
+      "bytes": 197,
+      "sha256": "90e27d9bcb5e3e9b137236b0ba018a56068bfea5c16c28930305346f83f1e329"
+    },
+    "final-sourceIntakeTransport.test.ts.gz": {
+      "bytes": 5320,
+      "sha256": "52979c4f3abebf8cd0e75efc513369d86f33d7ed1139978acc4c90c5fa3a0015"
+    },
+    "final-workflowImportReuse.test.ts.gz": {
+      "bytes": 1659,
+      "sha256": "43068650ed0b5ed40af2d79cc05aa62bc2d2fee504e3ce753bd2a3d692076ecf"
+    },
+    "lint-before.json": {
+      "bytes": 3133,
+      "sha256": "e9d8850d4621e05775df0acbe8c1cdb42ea843461dadb415650936b3f235d22e"
+    },
+    "lint-before.log.gz": {
+      "bytes": 6454,
+      "sha256": "af826072f364930581adae9ff5eba1497caf8e26b1e9ca0123541dc64951f5d8"
+    },
+    "red-authoringHandoff.ts.gz": {
+      "bytes": 4993,
+      "sha256": "a4ba160d3c2f73c3167c0286e3ceb78afef2e9263d82ba67ac953a337048e2d0"
+    },
+    "red-source-freeze.json": {
+      "bytes": 1282,
+      "sha256": "de9a18b4f674c23b03cc324624b7955848e5c1366cab443a205d3ce4266dbb1c"
+    },
+    "red-sourceIntakeTransport.test.ts.gz": {
+      "bytes": 1408,
+      "sha256": "8d913d26f6ea47a883ed1803797b17dc6f9e353e1b6a521650317d22e0f60df7"
+    },
+    "red-workflowImportReuse.test.ts.gz": {
+      "bytes": 1632,
+      "sha256": "5734b8b826c1f01b891f7ff924cca5d2334e432dc76dbf0d4906ac2809661eca"
+    },
+    "red.json": {
+      "bytes": 3214,
+      "sha256": "1ff230064e433cc4508c6a8cfb4af01d6555d4fe0397a81677f0b7ad13e906d8"
+    },
+    "red.log.gz": {
+      "bytes": 1702,
+      "sha256": "49d31ebda23e704c56802bf5c0c8667a3c342681ef20ce32ca21105a4c5a5e29"
+    },
+    "run-check.py": {
+      "bytes": 2348,
+      "sha256": "4eb8f0f313cc617a28564e16a463a60c01ecea8ca2c7abfd21679ead896efd9e"
+    },
+    "source-freeze.json": {
+      "bytes": 1811,
+      "sha256": "c4dee1fd607f777a0459db82c398c0375ee1e1bf830831e0f0009185b466beba"
+    },
+    "specialist-prefix.json": {
+      "bytes": 295,
+      "sha256": "1b743a06690058de5e6af2c71c663e90c92b19e9c0249f184840a0a2bdbd44fc"
+    },
+    "transport-first-lint.json": {
+      "bytes": 4013,
+      "sha256": "149491a625ddb1967014f23eae2bf57e0dbe4dd37bd39956ea354d3551bc76de"
+    },
+    "transport-first-lint.log.gz": {
+      "bytes": 197,
+      "sha256": "90e27d9bcb5e3e9b137236b0ba018a56068bfea5c16c28930305346f83f1e329"
+    },
+    "transport-first-source-freeze.json": {
+      "bytes": 1780,
+      "sha256": "756a61312cf4430f9e6d0adcb8231703ffe8a47f32cc9c7587efa56e6c9287d5"
+    },
+    "transport-first-sourceIntakeTransport.test.ts.gz": {
+      "bytes": 5315,
+      "sha256": "4a210640723e9eac7999e69f9a1a0264d58010259a3c72e9853470556d26a7cf"
+    },
+    "transport-first.json": {
+      "bytes": 4237,
+      "sha256": "689d0b2fb631ac2b1307eb4d9b120881e0a509e6bc96d9babffc1a2ffe5c3c47"
+    },
+    "transport-first.log.gz": {
+      "bytes": 2906,
+      "sha256": "53b2d5ca7468c6faa47b65aad79c838f618f4e3b7acd3ffcbb7b6845eac85b9f"
+    }
+  }
+}

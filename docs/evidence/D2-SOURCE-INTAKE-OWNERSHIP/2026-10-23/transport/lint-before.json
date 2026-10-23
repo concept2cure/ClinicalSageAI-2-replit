@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-10-23T21:29:31.346635+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "client/src/concept2cure/v2/authoringHandoff.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+    "--format",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.001,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "red-source-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "bba2f120b45b3b3df19ae9d97c5271c90ad9f6ec0a37073f86466af939956250",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts": "545eddb03b2ba6cc764259980f9f350653c459193dd1b7bef1381dce90409309",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts": "32ea22ed23352dc032c07e25839a665bc75f6eead1654c5ef9238911dfff69f5",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "bba2f120b45b3b3df19ae9d97c5271c90ad9f6ec0a37073f86466af939956250",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts": "545eddb03b2ba6cc764259980f9f350653c459193dd1b7bef1381dce90409309",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts": "32ea22ed23352dc032c07e25839a665bc75f6eead1654c5ef9238911dfff69f5",
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-before.log.gz",
+  "rawGzipSha256": "af826072f364930581adae9ff5eba1497caf8e26b1e9ca0123541dc64951f5d8",
+  "testSummary": []
+}

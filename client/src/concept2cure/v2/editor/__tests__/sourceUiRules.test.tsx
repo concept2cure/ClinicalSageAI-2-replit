@@ -9,6 +9,9 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 import { SourceImportDialog } from '../SourceImportDialog';
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
+import { clearShellProject, publishShellProject } from '../../shellProject';
 
 const programId = '11111111-1111-4111-8111-111111111111';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data });
@@ -17,8 +20,13 @@ const sourcePage = (sources: Array<typeof source & { originalFileAvailable?: boo
   projectId: programId, sources: sources.map(row => ({ isCurrent: true, originalFileAvailable: true, ...row })),
   total: sources.length, currentTotal: sources.length, page: { limit: 50, offset: 0 }, window: { shown: sources.length, truncated: false },
 });
-beforeEach(() => { apiRequest.mockReset(); });
-afterEach(() => cleanup());
+beforeEach(() => {
+  authService.endSession(null); clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  const bearer = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
+  authService.setToken(bearer, { id: '7', organizationId: '12', roles: ['admin'] }, 'fixture-refresh', 3600);
+  publishShellProject({ id: programId }); apiRequest.mockReset();
+});
+afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('governed source intake rules', () => {
   it('explains the reason rule and refuses a short or overlong reason before sending', () => {

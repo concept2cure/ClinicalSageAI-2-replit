@@ -1,0 +1,42 @@
+{
+  "editor": [
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx",
+    "client/src/concept2cure/v2/__tests__/deferredAssessmentWorkbenches.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx"
+  ],
+  "canonical": [
+    "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+    "client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx",
+    "client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx",
+    "client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts",
+    "client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardResponseShape.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/lib/__tests__/api-request-active-organization.test.ts",
+    "client/src/utils/__tests__/authToken.test.ts",
+    "server/routes/__tests__/report-os-bundle-recording.test.ts",
+    "server/routes/__tests__/report-os-report-pack-export.test.ts",
+    "server/routes/__tests__/taskBoard-runtime-recovery.test.ts",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts"
+  ]
+}

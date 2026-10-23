@@ -1,0 +1,8 @@
+{
+  "scope": "Exact root source-http-v3 GREEN20 input immediately before private test-fixture extraction.",
+  "path": "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+  "bytes": 37464,
+  "lines": 528,
+  "sha256": "9a279e714f0dfb5d5f5b8ca4297a20bf3d6da46226747a4d8bcd28732605654c",
+  "archive": "source-http-pre-extraction.test.ts.gz"
+}

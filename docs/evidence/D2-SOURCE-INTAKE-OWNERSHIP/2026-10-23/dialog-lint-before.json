@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "npx",
+    "eslint",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx"
+  ],
+  "exitCode": 0,
+  "sha256": "fd7109971d44da0b8d970fdf4d012a2c797a77de8f561d3ce1c64efe58582757",
+  "nodeVersion": "v22.23.3"
+}
