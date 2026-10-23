@@ -1,0 +1,120 @@
+{
+  "qualifiedCommit": "66110e1a74cf0d477af208f692fc5b276529e8d8",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 8764,
+      "sha256": "1f0b357a2b07eca0efb6d6026c2105d1901c7903449675942d030b89f548e304"
+    },
+    {
+      "path": "auth/green.txt",
+      "bytes": 17130,
+      "sha256": "69d14930e3c1485f6f4b77a7842b405681fbd25c2302f20df000fb39c2697254"
+    },
+    {
+      "path": "auth/red.txt",
+      "bytes": 14552,
+      "sha256": "4a0fd9563a004c3d02a90bb6e606fc01c1f83f1757ee9f15462387a1367edb0f"
+    },
+    {
+      "path": "auth/switch-and-guard.txt",
+      "bytes": 12190,
+      "sha256": "56fde1d1a8bafcae8727244a3a083cab3826cecffa3e1b185863426b24147c35"
+    },
+    {
+      "path": "board/README.md",
+      "bytes": 5802,
+      "sha256": "1cb4b3b577f4b8a99b44c7b73b983a5646670967379c1506fe51e8d2655ab78a"
+    },
+    {
+      "path": "board/green.log",
+      "bytes": 29535,
+      "sha256": "b334428392a5fb54999940812788de73d58e10e44192ebfb535b9ded5c473f25"
+    },
+    {
+      "path": "board/inputs.sha256",
+      "bytes": 476,
+      "sha256": "cbead0e57716d6b13b88f606104c0dc1735246a236e1620fbcc67220f70dc416"
+    },
+    {
+      "path": "board/lint-baseline-client.log",
+      "bytes": 1131,
+      "sha256": "4748bb9b84517fae9378ded7bf60faa0cbc63e1aea1c76ee9ff66936aafa6a48"
+    },
+    {
+      "path": "board/lint-baseline-server.log",
+      "bytes": 189,
+      "sha256": "84a362ccdd675af741341fff19d75f684290bdea50a27076f0c2d0afc04613aa"
+    },
+    {
+      "path": "board/lint.log",
+      "bytes": 1284,
+      "sha256": "37c7e2ad33dae314e9ee5637bf2cd92106a9b5e1b1b83ab92f0e30f9990427cf"
+    },
+    {
+      "path": "board/partial-empty-red.log",
+      "bytes": 1965,
+      "sha256": "ae142e7d23f08f3f12acb23e4e4dbd27ee89946f127a043d56129208c1b07eff"
+    },
+    {
+      "path": "board/red.log",
+      "bytes": 3974,
+      "sha256": "038546255945f6085b85aa15095839c2d9bbb2e4c164c46de275eb5561eb00c5"
+    },
+    {
+      "path": "board/shape-final.log",
+      "bytes": 1238,
+      "sha256": "aa9083f376946eb21e5436720e25c5e58ab53f188484591dffed78c2236f87f3"
+    },
+    {
+      "path": "browser-cross-tab.json",
+      "bytes": 1465,
+      "sha256": "15c85ddd40d7291b1973c90fe77080cde0de45baf9cf4ad9e193e059ca942f87"
+    },
+    {
+      "path": "browser-recovery.json",
+      "bytes": 466,
+      "sha256": "df2b6868ce29fc29354dd6f483f75f1edd8a407367f1af8892c8aec9d6630e2b"
+    },
+    {
+      "path": "browser.json",
+      "bytes": 5819,
+      "sha256": "67aaaf94d895dfdf937b05faa071b2ee6f1ea35eec6e58e16217e13dcd3add41"
+    },
+    {
+      "path": "build.log.gz",
+      "bytes": 4688,
+      "sha256": "fd00331b53210adea32239c589b20f73ef00b920e9e7fd2c33813959aa25ca94"
+    },
+    {
+      "path": "checks.json",
+      "bytes": 911,
+      "sha256": "7691cb7b2b68feaa63e77be3ec73eba24c395c665de9dd243b94d61ac197df8c"
+    },
+    {
+      "path": "http.json",
+      "bytes": 2341,
+      "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
+    },
+    {
+      "path": "native-board.json",
+      "bytes": 1266,
+      "sha256": "a8cdef4727b7f83e3727b53735167b9fd7a5c314edf0878d6fe9a03066bded70"
+    },
+    {
+      "path": "qualified-inputs.json",
+      "bytes": 1554,
+      "sha256": "200b3439a3b186b03c74d31da9f1de71eaaf3ccef114664bca34739cb96c1410"
+    },
+    {
+      "path": "qualified-tests.log.gz",
+      "bytes": 5941,
+      "sha256": "db08a4fadcb9629a166ae5dcb6b1219fe369a995683f10726181090648721e4c"
+    },
+    {
+      "path": "typecheck.log",
+      "bytes": 204,
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    }
+  ]
+}
