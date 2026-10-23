@@ -32,5 +32,16 @@
     "--since",
     "5ff6d225274079e9a08444409471394d9963970c",
     "--gate"
+  ],
+  "canonicalUi": [
+    "client/src/concept2cure/v2/__tests__/apiCall.test.ts",
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
   ]
 }

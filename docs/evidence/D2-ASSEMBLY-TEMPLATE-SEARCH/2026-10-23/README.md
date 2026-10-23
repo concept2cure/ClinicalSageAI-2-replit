@@ -57,21 +57,45 @@ changed-file warning ratchet, production build and seven repository/editor/UI
 gates pass. Repeated worker and picker cohorts are not added to that count.
 `qualification.json` lists actual receipts and their original freeze scopes.
 
-The first combined run passed210/211: one root-authored AnA integration test
+The first combined run passed 210/211: one root-authored AnA integration test
 waited for a transient Structure built message after preparation had advanced to
 retained candidates. Its corrected wait checks the final candidate state. The
 original test is archived and its failure retained; no production change hid it.
 
 A declaration error initially included `/tmp/repo-health-ceiling-probe.json`,
-a generated scanner output, as a source input. The health command itself exited0
+a generated scanner output, as a source input. The health command itself exited 0
 but the runner correctly flagged that output's change. The explicit
 `publication-source-freeze.json` removes only that generated output, leaving
 **64 unchanged repository inputs**; the repeated health capture passes without
-drift. Earlier65-input receipts are retained with their actual scopes rather
+drift. Earlier 65-input receipts are retained with their actual scopes rather
 than overwritten or silently relabelled.
 
 The pre-publication fetch also found concurrent company-session and workflow
 catalogue/navigation completions at `aef1b6a15`. Normal merge and bounded
 integration verification follow. These do not replace the editor or authorize
 new drafting/filing acts. Full current TypeScript is required by the ordinary
-pre-push hook before publication; human cases1–95 remain Not run.
+pre-push hook before publication; human cases 1–95 remain Not run.
+
+## Canonical integration
+
+Implementation `1e3732a0a` and normal merge `c10dc27b2` preserve the incoming
+company/session and workflow-discovery completions. Read-only review found no
+compatibility blocker: incoming code touches none of our 64 declared repository
+inputs. Assembly still uses its pinned apiRequest path; apiCall's new owner
+guard is opt-in for existing company callers. The existing Apps destination and
+feature IDs are retained by the reached Workflow catalogue. The removed legacy
+CapabilityBrowser is intentionally replaced by that canonical destination.
+
+`canonical-source-freeze.json` extends the unchanged 64 inputs with 53 incoming/
+shared-owner inputs (**117** total), recording the deleted browser path separately.
+The bounded 9-suite integration and current build/UI checks use this explicit
+merged epoch. Repeated assembly/Workbench suites are not added to earlier 211
+tests as new coverage. Final publication verifies actual Git blobs and absence
+of the removed legacy path; no external generated output is a declared input.
+
+The merged canonical replay passes **184 tests / 9 suites**, the current build
+and all seven repository/editor/UI gates with no declared source drift. This
+includes repeated assembly and actual Workbench tests; it is a separate cohort,
+not 184 additional distinct tests. All own 64 repository pins are unchanged.
+Current whole-project TypeScript runs in the normal direct push hook; the actual
+accepted receipt and source Git-object verification follow publication.

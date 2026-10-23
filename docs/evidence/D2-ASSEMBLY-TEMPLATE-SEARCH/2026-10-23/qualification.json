@@ -1,115 +1,116 @@
 {
-  "at": "2026-10-23T20:40:06.812408+00:00",
-  "scope": "Own editor/picker qualification before normal canonical company/workflow integration. Repeated picker and worker cohorts are not added as distinct coverage.",
-  "sourceFreeze": "publication-source-freeze.json",
-  "sourceFreezeSha256": "a0a77c052f6b9e137d7449e06d3051d95bcf55923cb4263c2f03cbeece9a01a0",
-  "declaredInputs": 64,
+  "at": "2026-10-23T20:43:39.139032+00:00",
+  "scope": "Final canonical integration. Earlier editor/picker/worker results retain their original scopes and overlapping cohorts are never summed.",
+  "implementationCommit": "1e3732a0a",
+  "mergedCodeCommit": "c10dc27b2477c925d4707fc10dd2005da6db0cb4",
+  "sourceFreeze": "canonical-source-freeze.json",
+  "sourceFreezeSha256": "18948ee721e7a7ae30b930ae79efeb9b13c9e863b8b497517f81d6be99f5e41c",
+  "declaredInputs": 117,
+  "absentInputs": [
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx"
+  ],
+  "ownEditorQualification": "pre-canonical-qualification.json",
   "checks": [
     {
-      "receipt": "qualified-ui.json",
-      "sha256": "f7425a6a435d7935744ba47e07804198060160af843803ce3376d12fe713cd94",
+      "receipt": "canonical-ui.json",
+      "sha256": "6c6ebf8dad071ae28ca63e6f0cf5e68dc140d4cd02ca683d9af5e8622ada6ff5",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
-      "rawGzipSha256": "ed9d06ef428916a54b59ead2fd8ba1585531d1e5370fc912ab025eafbd9d3ef1",
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "1a66b3a1e2b522d5554dbf2c5594234515c087accfba1f668dfd853437bf286f",
       "testSummary": [
-        "Test Files  10 passed (10)",
-        "Tests  211 passed (211)",
-        "Duration  65.06s (transform 2.60s, setup 702ms, import 5.97s, tests 52.77s, environment 4.27s)"
+        "Test Files  9 passed (9)",
+        "Tests  184 passed (184)",
+        "Duration  34.40s (transform 3.09s, setup 622ms, import 5.05s, tests 23.93s, environment 3.65s)"
       ]
     },
     {
-      "receipt": "qualified-lint.json",
-      "sha256": "ac2591f680a9c60b09d51f42f88f9b2ecce65283eecf2ab3092adc01d343e4a8",
+      "receipt": "canonical-build.json",
+      "sha256": "b18d169af5ba30d8a8aa394f458812704362761fc0f576125e43cedca3e43d6d",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
-      "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "2e8c95726a2c50a1ef0a1d9f7e0fa0cef82bf679a6149073a31ebe9bbbf2b60f",
       "testSummary": []
     },
     {
-      "receipt": "qualified-warning-ratchet.json",
-      "sha256": "5fd2b667f8210eda6057b7e28beaa376a41648dbbb698929efb0590ac534b196",
+      "receipt": "canonical-ci-single-native-canvas.json",
+      "sha256": "97c8b2afd44ec35fde21df6ea628922c465782dfc2e5dde4af003b9b9393b841",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
-      "rawGzipSha256": "90b917a9ebb593de8465f21513af98cfc17c03a2a634204b6f2256fa6723a68a",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-build.json",
-      "sha256": "b6d980b3f0f438aeef29377c36b6d5c841b48a8e990cb2aa5548f807b53aa97d",
-      "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
-      "rawGzipSha256": "2bb29732a1298d2a22ed0c2a0f7573133c21c6d25dec7b5e29b4e571206e6c90",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-ci-single-native-canvas.json",
-      "sha256": "956a83c47d6afd376c61ae2cb48c5061ee0a1aa6b69b995e066e26767d727c48",
-      "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
       "testSummary": []
     },
     {
-      "receipt": "qualified-ci-canvas-path.json",
-      "sha256": "fb7c92c911f274022112fce603d1edcf41322d02373ba4e77ff02eabde735ac9",
+      "receipt": "canonical-ci-canvas-path.json",
+      "sha256": "f0486bc6c253c5e864b45f4a45cebaa300db1ecd4ebf38c8fa8567febdaa42c4",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
       "testSummary": []
     },
     {
-      "receipt": "qualified-ci-check-editor-integrity.json",
-      "sha256": "3caadc6e9db15c69abf6228fdc9a3f31e360c505c2272acf8932294914714349",
+      "receipt": "canonical-ci-check-editor-integrity.json",
+      "sha256": "dc7754243b9e917210c5a04e7ae2888437d79a5be05a11366b6679ce678ac309",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "7b36c3a871006c0b53b696a49034703a55cb9488f9192797e45c22e73aa4c574",
       "testSummary": []
     },
     {
-      "receipt": "qualified-ci-design-system.json",
-      "sha256": "09ed759e2c3366aea228b88fb3bdec599ca3d39d31bb5ea39a63d41a11527a23",
+      "receipt": "canonical-ci-design-system.json",
+      "sha256": "b01e7bb75fbe2c400110566980ce41cfe6e1ec420f692d230d86006950b9ad53",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
       "testSummary": []
     },
     {
-      "receipt": "qualified-ci-check-shell-css-collisions.json",
-      "sha256": "3a88302d1d6892b30bc221eff22bf88710881fceede9feac071bc83d68b780e8",
+      "receipt": "canonical-ci-check-shell-css-collisions.json",
+      "sha256": "9fc9304732e46951afcea68a7f18d60bb2fa76a49cf17ec29993a3df3fcd32af",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
       "testSummary": []
     },
     {
-      "receipt": "qualified-ci-surface-text-ramp.json",
-      "sha256": "4f039aedff3b618587fd12e199b065ab691165aebb469e5c39b05470f73d4ff9",
+      "receipt": "canonical-ci-surface-text-ramp.json",
+      "sha256": "01865b23215eb8875238d2ae44fbdef2b91cd31c165b1f85330b9e7d5deaccaf",
       "exitCode": 0,
-      "sourceFreeze": "qualified-source-freeze.json",
+      "sourceFreeze": "canonical-source-freeze.json",
       "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
       "testSummary": []
     },
     {
-      "receipt": "publication-repo-health.json",
-      "sha256": "f9f127d742ae6e2c8ecab1afbe784b74385f91008c24f9bae70e5bd65627d659",
+      "receipt": "canonical-audit-repo-health-ceiling.json",
+      "sha256": "12f14fb09b6249d58cd0a9c4ffca230094601bf29d615c24ee52242bf36045e5",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
-      "rawGzipSha256": "91b06e5b8c66a2b36ada1e4e30bb06d5c156c1289e516520bd7957d4b00d142a",
+      "sourceFreeze": "canonical-source-freeze.json",
+      "rawGzipSha256": "01603fddcce575174c7eadda932c92f2c50859b4178fdb142e93caefc112735b",
       "testSummary": []
     }
   ],
-  "selectedTests": 211,
-  "selectedSuites": 10,
-  "strictLintWarnings": 0,
+  "cohorts": [
+    {
+      "receipt": "qualified-ui.json",
+      "tests": 211,
+      "suites": 10
+    },
+    {
+      "receipt": "canonical-ui.json",
+      "tests": 184,
+      "suites": 9
+    }
+  ],
+  "cohortsOverlap": true,
+  "strictChangedFileLintWarnings": 0,
   "passedRepositoryGates": 7,
   "dependencyChanges": false,
   "baselineChanges": false,
-  "fullCompiler": "Pending actual normal pre-push hook; no zero-error claim inferred from older work.",
+  "fullCompiler": "Pending actual normal pre-push hook; not inferred from upstream or historical results.",
   "humanCases": 95,
   "humanStatus": "All Not run",
   "limits": [
     "Synthetic HTTP/auth client tests; no human acceptance or live provider/agency delivery.",
     "No server catalogue, source policy, template outline or agency coverage change.",
-    "Source pins are bounded inputs, not complete transitive dependency closure."
+    "Declared inputs are not exhaustive transitive dependency closure."
   ]
 }

@@ -1,9 +1,93 @@
 {
-  "scope": "Own qualified packet before normal canonical merge/publication; excludes this manifest itself.",
+  "scope": "Final merged qualification before normal direct publication; excludes this manifest itself. Accepted push/source Git verification follows in a documentation-only commit.",
   "files": {
     "README.md": {
-      "sha256": "97e420b77ef3ed49d655a873afce123ddcb8e8479b025f1781dc5ff6ccc5479f",
-      "bytes": 4563
+      "sha256": "68ca353390eceda8edddfb093403b15deea25a32546de00f2303a93a4342e195",
+      "bytes": 6086
+    },
+    "canonical-audit-repo-health-ceiling.json": {
+      "sha256": "12f14fb09b6249d58cd0a9c4ffca230094601bf29d615c24ee52242bf36045e5",
+      "bytes": 30990
+    },
+    "canonical-audit-repo-health-ceiling.log.gz": {
+      "sha256": "01603fddcce575174c7eadda932c92f2c50859b4178fdb142e93caefc112735b",
+      "bytes": 292
+    },
+    "canonical-build.json": {
+      "sha256": "b18d169af5ba30d8a8aa394f458812704362761fc0f576125e43cedca3e43d6d",
+      "bytes": 30951
+    },
+    "canonical-build.log.gz": {
+      "sha256": "2e8c95726a2c50a1ef0a1d9f7e0fa0cef82bf679a6149073a31ebe9bbbf2b60f",
+      "bytes": 4692
+    },
+    "canonical-ci-canvas-path.json": {
+      "sha256": "f0486bc6c253c5e864b45f4a45cebaa300db1ecd4ebf38c8fa8567febdaa42c4",
+      "bytes": 30968
+    },
+    "canonical-ci-canvas-path.log.gz": {
+      "sha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
+      "bytes": 215
+    },
+    "canonical-ci-check-editor-integrity.json": {
+      "sha256": "dc7754243b9e917210c5a04e7ae2888437d79a5be05a11366b6679ce678ac309",
+      "bytes": 30990
+    },
+    "canonical-ci-check-editor-integrity.log.gz": {
+      "sha256": "7b36c3a871006c0b53b696a49034703a55cb9488f9192797e45c22e73aa4c574",
+      "bytes": 330
+    },
+    "canonical-ci-check-shell-css-collisions.json": {
+      "sha256": "9fc9304732e46951afcea68a7f18d60bb2fa76a49cf17ec29993a3df3fcd32af",
+      "bytes": 30998
+    },
+    "canonical-ci-check-shell-css-collisions.log.gz": {
+      "sha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
+      "bytes": 190
+    },
+    "canonical-ci-design-system.json": {
+      "sha256": "b01e7bb75fbe2c400110566980ce41cfe6e1ec420f692d230d86006950b9ad53",
+      "bytes": 30972
+    },
+    "canonical-ci-design-system.log.gz": {
+      "sha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "bytes": 173
+    },
+    "canonical-ci-single-native-canvas.json": {
+      "sha256": "97c8b2afd44ec35fde21df6ea628922c465782dfc2e5dde4af003b9b9393b841",
+      "bytes": 30986
+    },
+    "canonical-ci-single-native-canvas.log.gz": {
+      "sha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
+      "bytes": 139
+    },
+    "canonical-ci-surface-text-ramp.json": {
+      "sha256": "01865b23215eb8875238d2ae44fbdef2b91cd31c165b1f85330b9e7d5deaccaf",
+      "bytes": 30980
+    },
+    "canonical-ci-surface-text-ramp.log.gz": {
+      "sha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
+      "bytes": 157
+    },
+    "canonical-merge.json": {
+      "sha256": "c8e7ff1b99d8e96464c3273b33bce1fa6f1235d07d042424801c783ea2322b84",
+      "bytes": 16438
+    },
+    "canonical-merge.log.gz": {
+      "sha256": "e4c6031dab384e80f7f23c4765d39bdba30bb5e052a79e786817dc1638fb7861",
+      "bytes": 3481
+    },
+    "canonical-source-freeze.json": {
+      "sha256": "18948ee721e7a7ae30b930ae79efeb9b13c9e863b8b497517f81d6be99f5e41c",
+      "bytes": 19476
+    },
+    "canonical-ui.json": {
+      "sha256": "6c6ebf8dad071ae28ca63e6f0cf5e68dc140d4cd02ca683d9af5e8622ada6ff5",
+      "bytes": 31855
+    },
+    "canonical-ui.log.gz": {
+      "sha256": "1a66b3a1e2b522d5554dbf2c5594234515c087accfba1f668dfd853437bf286f",
+      "bytes": 5909
     },
     "combined-first-workbench-test.tsx.gz": {
       "sha256": "1dd542b2803abaa4bc97766764c0182a74d360544ddfa4427d572b437fcd2215",
@@ -17,9 +101,25 @@
       "sha256": "2f093fe6f85a982ecbd788dfc72ea8852051bae0dff6a92d734f3ea2cac2acb0",
       "bytes": 9398
     },
+    "final-canonical-fetch.json": {
+      "sha256": "e486673a6746d796d73d786664fb726c74b4989d1f6ee2df49a2252d715d4640",
+      "bytes": 30982
+    },
+    "final-canonical-fetch.log.gz": {
+      "sha256": "912622cc564a006c997ef32d6424bc48bb495574d6afbf6aeed3b9d9224d3c0b",
+      "bytes": 112
+    },
+    "implementation-commit.json": {
+      "sha256": "ccf7358012789eed2040a79ab8e1279f787729447fe101f30c6ce4c20b364a0d",
+      "bytes": 16496
+    },
+    "implementation-commit.log.gz": {
+      "sha256": "4f2d6374ae31a868a077d699758c528ea4ec9bbc0f4134b48088c76addd4fe24",
+      "bytes": 1121
+    },
     "independent-review.json": {
-      "sha256": "9155dfb15a6cbf76ca8cc8e87ba8acc0a9dfeeebda10e74d003eeb82073a6748",
-      "bytes": 1432
+      "sha256": "840b644a921b52c4175f63da3c31fbef7f6b2222165c921757e3c8ca0b296ae6",
+      "bytes": 2305
     },
     "picker-green-source-freeze.json": {
       "sha256": "e5e32b5c9812fff7efed18d23f8f36d8b178feb2689964904bcc10bf7eded9df",
@@ -97,6 +197,10 @@
       "sha256": "0727699d7220ccf6efadee24a420c6c0ba7d35d1b323f92515edc60331781d40",
       "bytes": 2128
     },
+    "pre-canonical-qualification.json": {
+      "sha256": "bbf049b8532669a5a82b1591c88a42d284b9e456c5356f05d260cf38124f280c",
+      "bytes": 4912
+    },
     "prepublication-fetch.json": {
       "sha256": "30909f8273a30211547e3a2607beea75073b542062d0893bbf3f6eb5cbd194c8",
       "bytes": 16655
@@ -118,12 +222,12 @@
       "bytes": 8516
     },
     "qualification-commands.json": {
-      "sha256": "d16bfc682641a2190c4587eac69602d9f7c4e8e92a6b6ed47ccb653bcc37870a",
-      "bytes": 1490
+      "sha256": "9a8a9a5fc26c0f5d3e37a8a5c1f1536eccb3021b45f568b274ed042927ddaa18",
+      "bytes": 2189
     },
     "qualification.json": {
-      "sha256": "bbf049b8532669a5a82b1591c88a42d284b9e456c5356f05d260cf38124f280c",
-      "bytes": 4912
+      "sha256": "db9236966ed1757eb49f5d85961ce0922076c227b249336ab7d02fbf9e8a517f",
+      "bytes": 4673
     },
     "qualified-audit-repo-health-ceiling.json": {
       "sha256": "0ff3dacd5c0bca9f8bb78af531d6d15d3dc96f65328ef5de6ec07263f5692a26",
