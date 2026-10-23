@@ -1,0 +1,10 @@
+{
+  "originalFreeze": "frozen-tests.json",
+  "originalFreezeCommit": "544cfcbf0de079494fdb95fa8e8fbafd7a12aa58",
+  "tests": {
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+  },
+  "change": "One erased test-fixture cast widened through unknown for deliberately incomplete metadata. Assertions, fixtures, runtime JavaScript and production unchanged; original bytes/logs retained. No red cases removed or skipped."
+}

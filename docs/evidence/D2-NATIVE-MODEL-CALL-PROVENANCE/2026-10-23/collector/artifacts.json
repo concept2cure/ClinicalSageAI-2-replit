@@ -1,0 +1,16 @@
+{
+  "scope": "Frozen worker evidence before root production; excludes this manifest and later root results.",
+  "files": {
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/README.md": "7a1b5b4d416461d2c383189ef455ab891a2941b530dc7f94cca26a8aed1c5b2e",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/baseline-after.json": "d8247da94ecf60592181d652b9ec8edb0946e925881bc8ed5d2e50c15f5c324f",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/baseline-before.json": "25e2d67cb50e30516f85d4e8a7f9059cd34c384acdc912d7bcfe55665f0faa8c",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/freeze.json": "06b347c9ddc2e893b7a8edd8b4a90d9cf920fd3cd60e6c7e9be2e4fa770d8d51",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-before-freeze.json": "ee116bc42379efdba901dff431f0779bd44620c0db5a7fa1b1dddbcd98ac2653",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-before-freeze.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-command.json": "d996f6c373cca84005e4a2659c8988e07239954467394f4b553fb9a772acf4fe",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-command.json": "fd488f292c9f84a4039fdf5b1595f7f4006fe8bd88ee97b06f5897b2bbd7c77e",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-exit.json": "f4d10bc08191b25062538b40f3d834e0b5cb50b225b9beaf6296cf49a196be4e",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-results.json": "96824389721d33bf036050621a034a88ab81535462e4460d87837f13ea216e2a",
+    "docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red.txt": "cf81d73c69e44cdf9a8249cdfd86d8a863c8ee66e577bc40f81c43a65c8e61d3"
+  }
+}

@@ -576,6 +576,7 @@ router.post('/agent', async (req: Request, res: Response) => {
           typed: String(prompt),
           messages,
           calls: collected.calls as LoopToolCall[],
+          servedCalls: collected.servedCalls,
           response: response as Parameters<typeof recordLoopTurn>[1]['response'],
           outcome,
           error,
@@ -603,6 +604,7 @@ router.post('/agent', async (req: Request, res: Response) => {
       },
       {
         maxRounds: maxRounds || 5,
+        onModelResponse: collected.onModelResponse,
         onToolExecution: (toolName, input, result) => {
           console.log(`[Claude Agent] Tool: ${toolName}`, Object.keys(input));
           collected.onToolExecution(toolName, input, result);

@@ -1,0 +1,33 @@
+{
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "capturedAt": "2026-10-23T17:25:00.495922+00:00",
+  "scope": "Selected initial production/rules/config/reader/regression inputs, not exhaustive dependency graph. Captured before contract/test/production changes.",
+  "files": {
+    "AGENTS.md": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+    "CLAUDE.md": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    ".husky/pre-commit": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
+    ".husky/pre-push": "3120d3b381d91eefdbad807c2511c6098e28ea2a3f7a7abdd39a55282136975e",
+    "server/services/ana/turn-record-loop.ts": "4eeb4745467edce0117c1e844f8ecefc56c6daa70f5fc69458bed1d23e649ada",
+    "server/routes/chat/send-message.ts": "8b207088e548ee52e32f876f599b7ea0f40817a2e63ae37de82addfcd3eee45f",
+    "server/routes/ana-intelligence.ts": "b9cb44bc33b1690f2d83027113688e1e99bdc00e9f9edb5c7f0731d2e98c906c",
+    "server/services/ana/ana-realtime.ts": "44107fbc94f03402b1a381b2d283ae6c90bebb065301d5fcc1b123463a829255",
+    "server/services/ana/AnaToolExecutor.ts": "29a42cbf3bea8212cf10ab802533debe4b6711bc248c16973fd69c0eaeb2e42c",
+    "server/services/ana/turn-record.ts": "1d0cabdfa63d05f0cd27684553acd99735c314de550a6ff2b18b149dd9eb740f",
+    "server/services/ana/turn-record-models.ts": "cab96729510306ef57ada2b6fc1a23ecc3051131a6572c85383d3be8fc92d2c5",
+    "server/services/ana/turn-record-verify.ts": "440ca578649859eaf7f602bd5d520df78fa063fcc000e713dcd451756ac13de7",
+    "server/services/ai-governance/approved-models.ts": "51c3e9406a899391ffcd3297fc330a78e8a11fcfb79584bc31c418f37971683c",
+    "server/services/authoring/machine-claim-verify.ts": "63782f78347176e3e39ac9e80b8d9ed75657d167aef4984cc7da08b09b93f25f",
+    "server/services/authoring/governed-machine-claims.ts": "b878e8a29978e53639d458782c62765457fffeeacdca4a7d7496b453f6ed732f",
+    "server/services/ana/__tests__/turn-record-loop.test.ts": "45709368d2a005056408e4a622e57e8daa5f460224acd8caf4ff86efd2068961",
+    "server/services/ana/__tests__/turn-record-served-models.test.ts": "2e131cb902fa8cf0f181ec35acc07f1b01253fde07fb4fe7af8c31f27ee7e0bb",
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts": "0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+    "server/routes/chat/__tests__/send-message-result-budget.test.ts": "c65f2f63632dc965f4da22e08f5fe5a64ba1ddbab3e425452c71504cad4912bd",
+    "server/services/authoring/__tests__/turn-served-models.pglite.test.ts": "2c4ae2ddcbc314bcf024da1eb33ae9b20c088527abb1727ddecb855de9a70819"
+  }
+}

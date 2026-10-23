@@ -1,0 +1,868 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:09.471Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:29:09.472Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:09.473Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:09.640Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > copies only primitive metadata immediately, without retaining or mutating the response 11ms
+   → expected [] to deeply equal [ { round: +0, …(3) } ]
+   → expected [] to deeply equal [ 'model', 'provider', …(2) ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > keeps first-round zero, later rounds and repeated-model calls with their distinct request IDs in callback order 12ms
+   → expected [] to deeply equal [ { round: +0, …(3) }, …(2) ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":"","model":"","requestId":""} 1ms
+   → expected [] to deeply equal [ { round: +0, provider: null, …(2) } ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":42,"model":false,"requestId":{"not":"a request id"}} 1ms
+   → expected [] to deeply equal [ { round: +0, provider: null, …(2) } ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {} 2ms
+   → expected [] to deeply equal [ { round: +0, provider: null, …(2) } ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves nonempty strings exactly, including whitespace under the existing helper rule 1ms
+   → expected [] to deeply equal [ { round: 7, provider: ' ', …(2) } ]
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves the existing raw tool collector without a model observer 1ms
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models 28ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ …(2) ]
+   → expected [ null ] to deeply equal [ false, true ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known 12ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ …(2) ]
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known 10ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ { provider: null, …(1) }, …(1) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ { provider: null, …(4) }, …(1) ]
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known 13ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ { provider: null, …(4) }, …(1) ]
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late failed turn without inventing a call from its error 9ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [] to deeply equal [ …(2) ]
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late stopped turn without inventing a call from its error 8ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [] to deeply equal [ …(2) ]
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the omitted observation-list legacy fallback and exact warning 10ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the empty observation-list legacy fallback and exact warning 7ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > names no served model when the first call fails without returning a response 7ms
+ × server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded 11ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+   → expected [ Array(1) ] to not include 'This turn ran through a door that rep…'
+   → expected 'This turn ran through a door that rep…' to match /model calls/i
+   → expected 'This turn ran through a door that rep…' to match /tool[- ]step round/i
+   → expected 'This turn ran through a door that rep…' to match /later model inputs/i
+   → expected 'This turn ran through a door that rep…' to match /not reported/i
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an unbound turn unrecorded despite observed models 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > copies only primitive metadata immediately, without retaining or mutating the response
+AssertionError: expected [] to deeply equal [ { round: +0, …(3) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "returned-1",
+-     "round": 0,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:95:38
+     93|     Object.assign(response, { provider: 'POISON_PROVIDER', model: 'POI…
+     94|     response.usage.totalTokens = 0;
+     95|     expect.soft(c.servedCalls ?? []).toEqual([observed(0, 'returned-1'…
+       |                                      ^
+     96|     expect.soft(Object.keys(c.servedCalls?.[0] ?? {}).sort()).toEqual(…
+     97|     expect.soft(c.servedCalls?.[0]).not.toBe(response);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > copies only primitive metadata immediately, without retaining or mutating the response
+AssertionError: expected [] to deeply equal [ 'model', 'provider', …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "model",
+-   "provider",
+-   "requestId",
+-   "round",
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:96:63
+     94|     response.usage.totalTokens = 0;
+     95|     expect.soft(c.servedCalls ?? []).toEqual([observed(0, 'returned-1'…
+     96|     expect.soft(Object.keys(c.servedCalls?.[0] ?? {}).sort()).toEqual(…
+       |                                                               ^
+     97|     expect.soft(c.servedCalls?.[0]).not.toBe(response);
+     98|     expect.soft(JSON.stringify(c.servedCalls ?? [])).not.toMatch(/PRIV…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > keeps first-round zero, later rounds and repeated-model calls with their distinct request IDs in callback order
+AssertionError: expected [] to deeply equal [ { round: +0, …(3) }, …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "returned-0",
+-     "round": 0,
+-   },
+-   {
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "returned-1",
+-     "round": 1,
+-   },
+-   {
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "returned-2",
+-     "round": 2,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:105:33
+    103|     const calls = [observed(0, 'returned-0', UNAPPROVED), observed(1, …
+    104|     calls.forEach(({ round, ...response }) => c.onModelResponse?.(resp…
+    105|     expect(c.servedCalls ?? []).toEqual(calls);
+       |                                 ^
+    106|   });
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":"","model":"","requestId":""}
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":42,"model":false,"requestId":{"not":"a request id"}}
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {}
+AssertionError: expected [] to deeply equal [ { round: +0, provider: null, …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "model": null,
+-     "provider": null,
+-     "requestId": null,
+-     "round": 0,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:115:33
+    113|     const c = collect();
+    114|     c.onModelResponse?.(response, 0);
+    115|     expect(c.servedCalls ?? []).toEqual([{ round: 0, provider: null, m…
+       |                                 ^
+    116|   });
+    117|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves nonempty strings exactly, including whitespace under the existing helper rule
+AssertionError: expected [] to deeply equal [ { round: 7, provider: ' ', …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "model": "	",
+-     "provider": " ",
+-     "requestId": "  ",
+-     "round": 7,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:121:33
+    119|     const c = collect();
+    120|     c.onModelResponse?.({ provider: ' ', model: '\t', requestId: '  ' …
+    121|     expect(c.servedCalls ?? []).toEqual([{ round: 7, provider: ' ', mo…
+       |                                 ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "native-0",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "native-1",
+-     "round": 1,
+-     "sent": null,
+-   },
+-   {
+-     "call": 3,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "native-2",
+-     "round": 2,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:141:35
+    139|     const final = { provider: APPROVED.provider, model: `${APPROVED.pr…
+    140|     const { body, stored, status } = await file({ servedCalls, respons…
+    141|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+       |                                   ^
+    142|     expect.soft(servedModelsOf(body.model)).toEqual([UNAPPROVED, APPRO…
+    143|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-   },
+-   {
+-     "model": "claude-opus-5-5",
++     "model": "anthropic/claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:142:45
+    140|     const { body, stored, status } = await file({ servedCalls, respons…
+    141|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    142|     expect.soft(servedModelsOf(body.model)).toEqual([UNAPPROVED, APPRO…
+       |                                             ^
+    143|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+    144|     expect.soft(status.servedBy?.map(model => model.approvedForHighRis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "approvedForHighRisk": false,
+-     "model": "claude-sonnet-5",
+-     "pq": "pending",
++     "approvedForHighRisk": null,
++     "model": "anthropic/claude-opus-5-5",
++     "pq": null,
+      "provider": "anthropic",
+      "qualified": false,
+-   },
+-   {
+-     "approvedForHighRisk": true,
+-     "model": "claude-opus-5-5",
+-     "pq": "pending",
+-     "provider": "anthropic",
+-     "qualified": true,
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:143:34
+    141|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    142|     expect.soft(servedModelsOf(body.model)).toEqual([UNAPPROVED, APPRO…
+    143|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+       |                                  ^
+    144|     expect.soft(status.servedBy?.map(model => model.approvedForHighRis…
+    145|     expect.soft(body.model.provider).toBe(final.provider);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models
+AssertionError: expected [ null ] to deeply equal [ false, true ]
+
+- Expected
++ Received
+
+  [
+-   false,
+-   true,
++   null,
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:144:75
+    142|     expect.soft(servedModelsOf(body.model)).toEqual([UNAPPROVED, APPRO…
+    143|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+    144|     expect.soft(status.servedBy?.map(model => model.approvedForHighRis…
+       |                                                                           ^
+    145|     expect.soft(body.model.provider).toBe(final.provider);
+    146|     expect.soft(body.model.model).toBe(final.model);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": null,
+-     "provider": "anthropic",
+-     "requestId": null,
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "known-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:162:35
+    160|     const servedCalls: readonly ObservedCall[] = [{ round: 0, ...unkno…
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+       |                                   ^
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": null,
+-     "provider": "anthropic",
+-   },
+-   {
+      "model": "claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:163:45
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+       |                                             ^
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -1,14 +1,7 @@
+  [
+    {
+-     "approvedForHighRisk": null,
+-     "model": null,
+-     "pq": null,
+-     "provider": "anthropic",
+-     "qualified": false,
+-   },
+-   {
+      "approvedForHighRisk": true,
+      "model": "claude-opus-5-5",
+      "pq": "pending",
+      "provider": "anthropic",
+      "qualified": true,
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:164:34
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+       |                                  ^
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:165:49
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+       |                                                 ^
+    166|   });
+    167|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-opus-5-5",
+-     "provider": null,
+-     "requestId": null,
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "known-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:162:35
+    160|     const servedCalls: readonly ObservedCall[] = [{ round: 0, ...unkno…
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+       |                                   ^
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ { provider: null, …(1) }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "model": "claude-opus-5-5",
+-     "provider": null,
+-   },
+-   {
+-     "model": "claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:163:45
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+       |                                             ^
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ { provider: null, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+@@ -1,14 +1,7 @@
+  [
+    {
+-     "approvedForHighRisk": null,
+-     "model": "claude-opus-5-5",
+-     "pq": null,
+-     "provider": null,
+-     "qualified": false,
+-   },
+-   {
+      "approvedForHighRisk": true,
+      "model": "claude-opus-5-5",
+      "pq": "pending",
+      "provider": "anthropic",
+      "qualified": true,
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:164:34
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+       |                                  ^
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": null,
+-     "provider": null,
+-     "requestId": null,
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "known-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:162:35
+    160|     const servedCalls: readonly ObservedCall[] = [{ round: 0, ...unkno…
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+       |                                   ^
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": null,
+-     "provider": null,
+-   },
+-   {
+      "model": "claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:163:45
+    161|     const { body, status } = await file({ servedCalls });
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+       |                                             ^
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ { provider: null, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+@@ -1,14 +1,7 @@
+  [
+    {
+-     "approvedForHighRisk": null,
+-     "model": null,
+-     "pq": null,
+-     "provider": null,
+-     "qualified": false,
+-   },
+-   {
+      "approvedForHighRisk": true,
+      "model": "claude-opus-5-5",
+      "pq": "pending",
+      "provider": "anthropic",
+      "qualified": true,
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:164:34
+    162|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    163|     expect.soft(servedModelsOf(body.model)).toEqual([unknownAuthor, AP…
+    164|     expect.soft(status.servedBy).toEqual(qualifyServedModels([unknownA…
+       |                                  ^
+    165|     expect.soft(status.servedBy?.[0].qualified).toBe(false);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late failed turn without inventing a call from its error
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late stopped turn without inventing a call from its error
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "completed-0",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "completed-1",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:174:35
+    172|     const { body, status } = await file({ outcome, response: undefined…
+    173|     expect.soft(body.turn.outcome).toBe(outcome);
+    174|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+       |                                   ^
+    175|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+    176|     expect.soft(body.model).toMatchObject({ provider: null, model: nul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late failed turn without inventing a call from its error
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late stopped turn without inventing a call from its error
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "approvedForHighRisk": false,
+-     "model": "claude-sonnet-5",
+-     "pq": "pending",
+-     "provider": "anthropic",
+-     "qualified": false,
+-   },
+-   {
+-     "approvedForHighRisk": true,
+-     "model": "claude-opus-5-5",
+-     "pq": "pending",
+-     "provider": "anthropic",
+-     "qualified": true,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:175:34
+    173|     expect.soft(body.turn.outcome).toBe(outcome);
+    174|     expect.soft(body.model.calls).toEqual(recorded(servedCalls));
+    175|     expect.soft(status.servedBy).toEqual(qualifyServedModels([UNAPPROV…
+       |                                  ^
+    176|     expect.soft(body.model).toMatchObject({ provider: null, model: nul…
+    177|     expect.soft(JSON.stringify(body.model)).not.toMatch(/REQUESTED_|NO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "returned-only",
+-     "round": 0,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:202:35
+    200|   it('states the remaining tool-round and later-input gaps when served…
+    201|     const { body } = await file({ servedCalls: [observed(0, 'returned-…
+    202|     expect.soft(body.model.calls).toEqual(recorded([observed(0, 'retur…
+       |                                   ^
+    203|     expect.soft(body.roundInputs).toEqual([]);
+    204|     expect.soft(body.warnings).not.toContain(LEGACY_LIMIT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected [ Array(1) ] to not include 'This turn ran through a door that rep…'
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:204:36
+    202|     expect.soft(body.model.calls).toEqual(recorded([observed(0, 'retur…
+    203|     expect.soft(body.roundInputs).toEqual([]);
+    204|     expect.soft(body.warnings).not.toContain(LEGACY_LIMIT);
+       |                                    ^
+    205|     const warning = body.warnings.join(' ');
+    206|     expect.soft(warning).toMatch(/model calls/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected 'This turn ran through a door that rep…' to match /model calls/i
+
+- Expected:
+/model calls/i
+
++ Received:
+"This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:206:26
+    204|     expect.soft(body.warnings).not.toContain(LEGACY_LIMIT);
+    205|     const warning = body.warnings.join(' ');
+    206|     expect.soft(warning).toMatch(/model calls/i);
+       |                          ^
+    207|     expect.soft(warning).toMatch(/tool[- ]step round/i);
+    208|     expect.soft(warning).toMatch(/later model inputs/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected 'This turn ran through a door that rep…' to match /tool[- ]step round/i
+
+- Expected:
+/tool[- ]step round/i
+
++ Received:
+"This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:207:26
+    205|     const warning = body.warnings.join(' ');
+    206|     expect.soft(warning).toMatch(/model calls/i);
+    207|     expect.soft(warning).toMatch(/tool[- ]step round/i);
+       |                          ^
+    208|     expect.soft(warning).toMatch(/later model inputs/i);
+    209|     expect.soft(warning).toMatch(/not reported/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected 'This turn ran through a door that rep…' to match /later model inputs/i
+
+- Expected:
+/later model inputs/i
+
++ Received:
+"This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:208:26
+    206|     expect.soft(warning).toMatch(/model calls/i);
+    207|     expect.soft(warning).toMatch(/tool[- ]step round/i);
+    208|     expect.soft(warning).toMatch(/later model inputs/i);
+       |                          ^
+    209|     expect.soft(warning).toMatch(/not reported/i);
+    210|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/33]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded
+AssertionError: expected 'This turn ran through a door that rep…' to match /not reported/i
+
+- Expected:
+/not reported/i
+
++ Received:
+"This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts:209:26
+    207|     expect.soft(warning).toMatch(/tool[- ]step round/i);
+    208|     expect.soft(warning).toMatch(/later model inputs/i);
+    209|     expect.soft(warning).toMatch(/not reported/i);
+       |                          ^
+    210|   });
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/33]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 5 passed (18)
+   Start at  17:29:07
+   Duration  4.69s (transform 1.03s, setup 73ms, import 1.77s, tests 2.59s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-results.json

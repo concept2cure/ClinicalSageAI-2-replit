@@ -1,0 +1,11 @@
+{
+  "originalTestSha256": "3a8947e2200c2abbde23f891ea0948180c18d1cb80fd4ab581038496e128a9f1",
+  "currentTestSha256": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836",
+  "firstPushHead": "a36245bc48c865fdb3ca5cd5d238ac52ba06043b",
+  "firstPushExit": 1,
+  "cause": "Whole-tree TypeScript TS2352 rejected an intentional fixture cast from unknown metadata directly to AnaGatewayResponse.",
+  "correction": "Add erased unknown bridge to that test-fixture cast only. Original frozen test saved exactly; no assertion, fixture value, source behavior or production edit.",
+  "originalBytes": "root/typecheck-correction-original.ts.txt",
+  "diff": "root/typecheck-correction.patch.txt",
+  "note": "Runtime equivalence proof and full current qualification follow."
+}

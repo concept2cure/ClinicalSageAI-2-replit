@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+    "--format",
+    "json"
+  ],
+  "cwd": "/workspace/Concept2Cure",
+  "env": {
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "exitCode": 0,
+  "stdoutSha256": "ee116bc42379efdba901dff431f0779bd44620c0db5a7fa1b1dddbcd98ac2653",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
