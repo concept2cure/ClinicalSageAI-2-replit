@@ -116,3 +116,17 @@ creation/workspace/market-reader cohort passes **92 checks** and a fresh
 production build passes, with all fifty-seven latest pins unchanged. These are
 source-bound overlapping cohorts, not a summed full-suite total. Normal gates
 and publication remain pending on the latest candidate.
+
+
+## Canonical eSTAR catch-up
+
+The third normal push passed all gates and full TypeScript with zero errors;
+the remote ref advanced to `035ee6854` before its update. The receipt is
+`verification/push-third-ref-race.txt.gz`. Ordinary merge `c503801bf` retains
+the governed official eSTAR attachment workflow. All fifty-seven preceding
+scoped pins still match. The four-file market-reader, eSTAR export and dispatch
+renewal cohort passes **58 checks** and a fresh production build passes; all
+eighty-five latest source/test/config pins match. The later `164b062b2` update
+is documentation only and leaves those pins unchanged. All earlier cohorts
+remain source-bound, with overlapping counts kept separate. Final normal gates
+and direct publication remain pending.

@@ -34,7 +34,7 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "Two completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
+  "fullCompilerAndPush": "Three completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
   "humanWitness": "unexecuted",
   "agencyQualification": "unexecuted",
   "firstFullCompilerAndPush": {
@@ -84,5 +84,30 @@
     "productionBuildExit": 0,
     "pinnedInputs": 57,
     "changedInputs": []
+  },
+  "thirdFullCompilerAndPush": {
+    "candidate": "24bfb02a2bd6f7532712630d106607ae3d26196e",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote advanced to035ee6854 during full compiler; ordinary merge retained official eSTAR attachments.",
+    "receipt": "push-third-ref-race.txt.gz"
+  },
+  "estarCatchup": {
+    "qualifiedHead": "c503801bf8793b1d5bf0ded0ed082a3f8bcd4cb0",
+    "currentHead": "3199db1c6ca8eb2e942ead1300113f0489e0c622",
+    "incoming": "035ee6854",
+    "tests": {
+      "files": 4,
+      "passed": 58,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 85,
+    "changedInputs": [],
+    "laterDocsOnlySync": "164b062b2"
   }
 }

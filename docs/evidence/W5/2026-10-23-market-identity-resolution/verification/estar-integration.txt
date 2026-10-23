@@ -1,0 +1,126 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 384ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 320ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 171ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 126ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature 104ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record 60ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 323ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature 181ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void 289ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 242ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 268ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new fda release verdict after a confirmed dispatched to dispatched act 333ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new ema release verdict after a confirmed dispatched to dispatched act 235ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new jp release verdict after a confirmed dispatched to dispatched act 331ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the ema release gates again before taking a new signature 213ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the jp release gates again before taking a new signature 326ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved fda verdict when the governed act has no confirmed receipt 975ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved ema verdict when the governed act has no confirmed receipt 3382ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved jp verdict when the governed act has no confirmed receipt 972ms
+stdout | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:41:44.197Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:41:44.200Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:41:44.200Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number 20ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's 7ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number 18ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built 5ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("not-a-market") never borrows either recorded number 3ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("") never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("   ") never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region (null) never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number 6ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("") cannot authorize the project or submission number 5ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("   ") cannot authorize the project or submission number 8ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > two identical unknown region strings do not establish home ownership 1ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes 18ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number 12ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number 15ms
+stderr | server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:41:52.679Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:41:52.795Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:41:52.796Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:41:52.796Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts > official export revalidates selected sources before retention and delivery > returns the truthful official flag and exact attachment receipt on the actual router response 201ms
+ ✓ server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts > official export revalidates selected sources before retention and delivery > refuses an actor with no identity before production or retention 37ms
+ ✓ server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts > official export revalidates selected sources before retention and delivery > refuses a source withdrawn during fill before retaining the output 77ms
+ ✓ server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts > official export revalidates selected sources before retention and delivery > withholds delivery and holds the outcome after write authority changes during retention 96ms
+ ✓ server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts > official export revalidates selected sources before retention and delivery > refuses an unpinned template on POST after a valid catalog read 340ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded fda facts 273ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded ema facts 88ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > reaches the existing governed dispatch chain for current recorded jp facts 48ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides fda renewal without explicit server authorization 33ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides ema renewal without explicit server authorization 27ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides jp renewal without explicit server authorization 29ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > hides unknown renewal without explicit server authorization 26ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows a refused ema renewal without asking for a signature 24ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows a refused jp renewal without asking for a signature 33ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not infer renewal from eligibility alone 25ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer fda renewal while another dispatch gate blocks 28ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer ema renewal while another dispatch gate blocks 25ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer jp renewal while another dispatch gate blocks 36ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > does not offer unnecessary renewal for a currently valid release 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a fda renewal 21ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a ema renewal 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only a server-authorized unsent release > shows the independent signer requirement for a jp renewal 31ms
+
+ Test Files  4 passed (4)
+      Tests  58 passed (58)
+   Start at  19:41:13
+   Duration  44.54s (transform 11.70s, setup 389ms, import 21.34s, tests 20.55s, environment 1.46s)
+
