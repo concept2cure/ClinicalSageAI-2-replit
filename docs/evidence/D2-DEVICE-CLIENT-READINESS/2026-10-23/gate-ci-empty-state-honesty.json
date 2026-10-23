@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:empty-state-honesty"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.637,
+  "output": "gate-ci-empty-state-honesty.log.gz",
+  "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+  "sourceFreeze": "source-freeze.json",
+  "sourceDrift": []
+}

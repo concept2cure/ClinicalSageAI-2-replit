@@ -39,7 +39,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -81,13 +81,19 @@ type Opts = {
   program?: Record<string, unknown>;
   /** The scoped read's meta.notOffered (the server's count). */
   notOffered?: number;
+  programRead?: Promise<Response>;
+  failProgram?: boolean;
 };
 function serve(opts: Opts = {}) {
   let subsFailures = opts.failSubs ?? 0;
+  const programResponse = opts.programRead ?? ok(opts.program ?? PROGRAM);
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
     const url = String(raw ?? '');
-    if (url === `/api/c2c/projects/${PID}`) return ok(opts.program ?? PROGRAM);
+    if (url === `/api/c2c/projects/${PID}`) {
+      if (opts.failProgram) throw fail();
+      return programResponse;
+    }
     if (url === SCOPED) {
       if (subsFailures > 0) { subsFailures -= 1; throw fail(); }
       return ok({ data: opts.subs ?? [SUB], meta: { notOffered: opts.notOffered ?? 4 } });
@@ -123,6 +129,60 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
+
+describe('Project home — device pathway actions reflect the supported workflow', () => {
+  it('waits for the project record before offering Add a market, then reaches the medicinal action', async () => {
+    let finish!: (response: Response) => void;
+    serve({ programRead: new Promise<Response>(resolve => { finish = resolve; }) });
+    await openSubmit();
+    expect((await screen.findByTestId('pj-markets')).textContent).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Add a market/ })).toBeNull();
+    await act(async () => { finish(ok(PROGRAM)); });
+    await waitFor(() => expect(screen.getByRole('button', { name: /Add a market/ })).toBeTruthy());
+  });
+
+  it('offers no market action after a failed project read', async () => {
+    serve({ failProgram: true });
+    await openSubmit();
+    await screen.findByText("Couldn't load this project");
+    expect(screen.queryByRole('button', { name: /Add a market/ })).toBeNull();
+  });
+
+  it.each(['510k', 'pma', 'mdr', 'ivdr'])('keeps the recorded %s pathway out of eCTD markets even when its product class is inconsistent', async (programType) => {
+    serve({ program: { ...PROGRAM, program_type: programType, product_type: 'drug' } });
+    await openSubmit();
+    const panel = await screen.findByTestId('pj-markets');
+    await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
+    expect(within(panel).queryByRole('button', { name: /Add a market|Compile and download/ })).toBeNull();
+    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
+  });
+
+  it.each([['device', '510k'], ['device', 'pma'], ['ivd', '510k'], ['cdx', 'pma'], ['samd', '510k']])('does not offer an eCTD market for a %s %s project, while retaining its submissions', async (productType, programType) => {
+    serve({ program: { ...PROGRAM, program_type: programType, product_type: productType }, subs: [{ ...SUB, applicationType: programType }] });
+    await openSubmit();
+    const panel = await screen.findByTestId('pj-markets');
+    await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
+    expect(within(panel).queryByRole('button', { name: /Add a market/ })).toBeNull();
+    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: /Open readiness/ })).toBeTruthy();
+    expect(within(panel).queryByRole('button', { name: /Compile and download/ })).toBeNull();
+    expect(await screen.findByTestId('pj-submission')).toBeTruthy();
+  });
+
+  it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])(
+    'states the %s preparation limit before offering submission actions, even with inconsistent product data', async (programType) => {
+      serve({ subs: [], program: { ...PROGRAM, program_type: programType, product_type: 'drug' } });
+      await openSubmit();
+      const panel = await screen.findByTestId('pj-markets');
+      await waitFor(() => expect(panel.textContent).toContain('document preparation only'));
+      expect(panel.textContent).toContain('does not create submission records or sequences');
+      expect(panel.textContent).toContain('transmit it to an agency');
+      expect(within(panel).queryByRole('button')).toBeNull();
+      expect(document.body.textContent).not.toContain('No market yet');
+      expect(screen.getByTestId('pj-status-line').textContent).toContain('Authored here, not sequenced');
+    },
+  );
 });
 
 describe('Project home — the Submit stage lists the project’s submissions', () => {

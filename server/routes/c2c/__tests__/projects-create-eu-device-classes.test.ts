@@ -38,6 +38,35 @@ function inserted() {
 beforeEach(() => { query.mockReset(); query.mockResolvedValue({ rows: [] }); clearSeats(); seatMember(7, 3, 'member'); });
 
 describe('EU classes use the existing regional programme columns at initialization', () => {
+  it.each([
+    { type: 'pma', filing: 'cdx_pma', product: 'ivd' },
+    { type: 'pma', filing: 'US_CDX_510K', product: 'cdx' },
+    { type: '510k', filing: 'US_PMA', product: 'device' },
+    { type: 'pma', filing: 'us_cdx_typo', product: 'ivd' },
+  ])('refuses contradictory named filing $filing before writes', async ({ type, filing, product }) => {
+    queueCreate();
+    const response = await request(app()).post('/api/c2c/projects').send({ name: 'Named device identity', programType: type, productType: product, primaryAgency: 'FDA', submissionTypeId: filing });
+    expect(response.status, JSON.stringify(response.body)).toBe(400);
+    expect(query.mock.calls.some(c => /INSERT|UPDATE|DELETE/.test(String(c[0])))).toBe(false);
+  });
+  it.each([
+    { type: 'pma', filing: 'US_CDX_PMA', product: 'cdx' },
+    { type: '510k', filing: 'US_CDX_510K', product: 'cdx' },
+    { type: '510k', filing: 'US_510K', product: 'samd' },
+  ])('persists the compatible $product identity for $filing', async ({ type, filing, product }) => {
+    queueCreate();
+    const response = await request(app()).post('/api/c2c/projects').send({ name: 'Named device identity', programType: type, productType: product, primaryAgency: 'FDA', submissionTypeId: filing });
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    expect(inserted()).toMatchObject({ program_type: type, product_type: product });
+  });
+  it.each([
+    ['pma', 'cdx_pma', 'FDA'], ['510k', 'US_CDX_510K', 'FDA'], ['ivdr', 'cdx_ivdr_d', 'EU / Notified Body'],
+  ])('infers and persists CDx from %s / %s when no subtype was sent', async (type, filing, agency) => {
+    queueCreate();
+    const response = await request(app()).post('/api/c2c/projects').send({ name: 'Named companion diagnostic', programType: type, primaryAgency: agency, submissionTypeId: filing });
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    expect(inserted()).toMatchObject({ program_type: type, product_type: 'cdx' });
+  });
   it('does not use a class-specific EU identity for an FDA application, even with an unconfirmed class', async () => {
     queueCreate(); const response = await request(app()).post('/api/c2c/projects').send({ name: 'Wrong regional identity', programType: '510k', productType: 'device', primaryAgency: 'FDA', submissionTypeId: 'eu_mdr_class_iii' });
     expect(response.status, JSON.stringify(response.body)).toBe(400);

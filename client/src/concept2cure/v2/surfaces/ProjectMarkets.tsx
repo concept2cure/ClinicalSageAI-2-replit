@@ -33,6 +33,7 @@ import { MarketSupportLine } from '../MarketSupportLine';
 import { stashNavParamsForTarget } from '../navParams';
 import { SC_REGIONS, SC_SEQ_STATUS } from '../fixtures/submission';
 import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regulatory/filing-document-classes';
+import { resolveFilingCatalogEntry, type RegionalDeviceApplicationClass } from '@shared/regulatory/filing-catalog';
 import type { ReviewItem } from '../fixtures/review-data';
 import type { BuilderSection } from './submissionNavTarget';
 import { MarketApplicationNumber } from './MarketApplicationNumber';
@@ -348,36 +349,49 @@ export function MarketsBody({ markets, onOpen, center, startHint, detail, number
   );
 }
 
-/** A filing document class project has no market, in the platform's terms:
- *  the Submit tab and Submission Readiness (F18) say the same thing. */
-export function NotSequencedState({ documentClass }: { documentClass: FilingDocumentClass }) {
-  return <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced" hint={classNotSequencedReason(documentClass)} />;
+/** The exact preparation class names the limit; no neighboring filing or
+ *  available working outline establishes a qualified submission path. */
+export function regionalPreparationReason(application: RegionalDeviceApplicationClass): string {
+  const label = resolveFilingCatalogEntry(application.registryId)?.displayName ?? application.docType;
+  return `${label} is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use.`;
+}
+
+/** The Submit tab and Submission Readiness state the same authoring limit. */
+export function NotSequencedState({ documentClass, regionalApplication }: {
+  documentClass?: FilingDocumentClass | null;
+  regionalApplication?: RegionalDeviceApplicationClass | null;
+}) {
+  if (regionalApplication) return <EmptyState icon={I.fileText} title="Preparation only: this project is authored, not sequenced" hint={regionalPreparationReason(regionalApplication)} />;
+  return documentClass ? <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced" hint={classNotSequencedReason(documentClass)} /> : null;
 }
 
 /** The Submit tab's market list. "Open Submission Center" opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChange, documentClass = null }: {
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFiling, canChange, documentClass, regionalApplication }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
   /** The project is read and is not a device or diagnostic filing. */
   ectdFiling: boolean;
+  /** Device-family home projects cannot add medicinal eCTD markets. */
+  deviceFiling?: boolean;
   /** Whether the caller may change the project (the detail read's canChange); undefined when not read. */
   canChange?: boolean;
   /** The project is a filing document class (a PAS, a CSR, a meeting package): null for an application. */
   documentClass?: FilingDocumentClass | null;
+  regionalApplication?: RegionalDeviceApplicationClass | null;
 }) {
   /* A filing document class has no market: it is authored here and this
      platform builds no sequence for it, so Add a market (refused,
      NOT_AN_APPLICATION), Compile (a CTD backbone) and readiness (an
      application's sequence) are not offered beside it (review finding,
      2026-10-18). */
-  if (documentClass) {
+  if (documentClass || regionalApplication) {
     return (
       <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
         <div className="pj-sec-h"><h2 id="pj-markets-h">Markets</h2></div>
-        <NotSequencedState documentClass={documentClass} />
+        <NotSequencedState documentClass={documentClass} regionalApplication={regionalApplication} />
       </section>
     );
   }
@@ -406,7 +420,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
               Compile and download {I.right}
             </button>
           )}
-          {center && (
+          {center && ectdFiling && !deviceFiling && (
             <>
               {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
               <button type="button" className="btn primary pj-mkt-btn" disabled={canChange === false}
@@ -427,7 +441,9 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
           )}
         </span>
       </div>
+      {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
+        startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
@@ -467,10 +483,11 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
 /** The line under the project header: each market's verdict and the number
  *  of documents in review, from the same reads the Submit and Review tabs
  *  show. Nothing in it is computed beyond counting rows the server returned. */
-export function ProjectStatusLine({ markets, reviews, documentClass = null }: {
+export function ProjectStatusLine({ markets, reviews, documentClass = null, regionalApplication = null }: {
   markets: ProgramMarkets; reviews: ReviewCountRead;
   /** A filing document class has no market to wait for: "No market yet" would promise one. */
   documentClass?: FilingDocumentClass | null;
+  regionalApplication?: RegionalDeviceApplicationClass | null;
 }) {
   const { list } = markets;
   const lineRef = React.useRef<HTMLDivElement>(null);
@@ -480,7 +497,9 @@ export function ProjectStatusLine({ markets, reviews, documentClass = null }: {
     fn();
   };
   let marketItems: React.ReactNode;
-  if (list.loading) {
+  if (regionalApplication) {
+    marketItems = <span className="pj-status-item" data-tone="idle">Authored here, not sequenced</span>;
+  } else if (list.loading) {
     marketItems = <span className="pj-status-item" data-tone="idle">Reading this project&apos;s markets…</span>;
   } else if (marketsForbidden(markets)) {
     // A role that cannot read submissions: nothing to retry, and nothing failed.

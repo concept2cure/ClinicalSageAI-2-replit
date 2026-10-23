@@ -17,6 +17,7 @@ import { createSubmissionTx } from '../../services/submission-service/submission
 import {
   listProductTypes,
   productTypeForFilingType,
+  deviceProductTypesForFilingType,
   DEVICE_FAMILY_PRODUCT_TYPES,
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
@@ -213,7 +214,18 @@ export function productTypeForIntake(
   submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
   return regionalIntakeDecision(programType, stated, submissionTypeId)
+    ?? deviceIntakeDecision(programType, stated, submissionTypeId)
     ?? nonRegionalProductTypeForIntake(programType, stated, submissionTypeId);
+}
+
+/** Validate the same bounded refinements the existing wizard offers. */
+function deviceIntakeDecision(programType: string, stated: string, filingId?: string | null): { productType: string } | { refusal: string } | null {
+  const choices = deviceProductTypesForFilingType(programType, filingId);
+  if (choices === null) return null;
+  if (!choices.length) return { refusal: 'The selected device or diagnostic filing must match the project application type.' };
+  const productType = stated || productTypeForFilingType(programType, null, filingId) || '';
+  if (!choices.includes(productType as never)) return { refusal: `The product type must match this device or diagnostic filing. Use one of: ${choices.join(', ')}.` };
+  return { productType };
 }
 
 function nonRegionalProductTypeForIntake(

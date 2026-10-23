@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:action-overclaim"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.407,
+  "output": "gate-ci-action-overclaim.log.gz",
+  "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+  "sourceFreeze": "source-freeze.json",
+  "sourceDrift": []
+}

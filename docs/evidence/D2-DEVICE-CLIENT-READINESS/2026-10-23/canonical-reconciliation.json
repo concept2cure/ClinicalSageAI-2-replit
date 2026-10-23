@@ -1,0 +1,18 @@
+{
+  "from": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "to": "0a15a0725731eb50d33ca25902c67ca3421da792",
+  "strategy": "fast-forward with no overlapping local source paths",
+  "incomingSourceFiles": {
+    "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts": "32241c9cc91241fab9911a51c47d98c8178b05a4e6acf91e55131d9bc8f06f1b",
+    "client/src/concept2cure/components/ana/useAnaChat.ts": "1ae18f34277d318de67a93feb85aff18c5178390c2fc361e799ec264d6eabca1",
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts": "22883ed2e2acb0eea2d9e1b6ed585e2709c250c16d8b4329348dcdf83c6b885a",
+    "server/routes/ana-ri/stream.ts": "d35e5775faa1004c603052f9f2898b4eaa3b530539fd22a479232402e6a2d45a",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+    "server/routes/chat/send-message.ts": "7f97b3b5fdd7adcbd759072933733c484a8dfd02eaedc8e6540ca6a404af16f1",
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts": "fd5ec0fc4e3130510500e7dd3ec4ea248e5b26e0b12855e8f8e5b986295cb226",
+    "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts": "769fb1bbae6d8ea3b3c34b8e4610e6aed92b0dbb26ee5c8fc7072cf35721a116",
+    "server/services/ai-gateway/gateway-error-map.ts": "fb162287a12defca16c65b997464c519bc0a8d0b9b20a08755c7caa285d4120c",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0"
+  },
+  "incomingCommitCount": 8
+}

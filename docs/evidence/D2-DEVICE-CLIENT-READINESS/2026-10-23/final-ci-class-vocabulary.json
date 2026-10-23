@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.555,
+  "output": "final-ci-class-vocabulary.log.gz",
+  "outputSha256": "ed7be00715f13ce13a011ada30bc865018a5057c583b07f041c84ce597eeeabf",
+  "sourceFreeze": "source-freeze-final.json",
+  "sourceDrift": []
+}

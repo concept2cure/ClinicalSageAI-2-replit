@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-23T15:19:51Z",
+  "baseCommit": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx": "acbd753a94f1fb51fc2fec36b50e354f1184a1e98d103a0121433e1af7dad198",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx": "1902a44afd029bf03b2134ccf278de55e37885dbb7d1b002b05a443e4380199d",
+    "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx": "37be7c86a08c3f7686f8ce0a726b7f1d37f2044df05a92070c5dcdaf6abc7526",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "4053bfa325cf33255373838fd57bb390cad16631559b68937cd19feb5f3b876f",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "server/routes/c2c/__tests__/project-intake-class.test.ts": "151fb6b77a46c71259a5d08ecf382075c55613593af0a6a89a11c8ed8c6d2190",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts": "37977deea9bd23572c03025cdb5cc751e1bb511a214531dcc043081bcdcb6d05",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "server/services/ana/tool-authorization.register.json": "7da272972a2c1e26ee3730e54f1114ab259449234efe150dd06f730d0df7b54e",
+    "server/services/c2c/__tests__/add-project-market.pglite.test.ts": "400a41b6ae659ba767d29457614a0ebe80da67e310946c05f465a06f2e2db228",
+    "server/services/c2c/add-project-market.ts": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49",
+    "shared/constants/domain/__tests__/product-types.test.ts": "d6795dcbff29fcf9a78527adf732f7c9a8affb932e607f30df56715779196c95",
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b"
+  },
+  "originalFunctionalSourceDrift": [],
+  "additionalSourceChanges": [
+    "server/services/ana/tool-authorization.register.json",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css"
+  ]
+}

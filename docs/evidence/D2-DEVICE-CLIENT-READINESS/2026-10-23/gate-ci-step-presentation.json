@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:step-presentation"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 0.664,
+  "output": "gate-ci-step-presentation.log.gz",
+  "outputSha256": "a580a8ea34297f3242683d2da07223de02ec2284ee5c8144358c27623e28b8fa",
+  "sourceFreeze": "source-freeze.json",
+  "sourceDrift": []
+}

@@ -1,0 +1,155 @@
+{
+  "at": "2026-10-23T15:28:45Z",
+  "scope": "Serialized actual ProjectMarkets component DOM with all built CSS, using the existing visual-QA all-chunks superset convention. Layout and screenshots only; events, live application shell, authenticated backend and human UAT not exercised.",
+  "cssFiles": [
+    "index-CQkeOtwt.css",
+    "V2App-BomJQhLE.css",
+    "AdminAccess-xhPEI8Z8.css",
+    "ClientPortal-Df7niGAt.css",
+    "EctdCoauthor-WxR4wiGp.css",
+    "EsignModal-DY4l-xU8.css",
+    "GovernedConfirmDialog-BAvPP0yZ.css",
+    "Insights-DugMOhtx.css",
+    "Intelligence-Cn63MxwQ.css",
+    "MasterLicensing-CSgZ4t6r.css",
+    "MdxSurfaceHost-B03qnq2W.css",
+    "Onboarding-1aQVXd4a.css",
+    "OnboardingIngest--f7BZU_h.css",
+    "PdevRoute-BvTaZFQ6.css",
+    "ProtocolDev-CzvCduh-.css",
+    "Pyramid-CbR3Xx2c.css",
+    "QualityModule-7idVffPF.css",
+    "Rbm-BfE-ugYt.css",
+    "RedlineText-DBgVI_xu.css",
+    "Review-CGMT1O2r.css",
+    "RichSectionEditor-CsLGNfpk.css",
+    "SessionPolicySetting-DlIRNv18.css",
+    "SubmissionCenter-DK_y2NA8.css",
+    "VaultLibraryResults-CcuauHDn.css",
+    "ZenRouter-BbLT-fZv.css",
+    "ana-skills-Gc2BKvST.css",
+    "ana-v2-B_qTrbu9.css",
+    "commcenter-v2-DdJzkzwC.css",
+    "company-documents-CkoqPKhb.css",
+    "project-home-v2-BRi5JHo-.css",
+    "workDock-Dq695-ka.css"
+  ],
+  "results": [
+    {
+      "width": 1440,
+      "documentWidth": 1440,
+      "mainWidth": 1240,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [],
+      "bodyText": "Markets\nPreparation only: this project is authored, not sequenced\nHealth Canada Medical Device Licence (MDL) is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use.",
+      "overflowingText": [],
+      "component": "regional-preparation",
+      "theme": "light",
+      "screenshot": "regional-preparation-light-1440.png"
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "mainWidth": 390,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [],
+      "bodyText": "Markets\nPreparation only: this project is authored, not sequenced\nHealth Canada Medical Device Licence (MDL) is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use.",
+      "overflowingText": [],
+      "component": "regional-preparation",
+      "theme": "light",
+      "screenshot": "regional-preparation-light-390.png"
+    },
+    {
+      "width": 1440,
+      "documentWidth": 1440,
+      "mainWidth": 1240,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [],
+      "bodyText": "Markets\nPreparation only: this project is authored, not sequenced\nHealth Canada Medical Device Licence (MDL) is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use.",
+      "overflowingText": [],
+      "component": "regional-preparation",
+      "theme": "dark",
+      "screenshot": "regional-preparation-dark-1440.png"
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "mainWidth": 390,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [],
+      "bodyText": "Markets\nPreparation only: this project is authored, not sequenced\nHealth Canada Medical Device Licence (MDL) is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use.",
+      "overflowingText": [],
+      "component": "regional-preparation",
+      "theme": "dark",
+      "screenshot": "regional-preparation-dark-390.png"
+    },
+    {
+      "width": 1440,
+      "documentWidth": 1440,
+      "mainWidth": 1240,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [
+        "Open readiness",
+        "Open Submission Center"
+      ],
+      "bodyText": "Markets\nOpen readiness\nOpen Submission Center\n\nDevice and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.\n\nNo market for this project yet\nA market is one submission: an application to one agency. Existing submissions appear here when recorded to this project.",
+      "overflowingText": [],
+      "component": "supported-device",
+      "theme": "light",
+      "screenshot": "supported-device-light-1440.png"
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "mainWidth": 390,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [
+        "Open readiness",
+        "Open Submission Center"
+      ],
+      "bodyText": "Markets\nOpen readiness\nOpen Submission Center\n\nDevice and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.\n\nNo market for this project yet\nA market is one submission: an application to one agency. Existing submissions appear here when recorded to this project.",
+      "overflowingText": [],
+      "component": "supported-device",
+      "theme": "light",
+      "screenshot": "supported-device-light-390.png"
+    },
+    {
+      "width": 1440,
+      "documentWidth": 1440,
+      "mainWidth": 1240,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [
+        "Open readiness",
+        "Open Submission Center"
+      ],
+      "bodyText": "Markets\nOpen readiness\nOpen Submission Center\n\nDevice and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.\n\nNo market for this project yet\nA market is one submission: an application to one agency. Existing submissions appear here when recorded to this project.",
+      "overflowingText": [],
+      "component": "supported-device",
+      "theme": "dark",
+      "screenshot": "supported-device-dark-1440.png"
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "mainWidth": 390,
+      "heading": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "title": "Markets",
+      "buttons": [
+        "Open readiness",
+        "Open Submission Center"
+      ],
+      "bodyText": "Markets\nOpen readiness\nOpen Submission Center\n\nDevice and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.\n\nNo market for this project yet\nA market is one submission: an application to one agency. Existing submissions appear here when recorded to this project.",
+      "overflowingText": [],
+      "component": "supported-device",
+      "theme": "dark",
+      "screenshot": "supported-device-dark-390.png"
+    }
+  ]
+}

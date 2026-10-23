@@ -36,7 +36,7 @@ import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } 
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
-import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/product-types.js';
+import { isDeviceFamily, productTypeForFilingType } from '../../../shared/constants/domain/product-types.js';
 import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 
 export type AddMarketRefusalCode =
@@ -99,7 +99,7 @@ async function readProgram(client: PoolClient, programId: string, orgId: number)
 
 /** The market's class, pack and agency key, or the refusal that names what is missing. */
 async function resolveMarket(client: PoolClient, input: AddMarketInput, program: ProgramRow) {
-  if (DEVICE_FAMILY_PRODUCT_TYPES.includes((program.product_type ?? '') as never)
+  if (isDeviceFamily(program.product_type) || isDeviceFamily(productTypeForFilingType(program.program_type))
     || regionalDeviceApplicationClassOf(program.program_type)) {
     throw new AddMarketRefusal(422, 'DEVICE_PROGRAM',
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');

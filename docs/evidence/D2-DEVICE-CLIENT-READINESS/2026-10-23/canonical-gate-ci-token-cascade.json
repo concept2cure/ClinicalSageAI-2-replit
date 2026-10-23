@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-cascade"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.117,
+  "output": "canonical-gate-ci-token-cascade.log.gz",
+  "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

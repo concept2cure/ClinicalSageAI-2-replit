@@ -1,0 +1,87 @@
+{
+  "workstream": "W1 / D2",
+  "base": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "status": "source frozen; focused verification complete",
+  "changes": [
+    "Preserve exact named CDx and SaMD selections via existing product-type resolver and catalog aliases.",
+    "Reach bounded human product refinements through the existing wizard control; retain default and retire stale choices.",
+    "Refuse incompatible, unknown nonempty and contradictory exact device selections before project writes.",
+    "Keep complementary diagnostics explicitly IVD; retain generic/medicinal/regional controls."
+  ],
+  "finalCommand": "PATH=/workspace/.tooling/node_modules/node/bin:$PATH node_modules/.bin/vitest run server/routes/c2c/__tests__/project-intake-class.test.ts client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts shared/constants/domain/__tests__/product-types.test.ts client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts",
+  "epochs": [
+    {
+      "file": "identity-red.txt",
+      "filesFailed": 3,
+      "passed": 62,
+      "failed": 23,
+      "note": "Before production edits; actual wizard/route/intake semantic regressions."
+    },
+    {
+      "file": "identity-red-before-eu-fixture.txt",
+      "passed": 62,
+      "failed": 23,
+      "note": "Historical first attempt also omitted EU market fixture; retained, not counted separately."
+    },
+    {
+      "file": "identity-unknown-selection-red.txt",
+      "filesFailed": 2,
+      "passed": 99,
+      "failed": 2,
+      "note": "Current pre-fix unknown-ID acceptance reproduced in shared helper and actual HTTP route."
+    },
+    {
+      "file": "identity-green.txt",
+      "filesPassed": 6,
+      "passed": 152,
+      "failed": 0,
+      "note": "Historical earlier tree, before additional exact/unknown controls."
+    },
+    {
+      "file": "identity-final-green.txt",
+      "filesPassed": 8,
+      "passed": 242,
+      "failed": 0
+    }
+  ],
+  "lint": {
+    "command": "PATH=/workspace/.tooling/node_modules/node/bin:$PATH node_modules/.bin/eslint shared/constants/domain/product-types.ts server/routes/c2c/project-intake.ts client/src/concept2cure/v2/surfaces/Projects.tsx shared/constants/domain/__tests__/product-types.test.ts server/routes/c2c/__tests__/project-intake-class.test.ts server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx -f json",
+    "errors": 0,
+    "warnings": {
+      "shared/constants/domain/product-types.ts": {
+        "before": 0,
+        "after": 0
+      },
+      "client/src/concept2cure/v2/surfaces/Projects.tsx": {
+        "before": 7,
+        "after": 7
+      }
+    },
+    "otherOwnedFilesWarnings": 0,
+    "baselineRaised": false
+  },
+  "sources": {
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "shared/constants/domain/__tests__/product-types.test.ts": "d6795dcbff29fcf9a78527adf732f7c9a8affb932e607f30df56715779196c95",
+    "server/routes/c2c/__tests__/project-intake-class.test.ts": "151fb6b77a46c71259a5d08ecf382075c55613593af0a6a89a11c8ed8c6d2190",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts": "37977deea9bd23572c03025cdb5cc751e1bb511a214531dcc043081bcdcb6d05",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx": "1902a44afd029bf03b2134ccf278de55e37885dbb7d1b002b05a443e4380199d"
+  },
+  "evidence": {
+    "identity-red-before-eu-fixture.txt": "8fde8cca50a6ebc93b59edaaf07c17ffb341a7efad3a2f2505432323cfdc1b52",
+    "identity-red.txt": "517ce5af86f52c926c50f7ec0250052012e55695ae0d132a213e0daa6157838a",
+    "identity-unknown-selection-red.txt": "2e2811ad1e8cc75d9793b078ff218f6e279dbb068c90dab0970c7c46393015d1",
+    "identity-green.txt": "d13ad6a18c29cf8a87ca4e6850a2e2409636f04f97f08e009ea322888d893f44",
+    "identity-final-green.txt": "ab3355ed19f30c299e23ab27ec4d8346a173de09c2d1b0419426beb628bde563",
+    "identity-lint.json": "f0c0224c054651ab1c484693c9bdb7e4bba1d62501900a3a06b4a75f1aea458e",
+    "identity-product-types-baseline-lint.json": "04e22578e23c7989597e73fef30c3f98b789824c40e28022b6d9ae75c33c0d9b",
+    "identity-wizard-baseline-lint.json": "631af43cc3e1d6629951ba50d8405df3ff88babdd3c5b0f25f13a1f731a29081"
+  },
+  "limits": [
+    "Focused POST cases use the actual Express router with a mocked SQL executor and scaffold; assertions inspect emitted INSERT values and no-write refusals. They do not establish an installed database or production qualification.",
+    "No qualified device dossier assembly, agency transport, live model drafting or human acceptance claimed.",
+    "No commits, pushes, dependency additions, migrations or shared documentary-helper changes."
+  ]
+}

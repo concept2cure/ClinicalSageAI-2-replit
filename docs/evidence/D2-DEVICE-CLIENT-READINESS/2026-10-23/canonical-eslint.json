@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "server/routes/c2c/__tests__/project-intake-class.test.ts",
+    "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts",
+    "server/routes/c2c/project-intake.ts",
+    "server/services/c2c/__tests__/add-project-market.pglite.test.ts",
+    "server/services/c2c/add-project-market.ts",
+    "shared/constants/domain/__tests__/product-types.test.ts",
+    "shared/constants/domain/product-types.ts",
+    "--format=json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 1.065,
+  "output": "canonical-eslint.log.gz",
+  "outputSha256": "8c0d1b0211e19b9375bdd7746f10130597b49bdff722e602caa4bf59ffc75f68",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}
