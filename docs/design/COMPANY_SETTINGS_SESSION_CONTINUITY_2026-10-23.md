@@ -125,3 +125,16 @@ with a layout-effect snapshot. The separate `CompanyCorrespondenceDraft`,
 `CompanyCorrespondenceVariants` and `CompanyFilingIdentityReview` ownership
 implementations are outside this slice; parent continuity tests isolate those
 components and do not qualify all correspondence forms.
+
+### Incoming canonical consumer fixture
+
+Canonical catch-up runs the existing
+`__tests__/authoringCreationHostRecovery.test.tsx` against the real canvas and
+working-list hosts. That fixture seeds the real auth service but omits the
+React auth provider those hosts require; all 38 cases fail during setup. Both
+native hosts are byte-identical to discovery. Correct only the fixture using
+the real auth provider and controlled bootstrap transport, mounting the host
+after bootstrap completes. Preserve every existing case and ownership/header/
+recovery assertion. This is validation of an existing consumer, with no new
+auth implementation or production-host change. Retain the failed report and
+original fixture for review.

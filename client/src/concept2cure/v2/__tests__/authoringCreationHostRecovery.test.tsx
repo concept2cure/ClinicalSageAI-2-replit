@@ -3,9 +3,9 @@
  * Full Workbench/CreateExport/TaskTray failure coverage lives in the drawer suite. */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render as renderView, screen, waitFor } from '@testing-library/react';
 import type { DocumentWorkbenchProps } from '../editor/DocumentWorkbench';
-import { authService } from '@/services/portal/authService';
+import { AuthProvider, authService, useAuth } from '@/services/portal/authService';
 import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -48,6 +48,13 @@ function normal(_method: string, url: string): Promise<Response> {
 }
 const canvasProps = (): DocumentCanvasProps => ({ docId: DOC, programId: PID, conversationId: 'thread', fromThisConversation: false,
   expanded: true, onExpandedChange: vi.fn(), onNav: vi.fn(), onAsk: vi.fn(), fireToast: vi.fn() });
+function SessionReady({ children }: { children: React.ReactNode }) {
+  return useAuth().isBootstrapping ? null : <>{children}</>;
+}
+function AuthenticatedHost({ children }: { children: React.ReactNode }) {
+  return <AuthProvider><SessionReady>{children}</SessionReady></AuthProvider>;
+}
+const render = (view: React.ReactElement) => renderView(view, { wrapper: AuthenticatedHost });
 async function canvas() {
   const props = canvasProps();
   const mounted = render(<DocumentCanvas {...props} />);
@@ -58,6 +65,8 @@ beforeEach(() => {
   host.current = null; localStorage.clear(); sessionStorage.clear();
   clearAuthToken();
   authService.setToken(bearer(), actor(), 'fixture-refresh', 3600);
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ authenticated: true, user: authService.getUser() }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } })));
   publishShellProject({ id: PID });
   apiRequest.mockReset().mockImplementation(normal);
 });
@@ -135,7 +144,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
     ['foreign section', { success: true, sections: sections(NEXT) }, 200],
   ] as const)('refuses %s instead of confirming navigation', async (_name, body, status) => {
     const { props } = await canvas();
-    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}/sections`
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}/sections?programId=${PID}`
       ? Promise.resolve(ok(body, status)) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
@@ -146,7 +155,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
 
   it('refuses a response for another document', async () => {
     await canvas();
-    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}?programId=${PID}`
       ? Promise.resolve(ok({ success: true, document: documentRow(NEXT) })) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
@@ -156,7 +165,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
 
   it('refuses a pinned record from another program', async () => {
     const { props } = await canvas();
-    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}?programId=${PID}`
       ? Promise.resolve(ok({ success: true, document: documentRow(DOC, OTHER) })) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
@@ -176,7 +185,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
     ['created_by', {}],
   ] as const)('refuses malformed %s metadata before applying the record', async (field, value) => {
     const { props } = await canvas();
-    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}?programId=${PID}`
       ? Promise.resolve(ok({ success: true, document: { ...documentRow(), [field]: value } })) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
@@ -189,7 +198,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
     const { props } = await canvas();
     const refreshed = { ...documentRow(), title: 'Refreshed working document', product_code: 'clinical_overview', section_count: '1',
       updated_at: '2026-10-17T12:00:00Z' };
-    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}?programId=${PID}`
       ? Promise.resolve(ok({ success: true, document: refreshed })) : normal(method, url));
     const before = apiRequest.mock.calls.filter(([, url]) => url.startsWith('/api/authoring/docs/')).length;
     let confirmed: unknown;
