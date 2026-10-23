@@ -1,11 +1,11 @@
 {
   "qualifiedCommit": "66110e1a7",
-  "finalIntegrationCommit": "246fc58d3ebbec75676c197bd66e44f0209253a2",
+  "finalIntegrationCommit": "d6ce8f9250e6b42cd1778576773376f45f1f48d3",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 10027,
-      "sha256": "d8b17f486ff719e4c9abcd7d459241a634a044226bc5614af0afaa84201659e0"
+      "bytes": 11884,
+      "sha256": "1d513db7db564582c6ed704f34427231f849bdcf3c05438ecb1ed0ae24b751be"
     },
     {
       "path": "auth/green.txt",
@@ -68,6 +68,11 @@
       "sha256": "aa9083f376946eb21e5436720e25c5e58ab53f188484591dffed78c2236f87f3"
     },
     {
+      "path": "browser-cross-tab-current.json",
+      "bytes": 1465,
+      "sha256": "15c85ddd40d7291b1973c90fe77080cde0de45baf9cf4ad9e193e059ca942f87"
+    },
+    {
       "path": "browser-cross-tab.json",
       "bytes": 1465,
       "sha256": "15c85ddd40d7291b1973c90fe77080cde0de45baf9cf4ad9e193e059ca942f87"
@@ -108,6 +113,11 @@
       "sha256": "e752e4e6cc63c89a029750b80f2c9729fa6c32421f14bdd21a8211bcab915985"
     },
     {
+      "path": "http-before-workflow.json",
+      "bytes": 2341,
+      "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
+    },
+    {
       "path": "http.json",
       "bytes": 2341,
       "sha256": "cad29d668067e546d2ed4da0c391604c6559d692b5accc92f32e5ef448bc8172"
@@ -133,9 +143,29 @@
       "sha256": "db08a4fadcb9629a166ae5dcb6b1219fe369a995683f10726181090648721e4c"
     },
     {
+      "path": "second-push.log.gz",
+      "bytes": 4486,
+      "sha256": "8a3bd91886c2125a2e82f6e799cf8eacb562a8912e053d3f7574f92d4586177c"
+    },
+    {
       "path": "typecheck.log",
       "bytes": 204,
       "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    },
+    {
+      "path": "workflow-build.log.gz",
+      "bytes": 4684,
+      "sha256": "4c4117498cecfcf76a2ddd7475ce5abfae9d1ea31f81435398b073ddab393b42"
+    },
+    {
+      "path": "workflow-catchup.json",
+      "bytes": 918,
+      "sha256": "b473981bce42b680f45922526b7a22459646ca5d6d90f0a617abf9d0da5f9621"
+    },
+    {
+      "path": "workflow-tests.log.gz",
+      "bytes": 8766,
+      "sha256": "091f12d32cd7081329a790f22c0596628a23c2cf52a39271556d93538ea42312"
     }
   ]
 }

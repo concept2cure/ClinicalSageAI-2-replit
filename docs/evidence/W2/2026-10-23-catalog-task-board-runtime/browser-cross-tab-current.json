@@ -1,0 +1,63 @@
+{
+  "kind": "Chromium second tab changes shared organization AFTER bootstrap; original tab retains session; product Tasking and account-menu Apps controls used, actual APIs/DB",
+  "expectedOrganization": "391",
+  "staleOrganization": "100391",
+  "apps": {
+    "loaded": true,
+    "catalogUnavailable": 0
+  },
+  "board": {
+    "loadedSavedTask": true,
+    "unavailableClaim": 0
+  },
+  "consistency": {
+    "storedOrg": "100391",
+    "resolvedOrg": "391",
+    "catalogStatus": 200,
+    "boardStatus": 200,
+    "storedOrgUnchanged": true
+  },
+  "reads": [
+    {
+      "path": "/api/task-management/board",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/task-management/board",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "status": 200,
+      "organization": "391"
+    },
+    {
+      "path": "/api/task-management/board",
+      "status": 200,
+      "organization": "391"
+    }
+  ],
+  "uncaughtErrors": []
+}
