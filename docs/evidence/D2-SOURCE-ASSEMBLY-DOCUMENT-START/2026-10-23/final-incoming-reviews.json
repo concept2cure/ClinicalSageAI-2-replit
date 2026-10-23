@@ -1,0 +1,6 @@
+{
+  "reviewer": "/root/source_start_final_review",
+  "method": "Read-only source review; no edits or new check runs",
+  "backfillResult": "Clear: preserves stored extraction for source coordinates; existing eligibility/access/writer/retry policies retained.",
+  "marketIdentityResult": "Clear: unknown market/agency refuses with existing remedy; actual submission/authority rechecked under transaction locks; UI refusal precedes contradictory home/number; AnA refuses before build. No source-start/draft/editor change."
+}

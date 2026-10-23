@@ -8,6 +8,12 @@ import { unboundNotice } from '../governanceNotice';
 import { hasAuthoringCreationOutcome, readAuthoringCreationRecovery, hasAuthoringSectionCreationOutcome, readAuthoringSectionCreationRecovery, useAuthoringAttemptLedger, type AuthoringAttemptLedger, type AuthoringCreationRecoveryIdentity, type AuthoringSectionCreationRecoveryIdentity } from './authoringCreationRecovery';
 
 export type CreationKind = 'document' | 'section';
+export interface AuthoringDocumentStart {
+  programId: string;
+  sourceCount: number;
+  current: () => boolean;
+  onCreated: (document: { id: string; title: string }) => void | Promise<void>;
+}
 type Receipt = { id: string; title: string } | { id: string; code: string };
 type Phase = 'pending' | 'unknown' | 'failed' | 'created';
 export interface CreationState {
@@ -19,7 +25,7 @@ export interface CreationState {
   canOpenRecovered?: boolean;
   identifiedOutcome?: boolean;
 }
-interface Entry extends CreationState { attempt: object; owner?: object }
+interface Entry extends CreationState { attempt: object; owner?: object; documentStart?: AuthoringDocumentStart | null }
 interface Options {
   programId: string | null;
   openProject: string | null;
@@ -29,6 +35,7 @@ interface Options {
   onDocCreated: (document: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
   onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
+  documentStart?: AuthoringDocumentStart | null;
 }
 interface CreationOwner {
   generation: number;
@@ -42,6 +49,13 @@ type Ledger = AuthoringAttemptLedger<CreationKind, Entry> & {
   organizationId: string | undefined;
 };
 const accountChanged = 'Your signed-in account or organization changed. Sign in and reopen creation before continuing.';
+const sourceStartChanged = 'The selected-source start is no longer current. Select those sources again before creating a document.';
+
+function currentDocumentStart(start: AuthoringDocumentStart | null | undefined, programId: string | null): boolean {
+  if (!start) return true;
+  try { return start.programId === programId && start.current() === true; }
+  catch { return false; }
+}
 
 function sameActor(a: TaskActorScope | null, b: TaskActorScope | null): boolean {
   return a?.userId === b?.userId && a?.organizationId === b?.organizationId;
@@ -177,18 +191,22 @@ async function executeCreation({ kind, request, finished, templateLabel }: {
   kind: CreationKind; request: Record<string, unknown>; finished: () => void; templateLabel?: string;
 }, options: Options, ledger: Ledger) {
   const attempt = {};
-  if (!ledger.begin(kind, { attempt, phase: 'pending', message: `Creating ${kind}…` },
+  // Copy the offered context before POST. Later props and field replacement on
+  // the original object cannot attach an older receipt to a newer selection.
+  const documentStart = kind === 'document' && options.documentStart ? { ...options.documentStart } : null;
+  const identity = { attempt, documentStart };
+  if (!ledger.begin(kind, { ...identity, phase: 'pending', message: `Creating ${kind}…` },
     () => ['pending', 'unknown'].includes(ledger.read(kind)?.phase ?? '')
       || ledger.read(kind === 'document' ? 'section' : 'document')?.phase === 'pending')) return;
   let result: Entry;
   try {
     const confirmed = await receiveCreation(kind, request, ledger.headers(), templateLabel);
-    result = confirmed ? { attempt, phase: 'created', ...confirmed }
-      : { attempt, phase: 'unknown', message: unknownMessage(kind) };
-  } catch (error) { result = failedCreation(kind, error, attempt, options, ledger.organizationId); }
+    result = confirmed ? { ...identity, phase: 'created', ...confirmed }
+      : { ...identity, phase: 'unknown', message: unknownMessage(kind) };
+  } catch (error) { result = { ...failedCreation(kind, error, attempt, options, ledger.organizationId), documentStart }; }
   if (ledger.read(kind)?.attempt !== attempt) return;
   if (!ledger.current()) {
-    ledger.record(kind, { attempt, phase: 'unknown', message: unknownMessage(kind) });
+    ledger.record(kind, { ...identity, phase: 'unknown', message: unknownMessage(kind) });
     return;
   }
   ledger.record(kind, result);
@@ -199,12 +217,23 @@ async function executeCreation({ kind, request, finished, templateLabel }: {
   }
   finished();
   options.fireToast(result.message);
-  void openReceipt(kind, result.receipt!, options, ledger.current);
+  void openReceipt(kind, result, options, ledger.current);
 }
 
-async function openReceipt(kind: CreationKind, receipt: Receipt, options: Options, current: () => boolean) {
+async function openDocumentReceipt(entry: Entry, document: { id: string; title: string }, options: Options) {
+  if (!entry.documentStart) return options.onDocCreated(document);
+  if (!currentDocumentStart(entry.documentStart, options.programId)) {
+    options.fireToast('The document was created, but the selected-source context changed. Inspect working documents and select sources again before building.', 'error');
+    return;
+  }
+  await entry.documentStart.onCreated(document);
+}
+
+async function openReceipt(kind: CreationKind, entry: Entry, options: Options, current: () => boolean) {
+  const receipt = entry.receipt;
+  if (!receipt || !current()) return;
   try {
-    if (kind === 'document' && 'title' in receipt) await options.onDocCreated(receipt);
+    if (kind === 'document' && 'title' in receipt) await openDocumentReceipt(entry, receipt, options);
     else if (kind === 'section' && 'code' in receipt) await options.onSectionCreated(receipt);
   } catch {
     if (current()) options.fireToast(`The ${kind} was created, but could not be opened. Check ${names(kind)}.`, 'error');
@@ -327,16 +356,21 @@ export function useAuthoringCreation(options: Options) {
     || state(kind === 'document' ? 'section' : 'document')?.phase === 'pending';
   const create = (kind: CreationKind, values: Record<string, unknown>, finished: () => void, templateLabel?: string) => {
     if (blocked(kind) || !ledger.current() || (kind === 'section' && !options.docId)) return;
+    if (kind === 'document' && !currentDocumentStart(options.documentStart, options.programId)) {
+      options.fireToast(sourceStartChanged, 'error'); return;
+    }
     const request = kind === 'document' ? { ...values, client_program_id: options.programId }
       : { ...values, doc_id: options.docId, content: '' };
     void executeCreation({ kind, request, finished, templateLabel }, options, ledger);
   };
   return { state, refusal, blocked, create,
+    canStartDocument: (start: AuthoringDocumentStart) => !blocked('document') && ledger.current()
+      && currentDocumentStart(start, options.programId),
     check: (kind: CreationKind) => void checkCreation(kind, options, ledger),
     open: (kind: CreationKind) => {
       const entry = ledger.read(kind);
       const receipt = entry?.receipt;
-      if (receipt && !entry?.checking && (entry?.phase === 'created' || entry?.canOpenRecovered) && ledger.current() && recoveryCurrent(entry!, options, ledger) && !refusal) void openReceipt(kind, receipt, options, ledger.current);
+      if (receipt && !entry?.checking && (entry?.phase === 'created' || entry?.canOpenRecovered) && ledger.current() && recoveryCurrent(entry!, options, ledger) && !refusal) void openReceipt(kind, entry!, options, ledger.current);
     },
   };
 }

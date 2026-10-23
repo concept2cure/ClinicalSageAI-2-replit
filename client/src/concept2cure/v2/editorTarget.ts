@@ -93,6 +93,8 @@ export interface EditorSectionRef {
 
 export interface EditorTarget {
   assemblySources?: EditorAssemblySources;
+  /** An owned request for the existing New document form, never an existing document. */
+  sourceDocumentStart?: EditorAssemblySources;
   /** The document family the target belongs to, or null when the sender holds
    *  a real section but cannot name a family in this vocabulary — the Vault's
    *  governed dossiers are `ind`/`nda`/`bla`/… as often as they are device
@@ -145,6 +147,40 @@ function readOwnedAssemblyIntent(raw: Partial<EditorTarget>): EditorAssemblySour
   return intent && assemblyOwners.get(raw)?.() === true ? intent : null;
 }
 
+interface DocumentStartOwner { current: () => boolean; snapshot: string }
+const documentStartOwners = new WeakMap<object, DocumentStartOwner>();
+function readDocumentStart(raw: Partial<EditorTarget> & EditorSectionRef): EditorAssemblySources | null | undefined {
+  if (raw.sourceDocumentStart === undefined) return undefined;
+  if (raw.assemblySources !== undefined || [raw.docType, raw.docId, raw.sectionCode, raw.sectionLabel,
+    raw.code, raw.label, raw.returnTo].some(value => value != null)
+    || typeof raw.programId !== 'string' || !NOTICE_UUID.test(raw.programId)) return null;
+  const value = raw.sourceDocumentStart;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const sources = readAssemblySourceSelectors(value.sources);
+  return value.version === 1 && sources ? { version: 1, sources } : null;
+}
+const documentStartSnapshot = (raw: Partial<EditorTarget>, intent: EditorAssemblySources) =>
+  JSON.stringify([raw.programId, raw.setAt, intent]);
+function readOwnedDocumentStart(raw: Partial<EditorTarget>): EditorAssemblySources | null | undefined {
+  const intent = readDocumentStart(raw);
+  if (!intent) return intent;
+  const owner = documentStartOwners.get(raw);
+  try { return owner?.current() && owner.snapshot === documentStartSnapshot(raw, intent) ? intent : null; }
+  catch { return null; }
+}
+
+function targetIsFresh(raw: Partial<EditorTarget>, now: number): raw is Partial<EditorTarget> & { setAt: number } {
+  return typeof raw.setAt === 'number' && Number.isFinite(raw.setAt)
+    && Math.abs(now - raw.setAt) <= EDITOR_TARGET_TTL_MS;
+}
+
+/** Admit a fresh owned command once. Form editing can outlive the channel TTL;
+ * source replacement, actor/project visits and payload tampering still retire it. */
+export function captureEditorSourceDocumentStartOwner(target: EditorTarget): (() => boolean) | null {
+  if (!targetIsFresh(target, Date.now()) || !readOwnedDocumentStart(target)) return null;
+  return () => !!readOwnedDocumentStart(target);
+}
+
 /** The one return route a sender can name today: the conversation thread the
  *  document was drafted in. */
 export interface EditorReturnTo {
@@ -180,14 +216,19 @@ export function setEditorTarget(
     programTitle?: string | null;
     returnTo?: EditorReturnTo | null;
     assemblySources?: EditorAssemblySources;
+    sourceDocumentStart?: EditorAssemblySources;
   },
+  sourceDocumentStartCurrent?: () => boolean,
 ): void {
   if (typeof window === 'undefined') return;
+  const sourceDocumentStart = readDocumentStart(target);
+  if (sourceDocumentStart === null) { clearEditorTarget(); return; }
   const assemblySources = target.assemblySources === undefined ? undefined
     : readAssemblyIntent(target.assemblySources, target.docId, target.programId);
   if (assemblySources === null) { clearEditorTarget(); return; }
   const published: EditorTarget = {
     ...(assemblySources ? { assemblySources } : {}),
+    ...(sourceDocumentStart ? { sourceDocumentStart } : {}),
     docType: str(target.docType),
     docId: str(target.docId),
     sectionCode: str(target.code),
@@ -198,6 +239,10 @@ export function setEditorTarget(
     setAt: Date.now(),
   };
   if (assemblySources) assemblyOwners.set(published, captureEditorDraftGuard({ programId: published.programId }));
+  if (sourceDocumentStart) documentStartOwners.set(published, {
+    current: captureEditorDraftGuard({ programId: published.programId, isCurrent: sourceDocumentStartCurrent }),
+    snapshot: documentStartSnapshot(published, sourceDocumentStart),
+  });
   window.C2C_EDITOR_TARGET = published;
   window.dispatchEvent(new CustomEvent(EDITOR_TARGET_EVENT));
 }
@@ -255,14 +300,16 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   if (t.docType != null && (typeof t.docType !== 'string' || t.docType.trim().length === 0)) {
     return null;
   }
-  if (typeof t.setAt !== 'number' || !Number.isFinite(t.setAt)) return null;
   // Stale (unconsumed from an earlier visit) or stamped in the future (a
   // clock that cannot be trusted) — either way, no claim is honoured.
-  if (now - t.setAt > EDITOR_TARGET_TTL_MS || t.setAt - now > EDITOR_TARGET_TTL_MS) return null;
+  if (!targetIsFresh(t, now)) return null;
   const assemblySources = readOwnedAssemblyIntent(t);
   if (assemblySources === null) return null;
-  return {
+  const sourceDocumentStart = readOwnedDocumentStart(t);
+  if (sourceDocumentStart === null) return null;
+  const target: EditorTarget = {
     ...(assemblySources ? { assemblySources } : {}),
+    ...(sourceDocumentStart ? { sourceDocumentStart } : {}),
     docType: str(t.docType),
     docId: str(t.docId),
     sectionCode: str(t.sectionCode),
@@ -272,6 +319,9 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
     returnTo: normalizeReturnTo(t.returnTo),
     setAt: t.setAt,
   };
+  const owner = documentStartOwners.get(t);
+  if (sourceDocumentStart && owner) documentStartOwners.set(target, owner);
+  return target;
 }
 
 /** Read AND clear. The channel is one-shot: whatever was pending — valid,

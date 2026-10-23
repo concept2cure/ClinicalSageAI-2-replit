@@ -1,0 +1,35 @@
+{
+  "reviewType": "AI read-only peer review, not human acceptance",
+  "at": "2026-10-23T19:06:13.638324+00:00",
+  "scope": [
+    "DocumentWorkbench.tsx",
+    "workbenchLeaveTarget.ts",
+    "sourceDocumentStartFlow.test.tsx",
+    "creator and channel integration"
+  ],
+  "blockingFinding": "Dirty default-selected canvas could be replaced by reordered refreshed inventory before leave guard.",
+  "reproduction": "dirty-creation-red.json: 1 failed, 16 skipped; no declared source drift",
+  "correction": "Pin current document when admitting document-start, preserve dirty bookkeeping until actual save/navigation, stage delivery after canonical form close, pass original source intent separately from staging scope/navigation guard.",
+  "finalVerdict": "No remaining blocking issue found in final read-only root review.",
+  "uiReview": "Same existing chooser, form, picker, editor and classes. No additional modal trap, writer or automatic build/AnA action.",
+  "limits": "Final compiler/build/gates and publication belong to root; no human/provider/agency outcome inferred.",
+  "incomingReviews": [
+    {
+      "range": "56a07630..b3e5746f",
+      "result": "No source-start blocker in Unicode document-read, reporting/current-access or release-identity changes. Bounded replay selected."
+    },
+    {
+      "range": "b3e5746f..7fab2aa65",
+      "result": "No source-start blocker in Vault passage snapshot/current-text fences; access/disposition/exact-span checks preserved. Eight changed suites replayed."
+    },
+    {
+      "range": "7fab2aa65..7184fb1fd",
+      "result": "No source-start blocker. Workbench overlap is metadata/isolated refile hook/toolbar child; deliberate refile dispatch leaves ordinary create and section PATCH paths intact, retains clean/current/bound/lineage gates. Preserve both changes in normal merge and replay combined clients/shared lineage/filing contracts."
+    },
+    {
+      "range": "7184fb1fd..66ad10eaf",
+      "result": "No source-start blocker. Wizard verifies owned active workspace choices and saved anchor/program/actor/workspace receipt; confirmed response selects client then publishes real program UUID. Stale/unknown responses cannot switch. Existing source start actor/project/session visit guards retire on confirmed project change. Strict server workspace lock is in existing anchor transaction; source/editor/template eligibility unchanged."
+    }
+  ],
+  "reviewUpdatedAt": "2026-10-23T19:19:25.942839+00:00"
+}

@@ -246,9 +246,10 @@ async function failedHostRefresh(kind: Kind, failure: '503' | 'wrong scope') {
     let scopedReads = 0;
     const original = mocks.apiRequest.getMockImplementation()!;
     mocks.apiRequest.mockImplementation(async (method: string, path: string) => {
-      if (method === 'GET' && path === `/api/authoring/docs/${docId}`) return response({ document: doc });
+      if (method === 'GET' && path === `/api/authoring/docs/${docId}?programId=${A}`) return response({ document: doc });
       const isList = path.startsWith('/api/authoring/docs?');
-      const isSections = path === `/api/authoring/docs/${docId}/sections`;
+      const isSections = path === `/api/authoring/docs/${docId}/sections`
+        || path === `/api/authoring/docs/${docId}/sections?programId=${A}`;
       if (method === 'GET' && (isList || isSections)) {
         const counted = kind === 'document' ? isList : isSections;
         if (counted && ++scopedReads >= 3) {
@@ -263,7 +264,11 @@ async function failedHostRefresh(kind: Kind, failure: '503' | 'wrong scope') {
       return original(method, path);
     });
     await act(async () => { render(<Host nativeHost />); });
-    if (kind === 'section') await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Saved stability text.'));
+    if (kind === 'section') {
+      await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Saved stability text.'));
+      expect(mocks.apiRequest.mock.calls.some(([method, path]) => method === 'GET'
+        && path === `/api/authoring/docs/${docId}/sections?programId=${A}`)).toBe(true);
+    }
     await begin(kind);
     const checkName = kind === 'document' ? 'Check working documents' : 'Check document sections';
     fireEvent.click(await screen.findByRole('button', { name: checkName }));

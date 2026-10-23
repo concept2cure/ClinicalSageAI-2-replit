@@ -48,10 +48,11 @@ vi.mock('../../server/services/export/governedExportConsequence', async (importO
 // stand for an ident that resolves to nothing in this organization. When
 // `fakeDbState.error` is set every select REJECTS with it instead — the read
 // failed, which is a different fact from "no row" and must be answered as one.
-const { fakeDb, fakeDbState } = vi.hoisted(() => {
+const { fakeDb, fakeDbState, fakeRequestPg } = vi.hoisted(() => {
   const fakeDbState = { rows: [{ id: 33, deviceName: 'Test Device' }] as unknown[], error: null as unknown };
   return {
     fakeDbState,
+    fakeRequestPg: { query: vi.fn(async () => ({ rows: [] })) },
     fakeDb: {
       select: () => ({
         from: () => ({
@@ -67,7 +68,7 @@ const { fakeDb, fakeDbState } = vi.hoisted(() => {
   };
 });
 vi.mock('../../server/db', () => ({ db: fakeDb }));
-vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb, requestPgClient: () => fakeRequestPg }));
 
 // The governed-records loader is the ONLY DB read the program-data path adds;
 // its projection/resolution stay real. Stubbed per test with the records an
@@ -108,12 +109,12 @@ vi.mock('../../server/services/vault/vault-ingest.service', () => ({
    database reads are replaced. Stubbing the planner would leave the route's
    wiring pinned to nothing. */
 const { mockResolverFactory, resolverStub } = vi.hoisted(() => {
-  const resolverStub = vi.fn(async () => ({
+  const resolverStub = Object.assign(vi.fn(async () => ({
     ok: true as const,
     bytes: Buffer.from('%PDF-1.7 attachment bytes'),
     fileName: 'Cover Letter.pdf',
     mimeType: 'application/pdf',
-  }));
+  })), { assertCurrent: vi.fn(async () => undefined) });
   return { resolverStub, mockResolverFactory: vi.fn(() => resolverStub) };
 });
 vi.mock('../../server/services/pathway-engines/estar/estar-attachment-plan', async (importOriginal) => ({
@@ -1136,25 +1137,18 @@ describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
          the resolver factory away, so this is the only place the contract is
          checked.
 
-         The invariant is the shape, not the identity: omitting `client` is
-         valid and is what ships (the resolver then defaults to the shared pool,
-         as the three other loadAuthoredDeviceSections callers in this file do,
-         and every one of its queries re-asserts org_id in SQL). Anything passed
-         explicitly must expose the raw-query FUNCTION. Either is fine; a
-         Drizzle instance is not. */
+         The current route must pass its request SQL executor and expose a
+         raw-query FUNCTION to authored-section loading. Source/current-actor
+         rechecks use that same request executor; a Drizzle namespace or an
+         omitted/shared-pool fallback is not this route's contract. */
       const req = attachReq([
         { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
       ]);
       await getHandler('/official')(req, createMockResponse() as any);
 
-      const { client } = mockResolverFactory.mock.calls[0][0] as { client?: { query?: unknown } };
-      expect(
-        client === undefined || typeof client.query === 'function',
-        client === undefined
-          ? 'unreachable'
-          : `the attachment resolver was handed a client whose .query is a ${typeof client.query}, ` +
-            'not a function — loadAuthoredDeviceSections calls client.query(text, params) directly',
-      ).toBe(true);
+      const { client, executor } = mockResolverFactory.mock.calls[0][0] as { client?: { query?: unknown }; executor?: unknown };
+      expect(executor).toBe(fakeRequestPg);
+      expect(typeof client?.query).toBe('function');
     });
 
     it('refuses the export, with the reason, when a section is not fileable', async () => {
