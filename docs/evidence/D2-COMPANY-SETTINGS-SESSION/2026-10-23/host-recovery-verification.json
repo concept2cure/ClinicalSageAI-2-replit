@@ -1,0 +1,42 @@
+{
+  "frozen": true,
+  "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+  "sha256": "6e489582dae64f7ebe1992e672dd7fc8e1919e4dfc1972e0a654310ef9eda348",
+  "before": {
+    "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+    "sha256": "0e7c9d35bfdc7ad805666c66e25a615e17ef21ccef3cbb09093fb479d0f9ca8f",
+    "bytes": 14461,
+    "cases": 38,
+    "archive": "original-authoring-host-fixture.tsx.txt",
+    "observedFailure": "Root integration report: 391 pass /38 fail; all38 host recovery cases missing AuthProvider.",
+    "workerPrivateArchive": "host-recovery-before.test.tsx"
+  },
+  "finalTests": {
+    "report": "host-recovery-final.json",
+    "passed": 38,
+    "failed": 0,
+    "files": 1
+  },
+  "lint": {
+    "report": "host-recovery-lint-final.json",
+    "errors": 0,
+    "warnings": 0
+  },
+  "originalExpectLinesUnchanged": true,
+  "all38OrderedFullnamesPreserved": true,
+  "intermediate": {
+    "report": "host-recovery-provider-only.json",
+    "passed": 23,
+    "failed": 15,
+    "fixtureHashArchived": false
+  },
+  "changes": [
+    "Mount the actual AuthProvider and wait for its transport-backed session bootstrap before mounting either real host.",
+    "Supply bootstrap session transport using the actual canonical authService account; preserve real session transition and credential checks.",
+    "Correct five exact transport fixture URL comparisons to include the existing canonical recorded programId query."
+  ],
+  "limits": [
+    "No production changes, Git mutations, build or full TSC performed.",
+    "No expectations or test case identities changed; no broad URL matcher introduced."
+  ]
+}

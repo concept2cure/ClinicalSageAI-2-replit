@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 import type { CompanyDocumentProfile } from '@shared/company-documents';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 const apiRequest = vi.hoisted(() => vi.fn());
 const downloadBlob = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -12,8 +13,8 @@ import { CompanyDocumentSettings } from '../surfaces/CompanyDocumentSettings';
 const PATH = '/api/client-branding/company-documents';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 3, brandingAdopted: true, companyName: 'Saved Company', address: 'Registered office', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: true, legalDocuments: [] });
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); apiRequest.mockReset(); downloadBlob.mockClear(); });
-afterEach(cleanup);
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); apiRequest.mockReset(); downloadBlob.mockClear(); seedCompanySession(); });
+afterEach(() => { cleanup(); endCompanySession(); });
 
 describe('Unsaved company letterhead proof', () => {
   function serve(status = 200) {
@@ -45,11 +46,11 @@ describe('Unsaved company letterhead proof', () => {
     expect(screen.queryByText(/proof downloaded/)).toBeNull();
   });
 
-  it('drops a rendered proof if the authentication token changes before delivery', async () => {
+  it('drops a rendered proof if the canonical authentication session changes before delivery', async () => {
     let deliver: (response: Response) => void = () => undefined;
     const pending = new Promise<Response>(resolve => { deliver = resolve; });
     apiRequest.mockImplementation(async method => method === 'GET' ? json({ data: profile(), canManage: true }) : pending);
-    await editDraft(); localStorage.setItem('trialsage_access_token', 'changed-session');
+    await editDraft(); seedCompanySession({}, 'replacement');
     await act(async () => { deliver(new Response('old session proof')); });
     expect(downloadBlob).not.toHaveBeenCalled();
     expect(screen.queryByText(/Unsaved Word proof downloaded/)).toBeNull();

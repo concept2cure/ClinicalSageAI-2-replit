@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "f0ec738b1",
+  "scope": "Reviewed upstream trim-to-blank correction; no company feature production overlap",
+  "files": [
+    {
+      "path": "server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts",
+      "sha256": "05a1da7e0554b1586843fa902d334e78d2883cee9dedbc0dfbad8362eebeefe2"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts",
+      "sha256": "b437486716ce7af4b4150185abab10470bdb1f054b045a55ba1c41a9067ddd1d"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts",
+      "sha256": "264501759f74521e5f7fad09f795f6a34fbb59b84045895f1499710b984c2cdb"
+    },
+    {
+      "path": "server/services/vault/document-chunking-backfill.service.ts",
+      "sha256": "977964328a3904462d190267e52cd397fef7f046f878eb87fbcf69767b732802"
+    }
+  ]
+}

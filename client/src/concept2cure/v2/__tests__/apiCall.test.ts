@@ -103,3 +103,58 @@ describe('apiErrorText — fallback behaviour', () => {
     expect(text).not.toContain('[object Object]');
   });
 });
+
+describe('apiCall — optional captured owner handoff', () => {
+  it('does not dispatch a retired owner and never retries it', async () => {
+    expect(await apiCall('PUT', '/x', { value: 1 }, () => false)).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not parse a response after its owner retires', async () => {
+    let finish!: (response: Response) => void;
+    let current = true;
+    fetchSpy.mockImplementation(() => new Promise<Response>(resolve => { finish = resolve; }));
+    const pending = apiCall('GET', '/x', undefined, () => current);
+    const response = jsonResponse(200, { private: 'old account' });
+    const parse = vi.spyOn(response, 'json');
+    current = false; finish(response);
+    expect(await pending).toBeNull();
+    expect(parse).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards a parsed body when ownership changes during JSON', async () => {
+    let finish!: (body: unknown) => void;
+    let current = true;
+    const response = jsonResponse(200, null);
+    const parse = vi.spyOn(response, 'json').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    fetchSpy.mockResolvedValue(response);
+    const pending = apiCall('GET', '/x', undefined, () => current);
+    await vi.waitFor(() => expect(parse).toHaveBeenCalledTimes(1));
+    current = false; finish({ private: 'old account' });
+    expect(await pending).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards an obsolete rejection without changing current rejection normalization', async () => {
+    let reject!: (error: Error) => void;
+    let current = true;
+    fetchSpy.mockImplementationOnce(() => new Promise<Response>((_resolve, fail) => { reject = fail; }));
+    const pending = apiCall('POST', '/x', {}, () => current);
+    current = false; reject(new TypeError('Failed to fetch'));
+    expect(await pending).toBeNull();
+    current = true;
+    fetchSpy.mockResolvedValueOnce(jsonResponse(409, { error: 'This version changed.' }));
+    expect(await apiCall('POST', '/x', {}, () => current)).toEqual({
+      ok: false, status: 409, body: { error: 'This version changed.' }, networkError: false,
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a current guarded success identical to the existing three-argument result', async () => {
+    fetchSpy.mockResolvedValueOnce(jsonResponse(200, { data: 'saved' }));
+    const existing = await apiCall('PATCH', '/x', {});
+    fetchSpy.mockResolvedValueOnce(jsonResponse(200, { data: 'saved' }));
+    expect(await apiCall('PATCH', '/x', {}, () => true)).toEqual(existing);
+  });
+});

@@ -1,0 +1,37 @@
+{
+  "settingsFunctionalRed": {
+    "report": "functional-red.json",
+    "failed": 2,
+    "passed": 0,
+    "scope": "Observed assertion failures on original settings production: refresh loses draft/reason; retained Save dispatches after account replacement."
+  },
+  "parentAuthoringRed": {
+    "report": "parent-red.json",
+    "failed": 9,
+    "passed": 0,
+    "scope": "Historical authoring run on untouched parent production; Retry case later corrected because it counted a legitimate replacement-owner reread. This is not a nine-case qualified frozen baseline."
+  },
+  "sourceProvenanceLimit": "No pre-edit test/source hash manifest was captured for either RED run. Raw reports retain observed assertion names/failures; later test files add recovery/privacy cases and correct the Retry fixture. No exact frozen test-file equivalence or reconstructed RED run is claimed.",
+  "intermediateAttempts": [
+    {
+      "report": "first-green.json",
+      "passed": 20,
+      "failed": 4,
+      "files": 3,
+      "status": "Historical legal fixture migration attempt; superseded, not release qualification."
+    },
+    {
+      "report": "focused-green.json",
+      "passed": 66,
+      "failed": 1,
+      "files": 7,
+      "status": "Historical parent Retry fixture conflation; superseded, not release qualification."
+    }
+  ],
+  "reportHashes": {
+    "functional-red.json": "f4c2a7a3e5d9bb2db085d4be2819dcab8dc3bbf4914cb2cc5efa61f6de7b028a",
+    "parent-red.json": "546c4c5ddefba2b8f52682aeea0c51c3e9aee4deca9771d976608e38e466e84e",
+    "first-green.json": "853ce9d7f0536fda955f0da234a682f4b38182b831dad5ba32f4ffce1a7293d4",
+    "focused-green.json": "e57ebca937e6c15453d58f25fff3369e3d87c186bf74f32714b9b23f6736142f"
+  }
+}

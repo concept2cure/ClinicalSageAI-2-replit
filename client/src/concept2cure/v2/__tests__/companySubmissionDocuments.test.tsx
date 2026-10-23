@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 import type { CompanyDocumentsResponse, CompanyLegalDocument } from '@shared/company-documents';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const downloadBlob = vi.hoisted(() => vi.fn(() => true));
@@ -34,6 +35,7 @@ let templateStatus: number;
 const onDone = vi.fn();
 beforeEach(() => {
   sessionStorage.clear(); localStorage.clear(); apiRequest.mockReset(); onDone.mockReset(); downloadBlob.mockClear(); actionStatus = 200; readStatus = 200; templateStatus = 200;
+  seedCompanySession();
   profile = { canManage: true, data: { version: 1, revision: 2, companyName: 'Sponsor', address: '', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [document()] } };
   actionBody = { id: 10, sequenceId: 7, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'vault_documents', documentUuid: SOURCE, auditTrail: { persisted: true, chained: true } };
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -49,7 +51,7 @@ beforeEach(() => {
     return json(actionBody, actionStatus);
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); endCompanySession(); });
 const open = async (sequence = seq) => {
   render(<CompanySubmissionDocuments seq={sequence} submission={submission} onDone={onDone} />);
   return screen.findByRole('radio', { name: 'Sponsor authorization' });

@@ -1,0 +1,10 @@
+{
+  "phase": "before-admission-withdrawal-correction",
+  "sources": {
+    "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts": "582a8dd74d3e1bf8545691cae82edcae29a4c5666a8f8522ad92c8f64218ba9e",
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts": "a260ff641e4f73e9ba7ece650ea3ee6ca4ba7078738cf2225851a9bf64781df7"
+  },
+  "test": {
+    "client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx": "3e7c0273eedf205433f57f86fca0c1939eead9d7fe42a94df537d4177fcd4b48"
+  }
+}

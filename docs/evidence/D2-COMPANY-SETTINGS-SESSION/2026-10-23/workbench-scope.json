@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "a3acbbbb1c6327aa24d819ebb3beed50b982f939",
+  "scope": "Previously existing canonical editor-access consumer, separately run after correcting the initial requested path",
+  "passed": 25,
+  "failed": 0,
+  "skipped": 0,
+  "file": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+  "sha256": "63798a3d3cfbc5287864b25cf566f80fb8f4791c0a20a3c3a40314ee86f78578"
+}

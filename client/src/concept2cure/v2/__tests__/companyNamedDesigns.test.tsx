@@ -6,6 +6,7 @@ import type { CompanyDesignDetail } from '@shared/company-document-designs';
 import type { CompanyDocumentProfile } from '@shared/company-documents';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 import type { CompanyDocumentSettingsModel } from '../surfaces/useCompanyDocumentSettings';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 const apiRequest = vi.hoisted(() => vi.fn());
 const downloadBlob = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -17,8 +18,8 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 7, brandingAdopted: true, companyName: 'Organization default', address: '', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: true, applyToSubmissionCorrespondence: false, legalDocuments: [] });
 const model = (manageBrand = true) => ({ saved: profile(), draft: { ...profile(), companyName: 'Current designer draft' }, capabilities: { manageBrand, manageLegal: false, managePermissions: false }, busy: false, conflict: false }) as CompanyDocumentSettingsModel;
 const detail = (state: 'draft' | 'reviewed' | 'published' = 'draft'): CompanyDesignDetail => ({ design: { id: 'design-1', name: 'Japan letterhead', templateId: 'template-1', scope: { programId: null, market: 'JP', language: 'ja', subsidiary: null }, state, sha256: 'a'.repeat(64), createdBy: 1, createdAt: '2026-10-18', reviewedBy: state === 'draft' ? null : 2, reviewedAt: null, publishedBy: null, publishedAt: null, publishedRevision: null, publishedProfileHash: null }, candidate: companyDesignCandidate(profile()), changedFields: ['companyName'], canReview: false, canPublish: state === 'reviewed', canActivateDefault: false, activationBlocker: 'A scoped variant cannot become the organization default.', reviewBlocker: 'The creator cannot independently review this design.', publishBlocker: state === 'draft' ? 'Independent review is required before publication.' : null });
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); apiRequest.mockReset(); downloadBlob.mockClear(); });
-afterEach(cleanup);
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); apiRequest.mockReset(); downloadBlob.mockClear(); seedCompanySession(); });
+afterEach(() => { cleanup(); endCompanySession(); });
 async function openDesigns() { fireEvent.click(screen.getByText('Named designs, independent review and publication')); return screen.findByRole('button', { name: 'Inspect Japan letterhead' }); }
 
 describe('Governed named company designs', () => {
@@ -79,7 +80,7 @@ describe('Governed named company designs', () => {
     apiRequest.mockImplementation(async (method, url) => method === 'POST' ? pending : String(url).includes('/designs?') ? json({ data: [detail('published').design], nextBefore: null }) : json({ data: detail('published') }));
     render(<CompanyGovernedDesigns model={model(false)} />); fireEvent.click(await openDesigns());
     fireEvent.click(await screen.findByRole('button', { name: 'Download named design proof' }));
-    localStorage.setItem('trialsage_access_token', 'different-browser-session');
+    seedCompanySession({}, 'replacement');
     await act(async () => { deliver(new Response('previous session proof')); });
     expect(downloadBlob).not.toHaveBeenCalled();
     expect(screen.queryByText(/Named design proof downloaded/)).toBeNull();

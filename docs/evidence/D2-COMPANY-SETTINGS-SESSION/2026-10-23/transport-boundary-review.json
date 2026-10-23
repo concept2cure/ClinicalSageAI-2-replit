@@ -1,0 +1,22 @@
+{
+  "scope": "Read-only transport boundary; no implementation, functional RED or vulnerability claim",
+  "facts": [
+    "The canonical transport decodes a cloned401 and may announce an existing global session-ended event before returning to optional apiCall owner checkpoints.",
+    "The existing event carries a reason; its AuthProvider listener ends the current session."
+  ],
+  "qualificationLimit": "Company dispatch/result/body/file handoffs are qualified. Delayed transport-wide session-end events across account replacement are not qualified by this slice.",
+  "unchangedInputs": [
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"
+    },
+    {
+      "path": "client/src/utils/sessionEnd.ts",
+      "sha256": "7b946dd29ee01ba7bd1892f09e51f34e04248023301ecb6dd43e95d8fe4764e2"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
+    }
+  ]
+}

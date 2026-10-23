@@ -1,0 +1,55 @@
+{
+  "sourceCommit": "84025f505acdc5b2680b361a71981477c7981e6d",
+  "incomingProductionFiles": 8,
+  "earlierPassingScope": {
+    "passed": 391,
+    "files": 13,
+    "failed": 0,
+    "skipped": 0,
+    "report": "source-start-first-results.json.gz",
+    "note": "Only these13 files passed in the failed14-file attempt; production and these source/test pins remain exact after fixture-only correction. This does not relabel that entire failed run as green.",
+    "actualFiles": [
+      "tests/routes/estar-official-pdf.test.ts",
+      "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx",
+      "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts",
+      "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx"
+    ]
+  },
+  "correctedHostScope": {
+    "passed": 38,
+    "files": 1,
+    "failed": 0,
+    "skipped": 0,
+    "report": "host-recovery-final.json",
+    "sha256": "6e489582dae64f7ebe1992e672dd7fc8e1919e4dfc1972e0a654310ef9eda348",
+    "allOriginalExpectLinesUnchanged": true,
+    "independentFixtureReview": "CLEAR"
+  },
+  "licensedTemplateInput": {
+    "path": "assets/estar-templates/eSTAR-510k-non-ivd.pdf",
+    "present": true,
+    "sha256": "d7926c7699dab2e86b45062e228511650419d182f7255b3dee00519a3dfcfc93",
+    "qualification": "Controlled route tests use the present vendored asset; no human, license-rights, production, or agency acceptance claim."
+  },
+  "build": {
+    "processExit": 0,
+    "sourceCommitAtStart": "fc6f213ab0630c8b0640bb9acfac6a56cfe9e142",
+    "sourceCommitAtFinish": "fc6f213ab0630c8b0640bb9acfac6a56cfe9e142",
+    "transcriptSha256": "723d3dff72f1b3ae12b5028618e371bb93ebbe673da0ba1e31bcc15a5b43aa81"
+  },
+  "fullCurrentTreeTypecheck": "pending mandatory normal pre-push gate; previous d18 full typecheck remains historical exact-source evidence",
+  "limits": [
+    "No aggregate of overlapping earlier cohorts.",
+    "Provider-only23/15 fixture failures retained; no intermediate fixture hash captured.",
+    "Native hosts, canonical auth and server production remain unchanged by fixture correction."
+  ]
+}

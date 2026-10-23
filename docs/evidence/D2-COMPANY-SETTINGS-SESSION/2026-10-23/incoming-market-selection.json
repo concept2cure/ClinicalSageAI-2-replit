@@ -1,0 +1,21 @@
+{
+  "scope": "Reviewed incoming unresolved-market correction, exact changed suites plus real export identity and company identity/correspondence consumers",
+  "reviewedRemote": "1a37dcc94",
+  "tests": [
+    "client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+    "server/services/submission-service/__tests__/market-application-number.pglite.test.ts",
+    "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+    "server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts",
+    "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+    "server/services/company-documents/__tests__/identity.pglite.test.ts",
+    "server/services/company-documents/__tests__/correspondence.test.ts"
+  ],
+  "production": [
+    "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ectd/package-identity.ts",
+    "server/services/submission-service/market-application-number.ts"
+  ]
+}

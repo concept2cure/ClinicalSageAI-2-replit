@@ -1,0 +1,76 @@
+{
+  "reviewedUpstream": "5ff6d2252",
+  "verdict": "CLEAR; independent read-only source review",
+  "changedSourceAndTestPins": [
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts",
+      "sha256": "93c0b7578c6e78b040613bc7aebad98d65320268a5c034d8f75b86733bd763f6"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+      "sha256": "9a1860499aeb376b49b4218903fc5e16ba1a6ba7c906ea1d093c530d01e61ee2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx",
+      "sha256": "3e8866f91e129110951c3d23ae234833de2bba086b2f230834ec1a64918331b6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+      "sha256": "2c9af4ceb63450eb8727722432684d442b640dd9f384e57278b8e474a4500cb8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "2d34e3be4d76d6b2c6bdb3271642cca418028ac181d1255899e2d888fe9bface"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+      "sha256": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+      "sha256": "dda4527875c56a24ed3f08920c8e6b2e7295de9439878ce7f3307075f4890378"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx",
+      "sha256": "1c65d71893cb62a2e1980206aae557e38ca8e0963d80dd67389ade60e05503ef"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+      "sha256": "9545a571acaf9aed3bbb81bab5457aedc046e35adc0b77f9d53c3f8f545a1e6f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblySourceIntent.ts",
+      "sha256": "f15972120a419bf2157125d039364679aa946417d6ebbd1d985c588369a52055"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "2653f46d099d006ac5257caa8147d6a2ca31c0d43fdb661d7cfdd91d9b6bd23d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+      "sha256": "a0da60c5c42b38b79057fe19e60e4cac12f33b34cb34f499510de62f526de75a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "sha256": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "fec3aacb866b35dfe9028f58be7b9c952a488302eba7fffad74d821dcb58f951"
+    },
+    {
+      "path": "tests/routes/estar-official-pdf.test.ts",
+      "sha256": "01fd7fa91ab290e7a01d2c571ec784ac0bdea033eb4a692618937d0c9e14234a"
+    }
+  ],
+  "findings": [
+    "Existing source chooser/channel/creator/workbench retains ownership, TTL, captured payload and original per-attempt source context through recovery.",
+    "No new writer, endpoint, store, dependency or automatic build/accept/file path. Existing dirty/ceremony/account/project/visit gates remain.",
+    "eSTAR retains one original-header POST; changed-bearer delivery requires canonical same-actor/org/account/session/visit adoption. Existing receipt/PDF/unknown/duplicate gates remain."
+  ],
+  "qualificationLimits": [
+    "Read-only reviewer did not execute tests.",
+    "Previous actor/access consumer passes are historical at their specified source; the new14-suite cohort reruns changed producers and direct consumers.",
+    "Licensed eSTAR asset cases must retain explicit skips where REAL_NIVD is unavailable. No human or agency acceptance is claimed."
+  ]
+}
