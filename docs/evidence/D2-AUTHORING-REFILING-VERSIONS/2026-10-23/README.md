@@ -148,6 +148,14 @@ test seam; it does not establish native LibreOffice typography or deployment
 availability in this environment. Incoming native converter artifacts retain
 their own source pins and qualification scope.
 
+The next normal push caught one warning introduced by combining both
+increments: a parity-test group grew beyond the existing function-size limit.
+`canonical-push-retry.json` retains that failed gate. The two refiling cases
+now have their own describe group; assertions and product code are unchanged.
+`publication-parity-green*` passes all **18** parity cases, and
+`publication-warning-ratchet*` confirms no changed file gained warnings against
+the canonical publication target. No baseline or hook was bypassed.
+
 ## Human handoff and limits
 
 The existing [human testing guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)

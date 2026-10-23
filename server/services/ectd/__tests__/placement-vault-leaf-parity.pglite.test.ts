@@ -512,6 +512,9 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
   // client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx.
   // This file
   // qualifies the actual authoring/ingest/leaf services and approval gates.
+});
+
+describe('Authoring refiling preserves submission version pins', () => {
   it('new numeric refiling links the successor while the old leaf stays pinned and blocked', async () => {
     h.engine = 'fixture';
     const docId = await authoringDocument('Editable device clinical overview', false);

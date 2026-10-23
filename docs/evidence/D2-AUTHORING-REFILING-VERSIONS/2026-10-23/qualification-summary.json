@@ -69,5 +69,14 @@
     "fixtureDelta": "Align two existing refiling cases to canonical converter fixture mode",
     "firstPushHooksPassed": true,
     "firstPushRejected": "Concurrent canonical advancement; retained canonical-push.json"
+  },
+  "publicationDelta": {
+    "kind": "Test group organization only; product code unchanged",
+    "parityTestsPassed": 18,
+    "parityReport": "publication-parity-green-tests.json",
+    "warningGrowth": 0,
+    "warningReport": "publication-warning-ratchet.json",
+    "failedHookRetained": "canonical-push-retry.json",
+    "fileSha256": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18"
   }
 }
