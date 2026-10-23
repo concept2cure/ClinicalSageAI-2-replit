@@ -7,8 +7,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8317,
-      "sha256": "880c7b6ccd9fdb2e9235a2f390281760adec0a305d692f23ea24220edc2895ab"
+      "bytes": 8892,
+      "sha256": "483220e5187a1453895c541de1c3d2f706a5528a3142d83862e91eea24b066b7"
     },
     {
       "path": "browser/README.md",
@@ -471,14 +471,19 @@
       "sha256": "aac91b4b83b437616c28cfced3b1b0348a7ba4c4885601ed9e254d1ccd9fa729"
     },
     {
+      "path": "verification/push-type-refusal.txt.gz",
+      "bytes": 4608,
+      "sha256": "98dff8ecaca28f41c3e4c00243ff62c75a325dbbae21ae96b2d8b27f91619a28"
+    },
+    {
       "path": "verification/push-warning-refusal.txt.gz",
       "bytes": 4426,
       "sha256": "7029650a979aa0e3289f1ef04ea499c6cb9230cf47e40b47086894ecfd89f705"
     },
     {
       "path": "verification/qualification.json",
-      "bytes": 17150,
-      "sha256": "49343ea7736e69a9557847c7a66e411adce0b1e0424d307719c15218608395bd"
+      "bytes": 25286,
+      "sha256": "2a6f840ab6d78f17af865ba37ce04d5c9764b63c54b3edcf0d3f7fed15362fbf"
     },
     {
       "path": "verification/regional-boundary-inputs.json",

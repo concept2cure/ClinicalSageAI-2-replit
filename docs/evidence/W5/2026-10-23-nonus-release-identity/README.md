@@ -118,3 +118,14 @@ remain separate evidence. Optional non-US applicant identifiers retain their
 existing request-owned contract; no authoritative regional-ID registry is
 invented here. FDA rules, P-44 fixed-number immutability, EMA slash handling and
 the existing unknown-region home-number reading heuristic remain separate.
+
+
+## Full compiler correction
+
+The normal zero-error TypeScript gate found one parameter mismatch after the
+lint extraction (`verification/push-type-refusal.txt.gz`): the governed binder
+returns `string | null`, while the extracted comparison declared `string`.
+The predicate now accepts that actual nullable type. Its equality with the
+required expected digest still refuses null; runtime conditions are unchanged.
+The prior build and scoped cohort pins are retained as executed. The normal full
+compiler must pass again before publication; no baseline or hook was changed.

@@ -2361,7 +2361,7 @@ type TransmitClaimExpectation = {
 /** The expected program anchor has already been checked against the locked parent. */
 function transmitClaimBindingMatches(
   captured: RecordedPackageIdentitySnapshot | undefined,
-  digest: string,
+  digest: string | null,
   expected: TransmitClaimExpectation,
 ): captured is RecordedPackageIdentitySnapshot {
   return digest === expected.boundDigest && !!captured &&
