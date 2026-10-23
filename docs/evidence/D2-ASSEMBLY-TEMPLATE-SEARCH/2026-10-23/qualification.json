@@ -105,12 +105,19 @@
   "passedRepositoryGates": 7,
   "dependencyChanges": false,
   "baselineChanges": false,
-  "fullCompiler": "Pending actual normal pre-push hook; not inferred from upstream or historical results.",
+  "fullCompiler": {
+    "receipt": "implementation-push.json",
+    "typeScriptErrors": 0,
+    "tscExitCode": 0,
+    "allMandatoryHooksPassed": true,
+    "pushAccepted": true
+  },
   "humanCases": 95,
   "humanStatus": "All Not run",
   "limits": [
     "Synthetic HTTP/auth client tests; no human acceptance or live provider/agency delivery.",
     "No server catalogue, source policy, template outline or agency coverage change.",
     "Declared inputs are not exhaustive transitive dependency closure."
-  ]
+  ],
+  "publication": "publication.json"
 }
