@@ -169,6 +169,11 @@ export function parseVaultFilters(
   return { filters: filters as VaultDocumentFilters };
 }
 
+/** Facet counts are read on the first page only: later pages carry rows, not counts. */
+export function wantsFacets(query: Record<string, unknown>, offset: number): boolean {
+  return query.facets === 'true' && offset === 0;
+}
+
 /** Whether the query names any filter value at all (blanks are not filters). */
 export function vaultFiltersAsked(query: Record<string, unknown>): boolean {
   return Object.values(VAULT_FILTER_PARAMETERS).some((p) => vaultFilterValues(query[p]).length > 0);
@@ -269,6 +274,39 @@ export function vaultLifecycleStageSql(alias: string): string {
 export interface VaultFilterSqlOptions {
   /** 'within' (in-app, whole segments) or 'exact' (the public API's raw match). */
   ctdMatch?: 'within' | 'exact';
+}
+
+/**
+ * The dimensions a search can count (VR-18 "with counts"). A CTD section is a
+ * hierarchy, not a list, so it is filtered but not counted. A folder is one
+ * project's cabinet, so it is counted only within a project.
+ */
+export const VAULT_FACET_DIMENSIONS = ['documentTypes', 'classifications', 'evidenceKinds', 'folderIds', 'placementStatuses', 'lifecycleStages'] as const;
+export type VaultFacetDimension = (typeof VAULT_FACET_DIMENSIONS)[number];
+export type VaultFacets = Partial<Record<(typeof VAULT_FILTER_PARAMETERS)[VaultFacetDimension], Array<{ value: string | null; count: number }>>>;
+
+/**
+ * The value a document contributes to one facet, as SQL over `alias`: a fixed
+ * fragment per dimension, never a request value. Filing and stage are the same
+ * definitions the filters use, so a bucket and the filter it offers agree.
+ */
+export function vaultFacetValueSql(dimension: VaultFacetDimension, alias: string): string {
+  const value: Record<VaultFacetDimension, () => string> = {
+    documentTypes: () => `${alias}.document_type`,
+    classifications: () => `${alias}.classification::text`,
+    evidenceKinds: () => `${alias}.evidence_kind`,
+    folderIds: () => `${alias}.folder_id`,
+    placementStatuses: () => `CASE WHEN ${vaultUnfiledSql(alias)} THEN 'unfiled' WHEN ${vaultSuggestedSql(alias)} THEN 'suggested' WHEN ${vaultConfirmedSql(alias)} THEN 'confirmed' ELSE 'other' END`,
+    lifecycleStages: () => `COALESCE(${vaultLifecycleStageSql(alias)}, '${VAULT_STAGE_NONE}')`,
+  };
+  return value[dimension]();
+}
+
+/** The filters without one dimension: a facet counts what the OTHER filters select. */
+export function vaultFiltersWithout(filters: VaultDocumentFilters | undefined, dimension: VaultFacetDimension): VaultDocumentFilters {
+  const rest: VaultDocumentFilters = { ...(filters ?? {}) };
+  delete rest[dimension];
+  return rest;
 }
 
 /** Filters that are one column matched against a list of values. */

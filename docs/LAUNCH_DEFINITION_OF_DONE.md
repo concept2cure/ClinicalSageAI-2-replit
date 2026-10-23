@@ -787,6 +787,27 @@ for <agency>" and no sections. Today `buildSubmissionStructure` answers such a r
 the substitution in a note, and still marks it `supported: true`. AnA's two tools that call the engine read that answer,
 so F21's design owns correcting `supported` for a proxied region.
 
+### P-46 — Vault saved views are both personal and organisation-wide; filters and counts are scheduled now
+
+Decided by the founder, 2026-10-22. Asked "Should a saved view belong to one person or the whole organisation?", the
+founder answered **"Both"**, in the same session as the direction to close the gap with Veeva ("Continue as we need to
+close the gap between what we have and what Veeva offers here"). That direction also amended FD8 in
+`docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md` §5: facets (VR-18) are no longer deferred, and the parity plan's
+§6 exclusion of saved searches and views no longer holds for the Vault.
+
+- **A personal view** is seen, renamed and deleted by its owner only.
+- **An organisation view** is seen by every member of the organisation. Who may create, rename and delete one is set by
+  the saved-views design, which must start from its What already exists section: the one saved-query store today is
+  `saved_precedent_queries` (precedent-only, off the deploy path, and editable by any member).
+- **A view stores parameters, never results or counts.** It holds the text, the metadata filters the search already
+  validates, and whether it is one project's view or the library. A view naming a project or a folder is re-scoped
+  when it runs. A project the reader can no longer open contributes nothing, and a folder must still be in that
+  project's cabinet. A view can never hold a filter the search would refuse.
+- **No fixture or browser-only store.** The deleted views (`ProjectsListFilters`, `AdvancedSearchPanel`) kept views in
+  `localStorage` or fixtures. A Vault view is a tenant-scoped server record.
+- Filters and facet counts on the one Vault search landed the same day (`docs/evidence/D2-VAULT-SEARCH/2026-10-22/`,
+  `…-find-view/`, `…-facets/`).
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
