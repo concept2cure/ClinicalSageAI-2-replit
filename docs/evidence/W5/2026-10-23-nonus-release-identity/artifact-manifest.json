@@ -7,8 +7,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7787,
-      "sha256": "286cc4711fb12cbf8ab6ca8ce96b981e3397cdeafe7d28320e95cd2f1478e769"
+      "bytes": 8317,
+      "sha256": "880c7b6ccd9fdb2e9235a2f390281760adec0a305d692f23ea24220edc2895ab"
     },
     {
       "path": "browser/README.md",
@@ -72,8 +72,8 @@
     },
     {
       "path": "callers/README.md",
-      "bytes": 6575,
-      "sha256": "1b72b3f66cd2eadec0f76ab894b9295bcaee5965aaa7c1c2e9c94ecd89dae2c1"
+      "bytes": 8164,
+      "sha256": "e8eb677c94145039d0257e40a45018fc27f6c5374bab8cc9cf572ce5fa586152"
     },
     {
       "path": "callers/fail-first-input-sha256.txt",
@@ -99,6 +99,31 @@
       "path": "callers/native-freeze-lock.txt",
       "bytes": 2551,
       "sha256": "852b46ae7fcb403ac34a98c3a410c30f8796199f40f7292a38c2879033787779"
+    },
+    {
+      "path": "callers/post-refactor-inputs.json",
+      "bytes": 6183,
+      "sha256": "fce2f40c57d9cbdc8ff4adf30eee61b5ec9be2a75eff83d2c872e0e3999376b5"
+    },
+    {
+      "path": "callers/post-refactor-inputs.sha256",
+      "bytes": 3424,
+      "sha256": "1f65406b439340fbac094392ea9a26fb62408b1ac0a8493e6f0c165d95603ddc"
+    },
+    {
+      "path": "callers/post-refactor-lint.txt",
+      "bytes": 2053,
+      "sha256": "84e484db8fd8aebbd99bf92d88146535faad23f24e1f020443d4bb18b5a93ca7"
+    },
+    {
+      "path": "callers/post-refactor-transmit.txt",
+      "bytes": 4934,
+      "sha256": "add554cd0152298e9bc6e43733cde810fa2a5fdb611a866e94a2d4650aa76d51"
+    },
+    {
+      "path": "callers/post-refactor-warning-ratchet.txt",
+      "bytes": 228,
+      "sha256": "81c4926ce11c0cec08a3bd086ac0db1777b64589d35d7dda38d7a3081acde24e"
     },
     {
       "path": "callers/second-green-attempt.txt",
@@ -127,8 +152,8 @@
     },
     {
       "path": "callers/ui/README.md",
-      "bytes": 1781,
-      "sha256": "8d0ed6c73afbebaf0e733ead61f2ef6053ea5ff5798c7f6bf3c7ffb960af4258"
+      "bytes": 2560,
+      "sha256": "ef6c422085da47fc12e49feb7f674ccc575943e2ac6dc10f27180d2c70e03d4e"
     },
     {
       "path": "callers/ui/existing-ui-cohort.txt",
@@ -139,6 +164,21 @@
       "path": "callers/ui/lint.txt",
       "bytes": 1146,
       "sha256": "cb552ea0a21528d73fe089682ae1e2a03071e008964209e4c39fc2779e8a6de0"
+    },
+    {
+      "path": "callers/ui/refactored-inputs.json",
+      "bytes": 2422,
+      "sha256": "8bf69f444fb696fa76d8bcec90c0a463c77e90814ac9d9d0cc4cd30505db205b"
+    },
+    {
+      "path": "callers/ui/refactored-lint.txt",
+      "bytes": 955,
+      "sha256": "fb1ef3b00c9e61a0706628669d1f34417c6697ad3f7c18252f00ff6f053793b3"
+    },
+    {
+      "path": "callers/ui/refactored-ui-cohort.txt",
+      "bytes": 9047,
+      "sha256": "82324fbe8bbfdfd5b3903456779d721071664e3a198f70b5811fc9d9781c0af8"
     },
     {
       "path": "callers/ui/verified-inputs.json",
@@ -396,6 +436,16 @@
       "sha256": "4cb06589e1a0848906fa6a9c4d0e2b3e288535784663e7fe9a20d752df8820d8"
     },
     {
+      "path": "verification/build-final-inputs.json",
+      "bytes": 2372,
+      "sha256": "8d6bb8ac817d1d213fd881a946014be23d37471407d157cfde12a10f69f42075"
+    },
+    {
+      "path": "verification/build-final.txt",
+      "bytes": 16271,
+      "sha256": "6f3571a342427bdeeefea108c782ebe294e22336ce609b2aef026c033e1f4173"
+    },
+    {
       "path": "verification/build-inputs.json",
       "bytes": 2274,
       "sha256": "863d6edb14af366a11eeafa46394597a36d14cf16fb64f82a0c7615720ed013b"
@@ -407,8 +457,8 @@
     },
     {
       "path": "verification/current-input-verification.json",
-      "bytes": 1038,
-      "sha256": "ec2924df4b3927a2466b813c33fb5f67794c49804a4b4bc50c807c9ef2330d68"
+      "bytes": 2461,
+      "sha256": "b1819509a9194fca359f5ec3b552aa826cc57dcdd9f5658a1a0a6a5441699f3c"
     },
     {
       "path": "verification/evidence-secret-scan.json",
@@ -421,9 +471,14 @@
       "sha256": "aac91b4b83b437616c28cfced3b1b0348a7ba4c4885601ed9e254d1ccd9fa729"
     },
     {
+      "path": "verification/push-warning-refusal.txt.gz",
+      "bytes": 4426,
+      "sha256": "7029650a979aa0e3289f1ef04ea499c6cb9230cf47e40b47086894ecfd89f705"
+    },
+    {
       "path": "verification/qualification.json",
-      "bytes": 8641,
-      "sha256": "1e34ddd244a0596744701f252c0e6737fbd6dc32355cea21398ef55ff8b2df80"
+      "bytes": 17150,
+      "sha256": "49343ea7736e69a9557847c7a66e411adce0b1e0424d307719c15218608395bd"
     },
     {
       "path": "verification/regional-boundary-inputs.json",

@@ -12,17 +12,26 @@
   {
     "record": "review/reviewed-source-inputs.json",
     "inputCount": 14,
-    "moved": []
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
   },
   {
     "record": "native/inputs-final.json",
     "inputCount": 14,
-    "moved": []
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
   },
   {
     "record": "verification/build-inputs.json",
     "inputCount": 18,
-    "moved": []
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
   },
   {
     "record": "verification/regional-boundary-inputs.json",
@@ -42,13 +51,34 @@
   {
     "record": "callers/verified-inputs.json",
     "inputCount": 28,
-    "moved": [],
-    "capturedAfterExecution": true
+    "moved": [
+      "server/services/submission-service/submission-service.ts"
+    ],
+    "capturedAfterExecution": true,
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
   },
   {
     "record": "callers/ui/verified-inputs.json",
     "inputCount": 9,
-    "moved": [],
-    "capturedAfterExecution": false
+    "moved": [
+      "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx"
+    ],
+    "capturedAfterExecution": false,
+    "followup": "Later lint-only predicate/mock extraction; see post-refactor claim/UI replay and final build. Earlier source-bound records retained."
+  },
+  {
+    "record": "callers/post-refactor-inputs.json",
+    "inputCount": 28,
+    "moved": []
+  },
+  {
+    "record": "callers/ui/refactored-inputs.json",
+    "inputCount": 9,
+    "moved": []
+  },
+  {
+    "record": "verification/build-final-inputs.json",
+    "inputCount": 18,
+    "moved": []
   }
 ]

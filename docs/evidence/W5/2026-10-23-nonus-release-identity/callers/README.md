@@ -42,18 +42,21 @@ region vocabulary, schema or dependency was added.
 
 ## Executed verification
 
-Final scoped runs and commands are pinned in `verified-inputs.json` and
-`verified-inputs.sha256`. Those working-tree pins were captured after the final
-runs with no intervening owned production edit. They are not a full-suite or
-agency qualification claim.
+The original scoped runs and commands are pinned in `verified-inputs.json` and
+`verified-inputs.sha256`. They preserve the working-tree inputs at that capture.
+A later private predicate extraction required by the warning ratchet is recorded
+separately below; the 119-case result is historical rather than a claim that it
+was rerun afterward. None of these are full-suite or agency qualification claims.
 
 | Result | Outcome | Scope |
 |---|---|---|
 | `verified-caller-cohort.txt` | 119/119, 10 files | Actual JP/EU renewal with current applicant drift, original signature retained, independent creator/signer, chained audit and single-use signatures; captured packageability; actual waiver/disposition ordering and parent refusal; transmit proof/echo/typed-number race; existing release gates, filing order, voiding and local TLS delivery uncertainty safety |
 | `verified-compile-cohort.txt` | 49/49, 4 files | Actual handler sends JP/EMA market number/projection with no FDA facts; missing number/unknown region refuse; existing FDA, sequence/type/history/converter behavior |
 | `native-freeze-lock.txt` | 2/2, real PostgreSQL | Existing two-connection leaf/freeze serialization; executed before later transmit-only typed-number correction, with freeze/lock functions unchanged. Root archives integrated native proof separately |
-| `ui/verified-ui-cohort.txt` | 38/38, 2 files | FDA/EMA/JP existing re-sign → fresh action → readiness continuation; independent signer/gate refusal, unresolved receipt and no automatic retry; jsdom API/password seams |
-| `verified-lint.txt`, `verified-compile-lint.txt` | 0 errors | 16 existing production warnings in caller/compile lint; compile test lint clean |
+| `ui/refactored-ui-cohort.txt` | 38/38, 2 files | FDA/EMA/JP existing re-sign → fresh action → readiness continuation; independent signer/gate refusal, unresolved receipt and no automatic retry; jsdom API/password seams |
+| `post-refactor-transmit.txt` | 20/20, 1 file | Final affected claim/typed-number/proof/echo/parent checks after the private predicate extraction |
+| `post-refactor-lint.txt`, `verified-compile-lint.txt` | 0 errors | 15 existing production warnings in caller/compile lint; compile test lint clean |
+| `post-refactor-warning-ratchet.txt` | passed | 41 changed lintable files compared with `origin/concept2cure-v2` (`aa09f55f5`); no file grew warnings |
 
 Local TLS checks use synthetic endpoints and certificates. They prove claim
 handling for known non-delivery versus delivery uncertainty; no real agency was
@@ -87,6 +90,24 @@ secondary warning is visible; required chained transaction audit assertions pass
   omitted the newly required submission anchor/parent. That early refusal left
   a separate local TLS test waiting for a request; the owned run was stopped,
   mock rows were completed, and final 119/119 includes all those safety cases.
+
+## Warning-ratchet correction and final affected replay
+
+The normal push rejected two new warnings: claim callback complexity and a UI
+fixture callback. The earlier caller lint's 16 warnings included that new claim
+warning, despite the initial description as existing warnings. No baseline or
+suppression changed. The exact existing claim predicate is now a private
+`transmitClaimBindingMatches` type guard; locked-parent anchor equality is still
+checked first, and every digest, program, typed-number and canonical proof
+comparison remains. The UI worker extracted only a private mocked-precheck
+branch, with all assertions retained (`ui/README.md`).
+
+`post-refactor-inputs.json` and `.sha256` pin current caller source and the final
+20/20 claim replay, zero-error scoped lint and passing unchanged warning ratchet.
+Only `submission-service.ts` changed from the original 119-case caller source
+pins; all other 27 source pins remain equal. UI's final 38/38 replay has its own
+`ui/refactored-inputs.json`. The broader 119 and compile 49 were not rerun after
+this pure logical extraction. Root owns the final full compiler/build/push.
 
 Human witnessing, real transport qualification and agency acceptance remain
 unexecuted. Root owns the final compiler/build/canonical publication evidence.

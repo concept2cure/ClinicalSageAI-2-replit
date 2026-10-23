@@ -2353,6 +2353,23 @@ export interface TransmitSequenceResult {
   signatureVoided?: boolean;
 }
 
+type TransmitClaimExpectation = {
+  boundDigest: string; submissionId: number; programId: string | null; applicationId: string;
+  fda: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
+};
+
+/** The expected program anchor has already been checked against the locked parent. */
+function transmitClaimBindingMatches(
+  captured: RecordedPackageIdentitySnapshot | undefined,
+  digest: string,
+  expected: TransmitClaimExpectation,
+): captured is RecordedPackageIdentitySnapshot {
+  return digest === expected.boundDigest && !!captured &&
+    captured.identity.programId === expected.programId &&
+    captured.identity.applicationNumber === expected.applicationId &&
+    sameRecordedPackageIdentitySnapshot(captured, expected.recordedPackageIdentity);
+}
+
 /**
  * Claim the transmit slot with a COMPARE-AND-SET, before any bytes leave.
  *
@@ -2377,7 +2394,7 @@ export interface TransmitSequenceResult {
  */
 async function claimTransmitSlot(
   sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string,
-  expected: { boundDigest: string; submissionId: number; programId: string | null; applicationId: string; fda: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot },
+  expected: TransmitClaimExpectation,
 ): Promise<{ claimed: false } | { claimed: true; recordedPackageIdentity: RecordedPackageIdentitySnapshot }> {
   const client = await pool.connect();
   try {
@@ -2397,9 +2414,7 @@ async function claimTransmitSlot(
     await lockRecordedPackageIdentity(q, organizationId, parent.programId);
     const binding = await deriveGovernedTargetBinding(q, `ectd-sequence:${sequenceId}`, organizationId);
     const captured = binding.recordedPackageIdentity;
-    if (binding.digest !== expected.boundDigest || !captured || captured.identity.programId !== parent.programId ||
-      captured.identity.applicationNumber !== expected.applicationId ||
-      !sameRecordedPackageIdentitySnapshot(captured, expected.recordedPackageIdentity)) {
+    if (!transmitClaimBindingMatches(captured, binding.digest, expected)) {
       throw new SubmissionError('GOVERNED_REQUIRED',
         'The sequence leaves or recorded application/applicant facts changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
     }

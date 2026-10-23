@@ -359,6 +359,13 @@ describe('confirmed release renewal refreshes the existing dispatch assessment',
   function renewalApi(confirmed: boolean, region = 'fda', refuseAt?: number) {
     let renewed = false;
     let dispatchChecks = 0;
+    function renewalPrecheck(body: unknown) {
+      const step = (body as { step?: string } | undefined)?.step;
+      if (step === 'dispatch' && refuseAt && ++dispatchChecks >= refuseAt) {
+        return ok({ step, cleared: false, refusal: 'The recorded market facts changed; assemble and sign the current content.' });
+      }
+      return step === 'dispatch' ? ok({ step, cleared: true, refusal: null }) : ok({ step: 'transmit', cleared: false, refusal: 'Gateway unavailable.', transmit: TRANSMIT({ staging: false, production: false }) });
+    }
     seqs = [seqRow({ status: 'dispatched', region })];
     mockApi((method, url, body) => {
       if (method === 'GET' && url === '/api/submissions') return ok([{ ...SUBS[0], primaryRegion: region }]);
@@ -368,13 +375,7 @@ describe('confirmed release renewal refreshes the existing dispatch assessment',
         releaseSignature: { required: true, verdict: renewed ? 'valid' : 'unsigned', cleared: renewed },
         dispatchAuthorization: { reauthorizing: true, eligible: true, refusal: null },
       }));
-      if (method === 'POST' && url.endsWith('/governed-precheck')) {
-        const step = (body as { step?: string } | undefined)?.step;
-        if (step === 'dispatch' && refuseAt && ++dispatchChecks >= refuseAt) {
-          return ok({ step, cleared: false, refusal: 'The recorded market facts changed; assemble and sign the current content.' });
-        }
-        return step === 'dispatch' ? ok({ step, cleared: true, refusal: null }) : ok({ step: 'transmit', cleared: false, refusal: 'Gateway unavailable.', transmit: TRANSMIT({ staging: false, production: false }) });
-      }
+      if (method === 'POST' && url.endsWith('/governed-precheck')) return renewalPrecheck(body);
       if (method === 'POST' && url === '/api/c2c/actions/sign') return ok({ actionId: 'act_renewal', sha256Chain: 'a'.repeat(64) });
       if (method === 'POST' && url.endsWith('/dispatch')) {
         renewed = confirmed;

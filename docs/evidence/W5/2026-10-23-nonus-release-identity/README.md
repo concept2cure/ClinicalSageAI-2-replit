@@ -97,7 +97,14 @@ folder. Root current-source hash verification is in `verification/`.
 | `browser/` | 10 Chromium checks passed; actual market-number/dispatch components, synthetic intercepted API, observed callback only |
 | `verification/build.txt` | Production build passed on Node 22.23.3; pre/post source hashes stable |
 
-Scoped lint has zero errors and no new warnings; existing warnings remain.
+The first implementation push was refused for two added complexity warnings.
+The same claim predicate and UI mock branch were extracted without changing
+conditions or assertions. The followup passed 20 claim tests, 38 UI tests, the
+unchanged warning ratchet over all 41 changed lintable files, and a fresh build
+(`verification/build-final.txt`). Earlier source-bound cohort records retain
+their original pins; `verification/current-input-verification.json` names the
+limited changes and followup coverage. Scoped lint has zero errors and no added
+warnings after this correction; existing warnings remain.
 The native fixture container and browser server were stopped after verification.
 Normal unchanged push/compiler gates must pass before canonical publication is
 reported. No baseline, hook or failing agency gate was weakened.
