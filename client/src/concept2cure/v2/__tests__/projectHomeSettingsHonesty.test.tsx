@@ -26,11 +26,13 @@ const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) 
 
 let navigated: string[];
 let savedDescription: string;
+let projectProfile: Record<string, unknown>;
 
 beforeEach(() => {
   authService.setToken(`e30.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.signature`, { id: '12', organizationId: '7', permissions: [] }, 'fixture-refresh', 3600);
   navigated = [];
   savedDescription = 'Phase 3 BLA';
+  projectProfile = {};
   apiRequest.mockReset();
   apiRequest.mockImplementation((method: string, url: string, write?: { patch: { description: string } }) => {
     if (method === 'PATCH' && url === `/api/c2c/projects/${PROJECT_ID}/settings`) {
@@ -46,7 +48,7 @@ beforeEach(() => {
     } }));
     if (url === `/api/c2c/projects/${PROJECT_ID}`) {
       return Promise.resolve(
-        ok({ success: true, data: { id: PROJECT_ID, name: 'BX204', description: savedDescription, status: 'active' } }),
+        ok({ success: true, data: { id: PROJECT_ID, name: 'BX204', description: savedDescription, status: 'active', ...projectProfile } }),
       );
     }
     return Promise.resolve(ok({ success: true, data: null }));
@@ -86,10 +88,16 @@ describe('Project home — the "Project settings" control', () => {
       expect.objectContaining({ 'x-client-id': '21', 'x-organization-id': '7' }));
   });
 
-  it('refreshes saved metadata and activity without resetting the open workflow stage', async () => {
+  it.each([
+    { kind: 'generic project', profile: {}, mdx: false },
+    { kind: 'IVD 510K project', profile: { program_type: '510K', product_type: 'ivd', regulatory_path: '510k', primary_agency: 'FDA', device_flags: [] }, mdx: true },
+  ])('refreshes saved metadata and activity without resetting the open workflow stage for $kind', async ({ profile, mdx }) => {
+    projectProfile = profile;
     mount();
     const stages = () => Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage'));
     await waitFor(() => expect(stages()).toHaveLength(5));
+    if (mdx) expect((await screen.findByTestId('pj-mdx-workflow')).textContent).toContain('510(k) · Diagnostic project workflow');
+    expect(screen.getAllByRole('button', { name: 'Project settings' })).toHaveLength(1);
     fireEvent.click(stages().find(button => button.textContent?.includes('Review'))!);
     const reads = (path: string) => apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === path).length;
     const metadataPath = `/api/c2c/projects/${PROJECT_ID}`;
@@ -106,6 +114,7 @@ describe('Project home — the "Project settings" control', () => {
     expect(document.querySelector('.pj-desc')?.textContent).toBe('Updated sponsor project description');
     expect(stages().find(button => button.textContent?.includes('Review'))?.getAttribute('data-status')).toBe('active');
     expect(navigated).toEqual([]);
+    if (mdx) expect((await screen.findByTestId('pj-mdx-workflow')).textContent).toContain('510(k) · Diagnostic project workflow');
   });
 
   it('leaves only the honest way out of the project workspace', async () => {
