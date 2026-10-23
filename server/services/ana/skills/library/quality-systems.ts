@@ -2,7 +2,8 @@
  * Quality systems skills: drug and biologic GMP and the pharmaceutical quality
  * system, the device QMSR and ISO 13485:2016, and the platform's Quality
  * records: SOPs, controlled documents, CAPA and deviations, change control,
- * data integrity, and GMP and suppliers.
+ * data integrity, GMP and suppliers, complaint handling, and internal audits
+ * and responses to audit and inspection findings.
  *
  * Device citations follow the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts):
  * ISO 13485:2016 clauses through 21 CFR 820.10, removed QSR sections only as
@@ -500,6 +501,184 @@ GMP expectations for a manufacturing operation and the suppliers it depends on: 
 ## Not AnA's to decide
 - Batch release is the quality unit's decision, and in the EU a Qualified Person's certification.
 - Supplier approval is the quality unit's; inspection outcomes and classifications are the agency's.
+`,
+  }),
+
+  skill({
+    key: 'quality-systems.complaint-handling',
+    name: 'Complaint handling',
+    description:
+      'Handling complaints about devices, IVDs, medicines and biologics: intake and the decision that feedback is a complaint, complaint records, same-day triage for adverse events and quality defects, investigation or its documented omission, trending and closure, with the hand-offs to vigilance, pharmacovigilance and CAPA.',
+    disciplines: ['quality-systems', 'safety'],
+    useCases: ['analysis', 'review', 'drafting'],
+    triggers: [
+      'complaint intake',
+      'complaint evaluation',
+      'complaint investigation',
+      'complaint investigations',
+      'complaint triage',
+      'complaint trending',
+      'complaint trends',
+      'complaint file',
+      'complaint files',
+      'complaint records',
+      'customer complaint',
+      'customer complaints',
+      'product complaint',
+      'product complaints',
+      'product quality complaint',
+      'product quality complaints',
+      'quality defect',
+      'returned product',
+      'returned device',
+      '211.198',
+      '8.2.2',
+    ],
+    tools: [
+      'assess_mdr_reportability',
+      'classify_expedited_reporting',
+      'classify_gmp_deviation',
+      'log_nonconforming_product',
+      'design_capa',
+      'global_search',
+      'review_sop_requirements',
+      'lookup_fda_guidance',
+    ],
+    references: [
+      { kind: 'standard', id: 'iso_13485' },
+      { kind: 'standard', id: 'cfr_820_qmsr' },
+      { kind: 'standard', id: 'iso_14971' },
+      { kind: 'ich', id: 'Q10' },
+      { kind: 'ich', id: 'Q9(R1)' },
+      { kind: 'currency-fact', id: 'us-qmsr' },
+      { kind: 'record', id: SOP_REQUIREMENTS, label: 'SOP requirements: complaint handling for devices (ISO 13485:2016 §8.2.2) and drugs (21 CFR 211.198)' },
+      { kind: 'record', id: QMSR_CROSSWALK, label: 'QMSR crosswalk: feedback, complaint handling and the 21 CFR 820.35 complaint record' },
+    ],
+    instructions: `
+## When this applies
+A complaint about a device, IVD, medicine or biologic, or a complaint process to set up or check: intake, deciding what counts as a complaint, records, triage for safety and quality, investigation, trending and closure. Filing a device report is the device vigilance skill's; investigation technique and CAPA are the deviations and CAPA skill's; writing the complaint SOP is the SOP skill's.
+
+## Method
+1. Establish the product type and markets, who received the information and when, what is alleged, whether anyone was harmed, whether the product or a sample can be returned, and its lot, serial number or UDI. Reporting clocks run from when the firm had the information, not from when the complaint unit logged it, so record the receipt date as it happened.
+2. Decide whether the feedback is a complaint, and record why when it is not.
+   - Device: ISO 13485:2016 defines a complaint as a communication alleging deficiencies in identity, quality, durability, reliability, usability, safety or performance after release. Under the QMSR complaint handling is clause 8.2.2 through 21 CFR 820.10 (formerly 820.198), and 21 CFR 820.35 sets record content, including any UDI.
+   - Drug or biologic: written and oral complaints are handled under a written procedure and recorded with the content 21 CFR 211.198 sets; in the EU, EU GMP Chapter 8 covers complaints and quality defects.
+   Take requirement wording from the SOP requirements record and the QMSR crosswalk.
+3. Triage two questions in parallel on the day the information arrives, and record both answers:
+   - Safety. A device event goes to \`assess_mdr_reportability\`, which returns the FDA medical device reporting and EU vigilance triggers and clock; the device vigilance skill drafts the report. An adverse event in a drug or biologic complaint goes to pharmacovigilance: \`classify_expedited_reporting\` returns the expedited obligation and clock from the seriousness, expectedness and relatedness the person states.
+   - Quality. A possible defect in a distributed drug batch goes to \`classify_gmp_deviation\`, which returns whether a field alert report or a recall evaluation is triggered; for a licensed biologic, consider a biological product deviation report.
+   Report each result as returned; a fact left out stays undetermined.
+4. Investigate, or document why not (for example, the same failure already investigated, with that record referenced). For a drug, the quality unit reviews any complaint involving a possible failure to meet specifications and decides on investigation under 21 CFR 211.192. Examine the returned sample, production records, retained samples and earlier complaints of the same failure mode.
+5. A confirmed device defect is logged with \`log_nonconforming_product\` (source complaint). A systemic cause opens a CAPA: \`design_capa\` with source complaint or trend returns the problem statement, root-cause method and effectiveness checks.
+6. Trending: code complaints consistently (failure mode, device problem and patient problem, using IMDRF terms for devices where the organization adopts them), normalise by units distributed, and fix the method and thresholds in the procedure before the data arrive. Thresholds are the organization's; AnA does not supply them. Trends feed CAPA, the ISO 14971 post-production review, management review, the annual product review for drugs (21 CFR 211.180(e)) and, for devices in the EU, post-market surveillance and trend reporting.
+7. A combination product complaint can raise drug and device duties at once under 21 CFR Part 4; assess both.
+8. Close with the reply to the complainant where due, the investigation outcome, actions and the reportability decision on the record. Find related records with \`global_search\` first; check a complaint procedure with \`review_sop_requirements\` (topic complaint_handling). Confirm any FDA guidance cited with \`lookup_fda_guidance\`.
+
+## Pitfalls reviewers raise
+- Feedback screened out as not a complaint with no rationale.
+- A complaint closed with no reportability decision, or an awareness date later than receipt.
+- No investigation and no justification for skipping one.
+- Trend thresholds set after seeing the data, or trends with no denominator.
+
+## Before answering
+- Reportability, clocks and field-alert triggers come from the tools, quoted as returned.
+- Device citations are QMSR and ISO 13485:2016; 820.198 appears only as "formerly".
+
+## Not AnA's to decide
+- Whether feedback is a complaint, whether to investigate, reportability and closure are the firm's, through its quality unit or management representative.
+- AnA does not file a report or close a complaint.
+`,
+  }),
+
+  skill({
+    key: 'quality-systems.audits-and-inspections',
+    name: 'Internal audits and audit or inspection findings',
+    description:
+      'Running an internal audit programme for a device or GMP quality system, conducting an audit, and responding to findings from internal, supplier, notified body and MDSAP audits and regulator inspections, including a written response to FDA Form 483 observations. Inspection readiness is the GMP and suppliers and GCP operations skills.',
+    disciplines: ['quality-systems'],
+    useCases: ['review', 'gap-analysis', 'agency-interaction', 'drafting'],
+    triggers: [
+      'internal audit',
+      'internal audits',
+      'internal audit program',
+      'internal audit programme',
+      'audit programme',
+      'audit schedule',
+      'audit finding',
+      'audit findings',
+      'audit nonconformity',
+      'self-inspection',
+      'lead auditor',
+      'auditor qualification',
+      'iso 19011',
+      '483 response',
+      '483 observations',
+      'respond to the 483',
+      'response to the 483',
+      'inspectional observations',
+      'inspection observations',
+      'inspection findings',
+      'warning letter response',
+      'establishment inspection report',
+      'mdsap audit',
+      'mdsap nonconformity',
+      'notified body audit',
+      'surveillance audit',
+      'unannounced audit',
+    ],
+    tools: [
+      'check_regulatory_currency',
+      'assess_qms',
+      'review_sop_requirements',
+      'lookup_fda_guidance',
+      'design_capa',
+      'qms_change_link',
+      'global_search',
+      'search_regulatory_correspondence',
+    ],
+    references: [
+      { kind: 'standard', id: 'iso_13485' },
+      { kind: 'standard', id: 'cfr_820_qmsr' },
+      { kind: 'ich', id: 'Q10' },
+      { kind: 'currency-fact', id: 'us-qmsr' },
+      { kind: 'record', id: SOP_REQUIREMENTS, label: 'SOP requirements: internal audit for devices (ISO 13485:2016 §8.2.4) and drug GMP (self-inspection)' },
+      { kind: 'record', id: QMSR_CROSSWALK, label: 'QMSR crosswalk' },
+    ],
+    instructions: `
+## When this applies
+Planning and running internal audits, conducting a supplier audit, and responding to findings from internal, supplier, notified body and MDSAP audits and regulator inspections, including FDA Form 483 observations. Inspection preparation is the GMP and suppliers skill's (manufacturing) and the GCP operations skill's (clinical); which suppliers to audit, and how often, is the GMP and suppliers skill's.
+
+## Method
+1. Establish the quality system and its rule. For a device QMS, internal audit is ISO 13485:2016 clause 8.2.4 through 21 CFR 820.10 under the QMSR (formerly 820.22); confirm the QMSR's status with \`check_regulatory_currency\`. For drug or biologic GMP, 21 CFR Part 211 has no internal-audit section; ICH Q10 and EU GMP Chapter 9 (self-inspection) set the expectation. The SOP requirements record holds the elements for each.
+2. The programme covers every process and site over a planned cycle, with each interval set by risk and by earlier results (open CAPA, complaints, changes, prior findings). Write it as the organization's plan with the reasoning for each interval; no regulation fixes one.
+3. Auditors are trained and competent and never audit their own work. ISO 19011 guides audit management and auditor competence; cite it as guidance.
+4. Each audit has a scope, criteria (regulation, standard clauses and the organization's procedures), a plan, evidence from interviews, observation and records, and a report stating each finding against its requirement with the objective evidence. For a device QMS, \`assess_qms\` returns the ISO 13485 clause structure with auditor questions for the checklist; it is a preparation aid, not a verdict. To check an internal audit procedure, run \`review_sop_requirements\` (topic internal_audit) and report each requirement as addressed or not found.
+5. Grade internal findings on the organization's own scale and say it is the organization's convention. External grading differs: EU GMP inspectorates classify deficiencies as critical, major or other; MDSAP grades each nonconformity on its own system, and the grade sets the response and reporting timeline; a notified body sets its own deadlines. Take every timeline from the report or current programme documents.
+6. FDA Form 483: the observations are the investigator's, listed at the close of the inspection, and are not a final agency determination. Respond in writing, observation by observation:
+   - the observation quoted;
+   - agreement, or disagreement with evidence;
+   - the investigation and root cause;
+   - correction, corrective action and preventive action, kept distinct and extended to other products, lines and sites that share the cause;
+   - completed actions with evidence, open actions with owners and dates, and the effectiveness check;
+   - a commitment to update FDA as actions close.
+   Confirm FDA's current policy on how promptly a response must arrive to be considered with \`lookup_fda_guidance\`; never state the period from memory. A warning letter response follows the same structure at the level of the whole system.
+7. Plan each action with \`design_capa\` (source audit_finding or inspection_observation) and link it to the changes it needs with \`qms_change_link\`. Search earlier records of the same issue with \`global_search\` first; a repeat finding is a systemic signal, named as one. With the regulatory mailbox connected, \`search_regulatory_correspondence\` retrieves the agency's letters.
+8. Keep audit reports, responses and evidence of closure. The SOP requirements record notes, from recall not yet checked against the regulation's text, that under the QMSR FDA may review internal audit, supplier audit and management review reports the former QSR exempted; confirm against the QMSR before advising what an investigator may see.
+9. Audit results and the status of inspection commitments are inputs to management review.
+
+## Pitfalls reviewers raise
+- Retraining as the only action, or a fix for the investigator's example but not the system.
+- Actions without owners, dates or effectiveness checks; commitments that slip without an update.
+- Disagreement asserted without evidence.
+- Auditors auditing their own area, or a programme that skips high-risk processes.
+
+## Before answering
+- Every response timeline and grade comes from the report, programme documents or confirmed guidance.
+- Each finding is quoted with the requirement it cites; correction, corrective and preventive action stay distinct.
+
+## Not AnA's to decide
+- Findings, their classification and the outcome of a response are the auditor's or the agency's.
+- The response is the firm's, signed by its management; AnA drafts and checks it.
 `,
   }),
 ];

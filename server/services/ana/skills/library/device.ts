@@ -1,8 +1,9 @@
 /**
  * Device design and engineering skills: design controls under the QMSR, ISO 14971
  * risk management, software and AI, cybersecurity, usability, nonclinical safety
- * testing, 510(k) substantial equivalence, clinical evidence, and changes and
- * postmarket duties.
+ * testing, 510(k) substantial equivalence, clinical evidence, changes and
+ * postmarket duties, unique device identification and establishment
+ * registration, and the device constituent of drug-delivery combination products.
  *
  * Every figure, class, pathway and verdict these methods mention comes from the
  * engine named at that step; the methods say what to establish and in which order.
@@ -772,6 +773,162 @@ A device or IVD already on the market: a proposed change to design, labeling, ma
 ## Not AnA's to decide
 - Whether a change needs a submission is the manufacturer's documented decision; FDA or the notified body may disagree with it.
 - Reporting and recall decisions are the manufacturer's, and FDA classifies recalls. AnA drafts reports; a person with authority submits them.
+`,
+  }),
+
+  skill({
+    key: 'device.udi-and-registration',
+    name: 'Unique device identification and establishment registration',
+    description:
+      'Assigning and maintaining unique device identifiers (device identifier and production identifiers, issuing agencies, when a change needs a new DI, direct marking), submitting UDI data to GUDID and EUDAMED, and US device establishment registration and listing, at method level. Label content is the device labeling skill.',
+    disciplines: ['device-engineering', 'regulatory-operations', 'labeling'],
+    useCases: ['submission-assembly', 'lifecycle-change', 'gap-analysis', 'drafting'],
+    segments: ['device', 'ivd'],
+    triggers: [
+      'unique device identification',
+      'udi system',
+      'udi-pi',
+      'device identifier',
+      'production identifier',
+      'gudid submission',
+      'gudid record',
+      'issuing agency',
+      'issuing entity',
+      'gtin',
+      'direct marking',
+      'new udi-di',
+      'udi compliance',
+      'udi requirements',
+      'part 830',
+      '21 cfr 830',
+      'establishment registration',
+      'device establishment registration',
+      'device listing',
+      'registration and listing',
+      'us agent',
+    ],
+    tools: [
+      'validate_udi',
+      'lookup_fda_guidance',
+      'check_regulatory_currency',
+      'search_eudamed',
+      'global_search',
+      'global_ri_establishment_registration',
+    ],
+    references: [
+      { kind: 'standard', id: 'cfr_820_qmsr' },
+      { kind: 'standard', id: 'eu_mdr' },
+      { kind: 'standard', id: 'eu_ivdr' },
+      { kind: 'currency-fact', id: 'eu-eudamed-mandatory' },
+      { kind: 'currency-fact', id: 'us-qmsr' },
+      { kind: 'record', id: 'server/services/market-specs/udi-validator.ts', label: 'UDI carrier validator: GS1 check digit, GTIN-14 and production identifiers' },
+      { kind: 'record', id: QMSR_CROSSWALK, label: 'QMSR crosswalk: complaint and servicing records that carry the UDI (21 CFR 820.35)' },
+      {
+        kind: 'record',
+        id: 'server/services/global-ri/establishment-registration.ts',
+        label: 'Drug establishment registration and listing (21 CFR Part 207) and EU manufacturing authorisation',
+      },
+    ],
+    instructions: `
+## When this applies
+Giving a device or IVD its unique device identifiers and keeping them right through changes, submitting UDI data to GUDID and EUDAMED, and registering establishments and listing devices with FDA. What a label must carry, and checking a label's carrier, are the device labeling skill's; EU actor registration, the SRN and the technical documentation are the EU technical documentation skill's.
+
+## Method
+1. Establish the device and its configurations: models and versions, package levels and quantities, whether it is single use or reprocessed for reuse, implantable, software only, a kit or a combination product's constituent, and its class in each market. Each orderable configuration is a candidate for its own identifier.
+2. Structure: a UDI is a device identifier (DI), fixed for the labeler's specific version or model, plus production identifiers (PI) for what varies and appears on the label: lot or batch, serial number, expiry date, manufacture date and, for an HCT/P regulated as a device, its distinct identification code. It is issued under the system of an issuing agency FDA has accredited (21 CFR Part 830) or, in the EU, an issuing entity the Commission designated.
+3. Check carriers with \`validate_udi\`: for a GS1 carrier it computes the check digit, validates the GTIN-14 and parses the production identifiers; HIBCC and ICCBBA carriers are detected but not parsed, so say they were not checked. A valid check digit does not show the DI is registered.
+4. New DI or not: a change that creates a new version or model, changes the quantity in a package, or changes what the DI record says about the device generally needs a new DI. FDA's guidance on GUDID lists the triggers; confirm it with \`lookup_fda_guidance\` before advising. In the EU the Basic UDI-DI keys the device model in EUDAMED, on certificates and on the declaration of conformity; whether a change needs a new one is assessed against current MDCG guidance.
+5. Labels and marking: the UDI appears in plain text and in machine-readable form on the label and on each package level the rules require. A device used more than once and reprocessed between uses carries a permanent direct marking unless an exception applies; stand-alone software shows its UDI as its own provision sets. Confirm the paragraph in 21 CFR Part 801 subpart B before citing it.
+6. US compliance: the requirements took effect by device class in phases, and FDA has used enforcement discretion for some classes. Confirm the position for the device's class with \`lookup_fda_guidance\`; never state a compliance date from memory.
+7. Databases: the DI record goes to GUDID in the US; UDI and device registration go to EUDAMED in the EU. Run \`check_regulatory_currency\` (fact eu-eudamed-mandatory) for which EUDAMED modules are mandatory and from when, including the legacy-device deadline, and report the fact as returned. \`search_eudamed\` shows how comparable devices are registered, cited by Basic UDI-DI; relay an unavailable status. Search the program's existing UDI records with \`global_search\` before creating new ones.
+8. Quality records carry the UDI where the QMSR requires it: complaint and servicing records under 21 CFR 820.35 (QMSR crosswalk).
+9. US establishment registration and device listing are governed by 21 CFR Part 807. Establishments whose activities it names (manufacturing, specification development, repackaging, relabeling, reprocessing and initial import, among others) register; which must also list and pay the annual fee is checked against FDA's current instructions, as are timing and fee amounts. Registration is renewed each year, a foreign establishment names a US agent, and a listing ties the device to its premarket submission or exempt classification. Registration is not approval, and presenting it as approval misbrands the device. \`global_ri_establishment_registration\` covers drug establishments (21 CFR Part 207) and EU manufacturing authorisations, not device establishments: use it only for a drug constituent's site, and say so.
+
+## Pitfalls reviewers raise
+- One DI used for configurations that differ in model or package quantity.
+- GUDID or EUDAMED records that do not match the label or the authorised device.
+- Reusable, reprocessed devices with no direct marking and no documented exception.
+
+## Before answering
+- Dates, deadlines and fees come from the currency check or FDA's current instructions, never memory.
+- A carrier check names the issuing agency and whether the carrier was parsed.
+
+## Not AnA's to decide
+- The labeler assigns DIs and keeps database records true; authorities decide exceptions.
+- AnA does not submit a GUDID record, an EUDAMED registration or an establishment registration.
+`,
+  }),
+
+  skill({
+    key: 'device.combination-and-drug-delivery',
+    name: 'Drug-delivery device constituents',
+    description:
+      'Engineering the device constituent of a drug-device or biologic-device combination product: design inputs drawn from the drug, essential performance and drug delivery outputs, design verification on aged and transported product, human factors links, and bridging when the delivery device changes. Designation, lead centre and the Part 4 cGMP base are the combination products skill.',
+    disciplines: ['device-engineering', 'cmc'],
+    useCases: ['study-design', 'drafting', 'review', 'gap-analysis'],
+    triggers: [
+      'drug delivery device',
+      'drug-delivery device',
+      'delivery device design',
+      'device constituent',
+      'essential drug delivery outputs',
+      'essential performance requirements',
+      'dose accuracy',
+      'iso 11608',
+      'needle-based injection system',
+      'on-body injector',
+      'wearable injector',
+      'pen injector',
+      'injection device',
+      'device bridging',
+      'break loose force',
+      'glide force',
+      'activation force',
+    ],
+    tools: [
+      'classify_combination_product',
+      'plan_combination_cgmp',
+      'assess_device_constituent_controls',
+      'check_regulatory_currency',
+      'lookup_fda_guidance',
+      'design_human_factors_study',
+      'assess_essential_principles',
+    ],
+    references: [
+      { kind: 'standard', id: 'iso_13485' },
+      { kind: 'standard', id: 'iso_14971' },
+      { kind: 'standard', id: 'iec_62366_1' },
+      { kind: 'standard', id: 'cfr_820_qmsr' },
+      { kind: 'standard', id: 'eu_mdr' },
+      { kind: 'currency-fact', id: 'us-qmsr' },
+      { kind: 'record', id: QMSR_CROSSWALK, label: 'QMSR crosswalk, for restating 820.30 citations in tool results' },
+    ],
+    instructions: `
+## When this applies
+Designing, verifying or changing the device constituent of a drug-device or biologic-device combination product: a prefilled syringe, autoinjector, pen or on-body injector, the device parts of an inhaler, or another delivery system. Whether it is a combination product, its lead centre, the application and the Part 4 cGMP base are the combination products skill's; usability method is the human factors skill's.
+
+## Method
+1. Establish the product: the drug or biologic and the properties the device must handle (dose or volume, viscosity across temperature and shelf life, sensitivity to shear or silicone), the primary container, the delivery mechanism, users and use environment, and whether this presentation is used in the pivotal trials or only commercially. Take the combination-product category from the program record, or from \`classify_combination_product\` when it is not settled.
+2. Design controls apply to the device constituent whatever the base quality system: under 21 CFR Part 4 a drug-based manufacturer still meets the device provisions the rule calls out. \`plan_combination_cgmp\` returns those provisions for the date given. \`assess_device_constituent_controls\` lays out the constituent's design-control program, including essential performance requirements. Its citations name 21 CFR 820.30: restate them as ISO 13485:2016 clause 7.3 via 21 CFR 820.10(c), with 820.30 only as "formerly", and confirm the QMSR's status with \`check_regulatory_currency\`.
+3. Design inputs come from the drug as well as from users and risk: delivered dose and its accuracy, delivery time, needle depth or spray characteristics, user forces, fluid-path compatibility and sterility, and storage and transport conditions. Each input is measurable.
+4. Essential performance: identify the device outputs essential to delivering the drug as labeled (for an injector, typically delivered volume, needle extension and injection time; the engine's list is a starting point). FDA has issued guidance on essential drug delivery outputs for devices that deliver drugs and biological products; name it by topic and confirm its status with \`lookup_fda_guidance\`. Each output has a specification, a validated test method and a place in the control strategy, so it is verified at release and across shelf life.
+5. Design verification: dose accuracy and function against specification across the conditions of use, after transport, and on product aged to the end of shelf life alongside the drug's stability programme; reliability; and, for needle-based injection systems, the applicable part of the ISO 11608 series, edition stated. Extractables and leachables are a CMC question; biocompatibility, electrical safety and software follow their device skills.
+6. Human factors: critical tasks come from the use-related risk analysis, which shares the ISO 14971 risk file with the design. \`design_human_factors_study\` plans formative and summative work for the constituent; report its participant numbers and whether a full summative study is required as returned.
+7. Bridging: when the trial presentation differs from the commercial one (vial to prefilled syringe, syringe to autoinjector), plan comparative design verification, human factors on the new interface and, where exposure could differ, a pharmacokinetic comparison with clinical pharmacology. FDA's guidance on bridging for drug-device and biologic-device combination products is named by topic and confirmed. Whether clinical bridging data are needed is agreed with the agency.
+8. EU: for an integral product authorised as a medicine, the device part meets the relevant general safety and performance requirements, with a notified body opinion under Article 117 of the MDR. \`assess_essential_principles\` builds the GSPR matrix for the device part. EMA's guideline on quality documentation for medicinal products used with a medical device is named by topic and confirmed before citing.
+9. A change to the device constituent after approval goes through design change control and is classified for the drug or biologic application by the change-control method.
+
+## Pitfalls reviewers raise
+- Essential performance undefined, or not tied to the labeled dose.
+- Device performance verified on new product only, not at end of shelf life or after transport.
+- A commercial presentation that differs from the trial device with no bridging rationale.
+
+## Before answering
+- Design-control programs, called-out provisions and human factors numbers are engine outputs quoted with their inputs.
+- Specifications are the sponsor's; AnA proposes none.
+
+## Not AnA's to decide
+- The lead centre, and whether bridging and verification evidence suffice, are the agency's or the notified body's; design approvals are the sponsor's.
 `,
   }),
 ];
