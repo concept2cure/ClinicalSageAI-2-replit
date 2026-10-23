@@ -244,7 +244,9 @@ describe('canvas current-access refusal preserves a sent vault outcome', () => {
     const dialog = screen.getByTestId('file-to-vault-dialog');
     authService.endSession(null);
     fireEvent.click(within(dialog).getByTestId('ftv-submit'));
-    expect((await within(dialog).findByTestId('ftv-error')).textContent).toContain('Your session changed');
+    expect(await screen.findByText(/Your session changed/)).toBeTruthy();
+    expect((within(screen.getByTestId('file-to-vault-dialog')).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(screen.getByTestId('file-to-vault-dialog')).getByTestId('ftv-submit'));
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 

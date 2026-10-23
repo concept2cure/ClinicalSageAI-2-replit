@@ -30,7 +30,8 @@ import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getRuntimeDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
-import { buildRlsStartupOptions, assertRlsEnforcementForProduction } from './rlsEnforcement';
+import { assertRlsEnforcementForProduction } from './rlsEnforcement';
+import { buildRuntimeStartupOptions } from './runtimeStartupOptions';
 
 const logger = createScopedLogger('database');
 
@@ -47,7 +48,8 @@ try {
   if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
     const isProduction = process.env.NODE_ENV === 'production';
-    const rlsStartupOptions = buildRlsStartupOptions(process.env, process.env.PGOPTIONS);
+    // RLS enforcement plus jit=off (runtimeStartupOptions.ts).
+    const runtimeStartupOptions = buildRuntimeStartupOptions(process.env, process.env.PGOPTIONS);
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
@@ -57,7 +59,7 @@ try {
       statement_timeout: 30000,
       idle_in_transaction_session_timeout: 60000,
       allowExitOnIdle: !isProduction,
-      options: rlsStartupOptions,
+      options: runtimeStartupOptions,
     } as ConstructorParameters<typeof Pool>[0]);
 
     // Observability hook for the RLS rollout (PR A): every pool.query /

@@ -1,0 +1,27 @@
+--- organization 1, last 30 days
+{
+  "days": 30,
+  "turnsRead": 5,
+  "turnsWithSkills": 3,
+  "capped": false,
+  "skills": [
+    {
+      "key": "cmc.stability",
+      "turns": 2,
+      "picked": 0,
+      "deployed": 0,
+      "lastUsedAt": "2026-10-22T00:20:19.136Z"
+    },
+    {
+      "key": "labeling",
+      "turns": 2,
+      "picked": 1,
+      "deployed": 1,
+      "lastUsedAt": "2026-10-22T00:20:19.136Z"
+    }
+  ]
+}
+--- organization 1, last 60 days (the 45-day-old turn counts)
+{"turnsRead":6,"stability":{"key":"cmc.stability","turns":3,"picked":0,"deployed":0,"lastUsedAt":"2026-10-22T00:20:19.136Z"}}
+--- organization 3 (no records)
+{"days":30,"turnsRead":0,"turnsWithSkills":0,"capped":false,"skills":[]}

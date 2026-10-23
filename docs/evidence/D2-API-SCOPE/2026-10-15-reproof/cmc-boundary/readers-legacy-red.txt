@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-22T06:36:09.581Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > a legacy numeric project, which is not a program > is refused as not a program — a settled answer, never a failed read or a driver error
+[module3-compile] submission spine unreadable; refused at the composition boundary: invalid input syntax for type uuid: "42"
+
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a biologic, the newer a small molecule
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a small molecule, the newer a biologic
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > a legacy numeric project, which is not a program > is refused as not a program — a settled answer, never a failed read or a driver error 25ms
+   → expected 'CMC_APPLICATION_NOT_READABLE' to be 'CMC_PROGRAM_NOT_RECORDED' // Object.is equality
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > a legacy numeric project, which is not a program > is refused as not a program — a settled answer, never a failed read or a driver error
+AssertionError: expected 'CMC_APPLICATION_NOT_READABLE' to be 'CMC_PROGRAM_NOT_RECORDED' // Object.is equality
+
+Expected: "CMC_PROGRAM_NOT_RECORDED"
+Received: "CMC_APPLICATION_NOT_READABLE"
+
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:267:27
+    265|   it('is refused as not a program — a settled answer, never a failed r…
+    266|     const refusal = await assessProgramCompositionScope(ORG, '42');
+    267|     expect(refusal?.code).toBe('CMC_PROGRAM_NOT_RECORDED');
+       |                           ^
+    268|     expect(compositionRefusalStatus(refusal!)).toBe(409);
+    269|     expect(refusal?.message).not.toMatch(/uuid|invalid input syntax/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  06:36:07
+   Duration  5.69s (transform 1.93s, setup 81ms, import 2.92s, tests 2.41s, environment 0ms)
+

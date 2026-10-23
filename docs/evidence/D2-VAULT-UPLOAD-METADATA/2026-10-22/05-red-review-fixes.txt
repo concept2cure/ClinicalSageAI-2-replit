@@ -1,0 +1,22 @@
+# RED at cb472b8c0 (the first upload commit), the review-driven cases (accessibility and Part 11 reviews, 2026-10-22) (2026-10-22T06:58:13Z)
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked
+   → expected 'Not uploaded:tool.exe: the Vault does…' to contain '.DS_Store: a hidden or system file'
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no
+   → expected <input id="_r_5_-version" …(3)></input> to be null
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+   → Unable to find an element with the text: Recorded as v1.0 · Unfiled, needs a folder. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your match
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent
+   → Unable to find an element with the text: /Another file in this upload has this name\. The Vault identifies a document by its file name/. This could be because the text is broken up by multiple elements. In this case, you can provide 
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it
+   → Unable to find an accessible element with the role "heading" and name "Files to upload"
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > names each row by its file, offers only this view’s folders, and moves focus to Close once the uplo
+   → Unable to find an accessible element with the role "group" and name "cover-letter.pdf"
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+   → expected [ { …(3) } ] to deeply equal [ { …(4) } ]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+   → expected { Object (state, version, ...) } to match object { state: 'stored', …(2) }
+ × client/src/concept2cure/v2/__tests__/fileDropZone.test.tsx > the zone > where folders are not offered (the Data Room), a drop gives the dropped files only, as before
+   → expected { files: [ { …(2) }, …(4) ], …(1) } to deeply equal { files: [ { …(2) } ], unread: +0 }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+    222|     expect(latest!.note!.text).toContain('Filed risk-file.pdf → Engine…
+      Tests  9 failed | 14 passed (23)

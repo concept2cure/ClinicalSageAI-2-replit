@@ -80,7 +80,6 @@ describe('stage3 auth/db contract smoke', () => {
     expect(typeof dbTs.getPool).toBe('function');
     expect(typeof dbTs.getDb).toBe('function');
     expect(typeof dbTs.runMigrations).toBe('function');
-    expect(typeof dbTs.ensureAuthTables).toBe('function');
     expect(typeof dbTs.query).toBe('function');
     expect(typeof dbTs.transaction).toBe('function');
     expect(typeof dbTs.healthCheck).toBe('function');
@@ -89,7 +88,6 @@ describe('stage3 auth/db contract smoke', () => {
     expect(typeof dbJs.getPool).toBe('function');
     expect(typeof dbJs.getDb).toBe('function');
     expect(typeof dbJs.runMigrations).toBe('function');
-    expect(typeof dbJs.ensureAuthTables).toBe('function');
     expect(typeof dbJs.query).toBe('function');
     expect(typeof dbJs.transaction).toBe('function');
     expect(typeof dbJs.healthCheck).toBe('function');

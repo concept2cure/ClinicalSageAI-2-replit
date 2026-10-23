@@ -64,6 +64,8 @@ export interface CtTurn {
    * nothing performed (2026-10-04). What was checked is `evidence`.
    */
   contextUsed?: string[];
+  /** The skills AnA followed for this answer, and why each loaded. */
+  skillsUsed?: Array<{ key: string; name: string; reasons: string[]; chosen: 'picked' | 'deployed' | null }>;
   /** What went wrong around the answer (a failed save, a timeout), shown under it. */
   warnings?: string[];
   /**

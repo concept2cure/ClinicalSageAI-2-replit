@@ -3,17 +3,17 @@
  * DispatchReadiness — a program whose submissions are all of other types is
  * not told it has none (ONE_ANA_ONE_CANVAS.md slice 24, review finding).
  *
- * The gate reads only the program's submission of its own application type
- * (programSequence.ts submissionBelongsToProgram). An IND program whose only
- * submission is an EU MAA therefore has no sequence to gate, and the screen
- * said "No submission for <program> yet … This program has no submission
- * recorded", and told AnA the same, about a program that has one. The project
- * page now shows that program's submissions beside the readiness verdict, so
- * the claim stood next to its own refutation.
+ * The gate used to read only the program's submission of its own application
+ * type. An IND program whose only submission is an EU MAA therefore had no
+ * sequence to gate, and the screen said "No submission for <program> yet …
+ * This program has no submission recorded", and told AnA the same, about a
+ * program that has one. The first fix named the missing type and the other
+ * submissions.
  *
- * The screen and AnA now say which type is missing and name the program's
- * submissions of other types. "No submission" is kept only for a program with
- * none recorded (dispatchReadinessProgramScope.test.tsx pins that wording).
+ * F18 (2026-10-22): the screen lists every market of the project, so the MAA
+ * is not a footnote to a missing IND: it is a market with its own sequence and
+ * its own verdict, gated like any other. "No market" is said only when the
+ * project's scoped list is empty.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,13 +32,22 @@ const PROGRAM_UUID = '2b4c6d8e-0f1a-4b3c-8d5e-7f9a1b3c5d7e';
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
 const PROGRAM = { id: PROGRAM_UUID, name: 'BX-512 IND', code: 'BX-512', product_name: 'Vorelinib', program_type: 'IND' };
-const MAA = { id: 12, title: 'BX-512 EU MAA', productName: 'Vorelinib', applicationType: 'maa', programId: PROGRAM_UUID };
+const MAA = { id: 12, title: 'BX-512 EU MAA', productName: 'Vorelinib', applicationType: 'maa', primaryRegion: 'eu', status: 'active', lifecycleStage: 'original', programId: PROGRAM_UUID };
+const MAA_VERDICT = {
+  sequenceId: 40, region: 'eu', sequenceStatus: 'assembling', validationErrors: 1, unacknowledgedShadowCriticals: 0,
+  shadowReviewRunCount: 1, shadowReviewMissing: false, leafCount: 5,
+  externalValidation: { configured: false, ran: false, errorCount: 0, cleared: true, blockers: [] },
+  readiness: { errors: 1, warnings: 0, infos: 0, findings: [] },
+  gate: { cleared: false, blockers: ['1 open error-severity validation finding.'] },
+};
 
 function serve(subs: unknown[]) {
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
     const url = String(raw ?? '');
     if (url === `/api/c2c/projects/${PROGRAM_UUID}`) return ok(PROGRAM);
-    if (url === '/api/submissions') return ok(subs);
+    if (url === `/api/submissions?programId=${PROGRAM_UUID}`) return ok(subs);
+    if (url === '/api/submissions/12/sequences') return ok([{ id: 40, sequenceNumber: '0000', status: 'assembling' }]);
+    if (url === '/api/submissions/sequences/40/dispatch-readiness') return ok(MAA_VERDICT);
     return ok([]);
   });
 }
@@ -57,7 +66,7 @@ afterEach(() => {
 });
 
 describe('DispatchReadiness — the program’s submissions of other types', () => {
-  it('says the IND is missing and names the MAA, never "no submission"', async () => {
+  it('gates the MAA as its own market, and never says the program has no submission', async () => {
     serve([MAA]);
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     function Probe() {
@@ -65,22 +74,22 @@ describe('DispatchReadiness — the program’s submissions of other types', () 
       return null;
     }
     render(<><DispatchReadiness {...props()} /><Probe /></>);
-    await waitFor(() => expect(text()).toContain('No IND submission for BX-512 IND yet'));
-    expect(text()).toContain('MAA "BX-512 EU MAA"');
-    expect(text()).not.toMatch(/No submission for BX-512 IND/);
-    expect(text()).not.toMatch(/has no submission recorded/);
-    // AnA is told the same, not that the program has nothing.
-    await waitFor(() => expect(seen.ctx?.facts?.gateState).toBe('no-submission'));
-    expect(seen.ctx?.summary).toContain('has no IND submission recorded');
-    expect(seen.ctx?.summary).toContain('MAA "BX-512 EU MAA"');
+    await waitFor(() => expect(text()).toContain('MAA · EU (EMA): Dispatch blocked · 1 blocker'));
+    expect(text()).toContain('BX-512 EU MAA');
+    expect(text()).not.toMatch(/No IND submission|No submission for BX-512 IND|has no submission recorded|No market/);
+    // AnA is told the same: one market, with its verdict.
+    await waitFor(() => expect(seen.ctx?.facts?.listState).toBe('listed'));
+    expect(seen.ctx?.summary).toContain('MAA · EU (EMA): Dispatch blocked · 1 blocker');
     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
-    expect(urls.some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
+    expect(urls).toContain('/api/submissions/sequences/40/dispatch-readiness');
   });
 
-  it('a program with nothing recorded is still "no submission", with its type named', async () => {
+  it('a program with nothing recorded is "no market", and nothing is gated', async () => {
     serve([]);
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toContain('No submission for BX-512 IND yet'));
-    expect(text()).toContain("reads BX-512 IND's IND submission, and none is recorded");
+    await waitFor(() => expect(text()).toContain('No market for this project yet'));
+    expect(text()).toContain('A market is one submission: an application to one agency.');
+    const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+    expect(urls.some((u) => u.endsWith('/dispatch-readiness'))).toBe(false);
   });
 });

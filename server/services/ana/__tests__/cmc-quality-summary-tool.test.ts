@@ -39,7 +39,11 @@ function fakePool(opts: { programHere?: boolean; sources?: unknown[]; fail?: boo
       return { rows: [] };
     },
   };
-  return { pool, asked, poolOf: async () => pool };
+  /* Compose runs on a connection of its own, in a transaction: it reads the
+     spine under a savepoint, which Postgres refuses outside one. The real
+     engine's refusal is pinned in composition-boundary-readers.pglite.test.ts. */
+  const withConnection = { ...pool, connect: async () => ({ query: pool.query, release: () => undefined }) };
+  return { pool, asked, poolOf: async () => withConnection };
 }
 
 const ctx = { organizationId: ORG, projectRef: PROGRAM } as never;

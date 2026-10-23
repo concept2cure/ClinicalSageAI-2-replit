@@ -77,7 +77,8 @@ export interface CompositionRefusal {
     | 'CMC_MODALITY_OUT_OF_SCOPE'
     | 'CMC_MODALITY_NOT_ESTABLISHED'
     | 'CMC_APPLICATION_OUT_OF_SCOPE'
-    | 'CMC_APPLICATION_NOT_READABLE';
+    | 'CMC_APPLICATION_NOT_READABLE'
+    | 'CMC_PROGRAM_NOT_RECORDED';
   message: string;
   /** What the record established, for the audit row. */
   modality?: SubstanceModality;
@@ -110,13 +111,112 @@ export function isCompositionOutOfScope(err: unknown): err is CompositionOutOfSc
  * text reaches an IND. Distinct from `CMC_APPLICATION_OUT_OF_SCOPE` because the
  * remedy is different — nothing is wrong with the program, the read failed.
  */
-export function applicationNotReadable(detail: string): CompositionRefusal {
+export function applicationNotReadable(): CompositionRefusal {
+  /* The read's own error stays in the server log, where the caller writes it
+     (module3-compile.ts judgeProgramComposition). It used to be quoted here,
+     so a driver message (`invalid input syntax for type uuid`, a relation
+     name) reached the 409 body and AnA's answer (2026-10-22). */
   return {
     code: 'CMC_APPLICATION_NOT_READABLE',
     message:
       `This program's submission could not be read, so whether it files a US IND is not established, and ` +
       `Module 3 is not composed on an unestablished application type — a marketing application's content ` +
-      `differs from an IND's. Try again; if it persists, the failure is in the server log (${detail}).`,
+      `differs from an IND's. Try again; if it persists, the failure is in the server log.`,
+  };
+}
+
+/**
+ * The project named is not one of the organisation's regulatory programs (a
+ * legacy numeric project, from before programs), so what it files is not
+ * recorded. A settled answer, not a failed read: trying again changes nothing.
+ * It used to reach the boundary as a uuid cast error, answered "could not be
+ * read … try again" for as long as the project existed (2026-10-22).
+ */
+export function programNotRecorded(): CompositionRefusal {
+  return {
+    code: 'CMC_PROGRAM_NOT_RECORDED',
+    message:
+      `This project is not one of this organisation's regulatory programs, so the application it files is not ` +
+      `recorded, and Module 3 is composed here only for a program recorded as filing a US IND. Open the ` +
+      `program this project belongs to and work on its Module 3 there.`,
+  };
+}
+
+/** The CMC interview's biologic molecule types: the flow's own biologic branch (flows/cmc-specification.ts). */
+const INTERVIEW_BIOLOGIC_TYPES = new Map<string, string>([
+  ['monoclonal_antibody', 'monoclonal antibody'],
+  ['adc', 'antibody-drug conjugate'],
+  ['recombinant_protein', 'recombinant protein'],
+  ['cell_therapy', 'cell therapy'],
+  ['gene_therapy', 'gene therapy'],
+  ['vaccine', 'vaccine'],
+]);
+/** Not biologics, and not small molecules either: ICH Q3A(R2) and M7 exclude both by scope. */
+const INTERVIEW_EXCLUDED_TYPES = new Map<string, [article: string, plural: string]>([
+  ['peptide', ['a peptide', 'peptides']],
+  ['oligonucleotide', ['an oligonucleotide', 'oligonucleotides']],
+]);
+
+/**
+ * The composition boundary for the molecule type a person states in AnA's CMC
+ * specification interview (`substance_classification.molecule_type`). The
+ * interview applies small-molecule reasoning to every answer after it — ICH
+ * Q3A(R2) impurity qualification, ICH M7, ICH Q1A(R2) — and offered a
+ * monoclonal antibody, a cell therapy or a vaccine the same findings
+ * (2026-10-15 launch-boundary re-proof). Null for a small molecule, and while
+ * the question is unanswered; the refusal otherwise, and for any answer that
+ * is not one of the flow's options.
+ */
+export function interviewMoleculeTypeRefusal(moleculeType: unknown): CompositionRefusal | null {
+  if (moleculeType === undefined || moleculeType === null) return null;
+  const stated = typeof moleculeType === 'string' ? moleculeType.trim() : null;
+  if (stated === '' || stated === 'small_molecule') return null;
+  const biologic = stated === null ? undefined : INTERVIEW_BIOLOGIC_TYPES.get(stated);
+  if (biologic) {
+    return {
+      code: 'CMC_MODALITY_OUT_OF_SCOPE',
+      modality: 'biologic',
+      message:
+        `The drug substance is stated as a ${biologic}, a biologic. This interview applies small-molecule ` +
+        `reasoning — ICH Q3A(R2) impurity qualification and ICH M7 — and both exclude biological and ` +
+        `biotechnological products from their scope. ${AUTHORED_INSTEAD}`,
+    };
+  }
+  const excluded = stated === null ? undefined : INTERVIEW_EXCLUDED_TYPES.get(stated);
+  if (excluded) {
+    return {
+      code: 'CMC_MODALITY_OUT_OF_SCOPE',
+      message:
+        `The drug substance is stated as ${excluded[0]}. Module 3 is composed here only for a small molecule, and ` +
+        `the reasoning this interview applies — ICH Q3A(R2) and ICH M7 — excludes ${excluded[1]} from its scope. ` +
+        AUTHORED_INSTEAD,
+    };
+  }
+  return {
+    code: 'CMC_MODALITY_NOT_ESTABLISHED',
+    modality: 'unknown',
+    message:
+      `Whether this drug substance is a small molecule is not established by the answer given, and this interview ` +
+      `applies small-molecule reasoning only to a small molecule. If it is one, choose Small Molecule. If it is ` +
+      `not, ${AUTHORED_INSTEAD.charAt(0).toLowerCase()}${AUTHORED_INSTEAD.slice(1)}`,
+  };
+}
+
+/**
+ * A stability study filed under no program. The boundary judges a program, and
+ * a study with none has no product class, no substance and no application to
+ * judge: whether its product is a small molecule is not established, and an
+ * ICH Q1E figure is not produced on an unestablished modality (2026-10-22).
+ */
+export function studyFiledUnderNoProgram(studyIds: readonly number[]): CompositionRefusal {
+  const which = studyIds.length === 1 ? `Stability study ${studyIds[0]} is` : `Stability studies ${studyIds.join(', ')} are`;
+  return {
+    code: 'CMC_MODALITY_NOT_ESTABLISHED',
+    modality: 'unknown',
+    message:
+      `${which} filed under no program, so whether the product is a small molecule is not established, and an ` +
+      `ICH Q1E shelf life is produced here only for a small-molecule product of a US IND. File the study under ` +
+      `its program, then estimate again.`,
   };
 }
 
@@ -202,19 +302,36 @@ export function compositionRefusal(
     };
   }
 
+  return applicationRefusal(applicationType);
+}
+
+/**
+ * The application half of the boundary: null for a US IND, the refusal
+ * otherwise. Asked of the program by `compositionRefusal`, and of the
+ * submission Module 3 is placed into by `placeModule3IntoSubmission` — the
+ * boundary refused composing for an NDA and then let the IND-composed text be
+ * placed into one, 3.2.R statements that are false for a marketing application
+ * and all (2026-10-15 launch-boundary re-proof).
+ */
+export function applicationRefusal(
+  applicationType: string | null | undefined,
+  filer: 'program' | 'submission' = 'program',
+): CompositionRefusal | null {
   const filed = String(applicationType ?? '').trim();
   if (!filed) {
     /* `regulatory_programs.program_type` is NOT NULL, so an empty answer means
        the program row could not be read — not that it files nothing. */
-    return applicationNotReadable('the program row could not be read');
+    return applicationNotReadable();
   }
 
   if (!isUsClinicalTrialApplication(filed)) {
+    const subject = filer === 'program' ? 'This program files' : 'This submission files';
+    const verb = filer === 'program' ? 'composed' : 'composed and placed';
     return {
       code: 'CMC_APPLICATION_OUT_OF_SCOPE',
       applicationType,
       message:
-        `This program files ${filed.toUpperCase()}, and Module 3 is composed here only for a US ` +
+        `${subject} ${filed.toUpperCase()}, and Module 3 is ${verb} here only for a US ` +
         `IND (21 CFR 312.23(a)(7)). A marketing application needs the 3.2.R location statements, the ` +
         `§3.2.S.4.5 / §3.2.P.5.6 justification of specification and 4-level section granularity, none of which ` +
         `this composer produces; an EU or Health Canada clinical-trial application needs an IMPD Quality part, ` +
@@ -223,6 +340,15 @@ export function compositionRefusal(
   }
 
   return null;
+}
+
+/**
+ * The status a refusal is answered with. A read that failed is not a verdict
+ * about the program: it is 503, so a screen offers the retry the message asks
+ * for instead of a settled answer. Every other refusal is 409.
+ */
+export function compositionRefusalStatus(refusal: CompositionRefusal): 409 | 503 {
+  return refusal.code === 'CMC_APPLICATION_NOT_READABLE' ? 503 : 409;
 }
 
 /**
@@ -266,6 +392,26 @@ export function anaCompositionRefusal(
   };
 }
 
+/**
+ * An AnA tool result for a refusal at the boundary, in the refusal's own words.
+ * `doNot` names the workaround the assistant must not take — the generic
+ * calculator on numbers read off a record, or an answer chosen on the person's
+ * behalf — because the refusal is a property of the program, not of the tool.
+ */
+export function anaToolCompositionRefusal(
+  refusal: CompositionRefusal,
+  doNot: string,
+  extra: Record<string, unknown> = {},
+): string {
+  return JSON.stringify({
+    status: 'outside_composition_scope',
+    code: refusal.code,
+    message: refusal.message,
+    ...extra,
+    instruction: `Relay this reason to the user verbatim. ${doNot}`,
+  });
+}
+
 /** True only when the boundary refused — for a handler that otherwise rethrows. */
 export function refusedByCompositionScope(err: unknown): boolean {
   return isCompositionOutOfScope(err);
@@ -273,10 +419,14 @@ export function refusedByCompositionScope(err: unknown): boolean {
 
 export default {
   compositionRefusal,
+  applicationRefusal,
   anaCompositionRefusal,
+  anaToolCompositionRefusal,
   refusedByCompositionScope,
   compositionRefusalBody,
+  compositionRefusalStatus,
   applicationNotReadable,
+  interviewMoleculeTypeRefusal,
   CompositionOutOfScopeError,
   isCompositionOutOfScope,
 };

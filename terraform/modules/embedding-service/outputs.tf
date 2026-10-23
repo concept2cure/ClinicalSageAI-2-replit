@@ -1,5 +1,5 @@
 output "base_url" {
-  description = "EMBEDDING_LOCAL_BASE_URL: the OpenAI-compatible root the API and the worker call (the client appends /embeddings)."
+  description = "EMBEDDING_LOCAL_BASE_URL: the OpenAI-compatible root the API calls (the client appends /embeddings)."
   value       = "http://${aws_service_discovery_service.this.name}.${aws_service_discovery_private_dns_namespace.this.name}:${var.port}/v1"
 }
 

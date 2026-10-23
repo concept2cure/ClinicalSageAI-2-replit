@@ -1,0 +1,80 @@
+{
+  "canonical": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "previousCanonical": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "assessmentOnly": true,
+  "typeMappings": {
+    "total": 23,
+    "domain": [
+      "fcoi.disclosure_register",
+      "ha.commitment_register",
+      "iacuc.protocol_register",
+      "irb.submission_register",
+      "ibc.registration_register",
+      "nonclinical.study_send_register",
+      "grants.portfolio_register",
+      "rim.registration_grid",
+      "inspection.readiness_pack",
+      "controlled_substances.inventory_ledger",
+      "lifecycle.obligation_calendar",
+      "etmf.completeness_pack",
+      "research_compliance.training_status",
+      "effort.certification_register",
+      "research_security.coi_register",
+      "research_admin.scorecard",
+      "global.label_currency_matrix"
+    ],
+    "readiness": [
+      "readiness.executive_digest"
+    ],
+    "lineage": [
+      "provenance.evidence_trace_report"
+    ],
+    "regional": {
+      "usa_fda.ind_safety_readiness": [
+        "US",
+        [
+          "ind"
+        ]
+      ],
+      "usa_fda.nda_bla_filing_readiness": [
+        "US",
+        [
+          "nda",
+          "bla"
+        ]
+      ],
+      "ema.maa_readiness_assessment": [
+        "EU",
+        [
+          "maa"
+        ]
+      ],
+      "japan_pmda.jnda_shonin_readiness": [
+        "JP",
+        [
+          "jnda"
+        ]
+      ]
+    }
+  },
+  "deletedHistory": {
+    "command": "git log --all --diff-filter=D --format=%h %s -- <four reporting paths>",
+    "output": ""
+  },
+  "pinsAtCanonical": {
+    "client/src/concept2cure/v2/surfaces/Insights.tsx": "18ec406437a1462411376e6c8199cca8ac78980c09d478d6b565f7682227dd68",
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98",
+    "client/src/concept2cure/v2/surfaces/ReportGovernance.tsx": "266db5ce79596c5aa0d80b68859765d5c0b26565e5d31f4408c02c418e5c971a",
+    "client/src/concept2cure/v2/surfaceViews.ts": "32a6cdd68f922d25e6d508439a330c6055fd9c5334b69d2875ac17d1f94e3831",
+    "shared/constants/ui-surface-registry.ts": "a14d1e185a8627d60392541761fa95d308874c8d98298811eef9a777e8412bc1",
+    "server/routes/report-os.ts": "75758726fc97064f0f1ba54e9375443c8bca5a3a0f0a72aa47f0620d2983bb0f",
+    "server/services/report-os/report-engine.ts": "519237ede039102d62d87da011074d648ee2d027fc0e1cf270be2cfd1c25d563",
+    "server/services/report-os/regional/filing-types.ts": "5b8f871782dec668e5e9a3af4cb356ed6b1d9f447afcf460dcf5b7775435efe4",
+    "server/services/report-os/segment.ts": "be2b7a7914ea316020916be03a48b9b5e9f00b29969cdbf3cc6966bb6eba613f",
+    "server/services/report-os/lineage-trace-report.ts": "59f59ff534e2d8a1728987c9d1f48cea580a85133f62327551dd2d368d6f18f9",
+    "server/services/report-os/sealing/run-seal.ts": "85904be05c84422e781588607a2f4f246deec7071119f025dd955f50aed99c85",
+    "server/services/report-os/pdf/bundle-pdf.ts": "43e9b239863d6b62635764e49b13385fd618d0d7814020c5c99c728ff3c8c256",
+    "server/routes/analytics-demo-analysis.ts": "5d85bc6fe49631991689c5420ba3085b6a6610eb98efdb2d387848d6d6784797",
+    "server/services/pv/expedited-reporting-clock.ts": "5f1380c675a5ef77bf1ea950baf90179cb1c01840874099e111ea7bcbaf19918"
+  }
+}

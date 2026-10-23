@@ -1,0 +1,53 @@
+# Mutations at 149ef8ccd + this change (2026-10-22T15:16:48Z). Each is applied alone, run, and reverted.
+
+## MUTATION: a review counts for any version (reviewsRelease always true)
+##   server/services/qms/periodic-review.ts
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 265ms
+   → v2.0 is due on its own date again: expected undefined to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+
+## MUTATION: a voided review signature still counts (isSignatureWithdrawn not consulted)
+##   server/services/qms/periodic-review.ts
+ × tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 106ms
+   → expected 1 to be 2 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+
+## MUTATION: no qms-document content binder: the signature binds the ledger hash, not the release content
+##   server/services/part11/governed-target-binders.ts
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 14ms
+   → expected { id: 328, signer_id: 905, …(4) } to match object { signer_id: 905, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+
+## MUTATION: review-due reads the row's signed date, ignoring the review
+##   server/routes/mdx-qms.ts
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 62ms
+   → expected [ 135, 137, 134, 136 ] to not include 134
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 44ms
+   → expected [ 135, 137, 134, 136 ] to not include 136
+ × tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 69ms
+   → expected [ 135, 137, 134, 136 ] to not include 137
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+
+## MUTATION: the panel offers a review on a document under revision
+##   client/src/concept2cure/quality/PeriodicReview.tsx
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed 217ms
+   → expected <button class="qms-chip" …(2)>…(1)</button> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+
+## MUTATION: the dialog accepts today as the next review date
+##   client/src/concept2cure/quality/PeriodicReview.tsx
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > asks for a next review date after today before it can be signed 114ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)

@@ -45,15 +45,20 @@ const acc = computeDiagnosticAccuracy({ tp: 88, fp: 9, fn: 7, tn: 96 });
 console.log(`Sensitivity=${r3(acc.sensitivity)}, specificity=${r3(acc.specificity)}, AUC-adjacent agreement κ=${r3(acc.cohensKappa)}`);
 
 h('Submission-readiness capstone — pathway: cdx');
+// 2026-10-15: analytical and clinical performance and the post-market plan were typed
+// in as 1; nothing here computes those domains, so they are reported not assessed.
 const readiness = assessSubmissionReadiness({
   pathway: 'cdx',
   domainScores: {
     companionDiagnostics: cdx.ready ? 1 : cdx.readinessScore,
-    analyticalPerformance: 1,
-    clinicalPerformance: 1,
-    postMarketPlan: 1,
   },
 });
-console.log(`Overall: ${(readiness.overallScore * 100).toFixed(0)}%  →  VERDICT: ${readiness.verdict.toUpperCase()}`);
-readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${(d.score * 100).toFixed(0)}%`));
+const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
+console.log(
+  readiness.assessedDomainCompleteness === null
+    ? 'Completeness of the assessed domains: none assessed'
+    : `Completeness of the assessed domains: ${pct(readiness.assessedDomainCompleteness)} (${readiness.perDomain.length} of ${readiness.requiredDomains.length} required domains)  →  verdict: ${readiness.verdict}`,
+);
+readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${pct(d.score)}`));
+if (readiness.notAssessedDomains.length) console.log(`Not assessed: ${readiness.notAssessedDomains.join(', ')}`);
 console.log('');

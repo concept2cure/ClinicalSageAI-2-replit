@@ -37,7 +37,7 @@ const SUMMARY = {
     { n: '2.6.2', l: 'Pharmacology written summary', st: 'missing', note: 'No pharmacology / safety-pharmacology study in the registry.' },
   ],
   m4: [],
-  send: { inScope: 0, validated: 0, missingDomains: [], risk: 'none' },
+  send: { inScope: 0, declaredPassed: 0, missingDomains: [], risk: 'none' },
   completeness: 0,
   gaps: [],
   provisioned: true,

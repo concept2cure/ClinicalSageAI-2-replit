@@ -1,0 +1,12 @@
+# F23 (6/9) green
+## Every compile suite (tests/routes/ectd-*, conversion capacity, the marketing-application journey, pdev handlers)
+ Test Files  16 passed (16)
+      Tests  183 passed (183)
+
+## Every client test of the compile screen
+ Test Files  16 passed (16)
+      Tests  192 passed (192)
+
+Re-pointed: tests/routes/ectd-compile-ident.test.ts, a program with no sequence: overallReadiness null and readinessBasis 'no-sequence' (was 0); the section-store blocker kept.
+ESLint: EctdCompile.tsx 5 -> 5, ectd-compile.ts 9 -> 9, compile-placement.ts 0, EctdModuleReadiness.tsx 0. Typecheck 0 errors.
+EctdCompile.tsx: 99,513 -> 93,959 bytes.

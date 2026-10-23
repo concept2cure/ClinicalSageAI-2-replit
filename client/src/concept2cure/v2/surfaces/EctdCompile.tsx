@@ -44,52 +44,14 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { OrchestratorRunControls } from './OrchestratorRunControls';
 import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
 import { useSubmissionReadSession } from './submissionScopedRead';
 import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
+import { EctdModuleReadiness, isStatusView, statusReadinessWords, type StatusView } from './EctdModuleReadiness';
+import { EctdFiledState } from './EctdFiledState';
 
-interface ModuleReadiness {
-  moduleCode: string;
-  moduleName: string;
-  totalSections: number;
-  requiredSections: number;
-  completedRequired: number;
-  completionPct: number;
-  ready: boolean;
-}
-/** Where the required-section set came from: the program's live rule pack,
- *  or the labelled ICH baseline when no pack applies (with the reason). */
-interface RequiredSectionSource {
-  source: 'rule_pack' | 'fallback';
-  docType?: string;
-  agency?: string;
-  packVersion?: string;
-  reason?: string;
-}
-interface StatusView {
-  /** Legacy numeric project id, or null when the ident named a program. */
-  projectId: number | null;
-  projectIdent?: string;
-  programId?: string | null;
-  overallReadiness: number;
-  /** Every required section approved/locked/final. Not the same as submittable. */
-  contentComplete?: boolean;
-  submissionReady: boolean;
-  /** Why the package cannot be transmitted. Empty exactly when submissionReady. */
-  submissionBlockers?: string[];
-  modules: ModuleReadiness[];
-  requiredSectionSource?: RequiredSectionSource;
-  /** 'placed' — counted from documents placed in the program's sequence;
-   *  'approved' — from the section store's approved/locked/final statuses. */
-  readinessBasis?: 'placed' | 'approved';
-  /** The sequence a compile builds, with the region recorded on it. */
-  sequence?: { sequenceNumber: string; region: string; leafCount: number } | null;
-  totalSections: number;
-  totalRequired: number;
-  totalCompleted: number;
-  lastUpdated: string | null;
-}
 interface ValidationResult {
   rule: string;
   severity: 'error' | 'warning' | 'info';
@@ -924,6 +886,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const actionRevision = useRef(0);
   const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
   const [toast, fireToast] = useToast();
+  // The package download's review: the signed-in user's confirmation of this
+  // compile (a new compile starts unconfirmed). 2026-10-15: none was sent, so
+  // production refused every download (403 HUMAN_REVIEW_REQUIRED).
+  const exportReview = useExportReview(compileResult?.id ?? '');
 
   // ── Orchestrator pipeline state (folded in from the deleted duplicate) ──
   // Each panel carries its OWN read-outcome flag for the same reason
@@ -1035,7 +1001,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     setStatusState('loading');
     const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${identPath}/status${seqQuery}`);
     if (!current() || readRevision.current.status !== request) return;
-    if (!ok || !body) { setStatusState('error'); setStatus(null); return; }
+    // A reply without modules is a failed read, never an empty one (F23 6/9).
+    if (!ok || !isStatusView(body)) { setStatusState('error'); setStatus(null); return; }
     setStatus(body); setStatusState('ready');
   }, [identPath, seqQuery, current]);
 
@@ -1057,6 +1024,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
      changed nothing told the user a choice existed that did not. */
   const recordedRegion = status?.sequence?.region ?? null;
   const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
+  /* So is its type: the selector is offered only where none is recorded (it
+     read "initial" on amendment 0001, WO-9 §20, 2026-10-22). */
+  const recordedType = typeof status?.sequence?.type === 'string' && status.sequence.type ? status.sequence.type : null;
 
   /* A rehearsal (WO-9 Click 6) binds a follow-up sequence against the latest
      recorded compile of each earlier sequence, filed or not — for an agency
@@ -1097,7 +1067,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...exportRequestBody(compileResult, regionBody),
+        governance: exportReview.governance,
+      });
       if (!actionCurrent(request)) return;
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -1118,7 +1091,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     } finally {
       if (actionCurrent(request)) setBusy(null);
     }
-  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent]);
+  }, [compileResult, regionBody, ident, fireToast, current, actionCurrent, exportReview.governance]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null || !current()) return;
@@ -1126,7 +1099,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     setBusy('compile');
     try {
       const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
-        submissionType,
+        ...(recordedType ? {} : { submissionType }),
         ...regionBody,
         ...seqBody,
         ...(followUp && rehearsal ? { rehearsal: true } : {}),
@@ -1147,7 +1120,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       fireToast(notice.text, notice.tone);
       void loadStatus(); void loadHistory();
     } finally { if (actionCurrent(request)) setBusy(null); }
-  }, [identPath, submissionType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
+  }, [identPath, submissionType, recordedType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -1164,7 +1137,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       summary: ident == null
         ? 'eCTD compile, with no program open — nothing can be assembled until one is.'
         : `eCTD compile for ${region} (${submissionType}). Readiness is ${statusState}` +
-          (status ? `, overall ${status.overallReadiness}%` : '') +
+          (status ? `: ${statusReadinessWords(status)}` : '') +
           (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.',
       facts: {
         programOpen: ident != null,
@@ -1174,6 +1147,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         ...(status
           ? {
               overallReadinessPct: status.overallReadiness,
+              readinessBasis: status.readinessBasis ?? null,
+              readinessNote: status.readinessNote ?? null,
               modulesTotal: status.modules?.length ?? 0,
               sectionsRequired: status.totalRequired,
               sectionsCompleted: status.totalCompleted,
@@ -1458,10 +1433,19 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
               </select>
             </>
           )}
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
-          <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
-            {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {recordedType ? (
+            <span style={{ fontSize: 12.5 }}>
+              Type <b>{recordedType}</b>
+              <span style={{ color: 'var(--text-400)' }}> · recorded on sequence {status?.sequence?.sequenceNumber}</span>
+            </span>
+          ) : (
+            <>
+              <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
+              <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
+                {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </>
+          )}
           {followUp && (
             <label style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title="For an agency validator only. Binds this sequence's replace, append and delete against the latest recorded compile of each earlier sequence, filed or not. The package, its record and its download say so; transmit binds only against filed sequences.">
@@ -1476,67 +1460,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         </div>
       </div>
 
-      {/* ── Readiness ── */}
-      <div className="pj-card">
-        <div className="pj-card-h">
-          <span className="t">Module readiness</span>
-          {/* The chip reports CONTENT completeness, which is what this number
-              measures. It used to read "submission-ready" at 100%, over a package
-              with no leaf files — see the blockers panel below. */}
-          {status && status.readinessBasis === 'placed' ? (
-            // Counted from documents PLACED in the sequence — placement, not
-            // approval, so it never borrows the "content complete" wording.
-            <span className={'rd-chip tone-' + (status.totalCompleted === status.totalRequired ? 'ok' : 'warn')}>
-              {status.totalCompleted} of {status.totalRequired} required sections placed
-            </span>
-          ) : status && (
-            <span className={'rd-chip tone-' + ((status.contentComplete ?? status.overallReadiness === 100) ? 'ok' : 'warn')}>
-              {status.overallReadiness}% · {(status.contentComplete ?? status.overallReadiness === 100) ? 'content complete' : 'incomplete'}
-            </span>
-          )}
-        </div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          {statusState === 'loading' ? (
-            <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>
-          ) : statusState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="Compilation readiness didn’t respond. Sign in to your tenant and retry." /></div>
-          ) : !status || !Array.isArray(status.modules) || status.modules.length === 0 ? (
-            // `status && status.modules.length` reads as guarded and is not —
-            // the check covers the container, not the member. A readiness
-            // response that arrives without `modules` (version skew, a proxy
-            // that dropped a field, an error body served with 200) threw here
-            // and unwound the whole surface into "this surface didn't finish
-            // loading", when the truthful answer is the empty state below.
-            <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No module readiness yet" hint="Readiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module." /></div>
-          ) : (
-            <>
-            {/* Which required set the numbers below are measured against. A
-                generic baseline must never pass for the program's own outline. */}
-            {status.requiredSectionSource && (
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-400)', borderBottom: '1px solid var(--border)' }}>
-                {status.requiredSectionSource.source === 'rule_pack'
-                  ? `Required sections from rule pack ${status.requiredSectionSource.docType ?? ''}:${status.requiredSectionSource.agency ?? ''} ${status.requiredSectionSource.packVersion ?? ''}`.replace(/\s+/g, ' ').trim()
-                  : `Required sections are the generic ICH baseline, not this program's outline. ${status.requiredSectionSource.reason ?? ''}`.trim()}
-              </div>
-            )}
-            <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
-              <tbody>{status.modules.map((m) => (
-                <tr key={m.moduleCode}>
-                  <td style={{ fontWeight: 600 }}>{m.moduleName}</td>
-                  <td>{m.completedRequired}/{m.requiredSections}</td>
-                  <td>{m.totalSections}</td>
-                  <td style={{ minWidth: 120 }}>
-                    <div style={{ background: 'var(--border)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
-                      <div style={{ width: m.completionPct + '%', height: '100%', background: m.ready ? 'var(--success)' : 'var(--warning)' }} />
-                    </div>
-                    <span style={{ fontSize: 11, color: 'var(--text-400)' }}>{m.completionPct}%</span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span></td>
-                </tr>))}</tbody></table>
-            </>
-          )}
-        </div>
-      </div>
+      {/* ── Readiness ── (EctdModuleReadiness.tsx, F23 6/9) */}
+      <EctdModuleReadiness status={status} state={statusState} />
 
       {/* ── Compile result ──
           `errors` and `warnings` are read through these locals rather than off
@@ -1574,14 +1499,17 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
                 content file and is still a package (2026-09-29, W5/D7: this
                 was gated on rendered leaf files, so it could not be exported). */}
             {compileResult.submissionId != null && compileResult.package != null && (
-              <button
-                className="btn primary"
-                style={{ height: 32, marginRight: 8 }}
-                disabled={busy != null}
-                onClick={() => void doExport()}
-              >
-                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
-              </button>
+              <>
+                <ExportReviewConfirmation review={exportReview} subject="this compiled package's content" disabled={busy != null} />
+                <button
+                  className="btn primary"
+                  style={{ height: 32, marginRight: 8 }}
+                  disabled={busy != null}
+                  onClick={() => void doExport()}
+                >
+                  {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+                </button>
+              </>
             )}
             {compileResult.xmlBackbone && (
               <>
@@ -1646,6 +1574,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
           )}
         </div>
       </div>
+
+      {/* ── What the agency holds now, across every filed sequence (gap 6.1) ── */}
+      <EctdFiledState identPath={identPath} seqQuery={seqQuery} isScopeCurrent={current} />
 
       {/* ── Orchestrator pipeline ─────────────────────────────────────────
           The 11-step run (M2/M3 composition, CSR tabulation, assembly,

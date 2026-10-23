@@ -1,6 +1,7 @@
 /**
- * Seriousness is read from the recorded event type: 'AE' is non-serious; SAE,
- * SUSAR and AESI are serious; a missing or unrecognised type is UNDETERMINED —
+ * Seriousness is read from the recorded event type: 'AE' is non-serious; SAE
+ * and SUSAR are serious (an AESI from its recorded criterion — see
+ * aesi-seriousness-from-recorded-criterion.test.ts); a missing or unrecognised type is UNDETERMINED —
  * neither serious nor non-serious — and is surfaced for review, never dropped.
  *
  * What the code used to do (until 2026-10-15): isSerious() was
@@ -40,9 +41,12 @@ const ev = (id: string, eventType: unknown): AdverseEvent =>
   }) as AdverseEvent;
 
 describe('isSerious — from the recorded event type', () => {
-  it('AE is non-serious; SAE, SUSAR and AESI are serious', () => {
+  // An AESI is serious only with a recorded seriousness criterion (2026-10-15;
+  // aesi-seriousness-from-recorded-criterion.test.ts) — it read serious by type.
+  it('AE is non-serious; SAE and SUSAR are serious; an AESI with a recorded criterion is serious', () => {
     expect(isSerious({ eventType: 'AE' })).toBe(false);
-    for (const t of ['SAE', 'SUSAR', 'AESI'] as const) expect(isSerious({ eventType: t })).toBe(true);
+    for (const t of ['SAE', 'SUSAR'] as const) expect(isSerious({ eventType: t })).toBe(true);
+    expect(isSerious({ eventType: 'AESI', seriousnessCriteria: 'hospitalization' })).toBe(true);
   });
 
   it('a missing or unrecognised event type is undetermined (null), not serious', () => {

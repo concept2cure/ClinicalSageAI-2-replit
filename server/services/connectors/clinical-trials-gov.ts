@@ -72,7 +72,7 @@ export class ClinicalTrialsGovConnector implements DataConnector {
         sourceConnector: this.id,
         title,
         summary: `${conditions} | Phase: ${phase} | Status: ${status} | Sponsor: ${sponsor} | N=${enrollment}`,
-        relevanceScore: 1 - i * 0.03,
+        sourceRank: i + 1,
         metadata: { nctId: id, conditions, phase, status, sponsor, enrollment },
         url: `https://clinicaltrials.gov/study/${id}`,
       };

@@ -12,9 +12,10 @@ locals {
 resource "aws_secretsmanager_secret" "this" {
   for_each = local.secret_names
 
-  name        = "${var.prefix}/${each.key}"
-  description = nonsensitive(var.secrets[each.key].description)
-  kms_key_id  = var.kms_key_id
+  name                    = "${var.prefix}/${each.key}"
+  description             = nonsensitive(var.secrets[each.key].description)
+  kms_key_id              = var.kms_key_id
+  recovery_window_in_days = var.recovery_window_in_days
 
   tags = merge(var.tags, { SecretName = each.key })
 }

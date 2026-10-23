@@ -46,6 +46,7 @@
 import { pool } from '../../db/runtime';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { documentClassification } from '../../../shared/schema/vault';
+import { vaultFilterSql } from './vault-document-filter';
 
 /** Enum domain read from the schema rather than restated, so a value can never
  *  pass a caller's membership check and then fail the cast in Postgres. */
@@ -200,18 +201,13 @@ export async function listVaultDocuments(
     params.push(q.programId);
     where += ` AND d.program_id = $${params.length}::uuid`;
   }
-  if (q.classification !== undefined) {
-    params.push(q.classification);
-    where += ` AND d.classification = $${params.length}::vault.document_classification`;
-  }
-  if (q.documentType !== undefined) {
-    params.push(q.documentType);
-    where += ` AND d.document_type = $${params.length}`;
-  }
-  if (q.ctdSection !== undefined) {
-    params.push(q.ctdSection);
-    where += ` AND d.ctd_section = $${params.length}`;
-  }
+  // The one metadata predicate (vault-document-filter.ts), shared with the
+  // in-app search. The public API keeps its exact, raw CTD match (FD-g).
+  where += vaultFilterSql({
+    classifications: q.classification !== undefined ? [q.classification] : undefined,
+    documentTypes: q.documentType !== undefined ? [q.documentType] : undefined,
+    ctdSections: q.ctdSection !== undefined ? [q.ctdSection] : undefined,
+  }, params, 'd', { ctdMatch: 'exact' });
 
   try {
     // `d.id` breaks ties so OFFSET paging over equal updated_at values cannot

@@ -1,0 +1,23 @@
+# r-answered-over-a-stopped-row: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t another writer before its abort
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > server_shutdown: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason 57ms
+   → expected 'no_more_tools' to be 'server_shutdown' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > admin_cancelled: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason 8ms
+   → expected 'no_more_tools' to be 'admin_cancelled' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > session_ended: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason 6ms
+   → expected 'no_more_tools' to be 'session_ended' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a turn that errored after the row was stopped is recorded stopped with the row reason, and the error is written down 12ms
+   → expected [ 'failed' ] to deeply equal [ 'stopped' ]
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a session's end names what ended it in the record: the abort's cause, and the row's when it won late (DT3 review) 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a row this turn ended itself is answered as before 6ms
+ Test Files  1 failed | 1 skipped (2)
+      Tests  4 failed | 2 passed | 40 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > server_shutdown: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason
+AssertionError: expected 'no_more_tools' to be 'server_shutdown' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > admin_cancelled: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason
+AssertionError: expected 'no_more_tools' to be 'admin_cancelled' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > session_ended: the done frame, the closing row and what post-processing saves and files all say stopped with the row reason
+AssertionError: expected 'no_more_tools' to be 'session_ended' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the row stopped by another writer before its abort arrived (DT3 review, Part 11) > a turn that errored after the row was stopped is recorded stopped with the row reason, and the error is written down
+AssertionError: expected [ 'failed' ] to deeply equal [ 'stopped' ]

@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { mkdirSync } from 'fs';
+import { devLoginEmail, devLoginPassword } from './dev-identity';
 
 const APP_BASE = process.env.APP_BASE || 'http://localhost:5000';
 const SCREENSHOT_DIR = 'test-artifacts/final-meeting-screenshots';
@@ -11,12 +12,12 @@ async function login(page: Page) {
   await page.goto(`${APP_BASE}/concept2cure/login`);
   const emailInput = page.locator('input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jonmichaelpsmith@gmail.com');
+  await emailInput.fill(devLoginEmail());
   const continueBtn = page.locator('button').filter({ hasText: 'Continue' });
   await continueBtn.click();
   const passwordInput = page.locator('input#password');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });
-  await passwordInput.fill('demo123');
+  await passwordInput.fill(devLoginPassword());
   const signInBtn = page.locator('button').filter({ hasText: 'Sign in' });
   await signInBtn.click();
   await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 15000 });

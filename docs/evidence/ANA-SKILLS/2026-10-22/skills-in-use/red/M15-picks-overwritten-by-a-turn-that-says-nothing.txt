@@ -1,0 +1,84 @@
+Mutation: server/routes/ana-ri/stream.ts
+- if (Array.isArray(req.body.skills)) {
+            void recordThreadSkills
++ if (true) {
+            void recordThreadSkills
+Test: server/routes/ana-ri/__tests__/stream-skills.test.ts
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-skills.test.ts
+{
+  "timestamp": "2026-10-22T23:20:43.090Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T23:20:43.091Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-skills.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads the method the question calls for and reports it with its version and hash 84ms
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > says which engines the method names are not callable in this turn 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads no skill for a question no skill is about, and adds no block 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads a skill the person picked in the composer, with no phrase calling for it, and reports it as chosen 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > keeps the turn’s picks on the conversation, and an empty list when the person lets AnA choose again 14ms
+ × server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > leaves the conversation’s picks alone when a turn says nothing about them 12ms
+   → expected [ { threadId: 'thread-1', …(2) } ] to deeply equal []
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > ignores a picked value that is not a skill key 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads nothing when the organization’s skill state cannot be read, and warns 5ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  23:20:40
+   Duration  8.77s (transform 6.10s, setup 60ms, import 8.36s, tests 176ms, environment 0ms)
+
+stderr | server/routes/ana-ri/__tests__/stream-skills.test.ts
+{
+  "timestamp": "2026-10-22T23:20:43.092Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > loads nothing when the organization’s skill state cannot be read, and warns
+[AnA RI] Skills unavailable: relation does not exist
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-skills.test.ts > skills on a conversation turn > leaves the conversation’s picks alone when a turn says nothing about them
+AssertionError: expected [ { threadId: 'thread-1', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "keys": [],
++     "organizationId": 7,
++     "threadId": "thread-1",
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-skills.test.ts:105:34
+    103|   it('leaves the conversation\u2019s picks alone when a turn says noth…
+    104|     await turn(app, { message: 'Thanks.' });
+    105|     expect(h.state.threadSkills).toEqual([]);
+       |                                  ^
+    106|   });
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

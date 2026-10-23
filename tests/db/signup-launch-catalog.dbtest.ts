@@ -68,7 +68,7 @@ import {
   ensureOrganizationDefaultWorkspace,
   poolClientWorkspaceStore,
 } from '../../server/services/c2c/organization-default-workspace';
-import { seedOrganizations } from '../../server/db/bootstrap/seed-default-org';
+import { readFileSync } from 'node:fs';
 import {
   pathwaysForUseCases,
   primaryIndustryForIndustryMode,
@@ -457,7 +457,12 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     const locked = launchSurfaces
       .filter((id) => v.has(id) && v.get(id)!.entitled !== true)
       .map((id) => `${id}:${v.get(id)!.source}`);
-    expect(locked).toEqual(['cmc:tier']);
+    // communication-center (Projects) and ind-checklist (Submission Center, P-32)
+    // are listed surfaces with no module of their own in their app: existing
+    // module licensing applies and signup grants nothing for them, so on the
+    // free plan they are tier-locked by design (launch-scope.ts). In
+    // launchSurfaces order, and nothing else is locked.
+    expect(locked).toEqual(['communication-center:tier', 'ind-checklist:tier', 'cmc:tier']);
     expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
     expect((await grantRows(orgId)).some((grant) => grant.module_id === 'cmc')).toBe(false);
     for (const s of rail.surfaces) {
@@ -551,19 +556,23 @@ describe('the organisation\'s own workspace, under each creator\'s scope', () =>
     expect(await workspacesOf(ORG_PREAUTH_WS)).toEqual([{ marker: 'true', created_by_id: null }]);
   });
 
-  it('the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation', async () => {
-    const url = new URL(process.env.APP_DATABASE_URL!);
-    const rt = new Pool({ connectionString: url.toString(), max: 1, options: '-c app.rls_enforce=on' });
-    const client = await rt.connect();
+  // The two seeded organisations were the boot's (seedOrganizations, on the
+  // owner connection) until 2026-10-22; they are now the migration set's
+  // (MR-03 Stage 3, OPS-16). deploy-migrate applies every file on every
+  // deploy, as the owner, so this applies the seed and the workspace sweep
+  // after it twice, in set order, and checks the result is still one
+  // workspace per seeded organisation.
+  it('the seeded organisations: the migration and the workspace sweep, applied twice, leave one workspace each', async () => {
+    const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+    const seed = read('migrations/20261022_auth_schema_and_seeded_organizations.sql');
+    const sweep = read('migrations/20260923_organization_default_client_workspace.sql');
+    const client = await owner.connect();
     try {
       await client.query('BEGIN');
-      const posture = (await client.query(`SELECT current_user AS role, current_setting('app.rls_enforce', true) AS enforcement`)).rows[0];
-      expect(posture).toEqual({ role: runtimeRole, enforcement: 'on' });
-      await seedOrganizations(client);
-      await seedOrganizations(client);
-      // Read back as the owner would see it, from inside the same transaction:
-      // enforcement off for the read only, so RLS cannot hide a second row.
-      await client.query(`SELECT set_config('app.rls_enforce', 'off', true)`);
+      for (let deploy = 0; deploy < 2; deploy++) {
+        await client.query(seed);
+        await client.query(sweep);
+      }
       const { rows } = await client.query(
         `SELECT o.slug, count(w.id)::int AS workspaces,
                 count(*) FILTER (WHERE w.metadata->>'defaultForOrganization' = 'true')::int AS marked
@@ -577,7 +586,6 @@ describe('the organisation\'s own workspace, under each creator\'s scope', () =>
     } finally {
       await client.query('ROLLBACK').catch(() => {});
       client.release();
-      await rt.end();
     }
   });
 });

@@ -117,9 +117,7 @@ export class VeevaVaultConnector implements DataConnector {
       sourceConnector: this.id,
       title: doc.name__v || 'Untitled',
       summary: `${doc.type__v || ''} / ${doc.subtype__v || ''} | Status: ${doc.status__v || ''} | Product: ${doc.product__v || ''}`,
-      // Rank descending by position, floored at 0 so large result sets never
-      // emit a negative relevance.
-      relevanceScore: Math.max(0, 1 - i * 0.05),
+      sourceRank: i + 1,
       metadata: doc,
       url: `${this.baseUrl}/ui/#doc/${doc.id}`,
     }));

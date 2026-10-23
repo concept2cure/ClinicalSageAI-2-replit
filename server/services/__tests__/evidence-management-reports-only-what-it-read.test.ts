@@ -156,6 +156,7 @@ describe("every statement is scoped to the caller's organization", () => {
   });
 
   it('refuses an evidence read with no organization', async () => {
+    // @ts-expect-error -- an untyped caller with no organization is still refused at runtime
     await expect(svc.getStageEvidence('p1', 1)).rejects.toThrow(/organization/i);
     expect(execute).not.toHaveBeenCalled();
   });

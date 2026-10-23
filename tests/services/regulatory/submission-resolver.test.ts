@@ -8,7 +8,8 @@
  * EMA made the eSubmission Gateway / Web Client mandatory for every
  * centralised-procedure eCTD submission from 1 March 2014 — new MAAs,
  * variations, renewals, PSURs, ASMFs — and tells applicants not to send those
- * submissions to NCAs via CESP as well (regulator text, ema.europa.eu; see
+ * submissions to NCAs via CESP as well (recall: a search extract of an
+ * ema.europa.eu page, not a fetched copy; see
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-submission-channel-function-facts.md). CESP is the channel for national,
  * MRP and DCP procedures. The platform has no eSubmission Gateway connector

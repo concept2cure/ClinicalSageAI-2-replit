@@ -1,0 +1,11 @@
+# interview-composition-scope.ts without its catch: a boundary read that throws escapes the handler
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked 107ms
+   → connection terminated unexpectedly
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 skipped (24)
+Error: connection terminated unexpectedly
+ ❯ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts:203:53
+    201|
+    202|   it('a boundary that cannot be asked refuses as a failed read; the an…

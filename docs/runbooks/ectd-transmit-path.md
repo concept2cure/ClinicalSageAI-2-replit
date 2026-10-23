@@ -153,13 +153,13 @@ the FILED history and its fold — and delegates the diff itself to the canonica
 - **One bundle per filed sequence** (2026-10-01, sweep F19). A production send of a bundle
   whose sequence the history already holds on file as a *different* bundle is refused
   before the bytes leave (`409`, `details.code: 'SEQUENCE_ALREADY_FILED'`): the agency
-  loads at most one of two filings under one number. Re-sending the *same* bundle (after
-  a rollback) is allowed and reports `filedSequenceReason: 'already-recorded'`. If another
+  loads at most one of two filings under one number. Re-sending the *same* bundle,
+  once its earlier transmittal is no longer active, is allowed (it files nothing new) and reports `filedSequenceReason: 'already-recorded'`. If another
   bundle was recorded under the sequence while this one was in flight, the send reports
   `filedSequenceRecorded: false`, `filedSequenceReason: 'sequence-conflict'` and names
   the bundle the history holds (`filedSequenceConflict`); confirm with the agency which
-  one it loaded. A rollback does **not** un-file a sequence — the agency still holds the
-  bytes. An entry marked `state: 'rejected'` is not on file and its number can be reused.
+  one it loaded. Only a recorded technical rejection (below) takes a sequence off the
+  filed history — the agency still holds the bytes otherwise. An entry marked `state: 'rejected'` is not on file and its number can be reused.
 
   **Recording an agency technical rejection** (the agency did not load the sequence; for
   FDA, a failed Ack3) is the only way an entry becomes `rejected`. Upload the agency's
@@ -252,6 +252,37 @@ pre-transmit gate:
 
 Malformed evidence blocks on a stored descriptor are dropped, not forwarded: the gate
 then warns "cannot prove" rather than reading an empty object as compliance.
+
+What `POST /api/mdx/gateways/:region/:gateway/transmit` answers (2026-10-08, W5/D7,
+sweep HS-2/3/4/6/8; production refuses this package transmit since 2026-10-17, and the
+Gateway transmittals screen no longer offers it). A gate refusal is a 422 with
+`details.code: 'PRE_TRANSMIT_BLOCKED'` and one `details.findings` entry
+`{severity: 'error', ruleId: 'PRE-TRANSMIT', message}` per blocker; the blocker's own
+text names the remedy (the agency's large-submission channel, re-assembly for the target
+region, a PDF/A or DTD setting). FDA ESG with `FDA_ESG_TRANSPORT=rest` answers 412
+`details: {code: 'TRANSPORT_NOT_VERIFIED', transmitted: false}` before anything is sent.
+That 412's sentence names no endpoint, submitter ID or variable; the server log
+(`[fda-esg]`) records them. The gateway accounts in Setup (`GET /api/gateway-accounts`)
+and `GET /api/mdx/gateways` (also refused in production) list it as `configured` (its
+credentials resolve) with `transportReadiness.implementation: 'unavailable'`, and the
+sequence transmit's precheck refuses it before a signature is asked for, in
+`fdaEsgTransportImplementation`'s words (not logged). An active transmittal holding the
+package or its sequence is a 409 `ACTIVE_TRANSMITTAL` whose sentence names no route: the
+agency may already hold the bundle, so confirm receipt with the agency, and a resend is a
+new sequence from Submission Center (the rollback route was removed 2026-10-17). A
+`pending` send is said to be unfinished. The bytes lock has no environment in its key, so
+a send to the agency's test environment holds the same bytes in production (and the
+reverse): that refusal says where the holding send went and carries
+`details.holderEnvironment`. A 201 carries `preTransmitFailedChecks` (`"name: detail"`
+strings, as AnA's result and the sign record carry them) and `preTransmitWarnings`, `null` when the guard reported nothing.
+`GET /api/mdx/gateways/transmittals` returns a page (default 100, at most 500) with
+`meta: {count, total, hasMore, byStatus, awaitingAcknowledgement, signing}`; `total`,
+`byStatus` and `awaitingAcknowledgement` are counted over every row the filters match, not
+over the page, and `hasMore` says the page is shorter than `total`; the log screen shows
+"N of TOTAL" and says when older transmittals are not listed.
+`awaitingAcknowledgement` counts rows the agency may still acknowledge and has not: an
+active status (`pending`, `in_transit`, `received`, the duplicate-send lock's set) with no
+acknowledgement. A rejected, rolled-back or completed row is not counted.
 
 ## What the platform does not claim
 

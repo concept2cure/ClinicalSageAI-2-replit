@@ -1,0 +1,25 @@
+# m-timeout-shows-stopped-responding: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t follows its run
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the idle timer: straight to following from the last row, and "stopped responding" never shows 32ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a dropped connection: following, never interrupted 10ms
+   → expected true to be falsy
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a stream that ended before the turn did: following 6ms
+   → expected true to be falsy
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the followed run ends sealed: it hands over to the record, under the same id 8ms
+   → expected 'AnA stopped responding before finishi…' to be 'There are three reports.' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive 10ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ Test Files  1 failed (1)
+      Tests  5 failed | 8 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the idle timer: straight to following from the last row, and "stopped responding" never shows
+AssertionError: expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a dropped connection: following, never interrupted
+AssertionError: expected true to be falsy
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > a stream that ended before the turn did: following
+AssertionError: expected true to be falsy
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a detachable turn whose socket is lost follows its run, in place > the followed run ends sealed: it hands over to the record, under the same id
+AssertionError: expected 'AnA stopped responding before finishi…' to be 'There are three reports.' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive
+AssertionError: expected 'AnA stopped responding before finishi…' not to match /stopped responding/i

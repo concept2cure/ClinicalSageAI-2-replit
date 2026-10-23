@@ -1,0 +1,17 @@
+{
+  "initial43-red.txt.gz": {
+    "decodedBytes": 485733,
+    "decodedSha256": "50f21dfd09a12778fcfaf77f8988b3a9e8a933deac0eaa4dfcddea0997ea3913",
+    "archiveSha256": "9e3266d2f8e6a4734564dedded8f6507e1d4466bf4a97dfe4a79ab9da38785bf"
+  },
+  "vault-successor-green.txt.gz": {
+    "decodedBytes": 83406,
+    "decodedSha256": "ac9488e06e3b89ec649b0f34aa153540e5ffce8a44a20b2d7e8f143b881151de",
+    "archiveSha256": "622d692bb10374b174178d3a7d8425bd732c813edecb5b727612ae0df502d01f"
+  },
+  "remedy-lint.json.gz": {
+    "decodedBytes": 336893,
+    "decodedSha256": "d67580d202a0b185bf8c59f72dc7fe09453d9f097f9388a6a8784ac8bea002a1",
+    "archiveSha256": "36cdcede90a5d3a5f3903de37be25f79c9d068c8d2ccb03d560748363e370105"
+  }
+}

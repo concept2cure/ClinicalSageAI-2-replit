@@ -1,0 +1,17 @@
+# r-stop-then-close-filed-as-detach: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t not a detach
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > the person's own Stop, then the close: no detach stamp, no detach warning, no armed limit 62ms
+   → a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.731Z' ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > an administrator, then the close: no detach stamp, no detach warning, no armed limit 26ms
+   → a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.768Z' ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > a shutdown, then the close: no detach stamp, no detach warning, no armed limit 27ms
+   → a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.793Z' ] to deeply equal []
+ Test Files  1 failed | 1 skipped (2)
+      Tests  3 failed | 43 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > the person's own Stop, then the close: no detach stamp, no detach warning, no armed limit
+AssertionError: a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.731Z' ] to deeply equal []
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > an administrator, then the close: no detach stamp, no detach warning, no armed limit
+AssertionError: a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.768Z' ] to deeply equal []
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a stop that landed before the page closed is not a detach (DT3 review, product) > a shutdown, then the close: no detach stamp, no detach warning, no armed limit
+AssertionError: a stopped turn was stamped detached: expected [ '2026-10-22T17:16:06.793Z' ] to deeply equal []

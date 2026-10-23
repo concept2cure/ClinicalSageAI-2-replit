@@ -33,7 +33,7 @@ variables {
   one_off_task_families       = ["c2c-production-migrate", "c2c-production-provision"]
   pass_role_arns              = ["arn:aws:iam::111122223333:role/exec", "arn:aws:iam::111122223333:role/task"]
   api_log_group_arn           = "arn:aws:logs:us-east-1:111122223333:log-group:/ecs/c2c-production/api"
-  frontend_bucket_arn         = "arn:aws:s3:::c2c-prod-frontend"
+  frontend_bucket_arn         = "arn:aws:s3:::c2c-prod-frontend-123456789012"
   cloudfront_distribution_arn = "arn:aws:cloudfront::111122223333:distribution/E123"
 }
 
@@ -141,3 +141,52 @@ run "refuses_a_repository_that_is_not_owner_slash_repo" {
   }
   expect_failures = [var.github_repository]
 }
+
+# MR-03 Stage 4. Production never builds: with no build subjects there is no
+# build role at all, so nothing outside the environment can push an image.
+run "no_build_subjects_means_no_build_role" {
+  command = apply
+  variables {
+    build_subjects = []
+  }
+  assert {
+    condition     = length(aws_iam_role.build) == 0 && length(aws_iam_role_policy.build) == 0 && output.build_role_arn == null
+    error_message = "With no build subjects there must be no build role."
+  }
+}
+
+# Promotion reads the source repository, read only, and nothing else of it.
+run "the_deploy_role_reads_only_the_repository_it_promotes_from" {
+  command = apply
+  variables {
+    promote_source_repository_arns = ["arn:aws:ecr:us-east-1:444455556666:repository/c2c-stg-api"]
+  }
+  assert {
+    condition = length([
+      for st in jsondecode(output.deploy_policy).Statement : st
+      if contains(flatten([st.Resource]), "arn:aws:ecr:us-east-1:444455556666:repository/c2c-stg-api")
+      ]) == 1 && anytrue([
+      for st in jsondecode(output.deploy_policy).Statement :
+      contains(flatten([st.Resource]), "arn:aws:ecr:us-east-1:444455556666:repository/c2c-stg-api")
+      && toset(flatten([st.Action])) == toset(["ecr:DescribeImages", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"])
+    ])
+    error_message = "The deploy role may read the promotion source, and may not push to it."
+  }
+}
+
+run "promotes_from_nowhere_by_default" {
+  command = apply
+  assert {
+    condition     = !strcontains(output.deploy_policy, "ReadTheImageToPromote")
+    error_message = "With no promotion source the deploy role reads no other repository."
+  }
+}
+
+run "refuses_a_promotion_source_that_is_not_a_repository" {
+  command = plan
+  variables {
+    promote_source_repository_arns = ["arn:aws:s3:::c2c-stg-frontend"]
+  }
+  expect_failures = [var.promote_source_repository_arns]
+}
+

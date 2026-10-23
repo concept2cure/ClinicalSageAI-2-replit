@@ -33,6 +33,26 @@ vi.mock('../shared', async () => {
 });
 vi.mock('../../../services/docxGenerator', () => ({ generateDocxBuffer: vi.fn(async () => Buffer.from('PK docx')) }));
 
+// Exports admit their actor from persisted membership (exportActorAdmission →
+// requireCurrentProjectActor → readCsrProjectActor), never from the session
+// claim. The real readCsrProjectActor runs; only its executor is replaced, so
+// the membership read is answered with the actor's own organization_users row
+// for (org 7, user 3) and nothing else.
+const membership = vi.hoisted(() => ({ rows: [{ role: 'member' }] as Array<{ role: string }> }));
+vi.mock('../../../services/csr/project-scope', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/csr/project-scope')>();
+  const executor = {
+    query: async (sql: string, params?: unknown[]) => ({
+      rows: /FROM organization_users/.test(sql) && params?.[0] === 7 && params?.[1] === 3 ? membership.rows : [],
+    }),
+  };
+  return {
+    ...actual,
+    readCsrProjectActor: (_database: unknown, ...rest: [number, number | undefined, Record<string, boolean>?]) =>
+      actual.readCsrProjectActor(executor, ...rest),
+  };
+});
+
 import exportsRouter from '../exports';
 
 const binary = (res: any, cb: any) => {
@@ -49,6 +69,7 @@ function exportsApp() {
 }
 
 beforeEach(() => {
+  membership.rows = [{ role: 'member' }];
   logAction.mockReset();
   logAction.mockResolvedValue({ persisted: true });
 });
@@ -100,5 +121,13 @@ describe('POST /api/concept2cure/artifacts/export-docx — the review assertion 
       assertedByUserId: 3,
       reviewerName: null,
     });
+  });
+
+  it('refuses an actor whose organization membership was revoked, before anything is recorded', async () => {
+    membership.rows = [];
+    const res = await request(exportsApp()).post('/api/concept2cure/artifacts/export-docx').send(body);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('PROJECT_MEMBERSHIP_REQUIRED');
+    expect(logAction).not.toHaveBeenCalled();
   });
 });

@@ -83,6 +83,11 @@ describe('.gitleaks.toml carries the working-tree gate’s rules for the credent
     const hex = 'a2785d961da619bbed9e6b3ba52dcda642e3aec5cb160913420d46afcbc2a38b';
     expect(digestLine.test(`      "server/routes/__tests__/vault-data-room-counts.test.ts": "${hex}",`)).toBe(true);
     expect(digestLine.test(`"stream-project-private-access.pglite.test.ts": "${hex}"`)).toBe(true);
+    // A compressed gate log, as the 2026-10-20/21 evidence manifests record them:
+    // the 7 findings that kept the full-history scan red (MR-02, 2026-10-22).
+    expect(digestLine.test(`    "gate-check-phantom-tokens.log.gz": "${hex}",`)).toBe(true);
+    expect(digestLine.test(`"publication-gate-ci-check-phantom-tokens-output.txt.gz": "${hex}",`)).toBe(true);
+    expect(digestLine.test(`"api_key.gz": "sk-live-0123456789abcdef"`)).toBe(false); // ci-secret-scan-ignore: negative test vector
     // Not a path, or not a digest, or more than the one pair: still scanned.
     expect(digestLine.test(`"api_key": "${hex}",`)).toBe(false); // ci-secret-scan-ignore: negative test vector
     expect(digestLine.test(`"access_token": "${hex}"`)).toBe(false); // ci-secret-scan-ignore: negative test vector

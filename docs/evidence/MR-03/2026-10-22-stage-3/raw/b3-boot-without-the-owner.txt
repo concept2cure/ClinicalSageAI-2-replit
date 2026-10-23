@@ -1,0 +1,36 @@
+# Slice B on Postgres 16.15 + TLS (bootproof.sh, the local reproduction of ci.yml production-boot-smoke). Fresh database, provisioned by
+# install-fresh + deploy-migrate WITH the new migration; the production bundle rebuilt; booted from a root without .env.
+
+## 1. APP_DATABASE_URL only (no owner URL in the process)
+/readyz=200
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+  ✓ applied: migrations/20261022_auth_schema_and_seeded_organizations.sql
+  ✓ applied: migrations/20260923_organization_default_client_workspace.sql
+## seeded organisations and their workspaces after the deploy
+concept2cure tier=enterprise workspaces=1
+default tier=standard workspaces=1
+
+## 2. Who connected during that boot (log_connections on, server log diffed around the boot)
+      5 connection authorized: user=app_service database=c2c_boot
+
+## 3. The same with the owner URL ALSO present (as the Terraform still supplies until slice C): still only the runtime role
+      5 connection authorized: user=app_service database=c2c_boot
+
+## 4. A column the deploy creates, removed by the owner (ALTER TABLE users DROP COLUMN bio): the boot reports it, serves 503,
+## creates nothing; one deploy-migrate run restores it; the next boot is ready. Every line below is the run's own output
+## (column counts from information_schema as the owner; the boot waits 240 s for a 200 before reporting the last /readyz).
+users.bio columns before: 1
+users.bio columns after the owner drops it: 0
+--- boot (APP_DATABASE_URL only)
+not ready after wait (last /readyz: 503)
+readyz: {"ready":false,"failed":["schema"],"dependencies":{"database":"ok","schema":"down","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"missing","anaState":"deterministic","capabilityRegistry":"seeded","schemaDetail":"auth schema incomplete: users.bio"}
+boot.log FATAL/refusal lines:
+users.bio columns after that boot: 0
+--- deploy-migrate (as the owner)
+deploy-migrate exit 0
+  ✓ applied: migrations/20261022_auth_schema_and_seeded_organizations.sql
+users.bio columns after deploy-migrate: 1
+--- boot again (APP_DATABASE_URL only)
+/readyz=200 after 8s
+readyz: {"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot.log FATAL/refusal lines:

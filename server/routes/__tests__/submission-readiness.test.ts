@@ -21,13 +21,15 @@ beforeEach(async () => {
 });
 
 describe('submission-readiness API', () => {
-  it('assesses a pathway and returns a verdict + prioritized gaps', async () => {
+  // 2026-10-15: pinned 'not-ready' with gaps for the five domains it did not send (scored 0).
+  it('assesses a pathway and returns a verdict, prioritized gaps and the domains not assessed', async () => {
     const res = await request(app)
       .post('/api/submission-readiness/assess')
-      .send({ pathway: '510k', domainScores: { substantialEquivalence: 1 } });
+      .send({ pathway: '510k', domainScores: { substantialEquivalence: 1, udiGudid: 0.4 } });
     expect(res.status).toBe(200);
-    expect(res.body.result.verdict).toBe('not-ready');
-    expect(res.body.result.prioritizedGaps.length).toBeGreaterThan(0);
+    expect(res.body.result.verdict).toBe('incomplete');
+    expect(res.body.result.prioritizedGaps.map((g: { domain: string }) => g.domain)).toEqual(['udiGudid']);
+    expect(res.body.result.notAssessedDomains).toEqual(['cybersecurity', 'humanFactors', 'labelingSpl', 'postMarketPlan']);
   });
 
   it('rejects an unknown pathway with 400', async () => {

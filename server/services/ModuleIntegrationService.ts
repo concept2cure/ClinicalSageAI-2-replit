@@ -85,6 +85,33 @@ export interface UpdateDocumentInput {
 /** The unified_documents columns a patch may set. */
 const PATCHABLE_FIELDS = ['title', 'documentType', 'metadata'] as const;
 
+/** The (module_type, original_id, organization_id) unique index on module_documents. */
+const MODULE_DOC_UNIQUE_INDEX = 'module_doc_idx';
+
+/** A module document this organization has already registered (a conflict, not a failure). */
+export class DocumentAlreadyRegisteredException extends Error {
+  constructor(
+    readonly moduleType: ModuleType,
+    readonly originalId: string,
+  ) {
+    super(`The ${moduleType} document ${originalId} is already registered`);
+    this.name = 'DocumentAlreadyRegisteredException';
+  }
+}
+
+/** A module_doc_idx unique violation (Postgres 23505), directly or as a Drizzle error's cause. */
+function isModuleDocConflict(error: unknown): boolean {
+  let e: unknown = error;
+  for (let depth = 0; e && typeof e === 'object' && depth < 3; depth += 1) {
+    const pg = e as { code?: unknown; constraint?: unknown; message?: unknown; cause?: unknown };
+    if (pg.code === '23505') {
+      return pg.constraint === MODULE_DOC_UNIQUE_INDEX || String(pg.message ?? '').includes(MODULE_DOC_UNIQUE_INDEX);
+    }
+    e = pg.cause;
+  }
+  return false;
+}
+
 export class ModuleIntegrationService {
   private workflowService: WorkflowService;
 
@@ -168,6 +195,12 @@ export class ModuleIntegrationService {
           moduleDocument: moduleDoc,
         };
       } catch (error) {
+        // 2026-10-15: a second registration of the same module document was
+        // logged and rethrown as-is, so the caller got a 500 for a conflict.
+        // The transaction still rolls back; the caller is told it is a duplicate.
+        if (isModuleDocConflict(error)) {
+          throw new DocumentAlreadyRegisteredException(documentData.moduleType, documentData.originalId);
+        }
         console.error('Error registering document:', error);
         throw error;
       }

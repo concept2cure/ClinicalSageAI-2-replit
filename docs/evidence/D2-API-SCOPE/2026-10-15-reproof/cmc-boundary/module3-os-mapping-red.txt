@@ -1,0 +1,158 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:20.278Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:21.400Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T06:07:21.401Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-22T06:07:21.401Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers the boundary’s refusal 409, with its code and where the program’s Module 3 is authored
+{
+  "timestamp": "2026-10-22T06:07:23.859Z",
+  "level": "error",
+  "message": "[module3-build-state] computing the build state failed",
+  "context": {
+    "err": "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers a read the boundary could not make 503, never as a verdict
+{
+  "timestamp": "2026-10-22T06:07:23.875Z",
+  "level": "error",
+  "message": "[module3-build-state] computing the build state failed",
+  "context": {
+    "err": "This program's submission could not be read, so whether it files a US IND is not established, and Module 3 is not composed on an unestablished application type — a marketing application's content differs from an IND's. Try again; if it persists, the failure is in the server log.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers the boundary’s refusal 409, with its code and where the program’s Module 3 is authored 27ms
+   → expected 500 to be 409 // Object.is equality
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers a read the boundary could not make 503, never as a verdict 5ms
+   → expected 500 to be 503 // Object.is equality
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > POST /place-into-submission/:projectId > answers the boundary’s refusal with its code, its words and its hint 16ms
+   → expected { success: false, …(1) } to match object { success: false, …(2) }
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_missing_inputs 1ms
+   → This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_stale_sections 1ms
+   → This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.
+ × server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_refresh_stale 1ms
+   → This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers the boundary’s refusal 409, with its code and where the program’s Module 3 is authored
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts:72:24
+     70|     H.status.mockRejectedValue(new CompositionOutOfScopeError(MAB));
+     71|     const res = await request(app()).get(`/api/cmc/module3-os/build-st…
+     72|     expect(res.status).toBe(409);
+       |                        ^
+     73|     expect(res.body).toMatchObject({ success: false, code: 'CMC_MODALI…
+     74|     expect(res.body.hint).toMatch(/Document editor/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers a read the boundary could not make 503, never as a verdict
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts:80:24
+     78|     H.status.mockRejectedValue(new CompositionOutOfScopeError(applicat…
+     79|     const res = await request(app()).get(`/api/cmc/module3-os/build-st…
+     80|     expect(res.status).toBe(503);
+       |                        ^
+     81|     expect(res.body.code).toBe('CMC_APPLICATION_NOT_READABLE');
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > POST /place-into-submission/:projectId > answers the boundary’s refusal with its code, its words and its hint
+AssertionError: expected { success: false, …(1) } to match object { success: false, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "CMC_APPLICATION_OUT_OF_SCOPE",
+    "error": "This submission files NDA, and Module 3 is composed and placed here only for a US IND.",
+    "success": false,
+  }
+
+ ❯ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts:97:22
+     95|       .send({ submissionId: 10, sequenceId: 20, reason: 'Placing appro…
+     96|     expect(res.status).toBe(409);
+     97|     expect(res.body).toMatchObject({ success: false, code: 'CMC_APPLIC…
+       |                      ^
+     98|     expect(res.body.hint).toMatch(/Document editor/);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_missing_inputs
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_stale_sections
+ FAIL  server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_refresh_stale
+CompositionOutOfScopeError: This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.
+ ❯ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts:109:32
+    107|     ['module3_refresh_stale', () => module3RefreshStale(ctx, {})],
+    108|   ] as const)('%s', async (action, run) => {
+    109|     H.status.mockRejectedValue(new CompositionOutOfScopeError(MAB));
+       |                                ^
+    110|     expect(await run()).toEqual({ success: false, action, message: MAB…
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { refusal: { code: 'CMC_MODALITY_OUT_OF_SCOPE', modality: 'biologic', message: 'This program\'s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.' } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  06:07:17
+   Duration  6.59s (transform 4.29s, setup 110ms, import 5.93s, tests 54ms, environment 0ms)
+

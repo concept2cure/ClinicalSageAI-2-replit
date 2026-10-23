@@ -30,6 +30,7 @@ import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { serverError } from '../lib/api-response';
+import { authedOrgId } from '../utils/authedOrgId';
 
 const log = createScopedLogger('analytics-demo-analysis');
 const router = Router();
@@ -96,7 +97,8 @@ router.post('/demo-analysis', blockInProduction, async (req, res) => {
     const protocolData = await protocolAnalyzerService.analyzeProtocol(content);
 
     // Get similar protocols based on the analyzed data
-    const similarProtocols = await protocolAnalyzerService.findSimilarProtocols(protocolData, 5);
+    // Only the caller's organization's protocols (findSimilarProtocols refuses without one).
+    const similarProtocols = await protocolAnalyzerService.findSimilarProtocols(protocolData, 5, authedOrgId(req) ?? undefined);
 
     // Enhancing analysis with knowledge-based recommendations
     const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature.

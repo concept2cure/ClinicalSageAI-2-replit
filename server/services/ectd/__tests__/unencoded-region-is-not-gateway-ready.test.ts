@@ -94,9 +94,13 @@ describe('validateEctdPackageHardened does not call such a package gateway-ready
     expect(result.regional.some((f) => f.ruleId === 'REGION_RULES_NOT_ENCODED')).toBe(true);
   });
 
-  it('CONTROL: the same package for the US, whose rules are encoded, is gateway-ready', async () => {
+  it('CONTROL: the same package for the US has its rules encoded; gateway-ready only once its PDF versions are read', async () => {
+    // 2026-10-15: this pinned gatewayReady:true for PDFs whose version nobody
+    // read (FDA-ESG-006 was never evaluated). With no leaf bytes the rule is
+    // not assessed, and that blocks.
     const result = await hardened('US', 'IND123456');
     expect(result.regionalRulesAssessed).toBe(true);
-    expect(result.gatewayReady).toBe(true);
+    expect(result.gatewayReady).toBe(false);
+    expect(result.regional.some((f) => f.ruleId === 'FDA-ESG-006' && /not assessed/.test(f.message))).toBe(true);
   });
 });

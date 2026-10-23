@@ -94,7 +94,7 @@ locals {
 
   deploy_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       # Account-level; takes no resource.
       { Sid = "EcrLogin", Effect = "Allow", Action = ["ecr:GetAuthorizationToken"], Resource = "*" },
       { Sid = "EcrApiRepository", Effect = "Allow", Action = concat(local.ecr_push_actions, ["ecr:DescribeImages"]), Resource = var.ecr_repository_arn },
@@ -115,15 +115,25 @@ locals {
       { Sid = "FrontendBucketList", Effect = "Allow", Action = ["s3:ListBucket"], Resource = var.frontend_bucket_arn },
       { Sid = "FrontendBucketObjects", Effect = "Allow", Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], Resource = "${var.frontend_bucket_arn}/*" },
       { Sid = "Invalidate", Effect = "Allow", Action = ["cloudfront:CreateInvalidation", "cloudfront:GetDistribution"], Resource = var.cloudfront_distribution_arn },
-    ]
+    ], local.promote_statements)
   })
+
+  # Promotion (MR-03 Stage 4): production copies the image staging verified,
+  # by digest, out of staging's repository. Read only, on those repositories.
+  promote_statements = length(var.promote_source_repository_arns) == 0 ? [] : [{
+    Sid      = "ReadTheImageToPromote", Effect = "Allow"
+    Action   = ["ecr:DescribeImages", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"]
+    Resource = var.promote_source_repository_arns
+  }]
 
   build_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       { Sid = "EcrLogin", Effect = "Allow", Action = ["ecr:GetAuthorizationToken"], Resource = "*" },
-      { Sid = "PushTheApiImage", Effect = "Allow", Action = local.ecr_push_actions, Resource = var.ecr_repository_arn },
-      { Sid = "SmokeTestReadsTheDistribution", Effect = "Allow", Action = ["cloudfront:GetDistribution"], Resource = var.cloudfront_distribution_arn },
+      # DescribeImages: a re-run reuses the image already pushed for its commit
+      # (tags are immutable). The smoke test now runs in the environment, on
+      # the deploy role, so the distribution read moved there.
+      { Sid = "PushTheApiImage", Effect = "Allow", Action = concat(local.ecr_push_actions, ["ecr:DescribeImages"]), Resource = var.ecr_repository_arn },
     ]
   })
 }
@@ -148,13 +158,15 @@ resource "aws_iam_role_policy" "deploy" {
 # ── Build role ──────────────────────────────────────────────────────────────
 
 resource "aws_iam_role" "build" {
+  count              = length(var.build_subjects) > 0 ? 1 : 0
   name               = "${var.name_prefix}-github-build"
   assume_role_policy = local.trust_build
   tags               = var.tags
 }
 
 resource "aws_iam_role_policy" "build" {
+  count  = length(aws_iam_role.build)
   name   = "build"
-  role   = aws_iam_role.build.id
+  role   = aws_iam_role.build[0].id
   policy = local.build_policy
 }

@@ -31,9 +31,15 @@ export interface C2CFormField {
   max?: number;
   half?: boolean;
   desc?: string;
-  /** The description changes while the drawer is open (a read lands, or fails),
-   *  so it is a polite live region: a screen reader hears the change. */
-  descLive?: boolean;
+  /**
+   * The part of the description that changes while the drawer is open (a read
+   * lands or fails, a choice is made). It follows `desc` in the description, in
+   * its own polite live region, so a screen reader hears only what changed, not
+   * the whole description again (accessibility review, 2026-10-15). The region
+   * is drawn whenever the field declares it, even empty, so its first change is
+   * heard. Replaces `descLive`, which made the whole description live.
+   */
+  descStatus?: string;
   default?: string;
   /**
    * The value this field takes from the others while it applies: the field is
@@ -134,6 +140,9 @@ function useFieldValues(fields: ReadonlyArray<C2CFormField>, busy: string | unde
   return [v, setV] as const;
 }
 
+/** A field has a description when it states one or declares a changing part. */
+const hasDesc = (f: C2CFormField) => Boolean(f.desc) || f.descStatus !== undefined;
+
 export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField: customField }: C2CFormProps) {
   const { eyebrow, title, sub, fields = [], submitLabel = 'Save', governed } = config;
 
@@ -210,7 +219,7 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
       'aria-required': f.required || undefined,
       'aria-invalid': invalidKeys.has(f.key) || undefined,
       'aria-describedby':
-        [f.desc ? descId(f.key) : null, invalidKeys.has(f.key) ? errId : null].filter(Boolean).join(' ') || undefined,
+        [hasDesc(f) ? descId(f.key) : null, invalidKeys.has(f.key) ? errId : null].filter(Boolean).join(' ') || undefined,
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
         set(f.key, e.target.value),
     };
@@ -323,9 +332,12 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
                 {f.label}
                 {f.required && <span className="req" aria-hidden="true">*</span>}
               </label>
-              {f.desc && (
-                <div className="de-desc" id={descId(f.key)} aria-live={f.descLive ? 'polite' : undefined}>
+              {hasDesc(f) && (
+                <div className="de-desc" id={descId(f.key)}>
                   {f.desc}
+                  {f.descStatus !== undefined && (
+                    <span aria-live="polite">{f.desc && f.descStatus ? ' ' : ''}{f.descStatus}</span>
+                  )}
                 </div>
               )}
               {renderField(f)}

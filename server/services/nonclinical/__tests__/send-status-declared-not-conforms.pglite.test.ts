@@ -56,6 +56,7 @@ describe('listStudies — the SEND column says what the platform knows', () => {
     expect(declared?.send, 'a status the user declared was shown as SEND conformance').toBe(
       'declared passed (not validated by the platform)',
     );
-    expect(rows.find((r) => r.id === 'TX-702')?.send).toBe('in progress');
+    // 2026-10-15: pinned 'in progress' for 'not_validated'; it now reads as recorded.
+    expect(rows.find((r) => r.id === 'TX-702')?.send).toBe('not validated');
   });
 });

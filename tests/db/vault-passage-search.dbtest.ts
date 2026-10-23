@@ -317,7 +317,17 @@ describe('search_document_passages reaches it', () => {
     expect(out.passages.length).toBeGreaterThan(0);
     // Selection, not just reachability: the stability document, not the tox one.
     expect(out.passages[0].documentTitle).toContain('Stability');
-    expect(out.passages[0].text).toContain('98.4');
+    // 1700adc10: a passage whose context is sent at detail "full" carries no top-level
+    // text; the hit is then context.text sliced by context.hitWithinText.
+    const p0 = out.passages[0];
+    let hitText: string = p0.text;
+    if (typeof hitText !== 'string') {
+      expect(p0.context).toBeTruthy();
+      expect(p0.context.hitWithinText).not.toBeNull();
+      expect(p0.context.hitWithinText).toBeDefined();
+      hitText = p0.context.text.slice(p0.context.hitWithinText.start, p0.context.hitWithinText.end);
+    }
+    expect(hitText).toContain('98.4');
   }, 60_000);
 
   it('answers a tox question from the tox document', async () => {

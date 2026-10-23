@@ -1,0 +1,114 @@
+[
+  {
+    "question": "Do we need a PMDA consultation before adding Japanese sites to the global phase 3, or can we go straight to the clinical trial notification?",
+    "expect": "regulatory-strategy.global-planning.japan"
+  },
+  {
+    "question": "We have no entity in Japan. For the J-NDA, do we need a designated MAH, foreign manufacturer accreditation for our API site, and who acts as in-country caretaker for the master file?",
+    "expect": "regulatory-strategy.global-planning.japan",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Is our class II monitor in Japan a ninsho case through a registered certification body, or does it need shonin from MHLW?",
+    "expect": "regulatory-strategy.global-planning.japan",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Will CDE accept our global phase 3 without a separate China study, and how big does the Chinese cohort need to be?",
+    "expect": "regulatory-strategy.global-planning.china"
+  },
+  {
+    "question": "Do we need HGRAC approval to ship blood samples from our China sites to the central lab in Germany?",
+    "expect": "regulatory-strategy.global-planning.china",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "What class will NMPA put our infusion pump in, and will registration testing have to be done in China?",
+    "expect": "regulatory-strategy.global-planning.china",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Will MFDS ask for a Korean bridging study, or will the bridging data review accept our Asian PK data?",
+    "expect": "regulatory-strategy.global-planning.south-korea"
+  },
+  {
+    "question": "What do we need for an IND in South Korea, and does the site IRB review run in parallel with MFDS?",
+    "expect": "regulatory-strategy.global-planning.south-korea",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Our class 3 device needs KGMP certification for Korea. Does our existing audit cover it, and who can be the Korea license holder?",
+    "expect": "regulatory-strategy.global-planning.south-korea",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Should we file the NDS for a NOC/c on the phase 2 data, or wait for the confirmatory trial to read out?",
+    "expect": "regulatory-strategy.global-planning.canada",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Health Canada wants the MDSAP certificate with our class III medical device licence application. What else has to go in?",
+    "expect": "regulatory-strategy.global-planning.canada",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "What goes into a Canadian CTA for our phase 2 study, and is a pre-CTA meeting with Health Canada worth asking for?",
+    "expect": "regulatory-strategy.global-planning.canada"
+  },
+  {
+    "question": "Should our phase 1 in Australia run under the CTN scheme, or does it need the CTA scheme?",
+    "expect": "regulatory-strategy.global-planning.australia"
+  },
+  {
+    "question": "Can we use the FDA approval for a COR-B application to the TGA, and what will they want from the FDA review?",
+    "expect": "regulatory-strategy.global-planning.australia",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What conformity assessment evidence will the TGA accept for ARTG inclusion of our class IIb device?",
+    "expect": "regulatory-strategy.global-planning.australia",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "What does ANVISA need for a new medicine registration, and do we need a Brazilian registration holder before we file?",
+    "expect": "regulatory-strategy.global-planning.brazil",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Is there an optimised ANVISA review that relies on the FDA approval, and how do we get the CBPF for our plant?",
+    "expect": "regulatory-strategy.global-planning.brazil"
+  },
+  {
+    "question": "Our class III device for Brazil: registro or notification, and do we also need INMETRO certification?",
+    "expect": "regulatory-strategy.global-planning.brazil",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Under the New Drugs and Clinical Trials Rules, can we get a waiver of the local phase 3 in India?",
+    "expect": "regulatory-strategy.global-planning.india",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What will the Subject Expert Committee at CDSCO look for in a trial application that adds Indian sites to our global study?",
+    "expect": "regulatory-strategy.global-planning.india"
+  },
+  {
+    "question": "Which licence does our class C device need from CDSCO under the Medical Devices Rules, and can our distributor be the Indian authorised agent?",
+    "expect": "regulatory-strategy.global-planning.india",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Can we file with HSA on the verification route once FDA approves, or is the abridged route the better fit?",
+    "expect": "regulatory-strategy.global-planning.singapore",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Does a phase 1 in Singapore need a clinical trial authorisation from HSA or just a notification?",
+    "expect": "regulatory-strategy.global-planning.singapore"
+  },
+  {
+    "question": "How do we register a class C device in Singapore, and do we need a local registrant and a dealer licence?",
+    "expect": "regulatory-strategy.global-planning.singapore",
+    "context": { "segments": ["device"] }
+  }
+]

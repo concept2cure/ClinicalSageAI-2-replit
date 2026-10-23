@@ -26,14 +26,14 @@ import {
   PDFNull,
 } from 'pdf-lib';
 
-export interface OutlineNode {
+export interface BookmarkNode {
   /** Bookmark label shown in the outline pane. */
   title: string;
   /** eCTD section code (e.g. '2.5.1'); drives nesting in buildOutlineTree. */
   sectionCode: string;
   /** Zero-based page index the bookmark jumps to. */
   pageIndex: number;
-  children?: OutlineNode[];
+  children?: BookmarkNode[];
 }
 
 export interface FlatSection {
@@ -43,20 +43,20 @@ export interface FlatSection {
 }
 
 /**
- * Nest a flat list of sections into an OutlineNode tree by dotted sectionCode.
+ * Nest a flat list of sections into a BookmarkNode tree by dotted sectionCode.
  *
  * '2.5' is the parent of '2.5.1'; '2.7' is a sibling of '2.5'. A child whose
  * direct parent code is not present in the list is attached to the nearest
  * present ancestor; if no ancestor is present it becomes a root. Output order
  * follows the input order (callers usually pre-sort by section code).
  */
-export function buildOutlineTree(flatSections: FlatSection[]): OutlineNode[] {
-  const nodes = new Map<string, OutlineNode>();
+export function buildOutlineTree(flatSections: FlatSection[]): BookmarkNode[] {
+  const nodes = new Map<string, BookmarkNode>();
   // Preserve input order while allowing ancestor lookup by code.
-  const ordered: { code: string; node: OutlineNode }[] = [];
+  const ordered: { code: string; node: BookmarkNode }[] = [];
 
   for (const s of flatSections) {
-    const node: OutlineNode = {
+    const node: BookmarkNode = {
       title: s.title,
       sectionCode: s.sectionCode,
       pageIndex: s.pageIndex,
@@ -66,10 +66,10 @@ export function buildOutlineTree(flatSections: FlatSection[]): OutlineNode[] {
     ordered.push({ code: s.sectionCode, node });
   }
 
-  const roots: OutlineNode[] = [];
+  const roots: BookmarkNode[] = [];
 
   /** Walk up the dotted code looking for the nearest present ancestor node. */
-  const findParent = (code: string): OutlineNode | null => {
+  const findParent = (code: string): BookmarkNode | null => {
     const parts = code.split('.');
     for (let cut = parts.length - 1; cut >= 1; cut--) {
       const ancestorCode = parts.slice(0, cut).join('.');
@@ -92,7 +92,7 @@ export function buildOutlineTree(flatSections: FlatSection[]): OutlineNode[] {
 }
 
 /** Count the visible (sub)tree size for the /Count entry on an outline item. */
-function countDescendants(node: OutlineNode): number {
+function countDescendants(node: BookmarkNode): number {
   let n = 0;
   for (const child of node.children ?? []) {
     n += 1 + countDescendants(child);
@@ -113,7 +113,7 @@ function countDescendants(node: OutlineNode): number {
  */
 export async function addBookmarks(
   pdfBytes: Uint8Array,
-  nodes: OutlineNode[]
+  nodes: BookmarkNode[]
 ): Promise<Uint8Array> {
   // updateMetadata:false — pdf-lib's default (true) overwrites ModDate with the
   // CURRENT wall-clock time on load, which destroys byte-determinism (two renders
@@ -140,7 +140,7 @@ export async function addBookmarks(
    * Register one outline item subtree and return its ref. Wires the
    * doubly-linked sibling chain among `siblings` and recurses into children.
    */
-  const buildItems = (siblings: OutlineNode[], parentRef: PDFRef): {
+  const buildItems = (siblings: BookmarkNode[], parentRef: PDFRef): {
     first: PDFRef;
     last: PDFRef;
     refs: PDFRef[];
@@ -210,7 +210,7 @@ export async function addBookmarks(
  * leaf-pdf-renderer would need to emit per-line bounding boxes). Until then this
  * is a documented, opt-in stub driven by explicit rectangles.
  */
-export interface TocLinkNode extends OutlineNode {
+export interface TocLinkNode extends BookmarkNode {
   /** Clickable rectangle [x1,y1,x2,y2] in points on the *source* TOC page. */
   rect?: [number, number, number, number];
   /** Zero-based page index the TOC entry text sits on (the source page). */

@@ -1408,6 +1408,8 @@ export function DocumentWorkbench({
   type DialogSource = { context: string; documentId: string };
   const [fileToVaultOpen, setFileToVaultOpen] = useState<DialogSource | null>(null);
   const [sendForReviewOpen, setSendForReviewOpen] = useState<DialogSource | null>(null);
+  // Retain a sent writer when its list read withdraws; its props below become generic.
+  const vaultWriterDocId = activeDocId ?? (fileToVaultOpen?.context === writerContext ? fileToVaultOpen.documentId : null);
   useEffect(() => {
     const keep = (source: DialogSource | null) => source?.context === writerContext &&
       (!activeDocId || activeDocId === source.documentId) ? source : null;
@@ -2244,7 +2246,10 @@ export function DocumentWorkbench({
     activeSectionId, docPane: () => docScrollRef.current,
   });
   /* F22b: a market's editing copy, created bound to its document and opened. */
-  const marketCopy = useCreateMarketCopy({ programId, fireToast, openDocument: openPulledDocument });
+  const treeTitleRef = useRef<HTMLDivElement>(null);
+  const marketCopy = useCreateMarketCopy({
+    programId, fireToast, openDocument: openPulledDocument, focusOpened: () => treeTitleRef.current?.focus(),
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -3961,7 +3966,10 @@ export function DocumentWorkbench({
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t">
+          {/* Focusable by script only: after a market's editing copy is created
+              and opened, focus lands here, on the opened document's name
+              (accessibility review, 2026-10-15; FilingMarkets.tsx). */}
+          <div className="ed-tree-t" tabIndex={-1} ref={treeTitleRef}>
             {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
@@ -6334,11 +6342,11 @@ export function DocumentWorkbench({
       )}
 
       </>}
-      {activeDocId && readSession.sameRevision() && (
+      {vaultWriterDocId && readSession.sameRevision() && (
         <FileToVaultDialog
           key={writerContext}
-          open={fileToVaultOpen?.context === writerContext && fileToVaultOpen.documentId === activeDocId}
-          docId={activeDocId}
+          open={fileToVaultOpen?.context === writerContext && fileToVaultOpen.documentId === vaultWriterDocId}
+          docId={vaultWriterDocId}
           docTitle={!activeDoc || currentMetadata?.refused ? 'Authoring document' : activeDoc.title}
           docStatus={currentMetadata?.refused ? null : activeDoc?.status ?? null}
           refusal={!activeDoc ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(docAccess.fileToVault)}

@@ -108,14 +108,12 @@ async function seed() {
     const adminPasswordHash = await bcrypt.hash('pass-word', 12);
 
     const admin = await upsertReturning(`
-      INSERT INTO users (email, name, password_hash, title, department, status,
+      INSERT INTO users (email, name, password_hash, status,
         default_organization_id, password_changed_at)
-      VALUES ($1, $2, $3, $4, $5, 'active', $6, NOW())
+      VALUES ($1, $2, $3, 'active', $4, NOW())
       ON CONFLICT (email) DO UPDATE SET
         password_hash = $3,
-        title = EXCLUDED.title,
-        department = EXCLUDED.department,
-        default_organization_id = $6,
+        default_organization_id = $4,
         status = 'active',
         failed_login_attempts = 0,
         locked_until = NULL,
@@ -125,8 +123,8 @@ async function seed() {
       'jm.smith@concept2cure.pro',
       'JM Smith',
       adminPasswordHash,
-      'Chief Science Officer',
-      'Executive Leadership',
+      // 2026-10-15: stamped an invented title and department on the account;
+      // left unrecorded now, as seed-admin does.
       org.id,
     ]);
     console.log(`   ✓ Admin: ${admin.email} (id=${admin.id})`);

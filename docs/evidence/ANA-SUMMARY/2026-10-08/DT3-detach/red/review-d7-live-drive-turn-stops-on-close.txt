@@ -1,0 +1,20 @@
+# pre-fix red, 2026-10-22: D-7 as decided 2026-10-22 — a Live Drive turn detaches like any other; a later screen action is refused (founder decision, coordinator under delegation)
+# tests: stream-detach.test.ts -t D-7; stream-disconnect.test.ts; run-detachable.test.ts; useAnaChat-detach.test.ts
+# note: the stream-detach D-7 cases fail with 'expected 0 to be greater than 0' because the close stopped the turn: internalStops was ['client_disconnected'] (debug run)
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > detaches like any other turn, and finishes `finished` 1041ms
+   → expected 0 to be greater than 0
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on 1015ms
+   → expected 0 to be greater than 0
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run (before context assembly and the drive state) > local-only: settles an already-dropped response when beginRun resumes 39ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run (before context assembly and the drive state) > durable, no live_drive: detaches 59ms
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run (before context assembly and the drive state) > durable, live_drive: true: detaches too (D-7, 2026-10-22) 16ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the idle timer: it follows its run like any other, and this page lets go of the drive 32ms
+   → expected 'AnA stopped responding before finishi…' not to match /stopped responding/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > the person's Stop of a driving turn is confirmed by the server before it shows Stopped 13ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/run-detachable.test.ts > detachable > a turn that asked to drive the screen detaches too (D-7, decided 2026-10-22) 7ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed (4)
+      Tests  6 failed | 2 passed | 57 skipped (65)

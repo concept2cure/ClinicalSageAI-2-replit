@@ -147,6 +147,12 @@ export interface EsignModalProps {
   meanings?: ReadonlyArray<EsigMeaning>;
   /** Optional governed context for the selected meaning, inside this ceremony. */
   renderMeaningDetails?: (meaning: EsigMeaning, committing: boolean) => React.ReactNode;
+  /**
+   * What the signer attested, beside the action, once the signature is applied
+   * (§11.50): e.g. a periodic review's outcome and next date. `targetMeta`
+   * describes the act before it is signed and is not repeated here.
+   */
+  signedRows?: ReadonlyArray<{ label: string; value: string }>;
   onMeaningChange?: (meaning: EsigMeaning) => void;
   /** A current source-read refusal blocks a new confirmation, never a sent mutation's outcome. */
   commitRefusal?: string | null;
@@ -196,6 +202,7 @@ export function EsignModal({
   renderMeaningDetails,
   onMeaningChange,
   commitRefusal = null,
+  signedRows,
   signer,
   requireMfa = false,
   onClose,
@@ -236,6 +243,8 @@ export function EsignModal({
   const pwId = React.useId();
   const totpId = React.useId();
   const errorId = React.useId();
+  const doneSummaryId = React.useId();
+  const doneRef = React.useRef<HTMLButtonElement>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
   const refusalRef = React.useRef(commitRefusal);
   refusalRef.current = commitRefusal;
@@ -276,6 +285,19 @@ export function EsignModal({
       restoreFocusRef.current = null;
     }
   }, [open]);
+  // Most hosts close the dialog by unmounting it (`{x && <EsignModal open />}`),
+  // so `open` never turns false and the effect above never runs: focus fell to
+  // the page (accessibility review, 2026-10-22). Restore it on unmount too,
+  // when the trigger is still in the document.
+  React.useEffect(() => () => {
+    const trigger = restoreFocusRef.current;
+    if (trigger && trigger !== document.body && trigger.isConnected) trigger.focus?.();
+  }, []);
+  // Once signed, the form is gone: focus Done, which carries the summary as
+  // its description, so the outcome is heard and focus stays in the dialog.
+  React.useEffect(() => {
+    if (phase === 'signed') doneRef.current?.focus();
+  }, [phase]);
 
   const handleClose = React.useCallback(() => {
     if (phase === 'committing') return;
@@ -398,7 +420,7 @@ export function EsignModal({
               <IconCheck />
             </div>
             <h3 id={titleId}>Signature applied</h3>
-            <p>
+            <p id={doneSummaryId}>
               {meaningObj.label} signature recorded against {target}. The 21 CFR Part 11 audit
               trail has a new entry. This cannot be undone.
             </p>
@@ -407,6 +429,12 @@ export function EsignModal({
                 <span>Action</span>
                 <span>{action}</span>
               </div>
+              {signedRows?.map((row) => (
+                <div className="es-manifest-row" key={row.label}>
+                  <span>{row.label}</span>
+                  <span>{row.value}</span>
+                </div>
+              ))}
               <div className="es-manifest-row">
                 <span>Signed by</span>
                 <span>
@@ -437,7 +465,7 @@ export function EsignModal({
               ) : null}
             </div>
             <div className="es-foot">
-              <button className="es-btn-primary" type="button" onClick={onClose}>
+              <button ref={doneRef} className="es-btn-primary" type="button" aria-describedby={doneSummaryId} onClick={onClose}>
                 Done
               </button>
             </div>

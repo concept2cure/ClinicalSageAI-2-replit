@@ -1,0 +1,29 @@
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > every section locked reads 100 on the header and on every row (at head: 100 beside 0) 48ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > every section in review reads 0 approved on both, with the review counted beside it (at head: 0 beside 75) 57ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > a module is one row: "M1" and its sections are Module 1, named by the pack (at head: two rows) 49ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > one definition of complete, for the header and every module row > a one-document home reads what the readiness trigger stores on the document 37ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > each market on its own line (F22) > adding EMA leaves the home figure where it was (at head the pooled figure fell) 91ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > each market on its own line (F22) > with two home applications a market says why it has no figure 76ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > documents that are not CTD applications > a clinical study report is one row; its '1'…'13' are not CTD modules 35ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > documents that are not CTD applications > a 510(k)'s top-level headings are its rows, named by its pack 12ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > a project with no governed sections has no figure 6ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > another organization's documents are not read 20ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > a store this environment has not provisioned is unavailable, with the reason, and no 0 anywhere 5ms
+ ✓ server/services/c2c/__tests__/dossier-read.pglite.test.ts > a figure is measured, empty or unavailable, never a made-up 0 > any other failure is thrown, not answered 4ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0% 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with nothing to measure is stated as "not measured", never left out or drawn as 0 90ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "not measured" 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn 337ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s 62ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > reads the project’s sections in the caller’s organization and answers the dossier 24ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > a project the caller cannot read is 404 and no section is read 5ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > an unprovisioned store is every figure unavailable, with the reason, and no 0 4ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > any other failure is a 500, never an empty dossier 4ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /workstreams, which it replaces, is gone 5ms
+ Test Files  3 passed (3)
+      Tests  27 passed (27)

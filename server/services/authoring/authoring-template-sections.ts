@@ -2,7 +2,7 @@
 import { createScopedLogger } from '../../utils/logger';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { getBuiltinAuthoringTemplate, builtinTemplateSnapshot, type BuiltinAuthoringTemplate } from './builtin-authoring-templates';
-import type { Binding, CreateContext, CreateDocumentInput, Refusal } from './authoring-documents';
+import type { Binding, CreateContext, CreateDocumentInput, AuthoringRefusal } from './authoring-documents';
 import type { Queryable } from './authoring-evidence';
 
 const logger = createScopedLogger('authoring-documents');
@@ -67,7 +67,7 @@ export async function resolveTemplateSections(
   tenantId: number,
   templateId: string,
   resolved?: TemplateResolveOptions,
-): Promise<TemplateSectionSeed[] | Refusal> {
+): Promise<TemplateSectionSeed[] | AuthoringRefusal> {
   if (!UUID_RE.test(templateId)) {
     return { kind: 'refused', status: 400, error: 'template_id must be a valid UUID' };
   }
@@ -109,7 +109,7 @@ export async function resolveTemplateSections(
 }
 
 /** A builtin must use its actual module and the current writable project. */
-export async function refuseBuiltinTemplateStart(ctx: CreateContext, input: CreateDocumentInput, builtin: BuiltinAuthoringTemplate | undefined): Promise<Refusal | null> {
+export async function refuseBuiltinTemplateStart(ctx: CreateContext, input: CreateDocumentInput, builtin: BuiltinAuthoringTemplate | undefined): Promise<AuthoringRefusal | null> {
   if (!builtin) return null;
   if (input.module !== undefined && input.module !== builtin.module) return { kind: 'refused', status: 400,
     error: `Choose the module recorded by this ${builtin.filingContext ? 'regulatory' : 'IND'} template.`, code: 'TEMPLATE_MODULE_MISMATCH' };

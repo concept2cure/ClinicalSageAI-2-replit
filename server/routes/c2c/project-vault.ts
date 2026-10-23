@@ -16,12 +16,13 @@
  *   vault.documents          → the "Uploaded files" branch: what this surface's
  *                              own Upload button ingests
  *
- * This is the same document/section data the existing
- * `GET /api/c2c/projects/:id/vault-structure` endpoint reads, but mapped
- * SERVER-SIDE straight into the Vault.tsx display shape (folder tree of
- * VaultDoc/VaultFolder) so the surface can render it with a single fetch and
- * no client-side converter — and with real owner + relative-modified
- * provenance instead of the client converter's placeholders.
+ * It maps the project's document/section data SERVER-SIDE straight into the
+ * Vault.tsx display shape (folder tree of VaultDoc/VaultFolder) so the surface
+ * can render it with a single fetch and no client-side converter — and with
+ * real owner + relative-modified provenance instead of the client converter's
+ * placeholders. (`GET /api/c2c/projects/:id/vault-structure` read the same
+ * data with no client caller and was deleted in FILING_SPINE F23 4/9; the
+ * tree is this read's, and the figures are GET /api/c2c/projects/:id/dossier.)
  *
  * Response envelope: { success: true, data: <displayShape> }.
  *
@@ -62,6 +63,7 @@ import {
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
   resolveOrgVaultView,
+  resolveVaultView,
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
@@ -69,6 +71,7 @@ import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
+import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
@@ -76,6 +79,7 @@ import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../service
 import { countDataRoomStages, fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
+import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql, wantsFacets } from '../../services/vault/vault-document-filter.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -275,6 +279,9 @@ interface DocRow {
   updated_at: string | Date | null;
   owner_name: string | null;
   required_sections: unknown;
+  /** 'home' or 'market' (F22); read tolerantly, so a database before 20261015e
+   *  reads every document as home. */
+  filing_scope?: string | null;
 }
 
 interface SectionSpec {
@@ -706,8 +713,10 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
   return leaf;
 }
 
-/** Fallback leaf for a document with no rule-pack section spec. */
-function docLevelLeaf(doc: DocRow): VaultDoc {
+/** Fallback leaf for a document with no rule-pack section spec. With no live
+ *  sections there is nothing its readiness counted, so it has no completion
+ *  figure; it read 0% (F23 7/9). */
+function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   const readiness = typeof doc.readiness === 'number' ? doc.readiness : 0;
   const docTitle = doc.title || doc.doc_type || 'Document';
   return {
@@ -716,7 +725,7 @@ function docLevelLeaf(doc: DocRow): VaultDoc {
     title: docTitle,
     type: 'Document',
     status: normalizeStatus(doc.status, readiness > 0),
-    pct: readiness,
+    pct: hasSections ? readiness : null,
     owner: doc.owner_name ?? '—',
     ver: '—',
     updated: relativeTime(doc.updated_at),
@@ -756,14 +765,19 @@ function sectionsToNodes(
   return roots.map(toNode);
 }
 
-/** One document → its top-level VaultFolder. */
+/** One document → its top-level VaultFolder. A market added to the project
+ *  (F22) holds only its own part of the filing, Module 1 and 3.2.R, so its
+ *  folder is that part of its pack; the home filing holds the rest. It was the
+ *  whole market pack, which showed every Module 2-5 section of an MAA as
+ *  "Mandatory section — no content yet" (F23 7/9). */
 function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolder {
-  const specs = Array.isArray(doc.required_sections)
+  const pack = Array.isArray(doc.required_sections)
     ? (doc.required_sections as SectionSpec[])
     : [];
+  const specs = doc.filing_scope === 'market' ? regionalSubtree<SectionSpec>(pack) : pack;
   const children = specs.length > 0
     ? sectionsToNodes(doc, specs, live)
-    : [docLevelLeaf(doc)];
+    : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
     code: (doc.doc_type ?? '').toUpperCase(),
@@ -1128,20 +1142,28 @@ export default function createProjectVaultRoutes(): Router {
   router.get('/search', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
-    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
-    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
-    const includeSuperseded = req.query.includeSuperseded === 'true';
+    const { q, limit, offset, includeSuperseded } = readVaultSearchPaging(req.query as Record<string, unknown>);
+    // Metadata filters (VR-18), checked before anything is read. A folder is one
+    // project's cabinet, so the library refuses it; `programId` narrows the
+    // verified accessible set and never widens it.
+    const parsed = parseLibrarySearchFilters(req.query as Record<string, unknown>);
+    if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
+    const { filters, programIds } = parsed;
+    const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
     try {
       const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: governedActorId(req) ?? undefined });
-      if (!q) {
+      if (!q && !hasVaultFilters(filters)) {
         return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs' } });
       }
-      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded }, currentScope);
+      const found = await searchVaultDocuments(pool, {
+        organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded, filters,
+        allowedProgramIds: narrowed.allowedProgramIds, facets: wantsFacets(req.query, offset),
+      }, currentScope);
       return res.json({
         success: true,
         data: {
-          query: q, total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
+          query: q, mode: found.mode, filters, programIds: narrowed.programIds, facets: found.facets,
+          total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
           results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
         },
       });
@@ -1195,7 +1217,8 @@ export default function createProjectVaultRoutes(): Router {
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
                 COALESCE(du.name, du.email) AS owner_name,
-                rp.required_sections
+                rp.required_sections,
+                to_jsonb(d)->>'filing_scope' AS filing_scope
            FROM c2c_documents d
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
@@ -1333,16 +1356,10 @@ export default function createProjectVaultRoutes(): Router {
                   ${vaultDispositionChoiceSql('d')} AS disposition,
                   COALESCE(u.name, u.email) AS owner_name,
                   vc.version_count,
-                  lc.stage AS lifecycle_stage
+                  ${vaultLifecycleStageSql('d')} AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
              ${versionCountLateral('d')}
-             LEFT JOIN LATERAL (
-               SELECT c.stage FROM canonical_documents c
-                WHERE c.organization_id = $2 AND c.source_refs ? 'vault_documents'
-                  AND c.source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
-                ORDER BY c.created_at, c.canonical_id LIMIT 1
-             ) lc ON TRUE
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
@@ -1354,14 +1371,11 @@ export default function createProjectVaultRoutes(): Router {
         // Program-wide totals. Always taken, so `unfiledCount` means the same
         // thing whether or not the page was truncated.
         const cntRes = await pool.query(
+          // The same definitions the search's placementStatus filter uses
+          // (vault-document-filter.ts), so a filtered total and this count agree.
           `SELECT COUNT(*)::int AS total,
-                  COUNT(*) FILTER (
-                    WHERE d.folder_id IS NULL
-                       OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
-                  )::int AS unfiled,
-                  COUNT(*) FILTER (
-                    WHERE d.folder_id IS NOT NULL AND d.placement_status = 'suggested'
-                  )::int AS suggested
+                  COUNT(*) FILTER (WHERE ${vaultUnfiledSql('d')})::int AS unfiled,
+                  COUNT(*) FILTER (WHERE ${vaultSuggestedSql('d')})::int AS suggested
              FROM vault.documents d
             WHERE ${headsWhere}`,
           [id, orgId],
@@ -1598,17 +1612,15 @@ export default function createProjectVaultRoutes(): Router {
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
     if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
-    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
-    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
     // Current versions only unless asked (VR-09): an earlier version is the same
     // document, and listing it beside its successor reads as two.
-    const includeSuperseded = req.query.includeSuperseded === 'true';
+    const { q, limit, offset, includeSuperseded } = readVaultSearchPaging(req.query as Record<string, unknown>);
 
     /* An empty query is not "match everything" — that is the browse view, which
        is what GET /:id already serves. Returning the whole vault here would make
-       an empty search box look like a search that found everything. */
-    if (!q) {
+       an empty search box look like a search that found everything. Filters with
+       no text are a question, and are answered ('browse' mode). */
+    if (!q && !vaultFiltersAsked(req.query as Record<string, unknown>)) {
       return res.json({
         success: true,
         data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY' },
@@ -1620,13 +1632,22 @@ export default function createProjectVaultRoutes(): Router {
       // the same guard the read and download routes apply.
       if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
+      // Metadata filters (VR-18), checked before the corpus is read. A folder is
+      // checked against this project's cabinet.
+      const parsed = await parseProgramSearchFilters(req.query as Record<string, unknown>, () => resolveVaultView(id, orgId));
+      if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
+      const { filters } = parsed;
+
       // The one search query (vault-search.ts), here scoped to this program; the
       // library search below asks the same query across the organisation.
-      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: res.locals.currentProgramAccess.actor.userId, programId: id, q, limit, offset, includeSuperseded });
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: res.locals.currentProgramAccess.actor.userId, programId: id, q, limit, offset, includeSuperseded, filters, facets: wantsFacets(req.query, offset) });
       return res.json({
         success: true,
         data: {
           query: q,
+          mode: found.mode,
+          filters,
+          facets: found.facets,
           total: found.total,
           limit,
           offset,
@@ -1640,6 +1661,10 @@ export default function createProjectVaultRoutes(): Router {
             folderId: r.folderId,
             ctdSection: r.ctdSection,
             placementStatus: r.placementStatus,
+            evidenceKind: r.evidenceKind,
+            classification: r.classification,
+            lifecycleStage: r.lifecycleStage,
+            updatedAt: r.updatedAt,
             version: r.version,
             current: r.current,
             // The bytes a version is: a screen that names a version as

@@ -191,6 +191,24 @@ export function refusedBeforeWire(err: unknown): boolean {
 export { preTransmitFindings } from './pre-transmit-findings';
 export type { PreTransmitFindings } from './pre-transmit-findings';
 
+/**
+ * The transmit guard's own refusal: the package failed a pre-transmit check
+ * (gateway size limit, region identity, or PDF/A, DTD or regional backbone
+ * where required). Each blocker is an itemised error finding, and `code` names
+ * this source, so a surface can count and list them and tell this refusal
+ * apart from the structural-validation one. Still a ValidationError, name
+ * included, so every existing mapping of that class holds.
+ * 2026-10-08 (W5/D7, sweep HS-3): the blockers went out as bare strings, which
+ * the surface dropped, so the refusal read as "0 findings" beside a message
+ * that named them.
+ */
+export class PreTransmitBlockedError extends ValidationError {
+  readonly code = 'PRE_TRANSMIT_BLOCKED' as const;
+  constructor(message: string, blockers: string[]) {
+    super(message, blockers.map((blocker) => ({ severity: 'error' as const, ruleId: 'PRE-TRANSMIT', message: blocker })));
+  }
+}
+
 /** A production transmit whose packager grade lists PDF leaves shipped as plain PDF. */
 function carriesPlainPdf(req: GatewayTransmitRequest): boolean {
   const notConverted = req?.bundle?.submissionGrade?.notConverted;
@@ -258,7 +276,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           pdfa: carriesPlainPdf(req) ? await resolvePdfARequirement(pool, req.organizationId) : undefined,
         });
         if (!pre.cleared) {
-          throw new ValidationError(
+          throw new PreTransmitBlockedError(
             `Refusing to transmit to ${impl.region.toUpperCase()} ${impl.gateway}: package failed pre-transmit checks. ${pre.blockers.join(' ')}`,
             pre.blockers,
           );

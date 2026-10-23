@@ -1,0 +1,17 @@
+# Slice D: the guard's self-test, and the guard after the change.
+ok   a hardened Dockerfile passes
+ok   an unpinned builder
+ok   an unpinned production stage
+ok   a short digest
+ok   npm as the production CMD
+ok   a shell-form CMD
+ok   a recursive chown over /app
+ok   no BUILD_COMMIT in the builder
+ok   no BUILD_COMMIT ENV in production
+ok   a later stage FROM an earlier one needs no digest
+ok   workflow: a build passing the commit
+ok   workflow: a build without it
+[ci:image-hardening] self-test: every case behaves
+
+[ci:image-hardening] OK — Dockerfile.optimized is pinned by digest, owned without a recursive chown, stamped with BUILD_COMMIT and started as node; both workflows pass the commit.
+exit 0

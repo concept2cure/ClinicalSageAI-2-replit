@@ -119,8 +119,11 @@ describe('Dispatch readiness surface: the same answer', () => {
       if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
         return { ok: true, status: 200, json: async () => ({ id: PROGRAM_UUID, name: 'Zexanib IND', code: 'ZX-9', product_name: null, program_type: 'ind' }) } as Response;
       }
-      if (url === '/api/submissions') return wrap([{ id: 3, title: 'Zexanib IND', productName: 'Zexanib IND', applicationType: 'IND', programId: PROGRAM_UUID }]);
-      if (url === '/api/submissions/3/sequences') return wrap([{ id: 21, sequenceNumber: '0000' }]);
+      // F18: the screen lists the project's markets from its scoped list.
+      if (url === `/api/submissions?programId=${PROGRAM_UUID}`) {
+        return wrap([{ id: 3, title: 'Zexanib IND', productName: 'Zexanib IND', applicationType: 'ind', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: PROGRAM_UUID }]);
+      }
+      if (url === '/api/submissions/3/sequences') return wrap([{ id: 21, sequenceNumber: '0000', status: 'validated' }]);
       if (url.endsWith('/dispatch-readiness')) return wrap(assessment);
       return wrap([]);
     });
@@ -132,7 +135,10 @@ describe('Dispatch readiness surface: the same answer', () => {
   it('names a stored Validated stage the validation no longer supports', async () => {
     assessment = STALE;
     render(<DispatchReadiness {...({ surface: { id: 'dispatch-readiness', label: 'Dispatch' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'regulatory' } as any)} />);
-    await waitFor(() => expect(document.querySelector('[data-validated-stage="stale"]')?.textContent).toBe(` — ${STALE_REASON}`));
-    expect(document.body.textContent).toContain(`status validated — ${STALE_REASON}`);
+    await waitFor(() => expect(document.querySelector('[data-validated-stage="stale"]')?.textContent).toBe(STALE_REASON));
+    // Beside the stored stage it qualifies: in the market row that shows "Validated".
+    const row = document.querySelector('[data-market="3"]')!;
+    expect(row.textContent).toContain('Sequence 0000 · Validated');
+    expect(row.contains(document.querySelector('[data-validated-stage="stale"]'))).toBe(true);
   });
 });

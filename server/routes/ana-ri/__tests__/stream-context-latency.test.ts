@@ -162,6 +162,20 @@ describe('direct intelligence answers avoid unused model-turn reads', () => {
     expectDirectCleanup('answered');
   });
 
+  /* The CMC composition boundary (decision P-28) refuses an interview answer
+     with its own status, not `error`; the person is told why, never shown
+     nothing (2026-10-22). */
+  it('says a composition-boundary refusal in its own words', async () => {
+    const message = 'The drug substance is stated as a monoclonal antibody, a biologic.';
+    io.answer.mockResolvedValue(JSON.stringify({
+      status: 'outside_composition_scope', code: 'CMC_MODALITY_OUT_OF_SCOPE', message, session_id: 'interview-1',
+    }));
+    const events = await direct();
+    expect(events.find(e => e.type === 'text')?.content).toBe(message);
+    expect(events.some(e => e.type === 'intelligence_question')).toBe(false);
+    expectDirectCleanup('answered');
+  });
+
   it.each(['refused', 'throws', 'non-json'])('keeps %s handler failure honest without unused reads', async failure => {
     if (failure === 'throws') io.answer.mockRejectedValue(new Error('Interview unavailable.'));
     else io.answer.mockResolvedValue(failure === 'refused' ? JSON.stringify({ error: 'LAUNCH_SCOPE' }) : 'not-json');

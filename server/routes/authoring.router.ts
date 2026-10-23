@@ -43,6 +43,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
+import { readFilingLock } from '../services/c2c/filing-lock.js';
 import { filingAgreesWithEditing, filingResponse, signedFilingSectionTexts, type FilingDivergence } from '../services/c2c/filing-section-target.js';
 // Spine F1: the approval signature records the filing sections it approves
 // through the one governed-action writer (audit_logs + c2c_ana_actions).
@@ -6628,13 +6629,21 @@ router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) =>
 // ============= SUBMIT Operations =============
 
 /** Formal review state, workflow steps and the audit row share one transaction.
- * Projection retries read the existing workflow and never submit a second one. */
+ *
+ * 2026-10-17 (D2, document store consolidation step 6): this is the review's
+ * only record. The submit used to project the document into
+ * concept2cure_artifacts afterwards (services/ana/authoring-canonical-bridge.ts,
+ * through the AnA document spine): an artifact set to 'review' that no later
+ * approval or rejection ever moved, versioned as an AnA Document Studio
+ * generation. No reader keyed on it; the Review board and Tasks read this
+ * workflow (services/review/authoring-review-board.ts). A filed Vault version's
+ * lifecycle is canonical_documents. So the projection is not written, and its
+ * retry (`retry_canonical`) is refused by name. Rows written before stay. */
 async function submitReviewWorkflow(
   req: Request, docId: string, tenantId: number,
   steps: Array<{ role: string; approver_email: string }>,
-  options: { reason: string | null; retryCanonical: boolean },
+  reason: string | null,
 ) {
-  const { reason, retryCanonical } = options;
   return inTransaction(async (client) => {
     const result = await client.query(
       'SELECT id, status, current_workflow_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
@@ -6642,17 +6651,6 @@ async function submitReviewWorkflow(
     );
     const doc = result.rows[0];
     if (!doc) return { done: false as const, status: 404, error: 'Document not found' };
-    if (retryCanonical) {
-      if (doc.status !== 'IN_REVIEW' || !doc.current_workflow_id) {
-        return { done: false as const, status: 409, error: 'Canonical projection retry requires an existing review workflow' };
-      }
-      const count = await client.query(
-        'SELECT count(*)::int AS n FROM authoring_workflow_steps WHERE workflow_id=$1 AND doc_id=$2 AND tenant_id=$3',
-        [doc.current_workflow_id, docId, tenantId],
-      );
-      if (!count.rows[0]?.n) return { done: false as const, status: 409, error: 'Existing review workflow has no steps; it cannot be reused' };
-      return { done: true as const, workflowId: String(doc.current_workflow_id), steps: Number(count.rows[0].n), reused: true };
-    }
     if (doc.status !== 'DRAFT' && doc.status !== 'draft') {
       return { done: false as const, status: 400, error: 'Document must be in DRAFT status to submit' };
     }
@@ -6670,60 +6668,36 @@ async function submitReviewWorkflow(
        WHERE id=$2 AND tenant_id=$3`, [workflowId, docId, tenantId],
     );
     await createAuditTrail(req, docId, null, 'SUBMIT', null, null, reason, { workflowId, steps }, client);
-    return { done: true as const, workflowId, steps: steps.length, reused: false };
+    return { done: true as const, workflowId, steps: steps.length };
   });
 }
 
-/** The optional projection has its own receipt; it cannot invalidate the
- * author's committed review or leak a caught driver error to the caller. */
-async function projectAuthoringReview(req: Request, docId: string, tenantId: number, reason: string | null) {
-  try {
-    const { bridgeAuthoringToCanonical, defaultAuthoringBridgeDeps } = await import('../services/ana/authoring-canonical-bridge.js');
-    const actorRaw = req.user?.id ?? req.user?.userId;
-    const outcome = await bridgeAuthoringToCanonical({
-      docId, organizationId: tenantId,
-      projectId: typeof req.body?.project_id === 'number' ? req.body.project_id : null,
-      userId: Number.isSafeInteger(Number(actorRaw)) ? Number(actorRaw) : null,
-      reason, triggerReview: true,
-    }, defaultAuthoringBridgeDeps());
-    return {
-      bridged: outcome.bridged, retryable: !outcome.bridged, reason: outcome.reason,
-      projectId: outcome.projectId,
-      artifactId: outcome.result?.artifactId, version: outcome.result?.version,
-      contentHash: outcome.result?.contentHash,
-    };
-  } catch (error) {
-    logger.warn('authoring canonical projection not confirmed; review remains committed', { docId, err: error instanceof Error ? error.message : String(error) });
-    return { bridged: false, retryable: true, reason: 'Canonical projection was not confirmed; retry on the existing review workflow.' };
-  }
-}
-
-// POST /api/authoring/docs/:docId/submit - Submit or explicitly retry its projection.
+// POST /api/authoring/docs/:docId/submit - Submit for review (the approval chain).
 router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
   try {
     const docId = String(req.params.docId);
     const tenantId = getTenantId(req);
     if (!getActorEmail(req)) return res.status(401).json({ error: 'Authentication required' });
+    if (req.body?.retry_canonical !== undefined) {
+      return res.status(410).json({ success: false, error: {
+        code: 'CANONICAL_PROJECTION_RETIRED',
+        message: 'A review is no longer copied into the artifact store, so there is nothing to retry. The review is the document\'s workflow: GET /api/authoring/docs/:docId/workflow.',
+      } });
+    }
     const statedReason = optionalGovernedReason(req.body?.reason);
     if (!statedReason.ok) return res.status(400).json({ success: false, error: statedReason.error, field: 'reason' });
-    if (req.body?.retry_canonical !== undefined && typeof req.body.retry_canonical !== 'boolean') {
-      return res.status(400).json({ error: 'retry_canonical must be a boolean' });
-    }
-    const retryCanonical = req.body?.retry_canonical === true;
     const steps = req.body?.workflow_steps ?? [{ role: 'QA' }, { role: 'RA_CMC' }];
-    if (!retryCanonical) {
-      if (!Array.isArray(steps) || steps.length === 0) return res.status(400).json({ error: 'workflow_steps must be a non-empty array' });
-      const invalid = steps.findIndex((s) => typeof s?.role !== 'string' || !s.role.trim() ||
-        typeof s?.approver_email !== 'string' || !s.approver_email.trim());
-      if (invalid >= 0) return res.status(400).json({ error: `Workflow step ${invalid + 1} needs a role and approver_email` });
-    }
-    const workflow = await submitReviewWorkflow(req, docId, tenantId, steps, { reason: statedReason.reason, retryCanonical });
+    if (!Array.isArray(steps) || steps.length === 0) return res.status(400).json({ error: 'workflow_steps must be a non-empty array' });
+    const invalid = steps.findIndex((s) => typeof s?.role !== 'string' || !s.role.trim() ||
+      typeof s?.approver_email !== 'string' || !s.approver_email.trim());
+    if (invalid >= 0) return res.status(400).json({ error: `Workflow step ${invalid + 1} needs a role and approver_email` });
+    const workflow = await submitReviewWorkflow(req, docId, tenantId, steps, statedReason.reason);
     if (!workflow.done) return res.status(workflow.status).json({ error: workflow.error });
-    const canonical = await projectAuthoringReview(req, docId, tenantId, statedReason.reason);
     return res.json({
-      success: true, reviewSubmitted: true,
-      message: workflow.reused ? 'Review workflow retained; canonical projection checked' : 'Document submitted for review',
-      workflowId: workflow.workflowId, steps: workflow.steps, workflowReused: workflow.reused, canonical,
+      success: true, reviewSubmitted: true, message: 'Document submitted for review',
+      workflowId: workflow.workflowId, steps: workflow.steps,
+      // Where this review's state is read from: the one record, named.
+      reviewRecord: { store: 'authoring_workflow_steps', documentStatus: 'IN_REVIEW', workflowId: workflow.workflowId, steps: workflow.steps },
     });
   } catch (error) {
     return serverError(res, logger, 'submitting docs', error);
@@ -6791,6 +6765,8 @@ type ApproveBoundSectionsResult =
       documentId: string;
       /** c2c_ana_actions id of the governed-action record; null when nothing moved. */
       actionId: string | null;
+      /** Why nothing moved, when the filing is locked or submitted (filing-lock.ts). */
+      reason?: string;
     }
   | { approved: []; notApproved: []; documentId: null; actionId: null; reason: string };
 
@@ -6867,7 +6843,11 @@ async function approveBoundFilingSections(
   // org column).
   const signed = await signedFilingSectionTexts(client, { authoringDocId, tenantId, documentId });
   const signedKeys = signed.map((t) => t.key);
-  const moved = await client.query(
+  // A locked or submitted filing's sections are not moved (filing-lock.ts).
+  // The signature still stands on the editing copy; the reply says why the
+  // filing did not move with it.
+  const lock = await readFilingLock(client, documentId, tenantId);
+  const moved = lock ? { rows: [] as Array<{ section_key: string }> } : await client.query(
     `UPDATE c2c_document_sections ds
         SET status = 'approved', updated_at = now()
        FROM unnest($2::text[], $3::text[]) AS sig(section_key, text)
@@ -6899,7 +6879,10 @@ async function approveBoundFilingSections(
   const notApproved: string[] = left.rows.map((r: { section_key: string }) => r.section_key);
 
   if (approved.length === 0) {
-    return { approved: [], notApproved, documentId, actionId: null };
+    return {
+      approved: [], notApproved, documentId, actionId: null,
+      ...(lock ? { reason: `The filing this document is written for ${lock.words}, so none of its sections was approved.` } : {}),
+    };
   }
 
   const userId = Number(actorId);

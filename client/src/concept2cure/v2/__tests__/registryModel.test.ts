@@ -115,7 +115,7 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
 
   // ── CMC: on the rail 2026-08-23, off it 2026-10-08, in the catalog 2026-10-12
 
-  it('CMC / Module 3 is a launch app, reachable, and still not a rail entry', () => {
+  it('CMC / Module 3 is a launch app, reachable, and a rail place beside Quality', () => {
     // 2026-08-23 promoted CMC from NAV_HIDDEN to a "Science & intelligence"
     // rail entry. 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md) put it
     // outside the launch scope, returning as a feature of Project home, and the
@@ -127,15 +127,19 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     // (services/cmc/composition-scope.ts). Until that entry the screen was
     // refused to everyone, entitled or not.
     //
-    // THREE DIFFERENT FACTS, and this test pins all three because the flip moved
-    // only the first: in the launch catalog, so the launch-scope lock no longer
-    // refuses it; NOT a rail place, because the rail lists places and CMC is
-    // reached from Project home and ⌘K; not NAV_HIDDEN, so a deep link renders
-    // the surface rather than nothing. The launch-scope entry also keeps
+    // THREE DIFFERENT FACTS, and this test pins all three: in the launch
+    // catalog, so the launch-scope lock no longer refuses it; a rail place,
+    // directly before Quality (the founder's decision of 2026-10-22, "add QS to
+    // the left rail next to CMC, Vault, Tasking"; until then CMC was reached
+    // only from Project home and ⌘K); not NAV_HIDDEN, so a deep link renders the
+    // surface rather than nothing. The launch-scope entry also keeps
     // `modules: []` on purpose, so the professional band still decides who sees
-    // it — listing the surface is not granting it.
+    // it — listing the surface is not granting it, and an organisation outside
+    // that band sees the entry locked, with the server's reason.
     expect(isLaunchSurface('cmc')).toBe(true);
-    expect(RAIL_CORE.map((s) => s.id)).not.toContain('cmc');
+    const ids = RAIL_CORE.map((s) => s.id);
+    expect(ids).toContain('cmc');
+    expect(ids.indexOf('quality') - ids.indexOf('cmc'), 'CMC sits directly before Quality').toBe(1);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
   });

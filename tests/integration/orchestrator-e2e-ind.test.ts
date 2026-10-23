@@ -91,8 +91,15 @@ const hoisted = vi.hoisted(() => ({
 // steps, not the record, so the record names the run's own application number
 // (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
 const { recordedRunIdentity } = vi.hoisted(() => ({
-  recordedRunIdentity: async (i: { applicationNumber: string }) => ({
+  recordedRunIdentity: async (i: { applicationNumber: string; region?: string }) => ({
     recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+    applicantId: i.region === 'US' ? '123456789' : null,
+    contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    ...(i.region === 'US' ? { recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
+      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } } } : {}),
   }),
 }));
 vi.mock('../../server/services/ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
@@ -394,7 +401,7 @@ describe('Phase-1 IND e2e — happy path', () => {
     // Assembly contract.
     expect(outputs.assembly).toBeDefined();
     expect(outputs.assembly!.leaves.length).toBeGreaterThan(0);
-    expect(outputs.assembly!.applicationNumber).toBe('IND-TEST-001');
+    expect(outputs.assembly!.applicationNumber).toBe('123456');
     expect(outputs.assembly!.region).toBe('US');
   });
 });

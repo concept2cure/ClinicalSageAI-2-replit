@@ -12,11 +12,12 @@
  * Running production with the audit trail off is a deliberate rollout state, but
  * — exactly like the RLS enforcement posture (`server/db/rlsEnforcement.ts`,
  * `assertRlsEnforcementForProduction`) — it must be VISIBLE rather than silent.
- * This module adds the boot-time guardrail the audit trail was missing: a loud
- * warning when the app boots in production with the audit trail inactive, and a
- * hard fail-closed only when the operator explicitly opts in via
- * `AUDIT_REQUIRE_ENFORCE=true`. Default behaviour is unchanged (warn, do not
- * block boot).
+ * This module adds the boot-time guardrail the audit trail was missing: in
+ * production a process with the audit trail inactive refuses to boot. Enforce
+ * is the production default since 2026-10-22 (MR-03 SEC-18, decision P-43);
+ * only an explicit `AUDIT_REQUIRE_ENFORCE=false` turns it into a loud warning,
+ * and the hosted deployment refuses that value at boot (startup/env.ts).
+ * Outside production nothing is enforced unless `AUDIT_REQUIRE_ENFORCE=true`.
  *
  * This does NOT change the gating flag or the interceptor's behaviour — it only
  * surfaces the audit posture at boot.
@@ -31,9 +32,9 @@
  * the database is reachable (wired from `verifyDatabaseConnection`,
  * `server/startup/services.ts`). Unlike the trail flag above, a missing trigger
  * is NOT a rollout state: production refuses to boot regardless of
- * `AUDIT_REQUIRE_ENFORCE`. What `AUDIT_REQUIRE_ENFORCE=true` adds is fail-closed
- * on "could not check" — the probe failing, or the daily integrity sweep being
- * switched off — where the default posture warns.
+ * `AUDIT_REQUIRE_ENFORCE`. What enforcement adds is fail-closed on "could not
+ * check" — the probe failing, or the daily integrity sweep being switched off —
+ * where `AUDIT_REQUIRE_ENFORCE=false` only warns.
  *
  * @compliance FDA 21 CFR Part 11 §11.10(e).
  * @module server/startup/audit-enforcement
@@ -56,8 +57,11 @@ function isProductionEnv(env: NodeJS.ProcessEnv): boolean {
   return (env.NODE_ENV ?? '').toLowerCase() === 'production';
 }
 
+/** On in production unless written `false` (P-43); elsewhere only when written `true`. */
 function requiresEnforce(env: NodeJS.ProcessEnv): boolean {
-  return (env.AUDIT_REQUIRE_ENFORCE ?? '').trim().toLowerCase() === 'true';
+  const value = (env.AUDIT_REQUIRE_ENFORCE ?? '').trim().toLowerCase();
+  if (value === 'true') return true;
+  return isProductionEnv(env) && value !== 'false';
 }
 
 export interface AuditTrailPostureLogger {
@@ -71,11 +75,11 @@ const consoleLogger: AuditTrailPostureLogger = {
 };
 
 /**
- * Surface (or, opt-in, block) a production boot with the tamper-proof audit
+ * Block (or, with AUDIT_REQUIRE_ENFORCE=false, surface) a production boot with the tamper-proof audit
  * trail inactive. Mirrors `assertRlsEnforcementForProduction`.
  *
  * @returns whether the audit trail is active.
- * @throws when `AUDIT_REQUIRE_ENFORCE=true` and the trail is inactive in production.
+ * @throws in production when the trail is inactive, unless `AUDIT_REQUIRE_ENFORCE=false`.
  */
 export function assertAuditTrailForProduction(
   env: NodeJS.ProcessEnv = process.env,
@@ -93,7 +97,7 @@ export function assertAuditTrailForProduction(
     'AUDIT_TRAIL_ENABLED=true (operator runbook in server/startup/audit-trail.ts).';
 
   if (requiresEnforce(env)) {
-    // Operator opted into fail-closed: refuse to boot with the audit trail off.
+    // Fail closed, the production default: refuse to boot with the audit trail off.
     throw new Error(`[audit-enforcement] FAIL-CLOSED: ${message}`);
   }
 
@@ -145,13 +149,14 @@ export function resolveAuditChainSweepPosture(
 }
 
 /**
- * With `AUDIT_REQUIRE_ENFORCE=true`, production may not run without the daily
- * tamper-evidence sweep: an operator who asked for fail-closed audit posture
- * and also set `ENABLE_AUDIT_CHAIN_CHECK=false` has asked for two things that
- * contradict, and the process refuses rather than picking one silently.
+ * With audit enforcement on (the production default; off only with
+ * `AUDIT_REQUIRE_ENFORCE=false`), production may not run without the daily
+ * tamper-evidence sweep: fail-closed audit posture and
+ * `ENABLE_AUDIT_CHAIN_CHECK=false` contradict, and the process refuses rather
+ * than picking one silently.
  *
  * @returns the resolved sweep posture.
- * @throws in production when the enforce flag is set and the sweep is disabled.
+ * @throws in production when enforcement is on and the sweep is disabled.
  */
 export function assertAuditIntegritySweepForProduction(
   env: NodeJS.ProcessEnv = process.env,
@@ -159,7 +164,7 @@ export function assertAuditIntegritySweepForProduction(
   const posture = resolveAuditChainSweepPosture(env);
   if (isProductionEnv(env) && requiresEnforce(env) && !posture.enabled) {
     throw new Error(
-      `[audit-enforcement] FAIL-CLOSED: AUDIT_REQUIRE_ENFORCE=true but the daily audit integrity ` +
+      `[audit-enforcement] FAIL-CLOSED: audit enforcement is on (AUDIT_REQUIRE_ENFORCE) but the daily audit integrity ` +
         `sweep is ${posture.reason} — with ENABLE_AUDIT_CHAIN_CHECK=false no scheduled ` +
         'tamper-evidence check verifies the audit stores (21 CFR 11 §11.10(e)). Unset ' +
         'ENABLE_AUDIT_CHAIN_CHECK (the production default schedules it) or set it to true.',

@@ -46,17 +46,25 @@ import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/l
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
 import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
-import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
+import {
+  loadSpineLeaves,
+  namesLeafDocument,
+  isWithdrawal,
+  leafSatisfies,
+  measureStatus,
+  type SpineLeafRow,
+} from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity';
+import { readSubmissionPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
-import { serverError } from '../lib/api-response';
+import { serverError, isConversionCapacityError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
@@ -359,6 +367,28 @@ async function spineForRequest(
     return null;
   }
   return { spine, named: true };
+}
+
+/** The type a compile of this sequence is recorded as: the sequence's own, in
+ *  the history's words ('initial' for an original); null when it records none.
+ *  The history took the screen's selector, so amendment 0001 was recorded as
+ *  initial (WO-9 §20, 2026-10-22, W5/D7). */
+async function recordedCompilationType(sequenceId: number, orgId: number): Promise<string | null> {
+  const r = await pool.query(
+    `SELECT type FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [sequenceId, orgId],
+  );
+  const type = String(r.rows[0]?.type ?? '').trim().toLowerCase();
+  if (!type) return null;
+  return type === 'original' ? 'initial' : type;
+}
+
+/** The sequence a compile would build, as the status reports it: its recorded
+ *  region and type; null when the program has none. */
+async function statusSequence(spine: SubmissionSpine | null | undefined, orgId: number) {
+  if (!spine?.sequence) return null;
+  const { id, sequenceNumber, region, leafCount } = spine.sequence;
+  return { id, sequenceNumber, region, leafCount, type: await recordedCompilationType(id, orgId) };
 }
 
 /** A named sequence with nothing placed in it is refused: the program's section
@@ -688,12 +718,25 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
+      // The recorded type decides the record; a contradiction is refused, as a region is.
+      const recordedType = await recordedCompilationType(spine.sequence.id, orgId);
+      const statedType = req.body?.submissionType == null ? '' : String(req.body.submissionType).trim().toLowerCase();
+      if (recordedType && statedType && statedType !== recordedType) {
+        return res.status(409).json({
+          error: {
+            code: 'SUBMISSION_TYPE_MISMATCH',
+            message:
+              `Sequence ${spine.sequence.sequenceNumber} is recorded as ${recordedType}; it cannot be compiled as ` +
+              `"${req.body.submissionType}". The sequence's recorded type decides what the compile is recorded as.`,
+          },
+        });
+      }
       return await compileFromSpine(req, res, {
         orgId,
         anchor,
         ident,
         spine,
-        submissionType: String(submissionType),
+        submissionType: recordedType ?? String(submissionType),
         moduleFilter,
         required,
         priorState: req.body?.rehearsal === true ? 'rehearsal' : 'filed',
@@ -898,65 +941,10 @@ function resolveUserId(req: Request): number {
    REQUIRED_SECTION_UNPLACED on 3.2.S/3.2.P/3.2.R while the sections sat in the
    sequence.) */
 
-interface SpineLeafRow {
-  section_code: string | null;
-  title: string | null;
-  lifecycle_op: string | null;
-  document_table: string | null;
-  document_id: number | null;
-  /** The uuid half of the reference, for uuid-keyed stores (vault.documents);
-   *  set instead of document_id. */
-  document_uuid?: string | null;
-  /** form_<number> for a filed FDA form; how a form proves its requirement. */
-  document_type?: string | null;
-}
-
-/** The sequence's placed (not deleted) leaves, org-scoped: the one read that
- *  compile, validate and status share.
- *
- *  2026-09-23 (W5/D7, round-2 review): document_uuid is read too. Without it a
- *  vault leaf (document_id NULL) that the assembler packages by its uuid was
- *  reported "could not be materialized" by the compile, shown as
- *  'unresolved-source', and not counted as placed by the status roll-up. */
-async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<SpineLeafRow[]> {
-  const leafRes = await pool.query(
-    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_type
-       FROM submission_leaves
-      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-      ORDER BY section_code`,
-    [sequenceId, orgId],
-  );
-  return leafRes.rows as SpineLeafRow[];
-}
-
-/**
- * Does the leaf name a document? A table plus either key: integer-keyed stores
- * carry document_id, uuid-keyed ones (vault.documents) carry document_uuid —
- * the rule the assembler's resolveFile applies. Requiring document_id read
- * every vault leaf as having nothing behind it (2026-09-23, W5/D7, round-2
- * review).
- */
-function namesLeafDocument(l: SpineLeafRow): boolean {
-  return !!l.document_table && (!!l.document_id || !!l.document_uuid);
-}
-
-/** A declared withdrawal: it acts on a filed leaf and places no content. */
-function isWithdrawal(l: SpineLeafRow): boolean {
-  return String(l.lifecycle_op ?? '').trim().toLowerCase() === 'delete';
-}
-
-/**
- * Does this placed leaf satisfy a required section? By section (a leaf at or
- * beneath the requirement), or — for an FDA form, which is filed at 1.1 and
- * told apart by type — by the form requirement its document_type proves. A
- * withdrawal satisfies nothing: it takes a document off file.
- */
-function leafSatisfies(l: SpineLeafRow, requiredCode: string): boolean {
-  if (isWithdrawal(l)) return false;
-  if (sectionMatches(l.section_code, requiredCode)) return true;
-  const formRequirement = formRequirementForDocumentType(l.document_type);
-  return formRequirement != null && sectionMatches(formRequirement, requiredCode);
-}
+/* SpineLeafRow, loadSpineLeaves, namesLeafDocument, isWithdrawal and
+   leafSatisfies (what a sequence has placed, and which required sections it
+   satisfies) live in services/ectd/compile-placement, with the module roll-up
+   /status reports (FILING_SPINE F23 5/9, moved unchanged). */
 
 /**
  * Validation findings over the PLACED leaves of a sequence. `isMaterialized`
@@ -1132,23 +1120,28 @@ async function compileFromSpine(
   let leftOut: string[] = [];
   let lifecycle: CompiledLifecycle | null = null;
   let auditTrail: AuditRowOutcome | undefined;
+  /** The number the package carries (P-44), stored with the compilation. */
+  let packagedNumber: string | null = null;
 
   try {
     // The application and the applicant from the record, or nothing is
     // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
     // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
-    const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
-    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.');
+    // The sequence's own market's number (P-44): an added market, or a sequence
+    // of another region, never compiles under the project's home number.
+    const identity = await readSubmissionPackageIdentity(pool, orgId, spine.submissionId, { region: seq.region });
+    packagedNumber = identity.applicationNumber;
+    const fda = toPackagerRegion(seq.region) === 'fda';
+    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
     if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
       applicationId: identity.applicationNumber as string,
-      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
-      // (package-identity.ts header); its name is the organisation's.
-      sponsorId: `UNASSIGNED-ORG-${orgId}`,
+      sponsorId: fda ? identity.applicantId as string : '',
       sponsorName: identity.applicantName as string,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
       priorState,
     });
     auditTrail = assembled.auditTrail;
@@ -1209,6 +1202,8 @@ async function compileFromSpine(
       await assembled.cleanup();
     }
   } catch (err) {
+    // Converter busy (OPS-13): no failed compilation; serverError answers 503.
+    if (isConversionCapacityError(err)) throw err;
     assembleFailure = err instanceof Error ? err.message : String(err);
     // A refusal the assembler audited (EctdAssemblyBlockedError) carries what
     // happened to that row. Read structurally: the class arrives through a
@@ -1327,7 +1322,7 @@ async function compileFromSpine(
         // The SAME identifier the backbone carries, so the compilation history
         // and the next sequence's manifest lookup agree with what was filed;
         // NULL when none is recorded (the assembly was then refused).
-        recordedApplicationNumber(anchor),
+        packagedNumber,
         seq.sequenceNumber,
         leafManifestJson,
         // Stable per-submission key: lets the NEXT sequence locate this manifest
@@ -1407,61 +1402,19 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       { orderBy: 'section_code' },
     );
 
-    // Module-level readiness, against the program's own required set.
-    const required = await resolveRequiredSections(pool, {
-      programType: anchor.programType,
-      primaryAgency: anchor.primaryAgency,
-    });
-
-    // The leaf-rendering half of readiness comes from the submission spine's
-    // REAL state (documents placed into the sequence), not a capability flag.
-    // A named sequence (F14) is read when this project owns it.
+    // The sequence a compile would build (F14: a named one when this project
+    // owns it), and what /status measures for it: its placement, against the
+    // required set of its own market (F23 6/9, services/ectd/compile-placement).
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
     const spine = chosen.spine;
-    // A program has no linked section store, so for it the section-store count
-    // was always 0 of N — shown beside documents already placed in its
-    // sequence. Where the sequence carries leaves, readiness counts what is
-    // PLACED with a document behind it, and says so (`readinessBasis`), so a
-    // placed section is never read as an approved one.
-    const placedLeaves =
-      spine?.sequence && spine.sequence.leafCount > 0
-        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter(namesLeafDocument)
-        : null;
-
-    const moduleReadiness = required.modules.map((def) => {
-      const code = def.code;
-      const digit = code.replace('m', '');
-      const moduleSections = sections.filter(
-        s => sectionMatches(s.section_code, digit) || s.module?.toLowerCase() === code
-      );
-      const totalRequired = def.requiredSections.length;
-      const completedRequired = placedLeaves
-        ? def.requiredSections.filter((rs) => placedLeaves.some((l) => leafSatisfies(l, rs))).length
-        : def.requiredSections.filter(rs =>
-            moduleSections.some(
-              ms =>
-                sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
-            )
-          ).length;
-
-      return {
-        moduleCode: code,
-        moduleName: def.name,
-        totalSections: placedLeaves
-          ? placedLeaves.filter((l) => sectionMatches(l.section_code, digit)).length
-          : moduleSections.length,
-        requiredSections: totalRequired,
-        completedRequired,
-        completionPct:
-          totalRequired > 0 ? Math.round((completedRequired / totalRequired) * 100) : 0,
-        ready: completedRequired === totalRequired,
-      };
+    const measure = await measureStatus({
+      program: { programType: anchor.programType, primaryAgency: anchor.primaryAgency, hasSectionStore: anchor.numericProjectId !== null },
+      spine,
+      orgId,
+      sections,
     });
-
-    const totalRequired = moduleReadiness.reduce((a, m) => a + m.requiredSections, 0);
-    const totalCompleted = moduleReadiness.reduce((a, m) => a + m.completedRequired, 0);
-    const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
+    const { modules: moduleReadiness, totalRequired, totalCompleted, overallPct } = measure;
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1479,16 +1432,16 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       submissionReady: overallPct === 100 && submissionBlockers([], anchor, spine).length === 0,
       submissionBlockers: overallPct === 100
         ? submissionBlockers([], anchor, spine)
-        : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
+        : [measure.note ?? 'Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
       /** 'placed' — counted from documents placed in the sequence; 'approved' —
-       *  from the section store's approved/locked/final statuses. */
-      readinessBasis: placedLeaves ? 'placed' : 'approved',
-      /** The sequence a compile would build, with its recorded region. */
-      sequence: spine?.sequence
-        ? { id: spine.sequence.id, sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
-        : null,
-      requiredSectionSource: required.provenance,
+       *  from the section store's approved/locked/final statuses; 'no-sequence'
+       *  and 'unavailable' — nothing counted, `readinessNote` says why. */
+      readinessBasis: measure.basis,
+      readinessNote: measure.note,
+      /** The sequence a compile would build: its recorded region and type. */
+      sequence: await statusSequence(spine, orgId),
+      requiredSectionSource: measure.required?.provenance ?? null,
       totalSections: sections.length,
       totalRequired,
       totalCompleted,
@@ -1557,6 +1510,45 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
   } catch (error) {
     return serverError(res, log, 'reading the compilation history', error, { projectIdent: ident });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:projectIdent/filed-state — What the agency holds now (gap 6.1)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/* The current view of the application: every filed sequence of the spine's
+   submission folded, by the fold compile and transmit already use
+   (loadFiledStateBySubmission, prior-sequence-loader.ts). Only sent or
+   acknowledged sequences count; a preview or rehearsal compile never does.
+   An unreadable fold is 503, never an empty dossier. */
+router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
+  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  try {
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen) return;
+    const spine = chosen.spine;
+    if (!spine) {
+      return res.json({ projectIdent: ident, submissionId: null, throughSequence: null, sequences: [], leaves: [] });
+    }
+    let state: Awaited<ReturnType<typeof loadFiledStateBySubmission>>;
+    try {
+      state = await loadFiledStateBySubmission(pool, { organizationId: orgId, submissionId: spine.submissionId });
+    } catch (err) {
+      log.warn('The filed state could not be read', { orgId, submissionId: spine.submissionId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(503).json({ error: { code: 'FILED_STATE_UNAVAILABLE', message: 'What is on file at the agency could not be read. It is not shown as empty.' } });
+    }
+    const leaves = state.leaves
+      .map((l) => ({ ctdSection: l.ctdSection, fileName: l.fileName, title: l.title ?? null, href: l.href ?? null,
+        sequenceNumber: l.sequenceNumber ?? null, operation: l.operation ?? null, md5: l.md5 }))
+      .sort((a, b) => a.ctdSection.localeCompare(b.ctdSection, undefined, { numeric: true }) || a.fileName.localeCompare(b.fileName));
+    return res.json({ projectIdent: ident, submissionId: spine.submissionId, applicationType: spine.applicationType,
+      throughSequence: state.throughSequence, sequences: state.sequences, leaves });
+  } catch (error) {
+    return serverError(res, log, 'reading what is on file', error, { projectIdent: ident });
   }
 });
 

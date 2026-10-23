@@ -51,13 +51,19 @@ vi.mock('../../part11/signature-persistence.js', async () => {
   return { ...actual, deriveGovernedTargetBinding: (...a: unknown[]) => mockDerive(...a) };
 });
 
-import { BINDING_BASIS } from '../../part11/signature-persistence';
+import { BINDING_BASIS, manifestSignatureHash } from '../../part11/signature-persistence';
 import { resolveSequenceReleaseSignature } from '../sequence-release-signature';
 
 const ORG = 42;
 const SEQUENCE_ID = 5150;
 const TARGET = `ectd-sequence:${SEQUENCE_ID}`;
 const DIGEST = 'a'.repeat(64);
+const CONTENT_DIGEST = 'b'.repeat(64);
+const identityProof = (email = 'recorded@example.test') => ({ version: 1, identity: {
+  programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+  applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789', applicantName: 'Recorded applicant',
+  contact: { name: 'Recorded contact', phone: '+1 555 0100', email },
+} });
 
 /** One `electronic_signatures` row as the join returns it. */
 function signatureRow(over: Record<string, unknown> = {}) {
@@ -79,6 +85,50 @@ function derivesTo(digest: string | null, basis: string = BINDING_BASIS.ECTD_SEQ
 function rowsAre(...rows: Array<Record<string, unknown>>) {
   mockDbExecute.mockResolvedValue({ rows });
 }
+
+describe('FDA identity staleness preserves the existing content-tamper refusal', () => {
+  const probe = () => resolveSequenceReleaseSignature({ sequenceId: SEQUENCE_ID, organizationId: ORG });
+  function changedIdentity(over: Record<string, unknown> = {}) {
+    mockDerive.mockResolvedValue({ digest: 'c'.repeat(64), basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
+      note: 'current', sequenceContentDigest: CONTENT_DIGEST, recordedPackageIdentity: identityProof('changed@example.test'), ...over });
+  }
+  function modernRow(overManifest: Record<string, unknown> = {}, overRow: Record<string, unknown> = {}) {
+    const manifest = { boundPayloadDigest: DIGEST, recordedPackageIdentity: identityProof(), sequenceContentDigest: CONTENT_DIGEST, ...overManifest };
+    return signatureRow({ signature_manifest: manifest, signature_hash: manifestSignatureHash(manifest), ...overRow });
+  }
+  it('allows fresh authorization for an intact historical FDA leaf-only signature', async () => {
+    changedIdentity(); rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST, signature_manifest: { actionId: 'historical' } }));
+    expect((await probe()).verdict).toBe('unsigned');
+  });
+  it('allows fresh authorization when only the recorded applicant identity changed', async () => {
+    changedIdentity(); rowsAre(modernRow());
+    expect((await probe()).verdict).toBe('unsigned');
+  });
+  it('still refuses changed leaves even when applicant identity also changed', async () => {
+    changedIdentity({ sequenceContentDigest: 'd'.repeat(64) }); rowsAre(modernRow());
+    expect((await probe()).verdict).toBe('invalid');
+  });
+  it('does not accept damaged attributed proof as identity-only staleness', async () => {
+    changedIdentity(); rowsAre(modernRow({}, { signature_hash: 'damaged' }));
+    expect((await probe()).verdict).toBe('invalid');
+  });
+  it('does not accept a malformed captured identity', async () => {
+    changedIdentity(); rowsAre(modernRow({ recordedPackageIdentity: { version: 1, identity: {} } }));
+    expect((await probe()).verdict).toBe('invalid');
+  });
+  it('requires the attributed bound digest to match the signature row', async () => {
+    changedIdentity(); rowsAre(modernRow({ boundPayloadDigest: 'e'.repeat(64) }));
+    expect((await probe()).verdict).toBe('invalid');
+  });
+  it('keeps a same-identity digest mismatch invalid', async () => {
+    changedIdentity({ recordedPackageIdentity: identityProof() }); rowsAre(modernRow());
+    expect((await probe()).verdict).toBe('invalid');
+  });
+  it('does not treat malformed modern proof as a legacy signature', async () => {
+    changedIdentity(); rowsAre(signatureRow({ bound_payload_digest: CONTENT_DIGEST, signature_manifest: { recordedPackageIdentity: null } }));
+    expect((await probe()).verdict).toBe('invalid');
+  });
+});
 
 /** The SQL text and bound parameters of the lookup, from the drizzle template. */
 function lookup() {

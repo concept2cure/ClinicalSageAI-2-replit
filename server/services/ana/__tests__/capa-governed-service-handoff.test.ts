@@ -12,7 +12,7 @@ import { classifyResult } from '../tool-telemetry';
 
 const context = { organizationId: 1, userId: 7, humanConfirmed: true };
 const receipt = { persisted: true, chained: true };
-const complaint = { programId: 'program-1', source: 'direct', channel: 'phone', receivedAt: '2026-10-14T12:00:00Z', eventNarrative: 'Synthetic intake', reason: 'Synthetic review reason.', userId: 999, organizationId: 2, createdBy: '999' };
+const complaint = { programId: 'program-1', source: 'direct', channel: 'phone', receivedAt: '2026-10-14T12:00:00Z', eventNarrative: 'Synthetic intake', patientHarm: 'injury', severityAssessment: 'serious', reason: 'Synthetic review reason.', userId: 999, organizationId: 2, createdBy: '999' };
 const capa = { programId: 'program-1', title: 'Synthetic CAPA', type: 'corrective', source: 'complaint', reason: 'Synthetic review reason.', userId: 999, createdBy: '999' };
 const call = async (name: string, input: Record<string, unknown>) => JSON.parse(await getToolHandler(name)!(input, context));
 
@@ -28,7 +28,7 @@ describe('CAPA AnA service handoff', () => {
   it('passes the trusted context actor to both writes and carries the committed critical audit receipt', async () => {
     expect(await call('create_complaint', complaint)).toMatchObject({ status: 'created', complaintId: 'complaint-1', meta: { auditTrail: receipt } });
     expect(await call('open_device_capa', capa)).toMatchObject({ status: 'created', capaId: 'capa-1', meta: { auditTrail: receipt } });
-    expect(service.createComplaint).toHaveBeenCalledWith(1, expect.objectContaining({ createdBy: '7' }), { userId: 7 });
+    expect(service.createComplaint).toHaveBeenCalledWith(1, expect.objectContaining({ createdBy: '7', patientHarm: 'injury', severityAssessment: 'serious' }), { userId: 7 });
     expect(service.createCapaRecord).toHaveBeenCalledWith(1, expect.objectContaining({ createdBy: '7' }), { userId: 7 });
   });
 

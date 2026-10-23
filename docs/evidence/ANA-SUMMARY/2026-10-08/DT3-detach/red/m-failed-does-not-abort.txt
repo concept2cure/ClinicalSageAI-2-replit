@@ -1,0 +1,10 @@
+# m-failed-does-not-abort: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t reaped owner
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned) 28ms
+   → expected false to be true // Object.is equality
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ Test Files  1 failed (1)
+      Tests  1 failed | 36 skipped (37)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned)
+AssertionError: expected false to be true // Object.is equality

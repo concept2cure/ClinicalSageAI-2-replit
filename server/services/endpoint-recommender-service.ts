@@ -485,9 +485,11 @@ export class EndpointRecommenderService {
   /**
    * Get comprehensive endpoint recommendations based on indication and phase:
    * the recommendations with their evidence, and what each source returned.
+   * The CSR corpus read is the calling organization's.
    * Throws EndpointCorpusUnavailableError when the CSR corpus cannot be read.
    */
   async getComprehensiveEndpointRecommendations(
+    organizationId: number,
     indication: string,
     phase: string = '',
     count: number = 5,
@@ -502,7 +504,7 @@ export class EndpointRecommenderService {
     // their failures in `sources`.
     let corpus: CorpusRead;
     try {
-      corpus = await this.getEndpointsWithEvidence(indication, phase);
+      corpus = await this.getEndpointsWithEvidence(organizationId, indication, phase);
     } catch (error) {
       logger.error('CSR endpoint corpus read failed', { error });
       throw new EndpointCorpusUnavailableError({ cause: error });
@@ -879,12 +881,21 @@ export class EndpointRecommenderService {
   }
 
   /**
-   * Read the CSR corpus: the endpoints recorded for the reports that match the
-   * indication (and phase), with how many reports record each. Throws when the
-   * read fails; the caller refuses the recommendation rather than answer without it.
+   * Read the organization's CSR corpus: the endpoints recorded for the reports that
+   * match the indication (and phase), with how many reports record each. Throws when
+   * the read fails; the caller refuses the recommendation rather than answer without it.
    */
-  private async getEndpointsWithEvidence(indication: string, phase: string = ''): Promise<CorpusRead> {
-    const conditions = [like(csrReports.indication, `%${indication}%`)];
+  private async getEndpointsWithEvidence(
+    organizationId: number,
+    indication: string,
+    phase: string = ''
+  ): Promise<CorpusRead> {
+    // 2026-10-15: no organization predicate; the read relied on RLS alone, so where
+    // RLS was not enforcing, another organization's reports counted as precedent.
+    const conditions = [
+      eq(csrReports.organizationId, organizationId),
+      like(csrReports.indication, `%${indication}%`),
+    ];
     if (phase && phase !== 'any') {
       conditions.push(like(csrReports.phase, `%${phase}%`));
     }
@@ -1006,6 +1017,7 @@ Guidelines:
    * a successful evaluation with error text as its feedback.
    */
   async evaluateEndpoint(
+    organizationId: number,
     endpoint: string,
     indication: string,
     phase: string = ''
@@ -1025,16 +1037,17 @@ Answer in plain prose. Do not give a score, rating, grade, probability or overal
 `;
 
     const feedback = (await this.hfService.queryHuggingFace(prompt)).trim();
-    const similarEndpoints = await this.getSimilarEndpoints(endpoint, indication, 3);
+    const similarEndpoints = await this.getSimilarEndpoints(organizationId, endpoint, indication, 3);
     return { score: null, feedback, similarEndpoints };
   }
 
   /**
-   * Primary endpoints recorded in CSRs for the indication that share a word longer than
-   * three letters with this endpoint. null when it has no such word: nothing was compared.
-   * Throws when the corpus read fails.
+   * Primary endpoints recorded in the organization's CSRs for the indication that share
+   * a word longer than three letters with this endpoint. null when it has no such word:
+   * nothing was compared. Throws when the corpus read fails.
    */
   private async getSimilarEndpoints(
+    organizationId: number,
     endpoint: string,
     indication: string,
     limit: number = 3
@@ -1057,7 +1070,8 @@ Answer in plain prose. Do not give a score, rating, grade, probability or overal
       .select({ endpoints: csrDetails.endpoints })
       .from(csrDetails)
       .innerJoin(csrReports, eq(csrDetails.reportId, csrReports.id))
-      .where(like(csrReports.indication, `%${indication}%`))
+      // 2026-10-15: no organization predicate (RLS alone); see getEndpointsWithEvidence.
+      .where(and(eq(csrReports.organizationId, organizationId), like(csrReports.indication, `%${indication}%`)))
       .orderBy(csrDetails.id);
 
     const similar: string[] = [];

@@ -1,0 +1,72 @@
+# Slice B: ci:compose-boot-contract self-test before the guard change (the three new compose cases fail), after, and against the repository.
+## before
+FAIL ENABLE_TEST_ROUTES set on the app (MR-03 OPS-28)
+FAIL ENABLE_TEST_ROUTES left for the operator to set
+FAIL a demo route flag on the app
+[ci:compose-boot-contract] self-test: 3 case(s) failed
+
+## after
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   the connector turned on with no allowlist
+ok   SECURITY_SELF_TEST_NONBLOCKING set on the app
+ok   SECURITY_SELF_TEST_NONBLOCKING left for the operator to set
+ok   ENABLE_TEST_ROUTES set on the app (MR-03 OPS-28)
+ok   ENABLE_TEST_ROUTES left for the operator to set
+ok   a demo route flag on the app
+ok   the connector turned on with an allowlist
+ok   list-form environment is read
+ok   helm: a production chart with no forbidden flag passes
+ok   helm: ENABLE_TEST_ROUTES in a production chart's env.extra
+ok   helm: SECURITY_SELF_TEST_NONBLOCKING in a nested production env
+ok   helm: the same flag where NODE_ENV is not production
+ok   the route flags are read from server/startup/env.ts, ENABLE_TEST_ROUTES among them
+ok   a stack with its scanner passes
+ok   a scanner without a read-only root
+ok   a scanner with a string instead of read-only true
+ok   a scanner without no-new-privileges
+ok   a scanner that disables no-new-privileges
+ok   contradictory no-new-privileges options
+ok   an empty config mount that hides image defaults
+ok   a config mount reused across image recreation
+ok   a missing database volume
+ok   an undeclared database volume
+ok   a scanner with an extra writable root mount
+ok   missing runtime tmpfs mounts
+ok   an incorrectly owned log tmpfs
+ok   contradictory temporary filesystem options
+ok   an extra writable tmpfs
+ok   no clamav service
+ok   CLAMAV_HOST naming a missing service
+ok   CLAMAV_HOST that may resolve to anything
+ok   depends_on without service_healthy
+ok   list-form depends_on
+ok   a scanner with no healthcheck
+ok   a different digest
+ok   a StreamMaxLength mismatch
+ok   AlertExceedsMax off
+ok   a scanner that publishes a host port
+ok   a scanner with expose
+ok   a scanner under a profile
+ok   a scanner with network_mode
+ok   a scanner on no network the app is on
+ok   a scanner on the default network while the app is not
+ok   a scanner on a network an optional-profile service joins
+ok   an optional service sharing the app's network namespace
+ok   an optional service sharing the scanner's network namespace
+ok   an optional service on the host network
+ok   an optional service with no network passes
+ok   the scanner's network named as the shared bridge under another key
+ok   a scanner whose host port arrives through a merge key
+ok   a scanner declared with extends
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: every case behaves
+
+## the repository
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (28 preflight names, 4 excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner; 3 Helm values file(s) set none of the flags production refuses.

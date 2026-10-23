@@ -68,7 +68,14 @@
  *
  * And no production app service passes SECURITY_SELF_TEST_NONBLOCKING, in any
  * form: production refuses it at boot (server/startup/env.ts), because it let a
- * process boot past every critical security self-test failure (MR-08).
+ * process boot past every critical security self-test failure (MR-08). Nor any
+ * of the route flags production refuses (env.ts PROD_FORBIDDEN_FLAGS: the mock,
+ * experimental, demo and test route families; MR-03 OPS-28), read from env.ts
+ * so the two lists cannot drift. The same refusals hold for the Helm chart's
+ * values (charts/<chart>/values*.yaml and helm/*.yaml) wherever an `env:` map sets
+ * NODE_ENV=production. The *_ACCEPT_* overrides stay excused for these
+ * manifests: a self-hosted install keeps its written acceptances, and the
+ * hosted deployment refuses them at boot (decision P-43).
  *
  *   node scripts/ci/check-compose-boot-contract.mjs              # the repo's stacks
  *   node scripts/ci/check-compose-boot-contract.mjs --self-test  # shows it failing
@@ -82,6 +89,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const PREFLIGHT_FILE = '.github/workflows/deploy-aws.yml';
 const SCANNER_IMAGE_FILE = 'terraform/stack/variables.tf';
 const UPLOAD_LIMIT_FILE = 'server/config/platform-limits.ts';
+const BOOT_POSTURE_FILE = 'server/startup/env.ts';
 
 const PINNED = {
   NODE_ENV: 'production',
@@ -158,8 +166,20 @@ function environmentOf(service) {
   return env;
 }
 
+/**
+ * The route flags production refuses at boot, read from
+ * server/startup/env.ts's PROD_FORBIDDEN_FLAGS. Throws when the list cannot be
+ * read, so a refactor of env.ts cannot quietly empty this check.
+ */
+export function forbiddenRouteFlags(source = readFileSync(resolve(ROOT, BOOT_POSTURE_FILE), 'utf8')) {
+  const block = source.match(/const PROD_FORBIDDEN_FLAGS = \[([\s\S]*?)\];/);
+  const flags = block ? [...block[1].matchAll(/'([A-Z0-9_]+)'/g)].map(m => m[1]) : [];
+  if (flags.length === 0) throw new Error(`${BOOT_POSTURE_FILE}: PROD_FORBIDDEN_FLAGS not found`);
+  return flags;
+}
+
 /** Problems with one service's environment against the contract. */
-export function checkService(env, required) {
+export function checkService(env, required, forbidden = forbiddenRouteFlags()) {
   const problems = [];
   const resolved = name => classify(env[name]);
   const effective = name => {
@@ -206,6 +226,15 @@ export function checkService(env, required) {
         env.SECURITY_SELF_TEST_NONBLOCKING
       )}`
     );
+  }
+  // Refused at boot in every production process (env.ts), so present in any
+  // form it is either a crash-loop or one operator edit away from one.
+  for (const flag of forbidden) {
+    if (Object.prototype.hasOwnProperty.call(env, flag)) {
+      problems.push(
+        `${flag} must not be passed to a production app (server/startup/env.ts refuses it); got ${JSON.stringify(env[flag])}`
+      );
+    }
   }
   if (
     effective('STORAGE_ACCEPT_LOCAL_DISK') !== undefined &&
@@ -457,6 +486,47 @@ export function checkCompose(text, required, expect = scannerExpectation()) {
   return out;
 }
 
+/**
+ * Every `env:` map in a Helm values document that sets NODE_ENV=production,
+ * with its `extra` map merged in (charts/concept2cure-app renders both into its
+ * ConfigMap), checked for the flags production refuses at boot.
+ */
+export function checkHelmValues(text, forbidden = forbiddenRouteFlags()) {
+  const doc = YAML.parse(text, { merge: true }) ?? {};
+  const out = [];
+  const visit = (node, path) => {
+    if (!node || typeof node !== 'object') return;
+    for (const [key, value] of Object.entries(node)) {
+      const here = path ? `${path}.${key}` : key;
+      if (key === 'env' && value && typeof value === 'object' && !Array.isArray(value)) {
+        if (String(value.NODE_ENV ?? '').trim() === 'production') {
+          const env = { ...value, ...(value.extra && typeof value.extra === 'object' ? value.extra : {}) };
+          for (const flag of [...forbidden, 'SECURITY_SELF_TEST_NONBLOCKING']) {
+            if (Object.prototype.hasOwnProperty.call(env, flag)) {
+              out.push(`${here}: ${flag} must not be set where NODE_ENV=production (server/startup/env.ts refuses it)`);
+            }
+          }
+        }
+      }
+      visit(value, here);
+    }
+  };
+  visit(doc, '');
+  return out;
+}
+
+function helmValueFiles() {
+  const out = [];
+  const dirOf = d => {
+    try { return readdirSync(resolve(ROOT, d)); } catch { return []; }
+  };
+  for (const chart of dirOf('charts')) {
+    for (const f of dirOf(`charts/${chart}`)) if (/^values.*\.ya?ml$/.test(f)) out.push(`charts/${chart}/${f}`);
+  }
+  for (const f of dirOf('helm')) if (/\.ya?ml$/.test(f)) out.push(`helm/${f}`);
+  return out.sort();
+}
+
 function composeFiles() {
   return readdirSync(ROOT)
     .filter(f => /^docker-compose(\.[\w-]+)?\.ya?ml$/.test(f))
@@ -524,6 +594,21 @@ function selfTest(required) {
       ['SECURITY_SELF_TEST_NONBLOCKING must not be passed'],
     ],
     [
+      'ENABLE_TEST_ROUTES set on the app (MR-03 OPS-28)',
+      { ...base, ENABLE_TEST_ROUTES: 'true' },
+      ['ENABLE_TEST_ROUTES must not be passed'],
+    ],
+    [
+      'ENABLE_TEST_ROUTES left for the operator to set',
+      { ...base, ENABLE_TEST_ROUTES: '${ENABLE_TEST_ROUTES:-false}' },
+      ['ENABLE_TEST_ROUTES must not be passed'],
+    ],
+    [
+      'a demo route flag on the app',
+      { ...base, ENABLE_DEMO_ROUTES: 'true' },
+      ['ENABLE_DEMO_ROUTES must not be passed'],
+    ],
+    [
       'the connector turned on with an allowlist',
       { ...base, MCP_ENABLED: '${MCP_ENABLED:-true}', MCP_CLIENT_REDIRECT_ALLOWLIST: '${MCP_CLIENT_REDIRECT_ALLOWLIST:?x}' },
       [],
@@ -549,6 +634,30 @@ function selfTest(required) {
   const yamlOk = yamlCase.some(p => p.includes('JWT_SECRET is not passed'));
   if (!yamlOk) failed++;
   console.log(`${yamlOk ? 'ok  ' : 'FAIL'} list-form environment is read`);
+  // Helm values (checkHelmValues): the chart's env map and its extra map.
+  const helmCases = [
+    ['a production chart with no forbidden flag passes', 'env:\n  NODE_ENV: production\n  extra: {}\n', []],
+    [
+      'ENABLE_TEST_ROUTES in a production chart\'s env.extra',
+      "env:\n  NODE_ENV: production\n  extra:\n    ENABLE_TEST_ROUTES: 'true'\n",
+      ['env: ENABLE_TEST_ROUTES must not be set'],
+    ],
+    [
+      'SECURITY_SELF_TEST_NONBLOCKING in a nested production env',
+      "worker:\n  env:\n    NODE_ENV: 'production'\n    SECURITY_SELF_TEST_NONBLOCKING: 'true'\n",
+      ['worker.env: SECURITY_SELF_TEST_NONBLOCKING must not be set'],
+    ],
+    ['the same flag where NODE_ENV is not production', "env:\n  NODE_ENV: development\n  ENABLE_TEST_ROUTES: 'true'\n", []],
+  ];
+  for (const [label, text, expect] of helmCases) {
+    const got = checkHelmValues(text);
+    const ok = expect.length === 0 ? got.length === 0 : expect.every(e => got.some(g => g.includes(e)));
+    if (!ok) failed++;
+    console.log(`${ok ? 'ok  ' : 'FAIL'} helm: ${label}${ok ? '' : `\n     expected ${JSON.stringify(expect)}, got ${JSON.stringify(got)}`}`);
+  }
+  const flagsOk = forbiddenRouteFlags().includes('ENABLE_TEST_ROUTES');
+  if (!flagsOk) failed++;
+  console.log(`${flagsOk ? 'ok  ' : 'FAIL'} the route flags are read from server/startup/env.ts, ENABLE_TEST_ROUTES among them`);
   // The scanner beside the app (checkScanner), each case a whole stack.
   const expectScanner = scannerExpectation();
   const stack = (edit = () => {}) => {
@@ -820,6 +929,12 @@ function main() {
     total += problems.length;
     for (const p of problems) console.error(`${f}: ${p}`);
   }
+  const helmFiles = helmValueFiles();
+  for (const f of helmFiles) {
+    const problems = checkHelmValues(readFileSync(resolve(ROOT, f), 'utf8'));
+    total += problems.length;
+    for (const p of problems) console.error(`${f}: ${p}`);
+  }
   if (total) {
     console.error(
       `[ci:compose-boot-contract] ${total} problem(s). The server refuses to boot, or boots and signs no one in, ` +
@@ -830,7 +945,8 @@ function main() {
   }
   console.log(
     `[ci:compose-boot-contract] OK — ${stacks} production Compose stack(s) carry the boot contract (${required.length} preflight names, ` +
-      `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner.`
+      `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner; ` +
+      `${helmFiles.length} Helm values file(s) set none of the flags production refuses.`
   );
 }
 

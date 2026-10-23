@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > unattended_limit 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > session_ended 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > server_shutdown 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > orphaned 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > error 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > admin_cancelled 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > a reason this build does not know is still dropped 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > server_shutdown: "Stopped: the server restarted for an update. Continue picks it up." 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > orphaned: "Stopped: the server handling this turn stopped responding. Continue picks it up." 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > session_ended: "Stopped: the session that started this turn ended. Continue picks it up." 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > unattended_limit: "Stopped: nobody was watching for 15 minutes. Continue picks it up." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > admin_cancelled: "Stopped by an administrator." 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > the transcript's note for a run-row stop > error: "Stopped: the turn ended with an error." 0ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  06:49:31
+   Duration  851ms (transform 283ms, setup 128ms, import 225ms, tests 17ms, environment 0ms)
+

@@ -1,0 +1,28 @@
+# Slice D: every other check that reads Dockerfile.optimized, after the change.
+## ci:image-document-runtime
+[ci:image-document-runtime] OK — 4 runtime(s) copied, their imports installed and probed.
+exit 0
+## ci:image-runtime-assets:selftest
+
+[image-runtime-assets:selftest] the gate fails on all 11 cuts and passes the intact fixture.
+## ci:image-runtime-assets
+  dist/rules/manufacturingRules.yaml — server/src/services/ai/manufacturingReviewer.js:15: src/services/ai/manufacturingReviewer.js reads path.join(__dirname, "rules", …): the file is server/src/services/ai/rules/manufacturingRules.yaml, the bundle looks in dist/rules, and RULES stays [] with no error. CMC manufacturing review is outside the launch catalog; fix is in code (cwd anchor), not a COPY.
+  ingestion/pdf_extractor.py — server/services/unifiedDocumentIngestion.js:94: unifiedDocumentIngestion.js falls back to spawning this with .venv/bin/python3 when the FastAPI extractor is unreachable. Same Python decision as workers/artifact-compute.
+exit 0
+
+## tests that read the Dockerfile. First run: five contract assertions failed because their patterns spelled the old
+## `COPY --from=builder …` (no --chown), and one node test's fixture precondition did the same. Each now accepts an optional --chown and nothing looser:
+ FAIL  tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: the scans skip only the named directories and files
+ FAIL  tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: the scans skip only the named directories and files
+ FAIL  tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the root migrations tree into the production stage
+ FAIL  tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the db/migrations tree into the production stage
+ FAIL  tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the provisioning scripts into the production stage
+ FAIL  tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > ships every vendored-artifact drop-point the server reads from disk
+ FAIL  tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in
+
+## after the pattern fix
+ Test Files  4 passed (4)
+      Tests  446 passed (446)
+# pass 8
+# fail 0
+(tests/ci: 2 failures, both trivy-steps-run-after-failures, the .claude/skills/gstack submodule absent from this checkout; unrelated and unchanged)

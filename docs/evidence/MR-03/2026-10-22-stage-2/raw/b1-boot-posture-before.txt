@@ -1,0 +1,45 @@
+# Slice B, before: the new boot-posture tests against the pre-change env.ts and audit-enforcement.ts (head 47adbcc44).
+# The two existing audit tests that encoded the old default now write AUDIT_REQUIRE_ENFORCE=false explicitly, and pass both before and after.
+ Test Files  2 failed (2)
+      Tests  16 failed | 25 passed (41)
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > isAuditTrailActive > is true only when AUDIT_TRAIL_ENABLED === "true"
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is a no-op (no warn, no throw) outside production
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is silent in production when the audit trail is active
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE is unset
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > warns (but does not throw) in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE=false
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed (throws) when AUDIT_REQUIRE_ENFORCE=true and audit is off in production
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > does NOT fail closed when AUDIT_REQUIRE_ENFORCE=true but audit IS active
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > returns the report and refuses nothing when every trigger is present
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > REFUSES TO BOOT in production when a trigger is missing, naming it
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production even without AUDIT_REQUIRE_ENFORCE (a missing trigger is not a rollout state)
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when a trigger exists but is disabled
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns (structured, no throw) outside production when a trigger is missing
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE=true (fail closed)
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE is unset (the production default)
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns loudly, and never reports a pass, when the check cannot run in production with AUDIT_REQUIRE_ENFORCE=false
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when AUDIT_REQUIRE_ENFORCE=true and the daily sweep is switched off
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > is a no-op outside production, and in production with AUDIT_REQUIRE_ENFORCE=false
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when the sweep is disabled and AUDIT_REQUIRE_ENFORCE is unset (the production default)
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when AUDIT_REQUIRE_ENFORCE=true and the sweep is disabled
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > does not throw in production with AUDIT_REQUIRE_ENFORCE=true when the sweep is on (the production default)
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=false never schedules
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=true always schedules
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > unset: on in production, on elsewhere only with the audit trail active
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > names the controlling variable
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > refuses it in every production boot, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > never mounts the test routes in production, whatever the flag says
+ ✓ server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > still mounts them outside production
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AUDIT_SEAL_ACCEPT_UNSEALED=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AI_GOVERNANCE_ACCEPT_PERMISSIVE=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses STORAGE_ACCEPT_LOCAL_DISK=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AI_GATEWAY_ACCEPT_DETERMINISTIC=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses SOME_FUTURE_ACCEPT_RISK=true, naming it
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to "TRUE": anything but false is an acceptance
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to " true ": anything but false is an acceptance
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to "yes": anything but false is an acceptance
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to "1": anything but false is an acceptance
+ × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AUDIT_REQUIRE_ENFORCE=false
+ ✓ server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > boots with an override set to false, which accepts nothing
+ ✓ server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > boots with no override at all
+ ✓ server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on a self-hosted install (no ECS task metadata) > keeps each written acceptance: the install SKU runs on them

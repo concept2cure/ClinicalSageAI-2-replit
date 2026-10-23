@@ -166,12 +166,12 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'vault',
     label: 'Search the vault',
     description:
-      'On the project Vault, run a document search — filters the filing-cabinet tree and document list to title matches for the term the user asked about.',
+      'On the project Vault, run the server full-text search for the term the user asked about: the document list shows the uploaded documents whose title, file name or text matches it. The folder tree is not filtered, and the reader\'s metadata filters (type, filing, classification, evidence kind, review stage, CTD section) still apply.',
     params: [
       {
         name: 'query',
         required: true,
-        description: 'The search term to filter vault documents by (title match).',
+        description: 'The search term, matched against document titles, file names and extracted text.',
       },
     ],
   },
@@ -920,13 +920,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'admin-console',
     label: 'Open an admin tab',
     description:
-      'On Admin & access, switch between the members, roles, SSO, API-keys, and settings tabs. Inviting, granting, editing scopes, revoking keys, and changing settings stay governed administrator acts.',
+      'On Admin & access, switch between the members, roles, SSO, API-keys, skills and settings tabs. Inviting, granting, editing scopes, revoking keys, changing settings and turning skills on, off or changing them stay governed administrator acts.',
     params: [
       {
         name: 'tab',
         required: true,
         description: 'The tab to open.',
-        enum: ['members', 'roles', 'sso', 'apikeys', 'settings'],
+        enum: ['members', 'roles', 'sso', 'apikeys', 'skills', 'settings'],
       },
     ],
   },

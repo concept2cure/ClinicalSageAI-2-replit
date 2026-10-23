@@ -119,8 +119,16 @@ export function buildIcsrTransmission(
 export type IcsrAckCode = 'AA' | 'AE' | 'AR' | 'unknown';
 
 export interface IcsrAcknowledgment {
-  /** The acknowledged message/batch number, if present. */
+  /** The acknowledged ICSR message's number: <icsrmessagenumb> in the ACK's acknowledgment block; null when absent. */
   acknowledgedMessageNumber: string | null;
+  /** The ACK's own message number (<messagenumb> in its header) — not the acknowledged one; null when absent. */
+  ackMessageNumber: string | null;
+  /**
+   * When the ACK message was created: its header <messagedate> in format 204
+   * (CCYYMMDDHHMMSS); null when absent, in another format, or not a calendar
+   * date-time. The ACK states no time zone; the value is read as UTC.
+   */
+  ackMessageDate: Date | null;
   /** AA = accepted, AE = accepted with error(s), AR = rejected, unknown = unparseable. */
   ackCode: IcsrAckCode;
   /** True only for AA (fully accepted). */
@@ -132,8 +140,32 @@ export interface IcsrAcknowledgment {
 }
 
 const ACK_CODE_RE = /<(?:transmissionacknowledgmentcode|messageacknowledgmentcode|reportacknowledgmentcode)>\s*([A-Z]{2})\s*<\//i;
-const ACK_MSGNUM_RE = /<(?:acknowledgedmessagenumb|messagenumb|localmessagenumb)>\s*([^<]+?)\s*<\//i;
+// An E2B(R2) ACK's header (<ichicsrmessageheader>) carries the ACK's own
+// <messagenumb> and <messagedate> — the header this repo writes on its own R2
+// messages (grdhe/exportGenerators/emaAEE2BR3.ts) — and its acknowledgment
+// block carries the acknowledged message's <icsrmessagenumb>. 2026-10-15: the
+// number read was the first of acknowledgedmessagenumb | messagenumb |
+// localmessagenumb, i.e. the ACK's own (localmessagenumb is the receiver's).
+const ACK_MSGNUM_RE = /<icsrmessagenumb>\s*([^<]+?)\s*<\//i;
+const ACK_OWN_MSGNUM_RE = /<messagenumb>\s*([^<]+?)\s*<\//i;
+const ACK_DATE_FORMAT_RE = /<messagedateformat>\s*([^<]+?)\s*<\//i;
+const ACK_DATE_RE = /<messagedate>\s*([^<]+?)\s*<\//i;
 const ACK_ERROR_RE = /<(?:error|errormessagecomment|transmissionacknowledgmenterrormessage)>\s*([^<]+?)\s*<\//gi;
+
+/** The trimmed text of the first element the pattern matches, or null. */
+function elementText(xml: string, re: RegExp): string | null {
+  return xml.match(re)?.[1]?.trim() ?? null;
+}
+
+/** The ACK's own creation time from its header — format 204 only, read as UTC; else null. */
+function ackMessageDate(xml: string): Date | null {
+  const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(xml.match(ACK_DATE_RE)?.[1] ?? '');
+  if (xml.match(ACK_DATE_FORMAT_RE)?.[1] !== '204' || !m) return null;
+  const [y, mo, d, h, mi, s] = m.slice(1).map(Number);
+  const date = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
+  // A value that does not round-trip (month 13, 30 February, hour 24) is not a date.
+  return date.toISOString().slice(0, 19).replace(/[-T:]/g, '') === m[0] ? date : null;
+}
 
 /**
  * Parse an ICH ICSR acknowledgment (ACK) message into a structured result.
@@ -146,14 +178,15 @@ export function parseIcsrAcknowledgment(ackXml: string): IcsrAcknowledgment {
   const code = (codeMatch?.[1]?.toUpperCase() ?? 'unknown') as IcsrAckCode;
   const ackCode: IcsrAckCode = code === 'AA' || code === 'AE' || code === 'AR' ? code : 'unknown';
 
-  const msgNum = xml.match(ACK_MSGNUM_RE)?.[1]?.trim() ?? null;
   const errors: string[] = [];
   for (const m of xml.matchAll(ACK_ERROR_RE)) {
     if (m[1]) errors.push(m[1].trim());
   }
 
   return {
-    acknowledgedMessageNumber: msgNum,
+    acknowledgedMessageNumber: elementText(xml, ACK_MSGNUM_RE),
+    ackMessageNumber: elementText(xml, ACK_OWN_MSGNUM_RE),
+    ackMessageDate: ackMessageDate(xml),
     ackCode,
     accepted: ackCode === 'AA',
     requiresAction: ackCode === 'AE' || ackCode === 'AR',

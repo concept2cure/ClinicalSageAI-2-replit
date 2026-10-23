@@ -1,0 +1,9 @@
+# r-logout-stops-every-device: exit 1 (non-zero = red)
+# tests: server/routes/__tests__/passwordResetAuditTrail.test.ts  -t only those
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a sign-out with a live access token stops the runs its session started, and only those 300ms
+   → expected [ [ 7, null, 'session_ended', …(1) ] ] to deeply equal [ [ 7, 'sid-desk', …(2) ] ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 33 skipped (34)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > the person's live AnA runs stop when their session ends > a sign-out with a live access token stops the runs its session started, and only those
+AssertionError: expected [ [ 7, null, 'session_ended', …(1) ] ] to deeply equal [ [ 7, 'sid-desk', …(2) ] ]

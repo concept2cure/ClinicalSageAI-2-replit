@@ -73,6 +73,17 @@ describe('the IND checklist says what an attached form amounts to', () => {
     ]);
   });
 
+  // 2026-10-22: the server reports an authored form only as signed or not; an
+  // approved, unsigned co-authored form must not read as plain "Open".
+  it('an authored form with no signed copy says "Authored — not signed", never Complete', async () => {
+    mockChecklist([FORM('FDA_1571', { done: false, attachment: null, authored: { status: 'approved', signed: false } })]);
+    const { container } = render(<IndLifecycle {...props()} />);
+    await waitFor(() => expect(container.querySelectorAll('.indl-form')).toHaveLength(1));
+    const text = container.querySelectorAll('.indl-form')[0].textContent ?? '';
+    expect(text).toMatch(/Authored — not signed/);
+    expect(text).not.toMatch(/Complete/);
+  });
+
   it('a form with no file says Open, and an older server that reports no attachment state is not read as "none"', async () => {
     mockChecklist([FORM('FDA_1571', { done: false, attachment: null }), FORM('FDA_1572', { done: false })]);
     const { container } = render(<IndLifecycle {...props()} />);

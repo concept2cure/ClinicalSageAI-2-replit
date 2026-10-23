@@ -1,0 +1,214 @@
+# c1 — conversion-slots.test.ts (final version, 12 tests) against the CURRENT (uncapped) converters at HEAD
+# HEAD: 178f0b477c8e92257827a5f64c7f0441af7aa8a1
+# date: 2026-10-22T01:37:48Z
+# tree: `git archive HEAD server shared tests vitest.config.ts tsconfig.json package.json client/src/lib` extracted to a scratch directory,
+#       node_modules symlinked, and ONLY server/services/__tests__/conversion-slots.test.ts copied in. conversion-slots.ts does not exist there;
+#       every converter is the HEAD version. (An earlier run of the first 9 tests against the working tree before any implementation
+#       showed the same failures: peak 5 and peak 8, no --jobs, module missing.)
+# command (cwd = that tree): npx vitest run server/services/__tests__/conversion-slots.test.ts
+
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree
+
+ × server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > five concurrent LibreOffice conversions keep at most two children alive, and all five complete 139ms
+   → expected 5 to be less than or equal to 2
+ × server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > the cap is one budget for the whole process, across every converter 138ms
+   → expected 8 to be less than or equal to 2
+ × server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > OCRmyPDF is told to run one job, so its own worker pool cannot multiply the slot 122ms
+   → expected -1 to be greater than or equal to 0
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > rejects with ConversionCapacityError and starts no child for that request 9ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a capacity refusal inside PDF/A finalization is not reported as "returned unchanged" 3ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > with no Ghostscript, a veraPDF run that never started is refused, not written up as a validation note 2ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > stops a compression batch at the first refusal instead of failing each file in turn 2ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a version probe takes no slot: Ghostscript is reported present while every slot is held 406ms
+ × server/services/__tests__/conversion-slots.test.ts > withConversionSlot > grants slots in arrival order (FIFO) 3ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > withConversionSlot > releases the slot when the conversion throws, and passes the error through unchanged 3ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > withConversionSlot > a conversion started inside a slot runs under that slot, so nesting cannot deadlock 2ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ × server/services/__tests__/conversion-slots.test.ts > withConversionSlot > reads CONVERTER_MAX_CONCURRENCY and CONVERTER_QUEUE_TIMEOUT_MS, falling back to 2 and 120000 2ms
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+   → Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > five concurrent LibreOffice conversions keep at most two children alive, and all five complete
+AssertionError: expected 5 to be less than or equal to 2
+ ❯ server/services/__tests__/conversion-slots.test.ts:167:21
+    165|
+    166|     expect(cp.started).toHaveLength(5);
+    167|     expect(cp.peak).toBeLessThanOrEqual(2);
+       |                     ^
+    168|     // Every request got its PDF: the cap queues work, it never drops …
+    169|     for (const r of results) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > the cap is one budget for the whole process, across every converter
+AssertionError: expected 8 to be less than or equal to 2
+ ❯ server/services/__tests__/conversion-slots.test.ts:194:21
+    192|     );
+    193|     expect(cp.started).toHaveLength(jobs.length);
+    194|     expect(cp.peak).toBeLessThanOrEqual(2);
+       |                     ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > OCRmyPDF is told to run one job, so its own worker pool cannot multiply the slot
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ server/services/__tests__/conversion-slots.test.ts:202:16
+    200|     expect(ocr).toBeDefined();
+    201|     const at = ocr!.args.indexOf('--jobs');
+    202|     expect(at).toBeGreaterThanOrEqual(0);
+       |                ^
+    203|     expect(ocr!.args[at + 1]).toBe('1');
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > rejects with ConversionCapacityError and starts no child for that request
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:209:41
+    207| describe('a wait past CONVERTER_QUEUE_TIMEOUT_MS', () => {
+    208|   it('rejects with ConversionCapacityError and starts no child for tha…
+    209|     const { ConversionCapacityError } = await import('../conversion-sl…
+       |                                         ^
+    210|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '80';
+    211|     cp.holdMs = 400;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a capacity refusal inside PDF/A finalization is not reported as "returned unchanged"
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:234:41
+    232|
+    233|   it('a capacity refusal inside PDF/A finalization is not reported as …
+    234|     const { ConversionCapacityError } = await import('../conversion-sl…
+       |                                         ^
+    235|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '80';
+    236|     cp.holdMs = 400;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > with no Ghostscript, a veraPDF run that never started is refused, not written up as a validation note
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:251:41
+    249|
+    250|   it('with no Ghostscript, a veraPDF run that never started is refused…
+    251|     const { ConversionCapacityError } = await import('../conversion-sl…
+       |                                         ^
+    252|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '80';
+    253|     cp.holdMs = 400;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > stops a compression batch at the first refusal instead of failing each file in turn
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:266:41
+    264|
+    265|   it('stops a compression batch at the first refusal instead of failin…
+    266|     const { ConversionCapacityError } = await import('../conversion-sl…
+       |                                         ^
+    267|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '80';
+    268|     cp.holdMs = 400;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > grants slots in arrival order (FIFO)
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:304:19
+    302|
+    303|   it('grants slots in arrival order (FIFO)', async () => {
+    304|     const slots = await import('../conversion-slots');
+       |                   ^
+    305|     process.env.CONVERTER_MAX_CONCURRENCY = '1';
+    306|     slots.resetConversionSlotsForTests();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > grants slots in arrival order (FIFO)
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > releases the slot when the conversion throws, and passes the error through unchanged
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > a conversion started inside a slot runs under that slot, so nesting cannot deadlock
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > reads CONVERTER_MAX_CONCURRENCY and CONVERTER_QUEUE_TIMEOUT_MS, falling back to 2 and 120000
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:300:6
+    298| describe('withConversionSlot', () => {
+    299|   afterEach(async () => {
+    300|     (await import('../conversion-slots')).resetConversionSlotsForTests…
+       |      ^
+    301|   });
+    302|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > releases the slot when the conversion throws, and passes the error through unchanged
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:322:19
+    320|
+    321|   it('releases the slot when the conversion throws, and passes the err…
+    322|     const slots = await import('../conversion-slots');
+       |                   ^
+    323|     process.env.CONVERTER_MAX_CONCURRENCY = '1';
+    324|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '100';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > a conversion started inside a slot runs under that slot, so nesting cannot deadlock
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:334:19
+    332|
+    333|   it('a conversion started inside a slot runs under that slot, so nest…
+    334|     const slots = await import('../conversion-slots');
+       |                   ^
+    335|     process.env.CONVERTER_MAX_CONCURRENCY = '1';
+    336|     process.env.CONVERTER_QUEUE_TIMEOUT_MS = '100';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/__tests__/conversion-slots.test.ts > withConversionSlot > reads CONVERTER_MAX_CONCURRENCY and CONVERTER_QUEUE_TIMEOUT_MS, falling back to 2 and 120000
+Error: Cannot find module '/server/services/conversion-slots' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/04be64a6-2fcc-59ed-9be8-e8ed882b53cc/scratchpad/head-tree/server/services/__tests__/conversion-slots.test.ts
+ ❯ server/services/__tests__/conversion-slots.test.ts:346:80
+    344|
+    345|   it('reads CONVERTER_MAX_CONCURRENCY and CONVERTER_QUEUE_TIMEOUT_MS, …
+    346|     const { resolveConverterMaxConcurrency, resolveConverterQueueTimeo…
+       |                                                                                ^
+    347|     for (const bad of [undefined, '', '0', '-3', 'abc', '1.5']) {
+    348|       expect(resolveConverterMaxConcurrency({ CONVERTER_MAX_CONCURRENC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)
+   Start at  01:37:48
+   Duration  1.26s (transform 180ms, setup 95ms, import 143ms, tests 838ms, environment 0ms)
+
+# exit code: 1

@@ -1,0 +1,11 @@
+# m-hold-not-written: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t the hold, for a follower
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > holdForPerson writes { reason: 'manual', next }; the person's resume clears it 48ms
+   → expected null to deeply equal { reason: 'manual', …(1) }
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > a steer that answers the hold clears it too 12ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 35 skipped (37)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > the hold, for a follower > holdForPerson writes { reason: 'manual', next }; the person's resume clears it
+AssertionError: expected null to deeply equal { reason: 'manual', …(1) }

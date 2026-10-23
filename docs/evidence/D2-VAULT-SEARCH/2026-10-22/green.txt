@@ -1,0 +1,123 @@
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > document type 26ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > classification 13ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > evidence kind 17ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > folder 12ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > filing status, as the tree defines it 41ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > CTD section, by whole segments: 3.2.P.5 holds 3.2.P.5.1 and m3.2.p.5, not 3.2.P.50 25ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > lifecycle stage, in this organisation only; none is "not sent for review" 35ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > OR within a dimension, AND across dimensions 22ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > metadata filters narrow the page and the total > a filter and a text query together: both must hold 17ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > orders the newest version first and carries the metadata a row shows 13ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > keeps current versions only unless asked, and pages with a real total 35ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > browse: filters with no text > never widens scope: another program, another organisation and deleted rows stay out 45ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5.1" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.50" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "m3.2.p.5.1" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.p.5" within "3.2.P.5" 2ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > " 3.2.P.5.1 " within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.0" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.0" within "3.0" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "4.2.1" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "32.P" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5 Control" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "3.2.P.5.foo bar" within "3.2.P.5" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "banana" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > null within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "" within "3" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "M2.7.3" within "2.7" 1ms
+ ✓ server/services/vault/__tests__/vault-search-filters.pglite.integration.test.ts > the SQL form of "within a CTD section" is ctdCodeWithin > "2.7.30" within "2.7.3" 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 74ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 34ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 34ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 31ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > a filtered search keeps the org first, the programs third, and one WHERE for count and page 30ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > a filtered browse (no text) keeps the org first, the programs third, and one WHERE for count and page 23ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > verifies access but does not search the corpus for an empty query 9ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > reads repeated parameters and comma lists, drops blanks and duplicates, normalises CTD codes 3ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > checks a folder against the program view, and refuses one with no view 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > refuses more than twenty values in one dimension rather than truncating 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > parseVaultFilters > offers "none" (not sent for review) beside every canonical stage 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > appends after the positions already bound and leaves them where they are 1ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > vaultFilterSql > keeps the public API exact: a raw CTD string, no whole-segment widening 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > the taxonomy classifications are the schema enum, in the same order 0ms
+ ✓ server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate 256ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses without organization context, concealed as 404 on a read, and searches nothing 28ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > refuses a caller who is not a current member, concealed as 404, and searches nothing 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s when the programme is not this org's, and never searches it 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s on a non-uuid programme id rather than 500ing on the cast 8ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > returns no results rather than the whole vault 8ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > does not query at all for an absent or whitespace query 7ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > returns the page and the REAL total, not the page length 8ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > carries a body snippet when the match was in the content 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > omits an empty snippet rather than rendering a blank line 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > clamps limit and offset to a sane page 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > reports an honest zero when nothing matches 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > failure is not an empty result > 500s with a message saying nothing was searched 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses classification=SECRET by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses documentType=memo by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses evidenceKind=gossip by name, with no corpus read 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses placementStatus=done by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses ctdSection=banana by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses lifecycleStage=archived by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses folderId=module-9 by name, with no corpus read 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > names the allowed values for a closed vocabulary 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > refuses processingStatus, which the Vault does not record 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > browses on filters alone, rather than answering EMPTY_QUERY 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > binds filter values after the organisation, query and program list 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > metadata filters > the library search refuses a folder (one project's cabinet) and a malformed project id 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 62ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 46ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private project metadata for an unassigned same-organization member 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private Vault content search before any count, snippet, or document identity 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > applies sharing before the portfolio page so private newest rows cannot consume public slots 24ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > bounds library search count and page by accessible programs before ranking/pagination 32ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses project detail after organization membership is revoked even with a stale request role 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit program-to-project reconciliation for a missing anchor 18ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project 18ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project  before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /dossier before child content queries 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /drafts before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /team before child content queries 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /evidence before child content queries 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /activity before child content queries 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /records before child content queries 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /conversation-files before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /sources before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /source-changes before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /document-dispositions/preview?targetType=vault_document&targetId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /versions before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /compare before child content or bytes 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /history before child content or bytes 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /download before child content or bytes 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /catalog before child content or bytes 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /relationships before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /annotations before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /text before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps an unrelated missing private anchor out of the evaluated public page 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > requires reconciliation for a deleted anchor while retaining an archived readable anchor 20ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive user despite a stale request role 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive organization despite a stale request role 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > reports failed verification as unavailable instead of an empty portfolio 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps public viewer reads while denying a now-viewer lead mutation 29ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > intersects narrowing IDs with canonical access before count/rank/LIMIT 42ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > places actual private sharing ahead of tied counts and pages for a viewer 49ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > cannot launder a foreign source organization through an owned program 34ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > returns every current match exactly once across a heap reorder between pages 64ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > keeps project, tenant, deletion and current-version rules in counts and pages 57ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks constrains organization_id 29ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary constrains organization_id 6ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks resolves the project within the org 15ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks 404s on a project belonging to another org 6ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks/bulk resolves the project within the org 6ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > PUT /projects/:id/tasks/:taskId constrains organization_id 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > DELETE /projects/:id/tasks/:taskId constrains organization_id 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess constrains organization_id on both reads 4ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > refuses a materialized count and page when final actor admission changes 6ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > the library search names the organisation in the count and in the page 1ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > a project search adds the project, and keeps the organisation 1ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > turns a question into an OR of its words, without operators from punctuation 2ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > 'any' sends the OR query; the default keeps the search box's every-term meaning 1ms
+ Test Files  123 passed (123)
+      Tests  1396 passed (1396)

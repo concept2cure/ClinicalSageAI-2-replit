@@ -52,6 +52,7 @@ import {
   TenantNotFoundError as FullExportTenantNotFoundError,
 } from '../services/tenant-export/tenant-full-export.service';
 import { serverError } from '../lib/api-response';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -258,11 +259,10 @@ router.get('/attestation', async (req: Request, res: Response) => {
 
     /* WO-16C #133. Was `void auditService.logAction({…})`: whether the
        §11.10(e) record of who pulled this attestation, and what verdict it
-       carried, exists at all was unobservable to the caller. Generating the
-       report is a read, so the row is a log beside it and the report is
-       returned either way. The outcome goes in the `X-Audit-Trail-*` headers
-       rather than the body, because the body is HMAC-signed over every key but
-       `signature` — see the note at the top of this file. */
+       carried, exists at all was unobservable to the caller. This row records
+       the run and its verdict; its outcome goes in the `X-Audit-Trail-*`
+       headers rather than the body, because the body is HMAC-signed over every
+       key but `signature` — see the note at the top of this file. */
     const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: (req as any).user?.id ?? null,
@@ -280,15 +280,38 @@ router.get('/attestation', async (req: Request, res: Response) => {
 
     setAuditTrailHeaders(res, auditTrail);
 
-    res
-      .status(200)
-      .set('Content-Type', 'application/json')
-      .set(
-        'Content-Disposition',
-        `attachment; filename="attestation-${report.organization.slug}-${Date.now()}.json"`,
-      )
-      .send(JSON.stringify(report, null, 2));
+    /* The report itself is a document handed to an auditor outside the
+       platform, so its delivery is recorded as every generated download is
+       (D5): an EXPORT_GENERATED row with the SHA-256 of these exact bytes,
+       and nothing sent when that row does not persist. The run's row above
+       carried the verdict but no hash, and the report was returned whether or
+       not it persisted (2026-10-15 launch-boundary re-proof). The bytes are
+       the ones the screen saves (ComplianceAttestation.tsx writes the same
+       JSON.stringify(report, null, 2)). */
+    await sendAuditedDownload(res, {
+      organizationId: orgId,
+      userId: Number((req as any).user?.id),
+      sourceType: 'export_json',
+      backendRoute: '/api/tenant-export/attestation',
+      resourceType: 'audit_attestation_report',
+      resourceId: String(orgId),
+      programUuid: null,
+      filename: `attestation-${report.organization.slug}-${Date.now()}.json`,
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(report, null, 2), 'utf8'),
+      metadata: {
+        attestation: report.attestation,
+        totalEntries: report.totalEntries,
+        brokenLinks: report.brokenLinks,
+      },
+    });
   } catch (err: unknown) {
+    if (isUnauditedExportRefusal(err)) {
+      return res.status(503).json({
+        error: 'Attestation not delivered',
+        detail: 'Its record could not be written, so the report was not sent. Try again.',
+      });
+    }
     if (err instanceof AttestationKeyMissingError) {
       return res.status(503).json({
         error: 'Attestation not configured',

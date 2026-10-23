@@ -20,6 +20,8 @@
 import express from 'express';
 import request from 'supertest';
 import { runWithTenantScope } from '../../../../db/tenantStore.js';
+import { bindRequestDbClient } from '../../../../db/requestDbLease.js';
+import { RunStopped } from '../../../../services/ana/run-stopped.js';
 
 export type ToolUse = { id: string; name: string; input: Record<string, unknown> };
 /**
@@ -54,6 +56,8 @@ export interface GatewayRequestSeen {
 
 function freshState() {
   return {
+    /** Each write of a conversation's picked skills to its thread, in order. */
+    threadSkills: [] as Array<{ threadId: string; organizationId: number; keys: string[] }>,
     /** One entry per model call: tool calls to make, the answer text, or words with tool calls. */
     script: [] as Array<ToolUse[] | string | ModelSays>,
     /** The gateway request id each call reports, by call number from 1; none when absent. */
@@ -102,14 +106,31 @@ function freshState() {
     mirror: null as null | Record<string, unknown>,
     /** Each stampThread call: the conversation and question written onto the run. */
     stamps: [] as Array<{ threadId: string; userMessageId: number | null }>,
+    /** What stampThread answers (false: the run could not be stamped with its conversation). */
+    stampThreadResult: true as boolean,
     /** Each handle.heartbeat call. */
     heartbeats: 0,
     /** requestApproval opens the gate (true) or cannot hold the run (false). */
     approvalOpens: false,
+    /** What each requestApproval held on the run (the pending_approval row a follower reads). */
+    approvalRequests: [] as Array<Record<string, unknown>>,
+    /** Whether the governed-action route has claimed the held approval (run-control.ts approvalClaimed). */
+    approvalClaimed: false,
+    /** Called inside each handle.wake (a wait's tick): lets a test land a stop mid-wait. */
+    onWake: null as null | (() => void),
     approvalDecisionsRecorded: 0,
     /** What readApprovalDecision returns once the gate is open: a person's answer, or null (none yet). */
     approvalDecision: null as null | { decided: 'approved' | 'denied'; error?: string; result?: unknown },
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
+    /**
+     * What endRun answers (run-control.ts EndRunOutcome): 'already_ended' when
+     * another writer stopped the row before its abort reached the turn.
+     */
+    endRunOutcome: 'ended' as 'ended' | 'already_ended' | 'write_failed',
+    /** What readRunEnding answers: the reason the row says it was stopped with, or null. */
+    rowEnding: null as string | null,
+    /** …and what ended the session, for a session_ended row (ana_runs.stopped_detail). */
+    rowEndingDetail: null as null | { cause: string; byUserId?: number | null },
     /** The context post-processing was handed. */
     post: null as any,
     /** Each tool-run telemetry row the route wrote (toolRegistry.logToolRun). */
@@ -118,6 +139,36 @@ function freshState() {
     user: { id: 3, organizationId: 7 } as Record<string, unknown>,
     /** Aborts the run's cancel signal (a Stop). */
     cancel: null as null | (() => void),
+    /**
+     * Aborts the run's cancel signal as the run row's own stop would
+     * (run-control.ts RunStopped, AnA detach DT3): a shutdown, the reaper,
+     * the session's end, an admin, the unattended limit.
+     */
+    stop: null as null | ((reason: string, detail?: { cause: string; byUserId?: number | null } | null) => void),
+    /** Each internal stop the route asked for, by reason (stopRunInternally). */
+    internalStops: [] as string[],
+    /** Each detach stamped on the run (markRunDetached), as ISO. */
+    detachStamps: [] as string[],
+    /** What readLastWatched answers: the asker's last watched stamp (epoch ms), or null. */
+    lastWatched: null as number | null,
+    /**
+     * What the handle's session check answers at each round boundary, in
+     * order (the last repeats); empty: the handle has no check, as a test
+     * double for a run with no person.
+     */
+    standing: [] as Array<'session_ended' | null | 'throws' | { reason: 'session_ended'; detail: { cause: string; byUserId?: number | null } }>,
+    standingChecks: 0,
+    /** The standing check a local-only handle (no run row) is given, as `standing`; empty: none. */
+    localStanding: [] as Array<'session_ended' | null | { reason: 'session_ended'; detail: { cause: string } }>,
+    /** Each local-only handle's abort, by its reason (RunStopped). */
+    localAborts: [] as string[],
+    /**
+     * Each release of the request's pinned DB client (db/requestDbLease.ts),
+     * and each query refused because it came after one — as
+     * LazyRequestDbClient refuses a released client.
+     */
+    requestClientReleases: 0,
+    requestClientRefusals: 0,
   };
 }
 
@@ -209,8 +260,8 @@ function reader(name: string, result: Record<string, unknown>) {
   };
 }
 
-/** The tool handlers the scripted model may call. Tests may add their own. */
-const handlers: Record<string, (input: any) => Promise<string>> = {
+/** The tool handlers the scripted model may call (input, then the tool context). Tests may add their own. */
+const handlers: Record<string, (input: any, ctx?: any) => Promise<string>> = {
   list_app_screens: reader('list_app_screens', { screens: ['vault'] }),
   search_literature: reader('search_literature', { totalMatches: 2, results: [] }),
   // A write the gate puts to a person: if it ever runs here, the gate was bypassed.
@@ -231,19 +282,34 @@ const servedModelOf = (r: { provider?: string | null; model?: string | null; req
 function runHandle() {
   const controller = new AbortController();
   state.cancel = () => controller.abort();
+  state.stop = (reason: string, detail?: { cause: string; byUserId?: number | null } | null) =>
+    controller.abort(new RunStopped(reason as never, (detail ?? null) as never));
+  const standing = state.standing.length > 0
+    ? {
+        standing: async () => {
+          state.standingChecks++;
+          const next = state.standing.length > 1 ? (state.standing.shift() ?? null) : state.standing[0];
+          if (next === 'throws') throw new Error('the standing could not be read');
+          // As runStanding answers (DT3 review, DP-83): the reason and what the check found.
+          return next === 'session_ended' ? { reason: 'session_ended', detail: { cause: 'credential_ended' } } : next;
+        },
+      }
+    : {};
   return {
+    ...standing,
     runId: 'run_test',
     cancelSignal: controller.signal,
     wake: async (ms: number) => {
       state.wakes.push(ms);
       state.clockOffset += ms;
+      state.onWake?.();
     },
     heartbeat: async () => {
       state.heartbeats++;
     },
     stampThread: async (threadId: string, userMessageId: number | null) => {
       state.stamps.push({ threadId, userMessageId });
-      return true;
+      return state.stampThreadResult;
     },
     ...(state.mirror ? { events: state.mirror } : {}),
   };
@@ -263,25 +329,61 @@ function runControl(real: { readMoveId: unknown }) {
       state.beginRunInputs.push(input);
       if (state.beginRunError) throw state.beginRunError;
       if (state.beginRunThrows) throw new Error('ana_runs is unavailable');
-      return { runId: 'run_test', handle: runHandle() };
+      // As beginRun does: the conversation the client named, verified (or null for a new one).
+      return { runId: 'run_test', handle: runHandle(), threadId: typeof input.threadId === 'string' ? input.threadId : null };
     },
-    localOnlyRunHandle: () => ({ runId: '', cancelSignal: new AbortController().signal, wake: async () => {}, heartbeat: async () => {} }),
+    localOnlyRunHandle: (subject?: unknown) => {
+      const controller = new AbortController();
+      return {
+        runId: '',
+        cancelSignal: controller.signal,
+        wake: async () => {},
+        heartbeat: async () => {},
+        abortLocally: (reason?: unknown) => {
+          state.localAborts.push(String((reason as { stoppedReason?: string } | undefined)?.stoppedReason ?? 'none'));
+          controller.abort(reason);
+        },
+        // As the real one: a person identified gets the round-boundary check (DT3 review, IAM-35).
+        ...(subject && state.localStanding.length > 0
+          ? {
+              standing: async () => {
+                state.standingChecks++;
+                const next = state.localStanding.length > 1 ? (state.localStanding.shift() ?? null) : state.localStanding[0];
+                return next === 'session_ended' ? { reason: 'session_ended', detail: { cause: 'credential_ended' } } : next;
+              },
+            }
+          : {}),
+      };
+    },
     endRun: async (_pool: unknown, _runId: string, status: string, stoppedReason: string) => {
       state.endRuns.push({ status, stoppedReason });
+      return state.endRunOutcome;
     },
+    readRunEnding: async () => (state.rowEnding ? { stoppedReason: state.rowEnding, detail: state.rowEndingDetail } : null),
     readStatus: async () => readStatus(),
     readRun: async () => null,
     releaseLocalRun: () => {},
     consumeInterjections: async () => state.drains.shift() ?? [],
-    requestApproval: async () => state.approvalOpens,
+    requestApproval: async (_pool: unknown, _runId: string, held: Record<string, unknown>) => {
+      state.approvalRequests.push(held);
+      return state.approvalOpens;
+    },
     recordApprovalDecision: async () => {
       state.approvalDecisionsRecorded++;
       return true;
     },
     readApprovalDecision: async () => state.approvalDecision,
-    stopRunInternally: async () => {
+    approvalClaimed: async () => state.approvalClaimed,
+    stopRunInternally: async (_pool: unknown, _runId: string, reason: string, _org?: number, detail?: { cause: string } | null) => {
       state.stops++;
+      state.internalStops.push(reason);
+      // As the real one does: the row's stop aborts the owner with its reason (and what ended the session).
+      state.stop?.(reason, detail ?? null);
     },
+    markRunDetached: async (_pool: unknown, _runId: string, at: Date) => {
+      state.detachStamps.push(at.toISOString());
+    },
+    readLastWatched: async () => state.lastWatched,
     resumeAbandonedRun: async () => {
       state.resumeAbandoned++;
       state.forced = 'running';
@@ -351,6 +453,9 @@ export const mocks = {
   chatThreads: () => ({
     getOrCreateThread: async () => 'thread-1',
     getThreadMessages: async () => [],
+    recordThreadSkills: async (threadId: string, organizationId: number, keys: string[]) => {
+      state.threadSkills.push({ threadId, organizationId, keys });
+    },
     saveChatMessage: async () => {},
     programIdForThread: () => null,
     ThreadAccessError: class ThreadAccessError extends Error {},
@@ -390,12 +495,26 @@ export function streamApp(
     const tenantId = options.tenantScope;
     app.use((_req, _res, next) => runWithTenantScope({ tenantId, source: 'test', caller: 'stream-harness' }, () => next()));
   }
-  app.use((req, _res, next) => {
+  app.use((req, res, next) => {
     (req as any).tenantId = 7;
     (req as any).user = { ...state.user };
     // The actual host now passes the request executor to source tools. Keep
-    // that per-request contract in this scripted, post-admission harness too.
-    (req as any).dbClient = { query: mocks.db().pool.query };
+    // that per-request contract in this scripted, post-admission harness too —
+    // bound and released as the auth boundary binds it (db/requestDbLease.ts):
+    // it answers until its last holder lets go, then refuses, as
+    // LazyRequestDbClient does (AnA detach DT3).
+    let released = false;
+    bindRequestDbClient(req, res, {
+      query: ((sql: string, params?: unknown[]) => {
+        if (!released) return mocks.db().pool.query(sql, params);
+        state.requestClientRefusals++;
+        return Promise.reject(new Error('Cannot query a released request DB client'));
+      }) as never,
+      release: async () => {
+        released = true;
+        state.requestClientReleases++;
+      },
+    });
     next();
   });
   const router = express.Router();

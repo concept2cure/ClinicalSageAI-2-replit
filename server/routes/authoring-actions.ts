@@ -1261,11 +1261,21 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
 router.post('/harmonize-sections', async (req: Request, res: Response) => {
   try {
     const { projectId, sectionCodes, submissionType, productName } = req.body;
-    // Tenant context from verified auth middleware (non-failing here: decision
-    // recording below is best-effort and skips DB persistence without it).
-    const rawTenantId = Number((req as any).tenantId ?? (req as any).organizationId);
-    const orgId = Number.isFinite(rawTenantId) && rawTenantId > 0 ? rawTenantId : undefined;
+    /* 2026-10-15: this ran without an organization, read each section's
+       artifact by project id alone (any organization's), assumed 'IND' when no
+       submissionType was sent, and answered a failed read as
+       "insufficient_content". */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    const projectIdNum = Number(projectId);
+    if (!Number.isSafeInteger(projectIdNum) || projectIdNum <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+    const { projectBelongsToTenant } = await import('../services/cmc/project-membership.js');
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId: String(projectIdNum) }))) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     if (!sectionCodes || !Array.isArray(sectionCodes) || sectionCodes.length === 0) {
       return res.json({
         status: 'no_sections',
@@ -1274,23 +1284,43 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
       });
     }
 
-    // Fetch content for each section from artifacts
+    // The submission track as the request states it, else as the project's
+    // regulatory program records it (resolveDraftSubmissionType); never assumed.
+    let track = typeof submissionType === 'string' && submissionType.trim() ? submissionType.trim() : undefined;
+    if (!track) {
+      const [{ resolveDraftSubmissionType }, { getPool }] = await Promise.all([
+        import('../services/ana/draft-submission-context.js'),
+        import('../db.js'),
+      ]);
+      track = await resolveDraftSubmissionType(getPool(), { organizationId: orgId, projectId: projectIdNum });
+    }
+    if (!track) {
+      return res.status(422).json({
+        status: 'submission_track_unrecorded',
+        action: 'harmonize_sections',
+        error: 'SUBMISSION_TRACK_UNRECORDED',
+        message:
+          'This project records no submission track: it is not anchored to a regulatory program whose filing type ' +
+          'resolves to a registry entry. Send submissionType, or record the program\'s submission type.',
+      });
+    }
+
+    // Each section's latest artifact in this organization's project. A failed
+    // read propagates to the error response below.
     const sections: Record<string, string> = {};
-    try {
-      const { db } = await import('../db.js');
-      for (const code of sectionCodes) {
-        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
-          where: (a: any, { and, eq }: any) =>
-            and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
-          orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
-        }).catch(() => null);
-        if (artifact?.content) {
-          sections[code] = typeof artifact.content === 'string'
-            ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-            : '';
-        }
+    const { db } = await import('../db.js');
+    for (const code of sectionCodes) {
+      const artifact = await db.query.concept2cureArtifacts.findFirst({
+        where: (a: any, { and, eq }: any) =>
+          and(eq(a.projectId, projectIdNum), eq(a.organizationId, orgId), eq(a.ctdSection, code)),
+        orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+      });
+      if (artifact?.content) {
+        sections[code] = typeof artifact.content === 'string'
+          ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          : '';
       }
-    } catch { /* DB unavailable */ }
+    }
 
     if (Object.keys(sections).length < 2) {
       return res.json({
@@ -1307,7 +1337,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
       const engine = new HarmonizeEngine();
       const result = await engine.check({
         sections,
-        submissionType: submissionType || 'IND',
+        submissionType: track,
         productName: productName || undefined,
       });
 
@@ -1367,6 +1397,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         checkedDimensions: result.checkedDimensions,
         skippedDimensions: result.skippedDimensions,
         sectionsCompared: Object.keys(sections),
+        submissionType: track,
         decisionId: harmonizeDecision?.id || null,
         authority: harmonizeDecision?.authority || null,
       });
@@ -1554,7 +1585,9 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
         gapAnalysis: gapAnalysis ? {
           completeness: gapAnalysis.completeness,
           gaps: (gapAnalysis.gaps || []).slice(0, 5),
-          criticalGaps: gapAnalysis.critical_gaps || [],
+          // The count summarizeRequirementCoverage holds, or null when none is
+          // recorded. Was `critical_gaps || []`: a recorded 0 read as an empty list.
+          criticalGaps: typeof gapAnalysis.critical_gaps === 'number' ? gapAnalysis.critical_gaps : null,
         } : null,
         context: { projectId, sectionCode },
       });
@@ -1605,8 +1638,43 @@ function deriveLinkedSections(sectionCode: string): string[] {
 router.post('/cross-section-consistency', async (req: Request, res: Response) => {
   try {
     const { projectId, sectionCode, linkedSectionCodes, submissionType } = req.body;
+    /* 2026-10-15: as harmonize-sections was — this ran without an organization,
+       read each section's artifact by project id alone (any organization's),
+       scanned contradictions as organization 0, assumed 'IND' when no
+       submissionType was sent, and answered a failed read as missing content. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     if (!projectId || !sectionCode) {
       return res.status(400).json({ error: 'projectId and sectionCode are required' });
+    }
+    const projectIdNum = Number(projectId);
+    if (!Number.isSafeInteger(projectIdNum) || projectIdNum <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+    const { projectBelongsToTenant } = await import('../services/cmc/project-membership.js');
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId: String(projectIdNum) }))) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // The submission track as the request states it, else as the project's
+    // regulatory program records it; never assumed.
+    let track = typeof submissionType === 'string' && submissionType.trim() ? submissionType.trim() : undefined;
+    if (!track) {
+      const [{ resolveDraftSubmissionType }, { getPool }] = await Promise.all([
+        import('../services/ana/draft-submission-context.js'),
+        import('../db.js'),
+      ]);
+      track = await resolveDraftSubmissionType(getPool(), { organizationId: orgId, projectId: projectIdNum });
+    }
+    if (!track) {
+      return res.status(422).json({
+        status: 'submission_track_unrecorded',
+        action: 'cross_section_consistency',
+        error: 'SUBMISSION_TRACK_UNRECORDED',
+        message:
+          'This project records no submission track: it is not anchored to a regulatory program whose filing type ' +
+          'resolves to a registry entry. Send submissionType, or record the program\'s submission type.',
+      });
     }
 
     // 1. If linkedSectionCodes not provided, derive from CTD hierarchy
@@ -1616,24 +1684,21 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
 
     const allCodes = [sectionCode, ...linked];
 
-    // 2. Fetch content for current + linked sections from artifacts
+    // 2. Each section's latest artifact in this organization's project. A
+    // failed read propagates to the error response below.
     const sections: Record<string, string> = {};
-    try {
-      const { db } = await import('../db.js');
-      for (const code of allCodes) {
-        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
-          where: (a: any, { and, eq }: any) =>
-            and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
-          orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
-        }).catch(() => null);
-        if (artifact?.content) {
-          sections[code] = typeof artifact.content === 'string'
-            ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-            : '';
-        }
+    const { db } = await import('../db.js');
+    for (const code of allCodes) {
+      const artifact = await db.query.concept2cureArtifacts.findFirst({
+        where: (a: any, { and, eq }: any) =>
+          and(eq(a.projectId, projectIdNum), eq(a.organizationId, orgId), eq(a.ctdSection, code)),
+        orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+      });
+      if (artifact?.content) {
+        sections[code] = typeof artifact.content === 'string'
+          ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          : '';
       }
-    } catch {
-      // DB unavailable — continue with what we have
     }
 
     // 3. Run harmonize-engine check
@@ -1644,7 +1709,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
         const engine = new HarmonizeEngine();
         harmonizeResult = await engine.check({
           sections,
-          submissionType: submissionType || 'IND',
+          submissionType: track,
         });
       } catch {
         // Harmonize engine unavailable
@@ -1663,10 +1728,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
         '../services/contradiction-engine-service.js'
       );
       if (contradictionEngineService?.scanProject) {
-        const scanResult = await contradictionEngineService.scanProject(
-          0,
-          Number(projectId)
-        );
+        const scanResult = await contradictionEngineService.scanProject(orgId, projectIdNum);
         contradictions = ((scanResult?.findings as any[]) || [])
           .filter(
             (f: any) =>
@@ -1697,6 +1759,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
       status: 'data',
       action: 'cross_section_consistency',
       sectionCode,
+      submissionType: track,
       linkedSections: linked,
       sectionsWithContent: Object.keys(sections),
       harmonize: harmonizeResult
@@ -2475,6 +2538,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
     if (orgId == null) return;
     type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';
     const checks: Record<string, any> = {};
+    const { db } = await import('../db.js');
 
     // ── Run all checks in parallel ──────────────────────────────────
     const [readinessResult, contradictionResult, bodyResult, consistencyResult] =
@@ -2552,23 +2616,52 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
           const linked = linkedSectionCodes || CTD_LINKS[sectionCode]
             || CTD_LINKS[sectionCode.split('.').slice(0, -1).join('.')] || [];
           if (linked.length === 0) return { status: 'unknown' as CheckStatus, items: [] };
+          /* 2026-10-15: each section was read with an exact ctdSection match, so
+             '5.3' missed reports filed under 5.3.5.x; a failed read was swallowed
+             into "no content"; and a linked section that was absent or unread was
+             dropped, so 'pass' read as consistent with sections never compared.
+             A section now includes its subsections (on the '.' boundary), and
+             the sections not compared are named. */
+          const sections: Record<string, string> = {};
+          const absentSections: string[] = [];
+          const unreadSections: string[] = [];
+          for (const code of [String(sectionCode), ...linked.map(String)]) {
+            // A section code is digits, letters, dots and hyphens; anything else
+            // (a LIKE wildcard among it) names no section.
+            if (!/^[0-9A-Za-z.-]+$/.test(code)) { absentSections.push(code); continue; }
+            const under = `${code}.%`;
+            let rows: Array<{ ctdSection: string | null; content: unknown }>;
+            try {
+              rows = await db.query.concept2cureArtifacts.findMany({
+                where: (a: any, { and, eq, or, like }: any) =>
+                  and(eq(a.projectId, Number(projectId)), eq(a.organizationId, Number(orgId)),
+                    or(eq(a.ctdSection, code), like(a.ctdSection, under))),
+                orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+              });
+            } catch (err) {
+              console.error('[authoring-actions] section-preflight: linked section read failed', {
+                sectionCode: code, error: err instanceof Error ? err.message : String(err),
+              });
+              unreadSections.push(code);
+              continue;
+            }
+            // The latest artifact of each (sub)section, in code order.
+            const latest = new Map<string, string>();
+            for (const r of rows) {
+              const key = String(r.ctdSection);
+              if (!latest.has(key) && typeof r.content === 'string' && r.content.trim()) latest.set(key, r.content);
+            }
+            const text = [...latest.keys()].sort((x, y) => x.localeCompare(y, 'en', { numeric: true }))
+              .map((k) => latest.get(k)!).join(' ')
+              .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (text) sections[code] = text; else absentSections.push(code);
+          }
+          const coverage = { sectionsCompared: Object.keys(sections), absentSections, unreadSections };
+          if (unreadSections.length > 0 || Object.keys(sections).length < 2) {
+            return { status: 'unknown' as CheckStatus, items: [], ...coverage };
+          }
           try {
             const { HarmonizeEngine } = await import('../services/harmonize-engine.js');
-            const { db } = await import('../db.js');
-            const sections: Record<string, string> = {};
-            for (const code of [sectionCode, ...linked]) {
-              // This tenant's artifact: the read named no organization.
-              const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
-                where: (a: any, { and, eq }: any) =>
-                  and(eq(a.projectId, Number(projectId)), eq(a.organizationId, Number(orgId)), eq(a.ctdSection, code)),
-                orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
-              }).catch(() => null);
-              if (artifact?.content) {
-                sections[code] = typeof artifact.content === 'string'
-                  ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-              }
-            }
-            if (Object.keys(sections).length < 2) return { status: 'unknown' as CheckStatus, items: [] };
             const engine = new HarmonizeEngine();
             const result = await engine.check({ sections, submissionType: submissionType || 'unspecified' });
             const items = result.issues.slice(0, 10).map((i: any) => ({
@@ -2577,8 +2670,8 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             }));
             const hasCritical = items.some((i: any) => i.severity === 'critical' || i.severity === 'error');
             const status: CheckStatus = hasCritical ? 'fail' : items.length > 0 ? 'warn' : 'pass';
-            return { status, consistencyScore: result.consistencyScore, items };
-          } catch { return { status: 'unknown' as CheckStatus, items: [] }; }
+            return { status, consistencyScore: result.consistencyScore, items, ...coverage };
+          } catch { return { status: 'unknown' as CheckStatus, items: [], ...coverage }; }
         })(),
       ]);
 

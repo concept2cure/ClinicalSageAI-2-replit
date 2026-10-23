@@ -1,6 +1,8 @@
 /**
- * Submission-readiness API — composes per-domain readiness scores into a single
- * pathway readiness scorecard. Pure, deterministic; role-gated and Zod-validated.
+ * Submission-readiness API — composes per-domain completeness figures into the
+ * completeness of a pathway's assessed domains, naming the domains not assessed
+ * (2026-10-15: an unsent domain was scored 0 and the mean called readiness).
+ * Pure, deterministic; role-gated and Zod-validated.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';

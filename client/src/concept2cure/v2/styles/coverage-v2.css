@@ -942,6 +942,13 @@
 .c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; border-color:transparent; }
 @media (prefers-reduced-motion: reduce){ .c2c-v2 .vd-search input{ transition:none; } }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
+/* The find view's metadata filters (VR-18): one row under the search bar. */
+.c2c-v2 .vd-filters{ display:flex; align-items:flex-end; gap:8px; padding:6px 10px 8px; border-bottom:1px solid var(--border); flex-wrap:wrap; font-size:12px; }
+.c2c-v2 .vd-filter{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.c2c-v2 .vd-filter-l{ color:var(--text-300); font-size:11px; }
+.c2c-v2 .vd-filter .c2c-input{ width:auto; max-width:200px; font-size:12px; padding:4px 6px; }
+.c2c-v2 .vd-filter input.c2c-input{ width:96px; }
+.c2c-v2 .vd-filter-note{ flex-basis:100%; color:var(--text-300); }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }
 .c2c-v2 .vd-crumb-sep{ color:var(--text-400); }
 .c2c-v2 .vd-cols, .c2c-v2 .vd-row{ display:grid !important; grid-template-columns:minmax(0,1fr) 126px 128px 92px 110px; align-items:center; gap:10px; }
@@ -1526,31 +1533,19 @@
 /* ════════ Dispatch Readiness (dispatch-readiness.jsx) — proven pre-transmit gate ════════ */
 .c2c-v2 .dr2{ max-width:1000px; margin:0 auto; padding:26px 30px 60px; }
 .c2c-v2 .dr2-head{ margin-bottom:14px; }
-.c2c-v2 .dr2-verdict-t{ font-size:13px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .dr2-readiness{ border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-000); padding:14px 16px; margin-top:14px; }
 .c2c-v2 .dr2-eyebrow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
 .c2c-v2 .dr2-kicker{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-200); }
-.c2c-v2 .dr2-src{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:100px; }
-.c2c-v2 .dr2-src.sample{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
-.c2c-v2 .dr2-src.live{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
 .c2c-v2 .dr2-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 3px; letter-spacing:-.01em; }
 .c2c-v2 .dr2-sub{ font-size:12px; color:var(--text-400); }
-.c2c-v2 .dr2-verdict{ display:inline-flex; align-items:center; gap:9px; margin:16px 0 14px; padding:8px 16px; border-radius:100px; font-size:14px; font-weight:600; }
-.c2c-v2 .dr2-verdict.ok{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
-.c2c-v2 .dr2-verdict.warn{ background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); }
-.c2c-v2 .dr2-verdict.blocked{ background:color-mix(in srgb,var(--error) 13%,transparent); color:var(--error); }
-.c2c-v2 .dr2-verdict-ic{ display:inline-flex; }
-.c2c-v2 .dr2-verdict-ic svg{ width:18px; height:18px; }
-.c2c-v2 .dr2-lead{ display:flex; gap:14px; align-items:flex-start; background:var(--bg-000); border:1px solid var(--border); border-left:3px solid var(--accent-200); border-radius:var(--radius,10px); padding:16px 18px; margin-bottom:20px; }
-.c2c-v2 .dr2-lead.tone-good{ border-left-color:var(--success); }
-.c2c-v2 .dr2-lead.tone-urgent{ border-left-color:var(--error); }
-.c2c-v2 .dr2-lead-ic{ flex:none; width:32px; height:32px; display:grid; place-items:center; border-radius:var(--radius-lg); background:var(--accent-000); color:var(--accent-200); }
-.c2c-v2 .dr2-lead.tone-good .dr2-lead-ic{ background:color-mix(in srgb,var(--success) 12%,transparent); color:var(--success); }
-.c2c-v2 .dr2-lead.tone-urgent .dr2-lead-ic{ background:color-mix(in srgb,var(--error) 12%,transparent); color:var(--error); }
-.c2c-v2 .dr2-lead-ic svg{ width:18px; height:18px; }
-.c2c-v2 .dr2-lead-h{ font-size:15px; font-weight:600; color:var(--text-100); margin:0 0 5px; line-height:1.45; text-wrap:pretty; }
-.c2c-v2 .dr2-lead-b{ font-size:12.5px; color:var(--text-300); margin:0; line-height:1.55; text-wrap:pretty; }
 .c2c-v2 .dr2-gates{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+/* F18: the gates and findings are lists, one per market. */
+.c2c-v2 ul.dr2-gates, .c2c-v2 ul.dr2-finds{ list-style:none; margin-top:0; padding:0; }
+.c2c-v2 ul.dr2-finds{ margin-bottom:0; }
+.c2c-v2 .dr2-market{ margin-top:10px; }
+.c2c-v2 .dr2-door{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+/* The placed leaf a readiness finding points at: tinted, beside its text tag. */
+.c2c-v2 tr[data-section-target] > td{ background:var(--accent-000); }
 .c2c-v2 .dr2-gate{ border:1px solid var(--border); border-top:3px solid var(--border); border-radius:10px; background:var(--bg-000); padding:13px 15px; }
 .c2c-v2 .dr2-gate.ok{ border-top-color:var(--success); }
 .c2c-v2 .dr2-gate.block{ border-top-color:var(--error); }
@@ -1563,13 +1558,6 @@
 .c2c-v2 .dr2-gate-label{ font-size:12.5px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .dr2-gate-detail{ font-size:11.5px; color:var(--text-300); line-height:1.5; text-wrap:pretty; }
 .c2c-v2 .dr2-gate-basis{ font-size:10px; color:var(--text-400); margin-top:5px; line-height:1.4; }
-.c2c-v2 .dr2-blockers{ border:1px solid color-mix(in srgb,var(--error) 25%,var(--border)); border-radius:11px; background:color-mix(in srgb,var(--error) 4%,var(--bg-000)); padding:14px 16px; margin-bottom:20px; }
-.c2c-v2 .dr2-blockers-hd{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--error); margin-bottom:10px; }
-.c2c-v2 .dr2-blockers-hd svg{ width:14px; height:14px; }
-.c2c-v2 .dr2-blocker{ display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--border); }
-.c2c-v2 .dr2-blocker:first-of-type{ border-top:none; }
-.c2c-v2 .dr2-blocker-n{ flex:none; width:19px; height:19px; border-radius:50%; background:var(--error); color:var(--on-error); font-size:10.5px; font-weight:600; display:grid; place-items:center; }
-.c2c-v2 .dr2-blocker-t{ font-size:12.5px; color:var(--text-200); line-height:1.5; }
 .c2c-v2 .dr2-readiness-hd{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .c2c-v2 .dr2-readiness-t{ font-size:13px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .dr2-readiness-s{ display:flex; gap:8px; }
@@ -1577,7 +1565,9 @@
 .c2c-v2 .dr2-count.err{ background:color-mix(in srgb,var(--error) 13%,transparent); color:var(--error); }
 .c2c-v2 .dr2-count.warn{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
 .c2c-v2 .dr2-count.idle{ background:var(--bg-200); color:var(--text-300); }
-.c2c-v2 .dr2-find{ display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); }
+/* F18 review: a finding's act label is longer than "Fix"; the row wraps at narrow widths.
+   One rule, not two: a second .dr2-find rule above this one was a shadowed selector (ci:check-css-selector-shadowing). */
+.c2c-v2 .dr2-find{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); }
 .c2c-v2 .dr2-find-sev{ flex:none; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:100px; }
 .c2c-v2 .dr2-find-sev.tone-error{ background:color-mix(in srgb,var(--error) 14%,transparent); color:var(--error); }
 .c2c-v2 .dr2-find-sev.tone-warning{ background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); }

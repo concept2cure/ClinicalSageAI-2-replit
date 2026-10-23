@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 26ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > cover letter PDF: delivers nothing when the record does not persist, and says so 6ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > annual report PDF: delivers nothing when the record does not persist, and says so 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > SAE line listing CSV: delivers nothing when the record does not persist, and says so 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > letter of authorization PDF: delivers nothing when the record does not persist, and says so 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 6ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > right-of-reference PDF: delivers nothing when the record does not persist, and says so 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/documents-recorded.test.ts > a rendered IND document > briefing book PDF: delivers nothing when the record does not persist, and says so 2ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  05:10:06
+   Duration  4.76s (transform 3.01s, setup 92ms, import 4.31s, tests 70ms, environment 0ms)
+

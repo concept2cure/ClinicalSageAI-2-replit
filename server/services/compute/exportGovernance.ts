@@ -47,6 +47,12 @@ export interface ExportGovernanceInput {
     reviewerName?: string;
     reviewTimestamp?: string;
   };
+  /**
+   * Route facts recorded on the artifact's metadata and the EXPORT audit row's
+   * metadata (e.g. the review attestation the export passed). Never shadows the
+   * record's own fields.
+   */
+  metadata?: Record<string, unknown>;
   ipAddress?: string;
 }
 
@@ -103,6 +109,7 @@ export async function registerGovernedExport(
         input.ctdSection ?? null,
         input.userId,
         JSON.stringify({
+          ...input.metadata,
           source: 'governed_export',
           governanceSource: 'export',
           exportFormat: input.exportFormat,
@@ -114,8 +121,11 @@ export async function registerGovernedExport(
           provenancePresent: true,
           auditPresent: true,
           placementPresent: !!input.ctdSection,
-          aiGenerated: input.governance?.aiGenerated ?? true,
-          humanReviewApproved: input.governance?.humanReviewApproved ?? false,
+          // 2026-10-15: `?? true` / `?? false` — no caller of this path states
+          // either, so every governed export was recorded as AI-generated and
+          // not review-approved. Unstated is null.
+          aiGenerated: input.governance?.aiGenerated ?? null,
+          humanReviewApproved: input.governance?.humanReviewApproved ?? null,
           reviewerName: input.governance?.reviewerName,
           reviewTimestamp: input.governance?.reviewTimestamp,
           backendRoute: input.backendRoute,
@@ -212,8 +222,8 @@ export async function registerGovernedExport(
           exportFileSize: input.exportFileSize,
           exportHash: input.exportHash,
           docType: input.docType,
-          aiGenerated: input.governance?.aiGenerated ?? true,
-          humanReviewApproved: input.governance?.humanReviewApproved ?? false,
+          aiGenerated: input.governance?.aiGenerated ?? null,
+          humanReviewApproved: input.governance?.humanReviewApproved ?? null,
         }),
         input.userId,
         input.userName,
@@ -221,6 +231,7 @@ export async function registerGovernedExport(
         input.ipAddress || 'ip-not-captured',
         now,
         JSON.stringify({
+          ...input.metadata,
           source: 'governed_export',
           backendRoute: input.backendRoute,
           provenanceEventId,
@@ -367,6 +378,12 @@ export async function registerExportGovernanceQuick(opts: {
   ctdSection?: string;
   ipAddress?: string;
   allowDegradedMode?: boolean;
+  /**
+   * Route facts for the governed record (ExportGovernanceInput.metadata).
+   * 2026-10-15: there was no way to pass any, so a placed eCTD export's review
+   * attestation reached only the route's non-fatal audit row.
+   */
+  metadata?: Record<string, unknown>;
 }): Promise<ExportGovernanceResult | null> {
   try {
     /* No fallback. An export record with a metadata digest is worse than one
@@ -401,6 +418,7 @@ export async function registerExportGovernanceQuick(opts: {
       backendRoute: opts.backendRoute,
       ctdSection: opts.ctdSection,
       ipAddress: opts.ipAddress,
+      metadata: opts.metadata,
     });
   } catch (err) {
     logger.error('Governance registration failed', { err: err instanceof Error ? err.message : String(err) });

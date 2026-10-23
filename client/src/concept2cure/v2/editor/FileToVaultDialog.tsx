@@ -227,17 +227,29 @@ export function FileToVaultDialog(props: FileToVaultDialogProps) {
   const shellProject = useShellProject();
   const project = shellProgramId(shellProject);
   const session = useSubmissionReadSession();
+  const open = props.open !== false;
+  // A replaced session retires this open visit until an explicit close/reopen.
+  const opening = useRef({ open: false, current: session.sameRevision });
+  if (!open || !opening.current.open) {
+    opening.current = { open, current: session.sameRevision };
+  }
+  const sessionChanged = !opening.current.current();
   const context = JSON.stringify([props.docId, props.programId, project, session.key]);
   // Reuse the project-visit boundary: A → B → A retires the previous request too.
   const visit = useRef({ context, generation: 0, projectCurrent: captureShellProjectGuard() });
   if (visit.current.context !== context || !visit.current.projectCurrent()) {
     visit.current = { context, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
   }
-  return <FileToVaultDialogForDocument key={`${context}:${visit.current.generation}`} {...props} session={session} projectCurrent={visit.current.projectCurrent} projectMatches={!shellProject || project === props.programId} />;
+  return <FileToVaultDialogForDocument key={`${context}:${visit.current.generation}`} {...props}
+    docTitle={sessionChanged ? 'Authoring document' : props.docTitle}
+    docStatus={sessionChanged ? null : props.docStatus} programName={sessionChanged ? null : props.programName}
+    sessionChanged={sessionChanged} session={session} projectCurrent={visit.current.projectCurrent} projectMatches={!shellProject || project === props.programId} />;
 }
 
-function FileToVaultDialogForDocument({ open = true, docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast, session, projectCurrent, projectMatches, refusal = null }: FileToVaultDialogProps & {
-  session: SubmissionReadSession; projectCurrent: () => boolean; projectMatches: boolean;
+const sessionChangedMessage = 'Your session changed. Close this dialog and reopen the current document before filing.';
+
+function FileToVaultDialogForDocument({ open = true, docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast, session, projectCurrent, projectMatches, sessionChanged, refusal = null }: FileToVaultDialogProps & {
+  session: SubmissionReadSession; projectCurrent: () => boolean; projectMatches: boolean; sessionChanged: boolean;
 }) {
   const [filing, setFiling] = useState(false);
   const ref = useDialog(() => {
@@ -262,10 +274,11 @@ function FileToVaultDialogForDocument({ open = true, docId, docTitle, docStatus,
   }, [open, filing, needsReconciliation]);
 
   const sealed = ['FROZEN', 'APPROVED'].includes(String(docStatus ?? '').toUpperCase());
-  const canFile = open && projectMatches && Boolean(programId && isCanonicalId(programId)) && !filing && !result && !needsReconciliation && !refusal;
+  const canFile = open && projectMatches && Boolean(programId && isCanonicalId(programId)) && !filing && !result && !needsReconciliation && !refusal && !sessionChanged;
 
   const file = async () => {
-    if (!canFile || currentRef.current.refusal || !programId || pending.current || !active.current || !session.sameRevision() || !projectCurrent()) return;
+    if (sessionChanged || !session.sameRevision()) return;
+    if (!canFile || currentRef.current.refusal || !programId || pending.current || !active.current || !projectCurrent()) return;
     const started = generation.current;
     const sessionGuard = authService.captureSessionReadGuard();
     const current = () => active.current && started === generation.current && session.sameRevision() && sessionGuard.sameRevision() && projectCurrent();
@@ -290,7 +303,8 @@ function FileToVaultDialogForDocument({ open = true, docId, docTitle, docStatus,
   };
 
   if (!open) return null;
-  return <FileToVaultForm {...{ docTitle, docStatus, programId, programName, onClose, filing, format, setFormat, canFile, sealed, result, error, file, refusal }} dialogRef={ref}
+  return <FileToVaultForm {...{ docTitle, docStatus, programId, programName, onClose, filing, format, setFormat, canFile, sealed, result,
+    error, file, refusal: sessionChanged ? sessionChangedMessage : refusal }} dialogRef={ref}
     onOpenVault={onNav ? () => {
       if (!result || !receiptCurrent.current()) return;
       const current = receiptCurrent.current;

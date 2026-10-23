@@ -1,0 +1,13 @@
+# Stage 3 baseline (local reproduction of ci.yml production-boot-smoke; bootproof.sh): Postgres 16.15 with TLS, provisioned by
+# install-fresh + deploy-migrate as the owner; the production bundle (npm run build) booted from a root without .env (as the image is).
+# The clamd beside it is a PING/EICAR-only test fixture (it reports EICAR FOUND and refuses every other stream); Docker Hub refused the real image (429).
+
+## head, WITH the owner credential (DATABASE_URL beside APP_DATABASE_URL), as CI boots today
+/readyz=200
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+
+## head, WITHOUT the owner credential (APP_DATABASE_URL only): the process exits at import
+[database] No DATABASE_URL provided, skipping database connection
+Error: Missing required environment variable: DATABASE_URL_PROD
+    at getDatabaseUrl2 (file:///home/user/ClinicalSageAI-2-replit/dist/index.js:8319:76477)
+    at server/config/environment.ts (file:///home/user/ClinicalSageAI-2-replit/dist/index.js:8319:79471)

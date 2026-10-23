@@ -22,3 +22,13 @@ variable "kms_key_id" {
   description = "Customer-managed KMS key ARN for every secret. Null: the AWS-managed aws/secretsmanager key."
   default     = null
 }
+
+variable "recovery_window_in_days" {
+  type        = number
+  description = "Days a deleted secret can be recovered before it is gone; 0 deletes at once, so the same name can be created again (a re-applied staging)."
+  default     = 30
+  validation {
+    condition     = var.recovery_window_in_days == 0 || (var.recovery_window_in_days >= 7 && var.recovery_window_in_days <= 30)
+    error_message = "Secrets Manager accepts 0, or 7 to 30 days."
+  }
+}

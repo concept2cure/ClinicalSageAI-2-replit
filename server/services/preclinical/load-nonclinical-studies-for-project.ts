@@ -13,9 +13,9 @@
  * `NonclinicalStudy[]` ready to splice into `OrchestratorInputs.nonclinicalStudies`.
  *
  * Tenant-scope is inherited from `loadNonclinicalProgram` (which joins
- * `ctd_programs.organization_id` and returns `undefined` for cross-org
- * `ctdProgramId`). Org positivity is asserted at entry; we throw before any
- * DB I/O.
+ * `ctd_programs.organization_id` and throws CtdProgramNotFoundError for a
+ * cross-org or absent `ctdProgramId`). Org positivity is asserted at entry; we
+ * throw before any DB I/O.
  */
 
 import { loadNonclinicalProgram } from './nonclinical-program-loader';
@@ -30,8 +30,11 @@ import type { NonclinicalStudy } from '../m2-summary-builders';
  * @param orgId         Positive integer organization id.
  * @param ctdProgramId  Positive integer ctd_programs.id matching
  *                      `ctd_nonclinical_studies.ctd_program_id`.
- * @returns NonclinicalStudy[] — empty when the program has no studies OR is
- *          not visible to the org (loader returns undefined → []).
+ * @returns NonclinicalStudy[] — empty when the program has no studies, or when
+ *          the loader read nothing because the preclinical reviewer flag is off
+ *          (loader returns undefined → []).
+ * @throws CtdProgramNotFoundError when the program is not the organization's
+ *         (2026-10-15: this comment said that case returned [], as it once did).
  * @throws Error when orgId or ctdProgramId is missing or non-positive.
  */
 export async function loadNonclinicalStudiesForProject(

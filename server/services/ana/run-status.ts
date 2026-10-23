@@ -73,7 +73,24 @@ export type RunStoppedReason =
   | 'hold_unavailable'
   /** The loop ended, but the answer it ended on was cut off — the model's
    *  length limit, or a stream that stalled mid-answer (finish-reason.ts). */
-  | 'answer_cut_off';
+  | 'answer_cut_off'
+  /*
+   * AnA detach DT3 (docs/design/ANA_DETACH_2026-10-08.md §2.10). Each is the
+   * run ROW's reason, written by a server path that is not the turn's loop,
+   * and each reaches the turn through the abort's RunStopped (run-control.ts):
+   * the row's reason wins over what the loop saw.
+   *
+   *   unattended_limit  a detached turn nobody watched for 15 minutes
+   *   session_ended     the session or the organisation that started it ended
+   *   server_shutdown   a graceful shutdown (a deploy) ended it
+   *   admin_cancelled   an organisation admin or owner stopped it — the
+   *                     admin variant of `cancelled`, so "Stopped by an
+   *                     administrator." has a producer
+   */
+  | 'unattended_limit'
+  | 'session_ended'
+  | 'server_shutdown'
+  | 'admin_cancelled';
 
 /**
  * Why a TURN's work stopped — the subset of {@link RunStoppedReason} that the
@@ -85,8 +102,13 @@ export type RunStoppedReason =
  * connection (a phone locked, a tab closed), the run was stopped for it, and
  * the answer says so — "Stopped: this page lost its connection." with
  * Continue — rather than reading as a person's Stop (TurnPolicy.noteDisconnected).
+ *
+ * And since AnA detach DT3 every run-row reason except `approval_denied` (a
+ * gate's, never a turn's end): a turn the reaper, a shutdown, the session's
+ * end, an admin or the unattended limit stopped says so on its answer and its
+ * record, as the row does (§5.3).
  */
-export type TurnStoppedReason = Exclude<RunStoppedReason, 'orphaned' | 'approval_denied' | 'error'>;
+export type TurnStoppedReason = Exclude<RunStoppedReason, 'approval_denied'>;
 
 /**
  * Why a turn ended, as its saved answer and its record say it: the person's
@@ -151,6 +173,40 @@ export function isHoldable(run: { runId: string | null | undefined; runUserId: n
 }
 
 /**
+ * Does this turn go on when its page closes (AnA detach §2.1)? It needs a run
+ * row and an owner (as a hold does: isHoldable), and its conversation must be
+ * resolved: the thread beginRun verified, or the one minted for a new
+ * conversation and stamped on the run (§2.8, G-2). A run with no conversation
+ * could not be found again by thread, and its notice could name nothing, so it
+ * does not run on unseen. A page that closes before a new conversation's
+ * thread exists is decided once it does (stream.ts).
+ *
+ * A turn that asked to drive the screen detaches like any other (D-7, decided
+ * 2026-10-22 by the coordinator under the founder's delegation, replacing
+ * "a Live Drive turn stops on close"): Live Drive is on by default since
+ * 9db931c56, so the old rule kept every default turn from detaching. From the
+ * close, AnA stops driving: stream.ts refuses any further screen action
+ * (screenActionRefusal) and lists it as a step that did not run, and the rest
+ * of the turn's work goes on.
+ */
+export function detachable(input: {
+  runId: string | null | undefined;
+  runUserId: number | null | undefined;
+  threadResolved: boolean;
+}): boolean {
+  return isHoldable(input) && input.threadResolved;
+}
+
+/**
+ * The tools that act on the person's screen under Live Drive: a move, an
+ * on-screen operation, and starting a driven demonstration. Each one's result
+ * is applied to the page as it streams (services/ana-ri/navigation-actions.ts,
+ * live-drive.ts). The listings beside them (list_app_screens,
+ * list_screen_actions, list_demo_scripts) only read the registry.
+ */
+export const SCREEN_ACTION_TOOLS: ReadonlySet<string> = new Set(['navigate_to', 'act_on_screen', 'start_product_demo']);
+
+/**
  * Does Manual stop before this round? Pure; the caller supplies the gate's
  * verdict as `isUngoverned`, so this never classifies anything itself.
  *
@@ -183,8 +239,19 @@ export function manualHoldDue(input: {
  */
 export function turnStoppedReason(
   loopReason: TurnStoppedReason,
-  hold: { holdExpired: boolean; holdUnavailable: boolean; disconnected?: boolean },
+  hold: {
+    holdExpired: boolean;
+    holdUnavailable: boolean;
+    disconnected?: boolean;
+    /**
+     * The run row's reason, when the row's stop is what aborted the turn
+     * (run-control.ts RunStopped): it wins (AnA detach §2.4), so the answer
+     * and the record say what the row says.
+     */
+    rowReason?: RunStoppedReason | null;
+  },
 ): TurnStoppedReason {
+  if (hold.rowReason && hold.rowReason !== 'approval_denied') return hold.rowReason;
   if (hold.holdUnavailable) return 'hold_unavailable';
   if (hold.holdExpired) return 'hold_expired';
   // The loop saw only the abort; the socket that dropped is why (S4).
@@ -211,13 +278,18 @@ export function policyStopDirective(input: {
   approvalTimedOut: boolean;
   activeMs: number;
   wallMs: number;
-}): 'halt' | 'approval_timeout' | 'budget_exhausted' | null {
+  /**
+   * A detached turn's unattended limit has come (AnA detach §2.6): which one.
+   * Any policy, or none: the limit bounds unwatched work, not a policy's.
+   */
+  unattended?: 'unattended_limit' | 'budget_exhausted' | null;
+}): 'halt' | 'approval_timeout' | 'budget_exhausted' | 'unattended_limit' | null {
   if (input.holdExpired) return 'halt';
   if (input.runPolicy !== null && input.approvalTimedOut) return 'approval_timeout';
   if (input.runPolicy === 'auto' && (input.activeMs > AUTO_ACTIVE_MS || input.wallMs > AUTO_WALL_MS)) {
     return 'budget_exhausted';
   }
-  return null;
+  return input.unattended ?? null;
 }
 
 const ALLOWED_TRANSITIONS: Record<RunStatus, readonly RunStatus[]> = {
@@ -302,6 +374,16 @@ export interface HumanControlEvent {
   at: string;
   /** Who took the action. Null for a control the server applied itself. */
   byUserId?: number | null;
+  /**
+   * Set when an organisation admin or owner took it on a colleague's run
+   * (AnA detach §2.5: cancel only). Absent for the asker's own controls.
+   */
+  byRole?: 'admin';
+  /**
+   * The reason an administrator gave for stopping a colleague's turn (DT3
+   * review, DP-82): required for that cancel, absent otherwise.
+   */
+  reason?: string;
 }
 
 /**

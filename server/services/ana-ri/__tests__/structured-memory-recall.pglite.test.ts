@@ -83,7 +83,8 @@ const recall = (command: string) => enrichContextForChat({ ...INPUT, message: `/
 const titles = (rows: Array<Record<string, unknown>>) => rows.map(row => row.title);
 const exactHealthyBlocks: Record<string, string> = {
   precedent: '\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Active record** [90% confidence]: Active record body',
-  claims: '\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** moderate | **Confidence:** 66/100\n**Factors:** evidenceCount: 1, averageRelevance: 0.9, hasRegulatoryReference: false, hasUserVerification: false, recency: recent\n\n**Evidence Entries:**\n- **Active record** [90%]: Active record body\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.',
+  // 2026-10-15: the heuristic was labelled "**Confidence:** 66/100" (context-enrichment-claims-coverage-is-labelled-a-heuristic).
+  claims: '\n\n## Evidence & Claims Analysis\n**Evidence coverage (heuristic, not a confidence):** 66/100, from the number of entries, their mean recorded confidence, source types and recency | **Chain strength (from that heuristic):** moderate\n**Factors:** evidenceCount: 1, averageRelevance: 0.9, hasRegulatoryReference: false, hasUserVerification: false, recency: recent\n\n**Evidence Entries:**\n- **Active record** [90%]: Active record body\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.',
   knowledge: '\n\n## Knowledge Base Search Results\n**1 entries** found in project knowledge.\n\n- **Active record** [strategy] (90%): Active record body\n\nReference these knowledge atoms when answering. Cite the category and confidence level.',
   safety: '\n\n## Safety Intelligence\nProject-specific safety data. Reference directly in your response.\n- **Active record** [90% confidence]: Active record body',
 };
@@ -126,7 +127,7 @@ describe('structured readers execute canonical columns and retain their healthy 
     expect(block).toContain(`## ${route.heading}`);
     expect(block).toContain(route.command === 'knowledge' ? '(0%)' : '[0%');
     if (route.command === 'claims') {
-      expect(block).toContain('**Confidence:** 48/100');
+      expect(block).toContain('**Evidence coverage (heuristic, not a confidence):** 48/100');
       expect(block).toContain('averageRelevance: 0,');
       expect(block).toContain('**Zero confidence** [0%]');
     }

@@ -143,7 +143,10 @@ describe('search results stay with their current query and recorded eligibility'
   });
 
   it('uses newer search availability when the same file is also in the earlier Vault tree', async () => {
-    const old = { ...hit(1), num: '', type: 'Protocol', status: 'unfiled', pct: null, owner: '', ver: '', updated: '',
+    // The tree keys an upload `up-<uuid>` (server uploadLeaf) and a search hit is
+    // the bare uuid. The fixture used to give both the same id, which hid that a
+    // hit never met its tree row: no checksum, so a found file could not be cited.
+    const old = { ...hit(1), id: 'up-source-1', num: '', type: 'Protocol', status: 'unfiled', pct: null, owner: '', ver: '', updated: '',
       preview: '', src: 'upload', docId: 'source-1', hash: 'a'.repeat(64) };
     apiRequest.mockImplementation(async (_method: string, url: string) => ok(url.includes('/search?')
       ? { results: [{ ...hit(1), originalFileAvailable: false }], total: 1 } : { tree: [old], documentCount: 1 }));

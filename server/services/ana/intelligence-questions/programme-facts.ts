@@ -104,11 +104,12 @@ const US_CLASS: Readonly<Record<string, 'I' | 'II' | 'III'>> = {
   class_i: 'I',
   class_ii: 'II',
   class_iii: 'III',
-  /* device-pma.ts's second option: a reclassified or transitional device of
-     Class II for which FDA has called for premarket approval. It states the
-     class, and the PMA caution then asks for exactly the basis this value
-     asserts. */
-  class_ii_pma: 'II',
+  /* device-pma.ts's second option: a transitional device, which FD&C Act
+     section 520(l) placed in Class III (2026-10-22, D2 knowledge audit). It
+     read as Class II before, on the premise that a Class II device can be
+     "called for" PMA; FDA calls for PMAs under section 515(b) for Class III
+     devices only. A device reclassified into Class II needs no PMA. */
+  class_ii_pma: 'III',
   i: 'I',
   ii: 'II',
   iii: 'III',

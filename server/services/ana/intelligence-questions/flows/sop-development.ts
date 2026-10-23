@@ -299,6 +299,16 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             placeholder: 'Provide a high-level description of the entire process',
           },
           {
+            // 2026-10-22 (D2): read by sop_007 (and sop_024, sop_026).
+            id: 'procedure_steps',
+            label: 'Detailed Procedure Steps',
+            type: 'textarea',
+            required: false,
+            placeholder: 'Numbered, sequential steps: who does what, with parameters and acceptance criteria where they apply',
+            helpText:
+              'The overview above is not the procedure. 21 CFR 211.100 (drugs) and the QMSR via ISO 13485 (devices) require written procedures that personnel follow, so each step must be specific enough for a trained person to execute it the same way every time.',
+          },
+          {
             id: 'num_major_steps',
             label: 'Number of Major Steps',
             type: 'number',
@@ -1082,7 +1092,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'No Mock Audit Program',
             message:
               'Regular mock audits help identify compliance gaps before regulatory inspections. Consider establishing at least an annual mock audit schedule for GxP SOPs.',
-            reference: 'FDA Inspection Best Practices',
+            reference: 'Industry practice (no FDA rule requires mock audits). Internal audits: ISO 13485:2016 clause 8.2.4, incorporated by 21 CFR 820.10 (QMSR), for devices; ICH Q10 for drugs',
           },
           {
             id: 'not_inspection_ready',

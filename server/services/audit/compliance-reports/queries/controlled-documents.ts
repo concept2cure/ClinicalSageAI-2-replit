@@ -20,6 +20,8 @@
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
 import { actorJoin, cappedSection, columns, isoNaiveUtc, isoUtc, naiveUtcNote, utcWallClock } from './section';
+import { readQmsReviewSchedule } from '../../../qms/periodic-review';
+import type { QmsDocumentRow } from '../../../qms/document-approval-signature';
 
 /** A signature that stands now: valid, not revoked, not superseded. */
 const STANDING = (a: string) =>
@@ -130,17 +132,86 @@ SELECT c.id,
    AND (c.deleted_at IS NULL OR c.deleted_at >= $2::timestamptz)
  ORDER BY c.created_at, c.id`;
 
+/* $1 organisation, $2 the documents that can have a version in force (effective, in draft or review). */
+const LIVE_SQL = `SELECT * FROM qms_documents WHERE organization_id = $1 AND id = ANY($2::int[]) AND deleted_at IS NULL`;
+
+/* $1 organisation, $2 the end of the as-of day, $3 {"qms-document:<id>": "<version in force>"}:
+   each in-force version's standing approval, signed by the end of the day. */
+const IN_FORCE_APPROVAL_SQL = `
+SELECT DISTINCT ON (s.signed_target) s.signed_target, s.id,
+       to_char(s.signed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS signed_at, s.signer_name
+  FROM electronic_signatures s
+ WHERE s.organization_id = $1
+   AND s.signed_target = ANY(ARRAY(SELECT jsonb_object_keys($3::jsonb)))
+   AND s.signature_type = 'qms-document-approval'
+   AND s.signature_manifest->>'version' = ($3::jsonb ->> s.signed_target)
+   AND s.is_valid IS TRUE AND s.verification_status IS DISTINCT FROM 'revoked' AND s.superseded_by IS NULL
+   AND s.signed_at < ($2::timestamptz AT TIME ZONE 'UTC')
+ ORDER BY s.signed_target, s.signed_at DESC, s.id DESC`;
+
+const day = (value: unknown): string | null =>
+  value == null ? null : (value instanceof Date ? value.toISOString() : String(value)).slice(0, 10);
+
+const NO_VERSION_IN_FORCE = { in_force_version: null, in_force_effective_date: null, in_force_approval_signature_id: null, in_force_approval_signer_name: null };
+const NO_PERIODIC_REVIEW = { last_review_signature_id: null, last_reviewed_at: null, last_review_signer_name: null, last_review_outcome: null, next_review_due: null };
+
+/**
+ * While a successor is drafted or reviewed, the register row is that draft and
+ * the approved predecessor still governs the work. Which version is in force is
+ * decided by the one resolver (services/qms/in-force-release.ts), not re-derived
+ * here; this adds it, with the standing signature that approved it, beside the
+ * draft. A row with no successor open carries nulls: it is itself what is in force.
+ *
+ * Each version in force also carries its last standing periodic review signed
+ * by the end of the date, and when it is next due after it
+ * (services/qms/periodic-review.ts): the review never rewrites the row's
+ * signed next review date, so that column alone is not when it is due.
+ */
+async function withVersionInForce(ctx: RunContext, section: SectionResult): Promise<SectionResult> {
+  const live = section.rows.filter((row) => ['effective', 'draft', 'in_review'].includes(String(row.status))).map((row) => Number(row.id));
+  if (!live.length) return { ...section, rows: section.rows.map((row) => ({ ...row, ...NO_VERSION_IN_FORCE, ...NO_PERIODIC_REVIEW })) };
+  const liveRows = (await ctx.client.query(LIVE_SQL, [ctx.orgId, live])).rows as unknown as QmsDocumentRow[];
+  const schedule = await readQmsReviewSchedule(ctx.client, ctx.orgId, liveRows, { signedBefore: ctx.bounds.end });
+  const liveById = new Map(liveRows.map((row) => [Number(row.id), row]));
+  const versions = Object.fromEntries([...schedule.inForce].filter(([, entry]) => entry.underRevision)
+    .map(([id, entry]) => [`qms-document:${id}`, entry.release.version]));
+  const approvals = Object.keys(versions).length
+    ? new Map((await ctx.client.query(IN_FORCE_APPROVAL_SQL, [ctx.orgId, ctx.bounds.end, JSON.stringify(versions)])).rows
+        .map((sig) => [String(sig.signed_target), sig]))
+    : new Map<string, Record<string, unknown>>();
+  const reviewedOf = (id: number) => {
+    const liveRow = liveById.get(id);
+    if (!schedule.inForce.has(id) || !liveRow) return NO_PERIODIC_REVIEW;
+    const review = schedule.reviews.get(id);
+    return {
+      last_review_signature_id: review?.signatureId ?? null, last_reviewed_at: review?.reviewedAt ?? null,
+      last_review_signer_name: review?.reviewerName ?? null, last_review_outcome: review?.outcome ?? null,
+      next_review_due: schedule.dueOf(liveRow),
+    };
+  };
+  return { ...section, rows: section.rows.map((row) => {
+    const entry = schedule.inForce.get(Number(row.id));
+    const reviewed = reviewedOf(Number(row.id));
+    if (!entry?.underRevision) return { ...row, ...NO_VERSION_IN_FORCE, ...reviewed };
+    const approval = approvals.get(`qms-document:${row.id}`);
+    return { ...row, in_force_version: entry.release.version, in_force_effective_date: day(entry.release.effective_date),
+      in_force_approval_signature_id: approval?.id ?? null, in_force_approval_signer_name: approval?.signer_name ?? null, ...reviewed };
+  }) };
+}
+
 async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
   const currentState =
     'Status is the record as it is at generation time. The signatures shown are the latest applied by the end of the date that are not revoked or superseded at generation time.';
   const times = naiveUtcNote('Signing times');
   return {
     documents: {
-      ...(await cappedSection(ctx.client, DOCUMENTS_SQL, [ctx.orgId, ctx.bounds.end])),
+      ...(await withVersionInForce(ctx, await cappedSection(ctx.client, DOCUMENTS_SQL, [ctx.orgId, ctx.bounds.end]))),
       notes: [
         'Documents created by the end of the chosen date and not deleted before it.',
         currentState,
+        'A document whose next version is in draft or review is listed as that draft; the version still in force, its effective date and the standing signature that approved it are given beside it. They are empty when no successor is open.',
         'Revoked approval signatures counts the approval signatures of this version that were revoked or superseded.',
+        'Next review is the date the approval signed. A periodic review is a separate signature on the version in force and does not change it: the last standing one signed by the end of the date, its outcome, and the next review it set, are given beside it. Next review due is that date, or Next review when there is none or the review found a revision required.',
         times,
       ],
     },
@@ -183,6 +254,15 @@ export const controlledDocuments: ReportDefinition = {
         ['retired_at', 'Retired at'],
         ['retirement_signature_id', 'Retirement signature'],
         ['superseded_by_id', 'Superseded by document'],
+        ['in_force_version', 'In force while revised'],
+        ['in_force_effective_date', 'In force since'],
+        ['in_force_approval_signature_id', 'In-force approval signature'],
+        ['in_force_approval_signer_name', 'In-force approval signed by'],
+        ['last_review_signature_id', 'Last periodic review signature'],
+        ['last_reviewed_at', 'Last periodic review signed'],
+        ['last_review_signer_name', 'Last periodic review signed by'],
+        ['last_review_outcome', 'Last periodic review outcome'],
+        ['next_review_due', 'Next review due'],
         ['deleted_at', 'Deleted'],
       ]),
     },

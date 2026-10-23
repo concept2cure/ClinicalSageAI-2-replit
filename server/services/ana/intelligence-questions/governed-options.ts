@@ -69,17 +69,24 @@ function deviceDomainOf(input: GovernedOptionInput): PathwayDomain {
  *
  * For a medicine the regulator IS the agency: EMA grants a marketing
  * authorisation. For a device or a diagnostic in the EU it is not — the MDR
- * and IVDR routes are assessed by a notified body, and EMA has no part in
- * them beyond the companion-diagnostic consultation. Saying "these are EMA's
+ * and IVDR routes are assessed by a notified body (where the class needs
+ * one), and EMA has no part in them beyond the consultations the regulation
+ * requires: on an incorporated medicinal substance under the MDR, on a
+ * companion diagnostic under the IVDR. Saying "these are EMA's
  * routes" over the MDR class routes is a deterministic sentence that is
  * simply false, which a review caught (founder's directive, 2026-10-12).
  */
 function euRoutesAre(domain: PathwayDomain): string {
   if (domain === 'pharma_biotech') return `These are ${agencyFor('EU')}’s routes.`;
-  const regulation = domain === 'diagnostics_ivd' ? 'IVDR' : 'MDR';
+  const ivdr = domain === 'diagnostics_ivd';
+  const regulation = ivdr ? 'IVDR' : 'MDR';
+  const selfDeclared = ivdr ? 'non-sterile Class A' : 'plain Class I';
+  const consultation = ivdr
+    ? 'the consultation the IVDR requires on a companion diagnostic'
+    : 'the consultation the MDR requires on a device incorporating an ancillary medicinal substance';
   return (
-    `These are the EU ${regulation} conformity assessment routes. A notified body assesses them — ` +
-    `${agencyFor('EU')} has no part in them, beyond the companion-diagnostic consultation.`
+    `These are the EU ${regulation} conformity assessment routes. Except for ${selfDeclared}, which the manufacturer self-declares, a notified body assesses them — ` +
+    `${agencyFor('EU')} has no part in them, beyond ${consultation}.`
   );
 }
 

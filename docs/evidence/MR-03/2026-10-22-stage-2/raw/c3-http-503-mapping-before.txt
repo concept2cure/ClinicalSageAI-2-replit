@@ -1,0 +1,300 @@
+# c3 — HTTP mapping tests BEFORE the mapping exists (conversion-slots.ts and the wrapping are in place; no sink maps ConversionCapacityError yet)
+# HEAD (uncommitted changes on top): 178f0b477c8e92257827a5f64c7f0441af7aa8a1
+# date: 2026-10-22T01:35:00Z
+ M server/integrations/ocrmypdf/client.ts
+ M server/integrations/verapdf/client.ts
+ M server/services/docx-pdf-pipeline.ts
+ M server/services/ectd/pdfa-pipeline.ts
+ M server/services/pdf-compression-service.ts
+ M server/services/pdf-converter.ts
+?? docs/evidence/MR-03/2026-10-22-stage-2/
+?? server/services/__tests__/conversion-capacity-compile-http.test.ts
+?? server/services/__tests__/conversion-capacity-http.test.ts
+?? server/services/__tests__/conversion-capacity-submissions-http.test.ts
+?? server/services/__tests__/conversion-slots.test.ts
+?? server/services/conversion-slots.ts
+# command: npx vitest run server/services/__tests__/conversion-capacity-http.test.ts server/services/__tests__/conversion-capacity-submissions-http.test.ts server/services/__tests__/conversion-capacity-compile-http.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+{
+  "timestamp": "2026-10-22T01:35:03.392Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ × server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row 1557ms
+   → expected "vi.fn()" to be called with arguments: [ 503 ]
+
+Number of calls: 0
+
+stderr | server/services/__tests__/conversion-capacity-http.test.ts > the global error handler answers a busy converter 503 with Retry-After > in production too, where a 5xx message is otherwise replaced by "Internal server error"
+{
+  "timestamp": "2026-10-22T01:35:10.758Z",
+  "level": "error",
+  "message": "[http] unhandled_error",
+  "context": {
+    "errorName": "ConversionCapacityError",
+    "errorMessage": "The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.",
+    "stack": "ConversionCapacityError: The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.\n    at busy (/home/user/ClinicalSageAI-2-replit/server/services/__tests__/conversion-capacity-http.test.ts:57:20)\n    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/conversion-capacity-http.test.ts:97:15\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)\n    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)\n    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)\n    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)\n    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15\n    at processParams (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:582:12)\n    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:291:5)",
+    "statusCode": 503,
+    "path": "/thrown",
+    "method": "POST"
+  }
+}
+
+stdout | server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export)
+[eCTD Export] Generating package for submission 42, org 100
+
+stderr | server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export)
+{
+  "timestamp": "2026-10-22T01:35:10.777Z",
+  "level": "error",
+  "message": "[ectd-export] eCTD Export failed",
+  "context": {
+    "err": "The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.",
+    "correlationId": "ff3e6327-15b0-4780-8d38-93d09f937833",
+    "submissionId": 42
+  }
+}
+
+stderr | server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > GET /:submissionId/preview
+{
+  "timestamp": "2026-10-22T01:35:10.783Z",
+  "level": "error",
+  "message": "[ectd-export] Preview failed",
+  "context": {
+    "err": "The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.",
+    "correlationId": "6e73de73-9bc9-4e7e-990f-f4fc43c84525",
+    "submissionId": 42
+  }
+}
+
+stderr | server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId/validate (generate, then validate)
+{
+  "timestamp": "2026-10-22T01:35:10.790Z",
+  "level": "error",
+  "message": "[ectd-export] Validate failed",
+  "context": {
+    "err": "The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.",
+    "correlationId": "0b5d6eed-5b3c-4a4c-93dc-2101fad6f32a",
+    "submissionId": 42
+  }
+}
+
+ × server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > instead of 500 "something went wrong" 37ms
+   → answered 500 {"error":"INTERNAL_ERROR","message":"Something went wrong while compiling the eCTD submission. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > leaves every other error a 500 5ms
+ × server/services/__tests__/conversion-capacity-http.test.ts > the global error handler answers a busy converter 503 with Retry-After > in production too, where a 5xx message is otherwise replaced by "Internal server error" 8ms
+   → expected undefined to be '30' // Object.is equality
+ × server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export) 17ms
+   → answered 500 {"error":"eCTD package generation failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"ff3e6327-15b0-4780-8d38-93d09f937833"}: expected 500 to be 503 // Object.is equality
+ × server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > GET /:submissionId/preview 7ms
+   → answered 500 {"error":"eCTD preview failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"6e73de73-9bc9-4e7e-990f-f4fc43c84525"}: expected 500 to be 503 // Object.is equality
+ × server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId/validate (generate, then validate) 6ms
+   → answered 500 {"error":"eCTD validation failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"0b5d6eed-5b3c-4a4c-93dc-2101fad6f32a"}: expected 500 to be 503 // Object.is equality
+stdout | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:35:12.063Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T01:35:12.065Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:35:12.066Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts
+{
+  "timestamp": "2026-10-22T01:35:12.370Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/conversion-capacity-submissions-http.test.ts > POST /api/submissions/sequences/:seqId/assemble with every conversion slot busy > answers 503 with Retry-After and says the converter is busy
+{
+  "timestamp": "2026-10-22T01:35:14.950Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "The document converter is busy. Every conversion slot stayed in use for the 120 seconds this request waited, so it was not converted. Try again in about 30 seconds.",
+    "correlationId": null,
+    "code": "CONVERTER_BUSY"
+  }
+}
+
+ × server/services/__tests__/conversion-capacity-submissions-http.test.ts > POST /api/submissions/sequences/:seqId/assemble with every conversion slot busy > answers 503 with Retry-After and says the converter is busy 54ms
+   → answered 500 {"error":{"code":"INTERNAL","message":"Request failed."}}: expected 500 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row
+AssertionError: expected "vi.fn()" to be called with arguments: [ 503 ]
+
+Number of calls: 0
+
+ ❯ server/services/__tests__/conversion-capacity-compile-http.test.ts:49:24
+     47|
+     48|     expect(assembleSequenceMock).toHaveBeenCalled();
+     49|     expect(res.status).toHaveBeenCalledWith(503);
+       |                        ^
+     50|     expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '30');
+     51|     const body = res.json.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > instead of 500 "something went wrong"
+AssertionError: answered 500 {"error":"INTERNAL_ERROR","message":"Something went wrong while compiling the eCTD submission. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ expectConverterBusy server/services/__tests__/conversion-capacity-http.test.ts:62:76
+     60| /** What every busy answer must be: 503, Retry-After, and a sentence t…
+     61| function expectConverterBusy(res: request.Response) {
+     62|   expect(res.status, `answered ${res.status} ${JSON.stringify(res.body…
+       |                                                                            ^
+     63|   expect(res.headers['retry-after']).toBe('30');
+     64|   expect(res.body.error).toBe('CONVERTER_BUSY');
+ ❯ server/services/__tests__/conversion-capacity-http.test.ts:76:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-http.test.ts > the global error handler answers a busy converter 503 with Retry-After > in production too, where a 5xx message is otherwise replaced by "Internal server error"
+AssertionError: expected undefined to be '30' // Object.is equality
+
+- Expected:
+"30"
+
++ Received:
+undefined
+
+ ❯ expectConverterBusy server/services/__tests__/conversion-capacity-http.test.ts:63:38
+     61| function expectConverterBusy(res: request.Response) {
+     62|   expect(res.status, `answered ${res.status} ${JSON.stringify(res.body…
+     63|   expect(res.headers['retry-after']).toBe('30');
+       |                                      ^
+     64|   expect(res.body.error).toBe('CONVERTER_BUSY');
+     65|   expect(res.body.retryAfterSeconds).toBe(30);
+ ❯ server/services/__tests__/conversion-capacity-http.test.ts:101:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export)
+AssertionError: answered 500 {"error":"eCTD package generation failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"ff3e6327-15b0-4780-8d38-93d09f937833"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ expectConverterBusy server/services/__tests__/conversion-capacity-http.test.ts:62:76
+     60| /** What every busy answer must be: 503, Retry-After, and a sentence t…
+     61| function expectConverterBusy(res: request.Response) {
+     62|   expect(res.status, `answered ${res.status} ${JSON.stringify(res.body…
+       |                                                                            ^
+     63|   expect(res.headers['retry-after']).toBe('30');
+     64|   expect(res.body.error).toBe('CONVERTER_BUSY');
+ ❯ server/services/__tests__/conversion-capacity-http.test.ts:133:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > GET /:submissionId/preview
+AssertionError: answered 500 {"error":"eCTD preview failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"6e73de73-9bc9-4e7e-990f-f4fc43c84525"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ expectConverterBusy server/services/__tests__/conversion-capacity-http.test.ts:62:76
+     60| /** What every busy answer must be: 503, Retry-After, and a sentence t…
+     61| function expectConverterBusy(res: request.Response) {
+     62|   expect(res.status, `answered ${res.status} ${JSON.stringify(res.body…
+       |                                                                            ^
+     63|   expect(res.headers['retry-after']).toBe('30');
+     64|   expect(res.body.error).toBe('CONVERTER_BUSY');
+ ❯ server/services/__tests__/conversion-capacity-http.test.ts:139:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId/validate (generate, then validate)
+AssertionError: answered 500 {"error":"eCTD validation failed","code":"INTERNAL_ERROR","message":"eCTD operation failed","correlationId":"0b5d6eed-5b3c-4a4c-93dc-2101fad6f32a"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ expectConverterBusy server/services/__tests__/conversion-capacity-http.test.ts:62:76
+     60| /** What every busy answer must be: 503, Retry-After, and a sentence t…
+     61| function expectConverterBusy(res: request.Response) {
+     62|   expect(res.status, `answered ${res.status} ${JSON.stringify(res.body…
+       |                                                                            ^
+     63|   expect(res.headers['retry-after']).toBe('30');
+     64|   expect(res.body.error).toBe('CONVERTER_BUSY');
+ ❯ server/services/__tests__/conversion-capacity-http.test.ts:145:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/__tests__/conversion-capacity-submissions-http.test.ts > POST /api/submissions/sequences/:seqId/assemble with every conversion slot busy > answers 503 with Retry-After and says the converter is busy
+AssertionError: answered 500 {"error":{"code":"INTERNAL","message":"Request failed."}}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/services/__tests__/conversion-capacity-submissions-http.test.ts:50:78
+     48|     const res = await request(app).post('/api/submissions/sequences/11…
+     49|     expect(asm.calls).toBe(1);
+     50|     expect(res.status, `answered ${res.status} ${JSON.stringify(res.bo…
+       |                                                                              ^
+     51|     expect(res.headers['retry-after']).toBe('30');
+     52|     expect(res.body.error).toBe('CONVERTER_BUSY');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  7 failed | 1 passed (8)
+   Start at  01:35:01
+   Duration  13.61s (transform 5.40s, setup 121ms, import 11.13s, tests 1.70s, environment 0ms)
+
+# exit code: 1

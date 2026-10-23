@@ -1,0 +1,25 @@
+# m-abort-carries-no-reason: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t reaped owner|admin
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned) 34ms
+   → expected DOMException{ stack: 'AbortError: Th…' } to be an instance of RunStopped
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > is accepted on a colleague's run, attributed to the admin with byRole and their reason, and stops it admin_cancelled 18ms
+   → expected null to be 'admin_cancelled' // Object.is equality
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's pause is refused: only the asker steers 6ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's resume is refused: only the asker steers 11ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > an admin's interject is refused: only the asker steers 5ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > a member who is not an admin cannot cancel a colleague's run 4ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > another organisation's admin gets NOT_FOUND 6ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > the asker's own cancel is still `cancelled`, with no byRole, no reason asked and no admin audit row 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > needs a reason: refused REASON_REQUIRED, the run goes on, and nothing is written 20ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > writes the chained row inside the cancel: who, whose run, which conversation, and why 12ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > an admin's cancel is one transaction with its chained audit row (DT3 review) > a refused audit row rolls the cancel back: AUDIT_REFUSED, the run still running, no abort, no control event 7ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > endRun says which writer ended the row (DT3 review, Part 11) > 'already_ended' after an admin's cancel, and readRunEnding returns the row's reason 13ms
+ ✓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > a run an admin's cancel ended while the person signed: not_waiting, and nothing is claimed 10ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed | 24 skipped (37)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 8: a reaped owner stops, and knows why > a row failed/orphaned by another writer aborts its owner with RunStopped(orphaned)
+AssertionError: expected DOMException{ stack: 'AbortError: Th…' } to be an instance of RunStopped
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 12: an admin's cancel > is accepted on a colleague's run, attributed to the admin with byRole and their reason, and stops it admin_cancelled
+AssertionError: expected null to be 'admin_cancelled' // Object.is equality

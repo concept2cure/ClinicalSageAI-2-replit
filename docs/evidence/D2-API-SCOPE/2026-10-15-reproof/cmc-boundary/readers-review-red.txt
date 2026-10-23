@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-22T05:23:03.552Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in 45ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal 16ms
+   → This program records no drug substance, so whether its Module 3 is composable here is not established. Record the drug substance in the CMC registers, then compile again.
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary 18ms
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine
+ ↓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in
+AssertionError: expected { …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "CMC_MODALITY_NOT_ESTABLISHED",
+  "message": "Whether this program's drug substance is a small molecule is not established — the record states neither a manufacturing route nor a biological origin. Module 3 is composed only for a small-molecule substance, and that is not a question this platform will answer by assumption. Record the manufacturing route on the drug substance, and the source organism or cell line where one is used, then compile again.",
+  "modality": "unknown",
+}
+
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:206:66
+    204|       [ORG, PROGRAM, JSON.stringify({ name: 'BX-702' }), JSON.stringif…
+    205|     );
+    206|     expect(await refusalOf(getModule3BuildStatus(ORG, PROGRAM))).toBeN…
+       |                                                                  ^
+    207|   });
+    208|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal
+CompositionOutOfScopeError: This program records no drug substance, so whether its Module 3 is composable here is not established. Record the drug substance in the CMC registers, then compile again.
+ ❯ admitted server/services/cmc/module3-compile.ts:248:11
+    246| function admitted(judged: Awaited<ReturnType<typeof judgeProgramCompos…
+    247|   if (judged.refusal || !judged.regional) {
+    248|     throw new CompositionOutOfScopeError(judged.refusal ?? application…
+       |           ^
+    249|   }
+    250|   return judged.regional;
+ ❯ server/services/cmc/module3-compile.ts:265:5
+ ❯ inReadOnlyTransaction server/services/cmc/module3-compile.ts:226:17
+ ❯ Module.getModule3BuildStatus server/services/module3-convergence-service.ts:307:20
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:211:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { refusal: { code: 'CMC_MODALITY_NOT_ESTABLISHED', modality: 'unknown', message: 'This program records no drug substance, so whether its Module 3 is composable here is not established. Record the drug substance in the CMC registers, then compile again.' } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 7 skipped (10)
+   Start at  05:23:01
+   Duration  5.62s (transform 1.84s, setup 93ms, import 2.72s, tests 2.54s, environment 0ms)
+

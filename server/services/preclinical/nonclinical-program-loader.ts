@@ -113,6 +113,15 @@ export interface LoadedNonclinicalProgram {
 /** Full ctd_nonclinical_studies row — the single source for the row shape. */
 export type NonclinicalStudyRow = typeof ctdNonclinicalStudies.$inferSelect;
 
+/** The CTD program named is not on record for the organization (another's, or none). */
+export class CtdProgramNotFoundError extends Error {
+  readonly code = 'CTD_PROGRAM_NOT_FOUND';
+  constructor(ctdProgramId: number) {
+    super(`CTD program ${ctdProgramId} is not on record for this organization, so its nonclinical studies were not read.`);
+    this.name = 'CtdProgramNotFoundError';
+  }
+}
+
 /**
  * The single tenant-scoped reader of ctd_nonclinical_studies. Both the
  * M2.4/M2.6 composers (via loadNonclinicalProgram) and the reviewer-simulator
@@ -120,7 +129,8 @@ export type NonclinicalStudyRow = typeof ctdNonclinicalStudies.$inferSelect;
  * tenant constraint live in exactly one place. ctd_nonclinical_studies has no
  * org column of its own, so ownership is enforced through its parent program —
  * independent of whether Postgres RLS enforcement is active. Returns undefined
- * when the flag is unset or either id is invalid.
+ * when the flag is unset or either id is invalid; throws CtdProgramNotFoundError
+ * for a program that is not the organization's.
  */
 export async function fetchNonclinicalRows(
   ctdProgramId: number,
@@ -129,6 +139,14 @@ export async function fetchNonclinicalRows(
   if (!PRECLINICAL_REVIEWER_ENABLED) return undefined;
   if (!Number.isInteger(ctdProgramId) || ctdProgramId <= 0) return undefined;
   if (!Number.isInteger(organizationId) || organizationId <= 0) return undefined;
+  // 2026-10-15: a program of another organization's, or none, read as [] — "no
+  // studies" — and the preclinical persona raised critical questions against it.
+  const [program] = await db
+    .select({ id: ctdPrograms.id })
+    .from(ctdPrograms)
+    .where(and(eq(ctdPrograms.id, ctdProgramId), eq(ctdPrograms.organizationId, organizationId)))
+    .limit(1);
+  if (!program) throw new CtdProgramNotFoundError(ctdProgramId);
   return (await db
     .select(getTableColumns(ctdNonclinicalStudies))
     .from(ctdNonclinicalStudies)
@@ -143,8 +161,9 @@ export async function fetchNonclinicalRows(
 
 /**
  * Load a program's nonclinical studies in every shape the composers and engines
- * consume. Tenant-scoped via {@link fetchNonclinicalRows}; an empty result also
- * covers "program not in this organization".
+ * consume. Tenant-scoped via {@link fetchNonclinicalRows}: a program not in this
+ * organization throws CtdProgramNotFoundError (until 2026-10-15 it read as an
+ * empty program).
  */
 export async function loadNonclinicalProgram(
   ctdProgramId: number,

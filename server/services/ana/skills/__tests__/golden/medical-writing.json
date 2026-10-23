@@ -1,0 +1,77 @@
+[
+  {
+    "question": "Please proofread this section and build the list of abbreviations.",
+    "expect": "medical-writing"
+  },
+  {
+    "question": "The numbers do not match between the results text and Table 14.2.1. How should I fix the writing?",
+    "expect": "medical-writing"
+  },
+  {
+    "question": "Tighten the writing in this paragraph without changing any figures.",
+    "expect": "medical-writing",
+    "context": { "surfaceId": "document-authoring" }
+  },
+  {
+    "question": "How should the benefits and risks conclusions in Module 2.5 be structured?",
+    "expect": "medical-writing.clinical-overview"
+  },
+  {
+    "question": "Our clinical overview mostly repeats the 2.7 summaries. How do we make it a critical analysis?",
+    "expect": "medical-writing.clinical-overview"
+  },
+  {
+    "question": "Is the efficacy discussion here too descriptive?",
+    "expect": "medical-writing.clinical-overview",
+    "context": { "documentType": "ICH_CLIN_OVERVIEW", "segments": ["pharma"] }
+  },
+  {
+    "question": "Which safety pool should the summary of clinical safety in 2.7.4 use?",
+    "expect": "medical-writing.clinical-summary"
+  },
+  {
+    "question": "Draft Module 2.7 from our completed CSRs.",
+    "expect": "medical-writing.clinical-summary",
+    "context": { "segments": ["biotech"], "submissionType": "US_BLA" }
+  },
+  {
+    "question": "Where should the study synopses for this section come from?",
+    "expect": "medical-writing.clinical-summary",
+    "context": { "documentType": "ICH_CLIN_SUMMARY" }
+  },
+  {
+    "question": "How should we word the questions for the agency in our pre-IND meeting briefing document?",
+    "expect": "medical-writing.briefing-documents"
+  },
+  {
+    "question": "Our EOP2 meeting package is due next month. How should each sponsor position be laid out?",
+    "expect": "medical-writing.briefing-documents",
+    "context": { "segments": ["pharma"], "submissionType": "US_TYPE_B_MEETING" }
+  },
+  {
+    "question": "Verify everything in this reference list and flag anything that has been retracted.",
+    "expect": "medical-writing.citations-and-references"
+  },
+  {
+    "question": "Format these EndNote exports in Vancouver style for the CER.",
+    "expect": "medical-writing.citations-and-references",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Which CONSORT items are missing from our manuscript?",
+    "expect": "medical-writing.reporting-guidelines"
+  },
+  {
+    "question": "We are writing up an observational cohort for a journal. Does STROBE apply, and do we need ICMJE disclosures?",
+    "expect": "medical-writing.reporting-guidelines"
+  },
+  {
+    "question": "Write a lay summary of the trial results for CTIS at a low reading level.",
+    "expect": "medical-writing.plain-language"
+  },
+  {
+    "question": "Is this plain-language summary at the right grade level for patients?",
+    "expect": "medical-writing.plain-language",
+    "context": { "segments": ["biotech"] }
+  }
+]

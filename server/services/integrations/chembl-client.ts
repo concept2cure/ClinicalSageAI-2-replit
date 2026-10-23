@@ -104,6 +104,13 @@ export function maxPhaseLabel(phase: number | null | undefined): string {
       return 'Phase 2';
     case 1:
       return 'Phase 1';
+    // ChEMBL's max_phase codes 0.5 as Early Phase 1 and -1 as an unknown
+    // clinical phase. 2026-10-15: both fell to the default and printed as
+    // "Phase 0.5" and "Phase -1".
+    case 0.5:
+      return 'Early Phase 1';
+    case -1:
+      return 'Clinical phase unknown (ChEMBL -1)';
     case 0:
       return 'Preclinical / not in clinical development';
     // 2026-10-15: null/undefined were labelled 'Preclinical / not in clinical
@@ -112,7 +119,7 @@ export function maxPhaseLabel(phase: number | null | undefined): string {
     case undefined:
       return 'Development phase not recorded in ChEMBL';
     default:
-      return `Phase ${phase}`;
+      return `Unrecognized ChEMBL max_phase value (${phase})`;
   }
 }
 

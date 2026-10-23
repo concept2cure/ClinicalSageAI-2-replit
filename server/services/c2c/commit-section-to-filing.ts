@@ -67,6 +67,8 @@ import type { PoolClient } from 'pg';
 import { filingSectionKey } from '../../../shared/regulatory/filing-section-key.js';
 import { filingSectionText } from './filing-section-target.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
+import { DocumentWriteReservationError } from '../authoring/document-lock.js';
+import { readFilingLock } from './filing-lock.js';
 
 /**
  * What the version ledger records when the save gave no reason.
@@ -187,9 +189,11 @@ async function marketScopeRefusal(
 /**
  * Write `content` through to the governed section, if there is one.
  *
- * Throws only on a real database fault. Because the caller runs this inside the
- * transaction that also writes authoring_sections, a throw aborts BOTH — which
- * is the point: the filing and the working copy move together or neither does.
+ * Throws on a real database fault, and on a locked or submitted filing
+ * (`DocumentWriteReservationError`, 403 FILING_LOCKED / FILING_SUBMITTED).
+ * Because the caller runs this inside the transaction that also writes
+ * authoring_sections, a throw aborts BOTH — which is the point: the filing and
+ * the working copy move together or neither does.
  */
 export async function commitSectionToFiling(
   input: CommitSectionInput,
@@ -248,6 +252,15 @@ export async function commitSectionToFiling(
       committed: false,
       reason: 'This document is not bound to a filing, so there is no governed section to update.',
     };
+  }
+  /* A locked or submitted filing is not changed in place, by this writer any
+     more than by the filing PATCH (filing-lock.ts). The save is refused whole,
+     as the editor's own seal refuses one (DOCUMENT_FROZEN), rather than filed
+     around: text saved to a copy whose filing is fixed could never be filed. */
+  const lock = await readFilingLock(client, documentId, tenantId);
+  if (lock) {
+    throw new DocumentWriteReservationError(403, lock.state === 'submitted' ? 'FILING_SUBMITTED' : 'FILING_LOCKED',
+      `The filing this document is written for ${lock.words}, so its sections are not changed in place. Nothing was saved.`);
   }
   if (typeof code !== 'string' || code.trim() === '') {
     // findSectionForNode refuses a null code for the same reason.

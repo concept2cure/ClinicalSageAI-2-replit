@@ -116,6 +116,40 @@ export interface ListedRun {
   runPolicy: AnaRunPolicy | null;
   startedAt: string | null;
   releasedAt: string | null;
+  /** The conversation it runs in; its title only on the person's own list (?mine=live). */
+  threadId: string | null;
+  threadTitle: string | null;
+  /** When it stops if nobody opens it (server UTC), once its page closed (AnA detach DT3, §2.6). */
+  unattendedStopsAt: string | null;
+  /** Its asker is watching it now: the page that started it, or a visible poll within 15 s (§2.2). */
+  watched: boolean;
+}
+
+/**
+ * Read a GET /runs listing — a conversation's runs (?thread_id=) or the
+ * person's live runs in any conversation (?mine=live, the conversation list's
+ * "Working" marker and RUN_LIMIT's links; AnA detach DT3, §5.1). One reader
+ * for both. Null when the body is not a listing: an error is never an empty list.
+ */
+export function readListedRuns(body: unknown): ListedRun[] | null {
+  const rows = (body as { runs?: unknown } | null)?.runs;
+  if (!Array.isArray(rows)) return null;
+  return rows
+    .map((raw) => (raw ?? {}) as Record<string, any>)
+    .filter((r) => typeof r.runId === 'string' && typeof r.status === 'string')
+    .map((r) => ({
+      runId: r.runId as string,
+      userMessageId: intOrNull(r.userMessageId),
+      status: r.status as string,
+      stoppedReason: strOrNull(r.stoppedReason),
+      runPolicy: isAnaRunPolicy(r.runPolicy) ? r.runPolicy : null,
+      startedAt: strOrNull(r.startedAt),
+      releasedAt: strOrNull(r.releasedAt),
+      threadId: strOrNull(r.threadId),
+      threadTitle: strOrNull(r.threadTitle),
+      unattendedStopsAt: strOrNull(r.unattendedStopsAt),
+      watched: r.watched !== false,
+    }));
 }
 
 /** One read of GET /runs/:runId/events, as the client keeps it. Allow-listed; nothing else is read. */
@@ -147,6 +181,11 @@ export interface RunPoll {
   approval: Record<string, unknown> | null;
   /** 'all' for the asker; 'cancel' for an organisation admin. */
   scope: 'all' | 'cancel';
+  /**
+   * The person whose turn it is, by name, for an administrator watching a
+   * colleague's turn (their Stop names them, DT3 review); null for the asker.
+   */
+  askerName: string | null;
 }
 
 export type RunPollResult =
@@ -155,6 +194,8 @@ export type RunPollResult =
   | { ok: false; kind: 'forbidden'; message: string }
   /** 404: not this organisation's run, or none. */
   | { ok: false; kind: 'gone' }
+  /** 401: the sign-in ended (an idle session); no retry can succeed. In the server's words when it gave some. */
+  | { ok: false; kind: 'signed_out'; message: string | null }
   /** The read did not reach the server, or the server failed it. The last known state stays. */
   | { ok: false; kind: 'unreachable' };
 
@@ -195,6 +236,7 @@ export function readRunPoll(raw: unknown): RunPoll | null {
     sealed,
     approval: b.approval && typeof b.approval === 'object' ? (b.approval as Record<string, unknown>) : null,
     scope: b.controlScope === 'cancel' ? 'cancel' : 'all',
+    askerName: typeof b.askerName === 'string' && b.askerName.trim() ? b.askerName.trim().slice(0, 120) : null,
   };
 }
 
@@ -226,6 +268,8 @@ export async function pollRun(
       return { ok: false, kind: 'forbidden', message };
     }
     if (res.status === 404) return { ok: false, kind: 'gone' };
+    // Not an outage: the session ended, and retrying cannot read anything (DT3 review).
+    if (res.status === 401) return { ok: false, kind: 'signed_out', message: serverMessage(body) };
     const poll = res.ok ? readRunPoll(body) : null;
     return poll ? { ok: true, poll } : { ok: false, kind: 'unreachable' };
   } catch {
@@ -242,20 +286,8 @@ export async function listThreadRuns(threadId: string, signal?: AbortSignal): Pr
       signal,
     });
     if (!res.ok) return null;
-    const body = await res.json().catch(() => null);
-    const rows: unknown[] = Array.isArray(body?.runs) ? body.runs : [];
-    return rows
-      .map((raw) => (raw ?? {}) as Record<string, any>)
-      .filter((r) => typeof r.runId === 'string' && typeof r.status === 'string')
-      .map((r) => ({
-        runId: r.runId as string,
-        userMessageId: intOrNull(r.userMessageId),
-        status: r.status as string,
-        stoppedReason: strOrNull(r.stoppedReason),
-        runPolicy: isAnaRunPolicy(r.runPolicy) ? r.runPolicy : null,
-        startedAt: strOrNull(r.startedAt),
-        releasedAt: strOrNull(r.releasedAt),
-      }));
+    // A body that is not a listing is a read that failed, never "no runs" (DT3 review).
+    return readListedRuns(await res.json().catch(() => null));
   } catch {
     return null;
   }

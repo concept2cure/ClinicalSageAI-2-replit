@@ -214,7 +214,7 @@ describe('post_market.document.create', () => {
       deviceClass: 'III',
       regulation: 'MDR',
       reportingPeriodStart: '2025-01-01',
-      reportingPeriodEnd: 'not-a-date',
+      reportingPeriodEnd: '2025-12-31',
     });
     expect(r.success).toBe(true);
     expect(svc.createDocument).not.toHaveBeenCalled();
@@ -227,9 +227,12 @@ describe('post_market.document.create', () => {
         deviceClass: 'III',
         regulation: 'MDR',
         createdBy: `ana:${CTX.userId}`,
-        reportingPeriodStart: new Date('2025-01-01'),
-        // An unparseable date is left undeclared (stored null, flagged by the gate), never "now".
-        reportingPeriodEnd: undefined,
+        // Passed as declared; the engine validates it. Until 2026-10-15 this
+        // pinned an unparseable end date becoming undefined ("not declared") —
+        // the defect; the refusal is pinned in
+        // mdx-post-market-create-refuses-an-undeclarable-period.test.ts.
+        reportingPeriodStart: '2025-01-01',
+        reportingPeriodEnd: '2025-12-31',
       }),
     );
     expect((r.data as any).validation.passesGate).toBe(false);

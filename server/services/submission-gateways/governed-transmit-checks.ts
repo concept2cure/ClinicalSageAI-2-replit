@@ -175,28 +175,98 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
       packageId: input.packageId ?? null,
       bundleSha256: bundle.sha256,
       filing: !input.clientBundle && bundle.sequence ? { sequence: bundle.sequence, environment: input.environment } : null,
+      environment: input.environment,
     });
   } catch (err) {
     throw new GovernedTransmitInternalError('transmit-active-lock-check', err);
   }
   if (!active) return;
-  if (active.sequence) {
-    throw new GovernedTransmitRefusal(
-      'ACTIVE_TRANSMITTAL',
-      `Sequence ${active.sequence} of this package already has an active ${input.environment} transmittal ` +
-        `(id=${active.id}, status=${active.status}), sent as a different bundle, and the agency may already hold it. ` +
-        `Confirm with the agency what it received. If a resend is needed, send it as a new sequence from Submission Center.`,
-      409,
-      { transmittalId: active.id, status: active.status, sequence: active.sequence, environment: input.environment },
-    );
-  }
   throw new GovernedTransmitRefusal(
     'ACTIVE_TRANSMITTAL',
-    `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-      `Confirm with the agency what it received. If a resend is needed, send it as a new sequence from Submission Center.`,
+    activeTransmittalMessage(active, input.environment),
     409,
-    { transmittalId: active.id, status: active.status },
+    {
+      transmittalId: active.id,
+      status: active.status,
+      ...(active.sequence ? { sequence: active.sequence, environment: input.environment } : {}),
+      ...(active.holderEnvironment ? { holderEnvironment: active.holderEnvironment } : {}),
+    },
   );
+}
+
+type ActiveHolder = NonNullable<Awaited<ReturnType<typeof findActiveTransmittal>>>;
+
+/** The agency environment a send went to, as an operator reads it. */
+const ENVIRONMENT_WORDS: Record<string, string> = {
+  staging: "the agency's test environment",
+  production: "the agency's production environment",
+};
+
+/** An active transmittal's status in an operator's words, never the stored token. */
+const ACTIVE_STATUS_WORDS: Record<string, string> = {
+  pending: 'it is still being sent',
+  in_transit: 'its receipt is not yet confirmed',
+};
+
+/** Where a resend goes, now that a transmittal cannot be rolled back (6ef0ef121). */
+const RESEND_REMEDY = 'If a resend is needed, send it as a new sequence from Submission Center.';
+
+/**
+ * Why a transmit is held by an active transmittal, and what to do — said so the
+ * operator can read it as sent: no route path (a client hides text that looks
+ * internal and substitutes its own), no status or environment token. Whatever
+ * the variant, the agency may already hold the bundle, so receipt is confirmed
+ * with the agency before anything is sent again, and a resend is a new
+ * sequence from Submission Center. 2026-10-08 (W5/D7, sweep HS-6): the sentence
+ * named the rollback route, so the surface replaced it with "Roll it back
+ * first" and the caveat was lost. Since 2026-10-17 (6ef0ef121) there is no
+ * rollback route to offer: it marked a transmittal the agency still held as
+ * rolled back, and taking a filing back is a withdrawal sequence.
+ *
+ * The bytes lock has no environment in its key, so the holder may be a send to
+ * the OTHER environment; that refusal says where it went instead (sweep HS-6
+ * review: a received test send was reported to a first production send as "with
+ * the agency").
+ */
+function activeTransmittalMessage(active: ActiveHolder, environment: GovernedTransmitInput['environment']): string {
+  const ref = `transmittal #${active.id}`;
+  const elsewhere = active.holderEnvironment ? ENVIRONMENT_WORDS[active.holderEnvironment] : undefined;
+  if (elsewhere) return otherEnvironmentMessage(ref, active, elsewhere);
+  const it = active.sequence ? `sequence ${active.sequence}` : 'it';
+  const sentAs = active.sequence ? `, sent to ${ENVIRONMENT_WORDS[environment] ?? environment} as a different bundle` : '';
+  if (active.status === 'received') {
+    const held = active.sequence ? `sequence ${active.sequence} of this package` : 'this bundle';
+    return (
+      `The agency's gateway acknowledged receipt of ${ref}${sentAs}, so ${held} is with the agency. ` +
+      `Confirm with the agency what it received. ${RESEND_REMEDY}`
+    );
+  }
+  const where = active.sequence ? `Sequence ${active.sequence} of this package is already in ${ref}${sentAs}` : `This bundle is already in ${ref}`;
+  const state = ACTIVE_STATUS_WORDS[active.status] ?? `its status is ${active.status.replace(/_/g, ' ')}`;
+  const remedy = active.status === 'pending'
+    ? 'That send has not finished; its row in the transmittal log shows the outcome once it does.'
+    : RESEND_REMEDY;
+  return `${where}, and ${state}. The agency may already hold it. Confirm receipt with the agency before sending ${it} again. ${remedy}`;
+}
+
+/** A send to the other environment's status, in an operator's words. */
+const OTHER_ENVIRONMENT_STATE: Record<string, string> = {
+  pending: '; that send has not finished',
+  received: ', whose gateway acknowledged receipt',
+};
+
+/** The bundle is held by a send to the other environment: where it went, and what to do. */
+function otherEnvironmentMessage(ref: string, active: ActiveHolder, elsewhere: string): string {
+  const state = OTHER_ENVIRONMENT_STATE[active.status] ?? '; its receipt is not yet confirmed';
+  const toProduction = active.holderEnvironment !== 'production';
+  const scope = toProduction
+    ? 'A send to the test environment does not file it in production.'
+    : 'A production send does not deliver it to the test environment.';
+  // A first send to this environment, not a resend: these bytes are held while
+  // that transmittal is active, and there is no rollback to free them (6ef0ef121).
+  const target = toProduction ? 'production' : 'the test environment';
+  return `This bundle is held by ${ref}, sent to ${elsewhere}${state}. ${scope} ` +
+    `These bytes cannot be sent to ${target} while that transmittal is active; to file there, send it as a new sequence from Submission Center.`;
 }
 
 /**

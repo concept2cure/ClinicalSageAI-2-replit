@@ -1,0 +1,4 @@
+ × server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 44 passed (45)
+      Tests  1 failed | 449 passed (450)

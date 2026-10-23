@@ -25,16 +25,28 @@
  * Fixing the read made the readiness score live for the first time, and with
  * it the dimensions the engine filled in when no twin assessment existed:
  * quality 65 ± profile counts, consistency the constant 70, compliance
- * 80 − 5 per risk, trend 'stable' from no data. The last describe block pins
- * that an unmeasured dimension is null, the overall score covers only what
- * was measured, and the trend is unknown without recorded scores.
+ * 80 − 5 per risk, trend 'stable' from no data.
+ *
+ * What the three describe blocks pin now:
+ *   1. computeReadinessScore lists the linked program's overdue milestone as a
+ *      gap, and milestones feed the gap list only: the overall score and the
+ *      dimensions are the same with or without them. Another organization, or
+ *      a soft-deleted program, reads none.
+ *   2. generateRecommendations turns overdue and due-soon milestones into
+ *      recommendations with no "Generator failed" warning, under the same
+ *      organization and soft-delete scoping.
+ *   3. A dimension nobody measured is null and the overall score covers only
+ *      what was measured (scoreBasis says which); the trend is unknown under
+ *      two recorded scores; a twin assessment supplies only the dimensions and
+ *      predictions it recorded, and only to its own organization.
  *
  * Real DDL on PGlite: the program tables from their creator migration, the
  * projects and documents tables as the base migration creates them, the
- * anchor column and its same-organization key from their migrations, and the
+ * anchor column and its same-organization key from their migrations, the
  * push-surface intelligence profile table from its drizzle definition, and
- * the twin assessment tables from the runtime DDL in
- * submission-readiness-twin-service.ts (no migration creates them).
+ * the twin assessment and trend tables from the runtime DDL in
+ * submission-readiness-twin-service.ts (db/migrations/072_gcc_innovation_platform_core.sql
+ * also creates the assessment table; the service's DDL is the one it runs).
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';

@@ -96,7 +96,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Let\'s identify the study. Please provide the protocol number, title, sponsor details, and regulatory identifiers.',
         guidance:
-          'Per ICH E3 Section 1, the CSR must clearly identify the study by protocol number, full title, IND/IDE number (if applicable), sponsor name, development phase, and therapeutic area. The EudraCT number is required for studies conducted in the EU per Regulation (EU) No 536/2014.',
+          'Per ICH E3 Section 1, the CSR must clearly identify the study by protocol number, full title, IND/IDE number (if applicable), sponsor name, development phase, and therapeutic area. The EU CT number assigned in CTIS is required for studies conducted in the EU under Regulation (EU) No 536/2014; a EudraCT number applies to legacy studies authorised under Directive 2001/20/EC.',
         fields: [
           {
             id: 'protocol_number',
@@ -172,6 +172,13 @@ export function createCsrReportFlow(): FlowDefinition {
               { value: 'ophthalmology', label: 'Ophthalmology' },
             ],
             allowOther: {},
+          },
+          {
+            id: 'gcp_compliance_statement',
+            label: 'Does the CSR State That the Study Was Conducted in Compliance With GCP?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'ICH E3 expects the title page to state whether the study was performed in compliance with Good Clinical Practice, and its ethics section to confirm IRB/IEC review and informed consent. ICH E6(R3) is the current GCP guideline; 21 CFR Parts 50 and 56 apply to US studies, and 21 CFR 312.120 to foreign studies not conducted under an IND.',
           },
         ],
         defaultNext: 'study_dates',
@@ -327,7 +334,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide details about the investigational product and comparator(s).',
         guidance:
-          'ICH E3 Section 9.4 requires documentation of the investigational product, including name, dose(s), route of administration, formulation, and comparator details. Per ICH E3 Section 9.4.3, the comparator should be described in sufficient detail to support the benefit-risk assessment.',
+          'ICH E3 Section 9.4 requires documentation of the investigational product, including name, dose(s), route of administration, formulation, and comparator details. Per ICH E3 Section 9.4.2 (Identity of Investigational Product(s)), the comparator should be described in sufficient detail to support the benefit-risk assessment.',
         fields: [
           {
             id: 'investigational_product_name',
@@ -404,7 +411,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Describe any protocol amendments made during the study.',
         guidance:
-          'Per ICH E3 Section 10.1, the CSR must list all protocol amendments, classifying each as major or minor, with the date and rationale. Major amendments (those changing endpoints, eligibility, sample size, or analysis methods) require a detailed description of the impact on data interpretation. FDA Guidance "Major/Minor Amendments to IND" (2001) further advises that any amendment affecting the safety or scientific validity of the study should be explicitly justified.',
+          'Per ICH E3 Section 9.8 (Changes in the Conduct of the Study or Planned Analyses), the CSR must describe all protocol amendments, with the date and rationale for each and their possible impact on interpretation of the results; the amendments themselves are provided in Appendix 16.1.1. Amendments that change endpoints, eligibility, sample size, or analysis methods warrant a detailed description of the impact on data interpretation. FDA regulations at 21 CFR 312.30 (Protocol amendments) govern how amendments to an IND protocol are submitted, and any amendment affecting the safety or scientific validity of the study should be explicitly justified.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -433,7 +440,7 @@ export function createCsrReportFlow(): FlowDefinition {
             label: 'Summary of Major Amendments',
             type: 'textarea',
             placeholder: 'For each major amendment, provide: date, description of change, rationale, and whether subjects were affected before or after the change.',
-            helpText: 'Per ICH E3 Section 10.1, describe changes to endpoints, eligibility, dosing, or analysis methods.',
+            helpText: 'Per ICH E3 Section 9.8, describe changes to endpoints, eligibility, dosing, or analysis methods.',
             visibleWhen: {
               field: 'major_amendments_count',
               operator: 'gt',
@@ -538,7 +545,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide the CONSORT-style patient disposition flow for this study.',
         guidance:
-          'Per ICH E3 Section 10.1 and the CONSORT 2010 Statement, the CSR should include a flow diagram showing the number of subjects screened, screen failures (with reasons), randomized to each arm, treated, completing the study, and discontinuing (with reasons). FDA Guidance "Oversight of Clinical Investigations" (2013) emphasizes the importance of documenting the screen failure rate to assess the generalizability of the trial population.',
+          'Per ICH E3 Section 10.1 and the CONSORT 2010 Statement, the CSR should include a flow diagram showing the number of subjects screened, screen failures (with reasons), randomized to each arm, treated, completing the study, and discontinuing (with reasons). Documenting the number screened, the screen failure rate and the reasons for screen failure lets reviewers judge how restrictive the eligibility criteria were and how generalizable the trial population is (see also FDA Guidance "Enhancing the Diversity of Clinical Trial Populations — Eligibility Criteria, Enrollment Practices, and Trial Designs" (2020)).',
         provideExpertFeedback: true,
         fields: [
           {
@@ -747,7 +754,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide a summary of prior and concomitant medications.',
         guidance:
-          'Per ICH E3 Section 11.3, the CSR must document prior therapies and concomitant medications used during the study, as they may affect both efficacy and safety interpretation. Medications should be coded using the WHO Drug Dictionary (WHO-DD) and summarized by ATC class. Per ICH E3 Section 11.3.2, prohibited medications that were used constitute protocol deviations and should be cross-referenced with the protocol deviations section.',
+          'Per ICH E3 Section 9.4.7 (Prior and Concomitant Therapy) and Section 11.2 (Demographic and Other Baseline Characteristics), the CSR must document prior therapies and concomitant medications used during the study, as they may affect both efficacy and safety interpretation. Medications should be coded using the WHO Drug Dictionary (WHO-DD) and summarized by ATC class. Prohibited medications (as defined in the protocol, see ICH E3 Section 9.4.7) that were used constitute protocol deviations and should be cross-referenced with the protocol deviations section (ICH E3 Section 10.2).',
         fields: [
           {
             id: 'who_drug_dictionary_version',
@@ -768,7 +775,7 @@ export function createCsrReportFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'List concomitant medications used by ≥10% of subjects in any treatment group, by ATC class.',
             required: true,
-            helpText: 'Per ICH E3 Section 11.3, present by treatment group and identify any differences.',
+            helpText: 'Per ICH E3 Section 11.2, present by treatment group and identify any differences.',
           },
           {
             id: 'prohibited_meds_used',
@@ -801,7 +808,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the primary efficacy results?',
         guidance:
-          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.5, the primary analysis should be fully pre-specified in the statistical analysis plan (SAP).',
+          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.1 (Prespecification of the Analysis), the primary analysis should be fully pre-specified in the protocol and statistical analysis plan (SAP).',
         provideExpertFeedback: true,
         fields: [
           {
@@ -848,7 +855,7 @@ export function createCsrReportFlow(): FlowDefinition {
             label: 'Missing Data Rate for Primary Endpoint (%)',
             type: 'number',
             validation: { min: 0, max: 100 },
-            helpText: 'Per ICH E9(R1) and FDA Guidance "Statistical Principles for Clinical Trials" (2020), missing data > 20% may compromise the validity of the primary analysis.',
+            helpText: 'Per ICH E9 (FDA Guidance "E9 Statistical Principles for Clinical Trials", 1998) and the ICH E9(R1) addendum (FDA final guidance, 2021), missing data are a potential source of bias that may compromise the validity of the primary analysis; neither sets a numeric threshold, so the extent of missing data and the handling strategy should be prespecified and supported by sensitivity analyses.',
           },
         ],
         branches: [
@@ -890,8 +897,8 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'critical',
             title: 'High Missing Data Rate for Primary Endpoint',
             message:
-              'Missing data exceeds 20% for the primary endpoint. Per FDA Guidance "Preventing Missing Data in Clinical Trials" (2010) and ICH E9(R1), high rates of missing data can introduce bias and undermine the validity of the primary analysis. A tipping-point analysis or pattern-mixture model sensitivity analysis is recommended.',
-            reference: 'FDA Guidance: Preventing Missing Data in Clinical Trials (2010); ICH E9(R1) Addendum',
+              'Missing data exceeds 20% for the primary endpoint. Per the National Research Council report "The Prevention and Treatment of Missing Data in Clinical Trials" (2010) and ICH E9(R1), high rates of missing data can introduce bias and undermine the validity of the primary analysis. A tipping-point analysis or pattern-mixture model sensitivity analysis is recommended.',
+            reference: 'National Research Council: The Prevention and Treatment of Missing Data in Clinical Trials (2010); ICH E9(R1) Addendum',
           },
         ],
       },
@@ -1154,7 +1161,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide an overview of the safety results.',
         guidance:
-          'ICH E3 Section 12 requires a comprehensive safety summary including the total number of AEs, drug-related AEs, discontinuations due to AEs, dose modifications due to AEs, and the most common adverse events (typically ≥5% in any treatment group). Per ICH E3 Section 12.1, present AE data by System Organ Class (SOC) and Preferred Term (PT) using MedDRA coding. This forms the basis of the benefit-risk assessment.',
+          'ICH E3 Section 12 requires a comprehensive safety summary including the total number of AEs, drug-related AEs, discontinuations due to AEs, dose modifications due to AEs, and the most common adverse events (typically ≥5% in any treatment group). Per ICH E3 Section 12.2 (12.2.2 Display of Adverse Events; 12.2.3 Analysis of Adverse Events), present AE data by System Organ Class (SOC) and Preferred Term (PT) using MedDRA coding. This forms the basis of the benefit-risk assessment.',
         fields: [
           {
             id: 'meddra_version',
@@ -1207,7 +1214,7 @@ export function createCsrReportFlow(): FlowDefinition {
             id: 'most_common_aes',
             label: 'Most Common AEs (≥5% in any group)',
             type: 'textarea',
-            helpText: 'List by PT with incidence in each treatment group. Per ICH E3 Section 12.1, present by SOC and PT.',
+            helpText: 'List by PT with incidence in each treatment group. Per ICH E3 Section 12.2.2, present by SOC and PT.',
             required: true,
             validation: { minLength: 30 },
           },
@@ -1224,8 +1231,8 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Elevated Discontinuation Rate Due to AEs',
             message:
-              'A high rate of discontinuation due to adverse events may affect the tolerability profile and benefit-risk balance. Per ICH E3 Section 12.1, the CSR should analyze AEs leading to discontinuation by PT and SOC, and compare rates between treatment groups. The FDA labeling team will consider this rate when drafting the Adverse Reactions section (USPI Section 6).',
-            reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.1',
+              'A high rate of discontinuation due to adverse events may affect the tolerability profile and benefit-risk balance. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), the CSR should analyze AEs leading to discontinuation by PT and SOC, and compare rates between treatment groups. The FDA labeling team will consider this rate when drafting the Adverse Reactions section (USPI Section 6).',
+            reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
           {
             id: 'high_grade3_ae_rate',
@@ -1237,8 +1244,8 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'warning',
             title: 'High Rate of Severe (Grade ≥3) Adverse Events',
             message:
-              'The incidence of Grade 3 or higher adverse events is notable. Per ICH E3 Section 12.1, severe AEs should be analyzed by SOC and PT with comparison to the control arm. Consider whether a dose modification strategy, Warnings and Precautions language, or monitoring recommendations are warranted for the product label.',
-            reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.1',
+              'The incidence of Grade 3 or higher adverse events is notable. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), severe AEs should be analyzed by SOC and PT with comparison to the control arm. Consider whether a dose modification strategy, Warnings and Precautions language, or monitoring recommendations are warranted for the product label.',
+            reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
         ],
       },
@@ -1326,7 +1333,7 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Drug-Related Deaths Reported',
             message:
-              'Drug-related deaths require immediate regulatory notification per 21 CFR 312.32 (IND Safety Reports) within 7 calendar days of sponsor awareness. Ensure these have been reported to all regulatory authorities and IRBs/ECs. The benefit-risk assessment must explicitly address these events.',
+              'Drug-related deaths that are unexpected (not consistent with the Investigator\'s Brochure) are IND safety reports under 21 CFR 312.32: FDA must be notified within 7 calendar days of sponsor awareness, and the full IND safety report must be submitted to FDA and all participating investigators within 15 calendar days. Expected deaths are not 7-day reports. Ensure applicable expedited reports have been submitted to FDA, participating investigators and other regulatory authorities as required, and that investigators have informed their IRBs/ECs. The benefit-risk assessment must explicitly address these events.',
             reference: '21 CFR 312.32; ICH E2A: Clinical Safety Data Management',
           },
         ],
@@ -1414,7 +1421,7 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Hy\'s Law Cases Detected',
             message:
-              'One or more Hy\'s Law cases were identified. Per FDA Guidance "Drug-Induced Liver Injury: Premarketing Clinical Evaluation" (2009), Hy\'s Law cases predict a drug-induced liver injury (DILI) rate of approximately 1 in 10,000 treated patients and may preclude approval absent a compelling benefit. Each case requires a detailed narrative, eDISH plot analysis, and assessment of alternative etiologies. This finding should be prominently discussed in the benefit-risk assessment and regulatory strategy.',
+              'One or more Hy\'s Law cases were identified. Per FDA Guidance "Drug-Induced Liver Injury: Premarketing Clinical Evaluation" (2009), Hy\'s Law cases are a strong signal of a potential to cause severe drug-induced liver injury (DILI): the guidance estimates the rate of severe DILI (death or transplant) at roughly one-tenth the Hy\'s Law case rate, and while a single case is worrisome, two are considered highly predictive of severe DILI potential in a larger population. Such findings may preclude approval absent a compelling benefit. Each case requires a detailed narrative, eDISH plot analysis, and assessment of alternative etiologies. This finding should be prominently discussed in the benefit-risk assessment and regulatory strategy.',
             reference: 'FDA Guidance: Drug-Induced Liver Injury: Premarketing Clinical Evaluation (2009)',
           },
         ],
@@ -1426,7 +1433,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Describe Adverse Events of Special Interest (AESIs) identified in this study.',
         guidance:
-          'Per ICH E3 Section 12.2.2, AESIs are pre-defined events warranting focused monitoring based on the drug\'s mechanism of action, pharmacological class effects, or pre-clinical/early clinical signals. Per FDA Guidance "Safety Reporting Requirements for INDs and BA/BE Studies" (2012), AESIs should be defined in the protocol and monitored via Standardized MedDRA Queries (SMQs) or Customized MedDRA Queries (CMQs). Time-to-onset and dose-response analyses are critical for assessing causal relationship.',
+          'AESIs are pre-defined events warranting focused monitoring based on the drug\'s mechanism of action, pharmacological class effects, or pre-clinical/early clinical signals; the AESI concept comes from CIOMS VI and the study protocol rather than ICH E3, which addresses comparable events as other significant adverse events in Section 12.3 and displays adverse events in Section 12.2.2. In line with CIOMS VI and common industry practice (not a requirement of FDA\'s 2012 guidance "Safety Reporting Requirements for INDs and BA/BE Studies", which addresses expedited reporting under 21 CFR 312.32), AESIs should be defined in the protocol and monitored via Standardized MedDRA Queries (SMQs) or Customized MedDRA Queries (CMQs). Time-to-onset and dose-response analyses are critical for assessing causal relationship.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1479,7 +1486,7 @@ export function createCsrReportFlow(): FlowDefinition {
             label: 'Time-to-Onset Analysis',
             type: 'textarea',
             placeholder: 'Describe the median and range of time to onset for key AESIs and whether a temporal pattern was observed.',
-            helpText: 'Time-to-onset analysis helps distinguish drug-related events from background rates. Per ICH E1 Section 2.4, exposure-response analysis may be informative.',
+            helpText: 'Time-to-onset analysis helps distinguish drug-related events from background rates. Per ICH E4 and the FDA guidance on Exposure-Response Relationships (2003), exposure-response analysis may be informative.',
           },
           {
             id: 'dose_response_for_aes',
@@ -1498,7 +1505,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide details on the safety narratives included in the CSR.',
         guidance:
-          'Per ICH E3 Section 12.3.2, individual patient narratives are required for: (1) ALL deaths, regardless of causality; (2) ALL SAEs assessed as drug-related by the investigator; (3) ALL AEs leading to discontinuation of study drug. Per ICH E3 Section 14.3, narratives should include subject identifier, demographics, relevant medical history, study drug exposure, event description with timeline, concomitant medications, interventions, and outcome. For blinded studies, include the treatment assignment in the narrative.',
+          'Per ICH E3 Section 12.3.2, brief individual patient narratives are expected for: (1) ALL deaths, regardless of causality; (2) ALL other serious adverse events, regardless of causality; (3) those other significant adverse events (e.g., AEs leading to discontinuation of study drug) judged to be of special interest because of clinical importance. Per ICH E3 Section 14.3, narratives should include subject identifier, demographics, relevant medical history, study drug exposure, event description with timeline, concomitant medications, interventions, and outcome. For blinded studies, include the treatment assignment in the narrative.',
         fields: [
           {
             id: 'total_narratives_written',
@@ -1557,7 +1564,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the analysis population sizes?',
         guidance:
-          'ICH E3 Section 11.1 requires documentation of all analysis populations. The ITT (all randomized), mITT (randomized and treated/assessed), per-protocol (PP), and safety populations should be clearly defined with the number of subjects in each and the reasons for exclusion from each set. Per ICH E9 Section 5.2, the ITT population should be the primary analysis population for superiority trials, while the PP population is preferred for non-inferiority and equivalence trials.',
+          'ICH E3 Section 11.1 requires documentation of all analysis populations. The ITT (all randomized), mITT (randomized and treated/assessed), per-protocol (PP), and safety populations should be clearly defined with the number of subjects in each and the reasons for exclusion from each set. Per ICH E9 Section 5.2, the ITT population should be the primary analysis population for superiority trials, while in non-inferiority and equivalence trials the full analysis set is generally not conservative, so both the ITT and PP analyses should be presented and the conclusions should be consistent across them.',
         fields: [
           {
             id: 'itt_population_size',
@@ -1692,8 +1699,8 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'warning',
             title: 'LOCF Used as Primary Missing Data Method',
             message:
-              'LOCF was used as the primary method for handling missing data. Per FDA Guidance "Statistical Principles for Clinical Trials" (2020) and the NRC report "The Prevention and Treatment of Missing Data in Clinical Trials" (2010), LOCF makes strong assumptions that are rarely justified and can bias results in either direction. FDA generally prefers likelihood-based methods (e.g., MMRM) or multiple imputation as the primary analysis, with LOCF as a sensitivity analysis at most.',
-            reference: 'FDA Guidance: Statistical Principles for Clinical Trials; NRC Report on Missing Data (2010)',
+              'LOCF was used as the primary method for handling missing data. Per ICH E9 (FDA Guidance "E9 Statistical Principles for Clinical Trials", 1998), the ICH E9(R1) addendum and the NRC report "The Prevention and Treatment of Missing Data in Clinical Trials" (2010), LOCF makes strong assumptions that are rarely justified and can bias results in either direction. FDA generally prefers likelihood-based methods (e.g., MMRM) or multiple imputation as the primary analysis, with LOCF as a sensitivity analysis at most.',
+            reference: 'ICH E9 (FDA Guidance, 1998); ICH E9(R1) Addendum; NRC Report on Missing Data (2010)',
           },
         ],
       },
@@ -1704,7 +1711,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide details on the interim analysis/analyses performed.',
         guidance:
-          'Per ICH E9 Section 4.5 and FDA Guidance "Adaptive Designs for Clinical Trials of Drugs and Biologics" (2019), interim analyses require pre-specification of the alpha-spending function (e.g., O\'Brien-Fleming, Lan-DeMets), the information fraction at each look, and documentation of whether the IDMC operated under a charter with firewall procedures. All interim results must be reported in the CSR per ICH E3 Section 11.4.6.',
+          'Per ICH E9 Section 4.5 and FDA Guidance "Adaptive Designs for Clinical Trials of Drugs and Biologics" (2019), interim analyses require pre-specification of the alpha-spending function (e.g., O\'Brien-Fleming, Lan-DeMets), the information fraction at each look, and documentation of whether the IDMC operated under a charter with firewall procedures. All interim results must be reported in the CSR per ICH E3 Section 11.4.2.3 (Interim Analyses and Data Monitoring).',
         fields: [
           {
             id: 'number_of_interim_analyses',
@@ -1788,7 +1795,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'Provide a structured benefit-risk assessment for the investigational product.',
         guidance:
-          'Per FDA Guidance "Benefit-Risk Assessment for New Drug and Biological Products" (2023) and EMA "Benefit-Risk Methodology" (GVP Module V), the benefit-risk assessment should be structured, transparent, and systematic. The FDA framework considers five dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk, and (5) Risk Management. NNT (number needed to treat) and NNH (number needed to harm) provide intuitive measures for clinicians and regulators.',
+          'Per FDA Guidance "Benefit-Risk Assessment for New Drug and Biological Products" (2023) and the EMA Benefit-Risk Methodology Project (a separate EMA initiative, not a GVP module; GVP Module V covers risk management systems), the benefit-risk assessment should be structured, transparent, and systematic. The FDA framework considers four dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, and (4) Risk and Risk Management. NNT (number needed to treat) and NNH (number needed to harm) provide intuitive measures for clinicians and regulators.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1921,7 +1928,7 @@ export function createCsrReportFlow(): FlowDefinition {
               { value: 'rmat', label: 'Regenerative Medicine Advanced Therapy (RMAT)' },
               { value: 'none', label: 'Standard Review' },
             ],
-            helpText: 'Per FDASIA 2012, document any expedited designations granted for this product/indication.',
+            helpText: 'Document any expedited programs or designations granted for this product/indication (Breakthrough Therapy, Fast Track, Accelerated Approval and RMAT under FD&C Act section 506; Priority Review). Orphan Drug designation (FD&C Act section 526, Orphan Drug Act 1983) is a designation, not an expedited program.',
           },
           {
             id: 'regulatory_strategy_notes',
@@ -1943,7 +1950,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What are the overall conclusions and next steps?',
         guidance:
-          'ICH E3 Section 13 requires an overall interpretation of the study results, integrating the efficacy, safety, and benefit-risk findings into a coherent narrative. The conclusion must be supported by the data presented and should not overstate the findings. Per ICH E3 Section 13.1, the CSR conclusion should address: (1) whether the study objectives were achieved; (2) clinical relevance of the findings; (3) how the results fit into the totality of evidence for the development program; and (4) implications for next steps.',
+          'ICH E3 Section 13 requires an overall interpretation of the study results, integrating the efficacy, safety, and benefit-risk findings into a coherent narrative. The conclusion must be supported by the data presented and should not overstate the findings. Per ICH E3 Section 13 (Discussion and Overall Conclusions), the CSR conclusion should address: (1) whether the study objectives were achieved; (2) clinical relevance of the findings; (3) how the results fit into the totality of evidence for the development program; and (4) implications for next steps.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1953,6 +1960,22 @@ export function createCsrReportFlow(): FlowDefinition {
             placeholder: 'Summarize the overall study conclusions based on the efficacy and safety results.',
             required: true,
             validation: { minLength: 50, maxLength: 5000 },
+          },
+          {
+            id: 'efficacy_conclusions',
+            label: 'Efficacy Conclusions',
+            type: 'textarea',
+            required: false,
+            placeholder: 'State whether the primary objective was met, citing the pre-specified primary analysis: the treatment effect estimate, its confidence interval and p-value, and whether sensitivity and key secondary analyses support it.',
+            helpText: 'ICH E3 asks for efficacy conclusions at the end of the efficacy evaluation, separate from the safety conclusions and the overall discussion. They should rest on the pre-specified primary analysis (ICH E9), not on secondary or post-hoc results.',
+          },
+          {
+            id: 'safety_conclusions',
+            label: 'Safety Conclusions',
+            type: 'textarea',
+            required: false,
+            placeholder: 'Summarise the overall safety and tolerability profile against the comparator: common and serious adverse events, deaths, discontinuations, laboratory findings, and any signal that warrants monitoring or label language.',
+            helpText: 'ICH E3 asks for safety conclusions at the end of the safety evaluation, as an overall assessment of the safety data with attention to events leading to changes in dose, concomitant therapy, serious events and deaths.',
           },
           {
             id: 'study_objectives_achieved',

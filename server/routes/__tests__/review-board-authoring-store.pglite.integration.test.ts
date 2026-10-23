@@ -365,11 +365,10 @@ describe('formal review submission is atomic and recoverable', () => {
     expect(String((doc.rows[0] as { status: string }).status).toLowerCase()).toBe('draft');
   }, T);
 
-  it('refuses retries on a draft or foreign document and malformed workflow inputs', async () => {
+  it('refuses a foreign document and malformed workflow inputs', async () => {
     const id = await newReviewDocument();
     const endpoint = `/api/authoring/docs/${id}/submit`;
-    expect((await as(AUTHOR)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(409);
-    expect((await as(OUTSIDER)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(404);
+    expect((await as(OUTSIDER)(request(app).post(endpoint)).send({ workflow_steps: reviewSteps })).status).toBe(404);
     for (const workflow_steps of [{ role: 'QA' }, [null], [{ role: '', approver_email: REVIEWER.email }]]) {
       expect((await as(AUTHOR)(request(app).post(endpoint)).send({ workflow_steps })).status).toBe(400);
     }
@@ -392,19 +391,17 @@ describe('formal review submission is atomic and recoverable', () => {
     }
   }, T);
 
-  it('a projection retry reuses the existing review workflow without new steps or another submit event', async () => {
+  /* 2026-10-17 (D2, step 6): the canonical projection and its retry are
+     retired — authoring-submit-no-artifact-projection.pglite.test.ts. A second
+     submit of a document in review is refused and records nothing. */
+  it('a second submit of a document in review adds no steps and no submit event', async () => {
     const id = await newReviewDocument();
     const first = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
     expect(first.status).toBe(200);
-    expect(first.body.canonical).toMatchObject({ bridged: false, retryable: true });
+    expect(first.body.reviewRecord).toMatchObject({ store: 'authoring_workflow_steps', workflowId: first.body.workflowId });
+    const before = await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id]);
     expect((await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
       .send({ workflow_steps: reviewSteps })).status).toBe(400);
-    const before = await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id]);
-    const retry = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
-      .send({ retry_canonical: true, reason: 'Retry the projection after restoring project mapping.' });
-    expect(retry.status).toBe(200);
-    expect(retry.body.workflowId).toBe(first.body.workflowId);
-    expect(retry.body.workflowReused).toBe(true);
     expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toHaveLength(1);
     expect((await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id])).rows).toEqual(before.rows);
   }, T);

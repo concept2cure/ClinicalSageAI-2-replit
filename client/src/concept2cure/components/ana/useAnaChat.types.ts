@@ -288,6 +288,13 @@ export interface AnaFollow {
   unreachable?: boolean;
   /** The server refused this reader the live progress (403), in its words. */
   forbidden?: string;
+  /**
+   * The poll was answered 401: the sign-in ended (an idle session), so no
+   * retry can succeed. The server's words, or FOLLOW_LINES.signedOut (DT3 review).
+   */
+  signedOut?: string;
+  /** The record exists, but the answer could not be read at hand-over (DT3 review). */
+  answerUnreadable?: boolean;
 }
 
 export interface AnaContextUsed {
@@ -295,6 +302,22 @@ export interface AnaContextUsed {
   unresolvedUploads: number;
   memory: Array<{ layer: string; title: string; documentName?: string }>;
   memoryStatus: 'read' | 'none' | 'unavailable';
+  /**
+   * The skills whose methods the turn carried (server/services/ana/skills/).
+   * Undefined when the server did not say — an older server — which is shown
+   * as nothing, never as "no skills".
+   */
+  skills?: Array<{
+    key: string;
+    name: string;
+    source: 'library' | 'organization';
+    version: number;
+    /** Why it loaded, in the selector's words ("asked about \"shelf life\""). */
+    reasons: string[];
+    /** Picked in the conversation or deployed to the project; null when AnA chose it. */
+    chosen: 'picked' | 'deployed' | null;
+  }>;
+  skillsStatus?: 'loaded' | 'none' | 'unavailable';
 }
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -610,8 +633,11 @@ export interface AnaChatMessage {
   /** Intelligence flow completion — summary + suggested actions. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /**
-   * War Game report — FDA auditor simulation results. Rendered as a rich
-   * advisory report component inline in the message thread.
+   * War Game report — FDA auditor simulation results, as the stream's
+   * `war_game_report` event carries them (server war-game/types.ts
+   * WarGameReport). No component renders it since WarGameReport.tsx was
+   * deleted on 2026-08-04 (2895218b8); AnA narrates the report, and its
+   * executiveSummary states how many checks could not be assessed.
    */
   warGameReport?: {
     id: string;
@@ -636,6 +662,11 @@ export interface AnaChatMessage {
     executiveSummary: string;
     topPriorities: string[];
     regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+    /** Checks in the auditor, and how many its source interview could feed (2026-10-22). */
+    rulesTotal?: number;
+    rulesAssessed?: number;
+    /** Checks that read a question the interview does not ask: no finding, no score. */
+    notAssessed?: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
   };
   /**
    * Reporting Canvas — a governed report render or a best-practices suggestion
@@ -840,6 +871,12 @@ export interface DriveTurnControls {
  */
 export interface AnaSendOptions {
   toolsOverride?: string[];
+  /**
+   * Skills the person picked for this conversation (the composer's Skills
+   * menu). Sent as `skills`; the server loads them ahead of what AnA selects
+   * herself. Omitted when empty: AnA chooses.
+   */
+  skills?: string[];
   liveDrive?: boolean;
   driveMode?: 'assist' | 'demo';
   runPolicy?: AnaRunPolicy | null;
@@ -905,6 +942,29 @@ export interface UseAnaChatReturn {
    * admin's cancel). Null while no turn is followed.
    */
   followScope?: 'all' | 'cancel' | null;
+  /**
+   * The person whose turn an administrator is following, by name (or
+   * "user <id>"), so the administrator's Stop can name them (DT3 review).
+   * Null for the asker, and while nothing is followed.
+   */
+  followAskerName?: string | null;
+  /**
+   * An organisation administrator's Stop of a colleague's turn, with the
+   * reason they gave (DT3 review, DP-82). One request, never retried behind
+   * the administrator's back: the server records the stop and its chained
+   * audit row together or changes nothing, and its sentence is returned so
+   * the dialog can say it.
+   */
+  adminStop?: (reason: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  /**
+   * The conversation's runs could not be read after it loaded (a failed or
+   * malformed GET /runs?thread_id=), so whether AnA is still working here is
+   * not known — never shown as "nothing running" (DT3 review). The thread
+   * says so, with `recheckLiveRuns`.
+   */
+  liveRunsUnchecked?: boolean;
+  /** Read the conversation's runs again, and rejoin one still working. */
+  recheckLiveRuns?: () => void;
   /** Control status of the in-flight run (drives the pause/resume UI). */
   runStatus: RunControlStatus;
   /**
@@ -943,4 +1003,11 @@ export interface UseAnaChatReturn {
   isLoadingThread: boolean;
   /** A failed history load blocks sending until retry or reset. */
   threadLoadError?: { threadId: string; message: string } | null;
+  /**
+   * The skills kept on the loaded conversation (its picks from the composer's
+   * Skills menu, recorded on the thread by the stream), or null when the read
+   * said nothing about them. Optional so a stand-in chat that predates it
+   * still types.
+   */
+  threadSkills?: { threadId: string; keys: string[] } | null;
 }

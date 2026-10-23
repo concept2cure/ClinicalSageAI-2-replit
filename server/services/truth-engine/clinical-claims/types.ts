@@ -110,7 +110,7 @@ export type PopulationSet =
   | 'screened'
   | 'enrolled';
 
-export interface Population {
+export interface ClaimPopulation {
   set: PopulationSet;
   /** The text defines the set as all randomized patients (ITT ≡ FAS only then, C3). */
   allRandomized?: true;
@@ -189,7 +189,7 @@ export interface Measure {
 
 export interface ClaimFrame {
   study?: StudyRef;
-  population?: Population;
+  population?: ClaimPopulation;
   arm?: ArmRef;
   contrast?: Contrast;
   measure: Measure;

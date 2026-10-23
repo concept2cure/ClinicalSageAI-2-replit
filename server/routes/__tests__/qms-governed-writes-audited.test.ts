@@ -86,6 +86,10 @@ beforeEach(() => {
 /** Every pool.query resolves to one row — enough for a tenant gate then a write. */
 function rowsAlways(row: Record<string, unknown>) {
   query.mockResolvedValue({ rows: [row], rowCount: 1 });
+  // The section writer checks it got back the row it saved (ad372567d), so its insert is echoed.
+  query.mockImplementation(async (sql: unknown, params?: unknown[]) => /INSERT INTO authoring_sections/i.test(String(sql))
+    ? { rows: [{ id: params?.[0], doc_id: params?.[1], code: params?.[2], title: params?.[3], content: params?.[4] }], rowCount: 1 }
+    : { rows: [row], rowCount: 1 });
 }
 
 const CASES: Array<{

@@ -18,6 +18,8 @@
  *
  * Mapping basis (`mappingSource`, and the `reviewStatus` it is stored with):
  *   backbone_xml       — the archive's regional backbone declares the leaf → 'mapped'
+ *   structure_path     — the backbone XML itself, an index, a DTD or stylesheet,
+ *                        recognized by its fixed path → 'skipped'
  *   filename_heuristic — a filename/path pattern (named by `mappingRuleId`)
  *                        suggests a placement → 'suggested' until a person confirms it
  *   fallback           — nothing matched: attachment bucket → 'skipped'
@@ -59,16 +61,7 @@ export interface DetectedFile {
   mappedCtdSection:   string | null;
   mappedSectionKey:   string | null;
   mappedArtifactKind: string | null;
-  /**
-   * 1 when the archive itself declares this placement (mappingSource
-   * 'backbone_xml'), 0 when nothing in it does. A flag, not a probability: no
-   * confidence is measured for a filename-pattern suggestion, so callers persist
-   * NULL there. No caller reads it since AnA's start_legacy_import moved to
-   * `reviewStatus` (2026-10-15); only this module's own test still pins it, and
-   * the field goes with that pin.
-   */
-  mappingConfidence:  0 | 1;
-  mappingSource:      'backbone_xml' | 'filename_heuristic' | 'fallback';
+  mappingSource:     'backbone_xml' | 'structure_path' | 'filename_heuristic' | 'fallback';
   /** The pattern that suggested the placement ('filename.protocol', …); null unless mappingSource is 'filename_heuristic'. */
   mappingRuleId:      string | null;
   /**
@@ -261,21 +254,23 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
   let unmappedWarn = 0;
   let suggested = 0;
   for (const ent of entries) {
-    /* Backbone + util files are not "leaves" — they're structure. */
+    /* Backbone + util files are not "leaves" — they're structure, recognized by
+       path. 2026-10-15: their source was 'backbone_xml', so each was stored as
+       declared by the backbone at mapping_confidence 1; nothing declares them. */
     if (ent.name === backbonePath) {
-      files.push(await fileEntry(ent, 'backbone_xml', null, null, null, 'backbone_xml'));
+      files.push(await fileEntry(ent, 'backbone_xml', null, null, null, 'structure_path'));
       continue;
     }
     if (/(^|\/)util\/index-md5\.txt$/i.test(ent.name)) {
-      files.push(await fileEntry(ent, 'index', null, null, 'md5_index', 'backbone_xml'));
+      files.push(await fileEntry(ent, 'index', null, null, 'md5_index', 'structure_path'));
       continue;
     }
     if (/(^|\/)index\.xml$/i.test(ent.name)) {
-      files.push(await fileEntry(ent, 'index', null, null, 'ich_index', 'backbone_xml'));
+      files.push(await fileEntry(ent, 'index', null, null, 'ich_index', 'structure_path'));
       continue;
     }
     if (/util\/(dtd|style)\//i.test(ent.name)) {
-      files.push(await fileEntry(ent, 'stylesheet', null, null, 'stylesheet', 'backbone_xml'));
+      files.push(await fileEntry(ent, 'stylesheet', null, null, 'stylesheet', 'structure_path'));
       continue;
     }
 
@@ -366,7 +361,6 @@ async function fileEntry(
     mappedCtdSection: ctdSection,
     mappedSectionKey: sectionKey,
     mappedArtifactKind: artifactKind,
-    mappingConfidence: declared ? 1 : 0,
     mappingSource,
     mappingRuleId,
     reviewStatus: reviewStatusFor(kind, declared),

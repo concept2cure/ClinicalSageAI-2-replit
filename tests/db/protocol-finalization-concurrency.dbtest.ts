@@ -296,7 +296,7 @@ describe('protocol finalization through the actual native runtime', () => {
       const holderPid = Number((await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
       await blocker.query('SELECT id FROM protocol_documents WHERE id=$1 AND organization_id=$2 FOR UPDATE', [fixture.documentId, orgId]);
       finalizeRequest = request(app).post(`/api/protocol-development/documents/${fixture.documentId}/finalize`).set('Authorization', `Bearer ${actors.author.token}`).send({ reason: REASON, meaning: 'authorship', reauth: { password: PASSWORD } }).then((response) => response);
-      const finalizerPid = await waitForParentWait(holderPid, '%SELECT protocol_kind, status, version FROM protocol_documents%FOR UPDATE%');
+      const finalizerPid = await waitForParentWait(holderPid, '%SELECT protocol_kind, status, version%FROM protocol_documents%FOR UPDATE%');
       const newContent = 'A queued native QA edit changes the protocol narrative after the old editable-state check. This is isolated synthetic content.';
       editRequest = request(app).patch(`/api/protocol-development/sections/${fixture.sectionId}`).set('Authorization', `Bearer ${actors.editor.token}`).send({ reason: REASON, content: newContent, status: 'complete' }).then((response) => response);
       const writerPid = await waitForParentWait(holderPid, '%protocol_documents%', finalizerPid, finalizerPid);

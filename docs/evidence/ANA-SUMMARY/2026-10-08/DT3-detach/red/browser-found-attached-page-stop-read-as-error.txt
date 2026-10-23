@@ -1,0 +1,226 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-detach.test.ts
+{
+  "timestamp": "2026-10-22T06:27:52.422Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-22T06:27:52.424Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-detach.test.ts
+{
+  "timestamp": "2026-10-22T06:27:52.424Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-detach.test.ts
+Loaded 0 academic documents
+
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn keeps its request's tenant connection (blocking review finding, 14362ef00) > the round after the page closed reads on the request's client, and the client is released once, after the turn
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (server_shutdown) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (session_ended) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (admin_cancelled) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a step in flight when the row stops the turn (unattended_limit) says what ended it, never "You stopped"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a step a server-side stop ended is not credited to the person (5d8e60f3e) > a person's own Stop still says they stopped it
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > admin_cancelled: done with the reason and post_done with the record, never an error frame 86ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > server_shutdown: done with the reason and post_done with the record, never an error frame 12ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > session_ended: done with the reason and post_done with the record, never an error frame 12ms
+   → a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn that fails mid-loop still ends, and is recorded (7780de83f) > the strict round-body limit refuses the round: the run ends failed, the record is filed failed, and the person is told
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 15 minutes with nobody watching: the next model call is the closing answer, and the run ends unattended_limit
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > a watch moves the clock: watched at 10 minutes, the turn is still going at 16
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 40 minutes from the start ends it as budget_exhausted, whatever the watching
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the session ended: stopped as session_ended, and the record says so
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > the standing could not be read (fails closed): stopped as session_ended, and the record says so
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 11: a session that ended stops the turn at its next round boundary > a standing session goes on
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 14: the row reason wins > a shutdown mid-call: stopped/server_shutdown, never answered, with the reason on the record
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 14: the row reason wins > a shutdown that lands as the last call returns: post-processing files it stopped/server_shutdown
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > Manual: a hold nobody answers ends hold_expired, never "lost its connection"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > no policy: an approval nobody answers is denied and the turn goes on
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 13: holds and approvals while nobody watches, as attached > Auto: an approval nobody answers ends the turn approval_timeout
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > ends: one notice to the asker, naming the conversation by its question, linking to it
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a step not authorised is said in the finished notice
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > an approval while nobody watches: one warning, with no parameters and no ids in its words
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a stop says why: "AnA stopped: the server restarted for an update"
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watched turn sends none
+ ↓ server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a turn whose page stayed open sends none
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > unattended_limit 8ms
+   → expected undefined to be 'unattended_limit' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > session_ended 1ms
+   → expected undefined to be 'session_ended' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > server_shutdown 1ms
+   → expected undefined to be 'server_shutdown' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > orphaned 1ms
+   → expected undefined to be 'orphaned' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > error 1ms
+   → expected undefined to be 'error' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > admin_cancelled 1ms
+   → expected undefined to be 'admin_cancelled' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > a reason this build does not know is still dropped 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > admin_cancelled: done with the reason and post_done with the record, never an error frame
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > server_shutdown: done with the reason and post_done with the record, never an error frame
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a page still attached when the run row stops its turn mid-call (found in the DT3 browser acceptance) > session_ended: done with the reason and post_done with the record, never an error frame
+AssertionError: a stop reached the page as an error: expected [ { type: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "error": "An error occurred while generating the response",
++     "turnRecord": {
++       "reason": "This test captures the sealed record without persistence.",
++       "status": "not_recorded",
++     },
++     "type": "error",
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-detach.test.ts:254:91
+    252|     };
+    253|     const events = await turn(app, { message: 'Compare the endpoints o…
+    254|     expect(events.filter(e => e.type === 'error'), 'a stop reached the…
+       |                                                                                           ^
+    255|     expect(events.find(e => e.type === 'done')?.stoppedReason).toBe(re…
+    256|     expect(events.at(-1)?.type).toBe('post_done');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > unattended_limit
+AssertionError: expected undefined to be 'unattended_limit' // Object.is equality
+
+- Expected:
+"unattended_limit"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > session_ended
+AssertionError: expected undefined to be 'session_ended' // Object.is equality
+
+- Expected:
+"session_ended"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > server_shutdown
+AssertionError: expected undefined to be 'server_shutdown' // Object.is equality
+
+- Expected:
+"server_shutdown"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > orphaned
+AssertionError: expected undefined to be 'orphaned' // Object.is equality
+
+- Expected:
+"orphaned"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > error
+AssertionError: expected undefined to be 'error' // Object.is equality
+
+- Expected:
+"error"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts > readTurnEnding keeps the run row's reasons (AnA detach §2.10) > admin_cancelled
+AssertionError: expected undefined to be 'admin_cancelled' // Object.is equality
+
+- Expected:
+"admin_cancelled"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/turnEndingRowReasons.test.ts:17:34
+     15|   it.each(['unattended_limit', 'session_ended', 'server_shutdown', 'or…
+     16|     const ending = readTurnEnding({ stoppedReason: reason, rounds: 2 }…
+     17|     expect(ending.stoppedReason).toBe(reason);
+       |                                  ^
+     18|     expect(stopLineText(ending.stoppedReason)).toMatch(/^Stopped/);
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 1 passed | 24 skipped (34)
+   Start at  06:27:43
+   Duration  17.87s (transform 11.65s, setup 161ms, import 16.81s, tests 136ms, environment 0ms)
+

@@ -26,7 +26,9 @@ describe('getGatewaySizeLimitOnFile', () => {
   });
 
   it('gives each figure it holds with the citation of the rule it comes from', () => {
-    expect(getGatewaySizeLimitOnFile('US')).toEqual({ bytes: 4 * GB, source: citationOf('US', 'FDA-ESG-003') });
+    // FDA's 10 GB (Form 5640 v2.0), read as 10^10 bytes (2026-10-08, W5/D7, sweep VP-6; it was 4 GiB).
+    expect(getGatewaySizeLimitOnFile('US')).toEqual({ bytes: 10 * 1000 ** 3, source: citationOf('US', 'FDA-ESG-003') });
+    expect(getGatewaySizeLimitOnFile('US')!.source).toMatch(/5640/);
     expect(getGatewaySizeLimitOnFile('EU')).toEqual({ bytes: 600 * 1024 * 1024, source: citationOf('EU', 'EMA-CESP-004') });
     expect(getGatewaySizeLimitOnFile('JP')).toEqual({ bytes: GB, source: citationOf('JP', 'PMDA-003') });
   });

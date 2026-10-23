@@ -28,7 +28,7 @@ locals {
   # made with, or mistaken for, the production key (D1 brief B8).
   release_signing_key_alias = var.environment == "production" ? "alias/fda-signing-key-${local.release_signing_key_year}" : "alias/fda-signing-key-${local.release_signing_key_year}-${var.environment}"
 
-  # Both containers carry it: server/services/signature/signer-mode.ts refuses
+  # The API carries it: server/services/signature/signer-mode.ts refuses
   # to boot a production process whose signer posture is unset, `dev`, or
   # incomplete.
   signer_environment = [

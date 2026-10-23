@@ -385,6 +385,26 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
 
       {build.loading ? (
         <EmptyState icon={I.layers} title="Loading the Module 3 build state…" busy testId="m3-build-loading" />
+      ) : build.status === 409 ? (
+        /* The composition boundary (decision P-28: small-molecule Module 3 for
+           a US IND) refused this program — a biologic, a marketing
+           application, or a substance whose modality is not yet recorded (the
+           one titled as a record still to make, by its code). That is an
+           answer about the program, not a failed read, so it is said in the
+           server's own words and offers no retry: retrying changes nothing
+           until the program's records do. A read that failed is 503 and takes
+           the error branch below, with its retry. */
+        <EmptyState
+          icon={I.layers}
+          title={
+            build.code === 'CMC_MODALITY_NOT_ESTABLISHED'
+              ? 'This program’s drug substance is not established yet'
+              : 'Module 3 is not composed here for this program'
+          }
+          hint={build.error}
+          regulation="Serves the CTD Module 3 record (ICH M4Q)"
+          testId="m3-build-out-of-scope"
+        />
       ) : build.error ? (
         <EmptyState
           tone="error"

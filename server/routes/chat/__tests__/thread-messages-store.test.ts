@@ -64,6 +64,32 @@ describe('GET /threads/:id/messages', () => {
     expect(params).toEqual(['ana-ri_1', 7]);
   });
 
+  it('returns the skills the conversation\u2019s person picked, read in the organization', async () => {
+    storeIs('chat', (sql) => {
+      if (/FROM chat_messages/.test(sql)) return { rows: [{ role: 'user', content: 'Check the label' }] };
+      if (/metadata -> 'skills'/.test(sql)) return { rows: [{ skills: ['labeling', 'cmc.stability'] }] };
+      return { rows: [] };
+    });
+    const r = res();
+    await listThreadMessages({ params: { threadId: 'ana-ri_1' }, query: {}, tenantId: 7 } as any, r);
+    expect(r.body.skills).toEqual(['labeling', 'cmc.stability']);
+    const read = query.mock.calls.find(([sql]) => /metadata -> 'skills'/.test(String(sql)))!;
+    expect(read[1]).toEqual(['ana-ri_1', 7]);
+  });
+
+  it('serves the transcript without the picks when they cannot be read, never as none picked', async () => {
+    storeIs('chat', (sql) => {
+      if (/FROM chat_messages/.test(sql)) return { rows: [{ role: 'user', content: 'Check the label' }] };
+      if (/metadata -> 'skills'/.test(sql)) throw new Error('connection reset');
+      return { rows: [] };
+    });
+    const r = res();
+    await listThreadMessages({ params: { threadId: 'ana-ri_1' }, query: {}, tenantId: 7 } as any, r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.messages).toHaveLength(1);
+    expect(r.body).not.toHaveProperty('skills');
+  });
+
   it('needs an organization', async () => {
     const r = res();
     await listThreadMessages({ params: { threadId: 'ana-ri_1' }, query: {} } as any, r);

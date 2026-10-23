@@ -203,7 +203,9 @@ function FindingDispositionControls({
 }) {
   const offered = offeredOn(finding);
   if (offered.length === 0) return null;
-  const ask = (disposition: FindingDisposition) =>
+  // Not `ask` (renamed 2026-10-15): that is the AnA chat helper's name, and ci:action-overclaim read
+  // this as a chat message. It opens the Part 11 signature chain; the act is posted after signing.
+  const request = (disposition: FindingDisposition) =>
     onDisposition({
       findingId: finding.id,
       disposition,
@@ -214,12 +216,12 @@ function FindingDispositionControls({
   return (
     <span className="cm-pushbar sc-mt">
       {offered.includes('accepted') && (
-        <button type="button" className="sc-trans-b" onClick={() => ask('accepted')}>
+        <button type="button" className="sc-trans-b" onClick={() => request('accepted')}>
           {I.penLine} Accept risk (Part 11 e-signature)
         </button>
       )}
       {offered.includes('fixed') && (
-        <button type="button" className="sc-trans-b" onClick={() => ask('fixed')}>
+        <button type="button" className="sc-trans-b" onClick={() => request('fixed')}>
           {I.penLine} Mark fixed (Part 11 e-signature)
         </button>
       )}

@@ -185,6 +185,46 @@ function rejectionRecordedMessage(id: number, r: RejectionRecorded, signer: stri
  * AnA cannot see this table, so a miss that lists these turns a dead end into a
  * retry with a real number (listedChoices, surfaceActions.ts).
  */
+/**
+ * The transmittal list's totals, from its envelope's meta. The route returns
+ * the most recent page only, so the header count and AnA's facts read these —
+ * a count taken from the page reported 100 for an org with 250 and hid every
+ * older unacknowledged transmittal (2026-10-08, W5/D7, sweep HS-8). Each field
+ * is null when not reported.
+ */
+interface LogMeta { total: number | null; hasMore: boolean | null; byStatus: Record<string, number> | null; awaitingAcknowledgement: number | null }
+const finiteOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+function readLogMeta(raw: unknown): LogMeta | null {
+  const m = (raw as { meta?: unknown } | null)?.meta;
+  if (!m || typeof m !== 'object') return null;
+  const meta = m as Record<string, unknown>;
+  const byStatus = meta.byStatus && typeof meta.byStatus === 'object' && !Array.isArray(meta.byStatus)
+    ? (meta.byStatus as Record<string, number>)
+    : null;
+  return {
+    total: finiteOrNull(meta.total),
+    hasMore: typeof meta.hasMore === 'boolean' ? meta.hasMore : null,
+    byStatus,
+    awaitingAcknowledgement: finiteOrNull(meta.awaitingAcknowledgement),
+  };
+}
+/** The log header's count: "N of TOTAL" when the page is not the whole log. */
+function logCountLabel(listed: number, meta: LogMeta | null): string {
+  return meta?.hasMore && meta.total != null ? `${listed} of ${meta.total}` : String(listed);
+}
+/** Said above the log when it is a page of a longer one. */
+function logTruncationNote(listed: number, meta: LogMeta | null): string | null {
+  if (!meta?.hasMore) return null;
+  return meta.total != null
+    ? `Showing the ${listed} most recently submitted of ${meta.total} transmittals. Older transmittals are not listed here.`
+    : `Showing the ${listed} most recently submitted transmittals. Older transmittals are not listed here.`;
+}
+/** The log's part of AnA's summary: the server's total, or that it was not reported. */
+function logSummary(listed: number, meta: LogMeta | null): string {
+  if (meta?.total == null) return `${listed} transmittal(s) listed; the log’s total was not reported.`;
+  return `${meta.total} transmittal(s) logged${meta.hasMore ? ` (the ${listed} most recent listed here)` : ''}.`;
+}
+
 function transmittalChoices(rows: ReadonlyArray<Transmittal>): string[] {
   return rows.map((t) => `#${t.id}${t.transmission_id ? ` · ${t.transmission_id}` : ''}`);
 }
@@ -223,6 +263,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
      QA 2026-10-08 (j6): a manager reached a signature's password. */
   const [canSign, setCanSign] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
+  const [logMeta, setLogMeta] = useState<LogMeta | null>(null);
   const linked = useTransmittalTarget<Transmittal>();
   const logRows = linked.record ? [linked.record,...rows.filter(row=>row.id!==linked.record?.id)] : rows;
   useEffect(()=>{
@@ -249,6 +290,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
     const signing = t.raw?.meta?.signing?.canSign;
     setCanSign(typeof signing === 'boolean' ? signing : null);
     setRows(Array.isArray(t.data) ? t.data : []);
+    setLogMeta(readLogMeta(t.raw));
     setState('ready');
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -335,17 +377,18 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
         ? 'The transmittal log is still loading.'
         : state === 'error'
           ? 'The transmittal log could not be read — which is not the same as nothing having been sent.'
-          : `Transmittal log: ${rows.length} transmittal(s) recorded for this organisation. This screen is read-only; ` +
+          : `Transmittal log: ${logSummary(rows.length, logMeta)} This screen is read-only; ` +
             'a sequence is transmitted from its Dispatch tab in the Submission Center.',
       facts: {
         logState: state,
-        transmittalCount: rows.length,
-        byStatus: rows.reduce<Record<string, number>>(
-          (acc, r) => ({ ...acc, [r.status ?? 'unknown']: (acc[r.status ?? 'unknown'] ?? 0) + 1 }),
-          {},
-        ),
+        // Over the whole log, from the server; null when it did not say. A count
+        // taken from the listed page understated both (sweep HS-8).
+        transmittalCount: logMeta?.total ?? null,
+        transmittalsListed: rows.length,
+        logTruncated: logMeta?.hasMore ?? null,
+        byStatus: logMeta?.byStatus ?? null,
         failureClasses: [...new Set(rows.map((r) => r.error_class).filter(Boolean))],
-        awaitingAcknowledgement: rows.filter((r) => r.submitted_at && !r.ack_received_at).length,
+        awaitingAcknowledgement: logMeta?.awaitingAcknowledgement ?? null,
         transmitsFromThisScreen: false,
       },
       availableActions: [
@@ -357,7 +400,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
         "Show one transmittal's gateway status, by its log number or gateway reference",
       ],
     }),
-    [state, rows],
+    [state, rows, logMeta],
   );
   usePublishSurfaceContext('gateway-transmittals', anaContext);
 
@@ -440,7 +483,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card-h">
           <span className="t">Transmittal log</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {state === 'ready' && <span className="s">{rows.length}</span>}
+            {state === 'ready' && <span className="s">{logCountLabel(rows.length, logMeta)}</span>}
             {ask && <button className="reg-cta" onClick={() => ask('Explain our transmittal log: which transmittals failed and why, from their error class, and which are still awaiting acknowledgement. Do not treat an unreadable log as nothing sent.')}>{I.sparkles} Explain the log</button>}
           </span>
         </div>
@@ -456,6 +499,9 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
             Recording a technical rejection is an electronic signature, and your role does not sign (21 CFR Part 11 §11.10(g)),
             so it is not offered to you. A colleague whose role carries signing authority records it.
           </div>
+        )}
+        {state === 'ready' && logTruncationNote(rows.length, logMeta) && (
+          <div className="pj-card-b" role="note" style={{ fontSize: 12 }}>{logTruncationNote(rows.length, logMeta)}</div>
         )}
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="Loading the transmittal log…" /></div>

@@ -35,6 +35,7 @@ import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRe
 import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { readDocumentOutline } from '../../services/c2c/document-outline.js';
 import { checkFilingWritable } from '../../services/authoring/document-lock.js';
+import { readFilingLock } from '../../services/c2c/filing-lock.js';
 import {
   normalizeRulePackProvenance,
   rulePackProvenanceSelectSql,
@@ -461,23 +462,28 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   }
 
   try {
-    // Verify doc org membership + lifecycle state.
+    // Verify doc org membership.
     const docCheck = await pool.query(
-      `SELECT status FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
       [id, orgId],
     );
     if (docCheck.rows.length === 0) return send404(res);
-    // A locked or submitted document is immutable: its sections must not be
-    // edited in place. Amendments go through a new version/submission, not a raw
-    // section PATCH — consistent with the /submit and /lock 409 guards.
-    const docStatus = (docCheck.rows[0] as { status?: string }).status;
-    if (docStatus === 'locked' || docStatus === 'submitted') {
-      return res.status(409).json({ error: docStatus === 'submitted' ? 'DOCUMENT_SUBMITTED' : 'DOCUMENT_LOCKED' });
-    }
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      // A locked or submitted document is immutable: its sections must not be
+      // edited in place. Amendments go through a new version/submission, not a
+      // raw section PATCH. One rule for every writer of its sections, read on
+      // this transaction so a lock cannot commit between the check and the
+      // write (filing-lock.ts; the editor's write-through reads it too).
+      const lock = await readFilingLock(client, String(id), orgId);
+      if (lock) {
+        await client.query('ROLLBACK');
+        const code = lock.state === 'submitted' ? 'DOCUMENT_SUBMITTED' : 'DOCUMENT_LOCKED';
+        return res.status(409).json({ code, error: code, message: `This filing ${lock.words}, so its sections are not changed in place. Nothing was changed.` });
+      }
 
       /* ── A SEALED DOCUMENT'S FILED TEXT IS SEALED TOO ────────────────────
        * The authoring freeze sets `authoring_documents.status = 'FROZEN'` and
@@ -498,7 +504,6 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
       const seal = await checkFilingWritable(client, String(id), orgId);
       if (!seal.writable) {
         await client.query('ROLLBACK');
-        client.release();
         return res
           .status(seal.code === 'SEAL_CHECK_UNAVAILABLE' ? 503 : 403)
           .json({ code: seal.code, error: seal.code, message: seal.reason });
@@ -531,12 +536,15 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
 
       let row: any;
       if (existing.rows.length === 0) {
-        // Not created yet — INSERT with no text. Label + path_order come from
-        // the rule pack when available.
+        // Not created yet — INSERT with no text. Label, path_order and the
+        // parent come from the rule pack when available. Without its parent a
+        // section reads as a root, and the heading above it as a section that
+        // holds nothing, which readiness then counts (F23 8/9).
         const rpackRes = await client.query(
           `SELECT elem ->> 'label' AS label,
                   (elem ->> 'path_order')::integer AS path_order,
-                  (elem ->> 'mandatory')::boolean AS mandatory
+                  (elem ->> 'mandatory')::boolean AS mandatory,
+                  elem ->> 'parent_key' AS parent_key
            FROM c2c_documents d
            JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
@@ -550,10 +558,10 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         const rpackRow = rpackRes.rows[0] as any;
         const ins = await client.query(
           `INSERT INTO c2c_document_sections
-             (document_id, section_key, label, path_order, mandatory, content, status)
-           VALUES ($1, $2, $3, $4, $5, '{}'::jsonb, $6)
+             (document_id, section_key, label, path_order, mandatory, content, status, parent_key)
+           VALUES ($1, $2, $3, $4, $5, '{}'::jsonb, $6, $7)
            RETURNING *`,
-          [id, key, rpackRow?.label ?? key, rpackRow?.path_order ?? 0, rpackRow?.mandatory ?? false, status],
+          [id, key, rpackRow?.label ?? key, rpackRow?.path_order ?? 0, rpackRow?.mandatory ?? false, status, rpackRow?.parent_key ?? null],
         );
         row = ins.rows[0];
       } else {

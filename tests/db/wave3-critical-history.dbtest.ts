@@ -133,8 +133,17 @@ async function screeningRow(entry = ownEntry) {
   return (await owner.query('SELECT id,decision,xmin::text AS xmin FROM literature_screening_decisions WHERE organization_id=$1 AND literature_entry_id=$2 AND program_id=$3',[ORG,entry,program])).rows[0];
 }
 
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
+const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
+function restoreAuditKeys(): void {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  if (priorAuditHmacSecret === undefined) delete process.env.AUDIT_HMAC_SECRET; else process.env.AUDIT_HMAC_SECRET = priorAuditHmacSecret;
+}
+
 beforeAll(async()=> {
-  if (!process.env.APP_DATABASE_URL || !process.env.AUDIT_HMAC_KEY || !process.env.AUDIT_HMAC_SECRET) throw new Error('Native runtime URL and configured synthetic HMAC keys are required.');
+  if (!process.env.APP_DATABASE_URL) throw new Error('Native runtime URL is required.');
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-wave3-critical-history-audit-hmac-key-no-production-use';
+  process.env.AUDIT_HMAC_SECRET ??= 'synthetic-wave3-critical-history-tamper-proof-key-no-production-use';
   owner = new Pool({connectionString:databaseUrl,max:3});
   await owner.query(`INSERT INTO organizations(id,name,slug,status) VALUES ($1,'Synthetic critical history audit','synthetic-critical-history-audit','active'),
     ($2,'Synthetic critical history foreign','synthetic-critical-history-foreign','active') ON CONFLICT(id) DO NOTHING`,[ORG,FOREIGN_ORG]);
@@ -176,7 +185,7 @@ beforeAll(async()=> {
   app.use('/api/cerv2',authMiddleware,(await import('../../server/routes/cerv2-document-routes')).default);
 });
 beforeEach(()=> {fault='none';faultUsed=false;committed=false;postAdmission='none';txSql.length=0;entered=undefined;releaseHold=undefined;holdGate=Promise.resolve();});
-afterAll(async()=> {releaseHold?.();vi.restoreAllMocks();await owner?.end();await runtimePool?.end();});
+afterAll(async()=> {releaseHold?.();vi.restoreAllMocks();restoreAuditKeys();await owner?.end();await runtimePool?.end();});
 
 describe('native critical case history',()=> {
   it('uses actual authenticated ALS/pinned app_service and real deployed column types',async()=> {
@@ -279,7 +288,7 @@ describe('native critical literature history',()=> {
     const last=history.slice(-2);expect(last[0].new_values.supersededDecision).toBe(revised?'excluded':null);expect(last[0].new_values.decision).toBe('pending');expect(last[1].new_values.supersededDecision).toBe('pending');expect(last[1].new_values.decision).toBe('included');
   });
   it('verifies the retained tenant hash chain and every HMAC seal without rewriting history',async()=> {
-    expect(await verifyAuditChain(owner,{tenantId:ORG})).toMatchObject({ok:true});expect(await verifyAuditChainSeals(owner,{tenantId:ORG})).toEqual({valid:true,brokenAt:null});
+    expect(await verifyAuditChain(owner,{tenantId:ORG})).toMatchObject({ok:true});const seals=await verifyAuditChainSeals(owner,{tenantId:ORG});expect(seals).toEqual({valid:true,brokenAt:null,verified:expect.any(Number),unsealed:0,unsealedAfterSealed:0,firstUnsealedAfterSealed:null});expect(seals.verified).toBeGreaterThan(0);
     expect((await owner.query('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id=$1 AND hmac_seal IS NULL',[ORG])).rows[0].n).toBe(0);
   });
 });

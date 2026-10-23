@@ -11,13 +11,15 @@
  * leaf, its index.xml leaf ID and the STF's relative path to index.xml; this
  * returns the XML keyed by study.
  *
- * What is regulator text and what is recall (2026-10-05, g-stf-name-tags-and-shape;
- * the record is docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * What rests on a search extract and what is recall alone (2026-10-05,
+ * g-stf-name-tags-and-shape; the record is
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-stf-name-tags-and-shape-facts.md). fda.gov and ich.org are refused by this
- * environment's egress policy, so "regulator text" below means the passage was
- * read in search results quoting the FDA- or ICH-hosted document, not opened:
+ * environment's egress policy, so no document was opened. A passage read in
+ * search results quoting the FDA- or ICH-hosted document is recall, not
+ * regulator text (shared/regulatory/regulatory-basis.ts):
  *
- *   Regulator text (search):
+ *   Recall, from search extracts of the regulator-hosted document:
  *   - File name: "stf-" followed by the sponsor's study-id, then ".xml"
  *     (ICH STF v2.6.1, fda.gov/media/159383).
  *   - File-tags are heading elements inside doc-content; the study is described
@@ -29,7 +31,7 @@
  *     and SEND), analysis-data-definition (ADaM) (FDA TRC material,
  *     fda.gov/media/160970, 135256, 123099).
  *
- *   Recall, not checked against the regulator's text:
+ *   Recall, with no extract of the regulator's text seen:
  *   - The element nesting: ectd:study > study-identifier, then study-document >
  *     doc-content[xlink:href = "<path to index.xml>#<leaf ID>"] > title?, file-tag;
  *     the info-type="ich" attribute on every file-tag; dtd-version "2.2" (the
@@ -116,7 +118,7 @@ export interface StfResult {
 
 /**
  * The STF file-tags FDA's validation 1735 requires on standardized datasets and
- * their define.xml. Regulator text read through search (see the module header).
+ * their define.xml. Recall, from a search extract of FDA's text (see the module header).
  */
 export const STF_DATASET_FILE_TAGS: {
   readonly xpt: readonly string[];

@@ -1,0 +1,26 @@
+{
+ "measured": "2026-10-22, launch-scope-route-inventory --rows, production posture, throwaway database built from empty; before = trunk, after = this change",
+ "changed": 4,
+ "routes": [
+  {
+   "route": "GET /api/ind-master-data/sponsors",
+   "before": "unmapped",
+   "after": "launch"
+  },
+  {
+   "route": "GET /api/ind-master-data/sponsors/:id",
+   "before": "unmapped",
+   "after": "launch"
+  },
+  {
+   "route": "POST /api/ind-master-data/sponsors",
+   "before": "unmapped",
+   "after": "launch"
+  },
+  {
+   "route": "PATCH /api/ind-master-data/sponsors/:id",
+   "before": "unmapped",
+   "after": "launch"
+  }
+ ]
+}

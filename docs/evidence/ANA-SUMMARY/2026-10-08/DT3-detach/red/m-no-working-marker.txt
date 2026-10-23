@@ -1,0 +1,14 @@
+# m-no-working-marker: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx  -t project's conversations
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > mark the conversation AnA is working in, from ?mine=live, and leave the others as they are 5095ms
+   → Unable to find an element with the text: Working · stops by 14:33 UTC if nobody opens it. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working" 5036ms
+   → Unable to find an element with the text: Working · stops by 14:33 UTC if nobody opens it. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > a list that could not be read says so, quietly, and marks nothing (DT3 review 2.3) 44ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 6 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > mark the conversation AnA is working in, from ?mine=live, and leave the others as they are
+TestingLibraryElementError: Unable to find an element with the text: Working · stops by 14:33 UTC if nobody opens it. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working"
+TestingLibraryElementError: Unable to find an element with the text: Working · stops by 14:33 UTC if nobody opens it. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.

@@ -1,0 +1,5 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > asks for counts, and shows each value's count from the verified read; a stage choice sums its stages 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > a failed read shows no counts 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > malformed counts are not shown as counts 97ms
+ Test Files  95 passed (95)
+      Tests  1010 passed (1010)

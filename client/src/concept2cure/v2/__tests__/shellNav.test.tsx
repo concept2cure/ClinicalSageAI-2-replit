@@ -125,6 +125,7 @@ const PLACES = [
   'Communication',
   'Vault',
   'Submission Center',
+  'CMC / Module 3',
   'Quality',
   'Reporting & analytics',
   'My work',
@@ -167,6 +168,14 @@ describe('the rail lists the places', () => {
     expect(onNav).toHaveBeenCalledWith('quality');
   });
 
+  it('CMC / Module 3 is on the rail beside Quality, and opens CMC', async () => {
+    // The founder's decision of 2026-10-22: Quality (QS) sits next to CMC,
+    // Vault and Tasking on the rail.
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'CMC / Module 3' }));
+    expect(onNav).toHaveBeenCalledWith('cmc');
+  });
+
   it('Home is explicitly labelled and opens Home', async () => {
     const { scroll, onNav } = await mountRail();
     fireEvent.click(within(scroll).getByRole('button', { name: 'Home' }));
@@ -177,7 +186,9 @@ describe('the rail lists the places', () => {
     const { rail } = await mountRail();
     expect(rail.querySelector('.nav-badge')).toBeNull();
     const text = rail.textContent ?? '';
-    for (const gone of ['Science & intelligence', 'Explore', 'Quick access', 'Client categories', 'AnA Command', 'AnA memory', 'Artifacts Center', 'CMC', 'Risk-based monitoring', 'CRL library']) {
+    // CMC came back as a place of its own on 2026-10-22, not inside the old
+    // "Science & intelligence" section, which stays gone with RBM and the CRL library.
+    for (const gone of ['Science & intelligence', 'Explore', 'Quick access', 'Client categories', 'AnA Command', 'AnA memory', 'Artifacts Center', 'Risk-based monitoring', 'CRL library']) {
       expect(text, gone).not.toContain(gone);
     }
   });

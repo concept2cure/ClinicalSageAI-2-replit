@@ -110,8 +110,15 @@ describe('a tool that records a reason for change is proposed at the reason tier
 
   it('the stream holds a tool with the verdict\'s tier (source check: there is no other seam)', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
-    const calls = src.match(/buildHumanConfirmationRequiredResult\([^)]*\)/g) ?? [];
-    expect(calls).toEqual(['buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier)']);
+    // Since the DT3 review the frame and the follower's run read share one
+    // builder (part11-governance.ts approvalRequiredEnvelope): the stream
+    // hands it the verdict's tier, and it builds the proposal with that tier.
+    expect(src.match(/buildHumanConfirmationRequiredResult\([^)]*\)/g) ?? []).toEqual([]);
+    const envelope = src.match(/approvalRequiredEnvelope\(\{[^}]*\}\)/g) ?? [];
+    expect(envelope).toHaveLength(1);
+    expect(envelope[0]).toMatch(/command: verdict\.command,\s*params: verdict\.params,\s*tier: verdict\.tier,/);
+    const builder = fs.readFileSync(path.resolve(__dirname, '../part11-governance.ts'), 'utf8');
+    expect(builder).toMatch(/buildHumanConfirmationRequiredResult\(held\.command, held\.params, held\.tier\)/);
   });
 });
 

@@ -1,0 +1,24 @@
+{
+  "staging": {
+    "AWS_REGION": "us-east-1",
+    "ECR_API_REPO": "c2c-stg-api",
+    "ECS_CLUSTER": "c2c-staging",
+    "ECS_API_SERVICE": "c2c-staging-api",
+    "ECS_API_TASK_FAMILY": "c2c-staging-api",
+    "ECS_API_CONTAINER_NAME": "api",
+    "ECS_MIGRATE_TASK_FAMILY": "c2c-staging-migrate",
+    "ECS_MIGRATE_CONTAINER_NAME": "migrate",
+    "ECS_PROVISION_TASK_FAMILY": "c2c-staging-provision"
+  },
+  "production": {
+    "AWS_REGION": "us-east-1",
+    "ECR_API_REPO": "c2c-prod-api",
+    "ECS_CLUSTER": "c2c-production",
+    "ECS_API_SERVICE": "c2c-production-api",
+    "ECS_API_TASK_FAMILY": "c2c-production-api",
+    "ECS_API_CONTAINER_NAME": "api",
+    "ECS_MIGRATE_TASK_FAMILY": "c2c-production-migrate",
+    "ECS_MIGRATE_CONTAINER_NAME": "migrate",
+    "ECS_PROVISION_TASK_FAMILY": "c2c-production-provision"
+  }
+}

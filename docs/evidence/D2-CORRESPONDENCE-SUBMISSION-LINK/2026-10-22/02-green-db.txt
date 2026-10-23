@@ -1,0 +1,10 @@
+# GREEN at d4be3c13f + working tree (real PostgreSQL 16, RLS_ENFORCE=on, app_service) (2026-10-22T05:17:26Z)
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > links a submission of the project and reads it back with its title
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a submission of another program of the organisation, and writes nothing
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses another organisation's submission, and writes nothing
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a removed submission, and writes nothing
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a submission that does not exist, and writes nothing
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a reference that is not a submission id
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > logs a letter with no submission as before
+ ✓ tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > returns an older unchecked value, or another program's id, as itself with no submission named
+      Tests  8 passed (8)

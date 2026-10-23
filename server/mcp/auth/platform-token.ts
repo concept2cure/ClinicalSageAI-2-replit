@@ -321,6 +321,7 @@ export function signPendingAuthorization(pending: PendingAuthorization, ttlSecon
 
 export function readPendingAuthorization(assertion: string): PendingAuthorization | null {
   try {
+    // token-class: its own class — admits only type PENDING_TYPE, the pending authorization this module signs (signPendingAuthorization), and nothing else.
     const claims = verifyJwtWithRotation<PendingAuthorization & { type?: string }>(assertion);
     if (claims.type !== PENDING_TYPE) return null;
     if (typeof claims.clientId !== 'string' || typeof claims.redirectUri !== 'string' || typeof claims.codeChallenge !== 'string') {

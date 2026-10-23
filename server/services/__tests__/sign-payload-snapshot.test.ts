@@ -32,8 +32,15 @@ const H = vi.hoisted(() => ({
 // steps, not the record, so the record names the run's own application number
 // (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
 const { recordedRunIdentity } = vi.hoisted(() => ({
-  recordedRunIdentity: async (i: { applicationNumber: string }) => ({
+  recordedRunIdentity: async (i: { applicationNumber: string; region?: string }) => ({
     recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+    applicantId: i.region === 'US' ? '123456789' : null,
+    contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    ...(i.region === 'US' ? { recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: i.applicationNumber,
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantName: 'Test Sponsor Inc',
+      applicantId: '123456789', contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } } } : {}),
   }),
 }));
 vi.mock('../ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
@@ -92,7 +99,7 @@ const VO: BoundDigestValidatorOutcome = { gatewayReady: true, hardenedScore: 100
 
 const IDENTITY = {
   submissionId: 'sub-001',
-  applicationNumber: 'IND123456',
+  applicationNumber: '123456',
   region: 'US' as const,
   submissionType: 'IND',
   organizationId: 1,
@@ -104,7 +111,7 @@ const IDENTITY = {
 const RESUME_INPUTS: OrchestratorInputs = {
   organizationId: 1,
   submissionId: 'sub-001',
-  applicationNumber: 'IND123456',
+  applicationNumber: '123456',
   region: 'US',
   submissionType: 'IND',
   cmcSources: [],
@@ -130,7 +137,7 @@ function makeRunRow(signPayload: unknown): Record<string, unknown> {
     organization_id: 1,
     submission_id: 'sub-001',
     submission_id_fk: 42,
-    application_number: 'IND123456',
+    application_number: '123456',
     region: 'US',
     submission_type: 'IND',
     started_at: new Date(0).toISOString(),
@@ -155,6 +162,11 @@ function snapshotFor(leaves: ECTDLeaf[], overrides: Record<string, unknown> = {}
     region: 'US',
     submissionType: 'IND',
     totalSizeBytes: 2048,
+    recordedPackageIdentity: { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: IDENTITY.applicationNumber,
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } },
     ...overrides,
   };
 }
@@ -171,6 +183,7 @@ function digestForSnapshot(snap: ReturnType<typeof snapshotFor>): string {
     submissionType: snap.submissionType as string,
     organizationId: snap.organizationId as number,
     backboneXml: (snap.backboneXml as string) || undefined,
+    recordedPackageIdentity: snap.recordedPackageIdentity,
   });
 }
 
@@ -182,6 +195,52 @@ beforeEach(() => {
 // ── 1–2. Digest is a pure function of its components ────────────────────────────
 
 describe('computeBoundPayloadDigest refactor', () => {
+  it('keeps recorded applicant binding stable when storage reorders object keys', () => {
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const reordered = { identity: Object.fromEntries(Object.entries(recordedPackageIdentity.identity).reverse()), version: 1 } as typeof recordedPackageIdentity;
+    const components = { leaves: [makeLeaf('m3.2.S.1', 'a'.repeat(32))], validatorOutcome: VO, ...IDENTITY };
+    expect(computeBoundPayloadDigestFromComponents({ ...components, recordedPackageIdentity: reordered }))
+      .toBe(computeBoundPayloadDigestFromComponents({ ...components, recordedPackageIdentity }));
+  });
+
+  it('binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe', () => {
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
+    const components = { leaves, validatorOutcome: VO, ...IDENTITY, applicationNumber: 'IND123456' };
+    const snapshot = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111',
+      applicationNumber: '123456', applicantName: 'Recorded Sponsor',
+      applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789',
+      contact: { name: 'Regulatory Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const historical = computeBoundPayloadDigestFromComponents(components);
+    // Fixed pre-integration digest for this historical snapshot (b9a48ce71).
+    expect(historical).toBe('e44dc2505771ec6a528e950587ecac2ab66d8eead703b8bc618cade0a9660513');
+    const withIdentity = computeBoundPayloadDigestFromComponents({ ...components, recordedPackageIdentity: snapshot });
+    expect(withIdentity).not.toBe(historical);
+    const changed = { ...snapshot, identity: { ...snapshot.identity, contact: { ...snapshot.identity.contact, email: 'updated@example.test' } } };
+    expect(computeBoundPayloadDigestFromComponents({ ...components, recordedPackageIdentity: changed })).not.toBe(withIdentity);
+    expect(computeBoundPayloadDigestFromComponents({ ...components, recordedPackageIdentity: undefined })).toBe(historical);
+  });
+
+  it('carries the assembled recorded identity into the bound digest wrapper', () => {
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const assembly = { leaves, totalSizeBytes: 1024, applicationNumber: IDENTITY.applicationNumber,
+      sequenceNumber: '0000', region: 'US' as const, submissionType: 'IND', recordedPackageIdentity };
+    const validation = { gatewayReady: VO.gatewayReady, hardenedScore: VO.hardenedScore, summary: VO.summary } as never;
+    const actual = computeBoundPayloadDigest({ assembly, validation, ...IDENTITY });
+    expect(actual).toBe(computeBoundPayloadDigestFromComponents({ leaves, validatorOutcome: VO, ...IDENTITY, recordedPackageIdentity }));
+    expect(actual).not.toBe(computeBoundPayloadDigestFromComponents({ leaves, validatorOutcome: VO, ...IDENTITY }));
+  });
+
   it('the component helper produces a byte-identical digest to the wrapper (no signature invalidated)', () => {
     const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32)), makeLeaf('m3.2.P.1', 'b'.repeat(32))];
     const assembly = {
@@ -213,6 +272,7 @@ describe('computeBoundPayloadDigest refactor', () => {
       region: 'US' as const,
       submissionType: 'IND',
       backboneXml,
+      recordedPackageIdentity: snapshotFor(leaves).recordedPackageIdentity,
     };
     const validation = { gatewayReady: VO.gatewayReady, hardenedScore: VO.hardenedScore, summary: VO.summary } as never;
     const prepDigest = computeBoundPayloadDigest({ assembly, validation, ...IDENTITY, backboneXml });
@@ -246,6 +306,35 @@ describe('computeBoundPayloadDigest refactor', () => {
 });
 
 // ── 3–5. Resume hydration behavior ──────────────────────────────────────────────
+
+describe('FDA frozen applicant proof at the sign boundary', () => {
+  it('refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof', async () => {
+    const snap = snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))], { recordedPackageIdentity: undefined });
+    const payloadDigest = digestForSnapshot(snap);
+    H.runRow = makeRunRow({ payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap });
+    H.signatureRows = [{ id: 777 }];
+    const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    const step = run.steps.find((candidate) => candidate.key === 'package.sign');
+    expect(step?.status).toBe('failed');
+    expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+  });
+
+  it('hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data', async () => {
+    const recordedPackageIdentity = { version: 1 as const, identity: {
+      programId: '11111111-1111-4111-8111-111111111111', applicationNumber: '123456',
+      applicantName: 'Recorded Sponsor', applicantSponsorId: '22222222-2222-4222-8222-222222222222',
+      applicantId: '123456789', contact: { name: 'Contact', phone: '+1 555 0100', email: 'ra@example.test' },
+    } };
+    const snap = { ...snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))]), recordedPackageIdentity };
+    const payloadDigest = computeBoundPayloadDigestFromComponents({ ...snap, region: 'US' });
+    H.runRow = makeRunRow({ payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap });
+    H.signatureRows = [{ id: 777 }];
+    const { run, outputs } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    expect(run.steps.find((step) => step.key === 'package.sign')?.status).toBe('complete');
+    expect(outputs.assembly?.recordedPackageIdentity).toEqual(recordedPackageIdentity);
+  });
+
+});
 
 describe('resumeAwaitingSignature — snapshot hydration', () => {
   it('HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs', async () => {

@@ -3,24 +3,30 @@
 # everything else is the stack's. See terraform/stack/versions.tf for why.
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.11"
 
   required_providers {
+    # Bounded to the 5.x line the lock file pins (.terraform.lock.hcl);
+    # 5.93 is the first with aws_db_instance.database_insights_mode.
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "~> 5.93"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.5"
+      version = "~> 3.6"
     }
   }
 
+  # The bucket is the account's (c2c-tfstate-<account id>-us-east-1, created by
+  # terraform/bootstrap), so it is not named here: copy backend.hcl.example to
+  # backend.hcl and run `terraform init -backend-config=backend.hcl`. Locking is
+  # S3-native, a lock object beside the state; the DynamoDB table it replaced
+  # is deprecated (MR-03 OPS-03/OPS-26; ci:terraform-backend).
   backend "s3" {
-    bucket         = "c2c-terraform-state"
-    key            = "production/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "c2c-terraform-lock"
+    key          = "production/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
     # No `encrypt = true`: without a kms_key_id it requests SSE-S3 on every write,
     # overriding the bucket's customer-managed key, and the bucket refuses it
     # (terraform/bootstrap, TRIVY-01).
@@ -63,11 +69,11 @@ module "stack" {
   evidence_object_lock_mode = "COMPLIANCE"
   evidence_retention_days   = 2555 # 7 years
 
-  rds_instance_class   = var.rds_instance_class
-  api_cpu              = var.api_cpu
-  api_memory           = var.api_memory
-  api_desired_count    = var.api_desired_count
-  worker_desired_count = var.worker_desired_count
+  rds_instance_class = var.rds_instance_class
+  api_cpu            = var.api_cpu
+  api_memory         = var.api_memory
+  api_desired_count  = var.api_desired_count
+  api_max_count      = var.api_max_count
 
   image_tag                  = var.image_tag
   acm_certificate_arn        = var.acm_certificate_arn
@@ -77,6 +83,7 @@ module "stack" {
 
   # The account's GitHub OIDC provider is created here.
   create_github_oidc_provider = true
+  staging_account_id          = var.staging_account_id
 
   jwt_secret               = var.jwt_secret
   refresh_token_secret     = var.refresh_token_secret
@@ -118,10 +125,6 @@ output "ecr_api_url" {
   value = module.stack.ecr_api_url
 }
 
-output "ecr_worker_url" {
-  value = module.stack.ecr_worker_url
-}
-
 output "rds_endpoint" {
   value     = module.stack.rds_endpoint
   sensitive = true
@@ -129,6 +132,11 @@ output "rds_endpoint" {
 
 output "ecs_cluster" {
   value = module.stack.ecs_cluster
+}
+
+# The pipeline's repository variable FRONTEND_BUCKET (terraform.tfvars.example).
+output "frontend_bucket" {
+  value = module.stack.frontend_bucket
 }
 
 output "evidence_bucket" {

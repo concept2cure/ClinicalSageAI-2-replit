@@ -64,7 +64,11 @@ const h = vi.hoisted(() => ({
   authoringReadThrows: false,
   /** The filing document's own lifecycle state. */
   filingStatus: 'draft',
+  /** Whether the filing already has a row for 2.5 (false: the INSERT branch runs). */
+  sectionExists: true,
   statements: [] as string[],
+  /** The parameters of every INSERT into c2c_document_sections. */
+  inserts: [] as unknown[][],
 }));
 
 /** Every statement this route issues, so a missing question is visible. */
@@ -73,7 +77,7 @@ function record(sql: string): void {
 }
 
 vi.mock('../../../db.js', () => {
-  const answer = async (sql: string) => {
+  const answer = async (sql: string, params: unknown[] = []) => {
     record(sql);
     if (/FROM\s+authoring_documents/i.test(sql)) {
       /* Two DIFFERENT failures, deliberately: a deployment without the
@@ -89,6 +93,11 @@ vi.mock('../../../db.js', () => {
     if (/to_regclass/i.test(sql)) {
       return { rows: [{ present: h.authoringTablePresent }], rowCount: 1 };
     }
+    /* The pack's own entry for the section, which the INSERT branch reads. It
+       is matched before the document read below, whose FROM it shares. */
+    if (/jsonb_array_elements\(rp\.required_sections\)/i.test(sql)) {
+      return { rows: [{ label: 'Introductory statement', path_order: 5, mandatory: true, parent_key: 'M2' }], rowCount: 1 };
+    }
     if (/FROM\s+c2c_documents/i.test(sql)) {
       return { rows: [{ id: 'doc-1', status: h.filingStatus }], rowCount: 1 };
     }
@@ -96,13 +105,14 @@ vi.mock('../../../db.js', () => {
        document's sections are written. It also keeps every case on the UPDATE
        branch, so the red is about the seal and not about which branch ran. */
     if (/FROM\s+c2c_document_sections/i.test(sql)) {
-      return { rows: [{ id: 'sec-1', status: 'drafted' }], rowCount: 1 };
+      return h.sectionExists ? { rows: [{ id: 'sec-1', status: 'drafted' }], rowCount: 1 } : { rows: [], rowCount: 0 };
     }
     if (/FROM\s+c2c_rule_packs/i.test(sql) || /rule_pack/i.test(sql)) return { rows: [], rowCount: 0 };
     /* The write itself. The route returns the row it wrote, so a stub that
        answers nothing turns every case into a 500 and the red would be about
        this fixture rather than about the seal. */
     if (/INSERT INTO c2c_document_sections|UPDATE c2c_document_sections/i.test(sql)) {
+      if (/INSERT INTO c2c_document_sections/i.test(sql)) h.inserts.push(params);
       return {
         rows: [{ id: 'sec-1', document_id: 'doc-1', section_key: '2.5', content: { text: 'Text put straight into the filing.' }, status: 'drafted', draft_source: null }],
         rowCount: 1,
@@ -158,7 +168,9 @@ beforeEach(() => {
   h.authoringTablePresent = true;
   h.authoringReadThrows = false;
   h.filingStatus = 'draft';
+  h.sectionExists = true;
   h.statements = [];
+  h.inserts = [];
 });
 
 describe('PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal', () => {
@@ -248,5 +260,24 @@ describe('PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
     expect(h.statements).toEqual([]);
+  });
+});
+
+describe('PATCH on a section not created yet files it under its pack parent (FILING_SPINE F23 8/9)', () => {
+  it('the INSERT carries the parent the rule pack gives the section', async () => {
+    /* Without its parent the section reads as a root, and the heading above
+       it as a section that holds nothing. Readiness counts such a heading
+       (migrations/20260528_phase9_document_schema.sql), so the figure falls. */
+    h.sectionExists = false;
+    const res = await saveSection();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(h.inserts, 'the route did not take the INSERT branch').toHaveLength(1);
+    const [docId, key, label, , , , parent] = h.inserts[0];
+    expect([docId, key, label]).toEqual(['doc-1', '2.5', 'Introductory statement']);
+    expect(parent).toBe('M2');
+    /* A stub answers whatever is asked, so the statements are read too: the
+       pack read must ask for the parent and the INSERT must write it. */
+    expect(h.statements.find((s) => /required_sections/.test(s))).toMatch(/elem ->> 'parent_key' AS parent_key/);
+    expect(h.statements.find((s) => /INSERT INTO c2c_document_sections/.test(s))).toMatch(/status, parent_key\) VALUES \(.*\$6, \$7\)/);
   });
 });

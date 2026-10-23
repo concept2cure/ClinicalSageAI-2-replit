@@ -4,8 +4,8 @@ output "deploy_role_arn" {
 }
 
 output "build_role_arn" {
-  description = "Repository secret AWS_BUILD_ROLE_ARN: build-push and smoke-test, which run outside the environment."
-  value       = aws_iam_role.build.arn
+  description = "Repository secret AWS_BUILD_ROLE_ARN: build-push, which runs outside the environment. Null where this environment never builds (production)."
+  value       = one(aws_iam_role.build[*].arn)
 }
 
 output "deploy_policy" {

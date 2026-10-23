@@ -153,9 +153,11 @@ describe('adding and finding a version in the Vault (VR-09)', () => {
     ]);
     render(<Vault {...props()} />);
     await screen.findByTestId('vault-versions');
-    fireEvent.change(screen.getByTestId('vault-upload-input'), {
+    fireEvent.change(screen.getByTestId('vault-upload-zone-files'), {
       target: { files: [new File(['changed'], 'stability-summary-24m.pdf')] },
     });
+    // The chosen file waits as a row until it is sent (gap 7.1).
+    fireEvent.click(await screen.findByTestId('vault-stage-upload'));
     const offer = await screen.findByText('Upload as a new version of stability-summary-24m');
     fireEvent.click(offer);
     await waitFor(() => expect(sent).toHaveLength(2));

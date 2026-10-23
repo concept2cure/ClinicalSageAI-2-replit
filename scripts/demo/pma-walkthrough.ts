@@ -4,8 +4,8 @@
  *   npx tsx scripts/demo/pma-walkthrough.ts
  *
  * Scenario: a next-generation implantable continuous glucose monitor (CGM) with
- * a connected mobile app, seeking Premarket Approval — a fully-prepared
- * submission across all domains.
+ * a connected mobile app, seeking Premarket Approval. The capstone scores only the
+ * domains an assessor below computes; the others are reported not assessed.
  */
 
 import { computeDiagnosticAccuracy, computeRoc } from '../../server/services/stats/clinical-performance';
@@ -56,19 +56,25 @@ const spl = assessSplCompleteness({
 console.log(`SPL labeling: ${(spl.completenessScore * 100).toFixed(0)}% complete`);
 
 h('Submission-readiness capstone — pathway: pma');
+// 2026-10-15: clinicalPerformance and postMarketPlan were typed in as 1 and a valid DI
+// check digit stood for UDI/GUDID at 1; nothing here computes those domains, so they
+// are left out and reported not assessed.
 const readiness = assessSubmissionReadiness({
   pathway: 'pma',
   domainScores: {
-    clinicalPerformance: 1,
-    cybersecurity: cyber.completeness,
+    cybersecurity: cyber.completeness, // share of the §524B artifacts recorded present
     humanFactors: hfe.completenessScore,
-    udiGudid: di.valid ? 1 : 0,
     labelingSpl: spl.completenessScore,
-    postMarketPlan: 1,
   },
 });
-console.log(`Overall: ${(readiness.overallScore * 100).toFixed(0)}%  →  VERDICT: ${readiness.verdict.toUpperCase()}`);
-readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${(d.score * 100).toFixed(0)}%`));
+const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
+console.log(
+  readiness.assessedDomainCompleteness === null
+    ? 'Completeness of the assessed domains: none assessed'
+    : `Completeness of the assessed domains: ${pct(readiness.assessedDomainCompleteness)} (${readiness.perDomain.length} of ${readiness.requiredDomains.length} required domains)  →  verdict: ${readiness.verdict}`,
+);
+readiness.perDomain.forEach(d => console.log(`  ${d.complete ? '✓' : '○'} ${d.domain}: ${pct(d.score)}`));
+if (readiness.notAssessedDomains.length) console.log(`Not assessed: ${readiness.notAssessedDomains.join(', ')}`);
 if (readiness.prioritizedGaps.length) {
   console.log('Prioritized gaps:');
   readiness.prioritizedGaps.forEach((g, i) => console.log(`  ${i + 1}. ${g.domain} (${(g.score * 100).toFixed(0)}%)`));
