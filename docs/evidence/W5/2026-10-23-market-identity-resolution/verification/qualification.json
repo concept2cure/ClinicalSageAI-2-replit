@@ -1,0 +1,154 @@
+{
+  "sourceCommit": "b0beb9392ef1fd2afb68ed5652ef6747f54c084d",
+  "qualifiedHead": "8a4893fea3c925dfe578e76332ef82d8efa77332",
+  "integrated": {
+    "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts server/services/ectd/__tests__/recorded-applicant-identity.test.ts server/services/ectd/__tests__/run-package-identity.test.ts server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts server/services/submission-service/__tests__/market-application-number.pglite.test.ts server/routes/__tests__/submissions-market-number-route.test.ts tests/regulatory/region-identity.test.ts client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx",
+    "files": 12,
+    "passed": 221,
+    "exitCode": 0
+  },
+  "build": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exitCode": 0,
+    "node": "22.23.3",
+    "outputs": [
+      "Vite client",
+      "server",
+      "audit-chain verifier"
+    ],
+    "existingWarnings": [
+      "chunk-size advisory"
+    ]
+  },
+  "inputVerification": {
+    "sourceConfigFiles": 10123,
+    "changed": []
+  },
+  "browser": {
+    "scenarios": 7,
+    "pageErrors": 0,
+    "syntheticApi": true
+  },
+  "gitleaks": {
+    "finalExitCode": 0,
+    "findings": 0,
+    "initialContentHashFormattingCorrection": "hash-format-correction.json"
+  },
+  "fullCompilerAndPush": "Five completed normal full compiler runs0errors; final direct push pending after docs-only sync.",
+  "humanWitness": "unexecuted",
+  "agencyQualification": "unexecuted",
+  "firstFullCompilerAndPush": {
+    "candidate": "1a6397d0f839359f605d276f3cbdad68e65189af",
+    "fullCompilerErrors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Canonical advanced while full compiler ran; ordinary merge required.",
+    "receipt": "push-first-ref-race.txt.gz"
+  },
+  "catchup": {
+    "head": "6c7235f227d452c10ac4178a3e87f62d52a5fda8",
+    "incoming": "7184fb1fd",
+    "laneInputsChanged": [],
+    "tests": {
+      "files": 5,
+      "passed": 161,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 30,
+    "changedInputs": []
+  },
+  "secondFullCompilerAndPush": {
+    "candidate": "175a4194e3c55fb8a9da3e5fa6d00c08d4a53ca9",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote ref advanced to66ad10eaf during compiler; normal ordinary merge preserved new project intake.",
+    "receipt": "push-second-ref-race.txt.gz"
+  },
+  "intakeCatchup": {
+    "head": "e7f38d5fd22bc8330212534dcdee3cd1f81a7415",
+    "incoming": "66ad10eaf",
+    "earlier57InputsChanged": [],
+    "tests": {
+      "files": 4,
+      "passed": 92,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts shared/__tests__/project-intake-workspace.test.ts client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 57,
+    "changedInputs": []
+  },
+  "thirdFullCompilerAndPush": {
+    "candidate": "24bfb02a2bd6f7532712630d106607ae3d26196e",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote advanced to035ee6854 during full compiler; ordinary merge retained official eSTAR attachments.",
+    "receipt": "push-third-ref-race.txt.gz"
+  },
+  "estarCatchup": {
+    "qualifiedHead": "c503801bf8793b1d5bf0ded0ed082a3f8bcd4cb0",
+    "currentHead": "3199db1c6ca8eb2e942ead1300113f0489e0c622",
+    "incoming": "035ee6854",
+    "tests": {
+      "files": 4,
+      "passed": 58,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 85,
+    "changedInputs": [],
+    "laterDocsOnlySync": "164b062b2"
+  },
+  "fourthFullCompilerAndPush": {
+    "candidate": "39b38e09640e04da25ff40b08a931cbb4d58d7ac",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Canonical ref advanced during compiler; ordinary merge retained five-line stored-source backfill correction.",
+    "receipt": "push-fourth-ref-race.txt.gz"
+  },
+  "backfillCatchup": {
+    "head": "ef5e8384375699ca03fb9202bd3071dad1ae0cfc",
+    "incoming": "f0ec738b1",
+    "previousScopedInputsChanged": [],
+    "tests": {
+      "files": 3,
+      "passed": 27,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 89,
+    "changedInputs": []
+  },
+  "fifthFullCompilerAndPush": {
+    "candidate": "ca1012dfb00df62b41a003801703628329f9f957",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote advanced by documentation-only41ce35bac; all89source pins match after ordinary merge.",
+    "receipt": "push-fifth-ref-race.txt.gz"
+  },
+  "docsOnlySync": {
+    "head": "ced573beb70f586d6fcb5835475d2e24090e25b7",
+    "incoming": "41ce35bac",
+    "inputs": 89,
+    "changed": [],
+    "testsAndBuildRepeated": false
+  }
+}

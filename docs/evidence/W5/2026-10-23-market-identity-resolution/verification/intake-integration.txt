@@ -1,0 +1,327 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:29:08.951Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:29:11.244Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:29:11.245Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:29:11.245Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 93ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default
+{
+  "timestamp": "2026-10-23T19:29:13.107Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "2efe8f16-bea4-499b-a908-68dba28072eb",
+    "orgId": 3,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 38ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 32ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default 33ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back
+{
+  "timestamp": "2026-10-23T19:29:13.215Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "94912d7a-c2ed-47d6-b077-10cf333fffcf",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back
+{
+  "timestamp": "2026-10-23T19:29:13.240Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "0a5f174e-53c5-4fd1-957d-3b1b3003a8a4",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > places the actual saved anchor and audit in the explicitly selected client instead of the default 34ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection null without falling back 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 0 without falling back 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection -1 without falling back 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1.5 without falling back 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 4 without falling back 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back 23ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back 23ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice
+{
+  "timestamp": "2026-10-23T19:29:13.336Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "c26dd0e5-5105-4e19-b094-1954590275db",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 2147483648 without falling back 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 9007199254740991 without falling back 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice 77ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-23T19:29:13.411Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "927fc2c5-cf24-4bab-8dc5-35c48665d30d",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-23T19:29:13.428Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "9cf7249a-1563-4942-bf87-c0239d9a88d1",
+    "orgId": 3,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-10-23T19:29:13.448Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "f7fcf862-50f2-4e89-bffe-30dbd8ad6646",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-10-23T19:29:13.465Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "9d4e724b-3b7b-49f2-a646-48a2c7fd80c0",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > omitted legacy intake uses the sole active workspace even beside an archived one 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses out-of-range and malformed request claims before business SQL 24ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving 41ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 17ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-10-23T19:29:13.487Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails
+{
+  "timestamp": "2026-10-23T19:29:13.541Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once
+{
+  "timestamp": "2026-10-23T19:29:13.567Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "801087de-d59e-4287-b5d3-f9b9a4e399e1",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind 19ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > preserves legacy default-marker ensure behavior and refuses contradictory explicit re-invocation 23ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails 31ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved
+{
+  "timestamp": "2026-10-23T19:29:13.585Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "d8d955bf-c055-4a9e-8641-1e142cee7920",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read
+{
+  "timestamp": "2026-10-23T19:29:13.607Z",
+  "level": "error",
+  "message": "[c2c-projects] Project committed but details unavailable",
+  "context": {
+    "correlationId": "ec66b47e-b10a-4ce3-b27c-d32d260d2838",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once 26ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved 14ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > every program the route created is anchored in its own organisation 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > supplies only active same-organization IDs and names with the current actor receipt 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > distinguishes an honestly empty active list from unavailable options 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses a current viewer regardless of its stale request role 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses unverified stores instead of returning a fabricated empty list 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses inactive actors while the canonical store prevents duplicate membership 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > rechecks the current creator after reading options and suppresses a revoked result 8ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 779ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 319ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 218ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 432ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 213ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 511ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 471ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 445ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 459ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 465ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 476ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 467ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 443ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 353ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 348ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 164ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 417ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 469ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 376ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 405ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 366ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty 483ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty 514ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty 524ms
+stdout | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:29:30.239Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:29:30.240Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:29:30.241Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number 11ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's 6ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number 21ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built 7ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("not-a-market") never borrows either recorded number 4ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("") never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("   ") never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region (null) never borrows either recorded number 2ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number 6ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("") cannot authorize the project or submission number 5ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("   ") cannot authorize the project or submission number 6ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > two identical unknown region strings do not establish home ownership 0ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes 19ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number 10ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number 12ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > admits a verified active list, including a genuine empty list 2ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope null 1ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope undefined 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":false,"clients":[{"id":"21","name":"Sponsor A","organizationId":"7","status":"active"}],"meta":{"purpose":"project-intake","actorUserId":12,"organizationId":7}} 1ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":true,"clients":null,"meta":{"purpose":"project-intake","actorUserId":12,"organizationId":7}} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":true,"clients":[{"id":"21","name":"Sponsor A","organizationId":"7","status":"active"}],"meta":{"actorUserId":12,"organizationId":7,"purpose":"other"}} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier 0 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier -1 1ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier 1.5 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "01" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "1.5" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "2147483648" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier true 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier null 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier undefined 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > admits only a created UUID program linked to the exact actor, parent and name 1ms
+
+ Test Files  4 passed (4)
+      Tests  92 passed (92)
+   Start at  19:29:02
+   Duration  32.31s (transform 5.45s, setup 281ms, import 5.99s, tests 24.26s, environment 824ms)
+

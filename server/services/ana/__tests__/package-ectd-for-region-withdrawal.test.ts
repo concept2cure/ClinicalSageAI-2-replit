@@ -15,6 +15,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import JSZip from 'jszip';
+import { PDFDocument } from 'pdf-lib';
 
 // 2026-09-28: confirmed writes now need an editor role (registry wrapper,
 // writeRoleRefusal); CTX models a confirmed person who may edit, so the
@@ -28,7 +29,7 @@ const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity
   // 2026-10-22 (ccd509c06): a US package also names the bound ind_sponsors
   // applicant, its D-U-N-S and a regulatory contact; the project records them.
   readRecordedPackageIdentity: vi.fn(async () => ({
-    programId: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', applicationNumber: '123456',
+    programId: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', applicationNumber: '123456', homeAgency: 'FDA',
     applicantSponsorId: '3f0b8e2a-6c4d-4e1f-8a7b-9c0d1e2f3a4b', applicantName: 'S', applicantId: '123456789',
     contact: { name: 'Regulatory Contact', phone: '+1-555-0100', email: 'regulatory@example.com' },
   })),
@@ -56,7 +57,11 @@ async function tenantWorkDir(): Promise<string> {
 }
 
 const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = async (label: string) => {
+  const document = await PDFDocument.create();
+  document.addPage().drawText(label);
+  return Buffer.from(await document.save());
+};
 
 type LeafSchema = { properties: Record<string, unknown>; required: string[] };
 const leafSchema = (): LeafSchema =>
@@ -85,7 +90,7 @@ describe('package_ectd_for_region — withdrawal', () => {
     const work = await tenantWorkDir();
     try {
       const cover = path.join(work, 'cover.pdf');
-      await fs.writeFile(cover, pdf('cover'));
+      await fs.writeFile(cover, await pdf('cover'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', file_name: 'old-manufacture.pdf', title: 'Old Manufacture',
           modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
@@ -105,7 +110,7 @@ describe('package_ectd_for_region — withdrawal', () => {
     const work = await tenantWorkDir();
     try {
       const withdrawn = path.join(work, 'old-manufacture.pdf');
-      await fs.writeFile(withdrawn, pdf('WITHDRAWN DOCUMENT BYTES'));
+      await fs.writeFile(withdrawn, await pdf('WITHDRAWN DOCUMENT BYTES'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', source_path: withdrawn, file_name: 'old-manufacture.pdf',
           title: 'Old Manufacture', modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
@@ -131,7 +136,7 @@ describe('package_ectd_for_region — withdrawal', () => {
     const work = await tenantWorkDir();
     try {
       const cover = path.join(work, 'cover.pdf');
-      await fs.writeFile(cover, pdf('cover'));
+      await fs.writeFile(cover, await pdf('cover'));
       const out = await run({ ...base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', file_name: 'ghost.pdf', title: 'Ghost' },
         { ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' },

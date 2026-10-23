@@ -10,7 +10,8 @@
  * through POST to the same path: the project's lead or a manager, with a
  * reason, as a chained audit row. Nothing is drawn for the home market, whose
  * number is the project's, or while the read is in flight. A failed read says
- * so.
+ * so. Unresolved market ownership shows the server's reason and offers no
+ * number-recording form.
  */
 import React from 'react';
 import { apiRequest, ApiRequestError, redactInternals } from '@/lib/queryClient';
@@ -24,13 +25,19 @@ interface MarketNumberRead {
   market: string | null;
   homeAgency: string | null;
   applicationNumber: string | null;
+  /** The server cannot establish which market owns a number. Absent on older servers. */
+  unresolvedReason?: string | null;
   /** The newest recording: who, when, why. Absent from an older server. */
   lastRecorded?: { by: string | null; at: string; reason: string | null } | null;
 }
 
+const validUnresolvedReason = (value: unknown): boolean =>
+  value === undefined || value === null || (typeof value === 'string' && value.trim().length > 0);
+
 const isMarketNumberRead: ShapeGuard<MarketNumberRead> = (v): v is MarketNumberRead =>
   !!v && typeof v === 'object' && typeof (v as MarketNumberRead).home === 'boolean' &&
-  ((v as MarketNumberRead).applicationNumber === null || typeof (v as MarketNumberRead).applicationNumber === 'string');
+  ((v as MarketNumberRead).applicationNumber === null || typeof (v as MarketNumberRead).applicationNumber === 'string') &&
+  validUnresolvedReason((v as MarketNumberRead).unresolvedReason);
 
 /** POST the number with its reason: whether it changed, or the server's words on refusal. Never throws. */
 async function postNumber(submissionId: number, applicationNumber: string, reason: string): Promise<{ refused: string } | { changed: boolean }> {
@@ -139,12 +146,24 @@ export function MarketApplicationNumber({ submissionId, canChange, onChanged }: 
     onChanged?.();
   }, [onChanged]);
   const { refusal, setRefusal, save } = useRecordNumber(submissionId, done);
+  const unresolvedReason = st.data?.unresolvedReason;
+  React.useEffect(() => {
+    if (!unresolvedReason) return;
+    setOpen(false);
+    setNotice(null);
+    setRefusal(null);
+  }, [unresolvedReason, setRefusal]);
 
   if (st.loading) return null;
   if (st.error || !st.data) {
     return <div className="pj-file-m" role="alert">This market&apos;s application number could not be read.</div>;
   }
   const read = st.data;
+  // The server's unresolved verdict takes precedence over a contradictory
+  // home flag or number, neither of which establishes ownership here.
+  if (read.unresolvedReason) {
+    return <div className="pj-file-m" role="alert">{read.unresolvedReason}</div>;
+  }
   if (read.home) return null;
   const market = read.market ?? 'this';
   return (

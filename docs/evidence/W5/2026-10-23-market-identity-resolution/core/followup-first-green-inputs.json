@@ -1,0 +1,19 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts",
+  "inputs": {
+    "server/services/ectd/package-identity.ts": "6b9e1fb1d7fc836ee4bae4dbda02860bc8887fca44eed5772894c586dce5b03e",
+    "server/services/ana/AnaToolExecutor.ts": "d240a2893312b2433fc5a6951fdc7feef7db188c1b1c71882e5c7069ed0901e6",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts": "08dac19f20efd1eddffb16f0109000788887e44b72bb4056a23fd7f11e60a965",
+    "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts": "f02b353383705299c8ac882f89e346160392115bf2dc264478b62346039d0490",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts": "ea8ed3f84ef67eda0db12efd687ae7a75482b9580b60fc9cbd8a2bca5b90e7f4",
+    "server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts": "48a9bedc63155fb495dfef54eb721e338129387d338fe3128de90b9e4b1ed2ae"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 4,
+    "passed": 36,
+    "allInputHashesStable": true,
+    "note": "Before root requested more precise unanchored remedy wording."
+  }
+}

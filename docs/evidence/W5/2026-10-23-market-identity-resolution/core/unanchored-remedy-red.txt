@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:01:33.254Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:01:33.260Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T19:01:33.260Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("not-a-market") never borrows either recorded number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("") never borrows either recorded number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region ("   ") never borrows either recorded number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an explicit unresolved package region (null) never borrows either recorded number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("") cannot authorize the project or submission number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > an unresolved home agency ("   ") cannot authorize the project or submission number
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > two identical unknown region strings do not establish home ownership
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes
+ ↓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number 39ms
+   → expected 'the submission is not anchored to a p…' not to match /record the number on the project/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > unresolved market identity never borrows a recorded application number > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number
+AssertionError: expected 'the submission is not anchored to a p…' not to match /record the number on the project/
+
+- Expected:
+/record the number on the project/
+
++ Received:
+"the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)"
+
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:186:52
+    184|       expect(identity.applicationNumber).toBeNull();
+    185|       expect(identity.marketResolutionProblem).toMatch(/not anchored t…
+    186|       expect(identity.marketResolutionProblem).not.toMatch(/record the…
+       |                                                    ^
+    187|       expect(packageIdentityRefusal(identity, 'Nothing was built.')?.m…
+    188|     });
+ ❯ withChangedRecord server/services/ectd/__tests__/market-application-number.pglite.test.ts:70:5
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:182:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  19:01:25
+   Duration  12.60s (transform 4.69s, setup 96ms, import 7.47s, tests 4.66s, environment 0ms)
+

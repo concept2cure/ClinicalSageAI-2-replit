@@ -16,6 +16,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 
 const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity } = vi.hoisted(() => ({
@@ -40,12 +41,16 @@ import { anaScratchDir } from '../document-workspace';
 const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 const PROGRAM = '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55';
 const recordedIdentity = (patch: Record<string, unknown> = {}) => ({
-  programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
+  programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics', homeAgency: 'FDA',
   applicantSponsorId: '11111111-1111-4111-8111-111111111111', applicantId: '123456789',
   contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' },
   ...patch,
 });
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = async (label: string) => {
+  const document = await PDFDocument.create();
+  document.addPage().drawText(label);
+  return Buffer.from(await document.save());
+};
 
 type Schema = { properties: Record<string, unknown>; required: string[] };
 const schema = () => PACKAGE_ECTD_FOR_REGION.input_schema as unknown as Schema;
@@ -64,7 +69,7 @@ async function coverLeaf() {
   const cover = path.join(work, 'p27-cover.pdf');
   const output = path.join(work, 'p27-out');
   await fs.mkdir(work, { recursive: true });
-  await fs.writeFile(cover, pdf('cover'));
+  await fs.writeFile(cover, await pdf('cover'));
   // Each fixture owns its paths; model input cannot choose a scratch directory.
   const modelInput = (extra: Record<string, unknown> = {}) => ({
     region: 'fda', program_id: PROGRAM, sequence: '0000', submission_type: 'original', application_type: 'ind',

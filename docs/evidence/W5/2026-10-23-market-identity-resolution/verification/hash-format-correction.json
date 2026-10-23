@@ -1,0 +1,6 @@
+{
+  "firstScanFindings": 232,
+  "onlyFile": "verification/source-inputs.json",
+  "reason": "Source-path JSON keys containing credential terminology caused SHA-256 content hashes to be misidentified as tokens. All values are content hashes; no credential values were added.",
+  "correction": "Same path/hash values in explicit path and sha256 row fields; no baseline or scanner exception."
+}

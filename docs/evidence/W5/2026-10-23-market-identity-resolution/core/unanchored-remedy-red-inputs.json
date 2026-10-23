@@ -1,0 +1,11 @@
+{
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts -t 'a missing, deleted or foreign submission'",
+  "productionHash": "6b9e1fb1d7fc836ee4bae4dbda02860bc8887fca44eed5772894c586dce5b03e",
+  "productionHashSource": "followup-first-green-inputs.json (unchanged until remedy correction after observed failing run)",
+  "testSha256": "ecb992dd4e8f6ce3333cd801b958688e1b23738f73883beb1a1b158b1e29bab7",
+  "result": {
+    "exitCode": 1,
+    "failed": 1,
+    "skipped": 14
+  }
+}

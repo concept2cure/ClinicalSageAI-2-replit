@@ -10,7 +10,7 @@
  * another market reads the number recorded on that submission, and with none
  * recorded its package is refused by name, never built with the project's.
  */
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
@@ -22,7 +22,7 @@ vi.mock('../../../db', () => ({
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 
 import { assembleSubmissionEctd } from '../assemble-from-core';
-import { packageIdentityRefusal, readSubmissionPackageIdentity, PackageIdentityMissingError } from '../package-identity';
+import { isHomeMarket, packageIdentityRefusal, readSubmissionPackageIdentity, recordedPackageIdentitySnapshot, PackageIdentityMissingError } from '../package-identity';
 
 let harness: IndPgliteDb;
 const ORG = 7;
@@ -58,8 +58,20 @@ beforeAll(async () => {
       (22, 1, 'eu', '0001', ${ORG}, ${USER});
   `);
 });
+afterAll(async () => { await harness?.close(); });
 
 const read = (id: number) => readSubmissionPackageIdentity(q(), ORG, id);
+
+/** Each damaged-record case restores its own changes before the next check. */
+async function withChangedRecord(sql: string, params: unknown[], check: () => Promise<void>) {
+  await harness.pglite.exec('BEGIN');
+  try {
+    await harness.pglite.query(sql, params);
+    await check();
+  } finally {
+    await harness.pglite.exec('ROLLBACK');
+  }
+}
 
 describe('a package carries its own market\'s application number (P-44)', () => {
   it("the home market reads the project's number", async () => {
@@ -90,5 +102,89 @@ describe('a package carries its own market\'s application number (P-44)', () => 
   it('the export of an added market with no number recorded is refused, and nothing is built', async () => {
     await expect(assembleSubmissionEctd({ submissionId: 2, organizationId: ORG, userId: USER, sequenceNumber: '0000' }))
       .rejects.toBeInstanceOf(PackageIdentityMissingError);
+  });
+});
+
+describe('unresolved market identity never borrows a recorded application number', () => {
+  it.each(['not-a-market', '', '   ', null])('an explicit unresolved package region (%j) never borrows either recorded number', async (region) => {
+    const identity = await readSubmissionPackageIdentity(q(), ORG, 3, { region });
+    expect(identity.applicationNumber).toBeNull();
+    expect(identity.marketResolutionProblem).toMatch(/package market is not recognized/);
+    const refusal = packageIdentityRefusal(identity, 'Nothing was built.');
+    expect(refusal?.message).toMatch(/correct the submission or sequence region before packaging/);
+    expect(refusal?.message).not.toMatch(/record the number|records no agency application number|214321|005124/);
+  });
+
+  it.each(['not-an-agency', '', '   '])('an unresolved home agency (%j) cannot authorize the project or submission number', async (agency) => {
+    await withChangedRecord('UPDATE regulatory_programs SET primary_agency = $1 WHERE id = $2', [agency, NDA], async () => {
+      for (const id of [1, 3]) {
+        const identity = await read(id);
+        expect(identity.applicationNumber).toBeNull();
+        expect(identity.marketResolutionProblem).toMatch(/primary agency is not recognized/);
+        expect(packageIdentityRefusal(identity, 'Nothing was built.')?.message)
+          .toMatch(/correct the project's primary agency before packaging/);
+      }
+    });
+  });
+
+  it('two identical unknown region strings do not establish home ownership', () => {
+    expect(isHomeMarket('unrecorded', 'unrecorded')).toBe(false);
+    expect(isHomeMarket(null, null)).toBe(false);
+    expect(isHomeMarket('eu', 'unknown')).toBe(false);
+    expect(isHomeMarket('unknown', 'FDA')).toBe(false);
+  });
+
+  it('recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes', async () => {
+    for (const region of [' US ', 'fda', 'FDA']) {
+      expect(isHomeMarket(region, 'FDA')).toBe(true);
+      const identity = await readSubmissionPackageIdentity(q(), ORG, 1, { region });
+      expect(identity.applicationNumber).toBe('214321');
+      expect(identity.marketResolutionProblem).toBeUndefined();
+      expect(JSON.stringify(recordedPackageIdentitySnapshot(identity, { region }))).toBe(JSON.stringify({
+        version: 1,
+        identity: {
+          programId: NDA, applicationNumber: '214321', applicantSponsorId: null,
+          applicantName: 'Concept2Cure Therapeutics', applicantId: null,
+          contact: { name: null, phone: null, email: null },
+        },
+      }));
+    }
+    for (const region of [' EU ', 'ema', 'EMA']) {
+      expect((await readSubmissionPackageIdentity(q(), ORG, 3, { region })).applicationNumber).toBe('EMEA-H-C-005124');
+    }
+    const home = await readSubmissionPackageIdentity(q(), ORG, 1);
+    expect(recordedPackageIdentitySnapshot({ ...home, marketResolutionProblem: 'runtime diagnosis' }))
+      .toEqual(recordedPackageIdentitySnapshot(home));
+  });
+
+  it('a known sequence may prove home despite an unknown submission region, but cannot read its non-home number', async () => {
+    await withChangedRecord('UPDATE submissions SET primary_region = $1 WHERE id = 3', ['unknown'], async () => {
+      expect((await readSubmissionPackageIdentity(q(), ORG, 3, { region: 'FDA' })).applicationNumber).toBe('214321');
+      const nonHome = await readSubmissionPackageIdentity(q(), ORG, 3, { region: 'EMA' });
+      expect(nonHome.applicationNumber).toBeNull();
+      expect(nonHome.marketResolutionProblem).toMatch(/submission's market is not recognized/);
+      expect(packageIdentityRefusal(nonHome, 'Nothing was built.')?.message).toMatch(/correct its primary region/);
+      expect((await read(3)).applicationNumber).toBeNull();
+    });
+  });
+
+  it('a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number', async () => {
+    expect((await read(999999)).applicationNumber).toBeNull();
+    expect((await readSubmissionPackageIdentity(q(), ORG + 1, 3)).applicationNumber).toBeNull();
+    await withChangedRecord('UPDATE submissions SET deleted_at = now() WHERE id = 3', [], async () => {
+      expect((await read(3)).applicationNumber).toBeNull();
+    });
+    await withChangedRecord('UPDATE regulatory_programs SET deleted_at = now() WHERE id = $1', [NDA], async () => {
+      const identity = await read(3);
+      expect(identity.applicationNumber).toBeNull();
+      expect(packageIdentityRefusal(identity, 'Nothing was built.')).not.toBeNull();
+    });
+    await withChangedRecord('UPDATE submissions SET program_id = NULL WHERE id = 3', [], async () => {
+      const identity = await read(3);
+      expect(identity.applicationNumber).toBeNull();
+      expect(identity.marketResolutionProblem).toMatch(/not anchored to a project/);
+      expect(identity.marketResolutionProblem).not.toMatch(/record the number on the project/);
+      expect(packageIdentityRefusal(identity, 'Nothing was built.')?.message).toMatch(/not anchored to a project/);
+    });
   });
 });

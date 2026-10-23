@@ -1,0 +1,44 @@
+{
+  "baseline": "526e86cba58dcca26e4b42b536e8315d45bdd9d1",
+  "redCommands": [
+    "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/submission-service/__tests__/market-application-number.pglite.test.ts"
+  ],
+  "redResults": {
+    "red.txt": {
+      "failed": 5,
+      "passed": 10,
+      "reason": "existing market read leaks home number"
+    },
+    "red-writer.txt": {
+      "failed": 10,
+      "passed": 10,
+      "reason": "split writer and read assertions reproduce wrong refusal and leaked numbers"
+    }
+  },
+  "baselineWriterSha256": "3a0d9caddbd4f1338c980f074fd4e75625f69d3fa567b88ca5292358414f91a9",
+  "greenInputs": {
+    "server/services/submission-service/market-application-number.ts": "53abf2d8f8927706a3d943e377143092f71d968d0e10098e91f8a345562b7b10",
+    "server/services/submission-service/__tests__/market-application-number.pglite.test.ts": "b47c391f5a409ccc8390d0b4dc483e540fa744d95a4c923638cf3b14a585e44f",
+    "server/routes/__tests__/submissions-market-number-route.test.ts": "630ccbea587e11f0abfe4b3c98936a58878a62f1f80c7627c095c426542723be",
+    "tests/regulatory/region-identity.test.ts": "7537e70401d475e65a77328424293eb31433b58ad9c7bc7df0fbcb8720869fa5"
+  },
+  "greenCommands": [
+    "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/submission-service/__tests__/market-application-number.pglite.test.ts server/routes/__tests__/submissions-market-number-route.test.ts tests/regulatory/region-identity.test.ts",
+    "npx eslint server/services/submission-service/market-application-number.ts server/services/submission-service/__tests__/market-application-number.pglite.test.ts -f json"
+  ],
+  "greenResults": {
+    "green.txt": {
+      "files": 3,
+      "passed": 30
+    },
+    "green-final.txt": {
+      "files": 3,
+      "passed": 33
+    },
+    "lint.json": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "limits": "Actual PGlite schema and real chained audit writer; injection immediately before transaction connection proves current-record checks and rollback, not native lock blocking. No production or agency traffic."
+}

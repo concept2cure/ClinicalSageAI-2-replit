@@ -1,0 +1,16 @@
+{
+  "head": "6c7235f227d452c10ac4178a3e87f62d52a5fda8",
+  "pinnedHead": "8a4893fea3c925dfe578e76332ef82d8efa77332",
+  "inputCount": 10123,
+  "changed": [
+    "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "server/routes/authoring.router.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+    "server/services/c2c/filing-section-target.ts",
+    "server/services/clinical-regulatory-evidence/span-lineage.service.ts"
+  ],
+  "passed": false
+}
