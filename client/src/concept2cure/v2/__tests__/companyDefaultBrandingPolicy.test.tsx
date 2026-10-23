@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { CompanyDocumentProfile } from '@shared/company-documents';
 import type { CompanyDesignDetail } from '@shared/company-document-designs';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 import { companyDesignCandidate } from '../surfaces/company-documents/CompanyDesignEditor';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -28,6 +29,7 @@ function serveRead(url: string) {
 }
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); apiRequest.mockReset(); stored = profile(); activationRefused = false;
+  seedCompanySession();
   apiRequest.mockImplementation(async (method, url, body) => {
     if (method === 'GET') return serveRead(String(url));
     if (String(url).endsWith('/activate-default')) {
@@ -38,7 +40,7 @@ beforeEach(() => {
     return json(receipt());
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); endCompanySession(); });
 async function openSettings() { render(<CompanyDocumentSettings />); return screen.findByLabelText('Company legal name'); }
 const reason = () => fireEvent.change(screen.getByLabelText('Reason for company document change'), { target: { value: 'Update approved branding preferences' } });
 

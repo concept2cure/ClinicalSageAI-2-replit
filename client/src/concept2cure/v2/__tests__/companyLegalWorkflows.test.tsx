@@ -5,9 +5,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { CompanyDocumentProfile, CompanyLegalDocument } from '@shared/company-documents';
 import type { CompanyLegalReadinessResponse } from '@shared/company-legal-workflows';
 import { DEFAULT_TEMPLATE_SPEC } from '@shared/templates/template-spec';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 const m = vi.hoisted(() => ({ token: 'session-a', api: vi.fn() }));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => m.token, getJwtOrgId: () => 7 }));
-vi.mock('../apiCall', () => ({ apiCall: m.api, apiErrorText: (result: { body?: { message?: string } }, fallback: string) => result.body?.message || fallback }));
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: m.api }));
 vi.mock('../surfaces/VaultLibraryResults', () => ({ VaultVersionPicker: ({ programId }: { programId?: string }) => <p data-program-id={programId}>Approved supporting evidence picker</p> }));
 import { LegalLifecycleEditor } from '../surfaces/company-documents/LegalLifecycleEditor';
 import { CompanyLegalReadiness } from '../surfaces/company-documents/CompanyLegalReadiness';
@@ -27,9 +27,9 @@ function readiness(sequenceId = 4, title = 'Reviewed cover-letter requirement'):
       applicability: 'unresolved', rationale: 'Review applicability.', legalDocumentIds: [], reviewedBy: null, reviewedAt: null }, status: 'unresolved', matchedDocumentIds: [], findings: ['Applicability review is unresolved.'] }],
     findings: [], disclaimer: 'This readiness check does not establish agency acceptance or cryptographic signature validity.' };
 }
-const ok = (body: unknown) => ({ ok: true, status: 200, body, networkError: false });
+const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
 beforeEach(() => {
-  m.token = 'session-a'; m.api.mockReset();
+  localStorage.clear(); sessionStorage.clear(); m.api.mockReset(); m.token = seedCompanySession({ organizationId: '7' });
   m.api.mockImplementation(async (method: string, url: string) => {
     if (url.endsWith('/custodians')) return ok({ data: [{ id: '8', name: 'Legal Custodian' }] });
     if (method === 'GET' && url.endsWith('/lifecycle')) return ok({ document, renewal: { status: 'unassigned', daysRemaining: 7, dueOn: '2026-09-25' }, placements: [], evidenceUnavailable: false });
@@ -38,7 +38,7 @@ beforeEach(() => {
     return ok({ data: { ...profile, revision: 4 }, canManage: false, capabilities: { manageBrand: false, manageLegal: true, managePermissions: false } });
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); endCompanySession(); });
 describe('legal lifecycle management', () => {
   it('records an explicit revocation with the saved revision, reason and selected eligible custodian', async () => {
     const onSaved = vi.fn();

@@ -20,3 +20,9 @@ Reporting. This completion reaches that implementation from company settings.
 Current company tests and Reporting's real-session test pattern supply the
 fixtures. Code, current claims and deleted-history searches found no competing
 company session implementation. See the design for exact paths and boundaries.
+
+Independent review identified `v2/apiCall.ts` as the existing canonical response
+normalizer. Its narrowly optional owner callback replaces an initial duplicated
+company JSON wrapper, preserving every ordinary three-argument call. The design
+records this one reviewed exception to the initial 14 boundary pins; the other
+13 remain protected. No generic mutation verdict or server API changes.

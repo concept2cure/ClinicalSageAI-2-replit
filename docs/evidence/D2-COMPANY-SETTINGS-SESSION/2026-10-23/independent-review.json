@@ -1,0 +1,31 @@
+{
+  "reviewer": "Independent read-only oct23_packaging + compatibility subreview",
+  "verdict": "CLEAR after two parent/library and admission corrections",
+  "scope": [
+    "Three-argument apiCall compatibility; guarded normalized handoffs",
+    "Canonical owner stability on ordinary refresh; account-object retirement",
+    "Lease/path/version/unmount/A-to-B-to-A retirement",
+    "Shared legal parent fresh capability read and remount",
+    "First-render private library masking and canonical query ownership",
+    "Captured admission visit withdrawal/re-admission; pending receipt suppression",
+    "Place/copy/blob/error/finally guard checkpoints; existing receipts/payloads unchanged"
+  ],
+  "limits": [
+    "Read-only source and fixture review; reviewer did not execute Node/tests.",
+    "Separate CompanyCorrespondenceDraft/Variants/CompanyFilingIdentityReview ownership is outside the slice."
+  ],
+  "reviewedPins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts",
+      "sha256": "40f523f58260df8f4694579002c7a164c5643ae419869904022e7ef06946aa51"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
+      "sha256": "a31e647abbd25beaf0c75cc19adcc2bdb61a4bbdf16e4cf9055ec15cbfe576c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/useCompanySubmissionLibrary.ts",
+      "sha256": "b1f70f0d2054f51b72917633dd84b0e2fed36aa71165ce767e81a68c8ff09a5b"
+    }
+  ]
+}

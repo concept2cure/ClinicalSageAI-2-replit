@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { CompanyDocumentProfile } from '@shared/company-documents';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const apiUpload = vi.hoisted(() => vi.fn());
@@ -47,6 +48,7 @@ beforeEach(() => {
   capabilities = undefined;
   legacyPreview = { available: false, sourceHash: null, candidate: null, warnings: [] };
   apiRequest.mockReset(); apiUpload.mockReset();
+  seedCompanySession();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (method === 'GET') { const response = knownRead(url); if (response) return response; }
     if (url === `${PATH}/legacy-adoption` && method === 'POST') {
@@ -68,7 +70,7 @@ beforeEach(() => {
     return json({});
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); endCompanySession(); });
 const open = async () => { render(<CompanyDocumentSettings />); return screen.findByLabelText('Company legal name'); };
 const editAndReason = async () => {
   const name = await open(); fireEvent.change(name, { target: { value: 'Northwind Life Sciences' } });
@@ -201,8 +203,7 @@ describe('Company letterhead and legal library', () => {
     fireEvent.change(screen.getByLabelText('Reason for legal document registration'), { target: { value: 'Previous account registration reason' } });
     fireEvent.click(screen.getByLabelText('Show archived library entries'));
     stored = { ...profile(), companyName: 'New Account Company' };
-    const payload = btoa(JSON.stringify({ organizationId: 2, id: 44 }));
-    sessionStorage.setItem('trialsage_access_token', `header.${payload}.signature`);
+    seedCompanySession({ organizationId: '2', id: '44' }, 'replacement');
     view.rerender(<CompanyDocumentSettings />);
     await screen.findByDisplayValue('New Account Company');
     expect((screen.getByLabelText('Reason for company document change') as HTMLInputElement).value).toBe('');
