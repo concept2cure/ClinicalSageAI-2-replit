@@ -25,6 +25,7 @@ import { useDialog } from '../useDialog';
 import { setVaultTarget } from '../vaultTarget';
 import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
 import { mutateVerbatim, mutationUnconfirmed } from '../surfaces/SubmissionSeqWorkspaces';
+import { authoringPdfPrewriteRefusal } from '../authoringPdfRefusal';
 import { useSubmissionReadSession, type SubmissionReadSession } from '../surfaces/submissionScopedRead';
 import type { FireToast } from '../toast';
 
@@ -153,7 +154,9 @@ async function attemptFileToVault(docId: string, programId: string, format: 'pdf
   const parsed = readFileToVaultResult(reply.data, { programId, format });
   if (parsed) return { ok: true, result: parsed };
   const existingVersion = reply.code === 'VAULT_VERSION_ALREADY_RECORDED';
-  const unconfirmed = existingVersion || !!reply.unconfirmed || reply.data != null || mutationUnconfirmed(reply.status, reply.code);
+  const definitePdfRefusal = authoringPdfPrewriteRefusal(reply.status, reply.code, reply.body);
+  const unconfirmed = existingVersion || reply.data != null ||
+    !definitePdfRefusal && (!!reply.unconfirmed || mutationUnconfirmed(reply.status, reply.code));
   return {
     ok: false,
     unconfirmed,

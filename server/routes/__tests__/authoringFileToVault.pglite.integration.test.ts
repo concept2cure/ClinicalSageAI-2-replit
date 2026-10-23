@@ -25,8 +25,8 @@ import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, ma
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown, put: vi.fn(),
-  /** The engine's answer: true is the plain-text stand-in a missing Puppeteer produces. */
-  fallback: false,
+  /** A real strict-converter failure before any admission. */
+  unavailable: false, convert: vi.fn(),
 }));
 vi.mock('../../db', () => ({
   get db() { return h.db; },
@@ -51,21 +51,19 @@ vi.mock('../../services/vault/document-chunking.service', () => ({
   isVaultChunkingEnabled: async () => false,
   chunkDocumentForIngest: vi.fn(),
 }));
-/* Bytes that differ per document (the title is in the HTML) so two filings in
-   one program do not collide on the vault's (program, content_hash) rule the
-   way one shared buffer would. A real '%PDF-' header so the magic-byte check
-   the ingest runs is exercised for real. */
+/* The converter seam reads actual rich Word and emits distinct real PDF bytes.
+   Storage/admission/recording below are native; actual LibreOffice fidelity
+   is qualified separately. */
 vi.mock('../../services/vault/vault-placement.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vault/vault-placement.service')>();
   return { ...actual, placeVaultDocument: vi.fn(actual.placeVaultDocument) };
 });
-vi.mock('../../export/renderers', () => ({
-  renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
-  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
-  renderHtmlToPdfTracked: async (html: string) => ({
-    buffer: Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
-    usedFallback: h.fallback,
-  }),
+vi.mock('../../services/pdf-converter', () => ({
+  convertDocxToPdf: async (word: Buffer, options: unknown) => {
+    h.convert(word, options);
+    if (h.unavailable) throw new Error('private strict converter failure /tmp/source.docx');
+    return (await import('./_authoring-pdf-converter-fixture')).convertedPdfFixture(word);
+  },
 }));
 const lastStoredBytes = (): Buffer => (h.put.mock.calls.at(-1)?.[0] as { bytes: Buffer }).bytes;
 
@@ -274,26 +272,22 @@ describe('POST /docs/:docId/file-to-vault', () => {
     });
   });
 
-  /* QA 2026-10-08, walk 2 (j4): with no PDF engine, File to vault (PDF) stored
-     the plain-text stand-in whose first line says "Do not file this rendering"
-     as the governed Vault copy, and said nothing. No decision allows filing it
-     with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md, docs/design),
-     so it fails closed. */
-  it('refuses a PDF the engine could only render as plain text: 503, nothing filed, nothing recorded; DOCX is unaffected', async () => {
+  /* A failed strict conversion must refuse before storage or recording. Word
+     remains available through its existing path, without a PDF fallback. */
+  it('refuses a strict converter failure: 503, nothing filed or recorded; DOCX is unaffected', async () => {
     const docId = await draftDocument('Module 2.5 — no PDF engine');
     const count = async (sql: string) => ((await jdb.pool.query(sql)).rows[0] as { n: number }).n;
     const vaultBefore = await count('SELECT count(*)::int AS n FROM vault.documents');
     const auditBefore = await count('SELECT count(*)::int AS n FROM audit_logs');
     const historyBefore = await count('SELECT count(*)::int AS n FROM authoring_export_history');
     const putsBefore = h.put.mock.calls.length;
-    h.fallback = true;
+    h.unavailable = true;
     try {
       const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
       expect(res.status, JSON.stringify(res.body)).toBe(503);
       expect(res.body.error.code).toBe('PDF_RENDERER_UNAVAILABLE');
-      expect(res.body.error.message).toContain(
-        'The PDF renderer is not available here; this would file a plain-text rendering. Nothing was filed.',
-      );
+      expect(res.body.error.message).toMatch(/PDF.*(unavailable|not available|could not)/i);
+      expect(JSON.stringify(res.body)).not.toMatch(/private|\/tmp|source\.docx/);
       expect(h.put.mock.calls.length).toBe(putsBefore);
       expect(await count('SELECT count(*)::int AS n FROM vault.documents')).toBe(vaultBefore);
       expect(await count('SELECT count(*)::int AS n FROM audit_logs')).toBe(auditBefore);
@@ -302,7 +296,7 @@ describe('POST /docs/:docId/file-to-vault', () => {
       const docx = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'docx' });
       expect(docx.status, JSON.stringify(docx.body)).toBe(201);
     } finally {
-      h.fallback = false;
+      h.unavailable = false;
     }
   });
 

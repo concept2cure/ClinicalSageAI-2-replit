@@ -14,17 +14,16 @@ import { sectionsDigest, type ExportSectionRow } from '../authoring-export';
 import { normalizeTemplateSpec } from '../../../../shared/templates/template-spec';
 import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
 import { companyProfileHash } from '../../company-documents/provenance';
+import { convertedPdfFixture, wordBody } from '../../../routes/__tests__/_authoring-pdf-converter-fixture';
 
 const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn(), chain: vi.fn(), history: vi.fn(), place: vi.fn(), carry: vi.fn(),
   recording: false, loseCommitReply: false, loseRollbackReply: false,
-  pdf: vi.fn(async (html: string) => Buffer.from(`%PDF-1.7\n${html}`)) }));
+  pdf: vi.fn() }));
 vi.mock('../../vault/vault-ingest.service', () => ({ ingestVaultDocument: h.ingest }));
 vi.mock('../../vault/vault-placement.service', () => ({ placeVaultDocument: h.place }));
 vi.mock('../../vault/vault-filing.service', () => ({ resolveVaultView: vi.fn(), isFolderInView: vi.fn(), folderLabel: vi.fn() }));
-vi.mock('../../../export/renderers', () => ({
-  renderHtmlToPdf: h.pdf,
-  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
-  renderHtmlToPdfTracked: async (html: string) => ({ buffer: await h.pdf(html), usedFallback: false }),
+vi.mock('../../pdf-converter', () => ({
+  convertDocxToPdf: h.pdf,
 }));
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: h.chain }));
 vi.mock('../../company-documents/history', () => ({ readCompanyPresentationRevision: h.history }));
@@ -86,7 +85,7 @@ beforeAll(async () => {
 afterAll(async () => { await harness?.close(); });
 beforeEach(() => {
   h.recording = false; h.loseCommitReply = false; h.loseRollbackReply = false;
-  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockClear(); h.trail.mockReset(); h.chain.mockReset(); h.history.mockReset(); h.place.mockReset(); h.carry.mockReset();
+  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockReset(); h.pdf.mockImplementation(convertedPdfFixture); h.trail.mockReset(); h.chain.mockReset(); h.history.mockReset(); h.place.mockReset(); h.carry.mockReset();
   h.carry.mockResolvedValue({ carried: false, reason: 'Working draft' });
   h.trail.mockImplementation(async (ctx: AuthoringAuditContext, entry: AuthoringAuditEntry) => {
     await entry.executor!.query('INSERT INTO test_filing_audit (tenant_id,operation,entry) VALUES ($1,$2,$3)',
@@ -198,7 +197,7 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
       WHERE doc_id=$2 AND tenant_id=$3`, [d.sections[0].id,d.docId,d.f.org]);
     admit(d);
     expect(await file(d)).toMatchObject({ kind:'filed' });
-    const rendered = String(h.pdf.mock.calls[0][0]);
+    const rendered = await wordBody(h.pdf.mock.calls[0][0] as Buffer);
     expect(rendered.indexOf('Original safety result.')).toBeLessThan(rendered.indexOf('Original endpoint result.'));
     expect((await facts(d)).history[0].doc_sha256).toBe(sectionsDigest([...d.sections].reverse()));
   });
@@ -236,8 +235,9 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     expect(after.vault.deleted_at).not.toBeNull();
     expect(after.audit).toEqual([{ operation: 'authoring.document.file_to_vault.reverted' }]);
     expect(h.trail).not.toHaveBeenCalled();
-    expect(h.pdf.mock.calls[0][0]).toContain('Original endpoint result.');
-    expect(h.pdf.mock.calls[0][0]).not.toContain('Changed endpoint result.');
+    const rendered = await wordBody(h.pdf.mock.calls[0][0] as Buffer);
+    expect(rendered).toContain('Original endpoint result.');
+    expect(rendered).not.toContain('Changed endpoint result.');
   });
 
 });

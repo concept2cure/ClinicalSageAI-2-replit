@@ -117,6 +117,51 @@ describe('File to vault receipt confirmation', () => {
     expect(apiRequest).toHaveBeenCalledTimes(2); expect(p.onFiled).toHaveBeenCalledTimes(1);
   });
 
+});
+
+describe('File to vault definite converter refusals', () => {
+  it.each([
+    ['PDF_RENDERER_UNAVAILABLE', 'response'], ['PDF_RENDERER_UNAVAILABLE', 'throw'],
+    ['CONVERTER_BUSY', 'response'], ['CONVERTER_BUSY', 'throw'],
+  ] as const)('keeps a definite %s %s refusal retryable and permits an explicit Word filing', async (code, carrier) => {
+    const message = code === 'CONVERTER_BUSY' ? 'The document converter is busy. Try again in about 30 seconds.'
+      : 'The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.';
+    const body = code === 'CONVERTER_BUSY' ? { error: code, message, retryAfterSeconds: 30 }
+      : { success: false, error: { code, message } };
+    apiRequest.mockImplementationOnce(async () => {
+      if (carrier === 'throw') throw new ApiRequestError(message, 503, body, code);
+      return response(body, 503);
+    });
+    const p = props(); render(<FileToVaultDialog {...p} />); submit();
+    expect((await screen.findByTestId('ftv-error')).textContent).toContain(message);
+    expect((screen.getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(false);
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(p.onFiled).not.toHaveBeenCalled();
+    apiRequest.mockImplementationOnce(async () => response(receipt({ format: 'docx' })));
+    fireEvent.click(screen.getByRole('radio', { name: /Word/ })); submit();
+    await screen.findByTestId('ftv-result');
+    expect(apiRequest.mock.calls[1][2]).toEqual({ format: 'docx' });
+    expect(p.onFiled).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['a missing body', undefined, 503],
+    ['an uncertain nested code', { code: 'PDF_RENDERER_UNAVAILABLE', error: { code: 'OUTCOME_UNKNOWN', message: 'Check the current record.' } }, 503],
+    ['a returned record', { code: 'PDF_RENDERER_UNAVAILABLE', error: 'PDF unavailable', message: 'No PDF was completed.', data: receipt().data }, 503],
+    ['contradictory success', { success: true, code: 'PDF_RENDERER_UNAVAILABLE', error: 'PDF unavailable', message: 'No PDF was completed.' }, 503],
+    ['another failure status', { code: 'PDF_RENDERER_UNAVAILABLE', error: 'PDF unavailable', message: 'No PDF was completed.' }, 502],
+  ] as const)('retains uncertainty for a PDF code with %s', async (_name, body, status) => {
+    apiRequest.mockImplementationOnce(async () => { throw new ApiRequestError('No PDF was completed.', status, body, 'PDF_RENDERER_UNAVAILABLE'); });
+    const p = props(); render(<FileToVaultDialog {...p} />); submit();
+    expect((await screen.findByTestId('ftv-error')).textContent).toMatch(/cannot confirm.*filed/i);
+    expect((screen.getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
+    submit(); expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(p.onFiled).not.toHaveBeenCalled();
+  });
+
+});
+
+describe('File to vault retained result identity', () => {
   it('keeps the request project and UUID for navigation and never invents missing approval', async () => {
     const p = props(); render(<FileToVaultDialog {...p} />); submit();
     await screen.findByTestId('ftv-result');

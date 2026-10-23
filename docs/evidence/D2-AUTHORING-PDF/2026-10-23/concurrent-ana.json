@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T17:49:45.339942+00:00",
+  "qualifiedCombinedSourceCommit": "70d112b8d8fb03857423011ccbe1e99f8d7d9c16",
+  "incomingUpstreamCommit": "4718e17cb1224022684829a0e45f92f5048b5850",
+  "scope": "Compatibility qualification after clean merge of incoming native AnA model-provenance update; ordinary Authoring PDF qualification remains separately pinned.",
+  "review": "Incoming observers copy actual returned model/provider/request identifiers into the existing canonical turn record. Earlier unqualified calls, failures and stopped calls remain represented; governed Authoring model eligibility remains fail closed. No company-document or PDF source pins changed.",
+  "tests": {
+    "files": [
+      {
+        "path": "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "reportSha256": "048faaee6ada18458eba1eaa271f9cff6064426c7b535c7807a67dcaf5a47f1e",
+    "countedInAuthoringPdf522": false
+  },
+  "checks": {
+    "all50AuthoringPdfSourcePinsUnchanged": true,
+    "productionBuildPassed": true,
+    "buildTranscriptSha256": "9748f27cac31fd2dcb1cdb6b4e6c5a1bcad0b935a779549eb4f0278bfb17ef37",
+    "fullTypecheckErrors": 0,
+    "typecheckProcessExit": 0,
+    "typecheckTranscriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+  },
+  "incomingSourcePins": [
+    {
+      "path": "server/routes/ana-intelligence.ts",
+      "sha256": "7495cc668f701daac9292f7cccd4aa95fcb0bc69c8272c6882dc6e180aca518d"
+    },
+    {
+      "path": "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+      "sha256": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b"
+    },
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "sha256": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008"
+    },
+    {
+      "path": "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+      "sha256": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6"
+    },
+    {
+      "path": "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+      "sha256": "baae0f43f919acfe429bdf52f336db9ef055dcb5fff8537dfdc8810f687ac836"
+    },
+    {
+      "path": "server/services/ana/ana-realtime.ts",
+      "sha256": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0"
+    },
+    {
+      "path": "server/services/ana/turn-record-loop.ts",
+      "sha256": "64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893"
+    }
+  ],
+  "limits": [
+    "Local qualification only; no production deployment or remote CI result is claimed.",
+    "The 43 concurrent AnA cases are supplemental and are not added to the 522 Authoring PDF cases."
+  ]
+}
