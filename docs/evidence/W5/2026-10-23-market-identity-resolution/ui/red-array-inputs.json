@@ -1,0 +1,9 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx --config vitest.config.ts -t array",
+  "note": "The initial parameter table passed the empty array as no arguments. Corrected to named object cases, so this run passes an actual array as the invalid diagnosis. Production unchanged. The first selector omitted Vitest\u2019s quoted interpolation and skipped this case (array-selector-skipped.txt); this command selects the actual array case.",
+  "inputs": {
+    "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx": "c901474fba23318e4535beb4a6205aa0fddcfbd56262e0d06ff882bcea26d257",
+    "client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx": "9efa69e27a5763cbab7cd77628ec4c6f2b74ec024a653f85401e5f52269fb0ab"
+  }
+}

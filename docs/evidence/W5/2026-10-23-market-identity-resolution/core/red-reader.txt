@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:53:16.047Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:53:16.048Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:53:16.048Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the home market reads the project's number 13ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > another market reads the number recorded on its submission, never the project's 7ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the market is the package's region: a sequence of another region never borrows its submission's number 25ms
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > the export of an added market with no number recorded is refused, and nothing is built 6ms
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("not-a-market") never borrows either recorded number 12ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("") never borrows either recorded number 4ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("   ") never borrows either recorded number 3ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region (null) never borrows either recorded number 3ms
+   → expected 'EMEA-H-C-005124' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number 5ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("") cannot authorize the project or submission number 3ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("   ") cannot authorize the project or submission number 4ms
+   → expected '214321' to be null
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > two identical unknown region strings do not establish home ownership 3ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > recognized aliases preserve the home number, non-home number and exact version-1 snapshot bytes 20ms
+ × server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number 10ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > a missing, deleted or foreign submission never yields a number; a deleted project cannot lend a submission its own number 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("not-a-market") never borrows either recorded number
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("") never borrows either recorded number
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region ("   ") never borrows either recorded number
+AssertionError: expected '214321' to be null
+
+- Expected:
+null
+
++ Received:
+"214321"
+
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:109:40
+    107|   it.each(['not-a-market', '', '   ', null])('an explicit unresolved p…
+    108|     const identity = await readSubmissionPackageIdentity(q(), ORG, 3, …
+    109|     expect(identity.applicationNumber).toBeNull();
+       |                                        ^
+    110|     expect(identity.marketResolutionProblem).toMatch(/package market i…
+    111|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an explicit unresolved package region (null) never borrows either recorded number
+AssertionError: expected 'EMEA-H-C-005124' to be null
+
+- Expected:
+null
+
++ Received:
+"EMEA-H-C-005124"
+
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:109:40
+    107|   it.each(['not-a-market', '', '   ', null])('an explicit unresolved p…
+    108|     const identity = await readSubmissionPackageIdentity(q(), ORG, 3, …
+    109|     expect(identity.applicationNumber).toBeNull();
+       |                                        ^
+    110|     expect(identity.marketResolutionProblem).toMatch(/package market i…
+    111|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("not-an-agency") cannot authorize the project or submission number
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("") cannot authorize the project or submission number
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > an unresolved home agency ("   ") cannot authorize the project or submission number
+AssertionError: expected '214321' to be null
+
+- Expected:
+null
+
++ Received:
+"214321"
+
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:120:44
+    118|       for (const id of [1, 3]) {
+    119|         const identity = await read(id);
+    120|         expect(identity.applicationNumber).toBeNull();
+       |                                            ^
+    121|         expect(identity.marketResolutionProblem).toMatch(/primary agen…
+    122|         expect(packageIdentityRefusal(identity, 'Nothing was built.')?…
+ ❯ withChangedRecord server/services/ectd/__tests__/market-application-number.pglite.test.ts:70:5
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:117:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > two identical unknown region strings do not establish home ownership
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:129:54
+    127|
+    128|   it('two identical unknown region strings do not establish home owner…
+    129|     expect(isHomeMarket('unrecorded', 'unrecorded')).toBe(false);
+       |                                                      ^
+    130|     expect(isHomeMarket(null, null)).toBe(false);
+    131|     expect(isHomeMarket('eu', 'unknown')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ectd/__tests__/market-application-number.pglite.test.ts > a package carries its own market's application number (P-44) > a known sequence may prove home despite an unknown submission region, but cannot read its non-home number
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:163:47
+    161|       const nonHome = await readSubmissionPackageIdentity(q(), ORG, 3,…
+    162|       expect(nonHome.applicationNumber).toBeNull();
+    163|       expect(nonHome.marketResolutionProblem).toMatch(/submission's ma…
+       |                                               ^
+    164|       expect(packageIdentityRefusal(nonHome, 'Nothing was built.')?.me…
+    165|       expect((await read(3)).applicationNumber).toBeNull();
+ ❯ withChangedRecord server/services/ectd/__tests__/market-application-number.pglite.test.ts:70:5
+ ❯ server/services/ectd/__tests__/market-application-number.pglite.test.ts:159:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 6 passed (15)
+   Start at  18:53:08
+   Duration  13.02s (transform 4.56s, setup 152ms, import 7.63s, tests 4.85s, environment 0ms)
+

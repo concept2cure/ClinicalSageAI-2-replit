@@ -30,6 +30,8 @@ const LEAD = 11;
 const MEMBER = 12;
 const NDA = '11111111-1111-4111-8111-111111111111';
 const MAA = '22222222-2222-4222-8222-222222222222';
+const UNKNOWN_HOME = '33333333-3333-4333-8333-333333333333';
+const BLANK_HOME = '44444444-4444-4444-8444-444444444444';
 const REASON = 'EMA assigned the procedure number on validation';
 let jdb: JourneyDb;
 
@@ -67,6 +69,22 @@ beforeAll(async () => {
        (4, 'no project', 'maa', 'pharma', 'eu', $1, $2, NULL)`,
     [ORG, LEAD, NDA, MAA],
   );
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, product_name, primary_agency, status, lead_user_id, application_number)
+     VALUES ($1, $3, 'Unknown agency', 'U-1', 'maa', 'drug', 'Vorelinib', 'unrecognized', 'active', $4, 'DO-NOT-BORROW'),
+            ($2, $3, 'Blank agency', 'U-2', 'maa', 'drug', 'Vorelinib', ' ', 'active', $4, 'DO-NOT-BORROW')`,
+    [UNKNOWN_HOME, BLANK_HOME, ORG, LEAD],
+  );
+  await jdb.pool.query(
+    `INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id, application_number) VALUES
+       (5, 'Unknown market', 'maa', 'pharma', 'unrecognized', $1, $2, $3, 'OLD-NUMBER'),
+       (6, 'Blank market', 'maa', 'pharma', ' ', $1, $2, $3, 'OLD-NUMBER'),
+       (7, 'Unknown home', 'maa', 'pharma', 'eu', $1, $2, $4, 'OLD-NUMBER'),
+       (8, 'Identical unknown regions', 'maa', 'pharma', 'unrecognized', $1, $2, $4, 'OLD-NUMBER'),
+       (9, 'Blank home', 'maa', 'pharma', 'eu', $1, $2, $5, 'OLD-NUMBER'),
+       (10, 'Changed before locking', 'maa', 'pharma', 'eu', $1, $2, $3, 'OLD-NUMBER')`,
+    [ORG, LEAD, NDA, UNKNOWN_HOME, BLANK_HOME],
+  );
 });
 afterAll(async () => { await jdb?.close?.(); });
 
@@ -76,6 +94,56 @@ const record = (submissionId: number, applicationNumber: string, ctx = lead) =>
 const audits = async () => (await jdb.pool.query(
   `SELECT reason, new_values FROM audit_logs WHERE action = 'SUBMISSION_APPLICATION_NUMBER_RECORDED' ORDER BY occurred_at`,
 )).rows as Array<{ reason: string; new_values: Record<string, unknown> }>;
+
+describe('unresolved market ownership is refused without writes', () => {
+  it.each([
+    { id: 5, diagnosis: /submission.*market.*not recognized/i },
+    { id: 6, diagnosis: /submission.*market.*not recognized/i },
+    { id: 7, diagnosis: /primary agency.*not recognized/i },
+    { id: 8, diagnosis: /submission.*market.*not recognized/i },
+    { id: 9, diagnosis: /primary agency.*not recognized/i },
+  ])('unresolved market $id refuses with its reason and records neither a number nor an audit row', async ({ id, diagnosis }) => {
+    const before = await audits();
+    await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+      code: 'INVALID_STATE', message: expect.stringMatching(diagnosis),
+    });
+    expect(await audits()).toEqual(before);
+    expect((await jdb.pool.query('SELECT application_number FROM submissions WHERE id = $1', [id])).rows[0])
+      .toMatchObject({ application_number: 'OLD-NUMBER' });
+  });
+
+  it.each([5, 6, 7, 8, 9])('unresolved read %s withholds both numbers and explains why', async (id) => {
+    const read = await readMarketApplicationNumber(id, { organizationId: ORG });
+    expect(read).toMatchObject({ home: false, applicationNumber: null, unresolvedReason: expect.stringMatching(/not recognized/i) });
+    expect(read.lastRecorded).toBeNull();
+  });
+
+  it.each([
+    { what: 'submission region', change: "UPDATE submissions SET primary_region = 'unrecognized' WHERE id = 10",
+      restore: "UPDATE submissions SET primary_region = 'eu' WHERE id = 10", code: 'INVALID_STATE', diagnosis: /submission.*market.*not recognized/i },
+    { what: 'home agency', change: `UPDATE regulatory_programs SET primary_agency = 'unrecognized' WHERE id = '${NDA}'`,
+      restore: `UPDATE regulatory_programs SET primary_agency = 'FDA' WHERE id = '${NDA}'`, code: 'INVALID_STATE', diagnosis: /primary agency.*not recognized/i },
+    { what: 'project lead', change: `UPDATE regulatory_programs SET lead_user_id = ${MEMBER} WHERE id = '${NDA}'`,
+      restore: `UPDATE regulatory_programs SET lead_user_id = ${LEAD} WHERE id = '${NDA}'`, code: 'FORBIDDEN', diagnosis: /lead or an organization manager/i },
+  ])('a $what change before locking is judged from the transaction record', async ({ change, restore, code, diagnosis }) => {
+    const before = await audits();
+    const connect = jdb.pool.connect;
+    const intercepted = vi.spyOn(jdb.pool, 'connect').mockImplementationOnce(async () => {
+      await jdb.pool.query(change);
+      return connect();
+    });
+    try {
+      await expect(record(10, 'NEW-NUMBER')).rejects.toMatchObject({ code, message: expect.stringMatching(diagnosis) });
+      expect(intercepted).toHaveBeenCalledTimes(1);
+      expect(await audits()).toEqual(before);
+      expect((await jdb.pool.query('SELECT application_number FROM submissions WHERE id = 10')).rows[0])
+        .toMatchObject({ application_number: 'OLD-NUMBER' });
+    } finally {
+      intercepted.mockRestore();
+      await jdb.pool.query(restore);
+    }
+  });
+});
 
 describe("recording a market's own application number (P-44)", () => {
   it('the lead records the EU number on the added market, with the reason and a chained audit row; the package reads it', async () => {

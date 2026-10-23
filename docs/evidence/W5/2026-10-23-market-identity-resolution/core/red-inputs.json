@@ -1,0 +1,8 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "command": "PATH=/workspace/scratch/node22/node-v22.23.3-linux-x64/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+  "inputs": {
+    "server/services/ectd/package-identity.ts": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts": "03dac348f39b5c8f5715bcddd0b280440b717e08d332548f6786f6189ffadfeb"
+  }
+}

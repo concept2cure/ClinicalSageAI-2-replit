@@ -1,0 +1,136 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says an added market's packages are refused until its number is recorded, and records it with a reason
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says what recording does before it is done, and who recorded the number, when and why
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unchanged number is said to be no change, and nothing is re-read
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows the server's refusal in its words, inside the form, which keeps what was typed
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > draws nothing for the home market, whose number is the project's
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is false
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows unresolved ownership instead of a number or record form, even when home is true
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('number') fails the read and offers no record act
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('boolean') fails the read and offers no record act
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('object') fails the read and offers no record act
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('array') fails the read and offers no record act 5076ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('empty string') fails the read and offers no record act
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('blank string') fails the read and offers no record act
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a null unresolved reason keeps the existing governed recording form available
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unresolved reread removes an already-open form and shows the current refusal
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > offers no change to someone who may not change the project, and says who can
+ ↓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a read that failed says so
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an invalid unresolved reason ('array') fails the read and offers no record act
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-file-m"[39m
+      [33mdata-testid[39m=[32m"pj-market-number"[39m
+    [36m>[39m
+      [0mNo application number is recorded for the [0m
+      [0mEU[0m
+      [0m market, so its packages are refused until one is. The project's number[0m
+      [0m (FDA)[0m
+      [0m is not used here.[0m
+      [0m [0m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord the number[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx:127:26
+    125|     read = { ...read, unresolvedReason };
+    126|     render(<MarketApplicationNumber submissionId={2} />);
+    127|     expect((await screen.findByRole('alert')).textContent).toMatch(/co…
+       |                          ^
+    128|     expect(screen.queryByRole('button')).toBeNull();
+    129|     expect(screen.queryByRole('dialog')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  18:54:59
+   Duration  7.22s (transform 504ms, setup 287ms, import 676ms, tests 5.09s, environment 803ms)
+

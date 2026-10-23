@@ -38,6 +38,8 @@ export interface RecordedPackageIdentity {
   market?: { region: string };
   /** The project's primary agency, which names its home market (P-44). Not a package fact. */
   homeAgency?: string | null;
+  /** Runtime diagnosis only: unresolved ownership withholds every application number. */
+  marketResolutionProblem?: string;
 }
 
 /** Versioned captured facts carried by the existing governed package binding. */
@@ -201,7 +203,18 @@ export async function lockRecordedPackageIdentity(
 }
 
 type LegacyReadableIdentity = Pick<RecordedPackageIdentity, 'programId' | 'applicationNumber' | 'applicantName'> &
-  Partial<Pick<RecordedPackageIdentity, 'applicantSponsorId' | 'applicantId' | 'contact' | 'market'>>;
+  Partial<Pick<RecordedPackageIdentity, 'applicantSponsorId' | 'applicantId' | 'contact' | 'market' | 'marketResolutionProblem'>>;
+
+function applicationNumberGap(identity: LegacyReadableIdentity): string {
+  if (identity.marketResolutionProblem) return identity.marketResolutionProblem;
+  if (identity.market) {
+    return `this submission is the project's ${identity.market.region} market, and records no application number of its own ` +
+      "(record the number its agency assigned on the submission; the project's number is its home market's, P-44)";
+  }
+  return identity.programId
+    ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
+    : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)';
+}
 
 /** Named actionable gaps, using the existing FDA identifier/contact rules. */
 export function packageIdentityRefusal(
@@ -213,12 +226,7 @@ export function packageIdentityRefusal(
   const gaps: string[] = [];
   if (!identity.applicationNumber) {
     missing.push('applicationNumber');
-    gaps.push(identity.market
-      ? `this submission is the project's ${identity.market.region} market, and records no application number of its own ` +
-        "(record the number its agency assigned on the submission; the project's number is its home market's, P-44)"
-      : identity.programId
-      ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
-      : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)');
+    gaps.push(applicationNumberGap(identity));
   }
   if (!identity.applicantName) {
     missing.push('applicantName');
@@ -249,14 +257,22 @@ export function packageIdentityRefusal(
 
 /**
  * Whether a submission's region is its project's home market, the region of the
- * project's primary agency (decision P-44). When either side does not name a
- * known region, the submission is read as the home market, as every submission
- * was before P-44: the project's number is not withheld on a guess.
+ * project's primary agency (decision P-44). Both sides must name recognized
+ * regions: an unknown value never establishes ownership of the project's number.
  */
 export function isHomeMarket(submissionRegion: unknown, primaryAgency: unknown): boolean {
   const market = canonicalRegionOf(typeof submissionRegion === 'string' ? submissionRegion : '');
   const home = canonicalRegionOf(typeof primaryAgency === 'string' ? primaryAgency : '');
-  return !market || !home || market === home;
+  return market !== undefined && market === home;
+}
+
+function unresolvedMarketIdentity(identity: RecordedPackageIdentity, problem: string): RecordedPackageIdentity {
+  return { ...identity, applicationNumber: null, marketResolutionProblem: problem };
+}
+
+/** Database region fields are untrusted text, not a new region vocabulary. */
+function recordedRegionText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }
 
 /**
@@ -269,8 +285,9 @@ export function isHomeMarket(submissionRegion: unknown, primaryAgency: unknown):
  * name. A sequence of another region under a submission therefore never
  * borrows its submission's number (security review, 2026-10-22). The applicant
  * and its contact are the project's either way. `application_number` is read
- * through to_jsonb, so a database the 20261022b column has not reached reads
- * every submission as before.
+ * through to_jsonb, so a database the 20261022b column has not reached can still
+ * read recognized home markets. Only an omitted/undefined override uses the
+ * submission's region; an explicit null or unknown region never falls back.
  */
 export async function readSubmissionPackageIdentity(
   q: PackageIdentityQueryable,
@@ -285,13 +302,30 @@ export async function readSubmissionPackageIdentity(
   )).rows[0] as { program_id?: unknown; primary_region?: unknown; market_number?: unknown } | undefined;
   const programId = typeof row?.program_id === 'string' && row.program_id ? row.program_id : null;
   const identity = await readRecordedPackageIdentity(q, organizationId, programId);
-  const packageRegion = options.region ?? row?.primary_region;
-  if (!programId || isHomeMarket(packageRegion, identity.homeAgency)) return identity;
-  const market = canonicalRegionOf(String(packageRegion)) as string;
-  const own = canonicalRegionOf(String(row?.primary_region ?? '')) === market;
+  if (!programId) {
+    return unresolvedMarketIdentity(identity,
+      "the submission is not anchored to a project; anchor it before resolving its market's recorded application number");
+  }
+  const packageRegion = options.region === undefined ? row?.primary_region : options.region;
+  const market = canonicalRegionOf(recordedRegionText(packageRegion));
+  const home = canonicalRegionOf(identity.homeAgency);
+  if (!market) {
+    return unresolvedMarketIdentity(identity,
+      'the package market is not recognized; correct the submission or sequence region before packaging');
+  }
+  if (!home) {
+    return unresolvedMarketIdentity(identity,
+      "its project's primary agency is not recognized; correct the project's primary agency before packaging");
+  }
+  if (market === home) return identity;
+  const submissionMarket = canonicalRegionOf(recordedRegionText(row?.primary_region));
+  if (!submissionMarket) {
+    return unresolvedMarketIdentity(identity,
+      `this submission's market is not recognized; correct its primary region before packaging for the ${market} market`);
+  }
   return {
     ...identity,
-    applicationNumber: own ? usableIdentifier('applicationNumber', row?.market_number) : null,
+    applicationNumber: submissionMarket === market ? usableIdentifier('applicationNumber', row?.market_number) : null,
     market: { region: market },
   };
 }

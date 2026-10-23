@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says an added market's packages are refused until its number is recorded, and records it with a reason 380ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says what recording does before it is done, and who recorded the number, when and why 70ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unchanged number is said to be no change, and nothing is re-read 82ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows the server's refusal in its words, inside the form, which keeps what was typed 54ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > draws nothing for the home market, whose number is the project's 24ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > offers no change to someone who may not change the project, and says who can 8ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a read that failed says so 8ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > shows unresolved ownership instead of a number or record form, even when home is false 10ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > shows unresolved ownership instead of a number or record form, even when home is true 9ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('number') fails the read and offers no record act 7ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('boolean') fails the read and offers no record act 7ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('object') fails the read and offers no record act 16ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('array') fails the read and offers no record act 15ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('empty string') fails the read and offers no record act 11ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an invalid unresolved reason ('blank string') fails the read and offers no record act 27ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > a null unresolved reason keeps the existing governed recording form available 28ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > unresolved market ownership on the existing number row > an unresolved reread removes an already-open form and shows the current refusal 33ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  18:57:52
+   Duration  2.92s (transform 368ms, setup 270ms, import 473ms, tests 797ms, environment 769ms)
+

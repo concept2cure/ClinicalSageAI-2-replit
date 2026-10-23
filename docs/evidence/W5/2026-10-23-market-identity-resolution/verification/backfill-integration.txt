@@ -1,0 +1,546 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span
+{
+  "timestamp": "2026-10-23T19:52:54.467Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks
+{
+  "timestamp": "2026-10-23T19:52:54.503Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger
+{
+  "timestamp": "2026-10-23T19:52:54.525Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider
+{
+  "timestamp": "2026-10-23T19:52:54.541Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span 45ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks 28ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger 18ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write
+{
+  "timestamp": "2026-10-23T19:52:54.562Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 3,
+    "indexed": 0,
+    "skipped": 3,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:52:54.587Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:52:54.599Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:52:54.603Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row
+{
+  "timestamp": "2026-10-23T19:52:54.613Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL
+{
+  "timestamp": "2026-10-23T19:52:54.633Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:52:54.647Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:52:54.659Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider 19ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write 23ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows 34ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row 11ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL 22ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied 27ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:52:55.598Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant
+{
+  "timestamp": "2026-10-23T19:52:55.605Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:52:55.611Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider
+{
+  "timestamp": "2026-10-23T19:52:55.613Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set
+{
+  "timestamp": "2026-10-23T19:52:55.614Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing
+{
+  "timestamp": "2026-10-23T19:52:55.616Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS 16ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant 3ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS 7ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing 2ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly
+{
+  "timestamp": "2026-10-23T19:52:56.545Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly
+{
+  "timestamp": "2026-10-23T19:52:56.550Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly
+{
+  "timestamp": "2026-10-23T19:52:56.552Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly
+{
+  "timestamp": "2026-10-23T19:52:56.553Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention
+{
+  "timestamp": "2026-10-23T19:52:56.554Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged
+{
+  "timestamp": "2026-10-23T19:52:56.557Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.559Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.559Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.561Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.561Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.562Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.563Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.564Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:52:56.564Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction
+{
+  "timestamp": "2026-10-23T19:52:56.566Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run
+{
+  "timestamp": "2026-10-23T19:52:56.566Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly 7ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention 3ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run 0ms
+
+ Test Files  3 passed (3)
+      Tests  27 passed (27)
+   Start at  19:52:48
+   Duration  8.56s (transform 2.03s, setup 154ms, import 3.63s, tests 3.80s, environment 0ms)
+

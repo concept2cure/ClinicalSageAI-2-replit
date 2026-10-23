@@ -1,0 +1,22 @@
+{
+  "head": "ca07898383a20dd5579da616daaca7f76e1039f9",
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts server/services/ectd/__tests__/recorded-applicant-identity.test.ts server/services/ectd/__tests__/run-package-identity.test.ts server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts",
+  "inputs": {
+    "server/services/ectd/package-identity.ts": "fae0672f55d7ff7342a3a4adf0371de18f5634c7845688bb82d860005104cfbb",
+    "server/services/ana/AnaToolExecutor.ts": "d240a2893312b2433fc5a6951fdc7feef7db188c1b1c71882e5c7069ed0901e6",
+    "server/services/ectd/__tests__/market-application-number.pglite.test.ts": "ecb992dd4e8f6ce3333cd801b958688e1b23738f73883beb1a1b158b1e29bab7",
+    "server/services/ectd/__tests__/export-application-identity.pglite.test.ts": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2",
+    "server/services/ectd/__tests__/recorded-applicant-identity.test.ts": "186f0e4da56746ec3e365555b19cd682be1926c4a290984311e8765111e8e1c1",
+    "server/services/ectd/__tests__/run-package-identity.test.ts": "6165bb02e8d8091d888bd53b8b9f170ed932d4d8cecbe291b6eba52725cdfdd7",
+    "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts": "d4d9c56b4a8bbcbdb1098a4139a26bbc375b4f2018205cfcd280e2b3789b1851",
+    "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts": "f02b353383705299c8ac882f89e346160392115bf2dc264478b62346039d0490",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts": "ea8ed3f84ef67eda0db12efd687ae7a75482b9580b60fc9cbd8a2bca5b90e7f4",
+    "server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts": "48a9bedc63155fb495dfef54eb721e338129387d338fe3128de90b9e4b1ed2ae"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 8,
+    "passed": 171,
+    "allInputHashesStable": true
+  }
+}

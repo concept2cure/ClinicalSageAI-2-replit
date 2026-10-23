@@ -1,0 +1,173 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/submission-service/__tests__/market-application-number.pglite.test.ts
+{
+  "timestamp": "2026-10-23T18:53:11.990Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stderr | server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the lead records the EU number on the added market, with the reason and a chained audit row; the package reads it
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 5 shows its reason and records neither a number nor an audit row 28ms
+   → expected { submissionId: 5, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 6 shows its reason and records neither a number nor an audit row 5ms
+   → expected { submissionId: 6, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 7 shows its reason and records neither a number nor an audit row 5ms
+   → expected { submissionId: 7, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 8 shows its reason and records neither a number nor an audit row 5ms
+   → expected { submissionId: 8, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+ × server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 9 shows its reason and records neither a number nor an audit row 8ms
+   → expected { submissionId: 9, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the lead records the EU number on the added market, with the reason and a chained audit row; the package reads it 26ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the audit row names the project, so the project's feed shows it; the row's read says who recorded it, when and why 22ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > the same number again writes nothing 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'the home market' is refused, and nothing is written 9ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a member who is not the lead' is refused, and nothing is written 21ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a number with a slash' is refused, and nothing is written 6ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'an FDA number that is not six digits' is refused, and nothing is written 7ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > 'a submission with no project' is refused, and nothing is written 4ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > a manager may record it, and the FDA rule takes a six-digit number; a frozen sequence does not stop a first recording 15ms
+ ✓ server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > a number a frozen or dispatched sequence was built under is not changed, and nothing is written 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 5 shows its reason and records neither a number nor an audit row
+AssertionError: expected { submissionId: 5, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationNumber": null,
+-   "home": false,
+-   "unresolvedReason": StringMatching /not recognized/i,
++   "applicationNumber": "214321",
++   "home": true,
+  }
+
+ ❯ server/services/submission-service/__tests__/market-application-number.pglite.test.ts:107:18
+    105|     const before = await audits();
+    106|     const read = await readMarketApplicationNumber(id, { organizationI…
+    107|     expect(read).toMatchObject({ home: false, applicationNumber: null,…
+       |                  ^
+    108|     expect(read.lastRecorded).toBeNull();
+    109|     await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 6 shows its reason and records neither a number nor an audit row
+AssertionError: expected { submissionId: 6, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationNumber": null,
+-   "home": false,
+-   "unresolvedReason": StringMatching /not recognized/i,
++   "applicationNumber": "214321",
++   "home": true,
+  }
+
+ ❯ server/services/submission-service/__tests__/market-application-number.pglite.test.ts:107:18
+    105|     const before = await audits();
+    106|     const read = await readMarketApplicationNumber(id, { organizationI…
+    107|     expect(read).toMatchObject({ home: false, applicationNumber: null,…
+       |                  ^
+    108|     expect(read.lastRecorded).toBeNull();
+    109|     await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 7 shows its reason and records neither a number nor an audit row
+AssertionError: expected { submissionId: 7, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationNumber": null,
+-   "home": false,
+-   "unresolvedReason": StringMatching /not recognized/i,
++   "applicationNumber": "DO-NOT-BORROW",
++   "home": true,
+  }
+
+ ❯ server/services/submission-service/__tests__/market-application-number.pglite.test.ts:107:18
+    105|     const before = await audits();
+    106|     const read = await readMarketApplicationNumber(id, { organizationI…
+    107|     expect(read).toMatchObject({ home: false, applicationNumber: null,…
+       |                  ^
+    108|     expect(read.lastRecorded).toBeNull();
+    109|     await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 8 shows its reason and records neither a number nor an audit row
+AssertionError: expected { submissionId: 8, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationNumber": null,
+-   "home": false,
+-   "unresolvedReason": StringMatching /not recognized/i,
++   "applicationNumber": "DO-NOT-BORROW",
++   "home": true,
+  }
+
+ ❯ server/services/submission-service/__tests__/market-application-number.pglite.test.ts:107:18
+    105|     const before = await audits();
+    106|     const read = await readMarketApplicationNumber(id, { organizationI…
+    107|     expect(read).toMatchObject({ home: false, applicationNumber: null,…
+       |                  ^
+    108|     expect(read.lastRecorded).toBeNull();
+    109|     await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/market-application-number.pglite.test.ts > recording a market's own application number (P-44) > unresolved market 9 shows its reason and records neither a number nor an audit row
+AssertionError: expected { submissionId: 9, home: true, …(4) } to match object { home: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicationNumber": null,
+-   "home": false,
+-   "unresolvedReason": StringMatching /not recognized/i,
++   "applicationNumber": "DO-NOT-BORROW",
++   "home": true,
+  }
+
+ ❯ server/services/submission-service/__tests__/market-application-number.pglite.test.ts:107:18
+    105|     const before = await audits();
+    106|     const read = await readMarketApplicationNumber(id, { organizationI…
+    107|     expect(read).toMatchObject({ home: false, applicationNumber: null,…
+       |                  ^
+    108|     expect(read.lastRecorded).toBeNull();
+    109|     await expect(record(id, 'NEW-NUMBER')).rejects.toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 10 passed (15)
+   Start at  18:53:09
+   Duration  11.27s (transform 3.84s, setup 152ms, import 5.44s, tests 5.22s, environment 0ms)
+

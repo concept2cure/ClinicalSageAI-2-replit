@@ -1,0 +1,139 @@
+{
+  "passed": true,
+  "syntheticInterceptedRecords": true,
+  "humanWitnessed": false,
+  "productionWriteExecuted": false,
+  "liveSignatureExecuted": false,
+  "liveTransmissionExecuted": false,
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+      "sha256": "ecf7d2eb7abf847e243b219479da9e12810618bb215540a8675e2d8a458250ba"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/C2CForm.tsx",
+      "sha256": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useDialog.ts",
+      "sha256": "d53dfb86826cd085e5cd486cd2c97a7764306a0d3acea30b337657822f4a5cf3"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "sha256": "9c979f80c158a485ed9aec34fd019fcf30d3f3b78df0391b64e9f0dd583f70e1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-probe.tsx",
+      "sha256": "01a5a3caa22b649d85e28e0e1b09ef5801fcd789ef97d81e268ac106f6249c10"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-check.mjs",
+      "sha256": "fba2e0fd184899d18aaef6c8e7bc48b99be749e19a98fbbf9dbeed4fa81bdbc3"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-index.html",
+      "sha256": "d32bc3430904f4e65c6869214c31f230cd2551ea184d79580c1d0d5acb71cc2c"
+    },
+    {
+      "path": "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-server.mjs",
+      "sha256": "7598b12dbe132e14e5fdd6addc58f0ea6eff829519c0e3a4eb976441c1ae9da6"
+    }
+  ],
+  "checks": [
+    {
+      "check": "Unknown market displays server refusal without recording control",
+      "passed": true
+    },
+    {
+      "check": "Unresolved reason overrides contradictory home flag and project number",
+      "passed": true
+    },
+    {
+      "check": "Malformed diagnosis fails the read without a recording control",
+      "passed": true
+    },
+    {
+      "check": "Recognized home market preserves existing hidden row",
+      "passed": true
+    },
+    {
+      "check": "Older recognized response without diagnosis retains governed form",
+      "passed": true
+    },
+    {
+      "check": "Recognized non-home market preserves reason-bearing record and reread",
+      "passed": true
+    },
+    {
+      "check": "Unresolved parent reread removes open form; corrected read does not reopen it",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "POST",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/2/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/3/application-number"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions/4/application-number"
+    }
+  ],
+  "browserErrors": []
+}
