@@ -303,7 +303,7 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
       'Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; ' +
       'regulatory intelligence, precedent and agency meetings.',
     laterDevice:
-      'Registrations, market access and post-market vigilance; regulatory intelligence, precedent and agency meetings.',
+      'Registration lifecycle tracking and market access; regulatory intelligence, precedent and agency meetings.',
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',

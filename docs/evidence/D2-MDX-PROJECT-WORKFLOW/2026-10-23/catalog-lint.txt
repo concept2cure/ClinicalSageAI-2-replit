@@ -1,0 +1,42 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/hooks/useRejectWorkflow.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/lib/formatRelativeShort.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/services/workflowDecisionService.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/registryModel.ts
+  711:1  warning  File has too many lines (780). Maximum allowed is 500  max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+   184:8   warning  Function 'Setup' has too many lines (339). Maximum allowed is 100                                                                                                                      max-lines-per-function
+   184:8   warning  Function 'Setup' has a complexity of 39. Maximum allowed is 15                                                                                                                         complexity
+   693:1   warning  File has too many lines (2784). Maximum allowed is 500                                                                                                                                 max-lines
+   716:8   warning  Function 'AuditTrail' has too many lines (603). Maximum allowed is 100                                                                                                                 max-lines-per-function
+   716:8   warning  Function 'AuditTrail' has a complexity of 26. Maximum allowed is 15                                                                                                                    complexity
+   716:30  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  1688:8   warning  Function 'Apps' has too many lines (411). Maximum allowed is 100                                                                                                                       max-lines-per-function
+  1688:8   warning  Function 'Apps' has a complexity of 30. Maximum allowed is 15                                                                                                                          complexity
+  1688:24  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  1730:9   warning  The 'pj' logical expression could make the dependencies of useMemo Hook (at line 1908) change on every render. To fix this, wrap the initialization of 'pj' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  1731:9   warning  The 'us' logical expression could make the dependencies of useMemo Hook (at line 1908) change on every render. To fix this, wrap the initialization of 'us' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  2235:8   warning  Function 'ArtifactsCenter' has too many lines (272). Maximum allowed is 100                                                                                                            max-lines-per-function
+  2235:35  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  2688:8   warning  Function 'AdminConsole' has too many lines (733). Maximum allowed is 100                                                                                                               max-lines-per-function
+  2688:8   warning  Function 'AdminConsole' has a complexity of 45. Maximum allowed is 15                                                                                                                  complexity
+  2688:32  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/scripts/ci/check-launch-scope-api.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+✖ 23 problems (0 errors, 23 warnings)
+

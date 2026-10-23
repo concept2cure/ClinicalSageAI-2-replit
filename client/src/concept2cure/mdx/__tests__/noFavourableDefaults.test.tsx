@@ -25,6 +25,7 @@ import { adaptClassification } from '../hooks/useIvd';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { useWorkbenchValidation } from '../hooks/useWorkbench';
 import { PostmarketSurface } from '../surfaces/PostmarketSurface';
+import type { Program } from '../data/programs';
 
 vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
 
@@ -81,10 +82,27 @@ describe('no favourable default for a missing regulatory value', () => {
 });
 
 describe('PostmarketSurface — statutory-clock cards come from the reads that hold them', () => {
-  function mount() {
+  function mount(program?: Program) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return render(<QueryClientProvider client={client}><PostmarketSurface onAskAna={() => {}} /></QueryClientProvider>);
+    return render(<QueryClientProvider client={client}><PostmarketSurface program={program} onAskAna={() => {}} /></QueryClientProvider>);
   }
+
+  it('explains the mixed scope and keeps reporting-clock requests narrowed to the project', async () => {
+    const seen: string[] = [];
+    serve(url => {
+      seen.push(url);
+      return url.includes('/api/capa-mdr/triage') ? { items: [], count: 0 }
+        : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } };
+    });
+    const project = { id: 'project-a', code: 'MDX-42', title: 'Device project' } as Program;
+    const { getByTestId, getByText } = mount(project);
+    expect(getByTestId('postmarket-scope').textContent).toContain('Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.');
+    expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to MDX-42.');
+    expect(getByText(/MDX-42 only/)).toBeTruthy();
+    await waitFor(() => expect(seen.some(url => url.includes('/api/capa-mdr/triage?program_id=project-a'))).toBe(true));
+    expect(seen).toContain('/api/mdx/postmarket');
+    expect(seen).not.toContain('/api/capa-mdr/triage');
+  });
 
   it('shows no count while the triage read has failed', async () => {
     serve((u) => (u.includes('/api/capa-mdr/triage') ? null : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } }));

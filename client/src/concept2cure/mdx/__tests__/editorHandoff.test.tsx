@@ -22,10 +22,15 @@ import type { SurfaceViewProps } from '../../v2/surfaceViews';
 import type { EstarRow } from '../data/k510';
 
 // The host fans out to live endpoints; this test is about the hand-off, not
-// any fetch, so everything resolves empty and the fixtures render.
+// the evidence fetches. The chosen project is real-shaped; evidence reads
+// resolve empty and the surface states that absence.
+const PROGRAM_ID = '11111111-1111-4111-8111-111111111111';
 vi.stubGlobal(
   'fetch',
-  vi.fn(async () => new Response(JSON.stringify({ data: [] }), {
+  vi.fn(async (input: RequestInfo | URL) => new Response(JSON.stringify({ data: String(input) === '/api/regulatory-programs' ? [{
+    id: PROGRAM_ID, name: 'Client device', productName: 'Client device', code: 'CLIENT', programType: '510K',
+    productType: 'device', regulatoryPath: '510k', status: 'active', phase: 'authoring', teamMembers: [], updatedAt: '2026-10-23T00:00:00Z',
+  }] : [] }), {
     status: 200,
     headers: { 'content-type': 'application/json' },
   })),
@@ -54,29 +59,27 @@ function renderHost(nav: string, onNav = vi.fn()) {
 }
 
 describe('the 510(k) workspace hands the editor its section', () => {
-  it('"Open §11 in editor" writes docType + section to the channel and navigates', () => {
+  it('"Open §11 in editor" writes the selected project, docType and section before navigating', async () => {
+    window.C2C_PROJECT = { id: PROGRAM_ID, title: 'Client device' };
     const onNav = renderHost('device-510k');
 
-    fireEvent.click(screen.getByRole('button', { name: /Open §11 in editor/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Open §11 in editor/i }));
 
     expect(onNav).toHaveBeenCalledWith('document-authoring');
     const t = window.C2C_EDITOR_TARGET;
     expect(t).toBeTruthy();
     expect(t!.docType).toBe('k510');
+    expect(t!.programId).toBe(PROGRAM_ID);
     expect(t!.sectionCode).toBe('11');
-    // The fixture's §11 label rides along for the title-match fallback and
-    // for the editor's honest-miss wording.
+    // The reference section label travels for the editor's honest-miss wording.
     expect(t!.sectionLabel).toBe('Substantial Equivalence Discussion');
   });
 
-  it('a click with no program in scope still writes the pathway anchor docType', () => {
-    // fetch returns no programs, so programForContext is null and the target
-    // carries no programId — the editor resolves best-effort in the user's own
-    // scope, and the docType still travels from the PATHWAY_ANCHOR.
+  it('with no selected project, offers Projects and creates no editor target', async () => {
     renderHost('device-510k');
-    fireEvent.click(screen.getByRole('button', { name: /Open §11 in editor/i }));
-    expect(window.C2C_EDITOR_TARGET?.programId).toBeNull();
-    expect(window.C2C_EDITOR_TARGET?.docType).toBe('k510');
+    expect(await screen.findByRole('button', { name: 'Open projects' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Open §11 in editor/i })).toBeNull();
+    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
   });
 });
 

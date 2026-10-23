@@ -394,7 +394,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
-          <p className="sp-state">Design and development — {dcBasis} — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
+          <p className="sp-state">Organization-wide design-controls register. Design and development — {dcBasis} — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button
           className="sp-primary"

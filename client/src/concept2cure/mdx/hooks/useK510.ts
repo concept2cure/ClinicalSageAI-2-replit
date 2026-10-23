@@ -45,13 +45,13 @@ import {
 /* ─── eSTAR sections (LOCAL endpoint, real DB) ──────────────────────── */
 
 interface ServerSection {
-  id: number;
+  id: number | string;
   sectionNumber: number | string;
   sectionTitle: string | null;
   sectionKey: string | null;
   category: string | null;
   status: string | null;
-  completionPercentage: number;
+  completionPercentage: number | null;
   contentLength: number;
   isRequired: boolean;
   level: number;
@@ -70,7 +70,7 @@ interface DocumentPreviewPayload {
   approvedCount: number;
   draftingCount: number;
   todoCount: number;
-  completionPercentage: number;
+  completionPercentage: number | null;
   sections: ServerSection[];
 }
 
@@ -88,9 +88,7 @@ function adaptSection(s: ServerSection): EstarRow {
   /* Required + empty + not-yet-drafted = blocker. The kit's UI surfaces
      blockers via a side accent and pre-flight validation; this matches. */
   const blocker = s.isRequired && (status === 'empty' || status === 'draft') && s.contentLength === 0;
-  const id = typeof s.sectionNumber === 'number'
-    ? s.sectionNumber
-    : Number.parseInt(String(s.sectionNumber), 10) || s.id;
+  const id = s.sectionNumber ?? s.sectionKey ?? s.id;
   /* Surface AnA's draft when present + not yet accepted. Acceptance stamps
      acceptedAt and KEEPS draftSource — the origin is a fact about the text,
      not a pending flag (ledger L155). */
@@ -100,7 +98,7 @@ function adaptSection(s: ServerSection): EstarRow {
           source: 'ana' as const,
           at: s.draftedAt,
           summary: s.draftedSummary ?? undefined,
-          rowId: s.id,
+          rowId: Number(s.id),
         }
       : null;
   return {
@@ -138,9 +136,9 @@ export interface UseK510EstarResult {
  *   priority is on the server.
  * @returns `{ rows, blockerCount, loading, error }`.
  */
-export function useK510EstarSections(projectIdent: string | null): UseK510EstarResult {
+export function useK510EstarSections(projectIdent: string | null, docType?: 'k510' | 'denovo' | 'pma' | 'cer' | 'mdr' | 'ivdr'): UseK510EstarResult {
   const url = projectIdent
-    ? `/api/510k/projects/${encodeURIComponent(projectIdent)}/document-preview`
+    ? `/api/510k/projects/${encodeURIComponent(projectIdent)}/document-preview${docType ? `?docType=${encodeURIComponent(docType)}` : ''}`
     : null;
   const { data, loading, error, refresh } = useFetchJson<DocumentPreviewPayload>(url);
   if (!data) return { rows: null, blockerCount: 0, loading, error, refresh };
@@ -157,7 +155,7 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
       refresh,
     };
   }
-  const rows = data.sections.map(adaptSection).sort((a, b) => a.id - b.id);
+  const rows = data.sections.map(adaptSection).sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
   return {
     rows,
     blockerCount: rows.filter((r) => r.blocker).length,

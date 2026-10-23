@@ -16,6 +16,8 @@ import { C2CToast, useToast } from '../toast';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { groupCatalogWorkflows, type CatalogFeature } from '../catalogWorkflows';
 import '../styles/workflows-v2.css';
+import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
+import { MdxCatalogSolution } from './MdxCatalogSolution';
 
 /* ════════════ Apps catalog ════════════
    Live-wired to /api/module-subscriptions (mounted in
@@ -501,6 +503,7 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
         visibleWorkflows: catalogView.workflows.map(area => ({ id: area.id, label: area.label,
           when: area.when, start: area.start, next: area.next, featureIds: area.features.map(feature => feature.row.id) })),
         matchingFeatures: catalogView.matchingFeatures,
+        mdxProjectFeatureIds: all.filter(feature => isMdxProjectFeature(feature.id)).map(feature => feature.id),
         licence: lic
           ? {
               tier: lic.tier,
@@ -536,6 +539,7 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
       },
       availableActions: [
         'Find a workflow or feature and open an available feature',
+        'Open Projects to work with MDX features inside a device or diagnostic project',
         'Show the admin controls and enable or disable a module for this organisation (admin only; takes a reason for change and is written to the audit trail)',
         'Read the plan tier and the project / user usage against their limits',
       ],
@@ -564,36 +568,74 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
   }, [catState.loading]);
   usePublishSurfaceContext('apps', anaContext);
 
+  const renderAccessRemedy = (a: AppRow) => {
+    if (a.toggleable) {
+      return (
+        <button
+          className="btn ghost"
+          style={{ height: 26, marginLeft: 'auto' }}
+          onClick={() => setAdmin(true)}
+          title="Turn on admin controls to enable this module"
+        >
+          Admin controls
+        </button>
+      );
+    }
+    const notice = a.lock ? lockNotice(a.lock, ROLE_AGNOSTIC) : null;
+    if (!notice?.ctaLabel || !notice.ctaTarget) return null;
+    return (
+      <button
+        className="btn primary"
+        style={{ height: 26, marginLeft: 'auto' }}
+        onClick={() => open(notice.ctaTarget as string)}
+        data-testid="admin-upgrade-plan"
+      >
+        {notice.ctaLabel}
+      </button>
+    );
+  };
+  const renderAccessControl = (a: AppRow, groupIdx: number, projectFeature: boolean) => {
+    if (admin && a.toggleable) {
+      return (
+        <button
+          className="lic-toggle"
+          role="switch"
+          aria-checked={a.on}
+          aria-label={`${a.on ? 'Disable' : 'Enable'} ${a.name || a.id}`}
+          data-on={a.on || undefined}
+          style={{ marginLeft: 'auto' }}
+          onClick={() => toggle(groupIdx, a.id, !a.on)}
+          title={a.on ? 'Disable module' : 'Enable module'}
+        >
+          <span className="lic-toggle-k"></span>
+        </button>
+      );
+    }
+    if (!a.on) return renderAccessRemedy(a);
+    if (projectFeature) return null;
+    return (
+      <button className="btn ghost" style={{ height: 26, marginLeft: 'auto' }} onClick={() => open(a.id)}>
+        Open
+      </button>
+    );
+  };
+  const renderAccess = (a: AppRow, groupIdx: number, projectFeature = false) => {
+    const notice = a.lock ? lockNotice(a.lock, ROLE_AGNOSTIC) : null;
+    return (
+      <>
+        <span className={`rd-chip rd-chip-sentence tone-${a.lock ? 'idle' : a.on ? 'ai' : 'ok'}`}>
+          {notice ? notice.status : a.tier}
+        </span>
+        {renderAccessControl(a, groupIdx, projectFeature)}
+      </>
+    );
+  };
+
   const renderFeatures = (features: CatalogFeature<AppRow>[]) => (
     <div className="launch-grid">
             {features.map(({ row: a, groupIndex }) => {
               const surf = getSurfaceMeta(a.id);
               const label = a.name || surf.label || a.id;
-              /* The lock's own words, from the shell's lock vocabulary.
-
-                 Only the role-INVARIANT parts of lockNotice are read here:
-                 `status` for the chip, and the 'tier' branch's CTA. Neither
-                 reads `opts`. The parts that DO fork on it — every `body`, and
-                 the CTAs on the 'disabled' and 'industry' branches — are
-                 deliberately unused, for two reasons. This surface holds no
-                 auth dependency and cannot answer "is the viewer an org admin"
-                 without adding one (the server is the real gate and already
-                 reports its refusal on the write). And lockNotice's 'disabled'
-                 CTA is "Open Apps catalog", which is this screen: the remedy
-                 for that lock is the switch a few pixels away, not a link back
-                 to where the reader already is. The sentence therefore comes
-                 from lockShortReason, which is documented to stand alone
-                 precisely because the rail appends it to a button with no
-                 context around it. */
-              const notice = a.lock ? lockNotice(a.lock, ROLE_AGNOSTIC) : null;
-              /* Mirrors canAccessModule() rather than the chip's LABEL. The
-                 previous gate was `a.tier === 'Add-on'`, so the question "would
-                 the server accept this write" was answered by string-matching
-                 display copy — one wording change away from putting a switch on
-                 a module whose only possible response is 403
-                 MODULE_NOT_AVAILABLE. `toggleable` is computed from isAvailable
-                 / isEnabled, the same two facts the server decides on. */
-              const showToggle = admin && a.toggleable;
               return (
                 <div key={a.id} className="launch" data-locked={!a.on || undefined}>
                   {!a.on && <span className="launch-lock">{I.lock}</span>}
@@ -612,65 +654,7 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
                         off a module nobody had ever touched. */}
                     {a.lock ? `${label} is ${lockShortReason(a.lock)}.` : a.desc}
                   </div>
-                  <div className="launch-foot">
-                    <span
-                      className={`rd-chip rd-chip-sentence tone-${a.lock ? 'idle' : a.on ? 'ai' : 'ok'}`}
-                    >
-                      {/* Locked: the reason, which for a tier gap names the
-                          plan that includes it ("Included from Professional").
-                          Otherwise the packaging band the module sits in. */}
-                      {notice ? notice.status : a.tier}
-                    </span>
-                    {showToggle ? (
-                      <button
-                        className="lic-toggle"
-                        role="switch"
-                        aria-checked={a.on}
-                        data-on={a.on || undefined}
-                        style={{ marginLeft: 'auto' }}
-                        onClick={() => toggle(groupIndex, a.id, !a.on)}
-                        title={a.on ? 'Disable module' : 'Enable module'}
-                      >
-                        <span className="lic-toggle-k"></span>
-                      </button>
-                    ) : a.on ? (
-                      <button
-                        className="btn ghost"
-                        style={{ height: 26, marginLeft: 'auto' }}
-                        onClick={() => open(a.id)}
-                      >
-                        Open
-                      </button>
-                    ) : a.toggleable ? (
-                      /* Off and switchable — either an administrator turned it
-                         off or it was never provisioned. Both are resolved by
-                         the switch above, which needs admin controls showing. */
-                      <button
-                        className="btn ghost"
-                        style={{ height: 26, marginLeft: 'auto' }}
-                        onClick={() => setAdmin(true)}
-                        title="Turn on admin controls to enable this module"
-                      >
-                        Admin controls
-                      </button>
-                    ) : notice?.ctaLabel && notice.ctaTarget ? (
-                      /* Only the tier branch reaches here with a CTA, and its
-                         target is the licensing surface. It is a button, not
-                         the old <a href="/settings/subscription">: that path
-                         matched no route, so the browser did a full reload and
-                         the SPA router landed the admin back on the app home. */
-                      <button
-                        className="btn primary"
-                        style={{ height: 26, marginLeft: 'auto' }}
-                        onClick={() => open(notice.ctaTarget as string)}
-                        data-testid="admin-upgrade-plan"
-                      >
-                        {notice.ctaLabel}
-                      </button>
-                    ) : null /* Industry mismatch: no plan and no switch on this
-                                screen changes it, so the card offers no step
-                                rather than a button that resolves nothing. */}
-                  </div>
+                  <div className="launch-foot">{renderAccess(a, groupIndex)}</div>
                 </div>
               );
             })}
@@ -782,20 +766,40 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
           <span className="sr-only" role="status">
             {query.trim() ? `${catalogView.matchingFeatures} features match your search` : ''}
           </span>
-          {catalogView.workflows.map(area => (
-            <section key={area.id} className="workflow-area" aria-label={`${area.label} workflow`}>
-              <h2>{area.label}</h2>
-              <dl className="workflow-guidance">
-                <div><dt>When to use</dt><dd>{area.when}</dd></div>
-                <div><dt>Start with</dt><dd>{area.start}</dd></div>
-                <div><dt>Next</dt><dd>{area.next}</dd></div>
-              </dl>
-              <details data-workflow={area.id} open={admin || !!query.trim()}>
-                <summary>Features and steps ({area.features.length})</summary>
-                {renderFeatures(area.features)}
-              </details>
-            </section>
-          ))}
+          {catalogView.workflows.map(area => {
+            const mdxFeatures = area.features.filter(feature => isMdxProjectFeature(feature.row.id));
+            const sharedFeatures = area.features.filter(feature => !isMdxProjectFeature(feature.row.id));
+            return (
+              <section key={area.id} className="workflow-area" aria-label={`${area.label} workflow`}>
+                <h2>{area.label}</h2>
+                <dl className="workflow-guidance">
+                  <div><dt>When to use</dt><dd>{area.when}</dd></div>
+                  <div><dt>Start with</dt><dd>{area.start}</dd></div>
+                  <div><dt>Next</dt><dd>{area.next}</dd></div>
+                </dl>
+                <MdxCatalogSolution
+                  onOpenProjects={() => open('projects')}
+                  expanded={admin || !!query.trim()}
+                  features={mdxFeatures.map(({ row: feature, groupIndex }) => {
+                    const label = feature.name || getSurfaceMeta(feature.id).label || feature.id;
+                    return {
+                      id: feature.id,
+                      label,
+                      description: feature.lock ? `${label} is ${lockShortReason(feature.lock)}.` : feature.desc,
+                      locked: !!feature.lock,
+                      access: renderAccess(feature, groupIndex, true),
+                    };
+                  })}
+                />
+                {sharedFeatures.length > 0 && (
+                  <details data-workflow={area.id} open={admin || !!query.trim()}>
+                    <summary>Features and steps ({sharedFeatures.length})</summary>
+                    {renderFeatures(sharedFeatures)}
+                  </details>
+                )}
+              </section>
+            );
+          })}
           {catalogView.additional.length > 0 && (
             <details className="workflow-additional" data-workflow="additional" open={admin || !!query.trim()}>
               <summary>Additional capabilities</summary>

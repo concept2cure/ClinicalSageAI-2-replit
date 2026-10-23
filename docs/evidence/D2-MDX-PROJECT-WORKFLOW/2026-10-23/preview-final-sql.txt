@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > requires authenticated organization context 22ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > assembles only the primary document with exact section keys and no invented percentage 14ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > opens an explicitly requested secondary CER without borrowing another project or filing 8ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > reports an absent requested document as empty rather than substituting the primary 7ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > rejects invalid or repeated requested document classes 7ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > keeps a failed content read distinct from an empty document 7ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > preserves current project-sharing denial before reading or auditing content 6ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > does not resolve another tenant or a deleted program 9ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > resolves codes and numeric identifiers through the recorded canonical anchor only 13ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > audits the actual program, document and requested class 8ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  20:49:36
+   Duration  2.82s (transform 556ms, setup 53ms, import 1.11s, tests 1.48s, environment 0ms)
+

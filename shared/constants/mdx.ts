@@ -27,8 +27,12 @@ export const REGULATORY_PATH_TO_PATHWAY: Record<string, RegulatoryPathway> = {
   'de_novo': 'k510',
   'pma':     'pma',
   'cer':     'cer',
+  'mdr':     'cer',
+  'mdr_td':  'cer',
+  'eu_mdr':  'cer',
   'ivd':     'ivdr',
   'ivdr':    'ivdr',
+  'ivdr_td': 'ivdr',
 };
 
 /** Backend `programType` column → kit pathway code (null = non-MDX type). */
@@ -39,6 +43,8 @@ export const PROGRAM_TYPE_TO_PATHWAY: Record<string, RegulatoryPathway | null> =
   'DE_NOVO': 'k510',
   'PMA':     'pma',
   'CER':     'cer',
+  'MDR':     'cer',
+  'MDR_TD':  'cer',
   'IVD':     'ivdr',
   'IVDR':    'ivdr',
   'IVDR_TD': 'ivdr',

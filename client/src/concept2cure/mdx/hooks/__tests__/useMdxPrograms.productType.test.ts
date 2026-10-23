@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useMdxPrograms } from '../useMdxPrograms';
+import { deriveKitPathway, useMdxPrograms } from '../useMdxPrograms';
 
 vi.mock('@/utils/authToken', () => ({
   getAuthToken: () => 'test-token',
@@ -58,6 +58,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('useMdxPrograms — productType', () => {
+  it('keeps EU evaluation filings distinct from a separately recorded US route', () => {
+    expect(deriveKitPathway('MDR', '510k')).toBe('cer');
+    expect(deriveKitPathway('MDR_TD', null)).toBe('cer');
+    expect(deriveKitPathway('IVDR_TD', '510k')).toBe('ivdr');
+    expect(deriveKitPathway('IVD', '510k')).toBe('k510');
+  });
   it('carries the server product_type onto the kit Program, alongside the k510 pathway', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

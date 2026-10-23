@@ -61,6 +61,11 @@ describe('dossierStore live-data integrity', () => {
     expect(deriveDossierStatus({ hasSections: true, isLoading: false, error: null })).toBe('live-data');
     expect(deriveDossierStatus({ hasSections: false, isLoading: true, error: null })).toBe('loading');
   });
+
+  it('does not let cached sections conceal a current permission denial or read failure', () => {
+    expect(deriveDossierStatus({ hasSections: true, isLoading: false, error: new ApiRequestError('Forbidden', 403) })).toBe('permission-denied');
+    expect(deriveDossierStatus({ hasSections: true, isLoading: false, error: new ApiRequestError('Unavailable', 503) })).toBe('unavailable');
+  });
 });
 
 describe('live audit events attribute only what the client can actually observe', () => {
