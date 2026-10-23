@@ -1,0 +1,267 @@
+{
+  "purpose": "Read-only broad diagnostic, not final source witness: other workers finished fixes during run. No source/fixture edits by snapshot diagnostic worker.",
+  "broad": {
+    "files": 163,
+    "consoleFileCounts": {
+      "passed": 151,
+      "failed": 11,
+      "skipped": 1
+    },
+    "totalTests": 2219,
+    "passedTests": 2163,
+    "failedTests": 17,
+    "skippedTests": 37,
+    "todoTests": 2,
+    "exitCode": 1,
+    "log": "backend-broad-first.log",
+    "json": "backend-broad-first.json"
+  },
+  "replays": [
+    {
+      "name": "backend-xmllint-replay-final",
+      "files": 3,
+      "passedTests": 38,
+      "failedTests": 0,
+      "exitCode": 0
+    },
+    {
+      "name": "backend-hook-qualification-replay",
+      "files": 2,
+      "passedTests": 14,
+      "failedTests": 0,
+      "exitCode": 0
+    }
+  ],
+  "failedFiles": [
+    {
+      "file": "server/services/ectd/__tests__/backbone-validation-confinement.test.ts",
+      "classification": "runtime_prerequisite",
+      "disposition": "Verified retained xmllint replay passed38/38 across3files; all16 skipped confinement assertions executed there.",
+      "suiteMessage": "Confinement qualification requires the real xmllint binary on PATH; absence is not a passing run.: expected false to be true // Object.is equality",
+      "failedCases": [],
+      "assertionStatuses": {
+        "skipped": 16
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/backbone-validation.test.ts",
+      "classification": "runtime_prerequisite",
+      "disposition": "Verified retained xmllint replay passed38/38 across3files.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "canonical per-file DTD evidence records actual well-formedness, DOCTYPE and DTD execution",
+          "failureMessages": [
+            "AssertionError: expected { relPath: 'index.xml', \u2026(5) } to match object { relPath: 'index.xml', \u2026(3) }\n(4 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/concept2cure/node_modules/chai/index.js:1700:25)\n    at /workspace/concept2cure/server/services/ectd/__tests__/backbone-validation.test.ts:24:20\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "canonical per-file DTD evidence records grammar-invalid XML separately from well-formedness",
+          "failureMessages": [
+            "AssertionError: expected { relPath: 'index.xml', \u2026(5) } to match object { \u2026(2) }\n(10 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/concept2cure/node_modules/chai/index.js:1700:25)\n    at /workspace/concept2cure/server/services/ectd/__tests__/backbone-validation.test.ts:29:58\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "canonical per-file DTD evidence does not let a commented declaration override the actual declaration",
+          "failureMessages": [
+            "AssertionError: expected { relPath: 'index.xml', \u2026(5) } to match object { doctype: { valid: true }, \u2026(1) }\n(10 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/concept2cure/node_modules/chai/index.js:1700:25)\n    at /workspace/concept2cure/server/services/ectd/__tests__/backbone-validation.test.ts:47:58\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "validation is confined to the shipped package allows a literal package-contained secondary dependency and lets xmllint judge its grammar",
+          "failureMessages": [
+            "AssertionError: expected { relPath: 'index.xml', \u2026(5) } to match object { dtd: { ran: true, valid: true } }\n(13 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/concept2cure/node_modules/chai/index.js:1700:25)\n    at /workspace/concept2cure/server/services/ectd/__tests__/backbone-validation.test.ts:91:58\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "failed": 4,
+        "passed": 14
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts",
+      "classification": "confirmed_private_fixture_gap",
+      "disposition": "Core worker restored real program linkage; dispatch+rehearsal12/12 pass.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "P11-28b on the real schema: the Dispatch click supplies the release it is gated on the dispatch signature the click records is the release: dispatch-now clears once it is on record",
+          "failureMessages": [
+            "error: column \"program_id\" does not exist\n    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)\n    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)\n    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)\n    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)\n    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)"
+          ]
+        },
+        {
+          "name": "P11-28b on the real schema: the Dispatch click supplies the release it is gated on a FREEZE signature is not the release: dispatch-on-signing stays the only way through",
+          "failureMessages": [
+            "error: column \"program_id\" does not exist\n    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)\n    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)\n    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)\n    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)\n    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)"
+          ]
+        },
+        {
+          "name": "P11-28b on the real schema: the Dispatch click supplies the release it is gated on content changed after the dispatch signature: invalid, and nothing is offered over it",
+          "failureMessages": [
+            "error: column \"program_id\" does not exist\n    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)\n    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)\n    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)\n    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)\n    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)\n    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 1,
+        "failed": 3
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "classification": "broad_hook_timeout",
+      "disposition": "Isolated original60second hook and all13assertions passed; replay14/14 across2files, no timeout/source change.",
+      "suiteMessage": "Hook timed out in 60000ms.\nIf this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+      "failedCases": [],
+      "assertionStatuses": {
+        "skipped": 13
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts",
+      "classification": "confirmed_private_fixture_gap",
+      "disposition": "Core worker seeded explicit synthetic sponsor facts; dispatch+rehearsal12/12 pass.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "exporting a rehearsal names the package a rehearsal and reports the unfiled sequences it was bound against",
+          "failureMessages": [
+            "PackageIdentityMissingError: A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA\u2019s us-regional backbone names a regulatory contact for the application: record the contact\u2019s name, telephone and e-mail.. Nothing was built.\n    at packageIdentityRefusal (/workspace/concept2cure/server/services/ectd/package-identity.ts:204:27)\n    at exportIdentity (/workspace/concept2cure/server/services/ectd/assemble-from-core.ts:564:19)\n    at Module.assembleSubmissionEctd (/workspace/concept2cure/server/services/ectd/assemble-from-core.ts:655:35)\n    at /workspace/concept2cure/server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:207:15\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "exporting a rehearsal an export for filing keeps its name and binds only against filed sequences",
+          "failureMessages": [
+            "PackageIdentityMissingError: A package names its application and its applicant from the record, never a placeholder, and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA\u2019s us-regional backbone names a regulatory contact for the application: record the contact\u2019s name, telephone and e-mail.. Nothing was built.\n    at packageIdentityRefusal (/workspace/concept2cure/server/services/ectd/package-identity.ts:204:27)\n    at exportIdentity (/workspace/concept2cure/server/services/ectd/assemble-from-core.ts:564:19)\n    at Module.assembleSubmissionEctd (/workspace/concept2cure/server/services/ectd/assemble-from-core.ts:655:35)\n    at /workspace/concept2cure/server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:217:15\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 6,
+        "failed": 2
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts",
+      "classification": "confirmed_private_fixture_gap",
+      "disposition": "Core worker added real missing signature_hash column; full waiver+finding43/43 pass.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "a waiver signature is its own act is not a release signature, and cannot freeze or dispatch",
+          "failureMessages": [
+            "AssertionError: expected 'undetermined' to be 'unsigned' // Object.is equality\n    at /workspace/concept2cure/server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts:388:103\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 26,
+        "failed": 1
+      }
+    },
+    {
+      "file": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "classification": "pre_existing_stage11_posture_red",
+      "disposition": "Two assertions remain failed, unchanged baseline inputs proven byte-identical to b9. No posture record or enforcement default change.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "submission gate posture \u2014 recorded, not accidental the asset-gated preconditions are still unmet \u2014 switching these on today would block production",
+          "failureMessages": [
+            "AssertionError: ESTAR_REQUIRE_TEMPLATE: recorded as blocking-today=true, observed false in assets/estar-templates \u2014 every manifest pathway clears. Re-decide the posture and update GATE_POSTURE + the posture report.: expected false to be true // Object.is equality\n    at /workspace/concept2cure/server/services/ectd/__tests__/submission-gate-posture.test.ts:432:9\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "submission gate posture \u2014 recorded, not accidental eSTAR is PARTIALLY unblocked: the 510(k) templates are vendored, the PreSTAR ones are not",
+          "failureMessages": [
+            "AssertionError: expected true to be false // Object.is equality\n    at /workspace/concept2cure/server/services/ectd/__tests__/submission-gate-posture.test.ts:480:51\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 6,
+        "failed": 2
+      }
+    },
+    {
+      "file": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "classification": "in_flight_source_staleness",
+      "disposition": "Caller latest fresh focused31/31 and broad260/260 include exact spent-under-lock case; initial broad began before last edit.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "FDA dispatch authorization renewal through the existing governed action refuses a dispatch signature another renewal spent while this request was assembling",
+          "failureMessages": [
+            "AssertionError: expected null to match object { code: 'GOVERNED_REQUIRED', \u2026(1) }\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/concept2cure/node_modules/chai/index.js:1700:25)\n    at /workspace/concept2cure/server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:120:19\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 9,
+        "failed": 1
+      }
+    },
+    {
+      "file": "server/services/submission-service/__tests__/governed-transition-cas.test.ts",
+      "classification": "caller_followup_pending",
+      "disposition": "Sent to caller: source regex expects old closed params array, while renewal appends its existing dispatch-status CAS parameter.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "governed freeze/dispatch \u2014 compare-and-set on the authorized state passes the read status as that predicate, not a constant",
+          "failureMessages": [
+            "AssertionError: expected '\\n\\nimport { createHash, randomUUID }\u2026' to match /params: \\[toStatus, id, ctx\\.organiza\u2026/\n    at /workspace/concept2cure/server/services/submission-service/__tests__/governed-transition-cas.test.ts:41:18\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "passed": 5,
+        "failed": 1
+      }
+    },
+    {
+      "file": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "classification": "caller_followup_pending",
+      "disposition": "Sent to caller: old isolated binding fixture reaches FDA binding refusal before expected no-state-change sentinel. Fresh inspection required.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "the governed packageability check is a dry run (P-27) asks the assembler for a dry run and supplies no identity of its own",
+          "failureMessages": [
+            "Error: expected [Function] to throw error matching /no state change expected/ but got 'Refusing to freeze: the sequence does\u2026'\n    at _Assertion.__VITEST_REJECTS__ (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///workspace/concept2cure/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///workspace/concept2cure/node_modules/chai/index.js:1659:22)\n    at /workspace/concept2cure/server/services/submission-service/__tests__/packageability-dry-run.test.ts:91:49\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)"
+          ]
+        },
+        {
+          "name": "the governed packageability check is a dry run (P-27) discards the dry-run bundle whether or not the check passes",
+          "failureMessages": [
+            "Error: expected [Function] to throw error matching /no state change expected/ but got 'Refusing to freeze: the sequence does\u2026'\n    at _Assertion.__VITEST_REJECTS__ (file:///workspace/concept2cure/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///workspace/concept2cure/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///workspace/concept2cure/node_modules/chai/index.js:1659:22)\n    at /workspace/concept2cure/server/services/submission-service/__tests__/packageability-dry-run.test.ts:100:49\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "failed": 2
+      }
+    },
+    {
+      "file": "server/services/ectd/qualification/__tests__/qualification-stf.test.ts",
+      "classification": "runtime_prerequisite",
+      "disposition": "Verified retained xmllint plus isolated hook replay passed14/14 across2files.",
+      "suiteMessage": "",
+      "failedCases": [
+        {
+          "name": "qualification reaches every generated STF records original and lifecycle STF checks and explicit unvendored schema notes",
+          "failureMessages": [
+            "AssertionError: expected [ { \u2026(6) }, { \u2026(6) } ] to deeply equal ArrayContaining{\u2026}\n    at /workspace/concept2cure/server/services/ectd/qualification/__tests__/qualification-stf.test.ts:19:10\n    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "assertionStatuses": {
+        "failed": 1
+      }
+    }
+  ],
+  "baselineProof": "backend-posture-baseline.json",
+  "baselineHistory": "backend-posture-history.log"
+}

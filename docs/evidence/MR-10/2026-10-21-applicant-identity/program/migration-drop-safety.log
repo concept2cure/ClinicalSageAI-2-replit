@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:migration-drop-safety
+> node scripts/ci/check-migration-drop-safety.mjs
+
+[ci:migration-drop-safety] OK — 418 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).

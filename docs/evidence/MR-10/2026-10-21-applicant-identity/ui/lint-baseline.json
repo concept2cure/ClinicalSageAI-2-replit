@@ -1,0 +1,37 @@
+{
+  "baseline": "b9a48ce7136b8eecb076126d22e387d4d1b0ba84",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx",
+      "errors": 0,
+      "warnings": 3
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "errors": 0,
+      "warnings": 7
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "errors": 0,
+      "warnings": 5
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx",
+      "errors": 0,
+      "warnings": 1
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "errors": 0,
+  "warnings": 16
+}

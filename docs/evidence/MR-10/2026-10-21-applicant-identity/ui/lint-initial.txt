@@ -1,0 +1,12 @@
+
+/workspace/concept2cure/client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx
+  215:1   warning  Function 'IndFormsPanelForScope' has too many lines (370). Maximum allowed is 100  max-lines-per-function
+  250:67  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                 complexity
+  306:52  warning  Async arrow function has a complexity of 19. Maximum allowed is 15                 complexity
+  332:55  warning  Async arrow function has a complexity of 23. Maximum allowed is 15                 complexity
+  414:51  warning  Async arrow function has a complexity of 30. Maximum allowed is 15                 complexity
+  474:84  warning  Async arrow function has a complexity of 23. Maximum allowed is 15                 complexity
+  593:31  warning  Arrow function has a complexity of 33. Maximum allowed is 15                       complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+

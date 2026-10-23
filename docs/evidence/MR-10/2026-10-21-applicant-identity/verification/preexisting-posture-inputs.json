@@ -1,0 +1,40 @@
+{
+  "baseline": "b9a48ce7136b8eecb076126d22e387d4d1b0ba84",
+  "observedHead": "68ca75efa248abb2e4c1fc2ce37ad8e8aff232bc",
+  "observedAt": "2026-10-21T01:44:41.883631+00:00",
+  "classification": "Pre-existing open Stage 11 posture re-decision evidence; two assertions remain failed. No posture record, enforcement default or baseline was changed by this identity slice.",
+  "inputs": [
+    {
+      "path": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "baselineBytes": 25396,
+      "currentBytes": 25396,
+      "baselineSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017",
+      "currentSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017",
+      "byteIdentical": true
+    },
+    {
+      "path": "assets/estar-templates/PreSTAR-q-sub.pdf",
+      "baselineBytes": 3803448,
+      "currentBytes": 3803448,
+      "baselineSha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3",
+      "currentSha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3",
+      "byteIdentical": true
+    },
+    {
+      "path": "assets/estar-templates/checksums.txt",
+      "baselineBytes": 1051,
+      "currentBytes": 1051,
+      "baselineSha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68",
+      "currentSha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68",
+      "byteIdentical": true
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-template-registry.ts",
+      "baselineBytes": 14670,
+      "currentBytes": 14670,
+      "baselineSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "currentSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "byteIdentical": true
+    }
+  ]
+}

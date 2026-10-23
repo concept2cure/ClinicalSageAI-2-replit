@@ -1,0 +1,95 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:41:35.974Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+{
+  "timestamp": "2026-10-21T01:41:49.417Z",
+  "level": "info",
+  "message": "[submission-service] Shadow Review waived",
+  "context": {
+    "sequenceId": 1,
+    "failedRunId": 1,
+    "failureCode": "provider_unavailable",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+{
+  "timestamp": "2026-10-21T01:41:49.426Z",
+  "level": "warn",
+  "message": "[sequence-release-signature] sequence release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "Failed query: \n    SELECT es.id,\n           es.bound_payload_digest,\n           es.verification_status,\n           es.superseded_by,\n           es.is_valid,\n           es.signature_manifest, es.signature_hash\n      FROM electronic_signatures es\n      JOIN c2c_ana_actions a\n        ON a.id = (es.signature_manifest::jsonb ->> 'actionId')\n       AND a.org_id = es.organization_id\n     WHERE es.organization_id = $1\n       AND es.signed_target = $2\n       AND es.binding_basis = $3\n       AND es.signature_type <> $4\n       AND a.command = 'sign'\n       AND a.state = 'executed'\n       AND (a.payload ->> 'intent') = $5\n       AND (a.payload ->> 'meaning') IN ($6, $7, $8)\n     ORDER BY es.id DESC\n     LIMIT 10\n  \nparams: 7,ectd-sequence:1,ectd-sequence-leaf-manifest-sha256,governed-revocation,dispatch,approval,responsibility,release",
+    "sequenceId": 1,
+    "organizationId": 7
+  }
+}
+
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > only after the newest run failed for a provider outage, within 24 hours
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as invalid_ai_response
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as policy_blocked
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as placement_refused
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as rate_limited
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as no_provider_configured
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as model_not_qualified
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as null
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not when the outage is more than 24 hours old, a newer run exists, or a review completed
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not once the sequence is frozen
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > the precheck answers from the same rule, before anyone signs
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > a revoked waiver blocks with its own sentence
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties)
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch 122ms
+   → expected 'undetermined' to be 'unsigned' // Object.is equality
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > a freeze or dispatch signature cannot waive
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > a completed review clears it whatever the waiver; no waiver blocks with the existing sentence
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > an undetermined waiver is never active
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > never waives an unacknowledged critical finding: it answers only "no review has run"
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived
+ ↓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a completed review needs no waiver: none is offered, and the gate clears without a note
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+AssertionError: expected 'undetermined' to be 'unsigned' // Object.is equality
+
+Expected: "unsigned"
+Received: "undetermined"
+
+ ❯ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts:388:103
+    386|     await waiveShadowReview({ sequenceId: seq, signatureActionId: waiv…
+    387|
+    388|     expect((await resolveSequenceReleaseSignature({ sequenceId: seq, o…
+       |                                                                                                       ^
+    389|     const freeze = await outcome(freezeSequence(seq, ctx, waiver));
+    390|     expect(freeze).toMatchObject({ code: 'GOVERNED_REQUIRED', message:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+   Start at  01:41:30
+   Duration  18.46s (transform 9.20s, setup 129ms, import 14.09s, tests 3.59s, environment 0ms)
+

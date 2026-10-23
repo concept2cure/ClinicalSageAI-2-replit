@@ -1,0 +1,47 @@
+Full execution output is retained in green-canonical-callers.txt.gz.
+
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:61:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: '\n    SELECT action FROM audit_logs\n    WHERE tenant_id = $1\n      AND table_name = \'ectd_sequence\'\n      AND record_id = $2\n      AND action IN (\'SEQUENCE_FROZEN\', \'SEQUENCE_DISPATCHED\', \'ECTD_TRANSMITTED\', $3,\n                     $4, $5)\n      AND (new_values::jsonb ->> \'signatureActionId\') = $6\n    LIMIT 1\n  ', params: [ 7, '9200', 'SHADOW_REVIEW_WAIVED', 'SHADOW_FINDING_DISPOSITIONED', 'GOVERNED_SIGNATURE_VOIDED', 'sig-2' ] }
+Caused by: TypeError: The "src" argument must be of type string. Received an instance of Object
+ ❯ R.addString node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:8855
+ ❯ R.addCString node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:8695
+ ❯ Object.xn [as parse] node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:10549
+ ❯ node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2283
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_INVALID_ARG_TYPE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (pending) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (rejected) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses transmitting before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses sent before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses acknowledged before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > rolls renewal back when its chained audit cannot be recorded
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a dispatch signature another renewal spent while this request was assembling
+error: current transaction is aborted, commands ignored until end of transaction block
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 145, severity: 'ERROR', code: '25P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'exec_parse_message', query: 'INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)\n    VALUES ($1, \'Renew dispatch\', \'ind\', \'biotech\', $2, $3, 2, $4)', params: [ 9201, 'fda', 7, '77777777-7777-4777-8777-777777777777' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+
+ Test Files  1 failed | 18 passed (19)
+      Tests  10 failed | 250 passed (260)
+   Start at  01:42:32
+   Duration  167.36s (transform 29.55s, setup 1.06s, import 79.34s, tests 79.48s, environment 3ms)
+

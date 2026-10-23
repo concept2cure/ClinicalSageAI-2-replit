@@ -247,3 +247,23 @@ owns its reachable Builder affordance after wire contract coordination.
 UI worker verifies the existing confirmed governed-success continuation in
 `SubmissionCenter.tsx`. Its redundant proposed refresh line was removed after
 the passing mutation refuted the gap; continuation/refusal regressions remain.
+
+
+## Normal-gate correction and publication
+
+The normal pre-push ownership gate refused the writer's standalone lock-only
+`SELECT id` query. The existing full-facts `resolveProgramIdent` reader now
+optionally applies Drizzle `FOR UPDATE OF regulatory_programs`; only the program
+row is locked, preserving its nullable sponsor join. It runs before the unchanged
+canonical `requireGovernedProgramWriteTx` authority check, exact revision CAS and
+selected-sponsor share lock. No ownership policy, gate, baseline or exception was
+added. The same 97 program/form tests, unchanged gate/selftest and lint pass.
+The evidence records the refused attempt and later normal publication gates.
+
+The full compiler then caught six static type errors. The signature writer now
+reuses `GovernedBinding` members while retaining its existing caller-supplied
+string basis. Renewal preserves the distinction between unknown and explicitly
+null unsent status; the claim boundary represents an absent program as null.
+The malformed-proof fixture explicitly crosses `unknown`. These corrections
+preserve the governed contract and are followed by focused regression replays,
+a rebuilt source, refreshed native pins and the unchanged normal compiler gate.

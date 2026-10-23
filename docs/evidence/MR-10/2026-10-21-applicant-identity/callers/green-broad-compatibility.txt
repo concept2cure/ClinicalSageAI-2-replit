@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the non-FDA governed packageability check retains its explicit dry run (P-27) > asks the assembler for a dry run and supplies no identity of its own 2259ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the non-FDA governed packageability check retains its explicit dry run (P-27) > discards the dry-run bundle whether or not the check passes 2ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the FDA governed packageability check uses the signature-captured recorded facts > supplies the captured DUNS and regulatory contact, then discards the temporary package 2ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the FDA governed packageability check uses the signature-captured recorded facts > refuses an FDA binding with no captured identity before assembly or a state write 6ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the FDA governed packageability check uses the signature-captured recorded facts > refuses incomplete recorded FDA contact facts before assembly or a state write 1ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the FDA governed packageability check uses the signature-captured recorded facts > retains the real assembly blockers and cleanup for a captured FDA package 2ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > both governed writes predicate on the status that was read 5ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > passes the read status as that predicate, not a constant 1ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > reports a lost race as INVALID_STATE, not "not found" 1ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > adds the read status to its where clause 2ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > refuses when the compare-and-set matched nothing 0ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the transmit terminal write explains its own zero-row case > says the package already went to the gateway 1ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  01:54:37
+   Duration  11.67s (transform 6.21s, setup 257ms, import 7.90s, tests 2.30s, environment 0ms)
+

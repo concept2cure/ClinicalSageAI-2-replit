@@ -1,0 +1,224 @@
+{
+  "observedAtUtc": "2026-10-23T15:04:56.919027+00:00",
+  "commit": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "claim": "Observed GitHub check-run snapshot only; no queued or failed result is claimed passed.",
+  "totalCount": 27,
+  "checks": [
+    {
+      "name": "Release evidence gate",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119135912340",
+      "started_at": "2026-10-21T09:05:56Z",
+      "completed_at": "2026-10-21T09:05:56Z"
+    },
+    {
+      "name": "Assemble Release Evidence",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119135911991",
+      "started_at": "2026-10-21T09:05:56Z",
+      "completed_at": "2026-10-21T09:05:56Z"
+    },
+    {
+      "name": "Build",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119135911036",
+      "started_at": "2026-10-21T09:05:56Z",
+      "completed_at": "2026-10-21T09:05:56Z"
+    },
+    {
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936611",
+      "started_at": "2026-10-21T07:20:35Z",
+      "completed_at": "2026-10-21T07:26:50Z"
+    },
+    {
+      "name": "Coverage (ratchet)",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936547",
+      "started_at": "2026-10-21T07:24:08Z",
+      "completed_at": "2026-10-21T10:18:42Z"
+    },
+    {
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936518",
+      "started_at": "2026-10-21T07:20:02Z",
+      "completed_at": "2026-10-21T07:20:32Z"
+    },
+    {
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936483",
+      "started_at": "2026-10-21T07:13:29Z",
+      "completed_at": "2026-10-21T07:16:13Z"
+    },
+    {
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936460",
+      "started_at": "2026-10-21T07:11:13Z",
+      "completed_at": "2026-10-21T07:13:27Z"
+    },
+    {
+      "name": "Test",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936447",
+      "started_at": "2026-10-21T07:08:30Z",
+      "completed_at": "2026-10-21T09:03:16Z"
+    },
+    {
+      "name": "Integration Tests",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936436",
+      "started_at": "2026-10-21T07:17:51Z",
+      "completed_at": "2026-10-21T09:05:55Z"
+    },
+    {
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119021936431",
+      "started_at": "2026-10-21T07:16:15Z",
+      "completed_at": "2026-10-21T07:17:50Z"
+    },
+    {
+      "name": "security_audit",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003363916",
+      "started_at": "2026-10-21T02:27:14Z",
+      "completed_at": "2026-10-21T02:27:13Z"
+    },
+    {
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119003363842",
+      "started_at": "2026-10-21T02:27:14Z",
+      "completed_at": "2026-10-21T02:27:13Z"
+    },
+    {
+      "name": "regulatory_validation",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003363833",
+      "started_at": "2026-10-21T02:27:14Z",
+      "completed_at": "2026-10-21T02:27:13Z"
+    },
+    {
+      "name": "ai_prompt_eval",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003363725",
+      "started_at": "2026-10-21T02:27:14Z",
+      "completed_at": "2026-10-21T02:27:13Z"
+    },
+    {
+      "name": "compliance_check",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003363621",
+      "started_at": "2026-10-21T02:27:14Z",
+      "completed_at": "2026-10-21T02:27:13Z"
+    },
+    {
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119003362766",
+      "started_at": "2026-10-21T03:01:32Z",
+      "completed_at": "2026-10-21T03:30:14Z"
+    },
+    {
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119003362676",
+      "started_at": "2026-10-21T02:59:50Z",
+      "completed_at": "2026-10-21T03:02:01Z"
+    },
+    {
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119003362669",
+      "started_at": "2026-10-21T02:58:52Z",
+      "completed_at": "2026-10-21T03:07:25Z"
+    },
+    {
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094089/job/119003362475",
+      "started_at": "2026-10-21T02:58:23Z",
+      "completed_at": "2026-10-21T03:01:31Z"
+    },
+    {
+      "name": "refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094099/job/119003362418",
+      "started_at": "2026-10-21T02:31:01Z",
+      "completed_at": "2026-10-21T02:31:23Z"
+    },
+    {
+      "name": "setup",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003362314",
+      "started_at": "2026-10-21T02:32:05Z",
+      "completed_at": "2026-10-21T02:32:32Z"
+    },
+    {
+      "name": "Authenticated app smoke (real browser + DB)",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094098/job/119003362271",
+      "started_at": "2026-10-21T02:29:58Z",
+      "completed_at": "2026-10-21T02:35:01Z"
+    },
+    {
+      "name": "Analyze (CodeQL python)",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094021/job/119003362254",
+      "started_at": "2026-10-21T02:30:45Z",
+      "completed_at": "2026-10-21T02:32:03Z"
+    },
+    {
+      "name": "typecheck",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094060/job/119003362000",
+      "started_at": "2026-10-21T02:31:50Z",
+      "completed_at": "2026-10-21T02:39:35Z"
+    },
+    {
+      "name": "Analyze (CodeQL javascript-typescript)",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094021/job/119003361992",
+      "started_at": "2026-10-21T02:28:34Z",
+      "completed_at": "2026-10-21T02:55:37Z"
+    },
+    {
+      "name": "Analyze (Semgrep)",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/39533094007/job/119003361917",
+      "started_at": "2026-10-21T02:31:25Z",
+      "completed_at": "2026-10-21T02:48:55Z"
+    }
+  ]
+}

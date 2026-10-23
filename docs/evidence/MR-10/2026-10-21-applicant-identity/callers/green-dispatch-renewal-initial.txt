@@ -1,0 +1,47 @@
+Full execution output is retained in green-dispatch-renewal-initial.txt.gz.
+
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+{
+  "timestamp": "2026-10-21T01:35:16.761Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status 313ms
+ ✓ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle 23ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:35:03
+   Duration  12.80s (transform 3.43s, setup 115ms, import 6.06s, tests 6.24s, environment 0ms)
+

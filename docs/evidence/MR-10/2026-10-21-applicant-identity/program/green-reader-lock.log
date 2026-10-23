@@ -1,0 +1,490 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/routes/__tests__/ind-forms.contract.integration.test.ts
+{
+  "timestamp": "2026-10-21T02:03:47.581Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "3a264d70-15a3-4fb3-b502-21a6846c086e",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-forms.contract.integration.test.ts
+{
+  "timestamp": "2026-10-21T02:03:47.590Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND investigator",
+  "context": {
+    "investigatorId": "6d5610b4-64f2-4420-a551-1f565e2194ce",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role 35ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids 62ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired 19ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[] 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers 136ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty 1458ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank 141ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator 727ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator 21ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor 88ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists
+{
+  "timestamp": "2026-10-21T02:03:51.010Z",
+  "level": "warn",
+  "message": "[ind-forms-routes] ind-form provenance event failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, default)\nparams: prov_1792548231008_68c6eb813291,1,,1,generation,form_build,9,,,{\"formId\":\"FDA_1571\",\"ready\":false},,,,routes/ind-forms,"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572
+{
+  "timestamp": "2026-10-21T02:03:51.031Z",
+  "level": "warn",
+  "message": "[ind-forms-routes] ind-form (investigator) provenance event failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, default)\nparams: prov_1792548231030_2c8265040bc0,2,,1,generation,form_build,9,,,{\"formId\":\"FDA_1572\",\"investigatorName\":\"Dr. Pat Smith\",\"ready\":true},,,,routes/ind-forms,"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572
+{
+  "timestamp": "2026-10-21T02:03:51.033Z",
+  "level": "warn",
+  "message": "[ind-forms-routes] ind-form (investigator) provenance event failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, default)\nparams: prov_1792548231032_13ffface0b82,3,,1,generation,form_build,9,,,{\"formId\":\"FDA_1572\",\"investigatorName\":\"Dr. Kim Lee\",\"ready\":true},,,,routes/ind-forms,"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records 637ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor 15ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404) 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project) 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists 22ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572 21ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded)
+{
+  "timestamp": "2026-10-21T02:03:51.078Z",
+  "level": "warn",
+  "message": "[ind-forms-routes] ind-form (investigator) provenance event failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, default)\nparams: prov_1792548231074_13174e4cea6a,4,,1,generation,form_build,9,,,{\"formId\":\"FDA_3455\",\"investigatorName\":\"Dr. Pat Smith\",\"ready\":true},,,,routes/ind-forms,"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded) 41ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454) 14ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant) 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet 75ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's 35ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build pins program address while retaining stated IND type and phase; unstated facts stay missing 18ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / carries the registry's IND type and phase options the panel offers 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record 92ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record
+{
+  "timestamp": "2026-10-21T02:03:51.503Z",
+  "level": "warn",
+  "message": "[ind-forms-routes] ind-form provenance event failed",
+  "context": {
+    "err": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, default)\nparams: prov_1792548231501_ac5cb2a6a513,5,,1,generation,form_build,9,,,{\"formId\":\"FDA_1571\",\"ready\":false},,,,routes/ind-forms,"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes
+{
+  "timestamp": "2026-10-21T02:03:51.547Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation's program — writing nothing 82ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > a stated value in the build request still wins over the recorded one 37ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record 19ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written 24ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice
+{
+  "timestamp": "2026-10-21T02:03:51.701Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "a.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes 164ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice
+{
+  "timestamp": "2026-10-21T02:03:52.378Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "b.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms
+{
+  "timestamp": "2026-10-21T02:03:53.097Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-3454.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms
+Removing XFA form data as pdf-lib does not support reading or writing XFA
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice 1394ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms 77ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be 15ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one
+{
+  "timestamp": "2026-10-21T02:03:53.204Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "FDA_1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into
+{
+  "timestamp": "2026-10-21T02:03:53.217Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all
+{
+  "timestamp": "2026-10-21T02:03:53.230Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program
+{
+  "timestamp": "2026-10-21T02:03:53.244Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form
+{
+  "timestamp": "2026-10-21T02:03:53.252Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses an upload that names no sequence, and files nothing
+{
+  "timestamp": "2026-10-21T02:03:53.264Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists
+{
+  "timestamp": "2026-10-21T02:03:53.291Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one 33ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into 13ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses an upload that names no sequence, and files nothing 25ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence
+{
+  "timestamp": "2026-10-21T02:03:53.414Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "a.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists 122ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence
+{
+  "timestamp": "2026-10-21T02:03:54.028Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "a.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored
+{
+  "timestamp": "2026-10-21T02:03:54.650Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored
+{
+  "timestamp": "2026-10-21T02:03:54.666Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence 1235ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored 39ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > a form that does not apply to the program is refused at filing, not placed
+{
+  "timestamp": "2026-10-21T02:03:55.317Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports 603ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > with investigators recorded, the build is still one per investigator 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an IND program is offered only the forms the registry says apply to an IND 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an NDA program is offered 356h and not the IND application 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > a form that does not apply to the program is refused at filing, not placed 11ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing
+{
+  "timestamp": "2026-10-21T02:03:55.977Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "FDA-1572.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing 2830ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file
+{
+  "timestamp": "2026-10-21T02:03:58.284Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "FDA-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field
+{
+  "timestamp": "2026-10-21T02:03:58.448Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file 255ms
+stderr | server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 with every required field recorded or stated, attested by its uploader: complete, and the checklist says so
+{
+  "timestamp": "2026-10-21T02:03:58.633Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field 176ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 with every required field recorded or stated, attested by its uploader: complete, and the checklist says so 174ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state 360ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record 96ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > pins form applicant identity to the program record despite caller overrides 94ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > preserves the bound registry signatory and refuses to replace it with stated metadata 121ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > holds the same precise program revision across session time zones 40ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > enforces the same-tenant binding against direct SQL too 30ms
+stderr | server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > reports an unavailable record read as an error rather than an unbound or missing program
+{
+  "timestamp": "2026-10-21T02:04:06.811Z",
+  "level": "error",
+  "message": "[ind-program-facts] program facts read failed",
+  "context": {
+    "err": "private query failure"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > refuses a stale read rather than overwrite a newer binding 216ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > requires a stated reason and read revision 79ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > reports an unavailable record read as an error rather than an unbound or missing program 15ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > refuses a foreign sponsor without changing the program 105ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > refuses invalid FDA application numbers and malformed sponsor IDs 97ms
+stderr | server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > rolls the facts and revision back when its chained audit cannot be written
+{
+  "timestamp": "2026-10-21T02:04:07.181Z",
+  "level": "error",
+  "message": "[ind-program-facts] program facts transaction failed",
+  "context": {
+    "err": "private audit database failure",
+    "commitStarted": false
+  }
+}
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > rechecks current persisted authority despite an admitted regulatory-author session 67ms
+stderr | server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > reports a lost commit acknowledgement as unconfirmed while the persisted change stands
+{
+  "timestamp": "2026-10-21T02:04:07.330Z",
+  "level": "error",
+  "message": "[ind-program-facts] program facts transaction failed",
+  "context": {
+    "err": "private lost commit acknowledgement",
+    "commitStarted": true
+  }
+}
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > rolls the facts and revision back when its chained audit cannot be written 164ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > reports a lost commit acknowledgement as unconfirmed while the persisted change stands 105ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > governed program fact changes and receipts > clears only stated facts and retains other recorded facts 108ms
+stderr | server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > unstated: the form is filed, checked complete, and NOT complete — the checklist says attached, not attested
+{
+  "timestamp": "2026-10-21T02:04:15.780Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > stated: recorded with the file — actor from the session, never the body; time from the server — and the form counts
+{
+  "timestamp": "2026-10-21T02:04:15.974Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > unstated: the form is filed, checked complete, and NOT complete — the checklist says attached, not attested 332ms
+stderr | server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > attested, with a required field missing: the statement is recorded and the form still does not count
+{
+  "timestamp": "2026-10-21T02:04:16.133Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > stated: recorded with the file — actor from the session, never the body; time from the server — and the form counts 159ms
+stderr | server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > an attestation that is neither true nor false is refused, and nothing is filed
+{
+  "timestamp": "2026-10-21T02:04:16.273Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "signed-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > attested, with a required field missing: the statement is recorded and the form still does not count 141ms
+ ✓ server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > an attestation that is neither true nor false is refused, and nothing is filed 40ms
+stderr | server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > an attestation over the platform’s own unedited render is refused — the platform never signs a form
+{
+  "timestamp": "2026-10-21T02:04:16.431Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "FDA-1571.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts > official-upload records the uploader’s completed-and-signed attestation, and only that makes the form count > an attestation over the platform’s own unedited render is refused — the platform never signs a form 254ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > sponsorToInfo > maps fields and composes a one-line address + signatory → authorized rep 3ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > agentToInfo > maps the US agent name/address/phone 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > investigatorToInfo > builds the full name with credentials and joins sub-investigators 2ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > assembleFormMetadata > assembles metadata from records and lets overrides win 2ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > assembleFormMetadata > omits empty collections when no records are supplied 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps an IND program: sponsor from the organisation, drug from product_name, IND number from application_number 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > an NDA / BLA / ANDA program carries its number as the application number — never as an IND number 3ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a program type the forms have no box for (MAA, 510K, CER) contributes no number and no application type 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > omits what the record does not hold — no empty strings that would read as present 2ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > an unnumbered IND program yields no IND number — an original submission has none yet 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > layers under caller overrides through assembleFormMetadata — a typed serial number wins, a typed blank does not erase the record 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps the recorded sponsor address and IND type to where the 1571 build reads them 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a blank address or IND type is absent, and an IND type is never carried for a program that is not an IND 0ms
+
+ Test Files  4 passed (4)
+      Tests  97 passed (97)
+   Start at  02:03:36
+   Duration  40.76s (transform 4.75s, setup 231ms, import 12.10s, tests 27.26s, environment 0ms)
+

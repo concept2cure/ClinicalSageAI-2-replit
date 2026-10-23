@@ -1,0 +1,29 @@
+{
+  "sourceAccepted": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "branch": "concept2cure-v2",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "sourceAcceptanceResultVerifiedAtUtc": "2026-10-23T15:06:13.218937+00:00",
+  "sourcePushEvidence": "verification/source-push-accepted.log.gz",
+  "directCanonicalPush": true,
+  "pullRequestOpened": false,
+  "forcePush": false,
+  "hooksBypassed": false,
+  "baselineRelaxedByThisSlice": false,
+  "typecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "exit": 0
+  },
+  "eslintWarningGrowth": -1,
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "deployed": false,
+  "evidenceCommit": "Resolve from this packet\u2019s Git commit; not self-embedded.",
+  "canonicalRefresh": "canonical-refresh.json",
+  "remoteCiSnapshots": [
+    "source-ci-snapshot.json",
+    "resumption-ci-snapshot.json"
+  ],
+  "remoteCiClaim": "Observed snapshots only; no full remote CI success claim.",
+  "qualificationBoundary": "The execution inputs/build/native/browser evidence qualify3c93 on21Oct; the packet is published after preserving later canonical changes on23Oct."
+}

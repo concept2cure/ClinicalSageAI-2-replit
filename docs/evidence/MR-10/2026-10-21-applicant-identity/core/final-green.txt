@@ -1,0 +1,752 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-21T01:27:38.060Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-21T01:27:38.063Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+{
+  "timestamp": "2026-10-21T01:27:38.064Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none 769ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is refused by name — the program code is never an application number 28ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, is refused by name: no number is recorded for it 29ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-21T01:27:38.611Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-21T01:27:38.611Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+{
+  "timestamp": "2026-10-21T01:27:38.612Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used 474ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused 15ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename 12ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-21T01:27:39.019Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-21T01:27:39.023Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder
+{
+  "timestamp": "2026-10-21T01:27:39.023Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder 388ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > an organisation whose record has no usable name is refused by name 23ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses an unbound sponsor even when the organization name is present 11ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses a caller-supplied DUNS that differs from the bound sponsor 7ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses incomplete contact facts instead of producing a placeholder 13ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-21T01:27:39.425Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-21T01:27:39.426Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible
+{
+  "timestamp": "2026-10-21T01:27:39.427Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible 345ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-21T01:27:40.279Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-21T01:27:40.283Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object
+{
+  "timestamp": "2026-10-21T01:27:40.283Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object 860ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > refuses packaging inputs that disagree with the claimed FDA identity 67ms
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:40.956Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:40.958Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:40.958Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:41.817Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:41.824Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier
+{
+  "timestamp": "2026-10-21T01:27:41.824Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier 1480ms
+stdout | server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
+{
+  "timestamp": "2026-10-21T01:27:45.022Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:27:45.024Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
+{
+  "timestamp": "2026-10-21T01:27:45.025Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an original IND sequence is an Original Application, sub-type original 6ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence with no type recorded is treated as an original 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an amendment / response sequence is an Original Application, sub-type amendment 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a withdrawal sequence is refused, never coded as an Original Application 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an annual sequence is an Annual Report 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence carrying a safety-report leaf is an IND Safety Report, whatever its type says 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > every derived value resolves to the us-regional code the FDA vocabulary defines 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > carries the application type and the sequence-derived submission type for an FDA sequence 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > codes an annual sequence as an annual report 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > adds no fda block for a non-FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > without the fda block an original IND is no longer coded as an IND safety report 219ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1 178ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an amendment is emitted as fdast1 with sub-type fdasst4; an annual report as fdast5 376ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > builds the backbone with the recorded applicant and application number, and proceeds to signature 459ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > says it is a dry run, and package.sign refuses it, when the project records no application number 234ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names an application number the record does not 208ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names no submission on record 159ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"duns":null} 183ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"duns":"12-345-6789"} 292ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > FDA recorded runs require the complete existing sponsor identity > keeps incomplete or malformed sponsor facts unsigned: {"contactEmail":null} 93ms
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-21T01:28:04.108Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-21T01:28:04.112Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-21T01:28:04.112Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 682ms
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-21T01:28:04.674Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-21T01:28:04.682Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-21T01:28:04.683Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 566ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 1ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-21T01:28:06.271Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:06.272Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-21T01:28:06.272Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > reads one tenant-scoped joined statement and uses the explicitly bound legal name 13ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > preserves the organization name only when no sponsor binding was recorded 2ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > never falls back to the organization for a broken or foreign explicit binding 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"application_number":"IND000512"} 4ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"duns":"12-345-6789"} 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_phone":"not a telephone"} 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_email":"not an email"} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_name":"\u0000"} 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > does not silently turn a failed identity read into an unbound record 3ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > accepts complete recorded FDA facts 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > canonical adapter reaches the existing FDA contact serializer > threads recorded contacts only to the FDA admin block 7ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > captures facts by value and compares only complete known fields 3ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed programId is different proof 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicationNumber is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantSponsorId is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantName is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > a changed applicantId is different proof 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: undefined 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: null 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":2} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{}} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > malformed or absent stored proof fails closed: {"version":1,"identity":{"contact":null}} 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > captured applicant identity proof > does not invent a partial regulatory contact 0ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > locks program before same-tenant sponsor, using the caller transaction 1ms
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded identity transaction locking > does not invent a sponsor lock for an unbound program 0ms
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so
+{
+  "timestamp": "2026-10-21T01:28:14.459Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 391ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-21T01:28:14.688Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-21T01:28:14.689Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 223ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-21T01:28:14.915Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-21T01:28:14.916Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded
+{
+  "timestamp": "2026-10-21T01:28:14.935Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLE_BLOCKED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 227ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 17ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-21T01:28:15.182Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "bug below the guard"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-21T01:28:15.183Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 248ms
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-21T01:28:16.392Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:16.394Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-21T01:28:16.394Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > maps core regions to publisher regions 3ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > throws on an unsupported region 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > maps fields and prefers the resolved md5 over the leaf checksum 3ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > reads a differently-cased operation as itself 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > builds a PackagerInput from core rows, mapping region and metadata 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > skips leaves whose document does not resolve to a file, and reports them 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > handles an empty product name 1ms
+stdout | server/services/ectd/__tests__/orchestrator-real-package.test.ts
+{
+  "timestamp": "2026-10-21T01:28:18.199Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:28:18.201Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/orchestrator-real-package.test.ts
+{
+  "timestamp": "2026-10-21T01:28:18.201Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/orchestrator-real-package.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > composedSectionBlocks > lays a section out as its narrative, then each table under its title 3ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > produces a real ICH backbone, real checksums, and href-keyed buffers 145ms
+stderr | server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > drives the hardened validator: DTD conformance runs (no DTD_NO_BACKBONE) and MD5 verifies
+{
+  "timestamp": "2026-10-21T01:28:19.501Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/ectd/ectd-validator-hardening.ts:599:32",
+    "queryPreview": "SELECT sequence_number FROM ectd_compilations WHERE application_number = $1 AND organization_id = $2",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > drives the hardened validator: DTD conformance runs (no DTD_NO_BACKBONE) and MD5 verifies
+{
+  "timestamp": "2026-10-21T01:28:19.503Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/ectd/ectd-validator-hardening.ts:611:36",
+    "queryPreview": "SELECT sequence_number FROM ectd_submissions WHERE application_number = $1 AND organization_id = $2",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > is DETERMINISTIC across re-renders (drift check depends on stable checksums) 67ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > drives the hardened validator: DTD conformance runs (no DTD_NO_BACKBONE) and MD5 verifies 48ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > fails closed with no backbone: DTD_NO_BACKBONE is an error and the package is not gateway-ready 20ms
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-21T01:28:26.095Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-21T01:28:26.099Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 542ms
+stderr | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-21T01:28:31.879Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-21T01:28:31.882Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-21T01:28:31.882Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 348ms
+
+ Test Files  10 passed (10)
+      Tests  88 passed (88)
+   Start at  01:27:20
+   Duration  71.29s (transform 7.92s, setup 470ms, import 35.02s, tests 32.56s, environment 1ms)
+

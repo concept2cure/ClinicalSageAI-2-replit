@@ -1,0 +1,26 @@
+
+/workspace/concept2cure/server/db/pglite-harness.ts
+  631:1  warning  File has too many lines (609). Maximum allowed is 500  max-lines
+
+/workspace/concept2cure/server/routes/__tests__/ind-forms.contract.integration.test.ts
+  610:1   warning  File has too many lines (950). Maximum allowed is 500            max-lines
+  803:80  warning  Arrow function has too many lines (114). Maximum allowed is 100  max-lines-per-function
+
+/workspace/concept2cure/server/routes/ind-forms.routes.ts
+    84:10  warning  'regulatoryPrograms' is defined but never used                                 @typescript-eslint/no-unused-vars
+   195:1   warning  Async function 'metaForRequest' has a complexity of 19. Maximum allowed is 15  complexity
+   606:81  warning  Async arrow function has too many lines (126). Maximum allowed is 100          max-lines-per-function
+   606:81  warning  Async arrow function has a complexity of 25. Maximum allowed is 15             complexity
+   736:1   warning  File has too many lines (951). Maximum allowed is 500                          max-lines
+   817:85  warning  Async arrow function has too many lines (126). Maximum allowed is 100          max-lines-per-function
+   817:85  warning  Async arrow function has a complexity of 17. Maximum allowed is 15             complexity
+  1079:82  warning  Arrow function has too many lines (225). Maximum allowed is 100                max-lines-per-function
+  1080:53  warning  Arrow function has too many lines (223). Maximum allowed is 100                max-lines-per-function
+  1081:20  warning  Async arrow function has a complexity of 43. Maximum allowed is 15             complexity
+
+/workspace/concept2cure/server/services/ind-forms/program-form-facts.ts
+  131:1  warning  Function 'parseProgramFacts' has a complexity of 21. Maximum allowed is 15             complexity
+  186:8  warning  Async function 'recordProgramFormFacts' has a complexity of 30. Maximum allowed is 15  complexity
+
+✖ 15 problems (0 errors, 15 warnings)
+

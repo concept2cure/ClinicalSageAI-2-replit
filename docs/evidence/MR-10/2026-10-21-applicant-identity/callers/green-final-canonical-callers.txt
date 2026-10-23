@@ -1,0 +1,47 @@
+Full execution output is retained in green-final-canonical-callers.txt.gz.
+
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > a freeze on a completed review names no waiver 539ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 22ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 5ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 2ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 6ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a number the identifier rule cannot carry, as the eCTD export does (P-23) 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 2ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing 1369ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable 3ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well 1ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 7ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+
+ Test Files  19 passed (19)
+      Tests  260 passed (260)
+   Start at  01:44:37
+   Duration  346.59s (transform 48.63s, setup 2.17s, import 194.71s, tests 130.30s, environment 4ms)
+
