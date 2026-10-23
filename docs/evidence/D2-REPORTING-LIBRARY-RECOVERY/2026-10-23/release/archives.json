@@ -280,6 +280,55 @@
       "sha256": "868290e65bee4cdcd799b6d674eb1a06c590f87c968dc43b98497cb029273fca",
       "uncompressedBytes": 14608,
       "uncompressedSha256": "599c510b42aeac84aae18169ad084e6f2c9a494311f2b7e055382e44ccbe7731"
+    },
+    {
+      "file": "push-attempt-4-zero-type-errors-cas-refusal.txt.gz",
+      "bytes": 4483,
+      "sha256": "da42fced0217722b957adfcca2dac9c2d66a7f7b68757c6d7c8359509292d66b",
+      "uncompressedBytes": 14092,
+      "uncompressedSha256": "e503179e6e8a48391804124c2c9b77f7c6c279620b4bc55c6e7c67b783c595df"
+    },
+    {
+      "file": "final-mdx-reconciled-build.txt.gz",
+      "bytes": 4740,
+      "sha256": "86f069f7c062c1b7e3d8ef0cbebe4ee21c989163e56bad687ea1b6609fd21fb6",
+      "uncompressedBytes": 16567,
+      "uncompressedSha256": "aba6a47d0bdfef2db4890766e66ce8d80d11e35ce6dc21b538e71db7fcfd81fe"
+    },
+    {
+      "file": "final-mdx-reconciled-build-command.json.gz",
+      "bytes": 296,
+      "sha256": "e1bde484e05a75823ccd9f3aa5f60853b1a0223bed226d7e37086c23537fd23a",
+      "uncompressedBytes": 404,
+      "uncompressedSha256": "15efccd6061d2439296a4227057ddaa779632a64bb66e8fb9306c609669f5c1f"
+    },
+    {
+      "file": "final-mdx-reconciled-build-source-before.json.gz",
+      "bytes": 523926,
+      "sha256": "48c87a387b625a6b88b5e4ed6d608d7f2f361323b80c26bb026540dcf9b7257b",
+      "uncompressedBytes": 1356679,
+      "uncompressedSha256": "d0a9807ba33a92d42641903fe6c47d0a52a2c3fcd8a5052d09066ebf69091537"
+    },
+    {
+      "file": "final-mdx-reconciled-build-source-after.json.gz",
+      "bytes": 523926,
+      "sha256": "48c87a387b625a6b88b5e4ed6d608d7f2f361323b80c26bb026540dcf9b7257b",
+      "uncompressedBytes": 1356679,
+      "uncompressedSha256": "d0a9807ba33a92d42641903fe6c47d0a52a2c3fcd8a5052d09066ebf69091537"
+    },
+    {
+      "file": "mdx-project-merge.txt.gz",
+      "bytes": 2042,
+      "sha256": "92f56a4b8b679c77f62fa15edac316a6ae1d36995853245225c53e1580d3c121",
+      "uncompressedBytes": 11327,
+      "uncompressedSha256": "2fb3d22388fd64cee12936874bc154bc6bfa15a6ad9b12c2e95570123bd0167d"
+    },
+    {
+      "file": "mdx-project-review.json.gz",
+      "bytes": 1760,
+      "sha256": "2cf5300b759c8b0433e766de10ae730588923177e3f8c73bfd3f07c19c8db2f2",
+      "uncompressedBytes": 8055,
+      "uncompressedSha256": "5d4f9076ec445b4044d8a1e5a9fca0bdaf4031ccbc8df06bc3fb54daf0e7f6db"
     }
   ]
 }

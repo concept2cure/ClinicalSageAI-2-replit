@@ -48,3 +48,5 @@ The later [workflow discovery reconciliation](post-discovery/README.md) records 
 The separate [incoming Authoring template-search compatibility phase](post-assembly-search/README.md) records a 71/3 pass after preserving newer canonical Authoring work. It confirms unchanged reporting/shared source hashes and does not repeat or pool the earlier reporting results.
 
 The later [Reporting legal chooser reconciliation](post-legal-chooser/README.md) records a separate 367/35 pass across the current reporting/API suites after preserving canonical chooser ownership/paging work. Its own source pins include the shared legal picker and company session helpers.
+
+The separate [MDX project workflow compatibility phase](post-mdx-project/README.md) records a 135/7 pass for selected project/discovery/reporting tests after preserving canonical MDX project integration. It verifies all 55 prior reporting hashes remain unchanged and retains its own incoming core UI/launch-scope pins.

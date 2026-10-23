@@ -30,3 +30,5 @@ After integration, two test-only lines were compacted to avoid adding a max-line
 PGlite executes the actual route/Drizzle inserts and SQL COMMIT/rollback. The existing chained-audit writer seam writes an enlisted SQL marker in this fixture. This demonstrates atomic SQL effects and real retained rows after lost acknowledgement; it does not establish cryptographic chain integration, native multi-connection PostgreSQL behavior, live provider acceptance or global regulatory qualification. Root performs integrated compiler/build/publication gates separately. The single-report PDF late-source revalidation gap remains outside this bounded change.
 
 [archives.json](archives.json) records compressed and uncompressed hashes for every lossless raw log, JSON result, command, source manifest and replay source. Private originals remain under `/workspace/.codex-notes/reporting-library-recovery-20261023/backend`.
+
+The [post-MDX Projects compatibility packet](post-mdx-project/README.md) records the separate incoming interface review and six-file successor check.
