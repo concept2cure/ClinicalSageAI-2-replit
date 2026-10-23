@@ -1,9 +1,9 @@
 {
   "at": "2026-10-23T19:52:05.217037+00:00",
   "scope": "Final publication envelope after canonical workspace intake and official eSTAR attachment integration; final-qualification.json retains its historical 623-input epoch. Cohorts overlap and must not be summed.",
-  "sourceFreeze": "published-source-freeze.json",
-  "sourceFreezeSha256": "0708c05f9de7c65bac6eabea4a54a576dd629e76da5529e83c100fe60cc9e7de",
-  "sourceCount": 678,
+  "sourceFreeze": "market-integration-source-freeze.json",
+  "sourceFreezeSha256": "239df0bdeec3e55daf6a764ef836479b476f7a35b547d65bc0c64724b3a04662",
+  "sourceCount": 687,
   "sourceDrift": [],
   "coreQualification": "final-qualification.json",
   "checks": [
@@ -134,6 +134,26 @@
         "Tests  27 passed (27)",
         "Duration  5.26s (transform 1.16s, setup 120ms, import 2.27s, tests 2.33s, environment 0ms)"
       ]
+    },
+    {
+      "receipt": "market-integration-tests.json",
+      "sha256": "ffb80ab14088ea3e94393af7528398f106a850b34d45f14bc05050b562048c4b",
+      "exitCode": 0,
+      "sourceFreeze": "market-integration-source-freeze.json",
+      "rawGzipSha256": "8e643800f6fe23d0db66847308dba4fa0066c920dc59aa453b7f454a934ec172",
+      "testSummary": [
+        "Test Files  6 passed (6)",
+        "Tests  76 passed (76)",
+        "Duration  22.99s (transform 6.33s, setup 190ms, import 15.70s, tests 5.85s, environment 389ms)"
+      ]
+    },
+    {
+      "receipt": "market-integration-build.json",
+      "sha256": "4d9dcea1abbc3cc76cf7fce8ef94c72911b0b33f59cef1813d978f599f1d774d",
+      "exitCode": 0,
+      "sourceFreeze": "market-integration-source-freeze.json",
+      "rawGzipSha256": "85a9e6ce367f4522ce09884ba871a3959f2b13d7c6c7329dbdb1b8de0eb9f574",
+      "testSummary": []
     }
   ],
   "workerRefreshQualification": "estar-owner/qualified-hooks.json",
@@ -158,7 +178,7 @@
     "No live provider or agency transmission, deployment, or universal sector/region completeness.",
     "No durable creation idempotency across remount/reload/another tab."
   ],
-  "previousPublicationFreeze": "final-publication-source-freeze.json",
+  "previousPublicationFreeze": "published-source-freeze.json",
   "priorCurrentCompiler": {
     "receipt": "implementation-push-retry.json",
     "typeScriptErrors": 0,

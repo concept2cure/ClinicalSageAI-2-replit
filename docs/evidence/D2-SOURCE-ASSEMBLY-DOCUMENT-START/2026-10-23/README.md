@@ -234,3 +234,16 @@ pass **27 tests** locally. The previous 674 pins remain byte-identical;
 `published-source-freeze.json` extends them by those four incoming source/test
 paths to **678** inputs. The publication envelope names this final freeze and
 keeps the preceding cohorts' original receipt scopes explicit.
+
+
+The third normal push (`implementation-push-final.*`) passed every hook and
+TypeScript at zero errors, then lost a remote reference lock race to `1a37dcc94`.
+`third-retry-merge.*` records a successful normal merge; the capture intentionally
+returns nonzero because the prior MarketApplicationNumber source pin changed.
+No source-start production input changed. This incoming completion refuses
+unrecognized package/home markets in the existing Submit and AnA paths and
+rechecks number-recording authority inside the transaction. Independent read-only
+review is clear. `market-integration-source-freeze.json` explicitly updates that
+one prior source pin and adds nine incoming production/test pins: **687** inputs.
+The six changed suites pass **76 tests** with no source drift. Their qualification
+and build are captured separately rather than attributed to earlier freezes.
