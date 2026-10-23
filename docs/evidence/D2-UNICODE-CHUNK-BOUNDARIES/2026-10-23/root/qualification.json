@@ -26,5 +26,12 @@
     "unicode_read_inventory final codePointAt range and erasedassertion review CLEAR",
     "unicode_source_safety actualproductiondiff and storagechain review CLEAR"
   ],
-  "normalPush": "Not yet attempted for implementation; contract-only push already passed all hooks. Whole-tree typecheck awaited normal implementation push."
+  "normalPush": {
+    "acceptedCodeHead": "70e5ea3bb1576b446ae02a6df80415850fab042b",
+    "exit": 0,
+    "wholeTreeTypeScriptErrors": 0,
+    "tscExit": 0,
+    "allMandatoryGatesPassed": true,
+    "log": "implementation-push.txt"
+  }
 }

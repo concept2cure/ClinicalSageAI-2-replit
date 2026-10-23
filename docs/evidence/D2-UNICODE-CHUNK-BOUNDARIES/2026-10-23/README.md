@@ -22,7 +22,7 @@ Only `server/services/vault/document-chunking.service.ts` changes production beh
 
 The final exact-source run (`root/final*`) passes **331 tests in 25 files**, zero failures/skips. All 33 new tests pass, including the real SQL/UTF-8 persistence, corrected page attribution, successful replacement and unchanged refusal controls. The deterministic property corpus checks **2,688 inputs / 8,080 chunks with zero violations**. `root/lint-final*` reports zero errors and the one pre-existing writer complexity warning: zero warning growth and zero new-test warnings. `qualification-source-manifest.json` pins 82 selected inputs including all 25 suites and one-hop relative imports; it is not an exhaustive graph.
 
-The initial implementation also passed331 tests but gained one complexity warning from redundant nullish fallbacks. Removing those fallbacks at two provably in-range codePointAt lookups eliminated the warning; TypeScript's non-null assertions add no runtime operation. The initial run, lint failure, range proof and final rerun are retained under `root/green*`, `root/lint-correction.json` and `root/final*`. No baseline, rule or frozen test was relaxed.
+The initial implementation also passed 331 tests but gained one complexity warning from redundant nullish fallbacks. Removing those fallbacks at two provably in-range codePointAt lookups eliminated the warning; TypeScript's non-null assertions add no runtime operation. The initial run, lint failure, range proof and final rerun are retained under `root/green*`, `root/lint-correction.json` and `root/final*`. No baseline, rule or frozen test was relaxed.
 
 ## Limits and next need
 
@@ -32,4 +32,4 @@ The separately reproduced `read_project_document` boundary defect still needs an
 
 ## Publication status
 
-Contract commit0fff4da02 was pushed directly to concept2cure-v2 with normal hooks. Implementation qualification is complete locally; incoming remote history has no overlap with the82 selected inputs. Implementation push and whole-tree typecheck results will be recorded after they complete.
+Contract commit `0fff4da02` was pushed directly to concept2cure-v2 with normal hooks. Implementation was merged with incoming remote history without conflicts; all 82 selected inputs remained unchanged. The normal implementation push succeeded at `70e5ea3bb1576b446ae02a6df80415850fab042b`: every mandatory gate passed and the whole-project TypeScript compiler returned zero errors / exit 0. Fresh remote Git byte checks verified all selected inputs, 25 current suites, three frozen suites and every evidence file tracked at that code head. See [PUBLICATION.md](PUBLICATION.md) and `root/code-verification.json` for actual publication scope and retained history.
