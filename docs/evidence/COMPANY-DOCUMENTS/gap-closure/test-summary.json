@@ -1,843 +1,1130 @@
 {
-  "selectedFiles": 102,
+  "generatedAt": "2026-10-21T02:23:53.957867+00:00",
+  "qualifiedCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
+  "selectedFiles": 122,
   "latestUniqueCaseResults": {
-    "passed": 1217,
+    "passed": 1529,
     "failed": 0,
     "pending": 0,
     "other": 0
   },
+  "aggregation": "Latest result per exact test file; overlapping reruns are not added twice. This is not a claim that the first aggregate run passed.",
   "runs": [
     {
-      "id": "aggregate-tests-final",
-      "command": "vitest run [102 exact paths in test-files.json] --reporter=verbose --reporter=json",
-      "passed": 1214,
-      "failed": 3,
-      "reason": "Three failures in a fixture missing the canonical audit table; all other files passed."
+      "id": "aggregate-post443",
+      "command": "vitest run [122 exact paths in test-files.json] --reporter=verbose --reporter=json",
+      "passed": 1519,
+      "failed": 10,
+      "privateJsonSha256": "64cc7304dfd77cdec27695b2da596168284b563c357b569f1a3c744afcf4d2ad",
+      "reason": "121 files passed; the regional-backbone-dtd-path fixture contained an invalid PDF with no Catalog or Pages and was correctly refused by the original/signature parser."
     },
     {
-      "id": "source-evidence-fixture-final",
-      "command": "vitest run server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts --reporter=verbose --reporter=json",
-      "passed": 21,
+      "id": "regional-backbone-path-correction",
+      "command": "vitest run server/services/submission-gateways/__tests__/{regional-backbone-dtd-path,regional-packager-dtd-validation,original-legal-pdf}.test.ts --reporter=verbose",
+      "passed": 25,
       "failed": 0,
-      "reason": "The two-line fixture correction installs the canonical audit schema; no production code changed. The same 21 cases all passed."
+      "shareableLog": "packaging/post443-native-tests.txt",
+      "reason": "Use the existing real goldenPdf fixture; no production gate was changed. The corrected 11-case file plus actual DTD and original-byte preservation suites all pass."
     }
   ],
   "files": [
     {
       "file": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 24,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "c82777c18e51bab48ace79f231c0923fe2d0aa13dc8528f7f3c8f041dc3b206f"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts",
+      "run": "aggregate-post443",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "720d8a709e82bfa1487a20f283ca24d06c77a49371ee25416bd64fafeeaf18da"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 29,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "d9c70d9d24fe3574a110649be493321bfd16b4df10d3b8b0eaba61a7f2d3e898"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 18,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "cdc2dca6300ef8dd27bc5693ffcd82ea6ec85d8b3e1b7e61192cf6c76cd584cf"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 6,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "10d5a8da59c6d48ebdfbc22db25567b818efb1174881ef5cab7eb5e2fe30b61b"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 23,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "a2bd99623e7e0fd7f0405ee7f6a90ec5bfcb107a10136a6d7e045988be6d69a8"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "208002b42b5cbb86519a7124972b3986bdb9516fa0ae0b25d5ca9ad4f6045428"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "19c34e2dc5ea7305f1fda7a4b239a9acdd2172a43b8f7c23945d09522671f19e"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "3c16dccadc90b8c144c2cdc91a886b846886ded069a500fd1e6c6e1302876cab"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "f1e504467dcb723c943e8d1b55c25f34612ed3caa93aab5dc88f5ae43021c5fc"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 7,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "3dc210ed9dd273f61e8136f8e094015713a54a4c2ed9a2128000ac19a230b347"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 7,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "fa4d601ea47f95f139a31aaf92b086e80e46f90a088e4313bb98f46dff2cad24"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 5,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "868a0a86afee4fc6d92b854e550fc2445cbbaaf711d3444f7793502583a59b39"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 5,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "fc6686ff8ac27917f11f4bd6eee33528d5793beca1d0cf0a0ec1b60e5c372660"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 16,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "b775f6e8c0255afc79960dd61420ddd0a8546891dd734f5e6efd199258097a9c"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 1,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "529fbd15020f02a9dbccd5c24a75075cce93ae4d394cdbd66f30af2a1d5f7f81"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 6,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "37d8d83662275ef2e3a41d23b5c94e5a848c8fcd52e47d3195e13df6224d8893"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 3,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "7e157a1ad20df2aea07ad1eff383c1f9189bab9f288dee26d894685e6c2299ec"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 4,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "e58520d3d1837a63a57caa7b60b9baf6d5df363e1f5745ac9da7ce92a76e3195"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 10,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "1a5cb6a2c64e709e85e2985bbf1fea8587d0dadb2a00d301ea1415f2f1f81e14"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/complianceReports.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 19,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "84cc1bc0e80cf81c9bebc83788261d3fd41cfcbbf0edde1c710a703f5627bdd8"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 9,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "297381d53cd4786d65802b8ac791525653c73c8eec6dd87f3411ebb9eaa8dfc3"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "aa4f7e0d28559c261bffc12d13604131a108e19aad40fefae2be6941aec68c51"
     },
     {
       "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
-      "run": "aggregate-tests-final",
-      "passed": 36,
+      "run": "aggregate-post443",
+      "passed": 41,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "cc1ba192337e3349eb306a68c84fb67a7024c9ba216c78d0df894d4f7df3a0de"
     },
     {
       "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 12,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "27d7d56bbc43522121bc0bafc2f0247cdaf63e27b022ae1417cf72037c2b6910"
     },
     {
       "file": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 9,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "552316ca06f4c81181d55ee3645dc4c27a73f396f8f538a1b04e462207b9e311"
     },
     {
       "file": "server/__tests__/routes/tenant-export.test.ts",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 8,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "b220840f9496906fb6515fd1fdabbbebadf3e5cc9d7e7c62f2b16290ac0ec19b"
     },
     {
       "file": "server/__tests__/security/tenant-isolation-client-branding.contract.test.ts",
-      "run": "aggregate-tests-final",
+      "run": "aggregate-post443",
       "passed": 5,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "1084c5eecf49cf08f6957a80030d9b2a3a23373eb5d63d8a2b717a7cd1c79ad4"
     },
     {
-      "file": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 27,
+      "file": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 29,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301"
     },
     {
-      "file": "server/routes/__tests__/company-document-actions.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 15,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/company-document-designs.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/company-document-governance.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 22,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/company-documents.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 39,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/organizations-profile-settings.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 38,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 21,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 42,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/tenant-config-audit.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 17,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/routes/c2c/__tests__/communication-center.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 20,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/__tests__/generated-pdf-normalization.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 2,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/__tests__/pdf-converter.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 17,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 8,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/ana-settings-privacy.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/communication-links.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 9,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/correspondence.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 6,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/designs.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 16,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/governance-store.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 8,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/identity.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 6,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legal-inventory.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 11,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legal-readiness.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legal-registry.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 11,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legal-renewal.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/legal-workflow.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 12,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/managed-settings.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 12,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/company-documents/__tests__/profile.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 59,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 1,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 1,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 6,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 9,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 15,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 8,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 17,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 13,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 12,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 28,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
-      "run": "source-evidence-fixture-final",
-      "passed": 21,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 16,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/__tests__/report-package-legal.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 19,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 15,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 11,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 8,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 17,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 4,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/leaf-source-pin.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/templates/__tests__/clinical-csr-templates.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/templates/__tests__/nonclinical-templates.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/templates/__tests__/template-store-audit-outcome.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 7,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant-export/__tests__/company-document-export.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 8,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 3,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 5,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 3,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 24,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 12,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 21,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 11,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 26,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
-      "run": "aggregate-tests-final",
+      "file": "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts",
+      "run": "aggregate-post443",
       "passed": 14,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16"
     },
     {
-      "file": "server/services/vault/__tests__/company-legal-validity.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 6,
+      "file": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 27,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "dab53058556d525c4b428ee6810eef0b1828bfe7e04812e31d513aa1e5c6b628"
     },
     {
-      "file": "shared/__tests__/company-documents.test.ts",
-      "run": "aggregate-tests-final",
-      "passed": 25,
-      "failed": 0,
-      "pending": 0,
-      "other": 0
-    },
-    {
-      "file": "shared/__tests__/saved-assembly-sources.test.ts",
-      "run": "aggregate-tests-final",
+      "file": "server/routes/__tests__/company-document-actions.test.ts",
+      "run": "aggregate-post443",
       "passed": 15,
       "failed": 0,
       "pending": 0,
-      "other": 0
+      "other": 0,
+      "sourceSha256": "f09ec24de1d5d8856789c43a61f31812fb176973a3006f70b42d86da2596e0d7"
+    },
+    {
+      "file": "server/routes/__tests__/company-document-designs.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "cacf2bbc0fa842ea372791a2c6f91618ef55097c1182bf58668a69e3c8cfc4e8"
+    },
+    {
+      "file": "server/routes/__tests__/company-document-governance.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 22,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "d85ffa5b6521322671d32ccde13e75c46897476846b05f9110238ff1cac8f340"
+    },
+    {
+      "file": "server/routes/__tests__/company-documents.test.ts",
+      "run": "aggregate-post443",
+      "passed": 46,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c6a1815400bdeb7e10454ec22ff54abe5cdfcfeca38873152ca8f4bec7b04f80"
+    },
+    {
+      "file": "server/routes/__tests__/organizations-profile-settings.test.ts",
+      "run": "aggregate-post443",
+      "passed": 38,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "0ba990aa8c57c07426e86958be6f34b4694fab950b9a9ca2349678aff4f3eef3"
+    },
+    {
+      "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+      "run": "aggregate-post443",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5a6f9e9454907b0fda377725555c5a18b9bddeb6e271a07b8d27a56f31522751"
+    },
+    {
+      "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "run": "aggregate-post443",
+      "passed": 50,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "a314d85d231829d1406451fbb5e42ac0b36a8dc6f1f2f9ac90c5d52bd073fd06"
+    },
+    {
+      "file": "server/routes/__tests__/tenant-config-audit.test.ts",
+      "run": "aggregate-post443",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e26c3eddb782e1f2940e6252a274c9f9e9f69c9c150158ee2ddd7cd5152d89ff"
+    },
+    {
+      "file": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "566499045897bbc3b6ee5816d506ee7c36eed7c40818dff68644564ce02fbf1c"
+    },
+    {
+      "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "a8628c3ecf2b8eec740b9d3728efb41ecb0221293098c2de2f68af908b3ec7cc"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "run": "aggregate-post443",
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "bb1da07d776b82a2551deabc1e527e60b16112012d794d16711e28dd758370d0"
+    },
+    {
+      "file": "server/services/__tests__/generated-pdf-normalization.test.ts",
+      "run": "aggregate-post443",
+      "passed": 2,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "1acf080d7a4a7c7b57cddfcb73621db92a7bc11b1eb787700f5770457415f92e"
+    },
+    {
+      "file": "server/services/__tests__/pdf-converter.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e22d76a8fbd4832a5770c6ab6daee39a2f762012450a0139000c0613ce49f025"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "run": "aggregate-post443",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "373c5960c2420f3a8ed149b34e3d6c7c6a958bf318de419ea486cf8b2f123a9d"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-export-xml-figures.test.ts",
+      "run": "aggregate-post443",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "3fa02e2d5de82f91abeacd375354825c327922a215ae0f640976ed704adfc340"
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "run": "aggregate-post443",
+      "passed": 32,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7cdafbf39cb15d37d55ad7285d1ae03b56cced546a0cad93874fb4be8b7f7859"
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+      "run": "aggregate-post443",
+      "passed": 28,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8df82fe0ad2e1c52923393d988af9da17c1c74dac41531a57ae70123eaa72122"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/ana-settings-privacy.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e0a76f49d69d7215aa4ce67d11fb6065e62c038fb499086275146d34fe34bfe7"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/communication-links.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "85ded5b1ff54d690f3d966924793e21eea2344c0a35a6cf759e1567f3e5ad0ff"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "0d234ca488e1846758e65beae4f3a1cbc9dfa8ece4420dec0ebea065dd7476f8"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/correspondence.test.ts",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5505a520bb76b3d046f9847867132beb77b521fd25bfe580bbcc5f6d0ec52500"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/designs.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "29ca2fe434ba33fc420ee76676249aa81b55b98c0612408df630e22473b41307"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/governance-store.test.ts",
+      "run": "aggregate-post443",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "9540de32f82a2448e04c74817238492082dda980d4691027b4b920912655e058"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/identity.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e777b7a99eacf170c7c7ef865ecf59631324fe3a0af29cdbcb86e5cbe2f0f349"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "b30dcfc0dddf4ba0668c63d5dec0072fbffe70ac3d7b9b2a2b83da371e90b4c3"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-inventory.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "ea0b61952ddd15b8242a807d23f93832806080571eb08dd9705e6a175aea5628"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-readiness.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "831377b80824b02c00a3b4d1378adbc3d313d0ff12c5add90cd3793d19dc994c"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-registry.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "b4373227b2ca193141cbf4feb4a38e7d0ec43f127e774d0e58bc8f41d464cf42"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-renewal.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "59948966e9699c12d32dad23476718ffddbe91b33eda8fe766eed3c74fa0f5cc"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/legal-workflow.test.ts",
+      "run": "aggregate-post443",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5297370d0ea6177e026ee72bd55ce8b29a1ed92e068613b946cdebbefbb5afd1"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/managed-settings.test.ts",
+      "run": "aggregate-post443",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7fd345ce616ad9adbd2df7d6909bd7134f62560333f29d999cb450fdf5ddc2e5"
+    },
+    {
+      "file": "server/services/company-documents/__tests__/profile.test.ts",
+      "run": "aggregate-post443",
+      "passed": 64,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "a213c7ecfffab452771ed0457c520445a9f0b054035056c97ca018725d60d79f"
+    },
+    {
+      "file": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c8415a69796b15cfef99e9ea97ed71157b0cd7cf12979998ab57ef2f4528d22b"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "f92cc4c82094aa4b67f6afdb5955cae871fea403d17fbffe0c24ee2f0d1de33e"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8e14966dff197cf481c652cacb49eb80403d016e4112c44dad2aa718ed38b553"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
+      "run": "aggregate-post443",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "1087b7763cc62b3619afab9c05356b3f997055d9ef42d7e5dc2bb12773e8fd69"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "b669077d8263ed05c289d533406c97d683d3fff0913e43ef5424aee83e74a7ae"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
+      "run": "aggregate-post443",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "89c7b37eb09e5b565211ec2539873e03dce7c58987954c1a34fc5e220bb842f7"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "6db18880d119a76ab2e894fd444c40cf324e2f481a25b8d655e53e4c4a2893e0"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7681f0be3b4d341357d0abda4b90e9e9d0c2c17a727eab6829fa5912c771017a"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "bce4dd96d80d566659708d4cd44d5be4f8f81e35a3b6550080d68389ac032b7d"
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "f6911985a80d24fcea37a7e954cadf1481476d973e82ad6ac076a002db329a46"
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5f284a97e8ba4bedd7858a34438ed6eca6e883246a6692606022dce096d21009"
+    },
+    {
+      "file": "server/services/ectd/__tests__/dtd-bundler.test.ts",
+      "run": "aggregate-post443",
+      "passed": 29,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e718b47d186b3f77966daf3c57b33f13ad8d9e46e8146a09486863b24436f844"
+    },
+    {
+      "file": "server/services/ectd/__tests__/dtd-validation-proof.test.ts",
+      "run": "aggregate-post443",
+      "passed": 18,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "fbcb3c793a9224cca1daea949120271daf93e094e0abb51bf9dce34e6fefc530"
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "741617afcc83664402acdc4616e2d088df44048fe45e78b5a79905cc3a4a4acf"
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "run": "aggregate-post443",
+      "passed": 13,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "481db638944907e4613691ca2e0c3e24a1fc9051fd71284e53cfe92978cf950f"
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "run": "aggregate-post443",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "000e6859d0363d8c9a22250cf2b95509b33c6c7e278b0fdeaa254c57e4835a90"
+    },
+    {
+      "file": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "run": "aggregate-post443",
+      "passed": 28,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
+    },
+    {
+      "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "44ee20276bf450066799691057bbfd6f9e7b1d46cc37bf124959721b7ace6931"
+    },
+    {
+      "file": "server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "5bd3c10955acc6002168da39938cfc399e08a251eab8a85bbc765aa2cff76050"
+    },
+    {
+      "file": "server/services/report-os/__tests__/report-package-legal.test.ts",
+      "run": "aggregate-post443",
+      "passed": 19,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "eed5c18a278878cc74869efb9ebcbc8b31b7c6690bb17df1896ebb887683ade6"
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "6ec934675661be5706239d56625c57c78b37aed35f737316fc30318bb01eaa99"
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "4444f73e2d6254114cae881a4fa72dc018c09c6311ef0c5afc6243c479652bbe"
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8a7258bda1612007731674e0b9d21a808e6531335bb258d3590f6f4cf92815b5"
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "ed51a253b9efd73628b32f6fc97427295a7967b3fee17a6c7000e3668ed639af"
+    },
+    {
+      "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+      "run": "aggregate-post443",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "ac39e29b819d816090ce92a12b602ec797320032036acd1c02163e380de19c6f"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "13bfe50f0f681440e26f1e8f4e07e2af4663a27bdb3309b49de98cbc4492425c"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "42ee1bb548518757af686693c819fbf6b13b40bd25baec61513e010d414b3977"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts",
+      "run": "aggregate-post443",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "2c016a14de92cb49a2abca58d541fd4bfa490c3b672d461306447943b845a08f"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "77df58666af03839c6c2813265b7625306eaf108f54af162a4c188ec3b98ab4f"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts",
+      "run": "aggregate-post443",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "924d775c8b9fd261f4bc8887edede4fdfd9e2a74bbd3414c6723ff1976f4772c"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "run": "regional-backbone-path-correction",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "456824383e699e316a400c6ba2cbf77202d42de5cde6ee12be2d0dac997cad93"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts",
+      "run": "aggregate-post443",
+      "passed": 28,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "40fc5c25f4521f26bb4a7ef8c14fa460fa3d443820da62595b8fc60bce074fe2"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts",
+      "run": "regional-backbone-path-correction",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "0a7c2bfd1a099b55f4eeb6760b99e4bbf47c06c84a88727008069147dd89e144"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
+      "run": "regional-backbone-path-correction",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "0bfac52b44c6df59c9089fc620d5f40aa9817847dc50561def5225fe21b812b6"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "83aac49cc07062cc5208f1be3568e4805a7946733abab64630b6cc64ca9d1247"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "34b21959b1878b7ecd4833fb53024192cecd8e159ae60de434e04edc38b957de"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts",
+      "run": "aggregate-post443",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "cef21dcb9483815acbc3e09d474f2a84e12e5f0827267ade78142eba3faea8f8"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "9da2efba37d8e103cacc444f8abcb2081856c453a9164423be3fafe3a59e5079"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-source-pin.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "2e0e30ee15f9549c88aa4ab95767d6e1f9d3ed74ed395354d8b1ebf52d738f57"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8bfb58811dc046b9d686968fcb34181fdb50fc68e1ede7369fde4c786c4b4871"
+    },
+    {
+      "file": "server/services/templates/__tests__/clinical-csr-templates.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "df74a50493f59a928544d79be578fe2971591ddbf8efebb5be797693ea4077d9"
+    },
+    {
+      "file": "server/services/templates/__tests__/nonclinical-templates.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "bc39c483bf2da3d273a6dd6ea864febca2e0ee4da26cf814abfc74c947c4c112"
+    },
+    {
+      "file": "server/services/templates/__tests__/template-store-audit-outcome.test.ts",
+      "run": "aggregate-post443",
+      "passed": 7,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "ff3ab0875d666c254f28656f51f5059e60617fc5ae24af2f58a9c3dec25b2151"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/company-document-export.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "6730e71db55e2c7b48132810dd16fae5f41aa8bbb507979bb93f80f2da38d634"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "2ecf661c325c1f5ab969b3d21fca6584d05a9e73942f248e4e1a0491863a8f7f"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
+      "run": "aggregate-post443",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c2d8875588fe5ca490ed0fc4d49b0c2ffa2504b1a0f95d65e2fb151b071af3d7"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
+      "run": "aggregate-post443",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7a94a22f6a4d243d08d8d7b9083344f85a46a6d6374d58495f6b918ebde0ecb6"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "651b17652790d5ff8e599d8dd31ac20e658876a975421636873145b16e7a7651"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+      "run": "aggregate-post443",
+      "passed": 24,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "81f6ea754b53e6f06204a7f94c025ed02fdb67efa2c5b8f7a73e190bf5bb8e3c"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+      "run": "aggregate-post443",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "98ea2715d73d0b402ff4d17d019f49fe8461e397d5898b1ac69ed67289522fe1"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "4ae7da9adbec7228712c2882c32939367b5ee4ba27ee9bd1c9fb9a6ce0769c27"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts",
+      "run": "aggregate-post443",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e41820cdd9d857fef06da07cedcbf1a53c379057eff5944a7a445de02f717039"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+      "run": "aggregate-post443",
+      "passed": 26,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "a0ce67087be3a19c2301299c66ff5a71904a4dbbccb2a4a8b3ec755eb3c0b300"
+    },
+    {
+      "file": "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
+      "run": "aggregate-post443",
+      "passed": 14,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "3be94fb7658695a50bec335dfac20b3dceef48d7da4ad217d032857fce0ef4b8"
+    },
+    {
+      "file": "server/services/vault/__tests__/company-legal-validity.test.ts",
+      "run": "aggregate-post443",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "fce7f36605a3a64c2e72ebdae781d62ac4ff0207b19f495b22039226d96c7e89"
+    },
+    {
+      "file": "shared/__tests__/company-documents.test.ts",
+      "run": "aggregate-post443",
+      "passed": 25,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "da27d222232e40ebd1e976a566899558b21cfaaaac7009e7072bec121ddf9597"
+    },
+    {
+      "file": "shared/__tests__/saved-assembly-sources.test.ts",
+      "run": "aggregate-post443",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60"
     }
   ]
 }

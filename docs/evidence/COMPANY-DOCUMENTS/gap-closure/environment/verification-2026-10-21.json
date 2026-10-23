@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "evidenceDate": "2026-10-21",
+  "sourceCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
+  "source": "Sanitized copy of retained xmllint setup verification metadata; binary/installer probes are recorded prior results, not rerun by this evidence collection.",
+  "tool": "xmllint/libxml2 20914",
+  "package": "libxml2-utils_2.12.7+dfsg+really2.9.14-2.1+deb13u3_amd64.deb",
+  "packageSha256": "cfa40541f9b314491c53b6c63e23ee1a2afa2ac309e6ca379c1081ef2b62e773",
+  "binarySha256": "e17c5db6dd44245d989eca51eab75e631d8789f9918fad262ec3234359e054b3",
+  "exactHostLibxml2VersionVerified": true,
+  "freshExtractionVerified": true,
+  "validDtdAccepted": true,
+  "invalidDtdExitStatus": 4,
+  "narrowInstallerRuns": 2,
+  "canonicalXmlValidatorTestsPassed": 4,
+  "fullInstallerRerun": false,
+  "npmDependenciesChanged": false,
+  "appRestarted": false,
+  "savedDraftRevision": 5,
+  "savedFields": [
+    "install_script",
+    "start_skill"
+  ],
+  "unrelatedDraftFieldsPreserved": true,
+  "requiresPublish": true,
+  "published": false,
+  "scriptSha256": {
+    "install.sh": "4f26c5a1eee13328c3154faa770884935f4ee4790405d285562c219458b8d10e",
+    "ensure-xmllint.sh": "88da95faeeeb21b12d87f49ea1812190cfee7a96f145b6fd6df496b0621b62bf",
+    "start-skill.md": "005ce61196c4179bbc86be598738c54bbb41e3afff8ced74efe388b3b461bfa0"
+  },
+  "vendorAuthentication": {
+    "repository": "Debian trixie signed InRelease + apt package hash verification",
+    "packageMetadata": "Package: libxml2-utils\nVersion: 2.12.7+dfsg+really2.9.14-2.1+deb13u3\nArchitecture: amd64",
+    "packageSha256": "cfa40541f9b314491c53b6c63e23ee1a2afa2ac309e6ca379c1081ef2b62e773"
+  },
+  "redactions": [
+    "Removed absolute local vendor-authentication evidence path and binary installation path. No credentials, connection URLs or saved draft contents included."
+  ],
+  "qualification": "Only the narrow xmllint installer and listed XML checks were exercised. Saved onboarding draft revision 5 still requires publication; full setup installer was not rerun and no publication is claimed."
+}

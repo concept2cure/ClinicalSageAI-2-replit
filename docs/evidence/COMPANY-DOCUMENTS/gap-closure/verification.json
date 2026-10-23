@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "evidenceDate": "2026-10-21",
+  "recordedAt": "2026-10-23T15:00:59.545128+00:00",
+  "qualifiedSourceCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
+  "synchronizedUpstream": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "status": "Locally qualified before October 23 upstream integration; historical qualification, not a production or current-upstream claim.",
+  "tests": {
+    "selection": "test-files.json",
+    "results": "test-summary.json",
+    "files": 122,
+    "latestUniquePassed": 1529,
+    "failed": 0,
+    "skipped": 0,
+    "aggregation": "First aggregate: 1519 passed and 10 invalid-fixture failures. Valid goldenPdf correction: 25 passed/3 files. Latest result per exact file without overlap."
+  },
+  "checks": {
+    "lockedInstall": true,
+    "productionBuild": true,
+    "fullTypecheckErrors": 0,
+    "requiredPrepushGatesPassed": true,
+    "newEslintWarnings": 0,
+    "prepushTranscriptSha256": "fcdd1f6e2d13a12a1c6083fdd4737eff98ae348fa53f1a41b812ce5439cebcc8",
+    "liveBrowser": "browser/2026-10-21-post443/README.md",
+    "realHistoricalWordAndPdf": "correspondence/verification.json",
+    "database": "database/verification-2026-10-21.json",
+    "environment": "environment/verification-2026-10-21.json"
+  },
+  "boundaries": {
+    "productionDeployed": false,
+    "remoteCiObserved": false,
+    "onboardingDraftPublished": false,
+    "onboardingDraftRevision": 5,
+    "agencyAcceptanceClaimed": false
+  }
+}

@@ -46,13 +46,15 @@ The native migration replay succeeded against local PostgreSQL. All five company
 
 ## Evidence and reproducibility
 
-The final result and source checksums are recorded in `verification.json` and `source-pins.json`. `test-files.json` is the exact unique suite selection. Raw full-run output is retained in the private execution workspace; focused shareable proof is retained here:
+The October 21 result and source checksums are recorded in `verification.json` and `source-pins.json`. Qualification follows integration of all 443 upstream commits since the paused October 18 session. `test-files.json` selects 122 unique suites. The first aggregate run passed 1,519 cases and failed 10 cases in one malformed-PDF fixture; using the existing real qualification PDF fixed that fixture, with all 25 focused layout/DTD/original-preservation cases passing. `test-summary.json` records the latest result per exact file: **1,529 passed, zero failed or skipped**, without counting overlapping reruns twice. Raw full-run output is retained in the private execution workspace; focused shareable proof is retained here:
 
-- `browser/README.md`: actual Chromium checks and seven screenshots, including genuine offline→Retry recovery, unsaved DOCX proof, default-policy explanation, font zoom and Account layout.
+- `browser/2026-10-21-post443/README.md`: fresh actual Chromium checks and nine screenshots, including genuine offline→Retry recovery in both inventory and the canonical Vault picker, unsaved DOCX proof, default-policy explanation, font zoom and Account layout. The parent folder preserves historical October 18 evidence.
 - `correspondence/verification.json`: actual five-page landscape DOCX/LibreOffice PDF, historical logo/style/text and geometry evidence.
 - `packaging/`: admitted-source-to-final-ZIP integrity and removed-control proofs.
 - `legal/README.md`: actual registry/Vault/filing SQL, requirement gates, lineage, renewal and unreviewed-state regressions.
 - `governance-independent-review.md`: independent permission/default-policy/lineage review and addressed findings.
+- `database/verification-2026-10-21.json`: actual PostgreSQL replay, company-table row-level security, indexes and runtime-role checks.
+- `environment/verification-2026-10-21.json`: tested native XML tool restoration and saved environment draft status.
 
 Reproduce the selected tests with Node 22 and the locked dependencies:
 
@@ -70,7 +72,7 @@ npm run build
 
 ## Operational boundaries
 
-No production deployment is claimed. Remote CI is unobserved: the current environment denies the GitHub API destination, although authenticated Git fetch/push works. The saved environment draft adds that destination for review and includes tested Node/PostgreSQL/LibreOffice installation/startup instructions. Draft revision 4 remains unpublished; saving a draft does not apply it to a new task.
+No production deployment is claimed. Remote CI is unobserved: the current environment denies the GitHub API destination, although authenticated Git fetch/push works. The saved environment draft adds that destination for review and includes tested Node/PostgreSQL/LibreOffice/XML-tool installation/startup instructions. Draft revision 5 remains unpublished; saving a draft does not apply it to a new task. The XML tool was restored twice through the narrow installer, with valid-DTD acceptance and invalid-DTD refusal; the full installer was not rerun.
 
 The browser proof used the existing administrator session and preserved profile revision 2. It did not activate a published default, compare nonexistent historical records or log in as a separate delegate; real SQL/HTTP/component tests cover the corresponding governance behaviors.
 

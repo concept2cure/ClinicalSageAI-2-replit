@@ -1,0 +1,437 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-21T02:24:37.401Z",
+  "sourceCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
+  "environment": "Local managed cloud onboarding PostgreSQL; current catalog checks use actual PostgreSQL, not PGlite.",
+  "verification": {
+    "mode": "read-only repeatable-read transactions through separate owner and authenticated app_service connections",
+    "serverVersion": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "readOnly": true,
+    "persistentDatabaseMutation": false,
+    "migrationReplayPerformedByThisVerification": false,
+    "applicationRowsExported": false,
+    "secretsOrConnectionUrlsIncluded": false
+  },
+  "recordedMigrationReplay": {
+    "date": "2026-10-21",
+    "command": "npm run db:migrate:deploy (existing provisioned database), followed by canonical runtime readiness verifier",
+    "reportedExitStatus": 0,
+    "exitStatusBasis": "Controller-observed completion; retained transcript reports schema migration completion and successful runtime readiness.",
+    "applied": 421,
+    "total": 421,
+    "transcriptSha256": "fe365437e61d1dff3fd197fa181a5f63ee57a4b75b0383f8e6c52b35e4480ba7",
+    "transcriptBytes": 58397,
+    "transcriptModifiedAt": "2026-10-21T02:12:41.150Z",
+    "privateTranscript": "live-migration-resume.txt (retained locally; not committed)",
+    "recordedRuntimeGrantAudit": {
+      "relations": 1312,
+      "denied": 0,
+      "beyondAuditCeiling": 0
+    },
+    "qualifications": [
+      "The deploy replay completed before the merge commit; the four company migration journal hashes below match the current merged source.",
+      "This is an additive replay against the existing provisioned local PostgreSQL database; it does not establish a fresh empty-database bootstrap or an AWS/production rollout.",
+      "The transcript includes two skipped non-public UUID isolation targets reported as unprovisioned/drift; all five public integer-keyed company tables were independently checked below.",
+      "pgaudit was not loaded on this local server; this does not establish a database-level audit configuration.",
+      "The company registry migration copies/verifies legacy settings before removing the settings array and refuses later legacy-array writes; production cutover requires a company-document write pause and all old API workers updated, as documented in docs/design/COMPANY_LEGAL_REGISTRY.md.",
+      "No second migration replay, full installer rerun, destructive probe or production data qualification was performed for this evidence."
+    ]
+  },
+  "migrationOrdering": {
+    "canonicalSet": "scripts/db/migration-set.mjs",
+    "canonicalSetSha256": "24a5141466b620587e86334e37687b5a2c1e7c9fb32f4758ebd510875c5e137b",
+    "totalEntries": 421,
+    "companyMigrations": [
+      {
+        "file": "migrations/20261018_company_document_governance.sql",
+        "positionOneBased": 415,
+        "sha256": "ec7606151539746dc9e5530abefa5323e66c4a7d3333ae6dc244b9aad8475d57",
+        "journal": {
+          "firstAppliedAt": "2026-10-18T00:29:59.397Z",
+          "lastAppliedAt": "2026-10-21T02:12:40.530Z",
+          "applyCount": 3,
+          "hashMatchesCurrentSource": true
+        }
+      },
+      {
+        "file": "migrations/20261018_company_document_export_receipts.sql",
+        "positionOneBased": 416,
+        "sha256": "21e5c910b1884993b4b3e1b9f3feee87baf4d263f2b5ab92a2fc14f368f90d58",
+        "journal": {
+          "firstAppliedAt": "2026-10-18T00:29:59.401Z",
+          "lastAppliedAt": "2026-10-21T02:12:40.532Z",
+          "applyCount": 3,
+          "hashMatchesCurrentSource": true
+        }
+      },
+      {
+        "file": "migrations/20261018_company_legal_registry.sql",
+        "positionOneBased": 417,
+        "sha256": "c7d90d5f59b71b1885fca5a2c2db85b1756ff7f3c56a0e8b01025a4cc19e2b7a",
+        "journal": {
+          "firstAppliedAt": "2026-10-18T00:29:59.416Z",
+          "lastAppliedAt": "2026-10-21T02:12:40.536Z",
+          "applyCount": 3,
+          "hashMatchesCurrentSource": true
+        }
+      },
+      {
+        "file": "migrations/20261018_company_document_designs.sql",
+        "positionOneBased": 418,
+        "sha256": "a7db1b30e4091281df03315495b56242f6faf0703e677d767a7dda8a11281edb",
+        "journal": {
+          "firstAppliedAt": "2026-10-18T00:29:59.443Z",
+          "lastAppliedAt": "2026-10-21T02:12:40.539Z",
+          "applyCount": 3,
+          "hashMatchesCurrentSource": true
+        }
+      }
+    ],
+    "allCompanyMigrationsBeforeIsolationTail": true,
+    "isolationTail": [
+      {
+        "file": "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql",
+        "positionOneBased": 419
+      },
+      {
+        "file": "db/migrations/20260813_child_table_parent_scoped_rls.sql",
+        "positionOneBased": 420
+      },
+      {
+        "file": "db/migrations/20260801_tenant_isolation_sweep.sql",
+        "positionOneBased": 421
+      }
+    ]
+  },
+  "companyTableRls": {
+    "tables": [
+      {
+        "table_name": "company_document_designs",
+        "rls_enabled": true,
+        "rls_forced": true,
+        "owner": "postgres",
+        "organization_key_type": "integer",
+        "organization_key_not_null": true,
+        "policyname": "tenant_isolation_policy",
+        "cmd": "ALL",
+        "roles": "{public}"
+      },
+      {
+        "table_name": "company_document_grants",
+        "rls_enabled": true,
+        "rls_forced": true,
+        "owner": "postgres",
+        "organization_key_type": "integer",
+        "organization_key_not_null": true,
+        "policyname": "tenant_isolation_policy",
+        "cmd": "ALL",
+        "roles": "{public}"
+      },
+      {
+        "table_name": "company_document_identity_reviews",
+        "rls_enabled": true,
+        "rls_forced": true,
+        "owner": "postgres",
+        "organization_key_type": "integer",
+        "organization_key_not_null": true,
+        "policyname": "tenant_isolation_policy",
+        "cmd": "ALL",
+        "roles": "{public}"
+      },
+      {
+        "table_name": "company_document_revisions",
+        "rls_enabled": true,
+        "rls_forced": true,
+        "owner": "postgres",
+        "organization_key_type": "integer",
+        "organization_key_not_null": true,
+        "policyname": "tenant_isolation_policy",
+        "cmd": "ALL",
+        "roles": "{public}"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "rls_enabled": true,
+        "rls_forced": true,
+        "owner": "postgres",
+        "organization_key_type": "integer",
+        "organization_key_not_null": true,
+        "policyname": "tenant_isolation_policy",
+        "cmd": "ALL",
+        "roles": "{public}"
+      }
+    ],
+    "usingAndWithCheckAreIdenticalAcrossAllFive": true,
+    "sharedPredicate": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = (\"substring\"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+    "qualification": "Forced RLS and canonical policy catalog shape are verified. Runtime policy filtering depends on the application setting app.rls_enforce=on and authoritative tenant/role request context; no new behavioral cross-tenant fixture was created."
+  },
+  "indexes": {
+    "comparison": "All 13 expected PostgreSQL pg_get_indexdef strings matched exact expected keys, direction, uniqueness and partial predicates; all indexes valid and ready.",
+    "expected": 13,
+    "verified": 13,
+    "conditionalIndexesPresent": [
+      "company_legal_reminder_once_idx (mdx_notifications present)",
+      "audit_company_legal_copy_lineage_idx (audit_logs present)"
+    ],
+    "entries": [
+      {
+        "table_name": "audit_logs",
+        "name": "audit_company_legal_copy_lineage_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX audit_company_legal_copy_lineage_idx ON public.audit_logs USING btree (tenant_id, record_id) WHERE ((table_name = 'vault_document'::text) AND (action = ANY (ARRAY['vault.document.ingest'::text, 'vault.document.reupload'::text])))"
+      },
+      {
+        "table_name": "company_document_designs",
+        "name": "company_document_designs_list_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_document_designs_list_idx ON public.company_document_designs USING btree (organization_id, created_at DESC, id DESC)"
+      },
+      {
+        "table_name": "company_document_designs",
+        "name": "company_document_designs_pkey",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": true,
+        "definition": "CREATE UNIQUE INDEX company_document_designs_pkey ON public.company_document_designs USING btree (id)"
+      },
+      {
+        "table_name": "company_document_designs",
+        "name": "company_document_designs_program_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_document_designs_program_idx ON public.company_document_designs USING btree (organization_id, program_id, state)"
+      },
+      {
+        "table_name": "company_document_grants",
+        "name": "company_document_grants_pkey",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": true,
+        "definition": "CREATE UNIQUE INDEX company_document_grants_pkey ON public.company_document_grants USING btree (organization_id, user_id)"
+      },
+      {
+        "table_name": "company_document_identity_reviews",
+        "name": "company_document_identity_current_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_document_identity_current_idx ON public.company_document_identity_reviews USING btree (organization_id, sequence_id, reviewed_at DESC)"
+      },
+      {
+        "table_name": "company_document_identity_reviews",
+        "name": "company_document_identity_reviews_pkey",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": true,
+        "definition": "CREATE UNIQUE INDEX company_document_identity_reviews_pkey ON public.company_document_identity_reviews USING btree (id)"
+      },
+      {
+        "table_name": "company_document_revisions",
+        "name": "company_document_revisions_pkey",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": true,
+        "definition": "CREATE UNIQUE INDEX company_document_revisions_pkey ON public.company_document_revisions USING btree (organization_id, revision, variant_id)"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "name": "company_legal_registry_inventory_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_legal_registry_inventory_idx ON public.company_legal_registry USING btree (organization_id, ((document ->> 'registeredAt'::text)), id)"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "name": "company_legal_registry_pkey",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": true,
+        "definition": "CREATE UNIQUE INDEX company_legal_registry_pkey ON public.company_legal_registry USING btree (organization_id, id)"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "name": "company_legal_registry_program_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_legal_registry_program_idx ON public.company_legal_registry USING btree (organization_id, ((document ->> 'programId'::text)))"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "name": "company_legal_registry_vault_idx",
+        "valid": true,
+        "ready": true,
+        "unique": false,
+        "primary": false,
+        "definition": "CREATE INDEX company_legal_registry_vault_idx ON public.company_legal_registry USING btree (organization_id, lower((document ->> 'vaultDocumentId'::text)))"
+      },
+      {
+        "table_name": "mdx_notifications",
+        "name": "company_legal_reminder_once_idx",
+        "valid": true,
+        "ready": true,
+        "unique": true,
+        "primary": false,
+        "definition": "CREATE UNIQUE INDEX company_legal_reminder_once_idx ON public.mdx_notifications USING btree (organization_id, ((metadata ->> 'companyLegalReminderKey'::text))) WHERE (metadata ? 'companyLegalReminderKey'::text)"
+      }
+    ]
+  },
+  "retentionAndReceiptCatalog": {
+    "enabledTriggers": [
+      {
+        "table_name": "company_document_designs",
+        "name": "company_document_design_governed",
+        "enabled": "O",
+        "function": "guard_company_document_design",
+        "definition": "CREATE TRIGGER company_document_design_governed BEFORE DELETE OR UPDATE ON public.company_document_designs FOR EACH ROW EXECUTE FUNCTION guard_company_document_design()"
+      },
+      {
+        "table_name": "company_document_designs",
+        "name": "company_document_design_no_truncate",
+        "enabled": "O",
+        "function": "guard_company_document_design",
+        "definition": "CREATE TRIGGER company_document_design_no_truncate BEFORE TRUNCATE ON public.company_document_designs FOR EACH STATEMENT EXECUTE FUNCTION guard_company_document_design()"
+      },
+      {
+        "table_name": "company_document_identity_reviews",
+        "name": "company_document_identity_immutable",
+        "enabled": "O",
+        "function": "guard_company_document_revision",
+        "definition": "CREATE TRIGGER company_document_identity_immutable BEFORE DELETE OR UPDATE ON public.company_document_identity_reviews FOR EACH ROW EXECUTE FUNCTION guard_company_document_revision()"
+      },
+      {
+        "table_name": "company_document_identity_reviews",
+        "name": "company_document_identity_no_truncate",
+        "enabled": "O",
+        "function": "guard_company_document_revision",
+        "definition": "CREATE TRIGGER company_document_identity_no_truncate BEFORE TRUNCATE ON public.company_document_identity_reviews FOR EACH STATEMENT EXECUTE FUNCTION guard_company_document_revision()"
+      },
+      {
+        "table_name": "company_document_revisions",
+        "name": "company_document_revision_immutable",
+        "enabled": "O",
+        "function": "guard_company_document_revision",
+        "definition": "CREATE TRIGGER company_document_revision_immutable BEFORE DELETE OR UPDATE ON public.company_document_revisions FOR EACH ROW EXECUTE FUNCTION guard_company_document_revision()"
+      },
+      {
+        "table_name": "company_document_revisions",
+        "name": "company_document_revision_no_truncate",
+        "enabled": "O",
+        "function": "guard_company_document_revision",
+        "definition": "CREATE TRIGGER company_document_revision_no_truncate BEFORE TRUNCATE ON public.company_document_revisions FOR EACH STATEMENT EXECUTE FUNCTION guard_company_document_revision()"
+      },
+      {
+        "table_name": "company_legal_registry",
+        "name": "company_legal_registry_guard",
+        "enabled": "O",
+        "function": "guard_company_legal_registry",
+        "definition": "CREATE TRIGGER company_legal_registry_guard BEFORE DELETE OR UPDATE ON public.company_legal_registry FOR EACH ROW EXECUTE FUNCTION guard_company_legal_registry()"
+      },
+      {
+        "table_name": "organizations",
+        "name": "company_legal_settings_array_refused",
+        "enabled": "O",
+        "function": "guard_company_legal_settings_array",
+        "definition": "CREATE TRIGGER company_legal_settings_array_refused BEFORE INSERT OR UPDATE OF settings ON public.organizations FOR EACH ROW EXECUTE FUNCTION guard_company_legal_settings_array()"
+      }
+    ],
+    "receiptBinding": {
+      "name": "tenant_export_receipts_company_documents_binding",
+      "definition": "CHECK ((((company_documents_version IS NULL) AND (company_documents_sha256 IS NULL)) OR ((company_documents_version IS NOT NULL) AND (company_documents_version = 1) AND (company_documents_sha256 IS NOT NULL) AND (company_documents_sha256 ~ '^[a-f0-9]{64}$'::text))))",
+      "validated": true
+    },
+    "receiptColumns": [
+      {
+        "column_name": "company_documents_sha256",
+        "data_type": "text",
+        "is_nullable": "YES"
+      },
+      {
+        "column_name": "company_documents_version",
+        "data_type": "integer",
+        "is_nullable": "YES"
+      }
+    ],
+    "qualification": "Catalog presence/enabled state only; destructive trigger behavior and hold/receipt races are covered by the separately recorded regression suites."
+  },
+  "runtimeRole": {
+    "role": "app_service",
+    "login": true,
+    "superuser": false,
+    "bypass_rls": false,
+    "create_database": false,
+    "create_role": false,
+    "replication": false,
+    "ownsCompanyTables": false,
+    "companyTablePrivileges": [
+      {
+        "relation": "company_document_designs",
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": true,
+        "truncate": false
+      },
+      {
+        "relation": "company_document_grants",
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": true,
+        "truncate": false
+      },
+      {
+        "relation": "company_document_identity_reviews",
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": true,
+        "truncate": false
+      },
+      {
+        "relation": "company_document_revisions",
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": true,
+        "truncate": false
+      },
+      {
+        "relation": "company_legal_registry",
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": true,
+        "truncate": false
+      }
+    ],
+    "canonicalReadiness": {
+      "module": "scripts/db/readiness-contract.mjs",
+      "ok": true,
+      "failures": [],
+      "authoringTables": 19,
+      "applicationRelations": 1312,
+      "missingPrivilegeRelations": 0,
+      "beyondAppendOnlyCeiling": 0,
+      "ownedAppendOnlyStores": 0
+    },
+    "qualification": "Company tables retain normal DML grants; immutable history, legal pointers and eligible purge disposal are additionally guarded by enabled triggers and service authorization. Append-only audit-store grant ceilings are assessed by the canonical full grant audit."
+  }
+}
