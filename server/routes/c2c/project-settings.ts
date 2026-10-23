@@ -56,8 +56,9 @@ async function verifyWorkspace(q: ProgramAccessExecutor, organizationId: number,
     if (anchor.rows.length !== 1 || anchor.rows[0].client_workspace_id !== access.clientWorkspaceId) throw stale();
   }
   if (access.clientWorkspaceId === null) return;
-  const workspace = await q.query(`SELECT id FROM client_workspaces WHERE id=$1 AND organization_id=$2${locked ? ' FOR SHARE' : ''}`,
-    [access.clientWorkspaceId, organizationId]);
+  const workspace = locked
+    ? await q.query('SELECT id FROM client_workspaces WHERE id=$1 AND organization_id=$2 FOR SHARE', [access.clientWorkspaceId, organizationId])
+    : await q.query('SELECT id FROM client_workspaces WHERE id=$1 AND organization_id=$2', [access.clientWorkspaceId, organizationId]);
   if (workspace.rows.length !== 1) throw new SettingsRefusal(409, 'PROJECT_WORKSPACE_UNRESOLVED', 'The saved project client relationship needs verification before settings can be supplied.');
 }
 

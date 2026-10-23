@@ -1,6 +1,6 @@
 # PM-06 native PostgreSQL qualification
 
-The final [native run](native-postgres.txt) passes **8 tests** under Node 22 and PostgreSQL 16:
+The initial qualified [native run](native-postgres.txt) and the final [fixed-SQL native run](native-postgres-fixed-sql.txt) each pass the same **8 tests** under Node 22 and PostgreSQL 16; these are reruns, not 16 distinct cases:
 
 ```sh
 NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.db.config.ts tests/db/project-settings.dbtest.ts
