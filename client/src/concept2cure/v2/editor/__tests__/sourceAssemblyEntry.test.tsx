@@ -163,16 +163,18 @@ describe('shared read-only source target chooser', () => {
     expect(screen.queryByRole('option', { name: documentRow.title })).toBeNull();
     expect(screen.queryByText('No working documents are available in this project.')).toBeNull();
   });
-  it('offers the existing-editor creation remedy without dispatching a pre-mount creator or writing', async () => {
+  it('retains sources for the existing-editor creation remedy without dispatching a pre-mount creator or writing', async () => {
     documents = () => ok({ success: true, documents: [] });
     const onNav = vi.fn(); const create = vi.fn();
     window.addEventListener('c2c:new-document', create);
     render(<SourceAssemblyDialog programId={PROGRAM} sources={selectors()} onClose={vi.fn()} onNav={onNav} />);
     await screen.findByText('No working documents are available in this project.');
-    fireEvent.click(screen.getByRole('button', { name: 'Open document editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New document' }));
     expect(onNav).toHaveBeenCalledWith('document-authoring');
     expect(create).not.toHaveBeenCalled();
-    expect(peekEditorTarget()).toBeNull(); expect(mutations()).toHaveLength(0);
+    expect(peekEditorTarget()).toMatchObject({ docId: null, programId: PROGRAM,
+      sourceDocumentStart: { version: 1, sources: selectors() } });
+    expect(mutations()).toHaveLength(0);
     window.removeEventListener('c2c:new-document', create);
   });
   it('does not publish while another governed form is open', async () => {

@@ -28,6 +28,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NEW_DOCUMENT_EVENT } from '../newDocumentAction';
+import { ceremonyOpen } from '../ceremony';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -36,7 +37,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { authoringPdfPrewriteRefusal } from '../authoringPdfRefusal';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
-import { useAuthoringCreation, type CreationKind, type CreationState } from '../editor/useAuthoringCreation';
+import { useAuthoringCreation, type AuthoringDocumentStart, type CreationKind, type CreationState } from '../editor/useAuthoringCreation';
 import { AuthoringRecoveryNotice } from '../AuthoringRecoveryNotice';
 import { AuthoringTemplatePicker, BLANK_DOCUMENT, templateLabel, type AuthoringTemplate, type TemplateCatalogState } from './AuthoringTemplatePicker';
 
@@ -51,6 +52,8 @@ export interface AuthoringCreateExportProps {
   onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
   /** Existing workbench notice area, outside its touch toolbar scroller. */
   noticeContainer?: HTMLElement | null;
+  /** One deliberate source start, kept in this existing creation host. */
+  documentStart?: AuthoringDocumentStart | null;
   /** The document's lifecycle status. Export of a filing artifact is refused
    *  server-side (409) unless it is FROZEN or APPROVED; the menu says so
    *  instead of offering an act that can only fail. A working copy is
@@ -98,10 +101,12 @@ function sectionCreationForm(title: string | null, state: CreationState | undefi
     ] };
 }
 
-function documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state }: {
+function documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state, documentStart }: {
   templates: AuthoringTemplate[]; selectedTemplate?: AuthoringTemplate; module: string;
-  globalCatalog: string; state?: CreationState;
+  globalCatalog: string; state?: CreationState; documentStart: AuthoringDocumentStart | null;
 }): C2CFormConfig {
+  const progress = creationProgress(state, 'document');
+  const sourceNotice = documentStart ? `This start uses ${documentStart.sourceCount} selected source${documentStart.sourceCount === 1 ? '' : 's'}. Creating the working document does not build it; preview and build later in the editor, with or without AnA.` : undefined;
   return {
     eyebrow: 'Authoring · ' + module,
     title: 'New document',
@@ -113,7 +118,8 @@ function documentCreationForm({ templates, selectedTemplate, module, globalCatal
           ? ' The template list didn’t load — only a blank document can be started right now. This is a failed read, not an empty catalog.'
           : ''),
     submitLabel: 'Create document',
-    ...creationProgress(state, 'document'),
+    ...progress,
+    notice: [progress.notice, sourceNotice].filter(Boolean).join(' ') || undefined,
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
       { key: 'module', label: 'CTD module', type: selectedTemplate?.module === undefined ? 'seg' : 'text', options: ['M1', 'M2', 'M3', 'M4', 'M5'], default: module, half: true,
@@ -126,24 +132,50 @@ function documentCreationForm({ templates, selectedTemplate, module, globalCatal
   };
 }
 
-export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer }: AuthoringCreateExportProps) {
+/** A refused command is consumed, so unrelated later work cannot reopen it. */
+function useDocumentStartCommand(start: AuthoringDocumentStart | null | undefined, dialogOpen: boolean,
+  mayStart: (request: AuthoringDocumentStart) => boolean, accept: (request: AuthoringDocumentStart) => void) {
+  const consumed = useRef(new WeakSet<AuthoringDocumentStart>());
+  useEffect(() => {
+    if (!start || consumed.current.has(start)) return;
+    consumed.current.add(start);
+    if (dialogOpen || ceremonyOpen() || !mayStart(start)) return;
+    accept(start);
+  }, [start, dialogOpen, mayStart, accept]);
+}
+
+function AuthoringRecoveryNotices({ creation, recovery }: {
+  creation: ReturnType<typeof useAuthoringCreation>; recovery: ReturnType<typeof useAuthoringExport>['recovery'];
+}) {
+  return <>
+    <ExportRecoveryNotice {...recovery} />
+    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind}
+      state={creation.state(kind)} disabled={!!creation.refusal} onCheck={() => creation.check(kind)} onOpen={() => creation.open(kind)} />)}
+  </>;
+}
+
+export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer, documentStart }: AuthoringCreateExportProps) {
   /* Sealed, or not offered. An unknown status used to count as exportable,
      which offered the controlled act on a document whose status nobody had
      read; the server would refuse it, and the working copy is the act that
      fits a document of unknown status. */
   const exportable = isSealedStatus(docStatus);
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
+  const [formDocumentStart, setFormDocumentStart] = useState<AuthoringDocumentStart | null>(null);
+  const closeDialog = () => { setDialog(null); setFormDocumentStart(null); };
   // Re-renders when a surface opens or switches project, so the control follows.
   const openProject = shellProgramId(useShellProject());
   const creation = useAuthoringCreation({ programId: programId === undefined ? openProject : programId,
-    openProject, docId, programSwitchHeld, fireToast, onDocCreated, onSectionCreated, onCheckCreation });
+    openProject, docId, programSwitchHeld, fireToast, onDocCreated, onSectionCreated, onCheckCreation, documentStart: formDocumentStart });
   const openDocument = () => {
     if (creation.blocked('document')) {
       fireToast(creation.refusal ?? creation.state('document')?.message ?? 'Wait for the current creation request.', 'error');
       return;
     }
-    setDialog('doc');
+    setFormDocumentStart(null); setDialog('doc');
   };
+  useDocumentStartCommand(documentStart, dialog !== null, creation.canStartDocument,
+    request => { setFormDocumentStart(request); setDialog('doc'); });
   const { exportDoc, blockedReason, recovery } = useAuthoringExport({
     docId, docTitle, exportable, openProject, fireToast, onExported, onCheckExports,
   });
@@ -190,7 +222,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
 
   const selectedTemplate = templates.find(t => String(t.id) === templateChoice);
 
-  const DOC_FORM = documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state: creation.state('document') });
+  const DOC_FORM = documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state: creation.state('document'), documentStart: formDocumentStart });
   const SECTION_FORM = sectionCreationForm(docTitle, creation.state('section'));
 
   const createDoc = (values: Record<string, string>) => {
@@ -200,16 +232,12 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
       return;
     }
     creation.create('document', { title: values.title, module: creationModule(template, values.module, module),
-      ...(template ? { template_id: template.id } : {}) }, () => setDialog(null), template ? templateLabel(template) : undefined);
+      ...(template ? { template_id: template.id } : {}) }, closeDialog, template ? templateLabel(template) : undefined);
   };
   const createSection = (values: Record<string, string>) => {
-    creation.create('section', { code: values.code, title: values.title }, () => setDialog(null));
+    creation.create('section', { code: values.code, title: values.title }, closeDialog);
   };
-  const notices = <>
-    <ExportRecoveryNotice {...recovery} />
-    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind}
-      state={creation.state(kind)} disabled={!!creation.refusal} onCheck={() => creation.check(kind)} onOpen={() => creation.open(kind)} />)}
-  </>;
+  const notices = <AuthoringRecoveryNotices creation={creation} recovery={recovery} />;
 
   return (
     <>
@@ -243,12 +271,12 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
         </>
       )}
       {noticeContainer ? createPortal(notices, noticeContainer) : notices}
-      {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={() => setDialog(null)} onSubmit={createDoc}
+      {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={closeDialog} onSubmit={createDoc}
         onFieldChange={(key, value) => { if (key === 'template') setTemplateChoice(value); }}
         renderField={(field, control) => field.key === 'template'
           ? <AuthoringTemplatePicker templates={templates} catalog={globalCatalog} query={templateQuery} onQueryChange={setTemplateQuery} control={control} />
           : undefined} />}
-      {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={() => setDialog(null)} onSubmit={createSection} />}
+      {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={closeDialog} onSubmit={createSection} />}
     </>
   );
 }

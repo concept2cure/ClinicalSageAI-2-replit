@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-23T19:30:26.969833+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "before": "5d3e138ecae7f92894511b0ce9b1dc0b27c69464",
+  "after": "42d7183240bc698fb819efa4e8517ace4a8fe37f",
+  "changedPriorPins": [
+    "client/src/concept2cure/v2/surfaces/Projects.tsx"
+  ],
+  "rawGzipSha256": "b26e718ac6dfad32ff77fcb352e07806fa149071b439224b2e35f876e3d8d6ff"
+}

@@ -23,10 +23,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
+import { capturedActorHeaders } from '@/utils/authToken';
 import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { downloadBase64 } from '../../v2/download';
 import { mutationUnconfirmed } from '../../v2/mutationOutcome';
+import { taskActorScope } from '../../v2/taskTarget';
 import {
   attachmentRefusals, confirmedAttachmentReceipts, copyAttachmentSelections,
   type OfficialEstarAttachment, type EstarAttachmentReceipt, type EstarAttachmentRefusal,
@@ -426,12 +428,13 @@ function refusedExport(json: Record<string, unknown> | null, official: boolean, 
 }
 
 async function postExport(url: string, body: unknown, official: boolean, current: () => boolean,
-  expected: readonly OfficialEstarAttachment[]): Promise<EstarExportOutcome> {
+  request: { expected: readonly OfficialEstarAttachment[]; headers: Record<string, string> }): Promise<EstarExportOutcome> {
+  const { expected, headers } = request;
   try {
     const res = await fetch(url, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body),
     });
     const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -486,6 +489,20 @@ async function postExport(url: string, body: unknown, official: boolean, current
   }
 }
 
+/** Accept a bearer rotation only when the canonical session adopted it for the same actor. */
+function exportCredentialsCurrent(headers: Record<string, string>, account: ReturnType<typeof authService.getUser>): boolean {
+  const live = buildAuthHeaders();
+  if (headers['x-organization-id'] !== live['x-organization-id']) return false;
+  if (headers.Authorization === live.Authorization) return true;
+  const actor = taskActorScope(account);
+  if (!actor) return false;
+  try {
+    const verified = capturedActorHeaders({ userId: Number(actor.userId), organizationId: Number(actor.organizationId) });
+    return verified.Authorization === live.Authorization && verified['x-organization-id'] === live['x-organization-id'] &&
+      authService.captureSessionReadGuard(verified.Authorization.slice('Bearer '.length)).current();
+  } catch { return false; }
+}
+
 export function useEstarExport(isContextCurrent?: () => boolean): UseEstarExportResult {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<EstarExportOutcome | null>(IDLE);
@@ -500,15 +517,15 @@ export function useEstarExport(isContextCurrent?: () => boolean): UseEstarExport
   const run = useCallback(async (url: string, body: unknown, official: boolean, expected: readonly OfficialEstarAttachment[] = []) => {
     if (active.current !== null) return failedExport(official, 'An export is already in progress.');
     const request = ++generation.current;
-    const owner = JSON.stringify(buildAuthHeaders());
+    const headers = buildAuthHeaders();
     const session = authService.captureSessionReadGuard();
     const account = authService.getUser();
     const current = () => mounted.current && generation.current === request && session.sameRevision() &&
-      authService.getUser() === account && owner === JSON.stringify(buildAuthHeaders()) && isContextCurrent?.() !== false;
+      authService.getUser() === account && exportCredentialsCurrent(headers, account) && isContextCurrent?.() !== false;
     active.current = request;
     setBusy(true);
     try {
-      const result = await postExport(url, body, official, current, expected);
+      const result = await postExport(url, body, official, current, { expected, headers });
       if (current()) setOutcome(result);
       return result;
     } finally {

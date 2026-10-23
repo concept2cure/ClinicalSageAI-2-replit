@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-23T19:11:21.697028+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--ff-only",
+    "origin/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "before": "b3e5746f63946e2819e1467d7d49a86b1b3ac6cb",
+  "after": "7fab2aa653d39b3d5be402245b95fb2f57517be1",
+  "sourceDrift": [],
+  "rawGzipSha256": "45da3d2f613347f615265c4c6063749a988b3813d4bfc8844f1b0cb854b5ec56",
+  "review": "Read-only incoming RAG freshness review found no editor compatibility blocker; replay changed eight suites and refreshed compiler/build/global affected gates."
+}

@@ -1,0 +1,22 @@
+{
+  "createdAt": "2026-10-23T18:50:18.100396+00:00",
+  "files": {
+    "README.md": "f5b8a97c693afefe019dc2d6f6599ac3df17a99bbdde7055eac36a84b97b5c4c",
+    "freeze.json": "a7f560721e3e3231abdebbb4c5dbfcacacc3d09bd33a22484598e182ed9188b1",
+    "freeze.sha256": "a5345e5ee398fda2a94358a302defd02581ea36e71b2c9c140976269932be89a",
+    "initial-green-freeze.json": "9416bfa15240979ee97731421973c7fe7cf966ba892cf4a59d60b25a50ffd241",
+    "initial-green.json": "1b781b25a0e82a2c8f01b7c4692570885c1e8f9c84723ae3a9980e63fc98abf1",
+    "initial-green.log.gz": "a312f285733d2db1d4742ee0b8d892e42bb8769f0874746a234e387a23f8d60b",
+    "initial-lint.json": "591082a495e7c3fd33116ae23e6b37d2518d6f448bc088a0c7d8bcfa8534a895",
+    "initial-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "ownership-check.json": "f6bae610d0296947844a9987f125b9c61dbc76f01fa9c3f4faf64311df04ab39",
+    "ownership-check.log.gz": "a2c7072be0075d9ea8075b93cbda2a37b6d8e0d7c385e1d030a9a300e5c6143b",
+    "ownership-freeze.json": "9738186cb62795fe49df74a3da88f87980e65cafe07050a690633fe3509e95ae",
+    "qualified-freeze.json": "bda7eff81dffa82b0f6f3866de1f3d59dbf1c7e8a236a81df7ce1b31494a75dd",
+    "qualified-green.json": "0812c1638a1c7a4f6a31e7ea924db9cd548c6b8997a3dbf9b252c73c42aea23a",
+    "qualified-green.log.gz": "e8ea87ba33c4e9d3587b051a9324af29184cfa6b1ff5ee055e80eb27289446cc",
+    "red-freeze.json": "9b5b2d62d111a80847e83181a714e7880bd6c9de4a4c93751ce4b37c98ed7d5c",
+    "red.json": "8f402d9540d05bfc012afdc058155a00f7a98754206f205afab15b052de6c7c6",
+    "red.log.gz": "a123a8a3cdd0c813863fb3921c4abf2e107412f19b6797244daba47acf3da98c"
+  }
+}

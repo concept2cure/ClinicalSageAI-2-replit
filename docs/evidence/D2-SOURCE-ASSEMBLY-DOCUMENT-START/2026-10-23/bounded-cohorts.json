@@ -1,0 +1,49 @@
+{
+  "scope": "Completed bounded cohorts before compiler/build and later incoming Vault freshness integration; not final publication.",
+  "checks": [
+    {
+      "receipt": "qualified-ui.json",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  20 passed (20)",
+        "Tests  447 passed (447)",
+        "Duration  88.46s (transform 4.37s, setup 1.29s, import 9.95s, tests 66.92s, environment 7.81s)"
+      ],
+      "rawVerified": true
+    },
+    {
+      "receipt": "qualified-backend.json",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  15 passed (15)",
+        "Tests  283 passed (283)",
+        "Duration  55.22s (transform 9.88s, setup 205ms, import 23.72s, tests 29.38s, environment 1ms)"
+      ],
+      "rawVerified": true
+    },
+    {
+      "receipt": "qualified-strict-lint.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "rawVerified": true
+    },
+    {
+      "receipt": "qualified-warning-ratchet.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "rawVerified": true
+    }
+  ],
+  "humanCases": 83,
+  "humanStatus": "All Not run",
+  "ownedProductionCount": 7,
+  "changedProductionPaths": [
+    "client/src/concept2cure/v2/editorTarget.ts",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx"
+  ]
+}
