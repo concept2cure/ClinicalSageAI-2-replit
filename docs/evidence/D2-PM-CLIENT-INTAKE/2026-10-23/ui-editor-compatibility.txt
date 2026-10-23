@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 1532ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 740ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 572ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 761ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 627ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 595ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 528ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 849ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 398ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 439ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 312ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 493ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 317ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 321ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 335ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 829ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 584ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 668ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 368ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 512ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 401ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  18:30:27
+   Duration  17.78s (transform 1.62s, setup 420ms, import 2.30s, tests 12.20s, environment 2.26s)
