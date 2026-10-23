@@ -13,5 +13,10 @@
     "decodedBytes": 16345,
     "decodedSha256": "ce71012c47c86164fa3e4668950b0e5831752db85dd4c1c3cc732ad07b9796b8",
     "archiveSha256": "d5165a06e5dc632efcc1f40abf9cea33ffd3ccd1650d267b293621c13b964097"
+  },
+  "build-authoring-reconciled.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "c785f92f49fd9b5c9c85bb162dd1420f8679e63feb9bacd8f54444aa1b7e89e9",
+    "archiveSha256": "09165fbf79056d66e38f84fa18f31d13e61ddd582bc7b9b27bd62153dd55071d"
   }
 }

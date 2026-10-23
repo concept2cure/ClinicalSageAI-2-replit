@@ -35,6 +35,12 @@ Normal merge `484ed08fc` preserves the reporting completion `4f3ebaf73` and conc
 
 The [late-native packet](late-native/README.md) records the independent review and **50 passing tests in four suites**, no failures, pending cases or TODOs, in 36.51 seconds. The latest merged-source production build completed in **29.84 seconds**; server and audit verifier passed. `release/checks.json` and `release/build-native-reconciled.txt.gz` retain this additional phase without overwriting the earlier reporting build evidence. Synthetic native tests do not establish live provider qualification.
 
+## Preserve concurrent Authoring PDF completion
+
+Canonical advanced again through `0a7abf314`, with Authoring PDF convergence already independently qualified in `docs/evidence/D2-AUTHORING-PDF/2026-10-23/README.md`. Normal merge `5482e9b75` retains it alongside this reporting completion. Ordinary Authoring PDFs reuse the existing rich Word builder and strict converter, preserving signatures, working-copy notices, source guards and historical company presentation. Definite pre-write conversion refusals remain distinct from uncertain export or Vault outcomes. No reporting runtime source overlaps the six incoming runtime paths.
+
+The latest combined production build passed in **26.89 seconds**, including server and audit verifier. All 87 selected build source/test/helper pins remain unchanged. `release/checks.json` and `release/build-authoring-reconciled.txt.gz` retain this later phase; earlier builds remain historical. The [late-authoring packet](late-authoring/README.md) records the bounded integration review and **115 passing tests across eight suites**, zero failures, with **one inherited re-filing TODO**, in 44.67 seconds. All 22 before/after pins and prior reporting/native pins remain unchanged. These separate test results are not added to the earlier reporting or native counts.
+
 ## Remaining acceptance
 
 Current actor rows are retained through commit; source-project policy is re-evaluated on the supplied executor. This does not establish serialization against every independent sharing writer. The SQL-backed tests do not establish native hosted acceptance.
