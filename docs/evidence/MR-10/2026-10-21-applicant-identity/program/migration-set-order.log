@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:migration-set-order
+> node scripts/ci/check-migration-set-order.mjs
+
+[ci:migration-set-order] OK — 418 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.

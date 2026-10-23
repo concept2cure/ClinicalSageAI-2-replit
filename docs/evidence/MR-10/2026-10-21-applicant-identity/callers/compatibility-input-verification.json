@@ -1,0 +1,19 @@
+{
+  "kind": "current input hashes with historical compatibility qualification",
+  "headAtVerification": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "historicalResult": {
+    "files": 2,
+    "passed": 12,
+    "exitCode": 0,
+    "lintWarnings": 0,
+    "lintErrors": 0
+  },
+  "historicalExecutionInputs": "compatibility-input-verification-before-type-fix.json",
+  "currentQualifiedReplay": "input-verification.json",
+  "limits": "The 12-case compatibility execution used the earlier service hash retained in historicalExecutionInputs. Its two fixture files are unchanged. The only subsequent service edits are the two optional-value boundary corrections qualified by the 31-case renewal/readiness/transmit replay; the compatibility cohort was not rerun.",
+  "files": {
+    "server/services/submission-service/__tests__/governed-transition-cas.test.ts": "d2b7b09176edd28960e8e57fe4e12224bda8be8cb4802c003f50f35012de3c55",
+    "server/services/submission-service/__tests__/packageability-dry-run.test.ts": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d",
+    "server/services/submission-service/submission-service.ts": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "files": 10,
+  "errors": 0,
+  "warnings": 6,
+  "byFile": {
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/authoring/authoring-file-to-vault.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/authoring/authoring-vault-filing-receipt.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ectd/assemble-from-core.ts": {
+      "errors": 0,
+      "warnings": 2
+    },
+    "server/services/ectd/core-to-packager.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ectd/leaf-source-resolver.ts": {
+      "errors": 0,
+      "warnings": 4
+    },
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/vault/vault-version-checkin.ts": {
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+}

@@ -1,0 +1,935 @@
+{
+ "schemaVersion": 2,
+ "kind": "scoped_source_pin_verification",
+ "verifiedAtUtc": "2026-10-21T02:23:39.015477+00:00",
+ "anchor": {"requestedGitHead": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912", "observedHeadAtStart": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912", "observedHeadAtEnd": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912", "headStayedAtRequestedAnchor": true},
+ "method": {"trackedSources": "SHA-256 over raw git show <fixed-anchor>:<path> blob bytes; no working-tree substitution for tracked sources.", "untrackedEvidenceHarnesses": "SHA-256 over filesystem bytes only; explicitly not claimed present in the source commit.", "sourceFileLookup": "sourceFiles provides each unique path's actual git-blob and filesystem hashes; each manifest retains its expected hash and match status.", "executionScope": "Named terminal results are retained as scoped historical executions. Hash comparison does not rerun tests or imply a complete transitive execution-input closure."},
+ "summary": {
+  "latestManifestCount": 10,
+  "latestPinOccurrences": 127,
+  "latestTrackedGitBlobMatches": 122,
+  "latestUntrackedHarnessFilesystemMatches": 5,
+  "latestPinMismatchCount": 0,
+  "latestUniqueInputPaths": 109,
+  "implementationProductionPathsChecked": 32,
+  "uncoveredChangedProductionPaths": [],
+  "requiresAdditionalWorkForPinMismatch": false
+ },
+ "latestPinMismatches": [],
+ "supersession": [
+  {"older": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/source-inputs.json", "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/source-inputs-reader-lock.json", "changedPath": "server/services/ind-forms/program-form-facts.ts", "disposition": "Old reader-lock bytes differ. The older manifest is not current proof. New 18-source manifest matches the anchor and the named green-reader-lock execution reports 97/97 across four files."},
+  {"older": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/browser-before-final-catchup.json", "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/result/result.json", "changedPath": "client/src/concept2cure/v2/styles/app-v2.css", "disposition": "Canonical catch-up changed CSS; final browser result was replayed and all final source pins match. The older browser record stays intermediate evidence."},
+  {"older": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/final-five-suites.log.gz", "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/compiler-correction.log.gz", "changedPath": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts", "disposition": "The older70/5 run did not use the later helper extraction. The earlier13/1 writer replay covered that helper; a separate final13/1 compiler-correction replay now qualifies the canonical GovernedBinding type correction. Runs remain separately labelled."},
+  {"older": "Red/intermediate/initial compatibility logs throughout the evidence packet", "newer": "The explicitly listed final manifests and named green executions", "changedPath": null, "disposition": "Red and intermediate runs remain diagnostic evidence and are not silently counted as current passing source qualification. Caller compatibility 12/2 and latest snapshot/core scoped manifests are separately matched rather than relabelling earlier failures."}
+ ],
+ "manifests": [
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/core/owned-inputs.sha256",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "9f99775973aa8d4f4a64ce219a32111eee4bb1d02fddfa570d505b2c54be4e87",
+   "entryCount": 9,
+   "matchingEntryCount": 9,
+   "declaredMetadata": {},
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/core/final-green.txt",
+     "sha256": "d3bcb1c909683c38f2640e0ba803e19ca762d446fade90b16cb7f9f8b270f2d5",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  10 passed (10)",
+      "Tests  88 passed (88)",
+      "Start at  01:27:20",
+      "Duration  71.29s (transform 7.92s, setup 470ms, import 35.02s, tests 32.56s, environment 1ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/core/final-capture-green.txt",
+     "sha256": "c17a5275d4b3059b258503045461d7f20ad60a65c3207c6f8ac336d394d63dea",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  2 passed (2)",
+      "Tests  42 passed (42)",
+      "Start at  01:29:20",
+      "Duration  24.37s (transform 4.69s, setup 175ms, import 12.75s, tests 10.65s, environment 0ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/core/type-boundary-green.txt",
+     "sha256": "5d98405d80def7904b8f68599bc96325d457d844850a866dd033970336b67b8c",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  1 passed (1)",
+      "Tests  27 passed (27)",
+      "Start at  02:18:00",
+      "Duration  4.94s (transform 2.81s, setup 142ms, import 4.17s, tests 24ms, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/services/ectd/package-identity.ts", "expectedSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658", "status": "git_blob_match"},
+    {"path": "server/services/ectd/core-to-packager.ts", "expectedSha256": "6238c888f9f6e107a1b1d217edd4d44b6f3b98cd749736d747138e44f9944555", "status": "git_blob_match"},
+    {"path": "server/services/ectd/assemble-from-core.ts", "expectedSha256": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e", "status": "git_blob_match"},
+    {"path": "server/services/ectd/package-from-core.ts", "expectedSha256": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899", "status": "git_blob_match"},
+    {"path": "server/services/ectd/run-package-identity.ts", "expectedSha256": "bda060fbdf89f2e554f62dd2b284f36e8ca19cfdf9d592770bdd54dcdab39004", "status": "git_blob_match"},
+    {"path": "server/services/ectd/orchestrator-real-package.ts", "expectedSha256": "822ccb8242a1847adbfce67090c1513b9a0a1b330b0174da94cea335f0b64c91", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts", "expectedSha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts", "expectedSha256": "0269c57dc7f3857b574c2a5aaa626d177ae9331a49b46bb848a76dce21e36d34", "status": "git_blob_match"},
+    {"path": "tests/unit/orchestrator-dry-run-identity.test.ts", "expectedSha256": "239cd1fa55cd19760a74a595c6749cc981a40aad871a9a2e589c003612d72e26", "status": "git_blob_match"}
+   ],
+   "executionQualification": "Earlier88/10 and42/2 executions remain earlier runs. The sole changed test cast now crosses an intentional malformed-value boundary through unknown; current27/1 replay and type-boundary-lint.txt cover its corrected bytes. Other named core production bytes are unchanged."
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/registry/inputs.sha256",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "deb593472181152823346ba46976673191da9147c97d27cc1526ad8968c0b5c6",
+   "entryCount": 6,
+   "matchingEntryCount": 6,
+   "declaredMetadata": {},
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/registry/green.log",
+     "sha256": "c727d4b1c4e9e2b719639fcee04ea0a850880433b28a93136a7445edcbf41e5b",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  3 passed (3)",
+      "Tests  48 passed (48)",
+      "Start at  01:25:10",
+      "Duration  13.66s (transform 950ms, setup 256ms, import 3.18s, tests 9.01s, environment 1ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/routes/ind-master-data.routes.ts", "expectedSha256": "5e4ee7f28ae98c65d619cc4a75e77b2d809891e71ff52be729ac7a10d99cda7a", "status": "git_blob_match"},
+    {"path": "server/services/ind-master-data/ind-master-data-service.ts", "expectedSha256": "79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c", "status": "git_blob_match"},
+    {"path": "server/services/ind-master-data/sponsor-input.ts", "expectedSha256": "70e446b18279e072fcf6dc621b1185af8fb7ad5354365f2f35dfc5a349d5de2e", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-master-data.contract.integration.test.ts", "expectedSha256": "ba6f18b71a2b589ee74c7c9620c448af99e82daa4021ef6cd5fd38100f2d559d", "status": "git_blob_match"},
+    {"path": "server/services/ind-master-data/__tests__/ind-master-data.test.ts", "expectedSha256": "b6ff25ba3ac64edc1e6d7b10535d486fcd408550324ab23720093388e91efba5", "status": "git_blob_match"},
+    {"path": "server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts", "expectedSha256": "7116baf6cda210527252ab08a0e580f2547e41f1cc78974516ada1f4697b1133", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/source-inputs.json",
+   "classification": "superseded",
+   "manifestFilesystemSha256": "548c032b8464c2632af63a45099a8fb300778745843321014a6a99db687d4b1b",
+   "entryCount": 18,
+   "matchingEntryCount": 17,
+   "declaredMetadata": {
+    "baseline": "b9a48ce7136b8eecb076126d22e387d4d1b0ba84",
+    "cohort": {"log": "green-reviewed.log", "files": 4, "passed": 97}
+   },
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/green-reviewed.log",
+     "sha256": "9561badd6cc90994e930ea65322769afcffd345c99223e01517b53634b89a61b",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  4 passed (4)",
+      "Tests  97 passed (97)",
+      "Start at  01:33:54",
+      "Duration  36.69s (transform 4.29s, setup 205ms, import 11.03s, tests 24.37s, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "migrations/20261021_regulatory_programs_applicant_sponsor.sql", "expectedSha256": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5", "status": "git_blob_match"},
+    {"path": "scripts/db/migration-set.mjs", "expectedSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2", "status": "git_blob_match"},
+    {"path": "shared/schema/programs.ts", "expectedSha256": "61d0770ac5f5084973d9e1dd369ec0544e4e5e8736cfe28ed56d2a6e9f84b21f", "status": "git_blob_match"},
+    {"path": "server/db/pglite-harness.ts", "expectedSha256": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402", "status": "git_blob_match"},
+    {"path": "server/routes/ind-forms.routes.ts", "expectedSha256": "226807057c9583db100d79be8941d388d7d62bc285a4d3702c626d9c7e021c75", "status": "git_blob_match"},
+    {"path": "server/services/ind-forms/program-form-facts.ts", "expectedSha256": "d5dcca015249070c0e2071f58db5ff1811ca68182af9fbf3cb7863cc91dc09d5", "status": "git_blob_mismatch"},
+    {"path": "server/services/ind-forms/form-context-assembler.ts", "expectedSha256": "7a6b2987b9d3b5de923f130bc72d5c80e634650b07666d18c3c015bffa811acd", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-program-applicant.contract.integration.test.ts", "expectedSha256": "b101d6bac0597c29127e7e6415c400647d9ddbf21cdf12e346421f656f547f73", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-forms.contract.integration.test.ts", "expectedSha256": "472bf046493c392285d691c45dbd3ab8ea7a3c181886b433193ba2a6240c453d", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts", "expectedSha256": "7762434200810e8cbda7d199023c9211a82d5e4eb38b75af4052e315449c41aa", "status": "git_blob_match"},
+    {"path": "server/services/ind-forms/__tests__/form-context-assembler.test.ts", "expectedSha256": "fcda09899d0dfda86c9e55fb524ace7056f6e9a77e5dea3f5e44bbe631b0ff4e", "status": "git_blob_match"},
+    {"path": "server/services/ana-ri/__tests__/pglite-pool.fixture.ts", "expectedSha256": "88830c8ed37f8e14b9f63853ef1477bb1eb96f901b8a43d01b1076fe56ce3765", "status": "git_blob_match"},
+    {"path": "server/services/ind-master-data/ind-master-data-service.ts", "expectedSha256": "79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c", "status": "git_blob_match"},
+    {"path": "server/services/c2c/governed-program-write.ts", "expectedSha256": "c04703de427c378258f4ca0e6b1d93c0c5755f7ac6481701f50266e244b5f0b8", "status": "git_blob_match"},
+    {"path": "server/services/c2c/program-access.ts", "expectedSha256": "0a0c963098f387b51987e7143297a8f51bb95c38514cff99702910d3857c59e1", "status": "git_blob_match"},
+    {"path": "server/services/csr/project-scope.ts", "expectedSha256": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092", "status": "git_blob_match"},
+    {"path": "server/services/auditService.ts", "expectedSha256": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c", "status": "git_blob_match"},
+    {"path": "server/services/tenant/governed-tenant-context.ts", "expectedSha256": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/source-inputs-reader-lock.json",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "f8111ff26bd6382f6dbfdf651cd912140c0218ddcfc6f0c76b8a564337b54dd6",
+   "entryCount": 18,
+   "matchingEntryCount": 18,
+   "declaredMetadata": {
+    "cohort": {"log": "green-reader-lock.log", "files": 4, "passed": 97},
+    "sourceHeadBeforeCorrection": "5dd30f0348fca8191159f914bf3e0cce6dab0679"
+   },
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/program/green-reader-lock.log",
+     "sha256": "16339b8a39ca4cdfd4d3a1c5e9dcab00d36f0a106d559ee7abdefc7d3a0e96c8",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  4 passed (4)",
+      "Tests  97 passed (97)",
+      "Start at  02:03:36",
+      "Duration  40.76s (transform 4.75s, setup 231ms, import 12.10s, tests 27.26s, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "migrations/20261021_regulatory_programs_applicant_sponsor.sql", "expectedSha256": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5", "status": "git_blob_match"},
+    {"path": "scripts/db/migration-set.mjs", "expectedSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2", "status": "git_blob_match"},
+    {"path": "shared/schema/programs.ts", "expectedSha256": "61d0770ac5f5084973d9e1dd369ec0544e4e5e8736cfe28ed56d2a6e9f84b21f", "status": "git_blob_match"},
+    {"path": "server/db/pglite-harness.ts", "expectedSha256": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402", "status": "git_blob_match"},
+    {"path": "server/routes/ind-forms.routes.ts", "expectedSha256": "226807057c9583db100d79be8941d388d7d62bc285a4d3702c626d9c7e021c75", "status": "git_blob_match"},
+    {"path": "server/services/ind-forms/program-form-facts.ts", "expectedSha256": "e7892475b5de8e992681c7f20f4b070377e986044e82ec49103a7ee440780a4d", "status": "git_blob_match"},
+    {"path": "server/services/ind-forms/form-context-assembler.ts", "expectedSha256": "7a6b2987b9d3b5de923f130bc72d5c80e634650b07666d18c3c015bffa811acd", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-program-applicant.contract.integration.test.ts", "expectedSha256": "b101d6bac0597c29127e7e6415c400647d9ddbf21cdf12e346421f656f547f73", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-forms.contract.integration.test.ts", "expectedSha256": "472bf046493c392285d691c45dbd3ab8ea7a3c181886b433193ba2a6240c453d", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts", "expectedSha256": "7762434200810e8cbda7d199023c9211a82d5e4eb38b75af4052e315449c41aa", "status": "git_blob_match"},
+    {"path": "server/services/ind-forms/__tests__/form-context-assembler.test.ts", "expectedSha256": "fcda09899d0dfda86c9e55fb524ace7056f6e9a77e5dea3f5e44bbe631b0ff4e", "status": "git_blob_match"},
+    {"path": "server/services/ana-ri/__tests__/pglite-pool.fixture.ts", "expectedSha256": "88830c8ed37f8e14b9f63853ef1477bb1eb96f901b8a43d01b1076fe56ce3765", "status": "git_blob_match"},
+    {"path": "server/services/ind-master-data/ind-master-data-service.ts", "expectedSha256": "79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c", "status": "git_blob_match"},
+    {"path": "server/services/c2c/governed-program-write.ts", "expectedSha256": "c04703de427c378258f4ca0e6b1d93c0c5755f7ac6481701f50266e244b5f0b8", "status": "git_blob_match"},
+    {"path": "server/services/c2c/program-access.ts", "expectedSha256": "0a0c963098f387b51987e7143297a8f51bb95c38514cff99702910d3857c59e1", "status": "git_blob_match"},
+    {"path": "server/services/csr/project-scope.ts", "expectedSha256": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092", "status": "git_blob_match"},
+    {"path": "server/services/auditService.ts", "expectedSha256": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c", "status": "git_blob_match"},
+    {"path": "server/services/tenant/governed-tenant-context.ts", "expectedSha256": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/input-verification.json",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "c636319b79a49b636d91434dae0dc6028a7333924ed9b28af5c213bfc18f523e",
+   "entryCount": 31,
+   "matchingEntryCount": 31,
+   "declaredMetadata": {
+    "result": {"files": 3, "passed": 31, "exitCode": 0, "lintErrors": 0, "lintWarnings": 7},
+    "headAtVerification": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+    "kind": "post-correction current input verification",
+    "qualificationScope": {
+     "executionOutput": "green-type-boundaries.txt",
+     "tests": [
+      "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts",
+      "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts"
+     ],
+     "correction": "The normal full compiler refused two caller optional-value boundaries. The renewal helper accepts the actual optional dispatch status without changing strict fail-closed comparison; the transmit claim normalizes absent programId to null.",
+     "previousExecutionInputs": "input-verification-before-type-fix.json",
+     "previousExecutionResult": {"files": 19, "passed": 260, "exitCode": 0},
+     "limits": "The 260-case cohort consumed the earlier input hashes retained in the previous execution record. Only the three listed files were replayed after the two boundary corrections. Current files hashes below pin the integrated source tree; parent evidence owns full compiler and publication."
+    }
+   },
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/green-type-boundaries.txt",
+     "sha256": "cf2de1979912d8b4eb032205e1a492f265061e03e7c201714468d56eb3afe123",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  3 passed (3)",
+      "Tests  31 passed (31)",
+      "Start at  02:18:51",
+      "Duration  25.48s (transform 6.24s, setup 166ms, import 13.54s, tests 10.96s, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/routes/ectd-compile.ts", "expectedSha256": "11f01bc9c4dd72c794769230d9de71e4d59989578cf9f0e1dd0e024dcedfb6c6", "status": "git_blob_match"},
+    {"path": "server/routes/submissions.ts", "expectedSha256": "b938dcf109a4981c3497c65b426b89ee2964bfd6cf5643103c0525f76ebec2e4", "status": "git_blob_match"},
+    {"path": "server/services/ana/AnaToolExecutor.ts", "expectedSha256": "fb499b2ede648c0b400d61d6aa3bd3ac3d0d4eadbd5163b9cdf9ddea91cd4af1", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/submission-service.ts", "expectedSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c", "status": "git_blob_match"},
+    {"path": "server/services/ectd/package-identity.ts", "expectedSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658", "status": "git_blob_match"},
+    {"path": "server/services/ectd/assemble-from-core.ts", "expectedSha256": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e", "status": "git_blob_match"},
+    {"path": "server/services/ectd/package-from-core.ts", "expectedSha256": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899", "status": "git_blob_match"},
+    {"path": "server/services/part11/signature-persistence.ts", "expectedSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9", "status": "git_blob_match"},
+    {"path": "server/services/ectd/sequence-release-signature.ts", "expectedSha256": "901489ab5ed1daeafb07e2e42796708ad46c6823e974885d56b62b8f35da99a2", "status": "git_blob_match"},
+    {"path": "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts", "expectedSha256": "b43b71d22c873b191f9ccaa491aac5907183bc4224550e22d05d00e4c358079e", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts", "expectedSha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts", "expectedSha256": "824a8a48a6e428f762936e63b2a4a2104d44beb8a5cd386cb5a26b4f331c8537", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/transmit-refusals.test.ts", "expectedSha256": "007268fd2eaaaf0c18956e828d8d3889edea56521446415e88dc946bf3b54e6a", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts", "expectedSha256": "23839e6a82cc3ef39a2f7f7b2c41ad117094519c95d746e41a91cdf9beca780a", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts", "expectedSha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts", "expectedSha256": "f95150e703d17bc043ac98cb3768ae43155a05531ee0c46277eaf9d723cb6f32", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts", "expectedSha256": "6d04bb6d50e9c3c44c85b755f59fe3c8fb29aef0669c66f080e86d321526ed87", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/gateway-selection.test.ts", "expectedSha256": "71ea80b36c61e48a267b708e51794f443fce9993471dbebc165ec8b631a44346", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts", "expectedSha256": "9c8e510494cac88549ec3a8d2bb63b8fb7945d275f8f34ac41b83e5d550dbe2a", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/_freeze-gate-fixture.ts", "expectedSha256": "9c1545e56009cafc3535e7966526e10c12df7f8bdbd8bfa632fbb63829d5520f", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-spine.test.ts", "expectedSha256": "1612ab3fc25701938a9ab22a57401772b9d051dcfe03c83fa41d8b2197a107f3", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-sequence.test.ts", "expectedSha256": "b8b3cd0cd86fd34ad7eeed760992c12331ce4fe5221eb5094b568ab547bb4882", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-dtd-evidence.test.ts", "expectedSha256": "205305feab39b5ea2527a800e78b51c688ec3444554f09783ae171bb5d92821f", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-ident.test.ts", "expectedSha256": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-lifecycle.test.ts", "expectedSha256": "b5d31129d5307b2f5c4f07515b593a45e1af4e0371ee5133eab75f01efef4170", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-vault-uuid.test.ts", "expectedSha256": "7ee46478144a2d7e46c7a3ed5894bab191ddd0fb04a39ad98428e269408d1a5b", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-evalidator-import.test.ts", "expectedSha256": "ebe83783bda9493ed1700d0231e29d32426e7f9dea39958045335f8c9b0047a2", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-5xx-containment.test.ts", "expectedSha256": "74abd084406828d3e46359fdc1edb4705f103fde56396449c038034b78203ecb", "status": "git_blob_match"},
+    {"path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts", "expectedSha256": "068edab2ab5ad1a623915768f08587bb717852f85a1f93c9749b778dab0d1f4d", "status": "git_blob_match"},
+    {"path": "tests/routes/ectd-compile-spine.harness.ts", "expectedSha256": "d201d90d1b0d4b4bae67d0ae87f7e356f788a06e7406282a79fc38b565b1dc4b", "status": "git_blob_match"},
+    {"path": "vitest.config.ts", "expectedSha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d", "status": "git_blob_match"}
+   ],
+   "executionQualification": "Current31/3 replay follows two compiler-boundary corrections. Earlier260/19 execution is retained separately in input-verification-before-type-fix.json and is not relabelled current."
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/compatibility-input-verification.json",
+   "classification": "latest_current_hashes_historical_compatibility",
+   "manifestFilesystemSha256": "04ca268f0e3a6c4917642957dbfc434e1abd183c9adfcf82e9118810227ed38e",
+   "entryCount": 3,
+   "matchingEntryCount": 3,
+   "declaredMetadata": {
+    "headAtVerification": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+    "kind": "current input hashes with historical compatibility qualification",
+    "historicalResult": {"files": 2, "passed": 12, "exitCode": 0, "lintWarnings": 0, "lintErrors": 0},
+    "historicalExecutionInputs": "compatibility-input-verification-before-type-fix.json",
+    "currentQualifiedReplay": "input-verification.json",
+    "limits": "The 12-case compatibility execution used the earlier service hash retained in historicalExecutionInputs. Its two fixture files are unchanged. The only subsequent service edits are the two optional-value boundary corrections qualified by the 31-case renewal/readiness/transmit replay; the compatibility cohort was not rerun."
+   },
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/green-broad-compatibility.txt",
+     "sha256": "4daba198c9f97cdef30f5fccea8bc897d62281dc41f39631c15f3c7b6eff4a23",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  2 passed (2)",
+      "Tests  12 passed (12)",
+      "Start at  01:54:37",
+      "Duration  11.67s (transform 6.21s, setup 257ms, import 7.90s, tests 2.30s, environment 0ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/green-type-boundaries.txt",
+     "sha256": "cf2de1979912d8b4eb032205e1a492f265061e03e7c201714468d56eb3afe123",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  3 passed (3)",
+      "Tests  31 passed (31)",
+      "Start at  02:18:51",
+      "Duration  25.48s (transform 6.24s, setup 166ms, import 13.54s, tests 10.96s, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/services/submission-service/__tests__/governed-transition-cas.test.ts", "expectedSha256": "d2b7b09176edd28960e8e57fe4e12224bda8be8cb4802c003f50f35012de3c55", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts", "expectedSha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d", "status": "git_blob_match"},
+    {"path": "server/services/submission-service/submission-service.ts", "expectedSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c", "status": "git_blob_match"}
+   ],
+   "executionQualification": "Current hashes pin the two unchanged fixture files plus corrected service. The12/2 compatibility execution used the prior service bytes and was not rerun; current31/3 replay qualifies the optional-value corrections, as the manifest explicitly states."
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/snapshots/verification-inputs.sha256",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "1f456f599ad0232d9e985a63670b5586839816ce2ac7015f7f8b03798dea0b69",
+   "entryCount": 14,
+   "matchingEntryCount": 14,
+   "declaredMetadata": {},
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/snapshots/green-final.log",
+     "sha256": "65eb02ef8de6d218f574d48ee5bb7b2f58eb9294d97c40baa3ddf894e78755bd",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  12 passed (12)",
+      "Tests  239 passed (239)",
+      "Start at  01:31:33",
+      "Duration  60.26s (transform 10.53s, setup 587ms, import 47.05s, tests 7.06s, environment 3ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/snapshots/green-sign-boundary.log",
+     "sha256": "e39c2eaf3f323d8016d56201a797fb307241b7e4b01bc4967709d0922a1b7234",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  5 passed (5)",
+      "Tests  70 passed (70)",
+      "Start at  01:30:55",
+      "Duration  17.35s (transform 4.12s, setup 229ms, import 12.97s, tests 2.79s, environment 1ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/snapshots/green-sequence-submission.log",
+     "sha256": "be32bb68a965b4e746b2bd1a414d23089d8a049adebe1fb5020e75e447b43bfc",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  2 passed (2)",
+      "Tests  32 passed (32)",
+      "Start at  01:35:31",
+      "Duration  9.39s (transform 5.22s, setup 203ms, import 8.21s, tests 57ms, environment 0ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/services/submission-package-orchestrator.ts", "expectedSha256": "a4a9ed437095cf5d7e8d58365223e6df4b7c0b9136ea9fa0fce7bde9e9f75b57", "status": "git_blob_match"},
+    {"path": "server/services/ectd/signed-package-export.ts", "expectedSha256": "13b631de791956df96982675ede496ecc81abf106ac1262a590a36e491fca3a9", "status": "git_blob_match"},
+    {"path": "server/services/ectd/signed-manifest-covers-sequence.ts", "expectedSha256": "13cd06ead038a96de2ad1a590b32e9e5bd000f27a4385a94e302bbc181ff272f", "status": "git_blob_match"},
+    {"path": "server/services/ectd/release-signature-status.ts", "expectedSha256": "a92ddf0fc40fc0739706593d5661daab83394ec9da5118955194ef8eb3547d30", "status": "git_blob_match"},
+    {"path": "server/services/ectd/package-identity.ts", "expectedSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658", "status": "git_blob_match"},
+    {"path": "server/services/ectd/run-package-identity.ts", "expectedSha256": "bda060fbdf89f2e554f62dd2b284f36e8ca19cfdf9d592770bdd54dcdab39004", "status": "git_blob_match"},
+    {"path": "server/services/ectd/orchestrator-real-package.ts", "expectedSha256": "822ccb8242a1847adbfce67090c1513b9a0a1b330b0174da94cea335f0b64c91", "status": "git_blob_match"},
+    {"path": "server/services/__tests__/sign-payload-snapshot.test.ts", "expectedSha256": "44d6db55c0b65ec6a1b12254728d3f769d4195960d2bfbe10119a250271fabe7", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/signed-package-export.test.ts", "expectedSha256": "818b1e87f814d99d98467b67b007d53adb66b6febfa33d673a041632ac8769fa", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts", "expectedSha256": "951d48230d18a664c8ffe1583e455a1a877ac0bb8f928c1d60a7773c1da3403b", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts", "expectedSha256": "b9517feea235aa2e9ff0e7cf240cd969fe3190cd600a5c794f8e43d311e44dc6", "status": "git_blob_match"},
+    {"path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts", "expectedSha256": "bc8f8e94b36284cd4a70ae894030192e57f8255eebaf5a9e5ac94c214268bfc5", "status": "git_blob_match"},
+    {"path": "tests/integration/orchestrator-e2e-ind.test.ts", "expectedSha256": "e7b5f588f307cd4eb55f7b63969bf712aa7ab91786ace27a3b06fe51d41dbb0c", "status": "git_blob_match"},
+    {"path": "tests/integration/orchestrator-e2e-ind-fixtures.ts", "expectedSha256": "6a7dbf5acdd1ce2edee763c06f40a01c151ca35982b90a6f211a43b65a44d825", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/ui/inputs.sha256",
+   "classification": "latest_scoped_worker",
+   "manifestFilesystemSha256": "e995910fb629d49a053f5b3df6a71b5abb3d9db6edb666553fe32756b32789a8",
+   "entryCount": 10,
+   "matchingEntryCount": 10,
+   "declaredMetadata": {},
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/ui/green.txt",
+     "sha256": "6581732d1fc1c75e3092ad93aba6e3083686570a4a612a13f47dda1b042aeee1",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  12 passed (12)",
+      "Tests  132 passed (132)",
+      "Start at  01:53:34",
+      "Duration  31.57s (transform 2.18s, setup 1.37s, import 6.44s, tests 13.83s, environment 7.75s)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/ui/green-authorized-representative.txt",
+     "sha256": "63ac24029f2aa1eb304746151a18cf93d8948e58438bd6358eb9dbadb3b13dfe",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  1 passed (1)",
+      "Tests  35 passed (35)",
+      "Start at  01:52:29",
+      "Duration  6.43s (transform 1.16s, setup 186ms, import 1.39s, tests 4.06s, environment 626ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx", "expectedSha256": "ad62e9b50700abdadeea98ab457be8cd459843d9e9a7269e8b1610c275dd33c5", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx", "expectedSha256": "ad5a06ce2d8113d0a613b86b930dee380ecdab6116e0b760378c07ec316a520d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/indFormsPanelRecords.ts", "expectedSha256": "2b3ea37f682579f0ba2d867747c1b3c95a571a27a78d7f820b2b737560b91d5d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx", "expectedSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx", "expectedSha256": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx", "expectedSha256": "8e5e3767c91c871a8e8caf69f890a7ffb6a0ea1bf9d3c2ebf1d32ea31c6f0146", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx", "expectedSha256": "20db44febb6b2947c110ac368090462e1c567566257c447edbc3d97ac2fcec79", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx", "expectedSha256": "fbac49ed5e3b0e64a5dfbff35f92c9c24779fae4f35c64adf0a9cfbeab4f7d7e", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx", "expectedSha256": "4f7611d7bfd6dbf62da456c3bd2e87cc64d8dc151682c52d4703e3eacd43512e", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx", "expectedSha256": "47844d986b229e44b9c15c55e86080e7590e3f5e416b14db943674b9afc736f4", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/integration-fixtures/owned-inputs.sha256",
+   "classification": "latest_scoped_fixture",
+   "manifestFilesystemSha256": "25784fbd2695510d1c306d00d1f2b715a652426de27f8a9865b9a0f2a9dc75b6",
+   "entryCount": 3,
+   "matchingEntryCount": 3,
+   "declaredMetadata": {},
+   "executionEvidence": [
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/integration-fixtures/shadow-waiver-green.txt",
+     "sha256": "1b8ac9b4a564d79fbd37b6be9e6b07afdfaabf734042ff28bdf744bed5e183b3",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  2 passed (2)",
+      "Tests  43 passed (43)",
+      "Start at  01:42:00",
+      "Duration  45.21s (transform 10.58s, setup 349ms, import 22.95s, tests 20.66s, environment 1ms)"
+     ]
+    },
+    {
+     "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/integration-fixtures/applicant-completion-green.txt",
+     "sha256": "d3d24591c53aef3fcf9f28c3ee8fc8642acee6c24e2800ce77554c8802d07681",
+     "exists": true,
+     "terminalSummary": [
+      "Test Files  2 passed (2)",
+      "Tests  12 passed (12)",
+      "Start at  01:48:26",
+      "Duration  62.43s (transform 11.26s, setup 290ms, import 24.23s, tests 36.95s, environment 2ms)"
+     ]
+    }
+   ],
+   "entries": [
+    {"path": "server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts", "expectedSha256": "7a0a390a3fbdf402a1ba920714a5dfbf5483569f221ab7fecfc5e8858115cb3c", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts", "expectedSha256": "956513d4912a01a29b143c61e966d8f636f339ac3d8f42838076b9b087f85bc0", "status": "git_blob_match"},
+    {"path": "server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts", "expectedSha256": "fda4941a95ef22b637a1d0a2f77396b94cc0508098e6f0448ee41e718e7d10bd", "status": "git_blob_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/result.json",
+   "classification": "latest_native",
+   "manifestFilesystemSha256": "bb58d07dc37ca4947320041d83fba01a35398c448b5b2e60a1a77b4a2239b153",
+   "entryCount": 11,
+   "matchingEntryCount": 11,
+   "declaredMetadata": {"passed": true, "humanWitnessed": false, "syntheticRecords": true, "serverVersion": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"},
+   "executionEvidence": [
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/execution.log.gz", "sha256": "95588aa1b116a7a5fbec2b5f78f853de1755d3247b7d9b2f31d524a2cad4a301", "exists": true}
+   ],
+   "entries": [
+    {"path": "migrations/20260609_ind_master_data.sql", "expectedSha256": "0909ac46db6d24b3c244f3b540f4f0c187072b922ecf4e81b5cdc03c676ffc18", "status": "git_blob_match"},
+    {"path": "migrations/20261021_regulatory_programs_applicant_sponsor.sql", "expectedSha256": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5", "status": "git_blob_match"},
+    {"path": "scripts/db/migration-set.mjs", "expectedSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2", "status": "git_blob_match"},
+    {"path": "server/db/pglite-harness.ts", "expectedSha256": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402", "status": "git_blob_match"},
+    {"path": "server/services/ectd/package-identity.ts", "expectedSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658", "status": "git_blob_match"},
+    {"path": "server/services/part11/signature-persistence.ts", "expectedSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9", "status": "git_blob_match"},
+    {"path": "server/services/part11/ectd-sequence-binding.ts", "expectedSha256": "8c4083c78ff0cc4f0a9fa06e64abe2553d5b92e3d01bce8612934f51aad70af4", "status": "git_blob_match"},
+    {"path": "server/services/ectd/core-to-packager.ts", "expectedSha256": "6238c888f9f6e107a1b1d217edd4d44b6f3b98cd749736d747138e44f9944555", "status": "git_blob_match"},
+    {"path": "server/services/submission-gateways/regional-packager.ts", "expectedSha256": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2", "status": "git_blob_match"},
+    {"path": "server/services/submission-gateways/ectd-packager/types.ts", "expectedSha256": "ed765786ed6993bbc74da23e8de03bb123f10ce711d25b522e61dc3dc090b13f", "status": "git_blob_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/check.ts", "expectedSha256": "ac4c8c46b3cde693deabcad5c8c99e26db06030d78be9ee9e573d48997bb5095", "status": "untracked_evidence_harness_filesystem_match"}
+   ],
+   "executionQualification": "Fresh root-owned database replay after the compiler corrections;8 native checks passed and all final declared source pins match this anchor. Prior native result is archived under verification/native-before-compiler-corrections/."
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/result/result.json",
+   "classification": "latest_browser",
+   "manifestFilesystemSha256": "f6e8729613b4a920668dfb05f8ad17725f56f89763857042334bfe789847ac76",
+   "entryCount": 22,
+   "matchingEntryCount": 22,
+   "declaredMetadata": {"passed": true, "humanWitnessed": false, "syntheticRecords": true},
+   "executionEvidence": [
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/execution.txt", "sha256": "c758eea19f3ad6996a2da831dff9f8b7da56bb11198d4de01a179e520eb4b417", "exists": true}
+   ],
+   "entries": [
+    {"path": "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx", "expectedSha256": "ad5a06ce2d8113d0a613b86b930dee380ecdab6116e0b760378c07ec316a520d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx", "expectedSha256": "ad62e9b50700abdadeea98ab457be8cd459843d9e9a7269e8b1610c275dd33c5", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/indFormsPanelRecords.ts", "expectedSha256": "2b3ea37f682579f0ba2d867747c1b3c95a571a27a78d7f820b2b737560b91d5d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx", "expectedSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts", "expectedSha256": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/shellProject.ts", "expectedSha256": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26", "status": "git_blob_match"},
+    {"path": "client/src/services/portal/authService.tsx", "expectedSha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0", "status": "git_blob_match"},
+    {"path": "client/src/lib/queryClient.ts", "expectedSha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70", "status": "git_blob_match"},
+    {"path": "shared/constants/governed-reason.ts", "expectedSha256": "49ab03c8f3e3de692a1e2c56e81f00ff88cc1f20cf6c9eedb9789264acef82c3", "status": "git_blob_match"},
+    {"path": "package.json", "expectedSha256": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7", "status": "git_blob_match"},
+    {"path": "package-lock.json", "expectedSha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3", "status": "git_blob_match"},
+    {"path": "design-system/colors_and_type.css", "expectedSha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/app-v2.css", "expectedSha256": "debde4aa374c854438ac31b30738fa32c638afe761446aedb98bd97f83be648e", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/journey-v2.css", "expectedSha256": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/coverage-v2.css", "expectedSha256": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css", "expectedSha256": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/submission-v2.css", "expectedSha256": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/surface-text-ramp.css", "expectedSha256": "6224ed53861451c8f4354743dc2ce2dc6968fc402d65cfd3413160852b258064", "status": "git_blob_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/probe.tsx", "expectedSha256": "452891160aadc438125010d3c4dc78346fdecb11b399525de60e26ecd58d2b36", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/check.mjs", "expectedSha256": "bc2bd7587d64adb43d1eac3ce65b8b52f906022cad6e092bd91a13ebb36c8c1a", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/index.html", "expectedSha256": "fa8964ca47335b1f66496c950e4c91e1d01cfa4b4b7d82da32fdb3bd73d60d82", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/server.mjs", "expectedSha256": "7686d2c9bcee6b1c4bddc69a358ae7281ca0e23a5da866c84b88c0e7a7beb363", "status": "untracked_evidence_harness_filesystem_match"}
+   ],
+   "executionQualification": "Browser sources and harness pins are unchanged by the three compiler corrections; existing final browser execution retained. No additional browser replay is claimed."
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/browser-before-final-catchup.json",
+   "classification": "superseded",
+   "manifestFilesystemSha256": "9773d8065e7f9bc1bf961d7720bd535585a209fabd4e9a1c984fa338c42bfa9c",
+   "entryCount": 22,
+   "matchingEntryCount": 21,
+   "declaredMetadata": {"passed": true, "humanWitnessed": false, "syntheticRecords": true},
+   "executionEvidence": [
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/browser-before-final-catchup.txt", "sha256": "c758eea19f3ad6996a2da831dff9f8b7da56bb11198d4de01a179e520eb4b417", "exists": true}
+   ],
+   "entries": [
+    {"path": "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx", "expectedSha256": "ad5a06ce2d8113d0a613b86b930dee380ecdab6116e0b760378c07ec316a520d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx", "expectedSha256": "ad62e9b50700abdadeea98ab457be8cd459843d9e9a7269e8b1610c275dd33c5", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/indFormsPanelRecords.ts", "expectedSha256": "2b3ea37f682579f0ba2d867747c1b3c95a571a27a78d7f820b2b737560b91d5d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx", "expectedSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts", "expectedSha256": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/shellProject.ts", "expectedSha256": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26", "status": "git_blob_match"},
+    {"path": "client/src/services/portal/authService.tsx", "expectedSha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0", "status": "git_blob_match"},
+    {"path": "client/src/lib/queryClient.ts", "expectedSha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70", "status": "git_blob_match"},
+    {"path": "shared/constants/governed-reason.ts", "expectedSha256": "49ab03c8f3e3de692a1e2c56e81f00ff88cc1f20cf6c9eedb9789264acef82c3", "status": "git_blob_match"},
+    {"path": "package.json", "expectedSha256": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7", "status": "git_blob_match"},
+    {"path": "package-lock.json", "expectedSha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3", "status": "git_blob_match"},
+    {"path": "design-system/colors_and_type.css", "expectedSha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/app-v2.css", "expectedSha256": "3edd14c1fe3cd592aa6120b97d7f45ace5ac27ed6e3a927ce567e9d4048885e5", "status": "git_blob_mismatch"},
+    {"path": "client/src/concept2cure/v2/styles/journey-v2.css", "expectedSha256": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/coverage-v2.css", "expectedSha256": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css", "expectedSha256": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/submission-v2.css", "expectedSha256": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c", "status": "git_blob_match"},
+    {"path": "client/src/concept2cure/v2/styles/surface-text-ramp.css", "expectedSha256": "6224ed53861451c8f4354743dc2ce2dc6968fc402d65cfd3413160852b258064", "status": "git_blob_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/probe.tsx", "expectedSha256": "452891160aadc438125010d3c4dc78346fdecb11b399525de60e26ecd58d2b36", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/check.mjs", "expectedSha256": "bc2bd7587d64adb43d1eac3ce65b8b52f906022cad6e092bd91a13ebb36c8c1a", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/index.html", "expectedSha256": "fa8964ca47335b1f66496c950e4c91e1d01cfa4b4b7d82da32fdb3bd73d60d82", "status": "untracked_evidence_harness_filesystem_match"},
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/server.mjs", "expectedSha256": "7686d2c9bcee6b1c4bddc69a358ae7281ca0e23a5da866c84b88c0e7a7beb363", "status": "untracked_evidence_harness_filesystem_match"}
+   ]
+  },
+  {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/preexisting-posture-inputs.json",
+   "classification": "historical_failure_context",
+   "manifestFilesystemSha256": "e82edfcb35057a6002ea7fa7ad0906c5da44e686ac7080aa575f75c06e0f2197",
+   "entryCount": 4,
+   "matchingEntryCount": 4,
+   "declaredMetadata": {"baseline": "b9a48ce7136b8eecb076126d22e387d4d1b0ba84", "observedHead": "68ca75efa248abb2e4c1fc2ce37ad8e8aff232bc", "classification": "Pre-existing open Stage 11 posture re-decision evidence; two assertions remain failed. No posture record, enforcement default or baseline was changed by this identity slice."},
+   "executionEvidence": [
+    {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/preexisting-posture-history.log.gz", "sha256": "7ad43b56895e41e1a5081662d2ff3fba34215a8da22aaa10054e7063df663301", "exists": true}
+   ],
+   "entries": [
+    {"path": "server/services/ectd/__tests__/submission-gate-posture.test.ts", "expectedSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017", "status": "git_blob_match"},
+    {"path": "assets/estar-templates/PreSTAR-q-sub.pdf", "expectedSha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3", "status": "git_blob_match"},
+    {"path": "assets/estar-templates/checksums.txt", "expectedSha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68", "status": "git_blob_match"},
+    {"path": "server/services/pathway-engines/estar/estar-template-registry.ts", "expectedSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942", "status": "git_blob_match"}
+   ]
+  }
+ ],
+ "rootOwnedFixtureSupplement": [
+  {
+   "path": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+   "currentGitBlobSha256": "31746402c7f54364a9a38e3cc30769df75076a21ed933f3f33ee86f970129817",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "d2e9eb07a3bf7c121bc9f3458a7542ce600a5848 2026-10-21T01:55:43Z Align governed packageability fixtures with recorded FDA identity",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/compiler-correction.log.gz",
+    "sha256": "2d8e9b5315c04bc08a682b35f5384aa90016b88205015cccb359bb537dc33926",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  1 passed (1)",
+     "Tests  13 passed (13)",
+     "Start at  02:18:03",
+     "Duration  36.41s (transform 1.60s, setup 124ms, import 2.91s, tests 32.93s, environment 0ms)"
+    ]
+   },
+   "qualification": "The root replayed the actual13-case writer after the GovernedBinding type-only correction. compiler-correction.json records scope/lint. The older70/5 and earlier13/1 runs stay separate historical executions."
+  },
+  {
+   "path": "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts",
+   "currentGitBlobSha256": "da4c1004be6612727ce874979591a6d9272d81110651889af42ec6e9929f265e",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "ccd509c06d7db397319600d495c432a69a0c28f5 2026-10-21T01:43:00Z Complete recorded applicant identity through forms and sequence approval",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/final-five-suites.log.gz",
+    "sha256": "74018b0a8308ca24c32b4775d118a9b755076616677442229b6dd0cb1cdf668c",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  5 passed (5)",
+     "Tests  70 passed (70)",
+     "Start at  01:37:57",
+     "Duration  83.66s (transform 2.19s, setup 236ms, import 6.49s, tests 74.79s, environment 1ms)"
+    ]
+   },
+   "qualification": "Root-owned fixture; current bytes recorded here, named executed suite retained separately."
+  },
+  {
+   "path": "server/services/ectd/__tests__/sequence-release-signature.test.ts",
+   "currentGitBlobSha256": "14c572112f1fd53387909a572733cafdf40d6b3b6316265cfb2b9c0b09d79aa0",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "ccd509c06d7db397319600d495c432a69a0c28f5 2026-10-21T01:43:00Z Complete recorded applicant identity through forms and sequence approval",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/final-five-suites.log.gz",
+    "sha256": "74018b0a8308ca24c32b4775d118a9b755076616677442229b6dd0cb1cdf668c",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  5 passed (5)",
+     "Tests  70 passed (70)",
+     "Start at  01:37:57",
+     "Duration  83.66s (transform 2.19s, setup 236ms, import 6.49s, tests 74.79s, environment 1ms)"
+    ]
+   },
+   "qualification": "Root-owned fixture; current bytes recorded here, named executed suite retained separately."
+  },
+  {
+   "path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts",
+   "currentGitBlobSha256": "4fe99267ea7fbc67a0f31feb1fac606f023a2536ac7acdbf6d40e00cee13d57c",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "ccd509c06d7db397319600d495c432a69a0c28f5 2026-10-21T01:43:00Z Complete recorded applicant identity through forms and sequence approval",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/final-five-suites.log.gz",
+    "sha256": "74018b0a8308ca24c32b4775d118a9b755076616677442229b6dd0cb1cdf668c",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  5 passed (5)",
+     "Tests  70 passed (70)",
+     "Start at  01:37:57",
+     "Duration  83.66s (transform 2.19s, setup 236ms, import 6.49s, tests 74.79s, environment 1ms)"
+    ]
+   },
+   "qualification": "The setup helper extraction was in governed-sign-esignature, not this file. Do not attribute it to this older cohort."
+  },
+  {
+   "path": "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts",
+   "currentGitBlobSha256": "c4cfe2c10de99165fac5eb66cb8aad516c1bbe74b2bbfeddcf66becabe52cafa",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "ccd509c06d7db397319600d495c432a69a0c28f5 2026-10-21T01:43:00Z Complete recorded applicant identity through forms and sequence approval",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/final-five-suites.log.gz",
+    "sha256": "74018b0a8308ca24c32b4775d118a9b755076616677442229b6dd0cb1cdf668c",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  5 passed (5)",
+     "Tests  70 passed (70)",
+     "Start at  01:37:57",
+     "Duration  83.66s (transform 2.19s, setup 236ms, import 6.49s, tests 74.79s, environment 1ms)"
+    ]
+   },
+   "qualification": "Root-owned fixture; current bytes recorded here, named executed suite retained separately."
+  },
+  {
+   "path": "server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts",
+   "currentGitBlobSha256": "34f0302ab6c838023aefb6506f4ad235d272633b9e523ad29c4d5d914bf40b0c",
+   "pinRecordedAtVerification": true,
+   "contemporaneousWorkerExecutionPin": false,
+   "latestChange": "ccd509c06d7db397319600d495c432a69a0c28f5 2026-10-21T01:43:00Z Complete recorded applicant identity through forms and sequence approval",
+   "executionEvidence": {
+    "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/freeze-row-lock.log.gz",
+    "sha256": "6d86223b7143bba56872ac60ecda19266dd8fb80982a07f11024bda18c677c1d",
+    "exists": true,
+    "terminalSummary": [
+     "Test Files  1 passed (1)",
+     "Tests  2 passed (2)",
+     "Start at  01:38:14",
+     "Duration  22.06s (transform 11.07s, setup 296ms, import 18.50s, tests 2.05s, environment 0ms)"
+    ]
+   },
+   "qualification": "Native PostgreSQL row-lock regression, 2 cases; current fixture bytes recorded here."
+  }
+ ],
+ "globalSetupContext": {"path": "tests/setup.ts", "currentGitBlobSha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4", "baselineGitBlobSha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4", "byteIdenticalToBaseline": true, "classification": "context_only_not_the_late_root_fixture_change"},
+ "productionChangeCoverage": {
+  "commitsInspected": [
+   "ccd509c06d7db397319600d495c432a69a0c28f5",
+   "f165afe1fd17e4c8fd59db5823d1fe520799f851",
+   "d2e9eb07a3bf7c121bc9f3458a7542ce600a5848",
+   "785dc0500f75b21291baad187c2f5856af8187e2",
+   "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912"
+  ],
+  "paths": [
+   "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx",
+   "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx",
+   "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+   "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+   "client/src/concept2cure/v2/surfaces/indFormsPanelRecords.ts",
+   "migrations/20261021_regulatory_programs_applicant_sponsor.sql",
+   "scripts/db/migration-set.mjs",
+   "server/db/pglite-harness.ts",
+   "server/routes/ectd-compile.ts",
+   "server/routes/ind-forms.routes.ts",
+   "server/routes/ind-master-data.routes.ts",
+   "server/routes/submissions.ts",
+   "server/services/ana/AnaToolExecutor.ts",
+   "server/services/ectd/assemble-from-core.ts",
+   "server/services/ectd/core-to-packager.ts",
+   "server/services/ectd/orchestrator-real-package.ts",
+   "server/services/ectd/package-from-core.ts",
+   "server/services/ectd/package-identity.ts",
+   "server/services/ectd/release-signature-status.ts",
+   "server/services/ectd/run-package-identity.ts",
+   "server/services/ectd/sequence-release-signature.ts",
+   "server/services/ectd/signed-manifest-covers-sequence.ts",
+   "server/services/ectd/signed-package-export.ts",
+   "server/services/ind-forms/form-context-assembler.ts",
+   "server/services/ind-forms/program-form-facts.ts",
+   "server/services/ind-master-data/ind-master-data-service.ts",
+   "server/services/ind-master-data/sponsor-input.ts",
+   "server/services/part11/ectd-sequence-binding.ts",
+   "server/services/part11/signature-persistence.ts",
+   "server/services/submission-package-orchestrator.ts",
+   "server/services/submission-service/submission-service.ts",
+   "shared/schema/programs.ts"
+  ],
+  "allCoveredByLatestScopedPins": true,
+  "scopeExcludes": "Unrelated incoming canonical commits and unlisted transitive dependencies."
+ },
+ "sourceFiles": [
+  {"path": "assets/estar-templates/PreSTAR-q-sub.pdf", "trackedAtAnchor": true, "gitBlobSha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3", "filesystemSha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3"},
+  {"path": "assets/estar-templates/checksums.txt", "trackedAtAnchor": true, "gitBlobSha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68", "filesystemSha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68"},
+  {"path": "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx", "trackedAtAnchor": true, "gitBlobSha256": "20db44febb6b2947c110ac368090462e1c567566257c447edbc3d97ac2fcec79", "filesystemSha256": "20db44febb6b2947c110ac368090462e1c567566257c447edbc3d97ac2fcec79"},
+  {"path": "client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx", "trackedAtAnchor": true, "gitBlobSha256": "8e5e3767c91c871a8e8caf69f890a7ffb6a0ea1bf9d3c2ebf1d32ea31c6f0146", "filesystemSha256": "8e5e3767c91c871a8e8caf69f890a7ffb6a0ea1bf9d3c2ebf1d32ea31c6f0146"},
+  {"path": "client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx", "trackedAtAnchor": true, "gitBlobSha256": "4f7611d7bfd6dbf62da456c3bd2e87cc64d8dc151682c52d4703e3eacd43512e", "filesystemSha256": "4f7611d7bfd6dbf62da456c3bd2e87cc64d8dc151682c52d4703e3eacd43512e"},
+  {"path": "client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx", "trackedAtAnchor": true, "gitBlobSha256": "fbac49ed5e3b0e64a5dfbff35f92c9c24779fae4f35c64adf0a9cfbeab4f7d7e", "filesystemSha256": "fbac49ed5e3b0e64a5dfbff35f92c9c24779fae4f35c64adf0a9cfbeab4f7d7e"},
+  {"path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx", "trackedAtAnchor": true, "gitBlobSha256": "47844d986b229e44b9c15c55e86080e7590e3f5e416b14db943674b9afc736f4", "filesystemSha256": "47844d986b229e44b9c15c55e86080e7590e3f5e416b14db943674b9afc736f4"},
+  {"path": "client/src/concept2cure/v2/shellProject.ts", "trackedAtAnchor": true, "gitBlobSha256": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26", "filesystemSha256": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26"},
+  {"path": "client/src/concept2cure/v2/styles/app-v2.css", "trackedAtAnchor": true, "gitBlobSha256": "debde4aa374c854438ac31b30738fa32c638afe761446aedb98bd97f83be648e", "filesystemSha256": "debde4aa374c854438ac31b30738fa32c638afe761446aedb98bd97f83be648e"},
+  {"path": "client/src/concept2cure/v2/styles/coverage-v2.css", "trackedAtAnchor": true, "gitBlobSha256": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4", "filesystemSha256": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4"},
+  {"path": "client/src/concept2cure/v2/styles/journey-v2.css", "trackedAtAnchor": true, "gitBlobSha256": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d", "filesystemSha256": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d"},
+  {"path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css", "trackedAtAnchor": true, "gitBlobSha256": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16", "filesystemSha256": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16"},
+  {"path": "client/src/concept2cure/v2/styles/submission-v2.css", "trackedAtAnchor": true, "gitBlobSha256": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c", "filesystemSha256": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c"},
+  {"path": "client/src/concept2cure/v2/styles/surface-text-ramp.css", "trackedAtAnchor": true, "gitBlobSha256": "6224ed53861451c8f4354743dc2ce2dc6968fc402d65cfd3413160852b258064", "filesystemSha256": "6224ed53861451c8f4354743dc2ce2dc6968fc402d65cfd3413160852b258064"},
+  {"path": "client/src/concept2cure/v2/surfaces/IndApplicantIdentity.tsx", "trackedAtAnchor": true, "gitBlobSha256": "ad62e9b50700abdadeea98ab457be8cd459843d9e9a7269e8b1610c275dd33c5", "filesystemSha256": "ad62e9b50700abdadeea98ab457be8cd459843d9e9a7269e8b1610c275dd33c5"},
+  {"path": "client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx", "trackedAtAnchor": true, "gitBlobSha256": "ad5a06ce2d8113d0a613b86b930dee380ecdab6116e0b760378c07ec316a520d", "filesystemSha256": "ad5a06ce2d8113d0a613b86b930dee380ecdab6116e0b760378c07ec316a520d"},
+  {"path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx", "trackedAtAnchor": true, "gitBlobSha256": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f", "filesystemSha256": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f"},
+  {"path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx", "trackedAtAnchor": true, "gitBlobSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf", "filesystemSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf"},
+  {"path": "client/src/concept2cure/v2/surfaces/indFormsPanelRecords.ts", "trackedAtAnchor": true, "gitBlobSha256": "2b3ea37f682579f0ba2d867747c1b3c95a571a27a78d7f820b2b737560b91d5d", "filesystemSha256": "2b3ea37f682579f0ba2d867747c1b3c95a571a27a78d7f820b2b737560b91d5d"},
+  {"path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts", "trackedAtAnchor": true, "gitBlobSha256": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519", "filesystemSha256": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519"},
+  {"path": "client/src/lib/queryClient.ts", "trackedAtAnchor": true, "gitBlobSha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70", "filesystemSha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"},
+  {"path": "client/src/services/portal/authService.tsx", "trackedAtAnchor": true, "gitBlobSha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0", "filesystemSha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"},
+  {"path": "design-system/colors_and_type.css", "trackedAtAnchor": true, "gitBlobSha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0", "filesystemSha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"},
+  {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/check.mjs", "trackedAtAnchor": false, "gitBlobSha256": null, "filesystemSha256": "bc2bd7587d64adb43d1eac3ce65b8b52f906022cad6e092bd91a13ebb36c8c1a"},
+  {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/index.html", "trackedAtAnchor": false, "gitBlobSha256": null, "filesystemSha256": "fa8964ca47335b1f66496c950e4c91e1d01cfa4b4b7d82da32fdb3bd73d60d82"},
+  {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/probe.tsx", "trackedAtAnchor": false, "gitBlobSha256": null, "filesystemSha256": "452891160aadc438125010d3c4dc78346fdecb11b399525de60e26ecd58d2b36"},
+  {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/server.mjs", "trackedAtAnchor": false, "gitBlobSha256": null, "filesystemSha256": "7686d2c9bcee6b1c4bddc69a358ae7281ca0e23a5da866c84b88c0e7a7beb363"},
+  {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/check.ts", "trackedAtAnchor": false, "gitBlobSha256": null, "filesystemSha256": "ac4c8c46b3cde693deabcad5c8c99e26db06030d78be9ee9e573d48997bb5095"},
+  {"path": "migrations/20260609_ind_master_data.sql", "trackedAtAnchor": true, "gitBlobSha256": "0909ac46db6d24b3c244f3b540f4f0c187072b922ecf4e81b5cdc03c676ffc18", "filesystemSha256": "0909ac46db6d24b3c244f3b540f4f0c187072b922ecf4e81b5cdc03c676ffc18"},
+  {"path": "migrations/20261021_regulatory_programs_applicant_sponsor.sql", "trackedAtAnchor": true, "gitBlobSha256": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5", "filesystemSha256": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5"},
+  {"path": "package-lock.json", "trackedAtAnchor": true, "gitBlobSha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3", "filesystemSha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"},
+  {"path": "package.json", "trackedAtAnchor": true, "gitBlobSha256": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7", "filesystemSha256": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7"},
+  {"path": "scripts/db/migration-set.mjs", "trackedAtAnchor": true, "gitBlobSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2", "filesystemSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2"},
+  {"path": "server/db/pglite-harness.ts", "trackedAtAnchor": true, "gitBlobSha256": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402", "filesystemSha256": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402"},
+  {"path": "server/routes/__tests__/ind-forms-official-upload-records-attestation.contract.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "7762434200810e8cbda7d199023c9211a82d5e4eb38b75af4052e315449c41aa", "filesystemSha256": "7762434200810e8cbda7d199023c9211a82d5e4eb38b75af4052e315449c41aa"},
+  {"path": "server/routes/__tests__/ind-forms.contract.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "472bf046493c392285d691c45dbd3ab8ea7a3c181886b433193ba2a6240c453d", "filesystemSha256": "472bf046493c392285d691c45dbd3ab8ea7a3c181886b433193ba2a6240c453d"},
+  {"path": "server/routes/__tests__/ind-master-data.contract.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "ba6f18b71a2b589ee74c7c9620c448af99e82daa4021ef6cd5fd38100f2d559d", "filesystemSha256": "ba6f18b71a2b589ee74c7c9620c448af99e82daa4021ef6cd5fd38100f2d559d"},
+  {"path": "server/routes/__tests__/ind-program-applicant.contract.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b101d6bac0597c29127e7e6415c400647d9ddbf21cdf12e346421f656f547f73", "filesystemSha256": "b101d6bac0597c29127e7e6415c400647d9ddbf21cdf12e346421f656f547f73"},
+  {"path": "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b43b71d22c873b191f9ccaa491aac5907183bc4224550e22d05d00e4c358079e", "filesystemSha256": "b43b71d22c873b191f9ccaa491aac5907183bc4224550e22d05d00e4c358079e"},
+  {"path": "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "31746402c7f54364a9a38e3cc30769df75076a21ed933f3f33ee86f970129817", "filesystemSha256": "31746402c7f54364a9a38e3cc30769df75076a21ed933f3f33ee86f970129817"},
+  {"path": "server/routes/ectd-compile.ts", "trackedAtAnchor": true, "gitBlobSha256": "11f01bc9c4dd72c794769230d9de71e4d59989578cf9f0e1dd0e024dcedfb6c6", "filesystemSha256": "11f01bc9c4dd72c794769230d9de71e4d59989578cf9f0e1dd0e024dcedfb6c6"},
+  {"path": "server/routes/ind-forms.routes.ts", "trackedAtAnchor": true, "gitBlobSha256": "226807057c9583db100d79be8941d388d7d62bc285a4d3702c626d9c7e021c75", "filesystemSha256": "226807057c9583db100d79be8941d388d7d62bc285a4d3702c626d9c7e021c75"},
+  {"path": "server/routes/ind-master-data.routes.ts", "trackedAtAnchor": true, "gitBlobSha256": "5e4ee7f28ae98c65d619cc4a75e77b2d809891e71ff52be729ac7a10d99cda7a", "filesystemSha256": "5e4ee7f28ae98c65d619cc4a75e77b2d809891e71ff52be729ac7a10d99cda7a"},
+  {"path": "server/routes/submissions.ts", "trackedAtAnchor": true, "gitBlobSha256": "b938dcf109a4981c3497c65b426b89ee2964bfd6cf5643103c0525f76ebec2e4", "filesystemSha256": "b938dcf109a4981c3497c65b426b89ee2964bfd6cf5643103c0525f76ebec2e4"},
+  {"path": "server/services/__tests__/sign-payload-snapshot.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "44d6db55c0b65ec6a1b12254728d3f769d4195960d2bfbe10119a250271fabe7", "filesystemSha256": "44d6db55c0b65ec6a1b12254728d3f769d4195960d2bfbe10119a250271fabe7"},
+  {"path": "server/services/ana-ri/__tests__/pglite-pool.fixture.ts", "trackedAtAnchor": true, "gitBlobSha256": "88830c8ed37f8e14b9f63853ef1477bb1eb96f901b8a43d01b1076fe56ce3765", "filesystemSha256": "88830c8ed37f8e14b9f63853ef1477bb1eb96f901b8a43d01b1076fe56ce3765"},
+  {"path": "server/services/ana/AnaToolExecutor.ts", "trackedAtAnchor": true, "gitBlobSha256": "fb499b2ede648c0b400d61d6aa3bd3ac3d0d4eadbd5163b9cdf9ddea91cd4af1", "filesystemSha256": "fb499b2ede648c0b400d61d6aa3bd3ac3d0d4eadbd5163b9cdf9ddea91cd4af1"},
+  {"path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "068edab2ab5ad1a623915768f08587bb717852f85a1f93c9749b778dab0d1f4d", "filesystemSha256": "068edab2ab5ad1a623915768f08587bb717852f85a1f93c9749b778dab0d1f4d"},
+  {"path": "server/services/auditService.ts", "trackedAtAnchor": true, "gitBlobSha256": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c", "filesystemSha256": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c"},
+  {"path": "server/services/c2c/governed-program-write.ts", "trackedAtAnchor": true, "gitBlobSha256": "c04703de427c378258f4ca0e6b1d93c0c5755f7ac6481701f50266e244b5f0b8", "filesystemSha256": "c04703de427c378258f4ca0e6b1d93c0c5755f7ac6481701f50266e244b5f0b8"},
+  {"path": "server/services/c2c/program-access.ts", "trackedAtAnchor": true, "gitBlobSha256": "0a0c963098f387b51987e7143297a8f51bb95c38514cff99702910d3857c59e1", "filesystemSha256": "0a0c963098f387b51987e7143297a8f51bb95c38514cff99702910d3857c59e1"},
+  {"path": "server/services/csr/project-scope.ts", "trackedAtAnchor": true, "gitBlobSha256": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092", "filesystemSha256": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092"},
+  {"path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "951d48230d18a664c8ffe1583e455a1a877ac0bb8f928c1d60a7773c1da3403b", "filesystemSha256": "951d48230d18a664c8ffe1583e455a1a877ac0bb8f928c1d60a7773c1da3403b"},
+  {"path": "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "956513d4912a01a29b143c61e966d8f636f339ac3d8f42838076b9b087f85bc0", "filesystemSha256": "956513d4912a01a29b143c61e966d8f636f339ac3d8f42838076b9b087f85bc0"},
+  {"path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "0269c57dc7f3857b574c2a5aaa626d177ae9331a49b46bb848a76dce21e36d34", "filesystemSha256": "0269c57dc7f3857b574c2a5aaa626d177ae9331a49b46bb848a76dce21e36d34"},
+  {"path": "server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "fda4941a95ef22b637a1d0a2f77396b94cc0508098e6f0448ee41e718e7d10bd", "filesystemSha256": "fda4941a95ef22b637a1d0a2f77396b94cc0508098e6f0448ee41e718e7d10bd"},
+  {"path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb", "filesystemSha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb"},
+  {"path": "server/services/ectd/__tests__/release-signature-covers-sequence.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b9517feea235aa2e9ff0e7cf240cd969fe3190cd600a5c794f8e43d311e44dc6", "filesystemSha256": "b9517feea235aa2e9ff0e7cf240cd969fe3190cd600a5c794f8e43d311e44dc6"},
+  {"path": "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "da4c1004be6612727ce874979591a6d9272d81110651889af42ec6e9929f265e", "filesystemSha256": "da4c1004be6612727ce874979591a6d9272d81110651889af42ec6e9929f265e"},
+  {"path": "server/services/ectd/__tests__/sequence-release-signature.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "14c572112f1fd53387909a572733cafdf40d6b3b6316265cfb2b9c0b09d79aa0", "filesystemSha256": "14c572112f1fd53387909a572733cafdf40d6b3b6316265cfb2b9c0b09d79aa0"},
+  {"path": "server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "7a0a390a3fbdf402a1ba920714a5dfbf5483569f221ab7fecfc5e8858115cb3c", "filesystemSha256": "7a0a390a3fbdf402a1ba920714a5dfbf5483569f221ab7fecfc5e8858115cb3c"},
+  {"path": "server/services/ectd/__tests__/signed-package-export.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "818b1e87f814d99d98467b67b007d53adb66b6febfa33d673a041632ac8769fa", "filesystemSha256": "818b1e87f814d99d98467b67b007d53adb66b6febfa33d673a041632ac8769fa"},
+  {"path": "server/services/ectd/__tests__/submission-gate-posture.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017", "filesystemSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017"},
+  {"path": "server/services/ectd/assemble-from-core.ts", "trackedAtAnchor": true, "gitBlobSha256": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e", "filesystemSha256": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e"},
+  {"path": "server/services/ectd/core-to-packager.ts", "trackedAtAnchor": true, "gitBlobSha256": "6238c888f9f6e107a1b1d217edd4d44b6f3b98cd749736d747138e44f9944555", "filesystemSha256": "6238c888f9f6e107a1b1d217edd4d44b6f3b98cd749736d747138e44f9944555"},
+  {"path": "server/services/ectd/orchestrator-real-package.ts", "trackedAtAnchor": true, "gitBlobSha256": "822ccb8242a1847adbfce67090c1513b9a0a1b330b0174da94cea335f0b64c91", "filesystemSha256": "822ccb8242a1847adbfce67090c1513b9a0a1b330b0174da94cea335f0b64c91"},
+  {"path": "server/services/ectd/package-from-core.ts", "trackedAtAnchor": true, "gitBlobSha256": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899", "filesystemSha256": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899"},
+  {"path": "server/services/ectd/package-identity.ts", "trackedAtAnchor": true, "gitBlobSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658", "filesystemSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658"},
+  {"path": "server/services/ectd/release-signature-status.ts", "trackedAtAnchor": true, "gitBlobSha256": "a92ddf0fc40fc0739706593d5661daab83394ec9da5118955194ef8eb3547d30", "filesystemSha256": "a92ddf0fc40fc0739706593d5661daab83394ec9da5118955194ef8eb3547d30"},
+  {"path": "server/services/ectd/run-package-identity.ts", "trackedAtAnchor": true, "gitBlobSha256": "bda060fbdf89f2e554f62dd2b284f36e8ca19cfdf9d592770bdd54dcdab39004", "filesystemSha256": "bda060fbdf89f2e554f62dd2b284f36e8ca19cfdf9d592770bdd54dcdab39004"},
+  {"path": "server/services/ectd/sequence-release-signature.ts", "trackedAtAnchor": true, "gitBlobSha256": "901489ab5ed1daeafb07e2e42796708ad46c6823e974885d56b62b8f35da99a2", "filesystemSha256": "901489ab5ed1daeafb07e2e42796708ad46c6823e974885d56b62b8f35da99a2"},
+  {"path": "server/services/ectd/signed-manifest-covers-sequence.ts", "trackedAtAnchor": true, "gitBlobSha256": "13cd06ead038a96de2ad1a590b32e9e5bd000f27a4385a94e302bbc181ff272f", "filesystemSha256": "13cd06ead038a96de2ad1a590b32e9e5bd000f27a4385a94e302bbc181ff272f"},
+  {"path": "server/services/ectd/signed-package-export.ts", "trackedAtAnchor": true, "gitBlobSha256": "13b631de791956df96982675ede496ecc81abf106ac1262a590a36e491fca3a9", "filesystemSha256": "13b631de791956df96982675ede496ecc81abf106ac1262a590a36e491fca3a9"},
+  {"path": "server/services/ind-forms/__tests__/form-context-assembler.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "fcda09899d0dfda86c9e55fb524ace7056f6e9a77e5dea3f5e44bbe631b0ff4e", "filesystemSha256": "fcda09899d0dfda86c9e55fb524ace7056f6e9a77e5dea3f5e44bbe631b0ff4e"},
+  {"path": "server/services/ind-forms/form-context-assembler.ts", "trackedAtAnchor": true, "gitBlobSha256": "7a6b2987b9d3b5de923f130bc72d5c80e634650b07666d18c3c015bffa811acd", "filesystemSha256": "7a6b2987b9d3b5de923f130bc72d5c80e634650b07666d18c3c015bffa811acd"},
+  {"path": "server/services/ind-forms/program-form-facts.ts", "trackedAtAnchor": true, "gitBlobSha256": "e7892475b5de8e992681c7f20f4b070377e986044e82ec49103a7ee440780a4d", "filesystemSha256": "e7892475b5de8e992681c7f20f4b070377e986044e82ec49103a7ee440780a4d"},
+  {"path": "server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "7116baf6cda210527252ab08a0e580f2547e41f1cc78974516ada1f4697b1133", "filesystemSha256": "7116baf6cda210527252ab08a0e580f2547e41f1cc78974516ada1f4697b1133"},
+  {"path": "server/services/ind-master-data/__tests__/ind-master-data.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b6ff25ba3ac64edc1e6d7b10535d486fcd408550324ab23720093388e91efba5", "filesystemSha256": "b6ff25ba3ac64edc1e6d7b10535d486fcd408550324ab23720093388e91efba5"},
+  {"path": "server/services/ind-master-data/ind-master-data-service.ts", "trackedAtAnchor": true, "gitBlobSha256": "79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c", "filesystemSha256": "79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c"},
+  {"path": "server/services/ind-master-data/sponsor-input.ts", "trackedAtAnchor": true, "gitBlobSha256": "70e446b18279e072fcf6dc621b1185af8fb7ad5354365f2f35dfc5a349d5de2e", "filesystemSha256": "70e446b18279e072fcf6dc621b1185af8fb7ad5354365f2f35dfc5a349d5de2e"},
+  {"path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "4fe99267ea7fbc67a0f31feb1fac606f023a2536ac7acdbf6d40e00cee13d57c", "filesystemSha256": "4fe99267ea7fbc67a0f31feb1fac606f023a2536ac7acdbf6d40e00cee13d57c"},
+  {"path": "server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "c4cfe2c10de99165fac5eb66cb8aad516c1bbe74b2bbfeddcf66becabe52cafa", "filesystemSha256": "c4cfe2c10de99165fac5eb66cb8aad516c1bbe74b2bbfeddcf66becabe52cafa"},
+  {"path": "server/services/part11/ectd-sequence-binding.ts", "trackedAtAnchor": true, "gitBlobSha256": "8c4083c78ff0cc4f0a9fa06e64abe2553d5b92e3d01bce8612934f51aad70af4", "filesystemSha256": "8c4083c78ff0cc4f0a9fa06e64abe2553d5b92e3d01bce8612934f51aad70af4"},
+  {"path": "server/services/part11/signature-persistence.ts", "trackedAtAnchor": true, "gitBlobSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9", "filesystemSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9"},
+  {"path": "server/services/pathway-engines/estar/estar-template-registry.ts", "trackedAtAnchor": true, "gitBlobSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942", "filesystemSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942"},
+  {"path": "server/services/submission-gateways/ectd-packager/types.ts", "trackedAtAnchor": true, "gitBlobSha256": "ed765786ed6993bbc74da23e8de03bb123f10ce711d25b522e61dc3dc090b13f", "filesystemSha256": "ed765786ed6993bbc74da23e8de03bb123f10ce711d25b522e61dc3dc090b13f"},
+  {"path": "server/services/submission-gateways/regional-packager.ts", "trackedAtAnchor": true, "gitBlobSha256": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2", "filesystemSha256": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2"},
+  {"path": "server/services/submission-package-orchestrator.ts", "trackedAtAnchor": true, "gitBlobSha256": "a4a9ed437095cf5d7e8d58365223e6df4b7c0b9136ea9fa0fce7bde9e9f75b57", "filesystemSha256": "a4a9ed437095cf5d7e8d58365223e6df4b7c0b9136ea9fa0fce7bde9e9f75b57"},
+  {"path": "server/services/submission-service/__tests__/_freeze-gate-fixture.ts", "trackedAtAnchor": true, "gitBlobSha256": "9c1545e56009cafc3535e7966526e10c12df7f8bdbd8bfa632fbb63829d5520f", "filesystemSha256": "9c1545e56009cafc3535e7966526e10c12df7f8bdbd8bfa632fbb63829d5520f"},
+  {"path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a", "filesystemSha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a"},
+  {"path": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc", "filesystemSha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc"},
+  {"path": "server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "34f0302ab6c838023aefb6506f4ad235d272633b9e523ad29c4d5d914bf40b0c", "filesystemSha256": "34f0302ab6c838023aefb6506f4ad235d272633b9e523ad29c4d5d914bf40b0c"},
+  {"path": "server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "23839e6a82cc3ef39a2f7f7b2c41ad117094519c95d746e41a91cdf9beca780a", "filesystemSha256": "23839e6a82cc3ef39a2f7f7b2c41ad117094519c95d746e41a91cdf9beca780a"},
+  {"path": "server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "f95150e703d17bc043ac98cb3768ae43155a05531ee0c46277eaf9d723cb6f32", "filesystemSha256": "f95150e703d17bc043ac98cb3768ae43155a05531ee0c46277eaf9d723cb6f32"},
+  {"path": "server/services/submission-service/__tests__/gateway-selection.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "71ea80b36c61e48a267b708e51794f443fce9993471dbebc165ec8b631a44346", "filesystemSha256": "71ea80b36c61e48a267b708e51794f443fce9993471dbebc165ec8b631a44346"},
+  {"path": "server/services/submission-service/__tests__/governed-transition-cas.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "d2b7b09176edd28960e8e57fe4e12224bda8be8cb4802c003f50f35012de3c55", "filesystemSha256": "d2b7b09176edd28960e8e57fe4e12224bda8be8cb4802c003f50f35012de3c55"},
+  {"path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d", "filesystemSha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d"},
+  {"path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "6d04bb6d50e9c3c44c85b755f59fe3c8fb29aef0669c66f080e86d321526ed87", "filesystemSha256": "6d04bb6d50e9c3c44c85b755f59fe3c8fb29aef0669c66f080e86d321526ed87"},
+  {"path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "9c8e510494cac88549ec3a8d2bb63b8fb7945d275f8f34ac41b83e5d550dbe2a", "filesystemSha256": "9c8e510494cac88549ec3a8d2bb63b8fb7945d275f8f34ac41b83e5d550dbe2a"},
+  {"path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "824a8a48a6e428f762936e63b2a4a2104d44beb8a5cd386cb5a26b4f331c8537", "filesystemSha256": "824a8a48a6e428f762936e63b2a4a2104d44beb8a5cd386cb5a26b4f331c8537"},
+  {"path": "server/services/submission-service/__tests__/transmit-refusals.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "007268fd2eaaaf0c18956e828d8d3889edea56521446415e88dc946bf3b54e6a", "filesystemSha256": "007268fd2eaaaf0c18956e828d8d3889edea56521446415e88dc946bf3b54e6a"},
+  {"path": "server/services/submission-service/submission-service.ts", "trackedAtAnchor": true, "gitBlobSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c", "filesystemSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c"},
+  {"path": "server/services/tenant/governed-tenant-context.ts", "trackedAtAnchor": true, "gitBlobSha256": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d", "filesystemSha256": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d"},
+  {"path": "shared/constants/governed-reason.ts", "trackedAtAnchor": true, "gitBlobSha256": "49ab03c8f3e3de692a1e2c56e81f00ff88cc1f20cf6c9eedb9789264acef82c3", "filesystemSha256": "49ab03c8f3e3de692a1e2c56e81f00ff88cc1f20cf6c9eedb9789264acef82c3"},
+  {"path": "shared/schema/programs.ts", "trackedAtAnchor": true, "gitBlobSha256": "61d0770ac5f5084973d9e1dd369ec0544e4e5e8736cfe28ed56d2a6e9f84b21f", "filesystemSha256": "61d0770ac5f5084973d9e1dd369ec0544e4e5e8736cfe28ed56d2a6e9f84b21f"},
+  {"path": "tests/integration/orchestrator-e2e-ind-fixtures.ts", "trackedAtAnchor": true, "gitBlobSha256": "6a7dbf5acdd1ce2edee763c06f40a01c151ca35982b90a6f211a43b65a44d825", "filesystemSha256": "6a7dbf5acdd1ce2edee763c06f40a01c151ca35982b90a6f211a43b65a44d825"},
+  {"path": "tests/integration/orchestrator-e2e-ind.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "e7b5f588f307cd4eb55f7b63969bf712aa7ab91786ace27a3b06fe51d41dbb0c", "filesystemSha256": "e7b5f588f307cd4eb55f7b63969bf712aa7ab91786ace27a3b06fe51d41dbb0c"},
+  {"path": "tests/routes/ectd-compile-5xx-containment.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "74abd084406828d3e46359fdc1edb4705f103fde56396449c038034b78203ecb", "filesystemSha256": "74abd084406828d3e46359fdc1edb4705f103fde56396449c038034b78203ecb"},
+  {"path": "tests/routes/ectd-compile-dtd-evidence.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "205305feab39b5ea2527a800e78b51c688ec3444554f09783ae171bb5d92821f", "filesystemSha256": "205305feab39b5ea2527a800e78b51c688ec3444554f09783ae171bb5d92821f"},
+  {"path": "tests/routes/ectd-compile-evalidator-import.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "ebe83783bda9493ed1700d0231e29d32426e7f9dea39958045335f8c9b0047a2", "filesystemSha256": "ebe83783bda9493ed1700d0231e29d32426e7f9dea39958045335f8c9b0047a2"},
+  {"path": "tests/routes/ectd-compile-ident.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19", "filesystemSha256": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19"},
+  {"path": "tests/routes/ectd-compile-lifecycle.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b5d31129d5307b2f5c4f07515b593a45e1af4e0371ee5133eab75f01efef4170", "filesystemSha256": "b5d31129d5307b2f5c4f07515b593a45e1af4e0371ee5133eab75f01efef4170"},
+  {"path": "tests/routes/ectd-compile-sequence.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "b8b3cd0cd86fd34ad7eeed760992c12331ce4fe5221eb5094b568ab547bb4882", "filesystemSha256": "b8b3cd0cd86fd34ad7eeed760992c12331ce4fe5221eb5094b568ab547bb4882"},
+  {"path": "tests/routes/ectd-compile-spine.harness.ts", "trackedAtAnchor": true, "gitBlobSha256": "d201d90d1b0d4b4bae67d0ae87f7e356f788a06e7406282a79fc38b565b1dc4b", "filesystemSha256": "d201d90d1b0d4b4bae67d0ae87f7e356f788a06e7406282a79fc38b565b1dc4b"},
+  {"path": "tests/routes/ectd-compile-spine.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "1612ab3fc25701938a9ab22a57401772b9d051dcfe03c83fa41d8b2197a107f3", "filesystemSha256": "1612ab3fc25701938a9ab22a57401772b9d051dcfe03c83fa41d8b2197a107f3"},
+  {"path": "tests/routes/ectd-compile-vault-uuid.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "7ee46478144a2d7e46c7a3ed5894bab191ddd0fb04a39ad98428e269408d1a5b", "filesystemSha256": "7ee46478144a2d7e46c7a3ed5894bab191ddd0fb04a39ad98428e269408d1a5b"},
+  {"path": "tests/setup.ts", "trackedAtAnchor": true, "gitBlobSha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4", "filesystemSha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"},
+  {"path": "tests/unit/orchestrator-dry-run-identity.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "239cd1fa55cd19760a74a595c6749cc981a40aad871a9a2e589c003612d72e26", "filesystemSha256": "239cd1fa55cd19760a74a595c6749cc981a40aad871a9a2e589c003612d72e26"},
+  {"path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts", "trackedAtAnchor": true, "gitBlobSha256": "bc8f8e94b36284cd4a70ae894030192e57f8255eebaf5a9e5ac94c214268bfc5", "filesystemSha256": "bc8f8e94b36284cd4a70ae894030192e57f8255eebaf5a9e5ac94c214268bfc5"},
+  {"path": "vitest.config.ts", "trackedAtAnchor": true, "gitBlobSha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d", "filesystemSha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"}
+ ],
+ "limitations": [
+  "Five evidence harness sources are currently untracked intended packet files: native/check.ts and browser/probe.tsx, check.mjs, index.html, server.mjs. Their filesystem bytes match the run pins; the final evidence commit still needs publication verification.",
+  "Worker manifests are scoped input pins, not complete dependency/environment manifests. Earlier execution logs are not made current merely because a subset of their source bytes still matches.",
+  "Root-owned fixture supplement hashes were recorded by this verification, not retroactively asserted as original execution-time manifest entries. The named executions and root confirmation of the late fixture edit are the bounded provenance basis.",
+  "This task only read sources/evidence and wrote this JSON. It did not edit source, README, build/publication manifests, rerun heavy tests or perform human/agency witnessing.",
+  "Latest caller compatibility pins include current service bytes but explicitly retain a historical12-case execution. Its optional-boundary corrections have a current31-case replay; the compatibility cohort itself was not repeated."
+ ],
+ "previousVerification": {"path": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/source-pins-before-compiler-corrections.json", "anchor": "785dc0500f75b21291baad187c2f5856af8187e2", "qualification": "Preserved historical observations; its no-mismatch conclusion applies to its own785 source point, not the corrected3c93 point."},
+ "compilerCorrectionSupersession": [
+  {
+   "older": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/input-verification-before-type-fix.json",
+   "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/input-verification.json",
+   "olderDeclaredMetadata": {
+    "result": {"files": 19, "passed": 260, "exitCode": 0},
+    "headAtVerification": "5017c5d12446dffc8623258c91eee88e5bf594dc",
+    "kind": "post-run input verification"
+   },
+   "changedInputs": [
+    {"path": "server/services/submission-service/submission-service.ts", "earlierSha256": "c7f3a285dffa12cd87dd4f1d09c1743365a6e0929c7ddd8f3e88fdf62024c4ba", "currentSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c"},
+    {"path": "server/services/part11/signature-persistence.ts", "earlierSha256": "0ec4fcd7faf525acf64a6f01097432c2267c0902c5155c4d9c2ecb71651192e4", "currentSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9"}
+   ],
+   "qualification": "Earlier execution inputs are retained and not counted as an execution of the corrected bytes. The named newer record carries current pins and its explicit replay limits."
+  },
+  {
+   "older": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/compatibility-input-verification-before-type-fix.json",
+   "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/compatibility-input-verification.json",
+   "olderDeclaredMetadata": {
+    "result": {"files": 2, "passed": 12, "exitCode": 0, "lintWarnings": 0, "lintErrors": 0},
+    "headAtVerification": "f165afe1fd17e4c8fd59db5823d1fe520799f851",
+    "kind": "post-run input verification"
+   },
+   "changedInputs": [
+    {"path": "server/services/submission-service/submission-service.ts", "earlierSha256": "c7f3a285dffa12cd87dd4f1d09c1743365a6e0929c7ddd8f3e88fdf62024c4ba", "currentSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c"}
+   ],
+   "qualification": "Earlier execution inputs are retained and not counted as an execution of the corrected bytes. The named newer record carries current pins and its explicit replay limits."
+  },
+  {
+   "older": "docs/evidence/MR-10/2026-10-21-applicant-identity/verification/native-before-compiler-corrections/result.json",
+   "newer": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/result.json",
+   "olderDeclaredMetadata": {"passed": true, "humanWitnessed": false, "syntheticRecords": true, "serverVersion": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"},
+   "changedInputs": [
+    {"path": "server/services/part11/signature-persistence.ts", "earlierSha256": "0ec4fcd7faf525acf64a6f01097432c2267c0902c5155c4d9c2ecb71651192e4", "currentSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9"}
+   ],
+   "qualification": "Earlier execution inputs are retained and not counted as an execution of the corrected bytes. The named newer record carries current pins and its explicit replay limits."
+  }
+ ],
+ "compilerCorrectionEvidence": {
+  "coreTest": {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/core/type-boundary-green.txt",
+   "sha256": "5d98405d80def7904b8f68599bc96325d457d844850a866dd033970336b67b8c",
+   "exists": true,
+   "terminalSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  27 passed (27)",
+    "Start at  02:18:00",
+    "Duration  4.94s (transform 2.81s, setup 142ms, import 4.17s, tests 24ms, environment 0ms)"
+   ]
+  },
+  "rootSignatureWriter": {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/compiler-correction.log.gz",
+   "sha256": "2d8e9b5315c04bc08a682b35f5384aa90016b88205015cccb359bb537dc33926",
+   "exists": true,
+   "terminalSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  13 passed (13)",
+    "Start at  02:18:03",
+    "Duration  36.41s (transform 1.60s, setup 124ms, import 2.91s, tests 32.93s, environment 0ms)"
+   ]
+  },
+  "callerBoundaries": {
+   "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/callers/green-type-boundaries.txt",
+   "sha256": "cf2de1979912d8b4eb032205e1a492f265061e03e7c201714468d56eb3afe123",
+   "exists": true,
+   "terminalSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  31 passed (31)",
+    "Start at  02:18:51",
+    "Duration  25.48s (transform 6.24s, setup 166ms, import 13.54s, tests 10.96s, environment 0ms)"
+   ]
+  },
+  "rootMetadata": "docs/evidence/MR-10/2026-10-21-applicant-identity/signature/compiler-correction.json",
+  "qualification": "27/1,13/1 and31/3 are scoped correction replays, not replacements for every earlier broad case. No old88/260 execution is claimed to have consumed the corrected test/service source."
+ }
+}

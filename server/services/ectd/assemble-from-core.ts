@@ -357,10 +357,10 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   // verify the package it claims to cover. The packager's own leafManifest
   // carries the SHIPPED href and md5; that is what is recorded.
   //
-  // Per-leaf sha256 is deliberately absent rather than wrong: the packager does
-  // not expose the converted bytes, so the only sha256 that can honestly be
-  // stated is the package-level one below, which is taken over the archive as
-  // written.
+  // Shipped per-leaf sha256 is deliberately absent: the packager does not
+  // expose the converted bytes. packageSha256 covers the written archive;
+  // sources[].derivation.artifactSha256 binds a receipt to the retained input
+  // before PDF/A normalization and does not describe the shipped leaf bytes.
   const governanceManifestPath = path.join(outputDir, 'package-governance.sha256.json');
   await fs.writeFile(
     governanceManifestPath,
@@ -372,15 +372,15 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
         dryRun,
         hashPolicy:
           'md5 = eCTD index (agency requirement), recorded here over the SHIPPED leaf bytes; ' +
-          'sha256 = package governance, package-level only (leaves are normalized to PDF/A after staging)',
+          'packageSha256 = written archive; sources[].derivation.artifactSha256 = receipt-bound retained input before PDF/A normalization, not shipped leaf bytes',
         packageSha256: result.bundle.sha256,
         leaves: (result.bundle.leafManifest ?? []).map((l) => ({
           fileName: l.fileName,
           href: l.href,
           md5: l.md5,
         })),
-        // Where each staged source came from, by identity (the document alias
-        // map) — the lineage a filed snapshot used to carry only as prose.
+        // Where each staged source came from: alias identity and the separately
+        // verified filing derivation, when recorded. Neither proves approval.
         // `canonicalId: null` is a row that was never aliased; `available:
         // false` is a database without the alias migration. Stated, not
         // smoothed over. Keyed by the resolver's `${table}:${id}` and the
@@ -389,6 +389,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
           key,
           stagedFileName: f.fileName,
           lineage: f.lineage ?? null,
+          derivation: f.derivation ?? null,
         })),
       },
       null,

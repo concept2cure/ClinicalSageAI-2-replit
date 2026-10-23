@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state 236ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record 119ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding 79ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision 41ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program 58ms
+stderr | server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written
+{
+  "timestamp": "2026-10-21T01:27:43.926Z",
+  "level": "error",
+  "message": "[ind-forms-routes] program facts transaction failed",
+  "context": {
+    "err": "private audit database failure",
+    "commitStarted": false
+  }
+}
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs 39ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session 17ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written 43ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts 59ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  01:27:23
+   Duration  21.00s (transform 9.37s, setup 144ms, import 12.56s, tests 7.47s, environment 0ms)
+

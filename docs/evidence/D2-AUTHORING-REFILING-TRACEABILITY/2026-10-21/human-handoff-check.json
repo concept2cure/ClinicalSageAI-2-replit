@@ -1,0 +1,10 @@
+{
+  "guide": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+  "sha256": "f19ebe396895a3550aaaeea71142ff30bd4a8f9cd549caa4819168f4b7248c67",
+  "cases": 61,
+  "sequential": true,
+  "statuses": {
+    "Not run": 61
+  },
+  "humanAcceptancePerformed": false
+}

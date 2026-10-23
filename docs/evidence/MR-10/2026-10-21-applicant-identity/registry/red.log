@@ -1,0 +1,619 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > POST /sponsors → 201
+{
+  "timestamp": "2026-10-21T01:20:23.923Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "60c4dc51-f379-4e4b-9197-5f55369a841a",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 401 when unauthenticated 67ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 403 with the wrong role 8ms
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > cannot identity-spoof organizationId via the body
+{
+  "timestamp": "2026-10-21T01:20:23.983Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "a1daeb9a-fa88-408c-9b9b-b3d7a274d6b2",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > tenant isolation > does not return another org's records
+{
+  "timestamp": "2026-10-21T01:20:23.993Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "337058a3-032f-4dac-a53b-ec8845769672",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /agents → 201
+{
+  "timestamp": "2026-10-21T01:20:24.011Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND regulatory agent",
+  "context": {
+    "agentId": "5fc45a19-f751-4eaf-b1f9-49722047dcd9",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /investigators → 201
+{
+  "timestamp": "2026-10-21T01:20:24.020Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND investigator",
+  "context": {
+    "investigatorId": "f2e9a393-5c17-4b80-ac73-e5b2dfd2bc2e",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a stated reason before creating a sponsor
+{
+  "timestamp": "2026-10-21T01:20:24.028Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "9f4dad11-9ef6-4d3c-819c-9cfa3942ffee",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > POST /sponsors → 201 40ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors → 200 includes the created sponsor 11ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 200 14ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > PATCH /sponsors/:id → 200 updates 15ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 404 for an unknown id 7ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > cannot identity-spoof organizationId via the body 8ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > tenant isolation > does not return another org's records 20ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /agents → 201 8ms
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /investigators → 201 10ms
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+{
+  "timestamp": "2026-10-21T01:20:24.048Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "974a250e-4976-4048-91b8-c214ce6c48f8",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+{
+  "timestamp": "2026-10-21T01:20:24.064Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "77bbd9e3-8bc5-4440-a7d2-3d05a83d3a39",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses unknown business fields but keeps the trusted identity strip
+{
+  "timestamp": "2026-10-21T01:20:24.076Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "d91c7cf9-15fc-4512-a41b-f8358a4c81cb",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stderr | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":null}
+{
+  "timestamp": "2026-10-21T01:20:24.089Z",
+  "level": "error",
+  "message": "[ind-master-data-routes] ind-master-data route error",
+  "context": {
+    "err": "Failed query: insert into \"ind_sponsors\" (\"id\", \"organization_id\", \"name\", \"address_line1\", \"address_line2\", \"city\", \"state_province\", \"postal_code\", \"country\", \"contact_name\", \"contact_phone\", \"contact_email\", \"duns\", \"signatory_name\", \"signatory_title\", \"created_at\", \"updated_at\", \"created_by\") values (default, $1, $2, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $3) returning \"id\", \"organization_id\", \"name\", \"address_line1\", \"address_line2\", \"city\", \"state_province\", \"postal_code\", \"country\", \"contact_name\", \"contact_phone\", \"contact_email\", \"duns\", \"signatory_name\", \"signatory_title\", \"created_at\", \"updated_at\", \"created_by\"\nparams: 1,,9"
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"   "}
+{
+  "timestamp": "2026-10-21T01:20:24.098Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "40b04957-0269-4e8e-87d8-e593e10cce2c",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"Applicant\u0001"}
+{
+  "timestamp": "2026-10-21T01:20:24.108Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "2db8abb1-48fa-4e10-95d8-7250cb86f859",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+{
+  "timestamp": "2026-10-21T01:20:24.116Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "104f4182-6fb1-4ee7-b010-02e5f5276273",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12-345-6789"}
+{
+  "timestamp": "2026-10-21T01:20:24.123Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "eeb35dde-3758-4139-80d2-f1afb96a2dfe",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12345678"}
+{
+  "timestamp": "2026-10-21T01:20:24.128Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "53090d1d-1c05-4e04-a4a1-4fc1f9823b6d",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactPhone":"call tomorrow"}
+{
+  "timestamp": "2026-10-21T01:20:24.134Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "1a1bef97-33d7-4003-9f80-1bb5334a6d05",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactEmail":"not email"}
+{
+  "timestamp": "2026-10-21T01:20:24.139Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "f4f27886-01f0-45bb-9053-e230412231dc",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a stated reason before creating a sponsor 19ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason 15ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason 10ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses unknown business fields but keeps the trusted identity strip 13ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":null} 13ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"   "} 10ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"Applicant\u0001"} 8ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} 7ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12-345-6789"} 6ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12345678"} 5ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactPhone":"call tomorrow"} 6ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactEmail":"not email"} 6ms
+   → expected 201 to be 400 // Object.is equality
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactName":"Contact\u0001"}
+{
+  "timestamp": "2026-10-21T01:20:24.147Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "55971cfb-7d62-41a9-a16e-64cdafeaff7a",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"city":22}
+{
+  "timestamp": "2026-10-21T01:20:24.159Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "936103b7-4041-4497-9f31-2e37ef241ffd",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > saves incomplete drafts, trims values and returns the full raw row plus audit and revision
+{
+  "timestamp": "2026-10-21T01:20:24.173Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "4d79650b-eb19-4501-a173-aa34ed4ab5b8",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > keeps all microseconds in reads and compares exactly on update
+{
+  "timestamp": "2026-10-21T01:20:24.184Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "a5dff2de-908c-446c-b91f-b3ed13e146cb",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a revision, a reason and a business change on PATCH
+{
+  "timestamp": "2026-10-21T01:20:24.198Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "56b792f5-7801-4d56-9c78-9017ba99650b",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > admits only one concurrent update using the same revision
+{
+  "timestamp": "2026-10-21T01:20:24.212Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "1e3e5378-a651-4e8c-8507-8a558c51e39f",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > does not leak another tenant through get or CAS update
+{
+  "timestamp": "2026-10-21T01:20:24.233Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "99382231-c0d5-4ec2-84d2-26f3afb3bbc0",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > records the reason and bounded before/after facts without governance fields in sponsor columns
+{
+  "timestamp": "2026-10-21T01:20:24.249Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "e21b011a-0f75-40f0-9e90-3dd120088f9b",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactName":"Contact\u0001"} 9ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"city":22} 13ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > saves incomplete drafts, trims values and returns the full raw row plus audit and revision 16ms
+   → expected { …(19) } to match object { name: 'Recorded Applicant', …(5) }
+(13 matching properties omitted from actual)
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > keeps all microseconds in reads and compares exactly on update 13ms
+   → expected undefined to be '2026-10-21T01:02:03.123456Z' // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a revision, a reason and a business change on PATCH 15ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > admits only one concurrent update using the same revision 21ms
+   → expected [ 200, 200 ] to deeply equal [ 200, 409 ]
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > does not leak another tenant through get or CAS update 15ms
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > reports a committed sponsor mutation when the ancillary audit receipt fails
+{
+  "timestamp": "2026-10-21T01:20:24.267Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "00ddb653-4448-4e71-aa63-15b7c1380ea3",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+stderr | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > reports a committed sponsor mutation when the ancillary audit receipt fails
+{
+  "timestamp": "2026-10-21T01:20:24.284Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "IND_SPONSOR_UPDATED",
+    "resourceType": "ind_sponsor",
+    "resourceId": "00ddb653-4448-4e71-aa63-15b7c1380ea3",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > records the reason and bounded before/after facts without governance fields in sponsor columns 18ms
+   → expected { organizationId: 1, userId: 9, …(4) } to match object { action: 'IND_SPONSOR_UPDATED', …(2) }
+(5 matching properties omitted from actual)
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > reports a committed sponsor mutation when the ancillary audit receipt fails 37ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a stated reason before creating a sponsor
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:139:24
+    137|   it('requires a stated reason before creating a sponsor', async () =>…
+    138|     const res = await create({ reason: undefined });
+    139|     expect(res.status).toBe(400);
+       |                        ^
+    140|     expect(holder.audit).not.toHaveBeenCalled();
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:144:47
+    142|
+    143|   it.each(['short', 'x'.repeat(2001)])('refuses an out-of-range reason…
+    144|     expect((await create({ reason })).status).toBe(400);
+       |                                               ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses unknown business fields but keeps the trusted identity strip
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:148:71
+    146|
+    147|   it('refuses unknown business fields but keeps the trusted identity s…
+    148|     expect((await create({ inventedContact: 'shadow data' })).status).…
+       |                                                                       ^
+    149|     const res = await create({ id: 'foreign', organizationId: 999, cre…
+    150|     expect(res.status).toBe(201);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":null}
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:160:43
+    158|     { contactEmail: 'not email' }, { contactName: 'Contact\u0001' }, {…
+    159|   ])('refuses a malformed supplied field %j', async (fields) => {
+    160|     expect((await create(fields)).status).toBe(400);
+       |                                           ^
+    161|     expect(holder.audit).not.toHaveBeenCalled();
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"   "}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"Applicant\u0001"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12-345-6789"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12345678"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactPhone":"call tomorrow"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactEmail":"not email"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactName":"Contact\u0001"}
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"city":22}
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:160:43
+    158|     { contactEmail: 'not email' }, { contactName: 'Contact\u0001' }, {…
+    159|   ])('refuses a malformed supplied field %j', async (fields) => {
+    160|     expect((await create(fields)).status).toBe(400);
+       |                                           ^
+    161|     expect(holder.audit).not.toHaveBeenCalled();
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > saves incomplete drafts, trims values and returns the full raw row plus audit and revision
+AssertionError: expected { …(19) } to match object { name: 'Recorded Applicant', …(5) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "auditTrail": {
+      "chained": true,
+      "persisted": true,
+    },
+-   "contactEmail": null,
++   "contactEmail": " ",
+    "contactName": null,
+-   "contactPhone": null,
+-   "duns": null,
+-   "name": "Recorded Applicant",
++   "contactPhone": "",
++   "duns": " ",
++   "name": "  Recorded Applicant  ",
+  }
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:167:22
+    165|     const res = await create({ name: '  Recorded Applicant  ', duns: '…
+    166|     expect(res.status).toBe(201);
+    167|     expect(res.body).toMatchObject({ name: 'Recorded Applicant', duns:…
+       |                      ^
+    168|     expect(res.body.revision).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:…
+    169|     expect(res.body).toHaveProperty('addressLine1', null);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > keeps all microseconds in reads and compares exactly on update
+AssertionError: expected undefined to be '2026-10-21T01:02:03.123456Z' // Object.is equality
+
+- Expected:
+"2026-10-21T01:02:03.123456Z"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:179:32
+    177|     await harness.pglite.query("UPDATE ind_sponsors SET updated_at='20…
+    178|     const read = await request(app).get(`/api/ind-master-data/sponsors…
+    179|     expect(read.body.revision).toBe('2026-10-21T01:02:03.123456Z');
+       |                                ^
+    180|     const stale = await request(app).patch(`/api/ind-master-data/spons…
+    181|       .send({ city: 'Wrong version', reason: REASON, expectedRevision:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a revision, a reason and a business change on PATCH
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:198:112
+    196|       { reason: REASON, expectedRevision: created.body.revision },
+    197|     ]) {
+    198|       expect((await request(app).patch(`/api/ind-master-data/sponsors/…
+       |                                                                                                                ^
+    199|     }
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > admits only one concurrent update using the same revision
+AssertionError: expected [ 200, 200 ] to deeply equal [ 200, 409 ]
+
+- Expected
++ Received
+
+  [
+    200,
+-   409,
++   200,
+  ]
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:207:49
+    205|       request(app).patch(`/api/ind-master-data/sponsors/${created.body…
+    206|         .send({ city, expectedRevision: created.body.revision, reason:…
+    207|     expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+       |                                                 ^
+    208|     const changed = results.find((r) => r.status === 200)!;
+    209|     const read = await request(app).get(`/api/ind-master-data/sponsors…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > records the reason and bounded before/after facts without governance fields in sponsor columns
+AssertionError: expected { organizationId: 1, userId: 9, …(4) } to match object { action: 'IND_SPONSOR_UPDATED', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "action": "IND_SPONSOR_UPDATED",
+    "details": {
+-     "after": {
+-       "contactName": "Regulatory Lead",
+-     },
+-     "before": {
+-       "contactName": null,
+-     },
++     "fields": [
++       "contactName",
++       "reason",
++     ],
+    },
+-   "reason": "Record reviewed applicant master data",
+  }
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:228:49
+    226|       .send({ contactName: 'Regulatory Lead', expectedRevision: create…
+    227|     expect(saved.status).toBe(200);
+    228|     expect(holder.audit.mock.calls.at(-1)?.[0]).toMatchObject({
+       |                                                 ^
+    229|       action: 'IND_SPONSOR_UPDATED', reason: REASON,
+    230|       details: { before: { contactName: null }, after: { contactName: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 13 passed (32)
+   Start at  01:20:18
+   Duration  5.88s (transform 584ms, setup 136ms, import 1.34s, tests 3.97s, environment 0ms)
+

@@ -1,0 +1,4 @@
+Normal full compiler refused the source push. Caller-owned diagnostics (full normal-gate output is retained by the parent evidence packet):
+
+    server/services/submission-service/submission-service.ts(1830,62): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | null'.
+    server/services/submission-service/submission-service.ts(2719,41): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | null'.

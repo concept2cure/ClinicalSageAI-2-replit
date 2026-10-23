@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:program-ownership-single-source:selftest
+> node scripts/ci/check-program-ownership-single-source.mjs --self-test
+
+[self-test] OK — 10 copies found, 6 reads passed.

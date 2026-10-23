@@ -1,0 +1,10 @@
+{
+  "file": "server/services/ectd/leaf-source-resolver.ts",
+  "previousSourceSha256": "0f64c7e2705fb47c1b7730dd979a0941df35e8a3d81309bc3fbed010d2ac0a81",
+  "releaseSourceSha256": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+  "transpiler": "esbuild",
+  "beforeEmittedSha256": "cb639ce6f68a6bd0ad7bcb0d80fdb5c163433ef637084ec67377ad5bdc133d04",
+  "afterEmittedSha256": "cb639ce6f68a6bd0ad7bcb0d80fdb5c163433ef637084ec67377ad5bdc133d04",
+  "identicalRuntimeOutput": true,
+  "otherDelta": "placement parity test now compares current source hash before and after the edit, instead of comparing distinct digest recipes; final focused rerun covers it."
+}

@@ -1,0 +1,29 @@
+{
+  "syntheticRecords": true,
+  "humanWitnessed": false,
+  "sourcePins": {
+    "migrations/20260609_ind_master_data.sql": "0909ac46db6d24b3c244f3b540f4f0c187072b922ecf4e81b5cdc03c676ffc18",
+    "migrations/20261021_regulatory_programs_applicant_sponsor.sql": "5e4f37a52945512bd53bdd4e3c88c97ca85b82479ca398b27e45882ce1ea4ef5",
+    "scripts/db/migration-set.mjs": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2",
+    "server/db/pglite-harness.ts": "a4ea679099810e34cd8ee6a8a91fa20887bbf18cb7034a9a02bf3795d9aa2402",
+    "server/services/ectd/package-identity.ts": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658",
+    "server/services/part11/signature-persistence.ts": "0ec4fcd7faf525acf64a6f01097432c2267c0902c5155c4d9c2ecb71651192e4",
+    "server/services/part11/ectd-sequence-binding.ts": "8c4083c78ff0cc4f0a9fa06e64abe2553d5b92e3d01bce8612934f51aad70af4",
+    "server/services/ectd/core-to-packager.ts": "6238c888f9f6e107a1b1d217edd4d44b6f3b98cd749736d747138e44f9944555",
+    "server/services/submission-gateways/regional-packager.ts": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2",
+    "server/services/submission-gateways/ectd-packager/types.ts": "ed765786ed6993bbc74da23e8de03bb123f10ce711d25b522e61dc3dc090b13f",
+    "docs/evidence/MR-10/2026-10-21-applicant-identity/native/check.ts": "ac4c8c46b3cde693deabcad5c8c99e26db06030d78be9ee9e573d48997bb5095"
+  },
+  "checks": [
+    "Before migration, selecting the missing program binding fails with 42703.",
+    "Actual additive migration replay preserves the existing sponsor binding and master data.",
+    "Composite foreign key refuses a cross-tenant sponsor (23503).",
+    "Canonical native reader uses the explicitly bound applicant, and cannot read it through another tenant.",
+    "Exact program revision retains six fractional digits across session time zones; unchanged legacy precision matches once and stale CAS refuses.",
+    "Native signature derivation changes when the stored contact changes; prior captured proof stays immutable.",
+    "Sequence/program/sponsor capture locks block competing identity edits, permit unrelated tenant work, and release after commit.",
+    "Real canonical adapter/packager ZIP contains the native recorded DUNS/name/contact, no placeholders, and retains unresolved agency telephone-type gaps."
+  ],
+  "serverVersion": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "passed": true
+}

@@ -1,0 +1,246 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts
+{
+  "timestamp": "2026-10-21T01:33:47.565Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+{
+  "timestamp": "2026-10-21T01:33:51.254Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9206"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+{
+  "timestamp": "2026-10-21T01:33:51.274Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state 107ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: true, refusal: null }
+(1 matching property omitted from actual)
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (pending) with a fresh signature and audit, preserving frozen state 16ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: true, refusal: null }
+(1 matching property omitted from actual)
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (rejected) with a fresh signature and audit, preserving frozen state 18ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: true, refusal: null }
+(1 matching property omitted from actual)
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses transmitting before signing or recording another dispatch 8ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses sent before signing or recording another dispatch 12ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses acknowledged before signing or recording another dispatch 4ms
+   → expected { step: 'dispatch', …(2) } to match object { cleared: false, …(1) }
+(1 matching property omitted from actual)
+stdout | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+{
+  "timestamp": "2026-10-21T01:33:51.288Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "9207"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle
+{
+  "timestamp": "2026-10-21T01:33:51.295Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ × server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status 57ms
+   → expected 'pending' to be 'transmitting' // Object.is equality
+ ✓ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > does not widen the non-FDA lifecycle 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (null) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (pending) with a fresh signature and audit, preserving frozen state
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > renews an unsent dispatched sequence (rejected) with a fresh signature and audit, preserving frozen state
+AssertionError: expected { step: 'dispatch', …(2) } to match object { cleared: true, refusal: null }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "cleared": true,
+-   "refusal": null,
++   "cleared": false,
++   "refusal": "Cannot transition sequence from dispatched to dispatched.",
+  }
+
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:58:22
+     56|     await q(`UPDATE ind_sponsors SET contact_name = $1 WHERE id = $2`,…
+     57|     const precheck = await precheckGovernedStep(id, 'dispatch', ctx);
+     58|     expect(precheck).toMatchObject({ cleared: true, refusal: null });
+       |                      ^
+     59|     const fresh = await sign(id, 'dispatch', 'release');
+     60|     const result = await dispatchSequence(id, ctx, fresh);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses transmitting before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses sent before signing or recording another dispatch
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses acknowledged before signing or recording another dispatch
+AssertionError: expected { step: 'dispatch', …(2) } to match object { cleared: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "cleared": false,
+-   "refusal": StringMatching /flight|transmitted/i,
++   "refusal": "Cannot transition sequence from dispatched to dispatched.",
+  }
+
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:72:61
+     70|   it.each(['transmitting', 'sent', 'acknowledged'])('refuses %s before…
+     71|     const id = await dispatched(status);
+     72|     expect(await precheckGovernedStep(id, 'dispatch', ctx)).toMatchObj…
+       |                                                             ^
+     73|     const error = await outcome(dispatchSequence(id, ctx, await sign(i…
+     74|     expect(error).toMatchObject({ code: 'INVALID_STATE' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts > FDA dispatch authorization renewal through the existing governed action > refuses a send claimed during the renewal checks without resetting its in-flight status
+AssertionError: expected 'pending' to be 'transmitting' // Object.is equality
+
+Expected: "transmitting"
+Received: "pending"
+
+ ❯ server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts:85:113
+     83|     const error = await outcome(dispatchSequence(id, ctx, signature));
+     84|     expect(error).toMatchObject({ code: 'INVALID_STATE' });
+     85|     expect((await q(`SELECT dispatch_status FROM ectd_sequences WHERE …
+       |                                                                                                                 ^
+     86|     expect((await q(`SELECT id FROM audit_logs WHERE action = 'SEQUENC…
+     87|   }, 120_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  01:33:39
+   Duration  11.73s (transform 4.57s, setup 144ms, import 7.70s, tests 3.41s, environment 0ms)
+

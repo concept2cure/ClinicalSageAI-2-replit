@@ -1,0 +1,146 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision 503ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves 159ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves 136ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry 95ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector 48ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program 244ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty 177ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit 100ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records 80ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them 60ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision 162ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name 152ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer 131ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read 358ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program 35ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement 101ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change 123ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay 83ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address 116ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save 132ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts 134ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes 81ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{}} 78ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":[]} 66ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{}}} 91ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1572","fields":{},"missingRequired":[]}} 79ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{},"missingRequired":[null]}} 71ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed 72ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt 213ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > retires a check when the bound sponsor changes without a program revision change 100ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > shows missing fields from the second investigator instead of calling a 1572 array clean 75ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryName 209ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryTitle 200ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor update when the returned representative differs from the submitted fact 176ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > reads and clears an existing representative title while retaining other recorded facts 249ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 391ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 296ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 118ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 108ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature 99ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record 44ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder 67ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 288ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature 144ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void 276ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 154ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 168ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new release verdict after a confirmed dispatched to dispatched act 216ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved verdict when the governed act has no confirmed receipt 202ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine 115ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict 375ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage 114ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly 11ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier 99ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form 41ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing 44ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left" 41ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 89ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 90ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open 64ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it 44ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names 43ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form 40ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing 54ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download 81ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes 45ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset 53ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form 35ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back 87ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 101ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record 42ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists 100ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen 135ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files 317ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed 84ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 80ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA" 90ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b) > RENDERS Dispatch on a frozen IND whose only blocker is the signature the click records 69ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b) > says what the gate is waiting for — not "Dispatch blocked", and not "clear" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b) > keeps the plain label once a release signature is already on record 24ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b) > HIDES Dispatch when signing cannot clear the gate — an orchestrator run awaiting its signer 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b) > HIDES Dispatch on a payload with no dispatchGateOnSigning — fail closed, and not by crashing 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — no sentence contradicts the control under it > a validated IND with Freeze open is not told "Freeze and dispatch stay locked" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — no sentence contradicts the control under it > a validated sequence whose freeze really is blocked says so — about freeze 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — no sentence contradicts the control under it > a draft IND whose freeze gate is open is told to move it to Validated — the instruction reads the FREEZE verdict 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > the creator sees why they cannot sign, and is not offered Freeze 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > the creator is warned while the sequence is still a draft — early enough to arrange a signer 24ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > the creator is not offered Dispatch on a frozen sequence 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > an independent colleague sees no warning and keeps both controls 8ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > no recorded creator: nobody can sign, and it says so 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > a failed check hides nothing — unknown is not "you cannot" 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx > DispatchWorkspace — the sequence creator is told before signing > a payload without `signer` behaves as before 10ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 562ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type with reason, revision and an exact resulting receipt 181ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 92ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 89ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the IND checklist says what an attached form amounts to > an attached file nobody attested is "Attached — not attested", never Complete; the others say what they are 215ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the IND checklist says what an attached form amounts to > a form with no file says Open, and an older server that reports no attachment state is not read as "none" 62ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > the attestation is sent only when the person ticks it, and the tick is cleared after the filing 343ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > a filing checked complete but not attested is reported as not counted, never as a completed form 78ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx > the forms panel lets the uploader state the attestation, and says when nobody has > a placement nobody attested is "attached · not attested"; an attested one is the completed form; an unreported one claims neither 32ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx > DispatchWorkspace — the Freeze button is gated on freezeGate > RENDERS Freeze when freezeGate clears and the dispatch gate does not 75ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx > DispatchWorkspace — the Freeze button is gated on freezeGate > HIDES Freeze when the freeze verdict itself blocks 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx > DispatchWorkspace — the Freeze button is gated on freezeGate > HIDES Freeze when an invalid signature blocks the freeze verdict 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx > DispatchWorkspace — the Freeze button is gated on freezeGate > HIDES Freeze on a payload with no freezeGate at all — fail closed, no crash 12ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > sends what the person stated with the attachment, and nothing the record holds 231ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > a filed attachment the engine finds incomplete is reported as filed and NOT complete, naming what is missing 113ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > each placement says whether it completes the form: complete, not complete (what is missing), or not checked 45ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx > DispatchWorkspace — nothing says "permitted" under a blocked gate > the missing-shadow-review note is the reason the gate blocks, not a permission 56ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx > DispatchWorkspace — nothing says "permitted" under a blocked gate > a "cleared" dispatch-QC verdict under a blocked gate is not green and says the gate decides 223ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > reaches the existing governed dispatch chain for current recorded facts 310ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: undefined 62ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: {"reauthorizing":true,"eligible":false,"refusal":"A transmission has already been attempted."} 33ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > hides renewal without explicit server authorization: {"reauthorizing":false,"eligible":true,"refusal":null} 44ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > does not offer renewal while another dispatch gate blocks 32ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > does not offer unnecessary renewal for a currently valid release 46ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx > existing dispatch action renews only an eligible unsent FDA release > shows the independent signer requirement for a renewal 28ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > a US IND opens the IND forms screen scoped to that submission 339ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > an NDA and a non-US IND are not offered it 129ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 400 5ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 401 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 403 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 404 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 409 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > preserves confirmed refusal at 422 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 408 as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 500 as unknown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at 502 as unknown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > marks a missing or uncertain reply at undefined as unknown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > a success whose JSON was lost is unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts > an explicit unknown code overrides a status commonly used for refusal 0ms
+
+ Test Files  12 passed (12)
+      Tests  132 passed (132)
+   Start at  01:53:34
+   Duration  31.57s (transform 2.18s, setup 1.37s, import 6.44s, tests 13.83s, environment 7.75s)
+

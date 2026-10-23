@@ -1,0 +1,109 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay
+ ↓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save 452ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts 164ms
+   → expected <span style …(1)></span> to be null
+ × client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes 86ms
+   → expected <span style …(1)></span> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save
+AssertionError: expected <span style …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+  style=""
+>
+  required fields present
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:285:59
+    283|     await screen.findByText('Program facts saved.');
+    284|     await act(async () => build.resolve(response({ formId: 'FDA_1571',…
+    285|     expect(screen.queryByText('required fields present')).toBeNull();
+       |                                                           ^
+    286|   });
+    287|   it('clears an old check when an explicit reload reads changed progra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts
+AssertionError: expected <span style …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+  style=""
+>
+  required fields present
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:295:59
+    293|     fireEvent.click(screen.getByRole('button', { name: 'Reload recorde…
+    294|     await screen.findByText(/Recorded program facts reloaded/i);
+    295|     expect(screen.queryByText('required fields present')).toBeNull();
+       |                                                           ^
+    296|   });
+    297|   it('clears an old check when the per-form serial number changes', as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes
+AssertionError: expected <span style …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="rd-chip tone-ok"
+  style=""
+>
+  required fields present
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx:303:59
+    301|     await screen.findByText('required fields present');
+    302|     fireEvent.change(screen.getByLabelText('Serial number'), { target:…
+    303|     expect(screen.queryByText('required fields present')).toBeNull();
+       |                                                           ^
+    304|   });
+    305| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 19 skipped (22)
+   Start at  01:33:28
+   Duration  3.17s (transform 1.12s, setup 194ms, import 1.38s, tests 708ms, environment 657ms)
+

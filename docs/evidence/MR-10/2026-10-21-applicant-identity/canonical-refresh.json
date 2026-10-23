@@ -1,0 +1,206 @@
+{
+  "observedAtUtc": "2026-10-23T15:06:13.195328+00:00",
+  "qualifiedSource": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "resumptionCanonical": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "qualifiedSourceIsAncestor": true,
+  "commitsAfterQualifiedSource": 411,
+  "scope": "Historical 21Oct evidence remains tied to3c93; no full requalification of411 incoming commits is claimed.",
+  "unchangedScopedTrackedInputPaths": 80,
+  "changedScopedInputs": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "qualifiedSourceSha256": "47844d986b229e44b9c15c55e86080e7590e3f5e416b14db943674b9afc736f4",
+      "resumptionSourceSha256": "49a8d66af0d17ced73c54509c808a4d1e3d0ef52499b76ce257a1fe99d0cdb0b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "qualifiedSourceSha256": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+      "resumptionSourceSha256": "3e2727dcfbe4d5b1499a59cbf1d44c21cd6c96c8456a96dd3e7a19467ad83647"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "qualifiedSourceSha256": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+      "resumptionSourceSha256": "9c979f80c158a485ed9aec34fd019fcf30d3f3b78df0391b64e9f0dd583f70e1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "qualifiedSourceSha256": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+      "resumptionSourceSha256": "5de39b9fa3d594254ca0b9a1f7f632e17ad32e31007f26c0198622ddff4cfa40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "qualifiedSourceSha256": "d32a5c9767e94d93ee790e14ee9c517f6d5032c025b1ac2b36e77b58501ec35f",
+      "resumptionSourceSha256": "990064ad592a712d4d3954f7e48bd69de49ef1dfc308147520af53af37015fef"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "qualifiedSourceSha256": "b2c1118d94157c8a18c4b65056f35d91cd62da1a98822e105a57782346cc24bf",
+      "resumptionSourceSha256": "ec56e7281ab93cd0edf6edd6e9b5890dbae7d73e8fe2bc0f6b3e52a96c1bef88"
+    },
+    {
+      "path": "package.json",
+      "qualifiedSourceSha256": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+      "resumptionSourceSha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "qualifiedSourceSha256": "dc2f4b0e29daff8cd75e43d2f6d1858b4c1715ef8e8174133f91823c0f09ccb2",
+      "resumptionSourceSha256": "b2e66270c4a471ebc214ed79c745f6f873d03949399fbdd141b08f98ab0ee358"
+    },
+    {
+      "path": "server/routes/__tests__/ind-forms.contract.integration.test.ts",
+      "qualifiedSourceSha256": "472bf046493c392285d691c45dbd3ab8ea7a3c181886b433193ba2a6240c453d",
+      "resumptionSourceSha256": "33f4a6aaabe6702618efc40b9e68b4fdd7367b3d528ede415859c637f3c157b2"
+    },
+    {
+      "path": "server/routes/ectd-compile.ts",
+      "qualifiedSourceSha256": "11f01bc9c4dd72c794769230d9de71e4d59989578cf9f0e1dd0e024dcedfb6c6",
+      "resumptionSourceSha256": "380274ce2b0b9aaa7f42813333a044ec4826ef8e0393a87ee7326d4e8762b4fb"
+    },
+    {
+      "path": "server/routes/ind-forms.routes.ts",
+      "qualifiedSourceSha256": "226807057c9583db100d79be8941d388d7d62bc285a4d3702c626d9c7e021c75",
+      "resumptionSourceSha256": "2b4b1c34465514cc5d22e79d43e2f0d2e24a67389fa5961b68cbc05fb9553862"
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "qualifiedSourceSha256": "b938dcf109a4981c3497c65b426b89ee2964bfd6cf5643103c0525f76ebec2e4",
+      "resumptionSourceSha256": "1554c1cc62e20505e086fa9b24eaf0f3c9c6a5e9562a0bee0538f52ad0470e73"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "qualifiedSourceSha256": "fb499b2ede648c0b400d61d6aa3bd3ac3d0d4eadbd5163b9cdf9ddea91cd4af1",
+      "resumptionSourceSha256": "29a42cbf3bea8212cf10ab802533debe4b6711bc248c16973fd69c0eaeb2e42c"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "qualifiedSourceSha256": "0a0c963098f387b51987e7143297a8f51bb95c38514cff99702910d3857c59e1",
+      "resumptionSourceSha256": "d48130f694e182aab8f81449377631cfc244743a8ab1d63dea2927364a33b28f"
+    },
+    {
+      "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "qualifiedSourceSha256": "951d48230d18a664c8ffe1583e455a1a877ac0bb8f928c1d60a7773c1da3403b",
+      "resumptionSourceSha256": "3915651ccb90cb9f5b1df1dd0d5790bf724a12b3eed3fd218bba57310a041aa1"
+    },
+    {
+      "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "qualifiedSourceSha256": "0269c57dc7f3857b574c2a5aaa626d177ae9331a49b46bb848a76dce21e36d34",
+      "resumptionSourceSha256": "fe33b190ef93a90537129c88d8249e38d9cef46ed03f991a18bb7817b21406b5"
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "qualifiedSourceSha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017",
+      "resumptionSourceSha256": "f0084e73e82ad809261d5b4bd71bec9cc7478123b8ebb30b757a33dce7775ee5"
+    },
+    {
+      "path": "server/services/ectd/assemble-from-core.ts",
+      "qualifiedSourceSha256": "64153d7eb84fdf4a370efe9f6d4192b373ad8d9684172e3540fb63999fb7b55e",
+      "resumptionSourceSha256": "8ad7410a5cabc389f43f1742910087c8bda302b0e67291e4b99810b4b16ddc10"
+    },
+    {
+      "path": "server/services/ectd/package-from-core.ts",
+      "qualifiedSourceSha256": "b9e73bc046310f10cbdf871b9eb05fe689c4a44f7d86ba9de4ec412d3614c899",
+      "resumptionSourceSha256": "dcde0fb5d0e6a649a5bfb101deecebb8763abfa4882ee9698b23a188d3593f2f"
+    },
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "qualifiedSourceSha256": "65380bebf213afb1cfc1e3bd18ac9757aa0c6b133ffd5591da009bcfc412b658",
+      "resumptionSourceSha256": "f4e3b6d0b4bafaa9660909876f9486eb49bca0bca1556c749321f28d6657bcad"
+    },
+    {
+      "path": "server/services/ectd/run-package-identity.ts",
+      "qualifiedSourceSha256": "bda060fbdf89f2e554f62dd2b284f36e8ca19cfdf9d592770bdd54dcdab39004",
+      "resumptionSourceSha256": "c170254bb828765d810f3c7f9d7ea7d1c2f53eb84e74910fa82e987e58471052"
+    },
+    {
+      "path": "server/services/ectd/signed-manifest-covers-sequence.ts",
+      "qualifiedSourceSha256": "13cd06ead038a96de2ad1a590b32e9e5bd000f27a4385a94e302bbc181ff272f",
+      "resumptionSourceSha256": "07b508ee636fee41e2453ad53e2d6b6183f79250e63967c0bdd9c870e922d92a"
+    },
+    {
+      "path": "server/services/ectd/signed-package-export.ts",
+      "qualifiedSourceSha256": "13b631de791956df96982675ede496ecc81abf106ac1262a590a36e491fca3a9",
+      "resumptionSourceSha256": "95d60a9c8e027e637fdf289cf07d4cb5e01e6449c359bd88cf07f6fc750c52d0"
+    },
+    {
+      "path": "server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts",
+      "qualifiedSourceSha256": "4fe99267ea7fbc67a0f31feb1fac606f023a2536ac7acdbf6d40e00cee13d57c",
+      "resumptionSourceSha256": "37b3670639537b81357f4d2ddef815469b2db5058cc8e21dd1db3465dbdf4173"
+    },
+    {
+      "path": "server/services/part11/ectd-sequence-binding.ts",
+      "qualifiedSourceSha256": "8c4083c78ff0cc4f0a9fa06e64abe2553d5b92e3d01bce8612934f51aad70af4",
+      "resumptionSourceSha256": "5610060576b4c6fa0a3e8dcf4fc5f53e00917ad4689e687ca64453066658e1f3"
+    },
+    {
+      "path": "server/services/part11/signature-persistence.ts",
+      "qualifiedSourceSha256": "cbcdc17eb9217c7f344cab83a45ef117086ea01c45402d0af669609dba9dcbf9",
+      "resumptionSourceSha256": "fa695643e58b1714cb1008c4d89676ee470d09e2687be111e8f08dfebe92a343"
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "qualifiedSourceSha256": "19497bb6cf50d817f0190b613a787c579e86f3cc581fb6a3c4e0ae2ef35a5fd2",
+      "resumptionSourceSha256": "4686dbcba364b56460c2f7664cb3394c753e323fb314e1a4ede7a6f978943cc5"
+    },
+    {
+      "path": "server/services/submission-package-orchestrator.ts",
+      "qualifiedSourceSha256": "a4a9ed437095cf5d7e8d58365223e6df4b7c0b9136ea9fa0fce7bde9e9f75b57",
+      "resumptionSourceSha256": "fb4465c81bf776726e4c9f542cc1637bc665719006ac16d43d8bb9e052d0c4e6"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/gateway-selection.test.ts",
+      "qualifiedSourceSha256": "71ea80b36c61e48a267b708e51794f443fce9993471dbebc165ec8b631a44346",
+      "resumptionSourceSha256": "9366dd836da41413346394837beff2cea77d0187a6279b6e29ac5eeb54597595"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "qualifiedSourceSha256": "824a8a48a6e428f762936e63b2a4a2104d44beb8a5cd386cb5a26b4f331c8537",
+      "resumptionSourceSha256": "598a622923f8fb8d295411424a5cd9cee545681303c1c27815839b7d61798c8e"
+    },
+    {
+      "path": "server/services/submission-service/submission-service.ts",
+      "qualifiedSourceSha256": "b5dd9d0b691d7941b70cf518179f27d0b976725b8d35bffb57d3c31bfd70403c",
+      "resumptionSourceSha256": "5f56fe0bc6fcc446ec0044bfb63994e98e0df005030c6ba4c0c4b80fed0fae91"
+    },
+    {
+      "path": "tests/routes/ectd-compile-ident.test.ts",
+      "qualifiedSourceSha256": "447dd192158e557e06e220657a54b64bec4b8d69069a697a4fcf143bfaae8a19",
+      "resumptionSourceSha256": "c51fb2efa459509f665cb2bbf6194f3cf87e8ab67a1267121dba8bcaabbb19a6"
+    },
+    {
+      "path": "tests/routes/ectd-compile-sequence.test.ts",
+      "qualifiedSourceSha256": "b8b3cd0cd86fd34ad7eeed760992c12331ce4fe5221eb5094b568ab547bb4882",
+      "resumptionSourceSha256": "02b7ac7c621ade7ea193a0efc0a1377d6f206e412d6f70dcbb176da56b8060e1"
+    },
+    {
+      "path": "tests/routes/ectd-compile-spine.harness.ts",
+      "qualifiedSourceSha256": "d201d90d1b0d4b4bae67d0ae87f7e356f788a06e7406282a79fc38b565b1dc4b",
+      "resumptionSourceSha256": "a3eaf9edf8b413696846eb8e013447a5d2356251d1d7e5e9939ab84fc2dd20d3"
+    },
+    {
+      "path": "tests/routes/ectd-compile-spine.test.ts",
+      "qualifiedSourceSha256": "1612ab3fc25701938a9ab22a57401772b9d051dcfe03c83fa41d8b2197a107f3",
+      "resumptionSourceSha256": "879402c37102fb69d5c173d32535501afa9c00113366e5eca97fac5258a4c4e0"
+    }
+  ],
+  "completedOverlaps": [
+    {
+      "name": "P-44 per-market application number",
+      "evidence": "docs/evidence/D2-ONE-ANA/2026-10-22/p44-market-application-number/README.md"
+    },
+    {
+      "name": "F18/F23 readiness convergence",
+      "record": "docs/work-orders/README.md"
+    },
+    {
+      "name": "IND reference walkthrough and P-42 Vault replace binding",
+      "evidence": "docs/evidence/W5/2026-10-21-ind-reference-lane/"
+    }
+  ],
+  "postureCorrection": {
+    "sourceCommit": "4d27ecc74",
+    "status": "Previous two PreSTAR assumptions corrected by another session22Oct; enforcement default remains a separate decision.",
+    "currentReplay": "verification/resumption-posture.log.gz"
+  },
+  "nextIdentityHandoff": "P-44 explicitly hands on non-US application-number signature coverage; EMA slash handling remains separate."
+}

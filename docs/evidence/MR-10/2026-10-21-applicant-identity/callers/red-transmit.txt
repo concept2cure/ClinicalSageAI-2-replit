@@ -1,0 +1,105 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 16ms
+   → expected 'wire checkpoint reached The signature…' to be 'wire checkpoint reached' // Object.is equality
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 9ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 2ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 2ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 3ms
+   → expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override
+AssertionError: expected 'wire checkpoint reached The signature…' to be 'wire checkpoint reached' // Object.is equality
+
+Expected: "wire checkpoint reached"
+Received: "wire checkpoint reached The signature given for this transmit is now void; sign again for a new attempt."
+
+ ❯ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts:89:27
+     87|   it('assembles only the claim-captured DUNS and contact, ignoring a c…
+     88|     const error = await transmit({ sponsorId: 'CALLER-OVERRIDE' });
+     89|     expect(error.message).toBe('wire checkpoint reached');
+       |                           ^
+     90|     expect(h.assemble).toHaveBeenCalledWith(expect.objectContaining({ …
+     91|       sponsorName: 'Recorded Applicant', contacts: [{ type: 'regulator…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly
+AssertionError: expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+
+- Expected
++ Received
+
+- {
+-   "code": "GOVERNED_REQUIRED",
++ Error {
++   "message": "wire checkpoint reached The signature given for this transmit is now void; sign again for a new attempt.",
+  }
+
+ ❯ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts:100:19
+     98|     h.changeAtLock = true;
+     99|     const error = await transmit();
+    100|     expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+       |                   ^
+    101|     expect(error.message).toMatch(/changed|identity|applicant/i);
+    102|     expect(h.assemble).not.toHaveBeenCalled(); expect(h.gateway).not.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim
+AssertionError: expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+
+- Expected
++ Received
+
+- {
+-   "code": "GOVERNED_REQUIRED",
++ Error {
++   "message": "wire checkpoint reached The signature given for this transmit is now void; sign again for a new attempt.",
+  }
+
+ ❯ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts:109:19
+    107|     h.changeDuringAssembly = true;
+    108|     const error = await transmit();
+    109|     expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+       |                   ^
+    110|     expect(h.gateway).not.toHaveBeenCalled(); expect(h.cleaned).toHave…
+    111|     expect(h.dispatchStatus).toBe('pending');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry
+ FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry
+AssertionError: expected Error: wire checkpoint reached The signat… to match object { code: 'GOVERNED_REQUIRED' }
+
+- Expected
++ Received
+
+- {
+-   "code": "GOVERNED_REQUIRED",
++ Error {
++   "message": "wire checkpoint reached The signature given for this transmit is now void; sign again for a new attempt.",
+  }
+
+ ❯ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts:117:19
+    115|     h.wrongAssemblyEcho = kind === 'wrong'; h.omitAssemblyEcho = kind …
+    116|     const error = await transmit();
+    117|     expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+       |                   ^
+    118|     expect(h.gateway).not.toHaveBeenCalled(); expect(h.cleaned).toHave…
+    119|     expect(h.dispatchStatus).toBe('pending');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  01:21:18
+   Duration  5.39s (transform 2.70s, setup 163ms, import 4.30s, tests 37ms, environment 0ms)
+

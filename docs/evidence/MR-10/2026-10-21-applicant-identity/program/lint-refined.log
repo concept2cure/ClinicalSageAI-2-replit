@@ -1,0 +1,13 @@
+
+/workspace/concept2cure/server/routes/ind-forms.routes.ts
+   611:81  warning  Async arrow function has too many lines (126). Maximum allowed is 100  max-lines-per-function
+   611:81  warning  Async arrow function has a complexity of 25. Maximum allowed is 15     complexity
+   738:1   warning  File has too many lines (954). Maximum allowed is 500                  max-lines
+   822:85  warning  Async arrow function has too many lines (126). Maximum allowed is 100  max-lines-per-function
+   822:85  warning  Async arrow function has a complexity of 17. Maximum allowed is 15     complexity
+  1084:82  warning  Arrow function has too many lines (225). Maximum allowed is 100        max-lines-per-function
+  1085:53  warning  Arrow function has too many lines (223). Maximum allowed is 100        max-lines-per-function
+  1086:20  warning  Async arrow function has a complexity of 43. Maximum allowed is 15     complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+
