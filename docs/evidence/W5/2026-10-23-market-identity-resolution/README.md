@@ -1,6 +1,6 @@
 # W5 / D7 — fail-closed market identity resolution
 
-Status: integrated 221 checks and production build passed after canonical catch-up; normal compiler/push gates pending. Baseline `526e86cba`.
+Status: published directly to canonical `concept2cure-v2` at `1a37dcc940955515b1b57bb4087d6c4e41a38bdf`. Normal gates and full compiler passed with zero errors. Human/agency qualification remains open.
 Contract: `docs/design/MARKET_IDENTITY_RESOLUTION_2026-10-23.md`.
 
 ## What already exists
@@ -60,7 +60,7 @@ No store, schema, dependency, vocabulary, approval engine or surface was added.
   actual component, form and production CSS run. Initial driver and test-table
   corrections are retained separately. The browser server was stopped.
 - `review/REVIEW.md`: independent caller/lock/null/diagnosis review. Scoped lint
-  reports zero errors and no added warnings; final normal gates are pending.
+  reports zero errors and no added warnings; final normal gates passed; see the publication receipt below.
 
 These cohorts overlap and are not a full-suite or agency-conformance total.
 `HUMAN_CHECK.md` remains explicitly unexecuted. Agency assets, live gateway
@@ -84,8 +84,7 @@ The packet secret scan passed with zero findings. Its first scan mistook
 content hashes keyed by credential-related source filenames for credentials;
 the same path/hash values were expressed as explicit row fields and rescanned,
 without an exception or baseline change (`hash-format-correction.json`).
-Normal compiler and direct-push gates still must pass before publication is
-reported. No overall CI, production deployment or human acceptance is claimed.
+The historical checks below preceded final publication; the accepted receipt is recorded at the end. No overall CI, production deployment or human acceptance is claimed.
 
 
 ## Later canonical Authoring catch-up
@@ -153,3 +152,19 @@ backfill qualification documents at `41ce35bac`; ordinary merge `ced573beb`
 preserves them with all eighty-nine source pins unchanged. Completed build and
 scoped tests were not repeated for this documentation-only change. Final direct
 publication remains pending.
+
+
+## Final publication
+
+Source `1a37dcc940955515b1b57bb4087d6c4e41a38bdf` was accepted directly on canonical `concept2cure-v2` and
+verified against the remote. The final normal push passed all gates, gained no
+lint warnings, and completed full TypeScript with **0 errors (tsc exit 0,
+baseline 0)**. `verification/publication.json` and `push-accepted.txt.gz` retain
+that receipt. The latest source-bound intake build passed with all 57 selected
+inputs unchanged; earlier scoped results stay bound to their recorded inputs.
+
+The claimed P-44 unresolved-market engineering handoff is complete. No PR,
+force push, hook bypass, baseline relaxation, identifier-format change, new
+store or approval engine was used. Overall CI, human witnessing, agency
+qualification, production deployment and D7 acceptance are not claimed.
+`HUMAN_CHECK.md` remains unexecuted.
