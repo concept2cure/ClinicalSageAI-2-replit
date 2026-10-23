@@ -1,0 +1,13 @@
+{
+  "head": "264560f40a3d984289d5fb3311d0986094735410",
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "remoteBefore": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "startedAt": "2026-10-23T15:08:25.361324+00:00",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "note": "Normal push with hooks; full canonical gates including TypeScript. No bypass."
+}

@@ -1,0 +1,57 @@
+{
+  "testFile": "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts",
+  "sha256": "e5dccf948320ab3cbba9aa0deda6dccbbb05f150d9e0f9c88b8745d7dde279ac",
+  "productionBaseline": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "total": 10,
+  "intendedFailures": 4,
+  "passingControls": 6,
+  "tests": [
+    {
+      "name": "canonical context refusal reaches mounted SSE returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal",
+      "status": "failed"
+    },
+    {
+      "name": "canonical context refusal reaches mounted SSE retains partial text and raw/staged tool bytes when a later gateway call refuses context",
+      "status": "failed"
+    },
+    {
+      "name": "canonical context refusal reaches mounted SSE keeps the stopped record and partial answer when cancellation races a context refusal",
+      "status": "failed"
+    },
+    {
+      "name": "canonical context refusal reaches mounted SSE uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status",
+      "status": "failed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: plain error keeps the existing generic event without exposing raw diagnostics",
+      "status": "passed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: copied name keeps the existing generic event without exposing raw diagnostics",
+      "status": "passed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: copied code keeps the existing generic event without exposing raw diagnostics",
+      "status": "passed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: copied name and code keeps the existing generic event without exposing raw diagnostics",
+      "status": "passed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: provider token error keeps the existing generic event without exposing raw diagnostics",
+      "status": "passed"
+    },
+    {
+      "name": "narrow SSE context-carrier compatibility controls CONTROL: the existing typed raw-body refusal keeps its code and message exactly",
+      "status": "passed"
+    }
+  ],
+  "baselineInputsBeforeAndAfterUnchanged": true,
+  "selectedInputCount": 24,
+  "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts --maxWorkers=1 --no-file-parallelism --reporter=verbose --reporter=json --outputFile=docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-vitest.json > docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-vitest.txt 2>&1",
+  "exitCode": 1,
+  "lintCommand": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node node_modules/eslint/bin/eslint.js server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts --format json > docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-eslint.json",
+  "lintErrors": 0,
+  "lintWarnings": 0
+}

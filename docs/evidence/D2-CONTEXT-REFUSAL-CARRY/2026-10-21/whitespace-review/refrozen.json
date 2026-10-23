@@ -1,0 +1,32 @@
+{
+  "test": "server/routes/chat/__tests__/send-message-context-window.test.ts",
+  "sha256": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/whitespace-review/red-results.json"
+  ],
+  "lintArgv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "exitCode": 1,
+  "failed": 3,
+  "passed": 4,
+  "skips": 0,
+  "baselineInputsUnchangedBeforeAndAfter": true,
+  "note": "Only one extra trailing EOF newline removed, before any production edit; original frozen bytes and run retained. Assertions and fixtures unchanged.",
+  "rawLogSha256": "b4dd6298ae59e915507f12666c3469d58c0059e4762cba31afffc409a9445fec"
+}

@@ -1,0 +1,15 @@
+{
+  "purpose": "Correct newly introduced test assumption, not production. Host loopRounds stays zero because executor threw before aggregate result returned, despite two gateway calls (separate assertion retained). Final stop frames now checked in order at final two event positions.",
+  "initialReport": "resume-green-results.json",
+  "initialResult": {
+    "tests": 1183,
+    "passed": 1181,
+    "failed": 2,
+    "files": 97,
+    "failedFiles": 1,
+    "skips": 0
+  },
+  "beforeSha256": "8715a55a55e0bb185fbdbd5a87887b8f6d650d29c1cbe55479dd7eb9de9ad8fd",
+  "afterSha256": "22883ed2e2acb0eea2d9e1b6ed585e2709c250c16d8b4329348dcdf83c6b885a",
+  "productionUnchangedFromReviewedMerge": true
+}
