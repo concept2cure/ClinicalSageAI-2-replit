@@ -41,6 +41,7 @@ import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTea
 import { ProjectSide } from './ProjectSide';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { ProjectSettings } from './ProjectSettings';
+import { ProjectMdxWorkflow, mdxProjectPlan } from './ProjectMdxWorkflow';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -56,17 +57,7 @@ import '../styles/project-home-v2.css';
    (parseInt of a UUID would load a different project in the same org). */
 declare global {
   interface Window {
-    /* Typed by its owner, `../shellProject` (ShellProject), not re-declared as
-       a string map here.
-
-       This read `Record<string, string>`, which was harmless while nothing else
-       typed the global — but a `declare global` block MERGES, so when
-       shellProject.ts became the channel's owner and assigned a real
-       `ShellProject`, TypeScript intersected the two into
-       `Record<string, string> & ShellProject` and rejected every write: a
-       ShellProject has no string index signature. That broke the typecheck for
-       the whole repository from a file neither end of the assignment mentions,
-       which is the specific cost of declaring another module's global. */
+    /* The shell-project channel owns this type; do not redeclare a string map. */
     C2C_PROJECT?: import('../shellProject').ShellProject;
     C2C_CONVO?: Record<string, string>;
     /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
@@ -220,10 +211,10 @@ function Anchored<T>(props: {
    on a button, so a screen reader was told of no open stage at all (design
    review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
    panels: each stage renders below the conversations, so a nav is what it is. */
-function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
+function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { stage: string; setStage: (s: string) => void; lifecycle?: typeof PJ_LIFECYCLE }) {
   return (
     <nav className="pj-lc" aria-label="Project lifecycle">
-      {PJ_LIFECYCLE.map((s) => {
+      {lifecycle.map((s) => {
         const status = s.id === stage ? 'active' : undefined;
         return (
           <button key={s.id} type="button" className="pj-lc-stage" data-status={status} aria-current={stage === s.id ? 'step' : undefined}
@@ -1590,6 +1581,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      segment). Only a project that is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
   const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
+  const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'author'
+    ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence' }
+    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation' } : item) : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
@@ -1644,6 +1638,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
     const team = teamState.data?.team;
     const activity = activityState.data?.activity;
     const documents = rowsOf(docsRead);
+    const workflow = prog?.id === pid ? mdxProjectPlan(prog,
+      !markets.list.loading && !markets.list.error ? markets.markets.map(market => market.submission.applicationType) : []) : null;
     return {
       summary:
         `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
@@ -1654,6 +1650,15 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       facts: {
         projectId: pid,
         openStage: stage,
+        ...(workflow ? { mdxWorkflow: {
+          title: workflow.title,
+          accountableFunction: workflow.lead,
+          cadence: workflow.cadence,
+          additionalFilingsState: markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'read',
+          workstreams: workflow.packages.map(item => ({ id: item.id, title: item.title,
+            ownerDiscipline: item.ownerDiscipline, applicability: item.applicability, inputsFrom: item.dependsOn })),
+          assignmentNote: 'Discipline expectations, not assigned people or completed work. Document reviews hold approval assignments.',
+        } } : {}),
         program: {
           title, product: productName, code: submissionType, description: desc,
           clientType, primaryAgency: region, indication, status, priority, phase,
@@ -1701,7 +1706,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       teamState.loading, teamState.error, teamState.data,
       activityState.loading, activityState.error, activityState.data,
       dossier,
-      docsRead]);
+      docsRead, markets.list.loading, markets.list.error, markets.markets]);
   usePublishSurfaceContext('project-home', anaContext);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1801,6 +1806,23 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
+      {pid && prog?.id === pid && !progState.loading && !progState.error && (
+        <ProjectMdxWorkflow
+          key={pid}
+          project={prog}
+          otherFilings={!markets.list.loading && !markets.list.error
+            ? markets.markets.map(market => market.submission.applicationType) : []}
+          marketsState={markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'ready'}
+          onNav={onNav}
+          onStage={nextStage => {
+            setStage(nextStage);
+            requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
+          }}
+          onAsk={ask}
+          available={available}
+        />
+      )}
+
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
           conversations held on this project. They are outside the stage
           switch, so a half-typed message survives a change of tab; they sat
@@ -1819,11 +1841,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           human's controls do not offer what hers cannot. */}
       {!noProject && (
         <>
-          <StageTracker stage={stage} setStage={setStage} />
+          <StageTracker stage={stage} setStage={setStage} lifecycle={lifecycle} />
           <div className="pj-stageband">
             <div className="pj-stageband-l">
-              <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
-              <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
+              <span className="pj-stageband-stage">{(lifecycle.find(s => s.id === stage) ?? { label: '' }).label}</span>
+              <span className="pj-stageband-blurb">{(lifecycle.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
             </div>
           </div>
         </>

@@ -140,7 +140,7 @@ export function checkLaunchScopeApi(
     }
   }
   const host = L.deviceHost;
-  const hostImports = host ? new Set(deps(host.file).filter((d) => /\/(surfaces|presub)\//.test(d))) : new Set<string>();
+  const hostImports = host ? new Set(deps(host.file).filter((d) => /\/(surfaces|presub|workbench)\//.test(d))) : new Set<string>();
 
   const unresolved: string[] = [];
   const fileSurfaces = new Map<string, Set<string>>();
@@ -221,7 +221,27 @@ export const REAL: Layout = {
   shellRoots: [path.join(ROOT, 'client/src/main.tsx'), path.join(ROOT, 'client/src/concept2cure/v2/V2App.tsx')],
   deviceHost: {
     file: path.join(ROOT, 'client/src/concept2cure/mdx/MdxSurfaceHost.tsx'),
-    components: { 'device-vault': 'VaultSurface', 'device-tasks': 'TasksSurface' },
+    // Existing MDX surfaces admitted as Projects features, founder request
+    // 2026-10-23. Resolve their actual leaves rather than skipping the shared
+    // host or walking every unrelated feature for each registration.
+    components: {
+      'device-workstream': 'Overview',
+      'device-510k': 'K510Surface',
+      'device-pma': 'PmaSurface',
+      'device-cer': 'CerSurface',
+      'device-diagnostics': 'IvdSurface',
+      'device-clinical-studies': 'ClinicalStudiesSurface',
+      'device-software': 'SoftwareSurface',
+      'device-engineering': 'EngineeringSurface',
+      'device-udi': 'UdiSurface',
+      'device-postmarket': 'PostmarketSurface',
+      'device-presub': 'PreSubManager',
+      'device-vault': 'VaultSurface',
+      'device-tasks': 'TasksSurface',
+      'device-validation': 'ValidationSurface',
+      'device-submission': 'SubmissionsSurface',
+      'device-analytics': 'AnalyticsSurface',
+    },
   },
 };
 
@@ -282,6 +302,21 @@ function selftest(): number {
   w('client/src/hook.ts', "export const hook = (m: string) => fetch(`/api/${m}/items`);");
   const computed = checkLaunchScopeApi(L, buildPrefixMap(surfaces), launch);
   expect('flags a launch screen that computes the /api namespace', computed.violations.some((v) => v.verdict === 'computed' && v.files.some((f) => f.endsWith('hook.ts'))));
+  // MDX's shared host imports several leaves. A project feature must be
+  // resolved to its own leaf; an absent mapping must fail closed rather than
+  // silently skipping the feature's API calls.
+  w('client/src/host.tsx', "import { Feature } from './workbench/feature';\nimport { Optional } from './workbench/optional';");
+  w('client/src/workbench/feature.tsx', "export const Feature = () => fetch('/api/launch-api/feature');");
+  w('client/src/workbench/optional.tsx', "export const Optional = () => fetch('/api/hidden-api/optional');");
+  w('client/src/sv.ts', "export const SURFACE_VIEWS = { 'device-feature': { component: DeviceSurfaces['device-feature'] } };");
+  const deviceLayout: Layout = { ...L, deviceHost: { file: path.join(dir, 'client/src/host.tsx'), components: { 'device-feature': 'Feature' } } };
+  const deviceLaunch = new Set(['device-feature']);
+  const devicePrefixes = buildPrefixMap([{ id: 'device-feature', apiPrefixes: ['/api/launch-api'] }, surfaces[1]]);
+  const device = checkLaunchScopeApi(deviceLayout, devicePrefixes, deviceLaunch);
+  expect('resolves a project MDX feature to its actual host import', device.unresolved.length === 0 && device.all.has('/api/launch-api/feature'));
+  expect('keeps unrelated optional workbench imports outside that feature graph', !device.all.has('/api/hidden-api/optional') && device.violations.length === 0);
+  const missingDevice = checkLaunchScopeApi({ ...deviceLayout, deviceHost: { ...deviceLayout.deviceHost!, components: {} } }, devicePrefixes, deviceLaunch);
+  expect('an MDX feature with no component mapping fails closed', missingDevice.unresolved.includes('device-feature'));
   fs.rmSync(dir, { recursive: true, force: true });
   console.log(failed === 0 ? '\nselftest PASSED — the gate flags a launch screen that production would refuse.' : `\nselftest FAILED (${failed})`);
   return failed === 0 ? 0 : 1;

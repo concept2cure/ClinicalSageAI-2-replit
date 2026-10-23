@@ -91,7 +91,7 @@ afterEach(() => {
 });
 
 /** Open a program the way the shell does — the host reads this selection
- *  before falling back to the surface's pathway anchor. */
+ *  before mounting the project feature. */
 function selectProgram(id: string) {
   (window as unknown as { C2C_PROJECT: { id: string } }).C2C_PROJECT = { id };
 }
@@ -99,6 +99,7 @@ function selectProgram(id: string) {
 describe('510(k) surface — the official eSTAR family follows the program', () => {
   it('an IVD program on the 510(k) surface is produced on the IVD eSTAR', async () => {
     stubFetch([IVD_510K_ROW]);
+    selectProgram(IVD_510K_ROW.id);
     renderK510();
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · 510(k) · IVD eSTAR')).toBeTruthy(),
@@ -108,6 +109,7 @@ describe('510(k) surface — the official eSTAR family follows the program', () 
 
   it('a device program on the 510(k) surface is produced on the nIVD eSTAR', async () => {
     stubFetch([{ ...IVD_510K_ROW, id: 'a2b4c6d8-0000-0000-0000-00000000dev1', productType: 'device', productName: 'BX-204 CGM' }]);
+    selectProgram('a2b4c6d8-0000-0000-0000-00000000dev1');
     renderK510();
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · 510(k) · nIVD eSTAR')).toBeTruthy(),
@@ -126,6 +128,7 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
         productType: 'ivd',
       },
     ]);
+    selectProgram('a2b4c6d8-0000-0000-0000-0000000dnov1');
     renderK510();
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · De Novo · IVD eSTAR')).toBeTruthy(),
@@ -158,6 +161,7 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
         deviceClass: 'III',
       },
     ]);
+    selectProgram('a2b4c6d8-0000-0000-0000-000000000pma1');
     renderPma();
     // The PMA surface's pathway word is fixed, so the header reads "PMA" from
     // the first frame; wait for the PROGRAM to resolve (its title in the
@@ -197,6 +201,7 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
         deviceClass: 'III',
       },
     ]);
+    selectProgram('a2b4c6d8-0000-0000-0000-000000000pma2');
     renderPma();
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · PMA · IVD eSTAR')).toBeTruthy(),

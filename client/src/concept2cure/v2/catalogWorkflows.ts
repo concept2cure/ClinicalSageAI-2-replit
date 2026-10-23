@@ -1,4 +1,5 @@
 import { LAUNCH_APPS } from '@shared/constants/launch-scope';
+import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
 
 /** Presentation of the existing work-area composition, never a scope or access decision. */
 interface WorkflowGuidance {
@@ -61,8 +62,9 @@ export function groupCatalogWorkflows<T extends FeatureRow>(groups: readonly Cat
     group.apps.map((row) => ({ row, groupIndex, category: group.group })),
   );
   const areaFor = (id: string) => LAUNCH_APPS.find(area => GUIDANCE[area.id] && (area.surfaces.includes(id) || area.modules.includes(id)));
+  const mdxTerms = 'MDX solutions medical devices diagnostics project workflows';
   const matches = (feature: CatalogFeature<T>) =>
-    `${feature.row.name ?? feature.row.id} ${feature.row.id} ${feature.row.desc} ${feature.category}`.toLocaleLowerCase().includes(needle);
+    `${feature.row.name ?? feature.row.id} ${feature.row.id} ${feature.row.desc} ${feature.category} ${isMdxProjectFeature(feature.row.id) ? mdxTerms : ''}`.toLocaleLowerCase().includes(needle);
   const workflows: WorkflowSection<T>[] = LAUNCH_APPS.flatMap(area => {
     const guidance = GUIDANCE[area.id];
     if (!guidance) return [];

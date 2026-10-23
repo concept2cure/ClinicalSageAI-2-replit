@@ -47,7 +47,7 @@ export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps)
 
   /* CER sections live in the same cerv2_510k_sections table used by 510(k)
      and PMA — the legacy table name spans all three pathways. */
-  const sectionsState = useK510EstarSections(programId);
+  const sectionsState = useK510EstarSections(programId, 'cer');
 
   /* Live safety signals + year-bucketed literature corpus, per-program. */
   const extras = useProgramExtras(programId);

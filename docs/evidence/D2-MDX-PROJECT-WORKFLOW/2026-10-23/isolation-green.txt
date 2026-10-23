@@ -1,0 +1,127 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > requires authenticated organization context 25ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > assembles only the primary document with exact section keys and no invented percentage 17ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > opens an explicitly requested secondary CER without borrowing another project or filing 11ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > reports an absent requested document as empty rather than substituting the primary 9ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > rejects invalid or repeated requested document classes 8ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > keeps a failed content read distinct from an empty document 7ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > preserves current project-sharing denial before reading or auditing content 6ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > does not resolve another tenant or a deleted program 10ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > resolves codes and numeric identifiers through the recorded canonical anchor only 15ms
+ ✓ server/__tests__/routes/k510-document-preview.test.ts > MDX document preview project/document isolation > audits the actual program, document and requested class 8ms
+stderr | client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > a section row passes ITS OWN code and label through onOpenEditor
+An update to GeneratorTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > without an onOpenEditor the affordance is not drawn — no dead buttons
+An update to GeneratorTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > "Open §11 in editor" writes the selected project, docType and section before navigating 276ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > with no selected project, offers Projects and creates no editor target 13ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > a section row passes ITS OWN code and label through onOpenEditor 49ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > without an onOpenEditor the affordance is not drawn — no dead buttons 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > renders all six tabs as a real tablist, with the pathway header 138ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > says so when no program is selected, without inventing one 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > never leaks kit fixtures into an empty tenant (sample mode off) 104ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > the Generator tab shows honest empty sections and routes drafting through AnA 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > supports arrow-key navigation across the tablist 156ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > the literature tab offers per-row recording and refuses a too-short search locally 65ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > keeps an absent secondary report empty without fetching the primary filing outline 66ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > hydrates exact project CER content and retains its canonical section key 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > does not replace a failed content read with an apparently empty section 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > reports an unreadable list as unavailable rather than claiming no report exists 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > withholds cached sections until the current session revalidates the read 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > a 200 that is not { sections: [...] } is reported, not thrown, and never an empty list 64ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > the documented shape adapts to rows, blockers counted 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > requests exact CER sections and preserves hierarchical section keys for editor handoff 53ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > turns only content-bearing sections into leaves (a gap is never invented) 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > honesty fix: a section still in draft/in-review status is built with substantive:false, no matter how long its body is 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > an AI-drafted section with status drafting is not substantive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > an AI-drafted section with status ready_for_review is not substantive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > an AI-drafted section with status ready-for-review is not substantive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > an AI-drafted section with status in-review is not substantive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > honesty fix: a bare placeholder body ("TBD") is built with substantive:false even when status is approved 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > honesty fix: a short stub with no status signal is not substantive (content-length fallback) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > a finalized status with a real, non-trivial body is substantive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > with no status signal at all, a long real body is still substantive (content-length fallback) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > normalizes category/key into a canonical documentType token 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > falls back to sectionKey for code/title/type when fields are missing 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > the produced leaves drive the eSTAR mapper (real, finalized content → readiness) 14ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > honesty fix: a draft-status 510(k) section does NOT drive the eSTAR mapper to present, even though its title matches 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > sectionsToLeaves (authored content → readiness leaves) > handles empty / non-array input safely 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > governedSectionsToDeviceSections (c2c_document_sections → adapter sections) > reads the editor content shapes and derives the documentType from the label 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > governedSectionsToDeviceSections (c2c_document_sections → adapter sections) > applies the governed status vocabulary: locked is substantive, drafted/todo are not 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > reads the program's governed document, tenant-scoped, and never the legacy store 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > reports substantive per section, without changing WHICH sections it returns 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > the legacy store reports substantive too, rather than reporting nothing 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > a program with no governed device document yields no leaves — honest, not the org-wide set 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > resolveDeviceContentScope: a program with authored governed content reads the governed store 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > resolveDeviceContentScope: a program whose governed document is empty or absent falls back to the legacy store, and says so 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > loadDeviceContentLeaves: a failed governed read throws — it is never an empty content set 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > loadAuthoredDeviceSections: a failed governed read throws — it is never an empty section set 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > the section read failing after the document resolved still surfaces 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > a FAILED governed read is not an empty one: it surfaces, never falls back org-wide 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId > names the store that answered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > resolveDeviceContentScope reports the governed document class > a governed PMA program resolves docType 'pma' from the org-scoped document lookup 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > resolveDeviceContentScope reports the governed document class > a 510(k) program resolves its own class, and the legacy fallback carries none 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts > resolveDeviceContentScope reports the governed document class > governed authored sections carry their rule-pack key as sectionCode for package file naming 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > produces byte-identical output for identical input 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > always emits the universal lifecycle scaffolding 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > keeps dependsOn edges pointing only at in-plan packages 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives IVD programs analytical + clinical performance, not bench/clinical-evidence 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives physical devices bench + clinical evidence, not analytical performance 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > adds SaMD software emphasis deliverables 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives "both" the full evidence spread 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits each package id exactly once (no per-filing duplication) 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits ONE analytical-performance package unioning all three filings 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions applicableMarkets across US (510k/clia) and EU (ivdr) filings 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions clinical-performance sections across CLIA and IVDR 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > has no duplicate strings within a package section/market list 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > is tolerant of case/format variants and ignores unknown tokens 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > derives US market from a US-only filing when markets are unspecified 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > names accountable disciplines and conditional specialist benches without inventing assignments 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > preserves unknown versus explicitly absent software, sterility and 510(k) clinical data 2ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > retains SaMD software even with no flags and preserves MDR clinical evaluation 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > keeps diagnostic PER synthesis distinct from MDR CER and reuses analytical/clinical evidence 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > uses performance evidence for a companion diagnostic without adding a device CER track 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — project discipline workflow > tailors strategy and publishing to 510(k), MDR and IVDR without treating other filings as SE 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — extended handoffs > centres an MDR-only evaluation on Clinical Affairs and reuses engineering inputs 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — extended handoffs > keeps every extended dependency valid and acyclic across device and diagnostic plans 6ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > does not seed fictional evidence merely by importing the store 2ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > has no way to install example evidence at all 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > exposes no audit feed of its own — a section's history is the server's 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > empty backend hydration removes what an earlier hydration installed 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > live hydration replaces an earlier hydration rather than merging it 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > distinguishes authorization failures, outages, and empty live data 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > reports live data and loading, and has no sample state 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > does not let cached sections conceal a current permission denial or read failure 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > live audit events attribute only what the client can actually observe > records NO audit event for a section edit — the server owns that entry 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > live audit events attribute only what the client can actually observe > records NO audit event for a file attach — the server owns that entry 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > does not relabel the primary filing as an absent secondary CER or IVDR document 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > uses exact pathway classes rather than partial name matches 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > rejects an unrelated or missing project identity even when the document type matches 0ms
+
+ Test Files  9 passed (9)
+      Tests  94 passed (94)
+   Start at  20:49:09
+   Duration  8.86s (transform 1.63s, setup 295ms, import 3.21s, tests 3.06s, environment 1.32s)
+

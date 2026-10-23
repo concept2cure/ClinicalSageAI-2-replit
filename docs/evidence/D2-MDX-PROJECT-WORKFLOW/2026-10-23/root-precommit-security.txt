@@ -1,0 +1,35 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+scripts/ci/check-launch-scope-api.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e
+  client/src/concept2cure/mdx/workbench/Workbench.tsx (777 lines)
+  client/src/concept2cure/v2/registryModel.ts (1119 lines)
+  client/src/concept2cure/v2/surfaces/DesignControls.tsx (542 lines)
+  client/src/concept2cure/v2/surfaces/HumanFactors.tsx (537 lines)
+  client/src/concept2cure/v2/surfaces/Labeling.tsx (588 lines)
+  client/src/concept2cure/v2/surfaces/ProjectHome.tsx (1958 lines)
+  client/src/concept2cure/v2/surfaces/Risk.tsx (782 lines)
+  client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx (855 lines)
+  server/services/pathway-engines/estar/estar-content-leaves.ts (523 lines)
+  shared/constants/ui-surface-registry.ts (1255 lines)
+  shared/regulatory/work-packages.ts (831 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3407 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete

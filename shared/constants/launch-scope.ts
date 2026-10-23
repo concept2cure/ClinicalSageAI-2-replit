@@ -59,7 +59,19 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // choice, and the New project wizard already persists the filing type.
     // Founder request 2026-10-16: communication is a core client destination.
     // Existing module licensing still applies; no new organisation grant.
-    surfaces: ['projects', 'project-home', 'tasks', 'communication-center'],
+    // Founder request, 2026-10-23: MDX disciplines and pathways are features
+    // of the client's project, not separate applications. Reach the existing
+    // surfaces here; keep every feature's existing commercial verdict. This
+    // list is pinned against MDX_PROJECT_FEATURE_SURFACE_IDS by the scope test.
+    // Literal ids are required by ci:launch-scope's structural parser.
+    surfaces: [
+      'projects', 'project-home', 'tasks', 'communication-center',
+      'device-workstream', 'device-510k', 'device-pma', 'device-cer',
+      'device-diagnostics', 'ivd-completeness', 'device-clinical-studies', 'device-software',
+      'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
+      'device-vault', 'device-tasks', 'device-validation', 'device-submission',
+      'device-analytics', 'design-controls', 'human-factors', 'risk', 'labeling',
+    ],
     modules: ['projects', 'tasks'],
   },
   {

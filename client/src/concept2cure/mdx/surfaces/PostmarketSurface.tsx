@@ -136,6 +136,12 @@ export function PostmarketSurface({
             {documents.length} regulatory submissions in flight. 21 CFR 803 MDR ·
             EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
           </div>
+          <div className="page-sub" data-testid="postmarket-scope">
+            Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.{' '}
+            {program
+              ? `Reporting clocks and the MDR/CAPA deadline metrics are limited to ${program.code || program.title}.`
+              : 'Reporting clocks and the MDR/CAPA deadline metrics cover all projects.'}
+          </div>
         </div>
         <div className="page-actions">
           <button

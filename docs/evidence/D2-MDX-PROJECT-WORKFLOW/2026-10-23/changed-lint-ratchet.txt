@@ -1,0 +1,6 @@
+[ci:eslint-warning-ratchet] --since HEAD (5ff6d2252) -- 23 lintable file(s) changed; linting both versions of each...
+
+    -1  client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx  (17 -> 16)
+    -2  shared/regulatory/work-packages.ts  (4 -> 2)
+
+[ci:eslint-warning-ratchet] net -3 warning(s) across the files changed since HEAD.

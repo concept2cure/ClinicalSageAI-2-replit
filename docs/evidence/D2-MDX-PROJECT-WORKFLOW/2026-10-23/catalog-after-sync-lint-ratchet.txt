@@ -1,0 +1,7 @@
+[ci:eslint-warning-ratchet] --since HEAD (ecc153941) -- 36 lintable file(s) changed; linting both versions of each...
+
+    -1  client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx  (4 -> 3)
+    -2  shared/regulatory/work-packages.ts  (4 -> 2)
+    -4  server/routes/k510-document-preview.ts  (4 -> 0)
+
+[ci:eslint-warning-ratchet] net -7 warning(s) across the files changed since HEAD.
