@@ -181,3 +181,14 @@ TypeScript errors, the full warning ratchet, build and all eighteen repository
 gates on the 623-input merged freeze. No baseline or dependency changed. All
 source-start production/test bytes and incoming filing repairs are represented
 in the final Git-object verification. The human handoff remains 83 Not run cases.
+
+
+The first normal push passed every hook, including zero-error compiler, lint and
+size gates, then Git refused the update because canonical advanced. Its actual
+exit/raw output remain in `implementation-push.*`. `project-intake-merge.json`
+records the normal merge of explicit workspace intake; only the prior Projects
+surface pin changed, with seven source-start production paths unchanged.
+`retry-source-freeze.json` records 649 inputs. The six-suite integration replay
+passed 109 tests, the two additional intake guards passed 40 tests, and the build
+passed. The repeated 17-case source-flow test is not added again as new coverage.
+Normal pre-push checks qualify the complete current compiler before publication.

@@ -514,5 +514,14 @@
         "ci:check-shell-css-collisions"
       ]
     ]
-  ]
+  ],
+  "retryTests": [
+    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx",
+    "shared/__tests__/project-intake-workspace.test.ts",
+    "server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts",
+    "server/routes/c2c/__tests__/projects-create-stated-facts.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx"
+  ],
+  "retrySourceFreeze": "retry-source-freeze.json"
 }
