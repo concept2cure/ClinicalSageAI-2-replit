@@ -129,3 +129,16 @@ The predicate now accepts that actual nullable type. Its equality with the
 required expected digest still refuses null; runtime conditions are unchanged.
 The prior build and scoped cohort pins are retained as executed. The normal full
 compiler must pass again before publication; no baseline or hook was changed.
+
+
+## Canonical catch-up
+
+Ordinary merge `f466464c7` preserves the 13 incoming Authoring PDF and native AnA
+model-provenance commits through `0a7abf314`. All 44 final identity-lane source/
+config inputs match across the merge; the incoming Vault parity test fixture is
+checked separately. The merged production build passed, and the four-file
+packaging/Authoring compatibility cohort passed **66 tests, with one existing
+todo**, with all 48 input hashes stable. See `verification/canonical-merge.json`,
+`build-merged-inputs.json`, `build-merged.txt`, `merged-packaging-inputs.json` and
+`merged-packaging.txt`. Historical core/earlier build records remain source-bound
+to their executed versions. Normal full compiler and push acceptance are pending.
