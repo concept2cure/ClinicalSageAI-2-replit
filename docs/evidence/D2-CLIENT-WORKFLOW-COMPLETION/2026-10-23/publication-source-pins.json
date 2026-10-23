@@ -2,7 +2,7 @@
   "qualifiedSourceCommit": "4c5f2745fa95327721276b85bc8f1a63b8883152",
   "implementationCommit": "8c87144fd",
   "branch": "concept2cure-v2",
-  "recordedAt": "2026-10-23T19:01:52.023899+00:00",
+  "recordedAt": "2026-10-23T19:21:17.803924+00:00",
   "sourcePaths": {
     "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts": "3ea4cfa7774bbbbbb443c7dfd18adcff70918b726f0fb086a0cfe4422baec9eb",
     "client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts": "5dfa2a24a68f280a517620eda0fad529dd49c6b07bec64abc7c5e07946fd2299",
@@ -31,12 +31,20 @@
   "qualification": "qualification-summary.json",
   "humanAcceptance": "Not run",
   "publication": "pending normal push; evidence-only commits preserve the source fingerprints",
-  "integratedHeadBeforePublication": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
+  "integratedHeadBeforePublication": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
   "reportingCatchUp": "reporting-integration-summary.json",
   "safetyGateSource": {
     "scripts/ci/lib/approved-sql-predicates.mjs": "3f977756c9629333aed868b236c743cde78608e9039a64d6f32c75cab1e64d5e",
     "scripts/ci/lib/approved-sql-predicates.test.mjs": "2a0ce4defaae0660d11abd32b49b1a684db2c94f6eee178c99e26bff0029f39c",
     "scripts/ci/check-sql-interpolation.selftest.mjs": "3c1dd471469d64bd9b5cf8933349a610f0ee35a5a2d4dd6a1fbf91632dc0b706"
   },
-  "safetyGateQualification": "sql-predicate-qualification.json"
+  "safetyGateQualification": "sql-predicate-qualification.json",
+  "freshnessCatchUp": "freshness-integration-summary.json",
+  "normalPushGatesBeforeRemoteAdvance": {
+    "sourceHead": "bcbf5877cfc7d16217614e291223408683d1793e",
+    "allGatesPassed": true,
+    "typescriptErrors": 0,
+    "receipt": "canonical-push-2.json",
+    "published": false
+  }
 }

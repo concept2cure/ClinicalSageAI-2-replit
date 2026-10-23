@@ -72,3 +72,27 @@ Incoming reporting evidence retains 277 client passes in 31 suites and 164 backe
 ## Limits
 
 No blocker was found in the bounded incoming diffs. Read-only inspection is not executed merged-source qualification. PGlite and explicit producer/provider/persistence seams do not prove native multi-connection PostgreSQL serialization, real delivery providers, Acrobat/applicant review, agency acceptance, deployment or witnessed human use. Current-access checkpoints do not serialize every independent sharing writer. Attachment late-failure behavior can leave retained historical output while withholding PDF delivery and requiring human review. Existing strict verified-template attachment policy and zero-attachment policy remain unchanged by these incoming increments.
+
+## Saved-section re-filing and Vault passage freshness catch-up
+
+Third review: common ancestor and previous incoming origin `b3e5746f63946e2819e1467d7d49a86b1b3ac6cb`; incoming origin `7184fb1fdb25a549bbf623d54f2d51783ae0d498`. Local HEAD at review was `bcbf5877cfc7d16217614e291223408683d1793e`. No runtime edits, tests or merges were performed by this reviewer.
+
+The incoming range changes 22 source/test paths, including 10 runtime files. Its changed-path set has **zero intersection with the 23 attachment-lane paths** recorded in `prepublication-qualification/qualification-source-freeze.json`. It changes no eSTAR implementation, `readVerifiedVaultBytes`, canonical Vault lifecycle/disposition/current-access helper, or approved SQL-predicate registration. No direct attachment compatibility blocker was found. That historical 23-path freeze already differs from current local bytes in two previously reviewed paths (picker CSS and the workspace comment); this review does not relabel those earlier pins as current.
+
+The explicit `filingOnly` branch of the existing section PATCH repairs a bound section's filed copy from reserved saved text through the canonical writer, without changing its saved section content, timestamp, revisions or attribution. It is separate from rendered PDF/DOCX Vault check-in. The contributor-membership extraction preserves its existing query and ordering. Span integrity primitives move to a small helper with service reexports preserving error identity and lazy executor behavior; the existing workflow gate reuses its stricter bounds/hash check. Missing/invalid provenance refuses, and uncertain commit retains a no-retry reconciliation hold.
+
+Vault passage freshness changes the existing RAG pipeline only. Retrieved hits pin extraction hash and coordinates in the selecting SQL statement; existing candidate checkpoints now drop changed text/extraction/coordinates or unpinned derived text. Generation retains whole-answer refusal. Current actor, tenant, disposition and exact-context verification remain authoritative; eSTAR's original binary read path is unaffected. Dense hashing occurs after the materialized ranking limit. No schema/dependency/provider or alternate store is added.
+
+Suggested bounded provider-free, non-native catch-up (not executed here):
+
+- `tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts` — real mounted router/JWT/PGlite transaction and the registered unchanged-section cases.
+- `client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx` — deliberate action, exact receipt and uncertain-outcome hold.
+- `client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx` — mounted working editor, current owner/access and delayed action guards.
+- `client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx` — ordinary-save/refile UI compatibility.
+- `server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts` — canonical lineage primitive/reexport compatibility.
+- `server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts` — actual lexical/revalidation/context SQL and current-source/disposition counterexamples.
+- `server/services/__tests__/rag-vault-freshness-boundaries.test.ts` — asynchronous retrieval/rerank/compression freshness fences.
+- `server/services/__tests__/rag-vault-freshness-generation.test.ts` — pre-generator and late whole-answer refusal.
+- `server/services/__tests__/rag-vault-freshness-mapping.test.ts` — dense/lexical mapping and SQL snapshot shape without native pgvector.
+
+Incoming historical qualification reports 595 passes in 32 files for the saved-section work and 269 in 27 for freshness, with later separate source-bound compatibility runs. These overlapping counts are not added or claimed as our merged rerun. Owner-mode PGlite and synthetic provider/acknowledgment seams do not qualify native concurrency or agency delivery. Freshness cannot recall content already sent to a provider; historical citation rows may remain after a late refusal. Saved-section pending state is not a persistent cross-reload idempotency/reconciliation protocol, and missing legacy provenance is not reconstructed.

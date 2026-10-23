@@ -120,8 +120,23 @@ component checks, not a live authenticated application or PDF-editor session.
 A later canonical reporting merge adds a separate **173 passed across 13 files**,
 zero failures/skips, and a successful rebuilt product. All 23 qualified eSTAR
 implementation fingerprints remain unchanged. This separate epoch is retained
-in `reporting-integration-summary.json`; the normal pre-push compiler gate must
-pass on the integrated publication head.
+in `reporting-integration-summary.json`. The normal pre-push compiler then
+passed with zero errors on `bcbf5877c`; every normal push gate passed before
+Git refused a concurrent remote advance. See `canonical-push-2.json` and its
+unmodified compressed output.
+
+A further normal merge integrates Vault passage freshness and saved authoring
+section refiling at `5b9b4511c`. Its separate integration epoch has **158 passed
+across 12 files**, zero failures/skips, and a successful production build.
+All 23 qualified eSTAR source fingerprints remain unchanged. The independent
+incoming review found no changed canonical attachment dependency or bounded
+compatibility blocker. See `freshness-integration-summary.json`; publication
+still requires the normal integrated pre-push compiler gate.
+
+The additional saved-text-to-filing contract passes **93 cases in one file**
+on that same integrated source, using the real router and canonical migrations
+through the existing PGlite harness. This is a separate epoch, retained in
+`freshness-filing-contract.json`, and is not added to the preceding run's count.
 
 ## Publication gate correction
 

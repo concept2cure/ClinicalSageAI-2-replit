@@ -29,7 +29,7 @@
     "sourceHead": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
     "build": "passed",
     "all23ImplementationFilesUnchanged": true,
-    "typescript": "normal pre-push gate required"
+    "typescript": "passed with zero errors in normal pre-push at bcbf5877c; remote advancement refused publication"
   },
   "publicationGateCorrection": {
     "firstPush": "canonical-push-1.json",
@@ -39,5 +39,24 @@
     "gateSelfTestsPassed": 35,
     "repositorySqlGate": "passed",
     "details": "sql-predicate-qualification.json"
+  },
+  "freshnessCatchUp": {
+    "passed": 158,
+    "files": 12,
+    "failed": 0,
+    "skipped": 0,
+    "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+    "build": "passed",
+    "all23ImplementationFilesUnchanged": true,
+    "typescript": "normal integrated pre-push gate required",
+    "details": "freshness-integration-summary.json"
+  },
+  "freshnessFilingContract": {
+    "passed": 93,
+    "files": 1,
+    "failed": 0,
+    "skipped": 0,
+    "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+    "details": "freshness-filing-contract.json"
   }
 }
