@@ -1,0 +1,10 @@
+{
+  "verdict": "CLEAR",
+  "reviewer": "unicode_read_inventory",
+  "findings": [
+    "End shift preserves bound and nonempty",
+    "Next-start shift preserves coverage and progress, reduces overlap at most one",
+    "Historical reindex and separate read/receipt limits explicit",
+    "codePointAt boundary checks do not duplicate existing window subsystems"
+  ]
+}
