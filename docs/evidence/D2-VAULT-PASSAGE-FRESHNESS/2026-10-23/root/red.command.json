@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-VAULT-PASSAGE-FRESHNESS/2026-10-23/root/red.results.json"
+  ],
+  "node": "v22.23.3",
+  "head": "526e86cba58dcca26e4b42b536e8315d45bdd9d1",
+  "sha256": {
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts": "893204d8034c840a3aaefeeb1c203fc87c2ebef755f46aebd040595ff840fc00",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts": "67e2be1e1996597285b8bb9e0e13e18180d7b1c341a18ba14e6be8400a75d587",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts": "4d1a258f025cc4fc77cdc6bd20677a24d0fa00360550b4375f0e113ed813c6f1",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts": "3b761c6ea7a93d75fe815dad362b1c101c33ef0baee64345793d0da4833b297b",
+    "server/services/advancedRAGPipeline.ts": "994fc4c396f088beb1c3803b113c481ebdcef63c0f15c9507c6fd1edcc3d10f6"
+  }
+}
