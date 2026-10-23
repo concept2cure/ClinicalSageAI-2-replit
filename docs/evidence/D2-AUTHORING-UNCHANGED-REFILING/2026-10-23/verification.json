@@ -94,12 +94,14 @@
     "ceilingsUnchanged": true
   },
   "finalPublicationInputs": {
-    "supplement": "reporting-integration.json",
-    "sourceCommit": "784db6fff7baf0dafd2bf8d9384c27730d01e21e",
-    "all143PostSplitPinsUnchanged": true,
-    "reportingIntegrationTestsPassed": 91,
-    "reportingIntegrationFiles": 5,
+    "supplement": "vault-freshness-integration.json",
+    "sourceCommit": "7442c4cfab3f7f9000987c91aec85ea799cb24c1",
+    "all198EarlierPinsUnchanged": true,
+    "upstream65FreshnessPinsMatch": true,
+    "freshnessIntegrationTestsPassed": 38,
+    "freshnessIntegrationFiles": 3,
     "freshProductionBuildPassed": true,
+    "previousMandatoryGatesAndTypecheckPassedButRefRaced": true,
     "mandatoryCombinedPushAndTypecheckRequired": true
   }
 }

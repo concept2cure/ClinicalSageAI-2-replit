@@ -137,6 +137,16 @@ source-bound upstream reporting cohorts and required combined TypeScript/push
 gates. Earlier counts and full compiler results keep their exact source scope;
 nothing is added across overlapping runs.
 
+Every mandatory push gate, including zero-error TypeScript, then passed at
+`dd71e2b49`; the remote advanced during that check and Git refused the push.
+Vault passage freshness at `7fab2aa65` merged cleanly at `7442c4cfa`, leaving
+all 198 earlier inputs unchanged. All 65 incoming freshness pins match the
+merged source. A separate **38-case, three-suite freshness/Authoring check**
+and fresh production build pass. `vault-freshness-integration.json` is the
+final input manifest and preserves the successful-check/ref-race evidence;
+publication requires the complete normal push hook again. Historical 269/27
+upstream freshness cases remain separate from every earlier run.
+
 ## Reproduction and limits
 
 ```sh
