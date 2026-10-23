@@ -1,0 +1,34 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings",
+    "0",
+    "server/services/market-specs/document-preparation.ts",
+    "server/services/market-specs/shared-planning-preparation.ts",
+    "server/services/ana/builtin-template-reference.ts",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:32:58.905030+00:00",
+  "elapsedSeconds": 1.767,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourcesBefore": {
+    "server/services/market-specs/document-preparation.ts": "4c0bece7828eaf6fbafa135c1e20aac5c4596f06ebf120a7d324d91b2f8cc628",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourcesAfter": {
+    "server/services/market-specs/document-preparation.ts": "4c0bece7828eaf6fbafa135c1e20aac5c4596f06ebf120a7d324d91b2f8cc628",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "bf68a5c6e868b18d7162c7c081c79be41d6096c79575ff5fad08ed7cf05a700f",
+  "testSummary": []
+}

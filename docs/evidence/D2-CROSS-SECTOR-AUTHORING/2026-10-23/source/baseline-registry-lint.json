@@ -1,0 +1,44 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--stdin",
+    "--stdin-filename",
+    "shared/regulatory/global-document-registry.ts",
+    "--format",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:31:28.443939+00:00",
+  "elapsedSeconds": 1.153,
+  "exitCode": 0,
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourcesBefore": {
+    "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+    "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0",
+    "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "sourcesAfter": {
+    "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+    "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0",
+    "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "rawOutput": "baseline-registry-lint.log.gz",
+  "rawGzipSha256": "a330322b5feb98861f74765c6ac5cfdb9ad12f45f5c14ce6f791c01240fbbd98",
+  "summary": []
+}

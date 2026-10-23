@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-10-23T18:04:13.429772+00:00",
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "HEAD:refs/heads/concept2cure-v2"
+  ],
+  "head": "3a57ddb4093403778aac860bbfb6691d1609781b",
+  "elapsedSeconds": 69.36,
+  "exitCode": 1,
+  "verifiedPublishedInputCount": 122,
+  "rawOutput": "implementation-push.log.gz",
+  "rawGzipSha256": "87c60e598c2d102ae907e7ad39793d01cff1e44ec3adfa6faba772f9d5da0754",
+  "hooks": "Normal configured hooks; no force, bypass or PR",
+  "inputVerificationScope": "122 HEAD committed-file bytes verified before the failed push; this receipt does not record publication."
+}

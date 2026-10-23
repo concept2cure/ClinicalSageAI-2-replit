@@ -618,6 +618,13 @@ export function isDeviceRegistryEntry(entry: RegulatoryApplicationType): boolean
       && entry.productClass.every(product => product === 'medical_device' || product === 'ivd'));
 }
 
+/** Existing internal planning records only; never an agency filing or a GxP package. */
+export function isSharedPlanningRegistryEntry(entry: RegulatoryApplicationType): boolean {
+  return entry.active && ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'].includes(entry.id)
+    && entry.region === 'GLOBAL' && entry.segment === 'cross_cutting' && entry.category === 'regulatory_intelligence'
+    && entry.submissionFormat === 'none' && entry.dossierStandard === 'none';
+}
+
 export function getApplicationType(id: string): RegulatoryApplicationType | undefined {
   return GLOBAL_REGISTRY.find(e => e.id === id);
 }

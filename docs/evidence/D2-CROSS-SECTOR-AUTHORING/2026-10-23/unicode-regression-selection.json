@@ -1,0 +1,14 @@
+{
+  "reason": "New UTF16-safe chunk boundaries: fresh Unicode/storage/properties regression, existing atomic writer/tenancy/backfill, passage spans/search context and actual editor selected-source lineage. No new module or source-access policy.",
+  "files": [
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts",
+    "server/services/vault/__tests__/document-chunking.service.test.ts",
+    "server/services/vault/__tests__/document-chunking.tenancy.test.ts",
+    "server/services/vault/__tests__/document-chunking-backfill.service.test.ts",
+    "server/services/vault/__tests__/passage-context-span.test.ts",
+    "server/services/vault/__tests__/document-passage-search-context.test.ts",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts"
+  ]
+}

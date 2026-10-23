@@ -70,7 +70,13 @@ beforeEach(async () => {
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
   await authService.adoptSession(bearer); publishShellProject({ id: PROGRAM, title: 'Source program' });
   apiRequest.mockReset().mockImplementation(async (method: string, path: string, input?: AssemblyPreviewInput) => {
-    if (readBodies.has(path)) return ok(readBodies.get(path));
+    const request = new URL(path, 'http://localhost');
+    if (readBodies.has(request.pathname)) {
+      if (/^\/api\/authoring\/docs\/[^/]+(?:\/sections)?$/.test(request.pathname)) {
+        expect(request.searchParams.get('programId')).toBe(PROGRAM);
+      }
+      return ok(readBodies.get(request.pathname));
+    }
     if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources?`)) return ok({ sources: [], projectId: PROGRAM, total: 0, currentTotal: 0 });
     if (method === 'POST' && path.endsWith('/assembly/preview')) return ok({ success: true, data: plan(input!) });
     if (method === 'POST' && path.endsWith('/assembly/commit')) return ok({ success: true, data: { docId: TARGET, programId: PROGRAM, plan: plan(input!), sections: [targetSection] } });

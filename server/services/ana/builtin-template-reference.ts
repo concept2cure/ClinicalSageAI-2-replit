@@ -1,6 +1,6 @@
 /** Regional UUID references use the same canonical scaffold as editor creation. */
 import { stableStringify } from '../../../shared/canonical-json';
-import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { getApplicationType, isSharedPlanningRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import { getBuiltinAuthoringTemplate, builtinTemplateReference, builtinTemplateSnapshot,
   type BuiltinAuthoringTemplate } from '../authoring/builtin-authoring-templates';
 import { buildDocumentPreparation, isDeviceDocumentScope, resolveDocumentPreparationScope,
@@ -28,9 +28,9 @@ function checkedRegistry(template: BuiltinAuthoringTemplate, request: ReferenceR
   }
   const registryId = request.registryId || context.registryId || undefined;
   const entry = registryId ? getApplicationType(registryId) : undefined;
-  if (registryId && (!entry?.active || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry }))
+  if (registryId && (!entry?.active || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry }) && !isSharedPlanningRegistryEntry(entry))
     || !['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region))) {
-    throw new Error('Use an exact active medicinal-product, device or diagnostics registry filing in the supported markets.');
+    throw new Error('Use an exact active medicinal-product, device, diagnostics or shared planning registry entry in the supported markets.');
   }
   return registryId;
 }

@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-23T18:05:38.053396+00:00",
+  "base": "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+  "remote": "0fff4da02f2d42cca7c2770fe1f2ef8c651f790d",
+  "incomingPaths": [
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/CONTRACT.md",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/INVENTORY.md",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/README.md",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/baseline-inputs.json",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/contract-review.json",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-baseline.json",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-baseline.raw.json",
+    "docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-baseline.stderr.txt"
+  ],
+  "reason": "Normal first push passed all hooks but was rejected because another canonical writer advanced the branch."
+}
