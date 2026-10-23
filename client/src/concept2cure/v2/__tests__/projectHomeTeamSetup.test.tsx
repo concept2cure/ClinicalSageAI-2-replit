@@ -2,15 +2,17 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 import type { ProjectSharingResponse } from '@shared/project-sharing';
 
 const request = vi.hoisted(() => vi.fn());
-const identity = vi.hoisted(() => ({ user: { id: '7', organizationId: '4' } as { id: string; organizationId: string } | null }));
 const tenant = vi.hoisted(() => ({ currentOrganization: { id: 4 }, currentClientWorkspace: { id: '9', organizationId: '4' } }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => identity.user }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }), useAuthUser: () => actual.authService.getUser() };
+});
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => tenant }));
+import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 
 const PID = '11111111-1111-4111-8111-111111111111';
@@ -21,6 +23,8 @@ const URL = `/api/concept2cure/projects/51/sharing?programId=${PID}`;
 const props = { surface: { id: 'project-home' } as never, segment: 'biopharma', onNav: vi.fn(), onAsk: vi.fn() };
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data }) }) as Response;
 const token = (id = 7, org = 4) => `x.${btoa(JSON.stringify({ userId: id, organizationId: org }))}.x`;
+const session = (actor = 7, org = 4) => authService.setToken(token(actor, org),
+  { id: String(actor), organizationId: String(org), permissions: [] }, 'fixture-refresh', 3600);
 function sharing(): ProjectSharingResponse {
   return { projectId: 'proj_51', programId: PID, organizationId: 4, actorUserId: 7, clientWorkspaceId: 9,
     visibility: 'org_public', legacyFallbackApplied: false, canManage: true,
@@ -41,7 +45,7 @@ function serve(teamResponse: Response | Promise<Response> = ok(TEAM), sharingRes
   });
 }
 beforeEach(() => {
-  identity.user = { id: '7', organizationId: '4' }; setAuthToken(token());
+  session();
   tenant.currentOrganization = { id: 4 }; tenant.currentClientWorkspace = { id: '9', organizationId: '4' };
   window.C2C_PROJECT = { id: PID, title: 'Programme A' };
 });
@@ -65,7 +69,7 @@ describe('team anchors belong to the current authenticated scope', () => {
       return ok({});
     });
     const before = request.mock.calls.filter(([, path]) => path.includes('/sharing')).length;
-    identity.user = { id: String(actor), organizationId: String(org) }; setAuthToken(token(actor, org));
+    session(actor, org);
     tenant.currentOrganization = { id: org }; tenant.currentClientWorkspace = { id: String(workspace), organizationId: String(org) };
     view.rerender(<ProjectHome {...props} />);
     expect(screen.queryByLabelText('Organization member')).toBeNull();
@@ -78,7 +82,7 @@ describe('team anchors belong to the current authenticated scope', () => {
       expect.objectContaining({ Authorization: `Bearer ${token(actor, org)}`, 'x-client-id': String(workspace) })));
   });
 });
-afterEach(() => { cleanup(); clearAuthToken(); request.mockReset(); delete window.C2C_PROJECT; });
+afterEach(() => { cleanup(); authService.endSession(null); request.mockReset(); delete window.C2C_PROJECT; });
 
 describe('ProjectHome reaches its existing sharing controls', () => {
   it('uses the admitted numeric anchor and offers only human Use/Edit choices', async () => {

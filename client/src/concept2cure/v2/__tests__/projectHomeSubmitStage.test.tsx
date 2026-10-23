@@ -51,6 +51,7 @@ vi.mock('@/services/portal/authService', async (importOriginal) => {
   return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }),
     useAuthUser: () => actual.authService.getUser() };
 });
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 1 }, currentClientWorkspace: null }) }));
 
 import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';

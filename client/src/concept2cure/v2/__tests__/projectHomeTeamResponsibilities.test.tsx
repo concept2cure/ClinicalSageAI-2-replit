@@ -6,6 +6,12 @@ import type { ProjectTeamMember, ProjectTeamResponse } from '@shared/project-tea
 
 const request = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }), useAuthUser: () => actual.authService.getUser() };
+});
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 4 }, currentClientWorkspace: { id: '9', organizationId: '4' } }) }));
+import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
@@ -34,8 +40,12 @@ function pendingRead() {
   let resolve!: (response: Response) => void;
   return { promise: new Promise<Response>(done => { resolve = done; }), resolve: (response: Response) => resolve(response) };
 }
-beforeEach(() => { window.C2C_PROJECT = { id: A, title: 'Programme A' }; });
-afterEach(() => { cleanup(); request.mockReset(); delete window.C2C_PROJECT; });
+beforeEach(() => {
+  authService.setToken(`x.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.x`,
+    { id: '7', organizationId: '4', permissions: [] }, 'fixture-refresh', 3600);
+  window.C2C_PROJECT = { id: A, title: 'Programme A' };
+});
+afterEach(() => { cleanup(); authService.endSession(null); request.mockReset(); delete window.C2C_PROJECT; });
 
 describe('ProjectHome sourced responsibility integration', () => {
   it('renders disambiguated identities and publishes identity/source facts to AnA without contact details', async () => {

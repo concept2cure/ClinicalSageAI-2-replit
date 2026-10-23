@@ -40,6 +40,7 @@ import type { ProjectTeamResponse } from '@shared/project-team';
 import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { ProjectSide } from './ProjectSide';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
+import { ProjectSettings } from './ProjectSettings';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1519,11 +1520,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
-  const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
+  const [metadataEpoch, setMetadataEpoch] = useState(0);
+  const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null, [pid, metadataEpoch]);
   const teamActor = useAuthUser();
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
-  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
+  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
   const dossier = useProjectDossier(pid);
@@ -1790,22 +1792,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             </section>
           )}
         </div>
-        {/* ── The ⋯ button called "Project settings" is gone ─────────────────
-            Its handler was `onNav('projects')`: it did not open settings, it
-            threw the user out of the project workspace they were in and back
-            to the all-projects list — the exact opposite of what its tooltip
-            promised, and a duplicate of the "All projects" control two rows
-            above it.
-
-            It is removed rather than relabelled or rewired because there is
-            nothing behind it: `shared/constants/ui-surface-registry.ts` has no
-            project-settings surface, and `server/routes/c2c/projects.ts`
-            exposes no PATCH/PUT for a regulatory program at all (only POST /,
-            POST /:id/evidence and DELETE /:id/evidence/:evId). A project's
-            settings cannot be edited anywhere in the product today, so any
-            destination this button reached would be a second lie in place of
-            the first. When a settings surface and its governed write exist,
-            this is where the control belongs. */}
+        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
 
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict

@@ -85,6 +85,8 @@ import { regulatoryPrograms, type PredicateDevice } from '../../../shared/schema
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import type { RequestDb } from '../../db/requestDb.js';
 import { REGULATORY_PATHS } from '../../../shared/constants/domain/device-classification.js';
+import { isRealCalendarDay } from '../../../shared/calendar-day.js';
+export { isRealCalendarDay } from '../../../shared/calendar-day.js';
 import {
   DEVICE_CLASSES,
   IVDR_CLASSES,
@@ -114,22 +116,6 @@ const optionalPredicateText = (max: number) =>
       const t = (v ?? '').trim();
       return t.length > 0 ? t : undefined;
     });
-
-/**
- * Whether 'YYYY-MM-DD' names a day that exists.
- *
- * The shape was the only check, and `new Date('2026-02-30')` is 2 March: a day
- * not on the calendar was stored silently as another one. `2026-13-45` matched
- * the pattern too and then threw inside the writer — AFTER the interview
- * session had moved to 'committing', which left the interview dead, because a
- * `complete` session takes no further answers and every retry failed the same
- * way (2026-10-13 audit). The only honest test is the round trip.
- */
-export function isRealCalendarDay(day: string): boolean {
-  const parsed = new Date(`${day}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.getTime())) return false;
-  return parsed.toISOString().slice(0, 10) === day;
-}
 
 const MAX_PREDICATE_DEVICES = 10;
 

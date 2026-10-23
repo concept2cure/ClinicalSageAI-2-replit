@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-10-23T20:27:01.259Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T20:27:01.260Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-10-23T20:27:01.262Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reads saved scope and a bound revision, deriving current mutation authority 189ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > saves the three normalized fields and actual chained reason/before/after receipt atomically 131ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > clears optional values and writes only actual differences 99ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > preserves a recorded calendar day in year 0001 through the canonical writer 82ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {} 44ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"description":3} 46ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"priority":"urgent"} 34ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-02-29"} 44ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"0000-01-01"} 36ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-3-04"} 41ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"name":"Changed"} 38ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"leadUserId":13} 43ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"status":"archived"} 37ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"metadata":{}} 38ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses strict, forbidden or invalid patches: {"clientWorkspaceId":2} 36ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses unknown envelope fields, short reason and malformed revision 62ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses an unchanged-only patch and a retired revision without audit 94ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > retires revisions when the canonical workspace changes 66ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 2 40ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 3 51ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 0 26ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 2147483648 33ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 1.0 30ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim 01 35ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > strict settings and stale-edit refusals > refuses malformed or mismatched client claim null 35ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > uses current lead/role/active membership and rejects a share edit as program management 94ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rechecks actor admission inside the owned transaction 36ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > keeps archived programs read-only without adding an inactive-workspace policy 61ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > conceals a foreign program and refuses an unresolved foreign workspace relationship 24ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > fails unavailable for unverifiable saved values instead of inventing a priority 15ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > retires private read access when a saved share is revoked 35ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > preserves the canonical open role vocabulary for a current programme lead 92ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rolls the actual profile update back when the canonical audit insert fails 71ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > rolls profile and audit back if the final saved receipt cannot be read before COMMIT 69ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > reports uncertainty after actual COMMIT with a lost reply and discards once without subsequent SQL 89ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > current admission and honest transaction outcomes > reports uncertainty when rollback acknowledgement is lost, and never reuses that connection 75ms
+ ✓ server/routes/c2c/__tests__/project-settings.pglite.test.ts > nullable legacy canonical workspace > retains a null parent without a resolver fallback and refuses any supplied client claim 99ms
+
+ Test Files  1 passed (1)
+      Tests  37 passed (37)
+   Start at  20:26:51
+   Duration  18.52s (transform 6.53s, setup 114ms, import 1.19s, tests 16.81s, environment 0ms)

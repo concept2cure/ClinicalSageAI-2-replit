@@ -31,6 +31,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }), useAuthUser: () => actual.authService.getUser() };
+});
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 4 }, currentClientWorkspace: { id: '9', organizationId: '4' } }) }));
+import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
@@ -80,10 +86,13 @@ function Probe({ onCtx }: { onCtx: (c: SurfaceContext | null) => void }) {
 }
 
 beforeEach(() => {
+  authService.setToken(`x.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.x`,
+    { id: '7', organizationId: '4', permissions: [] }, 'fixture-refresh', 3600);
   (window as any).C2C_PROJECT = { id: PID, title: 'BX-512' };
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as any).C2C_PROJECT;
 });
 
