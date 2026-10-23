@@ -1,0 +1,954 @@
+Updating 7fab2aa65..035ee6854
+Fast-forward
+ .../__tests__/useEstarExport.attachments.test.ts   |  227 ++
+ .../mdx/hooks/estarAttachmentReceipt.ts            |   89 +
+ .../src/concept2cure/mdx/hooks/useEstarExport.ts   |  173 +-
+ .../mdx/surfaces/OfficialEstarAttachments.tsx      |  160 ++
+ .../mdx/surfaces/OfficialEstarPanel.tsx            |   32 +-
+ .../OfficialEstarPanel.attachments.test.tsx        |  222 ++
+ .../__tests__/OfficialEstarPanel.render.test.tsx   |   15 +
+ .../__tests__/authoringSaveFilingCommit.test.tsx   |   30 +
+ .../newProjectWizardCrossLaneSearch.test.tsx       |    8 +-
+ .../newProjectWizardEuDeviceClasses.test.tsx       |   23 +-
+ .../v2/__tests__/newProjectWizardFailure.test.tsx  |   32 +-
+ .../v2/__tests__/newProjectWizardName.test.tsx     |   24 +-
+ .../__tests__/newProjectWizardNotOffered.test.tsx  |   16 +-
+ .../newProjectWizardPredicatePair.test.tsx         |   20 +-
+ .../newProjectWizardRegionalDevices.test.tsx       |   11 +-
+ .../newProjectWizardRegulatedChoices.test.tsx      |   30 +-
+ .../__tests__/newProjectWizardWorkspace.test.tsx   |  308 +++
+ .../v2/__tests__/projectDiscoveryHandoff.test.tsx  |   31 +-
+ .../v2/__tests__/projectIntakeFixture.ts           |   31 +
+ .../v2/__tests__/vaultSearchSelection.test.tsx     |    1 +
+ .../v2/__tests__/vaultVersionPicker.test.tsx       |   13 +
+ .../v2/editor/AuthoringRefileSavedText.tsx         |   97 +
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |   21 +-
+ .../__tests__/authoringRefileSavedText.test.tsx    |  141 +
+ .../__tests__/workbenchDocumentAccess.test.tsx     |  166 ++
+ .../v2/editor/authoringRefileSavedTextState.ts     |   90 +
+ client/src/concept2cure/v2/mutationOutcome.ts      |    5 +
+ client/src/concept2cure/v2/styles/vault-picker.css |    6 +-
+ client/src/concept2cure/v2/surfaces/Projects.tsx   |  283 +-
+ .../v2/surfaces/SubmissionSeqWorkspaces.tsx        |    7 +-
+ .../v2/surfaces/VaultLibraryResults.tsx            |    5 +-
+ .../v2/surfaces/projectIntakeRequest.ts            |   50 +
+ docs/LAUNCH_DEFINITION_OF_DONE.md                  |    9 +-
+ docs/design/AUTHORING_UNCHANGED_REFILING.md        |  210 ++
+ ...ESTAR_VAULT_ATTACHMENT_COMPLETION_2026-10-23.md |  123 +
+ .../evidence/D2-AUTHORING-PDF/2026-10-23/README.md |   10 +
+ .../2026-10-23/README.md                           |  173 ++
+ .../2026-10-23/client.json                         |  767 ++++++
+ .../2026-10-23/final-integration-test-files.json   |   10 +
+ .../2026-10-23/final-integration-tests.json        |  322 +++
+ .../2026-10-23/final-integration.json              |  599 +++++
+ .../2026-10-23/late-incoming-test-files.json       |   16 +
+ .../2026-10-23/late-incoming-tests.json            |  625 +++++
+ .../2026-10-23/late-incoming.json                  |  136 +
+ .../2026-10-23/lint.json                           |  160 ++
+ .../2026-10-23/red-proof.json                      |   73 +
+ .../2026-10-23/reporting-integration-tests.json    |  137 +
+ .../2026-10-23/reporting-integration.json          |  851 ++++++
+ .../2026-10-23/server.json                         |   95 +
+ .../2026-10-23/size-split-qualification.json       |  708 +++++
+ .../2026-10-23/size-split-tests.json               |  335 +++
+ .../2026-10-23/source-manifest.json                |  295 ++
+ .../2026-10-23/test-files.json                     |   34 +
+ .../2026-10-23/tests.json                          |  864 ++++++
+ .../2026-10-23/typecheck-result.json               |    6 +
+ .../2026-10-23/unchanged-boundaries.json           |   97 +
+ .../vault-freshness-integration-tests.json         |   72 +
+ .../2026-10-23/vault-freshness-integration.json    | 1107 ++++++++
+ .../2026-10-23/verification.json                   |  107 +
+ .../2026-10-23/README.md                           |  177 ++
+ .../2026-10-23/artifact-manifest.json              |  330 +++
+ .../2026-10-23/audit-repo-health-ceiling.json      |   16 +
+ .../2026-10-23/audit-repo-health-ceiling.log.gz    |  Bin 0 -> 193 bytes
+ .../2026-10-23/backend-eslint-after.json           |    1 +
+ .../backend-eslint-before-plan-test.json           |    1 +
+ .../2026-10-23/backend-eslint-before-route.json    |    1 +
+ .../2026-10-23/backend-green-composed.json         |    1 +
+ .../2026-10-23/backend-green-composed.log.gz       |  Bin 0 -> 177 bytes
+ .../2026-10-23/backend-green-final.json            |    1 +
+ .../2026-10-23/backend-green-final.log.gz          |  Bin 0 -> 172 bytes
+ .../2026-10-23/backend-green-initial.json          |    1 +
+ .../2026-10-23/backend-green-initial.log.gz        |  Bin 0 -> 173 bytes
+ .../2026-10-23/backend-qualification.json          |   95 +
+ .../2026-10-23/backend-red-expanded.json           |    1 +
+ .../2026-10-23/backend-red-expanded.log.gz         |  Bin 0 -> 180 bytes
+ .../2026-10-23/backend-red-qualified.json          |    1 +
+ .../2026-10-23/backend-red-qualified.log.gz        |  Bin 0 -> 183 bytes
+ .../2026-10-23/backend-red.json                    |    1 +
+ .../2026-10-23/backend-red.log.gz                  |  Bin 0 -> 165 bytes
+ .../2026-10-23/canonical-integration.log.gz        |  Bin 0 -> 4419 bytes
+ .../2026-10-23/canonical-push-1.json               |   18 +
+ .../2026-10-23/canonical-push-1.log.gz             |  Bin 0 -> 2750 bytes
+ .../2026-10-23/canonical-push-2.json               |   18 +
+ .../2026-10-23/canonical-push-2.log.gz             |  Bin 0 -> 4584 bytes
+ .../2026-10-23/canonical-push-3.json               |   18 +
+ .../2026-10-23/canonical-push-3.log.gz             |  Bin 0 -> 4485 bytes
+ .../2026-10-23/canonical-push-4.json               |   18 +
+ .../2026-10-23/canonical-push-4.log.gz             |  Bin 0 -> 4387 bytes
+ .../2026-10-23/ci-action-overclaim.json            |   16 +
+ .../2026-10-23/ci-action-overclaim.log.gz          |  Bin 0 -> 76 bytes
+ .../2026-10-23/ci-canvas-path.json                 |   16 +
+ .../2026-10-23/ci-canvas-path.log.gz               |  Bin 0 -> 166 bytes
+ .../2026-10-23/ci-check-shell-css-collisions.json  |   16 +
+ .../ci-check-shell-css-collisions.log.gz           |  Bin 0 -> 141 bytes
+ .../2026-10-23/ci-class-vocabulary.json            |   16 +
+ .../2026-10-23/ci-class-vocabulary.log.gz          |  Bin 0 -> 90 bytes
+ .../2026-10-23/ci-design-system.json               |   16 +
+ .../2026-10-23/ci-design-system.log.gz             |  Bin 0 -> 125 bytes
+ .../2026-10-23/ci-empty-state-honesty.json         |   16 +
+ .../2026-10-23/ci-empty-state-honesty.log.gz       |  Bin 0 -> 91 bytes
+ .../2026-10-23/ci-filing-exit-agreement.json       |   16 +
+ .../2026-10-23/ci-filing-exit-agreement.log.gz     |  Bin 0 -> 157 bytes
+ .../2026-10-23/ci-internals-in-copy.json           |   16 +
+ .../2026-10-23/ci-internals-in-copy.log.gz         |  Bin 0 -> 89 bytes
+ .../2026-10-23/ci-single-native-canvas.json        |   16 +
+ .../2026-10-23/ci-single-native-canvas.log.gz      |  Bin 0 -> 79 bytes
+ .../2026-10-23/ci-success-before-ok.json           |   16 +
+ .../2026-10-23/ci-success-before-ok.log.gz         |  Bin 0 -> 79 bytes
+ .../2026-10-23/ci-surface-text-ramp.json           |   16 +
+ .../2026-10-23/ci-surface-text-ramp.log.gz         |  Bin 0 -> 94 bytes
+ .../2026-10-23/ci-token-cascade.json               |   16 +
+ .../2026-10-23/ci-token-cascade.log.gz             |  Bin 0 -> 755 bytes
+ .../2026-10-23/ci-token-contrast.json              |   16 +
+ .../2026-10-23/ci-token-contrast.log.gz            |  Bin 0 -> 169 bytes
+ .../2026-10-23/ci-undefined-css-classes.json       |   16 +
+ .../2026-10-23/ci-undefined-css-classes.log.gz     |  Bin 0 -> 112 bytes
+ .../2026-10-23/ci-vault-document-writers.json      |   16 +
+ .../2026-10-23/ci-vault-document-writers.log.gz    |  Bin 0 -> 105 bytes
+ .../2026-10-23/discovery-source-pins.json          |   20 +
+ .../2026-10-23/freshness-filing-contract-runner.py |   11 +
+ .../freshness-filing-contract-test-results.json    |    1 +
+ .../2026-10-23/freshness-filing-contract.json      |   16 +
+ .../2026-10-23/freshness-filing-contract.log.gz    |  Bin 0 -> 10657 bytes
+ .../2026-10-23/freshness-integration-build.json    |   13 +
+ .../2026-10-23/freshness-integration-build.log.gz  |  Bin 0 -> 4684 bytes
+ .../2026-10-23/freshness-integration-merge.log.gz  |  Bin 0 -> 2427 bytes
+ .../2026-10-23/freshness-integration-runner.py     |   11 +
+ .../2026-10-23/freshness-integration-summary.json  |  106 +
+ .../freshness-integration-test-results.json        |    1 +
+ .../2026-10-23/freshness-integration-tests.json    |   28 +
+ .../2026-10-23/freshness-integration-tests.log.gz  |  Bin 0 -> 11642 bytes
+ .../2026-10-23/implementation-files.json           |   25 +
+ .../2026-10-23/incoming-review.md                  |  126 +
+ .../2026-10-23/independent-review.md               |  250 ++
+ .../audit-repo-health-ceiling.json                 |   16 +
+ .../audit-repo-health-ceiling.log.gz               |  Bin 0 -> 193 bytes
+ .../initial-qualification/ci-action-overclaim.json |   16 +
+ .../ci-action-overclaim.log.gz                     |  Bin 0 -> 76 bytes
+ .../initial-qualification/ci-canvas-path.json      |   16 +
+ .../initial-qualification/ci-canvas-path.log.gz    |  Bin 0 -> 166 bytes
+ .../ci-check-shell-css-collisions.json             |   16 +
+ .../ci-check-shell-css-collisions.log.gz           |  Bin 0 -> 141 bytes
+ .../initial-qualification/ci-class-vocabulary.json |   16 +
+ .../ci-class-vocabulary.log.gz                     |  Bin 0 -> 90 bytes
+ .../initial-qualification/ci-design-system.json    |   16 +
+ .../initial-qualification/ci-design-system.log.gz  |  Bin 0 -> 125 bytes
+ .../ci-empty-state-honesty.json                    |   16 +
+ .../ci-empty-state-honesty.log.gz                  |  Bin 0 -> 91 bytes
+ .../ci-filing-exit-agreement.json                  |   16 +
+ .../ci-filing-exit-agreement.log.gz                |  Bin 0 -> 157 bytes
+ .../ci-internals-in-copy.json                      |   16 +
+ .../ci-internals-in-copy.log.gz                    |  Bin 0 -> 89 bytes
+ .../ci-single-native-canvas.json                   |   16 +
+ .../ci-single-native-canvas.log.gz                 |  Bin 0 -> 79 bytes
+ .../ci-success-before-ok.json                      |   16 +
+ .../ci-success-before-ok.log.gz                    |  Bin 0 -> 79 bytes
+ .../ci-surface-text-ramp.json                      |   16 +
+ .../ci-surface-text-ramp.log.gz                    |  Bin 0 -> 94 bytes
+ .../initial-qualification/ci-token-cascade.json    |   16 +
+ .../initial-qualification/ci-token-cascade.log.gz  |  Bin 0 -> 755 bytes
+ .../initial-qualification/ci-token-contrast.json   |   16 +
+ .../initial-qualification/ci-token-contrast.log.gz |  Bin 0 -> 169 bytes
+ .../ci-undefined-css-classes.json                  |   16 +
+ .../ci-undefined-css-classes.log.gz                |  Bin 0 -> 112 bytes
+ .../ci-vault-document-writers.json                 |   16 +
+ .../ci-vault-document-writers.log.gz               |  Bin 0 -> 105 bytes
+ .../initial-qualification/qualification-build.json |   15 +
+ .../qualification-build.log.gz                     |  Bin 0 -> 4647 bytes
+ .../qualification-checks.json                      |  413 +++
+ .../qualification-eslint.json                      |   38 +
+ .../qualification-eslint.log.gz                    |  Bin 0 -> 93550 bytes
+ .../qualification-regressions-tests.json           |    1 +
+ .../qualification-regressions.json                 |   70 +
+ .../qualification-regressions.log.gz               |  Bin 0 -> 31987 bytes
+ .../qualification-source-freeze.json               |   28 +
+ .../qualification-test-files.json                  |   54 +
+ .../qualification-typecheck.json                   |   15 +
+ .../qualification-typecheck.log.gz                 |  Bin 0 -> 337 bytes
+ .../qualification-warning-ratchet.json             |   17 +
+ .../qualification-warning-ratchet.log.gz           |  Bin 0 -> 169 bytes
+ .../2026-10-23/intake-attachment-control-runner.py |   11 +
+ .../intake-attachment-control-test-results.json    |    1 +
+ .../2026-10-23/intake-attachment-control.json      |   17 +
+ .../2026-10-23/intake-attachment-control.log.gz    |  Bin 0 -> 1300 bytes
+ .../2026-10-23/intake-integration-build.json       |   13 +
+ .../2026-10-23/intake-integration-build.log.gz     |  Bin 0 -> 4670 bytes
+ .../2026-10-23/intake-integration-merge.log.gz     |  Bin 0 -> 2099 bytes
+ .../2026-10-23/intake-integration-runner.py        |   11 +
+ .../2026-10-23/intake-integration-summary.json     |  113 +
+ .../intake-integration-test-results.json           |    1 +
+ .../2026-10-23/intake-integration-tests.json       |   33 +
+ .../2026-10-23/intake-integration-tests.log.gz     |  Bin 0 -> 9662 bytes
+ .../2026-10-23/merge-context.json                  |    8 +
+ .../2026-10-23/picker-green-tests.json             |    1 +
+ .../2026-10-23/picker-green.log.gz                 |  Bin 0 -> 625 bytes
+ .../2026-10-23/picker-red.log.gz                   |  Bin 0 -> 1822 bytes
+ .../audit-repo-health-ceiling.json                 |   16 +
+ .../audit-repo-health-ceiling.log.gz               |  Bin 0 -> 193 bytes
+ .../ci-action-overclaim.json                       |   16 +
+ .../ci-action-overclaim.log.gz                     |  Bin 0 -> 76 bytes
+ .../ci-canvas-path.json                            |   16 +
+ .../ci-canvas-path.log.gz                          |  Bin 0 -> 166 bytes
+ .../ci-check-shell-css-collisions.json             |   16 +
+ .../ci-check-shell-css-collisions.log.gz           |  Bin 0 -> 141 bytes
+ .../ci-class-vocabulary.json                       |   16 +
+ .../ci-class-vocabulary.log.gz                     |  Bin 0 -> 90 bytes
+ .../ci-design-system.json                          |   16 +
+ .../ci-design-system.log.gz                        |  Bin 0 -> 125 bytes
+ .../ci-empty-state-honesty.json                    |   16 +
+ .../ci-empty-state-honesty.log.gz                  |  Bin 0 -> 91 bytes
+ .../ci-filing-exit-agreement.json                  |   16 +
+ .../ci-filing-exit-agreement.log.gz                |  Bin 0 -> 157 bytes
+ .../ci-internals-in-copy.json                      |   16 +
+ .../ci-internals-in-copy.log.gz                    |  Bin 0 -> 89 bytes
+ .../ci-single-native-canvas.json                   |   16 +
+ .../ci-single-native-canvas.log.gz                 |  Bin 0 -> 79 bytes
+ .../ci-success-before-ok.json                      |   16 +
+ .../ci-success-before-ok.log.gz                    |  Bin 0 -> 79 bytes
+ .../ci-surface-text-ramp.json                      |   16 +
+ .../ci-surface-text-ramp.log.gz                    |  Bin 0 -> 94 bytes
+ .../ci-token-cascade.json                          |   16 +
+ .../ci-token-cascade.log.gz                        |  Bin 0 -> 755 bytes
+ .../ci-token-contrast.json                         |   16 +
+ .../ci-token-contrast.log.gz                       |  Bin 0 -> 169 bytes
+ .../ci-undefined-css-classes.json                  |   16 +
+ .../ci-undefined-css-classes.log.gz                |  Bin 0 -> 112 bytes
+ .../ci-vault-document-writers.json                 |   16 +
+ .../ci-vault-document-writers.log.gz               |  Bin 0 -> 105 bytes
+ .../qualification-build.json                       |   15 +
+ .../qualification-build.log.gz                     |  Bin 0 -> 4658 bytes
+ .../qualification-checks.json                      |  413 +++
+ .../qualification-eslint.json                      |   38 +
+ .../qualification-eslint.log.gz                    |  Bin 0 -> 93565 bytes
+ .../qualification-regressions-tests.json           |    1 +
+ .../qualification-regressions.json                 |   70 +
+ .../qualification-regressions.log.gz               |  Bin 0 -> 31573 bytes
+ .../qualification-runner.py                        |   51 +
+ .../qualification-source-freeze.json               |   28 +
+ .../qualification-test-files.json                  |   54 +
+ .../qualification-typecheck.json                   |   15 +
+ .../qualification-typecheck.log.gz                 |  Bin 0 -> 146 bytes
+ .../qualification-warning-ratchet.json             |   17 +
+ .../qualification-warning-ratchet.log.gz           |  Bin 0 -> 169 bytes
+ .../2026-10-23/publication-source-pins.json        |   59 +
+ .../2026-10-23/qualification-build.json            |   15 +
+ .../2026-10-23/qualification-build.log.gz          |  Bin 0 -> 4659 bytes
+ .../2026-10-23/qualification-checks.json           |  425 +++
+ .../2026-10-23/qualification-eslint.json           |   38 +
+ .../2026-10-23/qualification-eslint.log.gz         |  Bin 0 -> 93560 bytes
+ .../qualification-regressions-tests.json           |    1 +
+ .../2026-10-23/qualification-regressions.json      |   82 +
+ .../2026-10-23/qualification-regressions.log.gz    |  Bin 0 -> 45568 bytes
+ .../2026-10-23/qualification-runner.py             |   64 +
+ .../2026-10-23/qualification-source-freeze.json    |   29 +
+ .../2026-10-23/qualification-summary.json          |   83 +
+ .../2026-10-23/qualification-test-files.json       |   66 +
+ .../2026-10-23/qualification-typecheck.json        |   15 +
+ .../2026-10-23/qualification-typecheck.log.gz      |  Bin 0 -> 146 bytes
+ .../2026-10-23/qualification-warning-ratchet.json  |   17 +
+ .../qualification-warning-ratchet.log.gz           |  Bin 0 -> 169 bytes
+ .../2026-10-23/reporting-canonical-merge.log.gz    |  Bin 0 -> 2322 bytes
+ .../2026-10-23/reporting-integration-build.json    |   13 +
+ .../2026-10-23/reporting-integration-build.log.gz  |  Bin 0 -> 4681 bytes
+ .../2026-10-23/reporting-integration-runner.py     |   11 +
+ .../2026-10-23/reporting-integration-summary.json  |  101 +
+ .../reporting-integration-test-results.json        |    1 +
+ .../2026-10-23/reporting-integration-tests.json    |   29 +
+ .../2026-10-23/reporting-integration-tests.log.gz  |  Bin 0 -> 8006 bytes
+ .../2026-10-23/shared-picker-initial.log.gz        |  Bin 0 -> 3749 bytes
+ .../shared-picker-regressions-tests.json           |    1 +
+ ...t-after-approved-sql-predicates.mjs.raw.json.gz |  Bin 0 -> 2732 bytes
+ ...er-approved-sql-predicates.test.mjs.raw.json.gz |  Bin 0 -> 257 bytes
+ ...heck-sql-interpolation.selftest.mjs.raw.json.gz |  Bin 0 -> 4593 bytes
+ .../2026-10-23/sql-predicate-eslint-after.json     |  229 ++
+ ...-before-approved-sql-predicates.mjs.raw.json.gz |  Bin 0 -> 2688 bytes
+ ...re-approved-sql-predicates.test.mjs.raw.json.gz |  Bin 0 -> 258 bytes
+ ...heck-sql-interpolation.selftest.mjs.raw.json.gz |  Bin 0 -> 4387 bytes
+ .../2026-10-23/sql-predicate-eslint-before.json    |  229 ++
+ .../2026-10-23/sql-predicate-green-ast.log.gz      |  Bin 0 -> 1522 bytes
+ .../2026-10-23/sql-predicate-green-gate.log.gz     |  Bin 0 -> 746 bytes
+ .../2026-10-23/sql-predicate-green-runs.json       |   32 +
+ .../2026-10-23/sql-predicate-green-selftest.log.gz |  Bin 0 -> 1105 bytes
+ .../2026-10-23/sql-predicate-qualification.json    |   96 +
+ .../2026-10-23/sql-predicate-red-ast.log.gz        |  Bin 0 -> 1978 bytes
+ .../2026-10-23/sql-predicate-red-selftest.log.gz   |  Bin 0 -> 1575 bytes
+ .../2026-10-23/sql-predicate-red.json              |   49 +
+ .../2026-10-23/transport-envelope-red.log.gz       |  Bin 0 -> 1422 bytes
+ .../2026-10-23/transport-eslint-baseline.log.gz    |  Bin 0 -> 233 bytes
+ .../2026-10-23/transport-eslint.log.gz             |  Bin 0 -> 234 bytes
+ .../2026-10-23/transport-green.log.gz              |  Bin 0 -> 2812 bytes
+ .../2026-10-23/transport-manifest-red.log.gz       |  Bin 0 -> 1324 bytes
+ .../2026-10-23/transport-red.log.gz                |  Bin 0 -> 2087 bytes
+ .../transport-uncertain-http-eslint.log.gz         |  Bin 0 -> 412 bytes
+ .../transport-uncertain-http-green.log.gz          |  Bin 0 -> 2560 bytes
+ .../2026-10-23/transport-uncertain-http-red.log.gz |  Bin 0 -> 1710 bytes
+ .../2026-10-23/ui/README.md                        |   81 +
+ .../2026-10-23/ui/browser-layout-runner.py         |   40 +
+ .../2026-10-23/ui/dom-capture-runner.py            |   41 +
+ .../2026-10-23/ui/dom-capture.metadata.json        |   24 +
+ .../2026-10-23/ui/dom-capture.raw.log.gz           |  Bin 0 -> 146 bytes
+ .../2026-10-23/ui/dom-capture.results.json         |    1 +
+ .../2026-10-23/ui/eslint-baseline.results.json     |    1 +
+ .../2026-10-23/ui/eslint-cdx.metadata.json         |   62 +
+ .../2026-10-23/ui/eslint-cdx.results.json          |    1 +
+ .../2026-10-23/ui/eslint-cdx.stderr.log.gz         |  Bin 0 -> 42 bytes
+ .../2026-10-23/ui/eslint-final.metadata.json       |   35 +
+ .../2026-10-23/ui/eslint-final.results.json        |    1 +
+ .../2026-10-23/ui/eslint-final.stderr.log.gz       |  Bin 0 -> 44 bytes
+ .../2026-10-23/ui/eslint-forced.metadata.json      |   15 +
+ .../2026-10-23/ui/eslint-forced.results.json       |    1 +
+ .../2026-10-23/ui/eslint-forced.stderr.log.gz      |  Bin 0 -> 45 bytes
+ .../ui/eslint-render-baseline.results.json         |    1 +
+ .../ui/eslint-render-baseline.stderr.log.gz        |  Bin 0 -> 54 bytes
+ .../2026-10-23/ui/eslint.metadata.json             |   14 +
+ .../2026-10-23/ui/eslint.results.json              |    1 +
+ .../2026-10-23/ui/eslint.stderr.log.gz             |  Bin 0 -> 38 bytes
+ .../2026-10-23/ui/green-cdx.metadata.json          |   30 +
+ .../2026-10-23/ui/green-cdx.raw.log.gz             |  Bin 0 -> 3262 bytes
+ .../2026-10-23/ui/green-cdx.results.json           |    1 +
+ .../2026-10-23/ui/green-final.metadata.json        |   30 +
+ .../2026-10-23/ui/green-final.raw.log.gz           |  Bin 0 -> 3086 bytes
+ .../2026-10-23/ui/green-final.results.json         |    1 +
+ .../2026-10-23/ui/green.metadata.json              |   30 +
+ .../2026-10-23/ui/green.raw.log.gz                 |  Bin 0 -> 2964 bytes
+ .../2026-10-23/ui/green.results.json               |    1 +
+ .../initial-dom-capture/dom-capture.metadata.json  |   24 +
+ .../ui/initial-dom-capture/dom-capture.raw.log.gz  |  Bin 0 -> 146 bytes
+ .../initial-dom-capture/dom-capture.results.json   |    1 +
+ .../component-browser-review.json                  | 1994 ++++++++++++++
+ .../layout-after-touch-change/picker-dark-1440.png |  Bin 0 -> 84742 bytes
+ .../layout-after-touch-change/picker-dark-390.png  |  Bin 0 -> 77222 bytes
+ .../picker-light-1440.png                          |  Bin 0 -> 85142 bytes
+ .../layout-after-touch-change/picker-light-390.png |  Bin 0 -> 76938 bytes
+ .../receipt-dark-1440.png                          |  Bin 0 -> 73172 bytes
+ .../layout-after-touch-change/receipt-dark-390.png |  Bin 0 -> 66849 bytes
+ .../receipt-light-1440.png                         |  Bin 0 -> 74615 bytes
+ .../receipt-light-390.png                          |  Bin 0 -> 68369 bytes
+ .../selected-dark-1440.png                         |  Bin 0 -> 59225 bytes
+ .../selected-dark-390.png                          |  Bin 0 -> 53493 bytes
+ .../selected-light-1440.png                        |  Bin 0 -> 59980 bytes
+ .../selected-light-390.png                         |  Bin 0 -> 54189 bytes
+ .../2026-10-23/ui/layout-build.log.gz              |  Bin 0 -> 4665 bytes
+ .../ui/layout-final/component-browser-review.json  | 1954 ++++++++++++++
+ .../ui/layout-final/picker-dark-1440.png           |  Bin 0 -> 85364 bytes
+ .../2026-10-23/ui/layout-final/picker-dark-390.png |  Bin 0 -> 80836 bytes
+ .../ui/layout-final/picker-light-1440.png          |  Bin 0 -> 85831 bytes
+ .../ui/layout-final/picker-light-390.png           |  Bin 0 -> 80217 bytes
+ .../ui/layout-final/receipt-dark-1440.png          |  Bin 0 -> 73172 bytes
+ .../ui/layout-final/receipt-dark-390.png           |  Bin 0 -> 66849 bytes
+ .../ui/layout-final/receipt-light-1440.png         |  Bin 0 -> 74615 bytes
+ .../ui/layout-final/receipt-light-390.png          |  Bin 0 -> 68369 bytes
+ .../ui/layout-final/selected-dark-1440.png         |  Bin 0 -> 59225 bytes
+ .../ui/layout-final/selected-dark-390.png          |  Bin 0 -> 53493 bytes
+ .../ui/layout-final/selected-light-1440.png        |  Bin 0 -> 59980 bytes
+ .../ui/layout-final/selected-light-390.png         |  Bin 0 -> 54189 bytes
+ .../layout-initial/component-browser-review.json   | 1962 ++++++++++++++
+ .../ui/layout-initial/picker-dark-1440.png         |  Bin 0 -> 83748 bytes
+ .../ui/layout-initial/picker-dark-390.png          |  Bin 0 -> 77561 bytes
+ .../ui/layout-initial/picker-light-1440.png        |  Bin 0 -> 84156 bytes
+ .../ui/layout-initial/picker-light-390.png         |  Bin 0 -> 77119 bytes
+ .../ui/layout-initial/receipt-dark-1440.png        |  Bin 0 -> 71356 bytes
+ .../ui/layout-initial/receipt-dark-390.png         |  Bin 0 -> 66198 bytes
+ .../ui/layout-initial/receipt-light-1440.png       |  Bin 0 -> 72749 bytes
+ .../ui/layout-initial/receipt-light-390.png        |  Bin 0 -> 67711 bytes
+ .../ui/layout-initial/selected-dark-1440.png       |  Bin 0 -> 57379 bytes
+ .../ui/layout-initial/selected-dark-390.png        |  Bin 0 -> 52810 bytes
+ .../ui/layout-initial/selected-light-1440.png      |  Bin 0 -> 58063 bytes
+ .../ui/layout-initial/selected-light-390.png       |  Bin 0 -> 53524 bytes
+ .../2026-10-23/ui/mounted-dom/picker.html.gz       |  Bin 0 -> 1482 bytes
+ .../2026-10-23/ui/mounted-dom/receipt.html.gz      |  Bin 0 -> 1353 bytes
+ .../2026-10-23/ui/mounted-dom/selected.html.gz     |  Bin 0 -> 1218 bytes
+ .../2026-10-23/ui/red-cdx.metadata.json            |   30 +
+ .../2026-10-23/ui/red-cdx.raw.log.gz               |  Bin 0 -> 3939 bytes
+ .../2026-10-23/ui/red-cdx.results.json             |    1 +
+ .../2026-10-23/ui/red-refinement.metadata.json     |   29 +
+ .../2026-10-23/ui/red-refinement.raw.log.gz        |  Bin 0 -> 2134 bytes
+ .../2026-10-23/ui/red-refinement.results.json      |    1 +
+ .../2026-10-23/ui/red.metadata.json                |   29 +
+ .../2026-10-23/ui/red.raw.log.gz                   |  Bin 0 -> 4168 bytes
+ .../2026-10-23/ui/red.results.json                 |    1 +
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/README.md       |  153 ++
+ .../2026-10-23/backend-compatible-tests.txt        |  836 ++++++
+ .../2026-10-23/backend-core-tests.txt              |  799 ++++++
+ .../2026-10-23/backend-eslint.txt                  |   22 +
+ .../2026-10-23/backend-fail-first.txt              |  206 ++
+ .../2026-10-23/backend-final-tests.txt             |  499 ++++
+ .../2026-10-23/backend-qualification.md            |   70 +
+ .../2026-10-23/backend-release-compatibility.txt   |  931 +++++++
+ .../2026-10-23/backend-sql-edges.txt               |  210 ++
+ .../2026-10-23/browser-check.mjs                   |  144 +
+ .../2026-10-23/browser-check.txt                   |    0
+ .../2026-10-23/browser-handoff-lint.txt            |    0
+ .../2026-10-23/browser-handoff.txt                 |    0
+ .../2026-10-23/browser-result.json                 |   73 +
+ .../2026-10-23/build-editor-integrated.txt         |  227 ++
+ .../2026-10-23/build-handoff.txt                   |  227 ++
+ .../2026-10-23/build-integrated.txt                |  227 ++
+ .../build-read-window-release-integrated.txt       |  227 ++
+ .../2026-10-23/build-refiling-integrated.txt       |  227 ++
+ .../2026-10-23/build-reporting-integrated.txt      |  228 ++
+ .../build-unchanged-refiling-integrated.txt        |  228 ++
+ .../2026-10-23/build-unicode-integrated.txt        |  227 ++
+ .../2026-10-23/build-vault-integrated.txt          |  228 ++
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/build.txt       |  227 ++
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/contract.md     |   45 +
+ .../2026-10-23/incoming-ana.txt                    |  449 ++++
+ .../2026-10-23/incoming-editor.txt                 |   92 +
+ .../2026-10-23/incoming-pdf-callers.txt            |  932 +++++++
+ .../2026-10-23/incoming-pdf.txt                    | 2824 ++++++++++++++++++++
+ .../2026-10-23/incoming-read-window.txt            |   59 +
+ .../2026-10-23/incoming-refiling.txt               | 2313 ++++++++++++++++
+ .../2026-10-23/incoming-release-identity-ui.txt    |   46 +
+ .../2026-10-23/incoming-reporting-ui.txt           |   85 +
+ .../2026-10-23/incoming-reporting.txt              |   70 +
+ .../incoming-source-bindings-before-editor.json    |   45 +
+ ...source-bindings-before-read-window-release.json |   62 +
+ .../incoming-source-bindings-before-refiling.json  |   32 +
+ .../incoming-source-bindings-before-reporting.json |  107 +
+ ...-source-bindings-before-unchanged-refiling.json |  134 +
+ .../incoming-source-bindings-before-unicode.json   |   40 +
+ ...ing-source-bindings-before-vault-freshness.json |  124 +
+ .../2026-10-23/incoming-source-bindings.json       |  149 ++
+ .../2026-10-23/incoming-unchanged-refiling-ui.txt  |  379 +++
+ .../2026-10-23/incoming-unchanged-refiling.txt     | 2441 +++++++++++++++++
+ .../2026-10-23/incoming-unicode.txt                |   98 +
+ .../2026-10-23/incoming-vault-freshness.txt        |   87 +
+ .../2026-10-23/intake-bad-receipt-1280.png         |  Bin 0 -> 87974 bytes
+ .../2026-10-23/intake-bad-receipt-390.png          |  Bin 0 -> 83098 bytes
+ .../2026-10-23/intake-configure-1280.png           |  Bin 0 -> 181729 bytes
+ .../2026-10-23/intake-configure-390.png            |  Bin 0 -> 174646 bytes
+ .../2026-10-23/intake-review-1280.png              |  Bin 0 -> 73910 bytes
+ .../2026-10-23/intake-review-390.png               |  Bin 0 -> 68302 bytes
+ .../2026-10-23/intake-unknown-1280.png             |  Bin 0 -> 90254 bytes
+ .../2026-10-23/intake-unknown-390.png              |  Bin 0 -> 85767 bytes
+ .../2026-10-23/legacy-callers.txt                  |  103 +
+ .../2026-10-23/native-postgres.txt                 |  140 +
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/root-lint.txt   |    0
+ .../2026-10-23/source-bindings-before-handoff.json |   79 +
+ .../source-bindings-before-release-identity.json   |   94 +
+ .../2026-10-23/source-bindings.json                |   95 +
+ .../submission-spine-function-verification.json    |   12 +
+ .../2026-10-23/typecheck-handoff.txt               |    7 +
+ .../2026-10-23/typecheck-initial.txt               |    7 +
+ .../2026-10-23/typecheck-pending-test-type.txt     |   12 +
+ .../typecheck-unchanged-refiling-integrated.txt    |    7 +
+ .../2026-10-23/typecheck-vault-integrated.txt      |    7 +
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/typecheck.txt   |    7 +
+ .../2026-10-23/ui-editor-compatibility.txt         |   29 +
+ .../2026-10-23/ui-eslint-final.txt                 |   11 +
+ .../2026-10-23/ui-fail-first.txt                   | 1880 +++++++++++++
+ .../D2-PM-CLIENT-INTAKE/2026-10-23/ui-final.txt    |  121 +
+ .../2026-10-23/ui-pending-exit-eslint.txt          |   11 +
+ .../2026-10-23/ui-pending-exit-fail-first.txt      |  127 +
+ .../2026-10-23/ui-pending-exit-final.txt           |   42 +
+ .../2026-10-23/ui-publication-final-21.txt         |   29 +
+ .../2026-10-23/ui-qualification.md                 |   43 +
+ .../2026-10-23/ui-scoped-final-110.txt             |  118 +
+ .../2026-10-23/ui-test-type-final.txt              |   32 +
+ .../2026-10-23/ui-workspace-handoff-eslint.txt     |   11 +
+ .../2026-10-23/ui-workspace-handoff-facts.md       |    9 +
+ .../2026-10-23/ui-workspace-handoff-fail-first.txt |  503 ++++
+ .../2026-10-23/ui-workspace-handoff-final.txt      |  123 +
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    8 +
+ scripts/ci/check-sql-interpolation.selftest.mjs    |   33 +
+ scripts/ci/lib/approved-sql-predicates.mjs         |    4 +
+ scripts/ci/lib/approved-sql-predicates.test.mjs    |   43 +
+ server/routes/510k-estar-routes.ts                 |   85 +-
+ .../510k-estar-attachment-export.pglite.test.ts    |  110 +
+ .../__tests__/510k-estar-attachment-slots.test.ts  |   67 +
+ server/routes/authoring.router.ts                  |   37 +-
+ .../projects-create-anchor.pglite.test.ts          |  244 +-
+ .../projects-create-eu-device-classes.test.ts      |    2 +-
+ .../c2c/__tests__/projects-create-fixture.ts       |    5 +-
+ .../__tests__/projects-create-market-offer.test.ts |   12 +-
+ .../projects-create-regional-devices.test.ts       |    2 +-
+ .../__tests__/projects-create-stated-facts.test.ts |    6 +-
+ .../routes/c2c/__tests__/projects-create.test.ts   |   46 +-
+ server/routes/c2c/project-intake-workspace.ts      |   51 +
+ server/routes/c2c/projects.ts                      |   65 +-
+ server/routes/clients-routes.ts                    |    2 +
+ .../authoring/authoring-refile-saved-section.ts    |  217 ++
+ .../authoring/workflow-import-governance.ts        |   12 +-
+ .../node-status-follows-work.pglite.test.ts        |    5 +-
+ server/services/c2c/filing-section-target.ts       |   29 +-
+ server/services/c2c/program-project-anchor.ts      |  166 +-
+ .../span-lineage-integrity.ts                      |   60 +
+ .../span-lineage.service.ts                        |   40 +-
+ .../estar/__tests__/estar-attachment-plan.test.ts  |   20 +-
+ .../estar-vault-attachment-access.pglite.test.ts   |   91 +
+ .../estar/estar-attachment-catalog.ts              |   30 +
+ .../pathway-engines/estar/estar-attachment-plan.ts |   88 +-
+ .../estar/estar-attachment-slots.ts                |    4 +-
+ .../estar/estar-attachment-source-access.ts        |   64 +
+ shared/__tests__/project-intake-workspace.test.ts  |   26 +
+ shared/project-intake-workspace.ts                 |   42 +
+ shared/regulatory/estar-attachment-manifest.ts     |    6 +
+ tests/db/project-client-workspace-intake.dbtest.ts |  256 ++
+ ...ring-section-commits-to-filing.contract.test.ts |   35 +-
+ .../authoring-unchanged-refiling.contract-cases.ts |  407 +++
+ 499 files changed, 44385 insertions(+), 575 deletions(-)
+ create mode 100644 client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts
+ create mode 100644 client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts
+ create mode 100644 client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx
+ create mode 100644 client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/projectIntakeFixture.ts
+ create mode 100644 client/src/concept2cure/v2/editor/AuthoringRefileSavedText.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/authoringRefileSavedTextState.ts
+ create mode 100644 client/src/concept2cure/v2/mutationOutcome.ts
+ create mode 100644 client/src/concept2cure/v2/surfaces/projectIntakeRequest.ts
+ create mode 100644 docs/design/AUTHORING_UNCHANGED_REFILING.md
+ create mode 100644 docs/design/ESTAR_VAULT_ATTACHMENT_COMPLETION_2026-10-23.md
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/client.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/final-integration-test-files.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/final-integration-tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/final-integration.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/late-incoming-test-files.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/late-incoming-tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/late-incoming.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/lint.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/red-proof.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/reporting-integration-tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/reporting-integration.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/server.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/size-split-qualification.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/size-split-tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/source-manifest.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/test-files.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/typecheck-result.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/unchanged-boundaries.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/vault-freshness-integration-tests.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/vault-freshness-integration.json
+ create mode 100644 docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/verification.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/audit-repo-health-ceiling.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-eslint-after.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-eslint-before-plan-test.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-eslint-before-route.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-composed.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-composed.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-final.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-final.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-initial.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-initial.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-qualification.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red-expanded.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red-expanded.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red-qualified.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red-qualified.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-integration.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-1.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-1.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-2.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-2.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-3.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-3.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-4.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/canonical-push-4.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-action-overclaim.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-action-overclaim.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-check-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-check-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-class-vocabulary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-class-vocabulary.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-design-system.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-design-system.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-empty-state-honesty.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-empty-state-honesty.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-filing-exit-agreement.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-filing-exit-agreement.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-internals-in-copy.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-internals-in-copy.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-success-before-ok.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-success-before-ok.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-undefined-css-classes.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-undefined-css-classes.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-vault-document-writers.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ci-vault-document-writers.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/discovery-source-pins.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-filing-contract-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-filing-contract-test-results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-filing-contract.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-filing-contract.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-merge.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-summary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-test-results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-tests.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/implementation-files.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/incoming-review.md
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/independent-review.md
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/audit-repo-health-ceiling.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-action-overclaim.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-action-overclaim.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-check-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-check-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-class-vocabulary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-class-vocabulary.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-design-system.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-design-system.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-empty-state-honesty.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-empty-state-honesty.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-filing-exit-agreement.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-filing-exit-agreement.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-internals-in-copy.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-internals-in-copy.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-success-before-ok.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-success-before-ok.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-undefined-css-classes.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-undefined-css-classes.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-vault-document-writers.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/ci-vault-document-writers.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-checks.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-eslint.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-eslint.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-regressions-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-regressions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-source-freeze.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-test-files.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-typecheck.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/initial-qualification/qualification-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-attachment-control-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-attachment-control-test-results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-attachment-control.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-attachment-control.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-merge.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-summary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-test-results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-integration-tests.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/merge-context.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/picker-green-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/picker-green.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/picker-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/audit-repo-health-ceiling.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/audit-repo-health-ceiling.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-action-overclaim.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-action-overclaim.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-check-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-check-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-class-vocabulary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-class-vocabulary.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-design-system.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-design-system.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-empty-state-honesty.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-empty-state-honesty.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-filing-exit-agreement.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-filing-exit-agreement.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-internals-in-copy.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-internals-in-copy.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-success-before-ok.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-success-before-ok.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-undefined-css-classes.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-undefined-css-classes.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-vault-document-writers.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/ci-vault-document-writers.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-checks.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-eslint.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-eslint.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-regressions-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-regressions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-source-freeze.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-test-files.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-typecheck.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/prepublication-qualification/qualification-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/publication-source-pins.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-checks.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-eslint.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-eslint.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-regressions-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-regressions.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-regressions.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-source-freeze.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-summary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-test-files.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-typecheck.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-canonical-merge.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-build.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-summary.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-test-results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/reporting-integration-tests.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/shared-picker-initial.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/shared-picker-regressions-tests.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-after-approved-sql-predicates.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-after-approved-sql-predicates.test.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-after-check-sql-interpolation.selftest.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-after.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-before-approved-sql-predicates.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-before-approved-sql-predicates.test.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-before-check-sql-interpolation.selftest.mjs.raw.json.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-eslint-before.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-green-ast.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-green-gate.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-green-runs.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-green-selftest.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-qualification.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-red-ast.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-red-selftest.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/sql-predicate-red.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-envelope-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-eslint-baseline.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-eslint.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-green.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-manifest-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-uncertain-http-eslint.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-uncertain-http-green.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/transport-uncertain-http-red.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/README.md
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/browser-layout-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/dom-capture-runner.py
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/dom-capture.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/dom-capture.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/dom-capture.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-baseline.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-cdx.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-cdx.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-cdx.stderr.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-final.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-final.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-final.stderr.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-forced.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-forced.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-forced.stderr.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-render-baseline.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint-render-baseline.stderr.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/eslint.stderr.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-cdx.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-cdx.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-cdx.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-final.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-final.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-final.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/initial-dom-capture/dom-capture.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/initial-dom-capture/dom-capture.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/initial-dom-capture/dom-capture.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/component-browser-review.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/picker-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/picker-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/picker-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/picker-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/receipt-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/receipt-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/receipt-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/receipt-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/selected-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/selected-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/selected-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-after-touch-change/selected-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-build.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/component-browser-review.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/picker-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/picker-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/picker-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/picker-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/receipt-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/receipt-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/receipt-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/receipt-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/selected-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/selected-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/selected-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-final/selected-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/component-browser-review.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/picker-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/picker-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/picker-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/picker-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/receipt-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/receipt-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/receipt-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/receipt-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/selected-dark-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/selected-dark-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/selected-light-1440.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/layout-initial/selected-light-390.png
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/mounted-dom/picker.html.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/mounted-dom/receipt.html.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/mounted-dom/selected.html.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-cdx.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-cdx.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-cdx.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-refinement.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-refinement.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red-refinement.results.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red.metadata.json
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red.raw.log.gz
+ create mode 100644 docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/red.results.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-compatible-tests.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-core-tests.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-eslint.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-fail-first.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-final-tests.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-qualification.md
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-release-compatibility.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/backend-sql-edges.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-check.mjs
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-check.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-handoff-lint.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-handoff.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-result.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-editor-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-handoff.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-read-window-release-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-refiling-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-reporting-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-unchanged-refiling-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-unicode-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build-vault-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/build.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/contract.md
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-ana.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-editor.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-pdf-callers.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-pdf.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-read-window.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-refiling.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-release-identity-ui.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-reporting-ui.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-reporting.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-editor.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-read-window-release.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-refiling.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-reporting.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-unchanged-refiling.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-unicode.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings-before-vault-freshness.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-unchanged-refiling-ui.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-unchanged-refiling.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-unicode.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/incoming-vault-freshness.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-bad-receipt-1280.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-bad-receipt-390.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-configure-1280.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-configure-390.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-review-1280.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-review-390.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-unknown-1280.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/intake-unknown-390.png
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/legacy-callers.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/native-postgres.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/root-lint.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/source-bindings-before-handoff.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/source-bindings-before-release-identity.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/submission-spine-function-verification.json
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck-handoff.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck-initial.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck-pending-test-type.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck-unchanged-refiling-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck-vault-integrated.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/typecheck.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-editor-compatibility.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-eslint-final.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-fail-first.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-final.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-pending-exit-eslint.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-pending-exit-fail-first.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-pending-exit-final.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-publication-final-21.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-qualification.md
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-scoped-final-110.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-test-type-final.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-workspace-handoff-eslint.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-workspace-handoff-facts.md
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-workspace-handoff-fail-first.txt
+ create mode 100644 docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/ui-workspace-handoff-final.txt
+ create mode 100644 server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+ create mode 100644 server/routes/__tests__/510k-estar-attachment-slots.test.ts
+ create mode 100644 server/routes/c2c/project-intake-workspace.ts
+ create mode 100644 server/services/authoring/authoring-refile-saved-section.ts
+ create mode 100644 server/services/clinical-regulatory-evidence/span-lineage-integrity.ts
+ create mode 100644 server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts
+ create mode 100644 server/services/pathway-engines/estar/estar-attachment-catalog.ts
+ create mode 100644 server/services/pathway-engines/estar/estar-attachment-source-access.ts
+ create mode 100644 shared/__tests__/project-intake-workspace.test.ts
+ create mode 100644 shared/project-intake-workspace.ts
+ create mode 100644 shared/regulatory/estar-attachment-manifest.ts
+ create mode 100644 tests/db/project-client-workspace-intake.dbtest.ts
+ create mode 100644 tests/schema-contract/authoring-unchanged-refiling.contract-cases.ts
