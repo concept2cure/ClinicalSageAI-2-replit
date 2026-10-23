@@ -1,0 +1,11 @@
+{
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "headBeforeFetch": "fa167b819c79145999f46f222c5ab31b03f27845",
+  "node": "v22.23.3",
+  "bypass": false
+}

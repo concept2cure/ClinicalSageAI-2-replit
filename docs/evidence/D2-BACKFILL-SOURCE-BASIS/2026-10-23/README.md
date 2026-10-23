@@ -1,5 +1,7 @@
 # Correct backfill source preservation — D2 / W2
 
+Current published code and qualification: [PUBLICATION.md](PUBLICATION.md). Earlier sections preserve the chronological evidence and superseded pending statuses.
+
 ## What already exists
 
 The existing Vault backfill invokes the canonical chunk writer, exact-source context verifier and tenant CLI wrapper. This increment corrects the caller's trimmed source argument, preserving all existing gates and policies. [INVENTORY.md](INVENTORY.md) records discovery and [CONTRACT.md](CONTRACT.md) specifies behavior and limits.
@@ -23,3 +25,7 @@ The original unqualified SQL fixture is archived in `root/initial-sql-fixture.ts
 ## Limits and remaining needs
 
 This corrects future selected backfill indexing; it adds no automatic historical repair policy. Existing embedding-upgrade reselection remains allowed. Already-chunked misaligned rows may remain hit-only until an explicit governed reindex. Page numbers remain unknown because backfill supplies no page spans. Catalog counts retain the builder's trimmed convention. Preserving edge whitespace can increase chunk totals or invoke the unchanged MAX_CHUNKS refusal. Existing indexing-await races, candidate-filter boundaries and the already-filed checksum cache race remain separate. SQL runs in owner-mode PGlite and provider replies are scripted; initial-BOM native SQL transport, native RLS, production latency, deployment, complete platform readiness and agency acceptance are not qualified here.
+
+## Accepted publication
+
+Normal direct code push f0ec738b118353f97977de4f10af62176d55c68a succeeded; every mandatory gate passed, including actual whole-project TypeScript zero errors / exit 0. [PUBLICATION.md](PUBLICATION.md), `root/published-qualification.json` and `root/code-verification.json` are authoritative. Final evidence is pinned by the publication manifest and checked against fresh remote Git after its normal push.
