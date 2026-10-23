@@ -23,5 +23,30 @@
     "decodedBytes": 16123,
     "decodedSha256": "f791b6fbc5ba85d19c1f583bbf57870e4ed56baa80324169ee00b634faa7f285",
     "archiveSha256": "7ccc4f0c92ad896cb5d52a86fdec3f55c4f857ed73da977713fccaf2b28fb894"
+  },
+  "device-reconciled-tests.txt.gz": {
+    "decodedBytes": 71440,
+    "decodedSha256": "da498a924bb6c5ed6b442b717a843b9fd3a820a31e652c3090a4ac913053c3b0",
+    "archiveSha256": "0a1b684ca004117c73e7c16e28b127fb7da67debd23642e21faeeb0f59f6411d"
+  },
+  "device-reconciled-tests.json.gz": {
+    "decodedBytes": 165132,
+    "decodedSha256": "afdea461a09ae38b519b5f3d2714249cc395f01b5e4925514ac02dd90fc928f9",
+    "archiveSha256": "93e216c77e847042024504e93396c8ea9de03337d13f3e11b9e072eb37861ce8"
+  },
+  "device-reconciled-fixture-successor.txt.gz": {
+    "decodedBytes": 11724,
+    "decodedSha256": "cfbd4b43b7df45a5e58f070e7930831108f6b3b5a1ed026adb87173eef40186d",
+    "archiveSha256": "52a3d867560a488199ddd4097e77996729824fb7a2a467a57cbeb731e5ced442"
+  },
+  "device-reconciled-fixture-successor.json.gz": {
+    "decodedBytes": 22444,
+    "decodedSha256": "d53fbbee4fec35281a28658261efe58753530197f651b146cfb5171b8cbbff2e",
+    "archiveSha256": "13b25899e242b329131fc77c5418a7673deb85ff4aa7e4e01a0f60087027531e"
+  },
+  "build-device-reconciled.txt.gz": {
+    "decodedBytes": 16123,
+    "decodedSha256": "c8f02d12e807887d9d757849cbcd4d0c7e5c8d2b067e04ed30e22a7ece773bf4",
+    "archiveSha256": "0141316ded88be298aef7951dcea25fb65afc1f276a190afece26f1bcd2d4026"
   }
 }

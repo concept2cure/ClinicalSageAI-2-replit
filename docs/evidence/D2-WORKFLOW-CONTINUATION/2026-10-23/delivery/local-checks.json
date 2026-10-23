@@ -85,5 +85,47 @@
       "clientSeconds": 19.68,
       "serverAndAuditVerifier": "passed"
     }
+  },
+  "lateDeviceReconciliation": {
+    "retainedParent": "7895e36ce",
+    "incomingParent": "d8082acfa",
+    "mergeCommit": "40aa75d908ddff0a35afdbebaf94376ce1a25ca7",
+    "runtimeEditsByReconciliation": 0,
+    "assertionsChanged": 0,
+    "initial": {
+      "status": "RED retained",
+      "testFilesPassed": 8,
+      "testFilesFailed": 2,
+      "passed": 213,
+      "failed": 48,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 27.8
+    },
+    "successor": {
+      "status": "GREEN",
+      "testFilesPassed": 2,
+      "testFilesFailed": 0,
+      "passed": 48,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 8.85
+    },
+    "sourcePins": 19,
+    "changedFixtures": [
+      "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+      "client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx"
+    ],
+    "productionBuild": {
+      "exitCode": 0,
+      "clientSeconds": 18.89,
+      "serverAndAuditVerifier": "passed"
+    },
+    "fixtureLint": {
+      "exitCode": 0,
+      "outputBytes": 0
+    },
+    "details": "device-reconciliation.json"
   }
 }

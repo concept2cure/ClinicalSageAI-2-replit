@@ -46,7 +46,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('@/services/portal/authService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }),
+    useAuthUser: () => actual.authService.getUser() };
+});
 
+import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 
 const PID = '6e0f3a2d-1b4c-4d5e-8f70-9a1b2c3d4e5f';
@@ -123,11 +129,13 @@ async function verdictRow(): Promise<HTMLElement> {
 }
 
 beforeEach(() => {
+  authService.setToken('fixture-market-reader', { id: '7', organizationId: '1' }, 'fixture-market-refresh', 3600);
   onNav.mockReset();
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'ONC-221' };
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
