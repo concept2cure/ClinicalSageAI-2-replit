@@ -1,0 +1,47 @@
+Full execution output is retained in green-corrected-governance.txt.gz.
+
+}
+
+stdout | server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void
+{
+  "timestamp": "2026-10-21T01:30:54.902Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "64"
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > the package sent names the organisation as the applicant, never a placeholder 572ms
+stdout | server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void
+{
+  "timestamp": "2026-10-21T01:30:55.000Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 7,
+    "resourceId": "65"
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 272ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 98ms
+stderr | server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+{
+  "timestamp": "2026-10-21T01:30:56.577Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ↓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence
+ ↓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged
+
+ Test Files  3 passed | 1 skipped (4)
+      Tests  61 passed | 2 skipped (63)
+   Start at  01:29:52
+   Duration  65.76s (transform 7.02s, setup 263ms, import 19.05s, tests 45.09s, environment 1ms)
+

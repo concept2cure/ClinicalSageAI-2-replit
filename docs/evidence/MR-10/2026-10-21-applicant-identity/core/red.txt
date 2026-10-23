@@ -1,0 +1,226 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-21T01:20:28.286Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:20:28.288Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+{
+  "timestamp": "2026-10-21T01:20:28.288Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/recorded-applicant-identity.test.ts
+[database] Database connection successful
+
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > reads one tenant-scoped joined statement and uses the explicitly bound legal name 5ms
+   → expected "vi.fn()" to be called 1 times, but got 2 times
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > preserves the organization name only when no sponsor binding was recorded 3ms
+   → expected null to be 'Platform organization' // Object.is equality
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > never falls back to the organization for a broken or foreign explicit binding 4ms
+   → expected [ 'applicantName' ] to deeply equal ArrayContaining{…}
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"application_number":"IND000512"} 2ms
+   → expected [ 'applicantName' ] to include 'applicationNumber'
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"duns":"12-345-6789"} 1ms
+   → expected [ 'applicantName' ] to include 'applicantId'
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_phone":"not a telephone"} 1ms
+   → expected [ 'applicantName' ] to include 'contact.phone'
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_email":"not an email"} 1ms
+   → expected [ 'applicantName' ] to include 'contact.email'
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_name":"\u0000"} 1ms
+   → expected [ 'applicantName' ] to include 'contact.name'
+ ✓ server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > does not silently turn a failed identity read into an unbound record 2ms
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > accepts complete recorded FDA facts 2ms
+   → expected PackageIdentityMissingError: A package na… { …(2) } to be null
+ × server/services/ectd/__tests__/recorded-applicant-identity.test.ts > canonical adapter reaches the existing FDA contact serializer > threads recorded contacts only to the FDA admin block 2ms
+   → expected undefined to deeply equal [ { type: 'regulatory', …(3) } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > reads one tenant-scoped joined statement and uses the explicitly bound legal name
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:22:19
+     20|   it('reads one tenant-scoped joined statement and uses the explicitly…
+     21|     const { identity, query } = await read();
+     22|     expect(query).toHaveBeenCalledTimes(1);
+       |                   ^
+     23|     expect(query.mock.calls[0]).toEqual([expect.stringMatching(/JOIN i…
+     24|     expect(identity).toMatchObject({ programId: PROGRAM, applicationNu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > preserves the organization name only when no sponsor binding was recorded
+AssertionError: expected null to be 'Platform organization' // Object.is equality
+
+- Expected:
+"Platform organization"
+
++ Received:
+null
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:30:36
+     28|   it('preserves the organization name only when no sponsor binding was…
+     29|     const { identity } = await read({ applicant_sponsor_id: null, spon…
+     30|     expect(identity.applicantName).toBe('Platform organization');
+       |                                    ^
+     31|     expect(packageIdentityRefusal(identity, 'Nothing was built.')).toB…
+     32|     expect(packageIdentityRefusal(identity, 'Nothing was built.', { fd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > never falls back to the organization for a broken or foreign explicit binding
+AssertionError: expected [ 'applicantName' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
++ [
+    "applicantName",
+-   "applicantId",
+-   "contact",
+  ]
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:38:92
+     36|       contact_name: null, contact_phone: null, contact_email: null });
+     37|     expect(identity.applicantName).toBeNull();
+     38|     expect(packageIdentityRefusal(identity, 'Nothing was built.', { fd…
+       |                                                                                            ^
+     39|   });
+     40|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"application_number":"IND000512"}
+AssertionError: expected [ 'applicantName' ] to include 'applicationNumber'
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:49:30
+     47|     const { identity } = await read(patch);
+     48|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+     49|     expect(refusal?.missing).toContain(field);
+       |                              ^
+     50|     expect(refusal?.message).toMatch(/Nothing was built\.$/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"duns":"12-345-6789"}
+AssertionError: expected [ 'applicantName' ] to include 'applicantId'
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:49:30
+     47|     const { identity } = await read(patch);
+     48|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+     49|     expect(refusal?.missing).toContain(field);
+       |                              ^
+     50|     expect(refusal?.message).toMatch(/Nothing was built\.$/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_phone":"not a telephone"}
+AssertionError: expected [ 'applicantName' ] to include 'contact.phone'
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:49:30
+     47|     const { identity } = await read(patch);
+     48|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+     49|     expect(refusal?.missing).toContain(field);
+       |                              ^
+     50|     expect(refusal?.message).toMatch(/Nothing was built\.$/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_email":"not an email"}
+AssertionError: expected [ 'applicantName' ] to include 'contact.email'
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:49:30
+     47|     const { identity } = await read(patch);
+     48|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+     49|     expect(refusal?.missing).toContain(field);
+       |                              ^
+     50|     expect(refusal?.message).toMatch(/Nothing was built\.$/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > FDA refuses invalid recorded facts without rewriting them: {"contact_name":"\u0000"}
+AssertionError: expected [ 'applicantName' ] to include 'contact.name'
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:49:30
+     47|     const { identity } = await read(patch);
+     48|     const refusal = packageIdentityRefusal(identity, 'Nothing was buil…
+     49|     expect(refusal?.missing).toContain(field);
+       |                              ^
+     50|     expect(refusal?.message).toMatch(/Nothing was built\.$/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > recorded applicant identity uses the existing sponsor registry > accepts complete recorded FDA facts
+AssertionError: expected PackageIdentityMissingError: A package na… { …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+PackageIdentityMissingError {
+  "message": "A package names its application and its applicant from the record, never a placeholder, and the organization's record has no usable name to give as the applicant. Nothing was built.",
+  "missing": [
+    "applicantName",
+  ],
+  "code": "PACKAGE_IDENTITY_MISSING",
+  "name": "PackageIdentityMissingError",
+}
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:58:83
+     56|   it('accepts complete recorded FDA facts', async () => {
+     57|     const { identity } = await read();
+     58|     expect(packageIdentityRefusal(identity, 'Nothing was built.', { fd…
+       |                                                                                   ^
+     59|   });
+     60| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ectd/__tests__/recorded-applicant-identity.test.ts > canonical adapter reaches the existing FDA contact serializer > threads recorded contacts only to the FDA admin block
+AssertionError: expected undefined to deeply equal [ { type: 'regulatory', …(3) } ]
+
+- Expected:
+[
+  {
+    "email": "ra@example.test",
+    "name": "Regulatory contact",
+    "phone": "+1 212 555 0100",
+    "type": "regulatory",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/recorded-applicant-identity.test.ts:68:66
+     66|       submission: { applicationType: 'ind' }, leaves: [], resolveFile:…
+     67|       applicationId: '000512', sponsorId: '123456789', sponsorName: 'R…
+     68|     expect(buildPackagerInputFromCore(args).input.fda?.contacts).toEqu…
+       |                                                                  ^
+     69|     expect(buildPackagerInputFromCore({ ...args, sequence: { ...args.s…
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  01:20:25
+   Duration  4.95s (transform 3.05s, setup 149ms, import 4.32s, tests 27ms, environment 0ms)
+

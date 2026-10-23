@@ -1,0 +1,141 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state 143ms
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record 46ms
+   → {"error":{"code":"NOT_FOUND","message":"Program not found for this organization."}}: expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding 33ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision 30ms
+ ✓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program 26ms
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs 18ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session 24ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written 36ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts 44ms
+   → expected 404 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record
+AssertionError: {"error":{"code":"NOT_FOUND","message":"Program not found for this organization."}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:103:50
+    101|   it('binds the existing sponsor and number with one audited program r…
+    102|     const res = await save({ applicantSponsorId: SPONSOR, applicationN…
+    103|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    104|     expect(res.body).toMatchObject({
+    105|       programId: PROGRAM, applicantSponsorId: SPONSOR, applicationNumb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:124:77
+    122|   it('refuses a stale read rather than overwrite a newer binding', asy…
+    123|     const before = await readProgram();
+    124|     expect((await save({ sponsorAddress: 'New recorded address' })).st…
+       |                                                                             ^
+    125|     const stale = await save({ sponsorAddress: 'Stale address' }, { ex…
+    126|     expect(stale.status).toBe(409);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:144:69
+    142|
+    143|   it('refuses invalid FDA application numbers and malformed sponsor ID…
+    144|     expect((await save({ applicationNumber: 'IND123456' })).status).to…
+       |                                                                     ^
+    145|     expect((await save({ applicantSponsorId: 'not-a-uuid' })).status).…
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:151:29
+    149|     await query("UPDATE organization_users SET role='viewer' WHERE org…
+    150|     const response = await save({ sponsorAddress: 'Revoked writer' });
+    151|     expect(response.status).toBe(403);
+       |                             ^
+    152|   });
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:158:29
+    156|     holder.auditFails = true;
+    157|     const response = await save({ sponsorAddress: 'Must roll back' });
+    158|     expect(response.status).toBe(503);
+       |                             ^
+    159|     expect(JSON.stringify(response.body)).not.toContain('private audit…
+    160|     const after = await readProgram();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:167:29
+    165|   it('clears only stated facts and retains other recorded facts', asyn…
+    166|     const response = await save({ applicantSponsorId: null, applicatio…
+    167|     expect(response.status).toBe(200);
+       |                             ^
+    168|     expect(response.body.applicantSponsorId).toBeNull();
+    169|     expect(response.body.boundSponsor).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  01:25:49
+   Duration  19.25s (transform 7.43s, setup 189ms, import 10.97s, tests 7.15s, environment 0ms)
+

@@ -1,0 +1,457 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 1 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=40
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:279:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 371ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 128ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 103ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 23ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 5ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 4ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 84ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > preserves the exact paused Module 3 narrative on async resume without repeating AI or enqueue 97ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 2ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 107ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 80ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 87ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 4ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all
+[Orchestrator] run failed: ValidationError: Cannot build the FDA regional backbone: no application type was supplied, and "510(k)" is not one. The eCTD Module 1 application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master files; device pathways (510(k), De Novo, PMA) and non-US pathways (MAA, CTA) have no code in it and must not be filed on this backbone. Pass fda.applicationType. Defaulting to fdaat1 would declare this package a New Drug Application, which is a statement about the filing, not a formatting detail.
+    at buildFdaBackbone (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:581:11)
+    at Object.fda (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1270:17)
+    at packageEctdSubmission (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1287:46)
+    at assembleRealPackage (/workspace/concept2cure/server/services/ectd/orchestrator-real-package.ts:191:20)
+    at assembleForValidation (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:648:16)
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:1937:42
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1936:5)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:787:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [],
+  errorClass: 'validation'
+}
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > refuses preparing a fresh FDA release without the captured recorded applicant proof 82ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 59ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 82ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 106ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 74ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — happy path > runs every step to complete|skipped and produces a gateway-ready package 803ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — m3.refine with useAI=true > swaps the deterministic sections for the AI-refined set and surfaces refinementMeta 58ms
+stderr | tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — validator rejection > fails package.validate and surfaces run.status === "partial" when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 3 structural error(s), 0 regional error(s), 0 sequence error(s); hardenedScore=64
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at /workspace/concept2cure/tests/integration/orchestrator-e2e-ind.test.ts:499:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — validator rejection > fails package.validate and surfaces run.status === "partial" when gatewayReady=false 341ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws on organizationId === 0 BEFORE any persistence call 2ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws when organizationId is undefined (cast-through) 1ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > first call suspends in awaiting-async; second call with resumeRunId completes 177ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > a resumed IND run whose validation was skipped is `partial`, not `complete` — the gate was never checked 287ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume cross-tenant > rejects when the resuming caller is a different org from the originator 5ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — Move-7 region widening (KR) > persists a KR submission run without raising a 23514 check_violation 201ms
+stderr | server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > reports a lookup failure as undetermined, never as unsigned
+{
+  "timestamp": "2026-10-21T01:31:56.083Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "connection reset",
+    "submissionId": 7,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > still says unsigned when the probe itself fails — no positive evidence of a run
+{
+  "timestamp": "2026-10-21T01:31:56.092Z",
+  "level": "warn",
+  "message": "[release-signature-status] unlinked-run probe failed; reporting none",
+  "context": {
+    "err": "probe failed",
+    "submissionId": 7,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > does NOT consult the other spine when the orchestrator lookup is undetermined
+{
+  "timestamp": "2026-10-21T01:31:56.109Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "connection reset",
+    "submissionId": 7,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a failed lookup: undetermined is not absent, and nothing is offered on it
+{
+  "timestamp": "2026-10-21T01:31:56.117Z",
+  "level": "warn",
+  "message": "[release-signature-status] release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "connection reset",
+    "submissionId": 7,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > clears when a run signed this very sequence 8ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > does NOT clear on a signature taken over a different sequence of the same submission 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > picks the run that signed this sequence out of several 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > reports a tampered package on THIS sequence as invalid, not as non-matching 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > reports a lookup failure as undetermined, never as unsigned 8ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > is unsigned when the submission has no runs at all 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > reports undetermined, not unsigned, when runs exist under this submission but carry no FK 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > resolveReleaseSignatureStatus — the verdict is about THIS sequence > still says unsigned when the probe itself fails — no positive evidence of a run 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the verdict is about THIS region > does NOT clear on a signature over the same sequence number in another region 5ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the verdict is about THIS region > DOES clear when the two spines spell the same region differently 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the verdict is about THIS region > picks the run for THIS region out of several 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the verdict is about THIS region > does NOT exclude when the region cannot be resolved — unknown is not different 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the verdict is about THIS region > is unchanged when the caller names no region at all 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > clears the gate when the sequence itself carries a verified release signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > addresses the submissions spine by SEQUENCE id, scoped to this organization 6ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > blocks on a sequence signature that no longer binds its content 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > reports a revoked sequence signature as revoked, not as unsigned 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > says so about BOTH spines when neither holds a signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > NEVER rescues a tampered orchestrator signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > does NOT consult the other spine when the orchestrator lookup is undetermined 5ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > a release signed on the submissions spine > leaves the orchestrator answer alone when no sequence id is supplied 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > neither spine holds one: the sequence decides, and signing now supplies it 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a revoked sequence signature: the new one is newest, so signing now supplies it 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a sequence signature that no longer binds its content is NOT resolved by signing again 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > an orchestrator run awaiting its signer: the sequence spine is never consulted, so signing it cannot help 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a REVOKED orchestrator signature: revoked is resolvable on the sequence spine, and precedence is what says no here 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a tampered orchestrator signature: the orchestrator decides, and nothing is offered over it 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > a failed lookup: undetermined is not absent, and nothing is offered on it 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > which spine decided — and so whether the dispatch signature can supply the release > no sequence id: the resolver cannot see a sequence signature, so it is the orchestrator that decided 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / signed → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / unsigned → true 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / awaiting → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / invalid → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / revoked → true 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / undetermined → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / signed → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / unsigned → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / awaiting → false 10ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / invalid → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / revoked → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / undetermined → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / signed → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / unsigned → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / awaiting → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / invalid → false 27ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / revoked → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / undetermined → false 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the assessor actually passes the sequence > is the only caller, and it hands the resolver this sequence 1ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the assessor actually passes the sequence > hands the resolver this sequence's REGION 0ms
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > the assessor actually passes the sequence > hands the resolver the sequence ID, or the submissions spine is unreachable 0ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > markDownstreamStale > returns the keys of every step transitively downstream of the changed step 4ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > markDownstreamStale > transitions only `complete` downstream steps to `stale` — leaves the changed step alone 1ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > markDownstreamStale > does NOT transition steps whose current status is not `complete` 0ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > markDownstreamStale > honors the run's OWN dependsOn snapshot over the live definition 0ms
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > returns the list of stale step keys triggered by the changedStep parameter
+[Orchestrator] run failed: Error: package not gateway-ready: 16 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at Module.regenerateAffected (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:3362:17)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:296:20
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > returns the list of stale step keys triggered by the changedStep parameter 534ms
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > persists the stale markers on the superseded run and names it, so its record stops claiming `complete`
+[Orchestrator] run failed: Error: package not gateway-ready: 16 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at Module.regenerateAffected (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:3362:17)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:334:20
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > persists the stale markers on the superseded run and names it, so its record stops claiming `complete` 176ms
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > PINS CURRENT BEHAVIOR: re-runs the entire pipeline regardless of stale marking
+[Orchestrator] run failed: Error: package not gateway-ready: 16 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at Module.regenerateAffected (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:3362:17)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:374:20
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > detects an input-hash change on csr.tabulate and adds its downstream to the regenerated list
+[Orchestrator] run failed: Error: package not gateway-ready: 16 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at Module.regenerateAffected (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:3362:17)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:429:20
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > PINS CURRENT BEHAVIOR: re-runs the entire pipeline regardless of stale marking 135ms
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > refuses step-audit persistence failure before running the step body
+[Orchestrator] run failed: Error: step audit unavailable
+    at Object.<anonymous> (/workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:521:76)
+    at Object.Mock [as poolQuery] (file:///workspace/concept2cure/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Object.query (/workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:43:15)
+    at persistStepEvent (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1245:16)
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1473:13)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1481:5)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:524:20
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > happy path: a region the CHECK accepts (`US`) persists without surfacing warnings
+[Orchestrator] run failed: Error: package not gateway-ready: 16 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=0
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-uncovered.test.ts:545:22
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > regenerateAffected > detects an input-hash change on csr.tabulate and adds its downstream to the regenerated list 86ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > getRun / getRunAudit — a failed read is not a missing run > normalizes driver Date timestamps for persistence and API round trips 2ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > getRun / getRunAudit — a failed read is not a missing run > refuses an unreadable recorded timestamp as a read failure 1ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > getRun / getRunAudit — a failed read is not a missing run > getRun throws OrchestratorReadError on a database failure instead of returning null 1ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > getRun / getRunAudit — a failed read is not a missing run > getRunAudit throws OrchestratorReadError on a database failure instead of returning an empty history 0ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > getRun / getRunAudit — a failed read is not a missing run > a genuinely missing run is still null, and a run with no events is still [] 0ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > PINS POST-FIX BEHAVIOR: a CHECK violation (23514) is re-thrown — no silent dark-row creation 2ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > refuses step-audit persistence failure before running the step body 1ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > refuses transient run persistence failure before starting composers or external jobs 1ms
+ ✓ tests/unit/submission-package-orchestrator-uncovered.test.ts > region-CHECK violation handling > happy path: a region the CHECK accepts (`US`) persists without surfacing warnings 111ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof 5ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > FDA frozen applicant proof at the sign boundary > hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 636ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned" 4ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify 104ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed 82ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted 167ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam) 2ms
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run
+{
+  "timestamp": "2026-10-21T01:32:12.624Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read
+{
+  "timestamp": "2026-10-21T01:32:12.639Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an identical manifest, and says how much the index-md5 corroborated 9ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a leaf the sequence now holds that nobody signed — the Module 3 placement case 7ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a signed leaf the sequence no longer holds 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses the same leaves when the bytes under one of them changed 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > is case- and vocabulary-insensitive about the section code, on both sides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > counts leaves, so dropping one of two identical leaves is caught 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > matches a leaf with no recorded checksum on its identity, and does NOT count it as corroborated 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > does not invent a mismatch when only one side recorded a checksum 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 4ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > treats a historical FDA snapshot without applicant proof as intact but not covering, retaining the sequence fallback 5ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports changed current contact as no covering signature rather than snapshot tampering 3ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports the exact recorded applicant snapshot the signature binds 10ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > refuses an applicant contact altered inside an otherwise intact frozen record 3ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 5ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 4ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 1ms
+stdout | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-10-21T01:32:19.271Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:32:19.273Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-10-21T01:32:19.273Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/release-signature-gate.test.ts
+[database] Database connection successful
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-10-21T01:32:22.555Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > clears a verified signature 8ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on unsigned 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on awaiting 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on revoked 5ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on undetermined 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > does not let an undetermined lookup read as an absent requirement 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > distinguishes unsigned from undetermined in its message 2ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > surfaces resolver detail in the blocker message 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 2: invalid blocks unconditionally > blocks a tampered signature even when a signature is NOT required 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 2: invalid blocks unconditionally > blocks a tampered signature when a signature IS required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears unsigned when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears awaiting when no signature is required 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears revoked when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears undetermined when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > release-signature gate composes with the existing dispatch gates > blocks the merged verdict even when every other gate is clean 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > release-signature gate composes with the existing dispatch gates > preserves blocker order across composed gates 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > blocks when ONLY the release-signature gate blocks 2ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > blocks on a tampered signature even when nothing else objects 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > clears only when every gate clears 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > unions blockers from every contributing gate 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > does not block a FREEZE for a missing release signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > still blocks a DISPATCH for the same missing signature 9ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > an undetermined lookup does not block a freeze either — it is the transmit re-check that needs certainty 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > a TAMPERED signature blocks both steps — integrity is not a transmit-only concern 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the structural gate governs a freeze exactly as it governs a dispatch 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the external gate governs a freeze exactly as it governs a dispatch 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the shadowPresence gate governs a freeze exactly as it governs a dispatch 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the dispatch composition is exactly what composeDispatchGates already produced 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for IND 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for NDA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for BLA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for MAA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > is case- and whitespace-insensitive 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for 510k 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for PMA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for JNDA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for DeNovo 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > treats a missing type as not-required rather than throwing 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > pins the required list so a silent widening fails here 0ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > uses only verified persisted inputs and the original run id, then releases the claim 16ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not run any downstream effect if another connection already holds the run 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > returns an already finished run after the claim without repeating its effects 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > releases the claim even when downstream persistence fails 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > allows only one of two overlapping continuation requests to execute the driver 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed snapshot before any effect 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed hash before any effect 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed seal before any effect 8ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed identity before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed program before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > collapses a foreign or missing run before loading any source inputs 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > rechecks current program authority, ignoring the original actor role 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a program lead downgraded to viewer before build/resume effects 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not guess original inputs for older asynchronous work 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > hydrates an older frozen signature record using its scoped submission identity 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a forged frozen release before creating any signature 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > waits for async jobs without running downstream work, then resumes with exact paused outputs 4ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses closed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses changed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses replacing the paused job id with another same-organization job 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a CSR job whose persisted project has changed from the original program anchor 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > continues dependent work on CSR completion using only its stored tenant and original actor 3ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > the template set is derived from the templates, and covers four of the route's thirteen regions 5ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > a region WITH a template composes its regional section 498ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > a region with NO template is skipped naming the region — not "no inputs" 156ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region CN is reported the same way — the fix is not UK-specific 220ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region BR is reported the same way — the fix is not UK-specific 152ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region SG is reported the same way — the fix is not UK-specific 123ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > GLOBAL is reported as not-applicable, NOT as a missing template 5ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > "skipped (no inputs)" still means exactly that when no sources were supplied 11ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > an unsupported region with no sources is also "no inputs" — the caller is told the nearer cause 17ms
+stderr | server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read
+{
+  "timestamp": "2026-10-21T01:32:33.335Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] recorded applicant read failed; coverage cannot be determined",
+  "context": {
+    "err": "database unavailable",
+    "sequenceId": 3,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > keeps a historical signature intact but refuses coverage without its applicant snapshot 5ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > covers identical leaves and the identical current recorded identity 4ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicationNumber 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantName 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantId 2ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantSponsorId 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed contact details 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not establish coverage from an unsupported stored identity version 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > refuses coverage when current required FDA facts were cleared 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read 4ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not require an FDA identity snapshot for an EU sequence 2ms
+
+ Test Files  12 passed (12)
+      Tests  239 passed (239)
+   Start at  01:31:33
+   Duration  60.26s (transform 10.53s, setup 587ms, import 47.05s, tests 7.06s, environment 3ms)
+

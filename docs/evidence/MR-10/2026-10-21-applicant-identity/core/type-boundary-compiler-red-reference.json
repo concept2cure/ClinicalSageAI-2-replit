@@ -1,0 +1,10 @@
+{
+  "sourceLogName": "source-push-reader-lock.log",
+  "sourceLogWorkspacePath": "/workspace/scratch/applicant-identity-20261021/source-push-reader-lock.log",
+  "wholeLogArchiveOwner": "root",
+  "anchorBeforeCorrection": "785dc0500f75b21291baad187c2f5856af8187e2",
+  "compilerDiagnostic": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts(95,48): error TS2352: Conversion of type '{ version?: undefined; identity?: undefined; } | { version: number; identity?: undefined; } | { version: number; identity: { contact?: undefined; }; } | { version: number; identity: { contact: null; }; } | null | undefined' to type 'RecordedPackageIdentitySnapshot' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+  "correctedPath": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+  "beforeSha256": "c8058c5b5cd0de983fc1b9e7356ea72fcfd3bd39813beadf36f0d87ad022a593",
+  "correction": "Deliberately malformed test fixture crosses the declared type boundary through an explicit unknown intermediate. Production types and behavior unchanged."
+}

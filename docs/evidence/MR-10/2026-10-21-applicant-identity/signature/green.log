@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > captures the exact canonical identity read on the signing client 13ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicationNumber changes 5ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantName changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantSponsorId changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when applicantId changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.name changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.phone changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > requires re-signing when contact.email changes 1ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > retains the captured proof when the mutable record later changes 2ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > binds absent facts too, so recording them changes the approval 2ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > does not change the non-FDA binding recipe 3ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts > FDA sequence approval covers the recorded applicant > propagates a failed identity read rather than signing a guessed record 3ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  01:21:04
+   Duration  1.34s (transform 377ms, setup 158ms, import 669ms, tests 41ms, environment 0ms)
+

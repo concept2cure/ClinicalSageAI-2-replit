@@ -1,0 +1,15 @@
+{
+  "anchor": "5dd30f0348fca8191159f914bf3e0cce6dab0679",
+  "command": "Node22 NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+  "exit": 0,
+  "sha256": {
+    "dist/index.js": "780510dfd253ea8bcc8b981c9ef83b74dadc95eaaf1c3dd92b7c4d6ebb5bc105",
+    "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791",
+    "dist/public/assets/index-DUhd9lun.js": "7cf3feafc5fe4acfd8924cd2b5230be891a9d65e19beeb744f1bdae7c09e4c33"
+  },
+  "embeddedAnchor": {
+    "dist/index.js": true,
+    "dist/ops/verify-audit-chain.mjs": false,
+    "dist/public/assets/index-DUhd9lun.js": true
+  }
+}

@@ -1,0 +1,52 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > exposes an exact microsecond revision and an honest unbound state
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > binds the existing sponsor and number with one audited program receipt; forms read that record
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > pins form applicant identity to the program record despite caller overrides
+ × server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > preserves the bound registry signatory and refuses to replace it with stated metadata 268ms
+   → expected { …(7) } to match object { …(2) }
+(5 matching properties omitted from actual)
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > holds the same precise program revision across session time zones
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > enforces the same-tenant binding against direct SQL too
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a stale read rather than overwrite a newer binding
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > requires a stated reason and read revision
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses a foreign sponsor without changing the program
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > refuses invalid FDA application numbers and malformed sponsor IDs
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rechecks current persisted authority despite an admitted regulatory-author session
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > rolls the facts and revision back when its chained audit cannot be written
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > reports a lost commit acknowledgement as unconfirmed while the persisted change stands
+ ↓ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > clears only stated facts and retains other recorded facts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-program-applicant.contract.integration.test.ts > the existing recorded program facts > preserves the bound registry signatory and refuses to replace it with stated metadata
+AssertionError: expected { …(7) } to match object { …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "authorized_rep_name": "Recorded signatory",
+-   "authorized_rep_title": "Regulatory director",
++   "authorized_rep_name": "",
++   "authorized_rep_title": "",
+  }
+
+ ❯ server/routes/__tests__/ind-program-applicant.contract.integration.test.ts:143:33
+    141|       const built = await request(app).post('/api/ind-forms/FDA_3454/b…
+    142|       expect(built.status).toBe(200);
+    143|       expect(built.body.fields).toMatchObject({ authorized_rep_name: '…
+       |                                 ^
+    144|     }
+    145|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  01:32:53
+   Duration  10.27s (transform 3.46s, setup 112ms, import 5.34s, tests 4.34s, environment 0ms)
+

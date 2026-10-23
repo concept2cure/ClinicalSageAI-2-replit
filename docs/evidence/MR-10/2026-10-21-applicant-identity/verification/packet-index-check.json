@@ -1,0 +1,32 @@
+{
+  "verifiedAtUtc": "2026-10-23T15:08:41.635659+00:00",
+  "qualificationSource": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "harnesses": [
+    {
+      "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/native/check.ts",
+      "indexedSha256": "ac4c8c46b3cde693deabcad5c8c99e26db06030d78be9ee9e573d48997bb5095",
+      "matchesExecutionPin": true
+    },
+    {
+      "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/probe.tsx",
+      "indexedSha256": "452891160aadc438125010d3c4dc78346fdecb11b399525de60e26ecd58d2b36",
+      "matchesExecutionPin": true
+    },
+    {
+      "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/check.mjs",
+      "indexedSha256": "bc2bd7587d64adb43d1eac3ce65b8b52f906022cad6e092bd91a13ebb36c8c1a",
+      "matchesExecutionPin": true
+    },
+    {
+      "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/index.html",
+      "indexedSha256": "fa8964ca47335b1f66496c950e4c91e1d01cfa4b4b7d82da32fdb3bd73d60d82",
+      "matchesExecutionPin": true
+    },
+    {
+      "path": "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/server.mjs",
+      "indexedSha256": "7686d2c9bcee6b1c4bddc69a358ae7281ca0e23a5da866c84b88c0e7a7beb363",
+      "matchesExecutionPin": true
+    }
+  ],
+  "allFiveExecutionHarnessesTrackedAndMatched": true
+}

@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:program-ownership-single-source
+> node scripts/ci/check-program-ownership-single-source.mjs
+
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).

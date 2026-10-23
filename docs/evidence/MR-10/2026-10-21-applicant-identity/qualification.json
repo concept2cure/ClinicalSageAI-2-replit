@@ -1,0 +1,195 @@
+{
+  "startingAnchor": "b9a48ce7136b8eecb076126d22e387d4d1b0ba84",
+  "sourceAnchor": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "workstream": "W5 / D7; MR-10 Stage 4 recorded identity/contact portion",
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "agencySchemasAcquired": false,
+  "deployed": false,
+  "testRecords": "Explicit synthetic fixture records only; browser APIs intercepted, native PostgreSQL proof and real packager bytes separate.",
+  "cohortsOverlap": true,
+  "cohorts": {
+    "registry": {
+      "passed": 48,
+      "files": 3,
+      "evidence": "registry/README.md"
+    },
+    "program": {
+      "passed": 97,
+      "files": 4,
+      "evidence": "program/green-reader-lock.log"
+    },
+    "core": {
+      "passed": 88,
+      "files": 10,
+      "laterCaptureReplay": {
+        "passed": 42,
+        "files": 2
+      },
+      "evidence": "core/README.md",
+      "laterTypeBoundaryReplay": {
+        "passed": 27,
+        "files": 1,
+        "evidence": "core/type-boundary-green.txt"
+      }
+    },
+    "callers": {
+      "passed": 260,
+      "files": 19,
+      "laterCompatibilityReplay": {
+        "passed": 12,
+        "files": 2
+      },
+      "evidence": "callers/README.md",
+      "laterTypeBoundaryReplay": {
+        "passed": 31,
+        "files": 3,
+        "evidence": "callers/green-type-boundaries.txt"
+      }
+    },
+    "snapshots": {
+      "passed": 239,
+      "files": 12,
+      "laterParentCoverageReplay": {
+        "passed": 32,
+        "files": 2
+      },
+      "evidence": "snapshots/README.md"
+    },
+    "ui": {
+      "passed": 132,
+      "files": 12,
+      "evidence": "ui/README.md"
+    },
+    "rootSignatures": {
+      "passed": 70,
+      "files": 5,
+      "laterPersistedWriterReplay": {
+        "passed": 13,
+        "files": 1,
+        "evidence": "signature/compiler-correction.log.gz"
+      },
+      "evidence": "signature/"
+    }
+  },
+  "native": {
+    "executed": true,
+    "engine": "PostgreSQL 16.15",
+    "checks": 8,
+    "passed": true,
+    "freezeRowLockTests": 2,
+    "realMigrationReplay": true,
+    "fullFreshDeploymentClaim": false,
+    "actualRecordedIdentityZip": true,
+    "evidence": "native/result.json"
+  },
+  "browser": {
+    "passed": true,
+    "stages": 11,
+    "writes": 7,
+    "pageErrors": [],
+    "actualComponents": true,
+    "syntheticInterceptedApis": true,
+    "governedDispatchCallbackObserved": true,
+    "backendSignatureExecutedInBrowser": false,
+    "evidence": "browser/result/result.json"
+  },
+  "build": {
+    "anchor": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+    "command": "Node22 NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exit": 0,
+    "sha256": {
+      "dist/index.js": "9f912ffa7a8ff9b6c54bf8e8222e336556730a543a31fc7b7ab5e92bf7289725",
+      "dist/ops/verify-audit-chain.mjs": "fcd682e198d1a83380a50414ee90642f9538589d2e650e00a7a94300d0faa791",
+      "dist/public/assets/index-AcqPpXsE.js": "4a84d0be4dd84349af105af8bac0e474205c3cdef733581d2791fe9270ad93ba"
+    },
+    "embeddedAnchor": {
+      "dist/index.js": true,
+      "dist/ops/verify-audit-chain.mjs": false,
+      "dist/public/assets/index-AcqPpXsE.js": true
+    }
+  },
+  "sourcePinVerification": "verification/source-pin-verification.json",
+  "fullBackendSuiteClaimedGreen": false,
+  "broadDiagnostic": {
+    "files": 163,
+    "totalTests": 2219,
+    "passed": 2163,
+    "failed": 17,
+    "skipped": 37,
+    "todo": 2,
+    "failedHooks": 2,
+    "finalSourceWitness": false,
+    "classification": "verification/backend-broad-summary.json",
+    "unresolvedPreexistingFailures": {
+      "file": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "count": 2,
+      "reason": "PreSTAR assets already present before this task; existing test deliberately requests Stage 11 enforcement posture re-decision. Test/assets/registry/checksums unchanged.",
+      "proof": "verification/preexisting-posture-inputs.json",
+      "statusOnResumption": "Corrected by another session in4d27ecc74; original diagnostic remains an historical failed execution."
+    }
+  },
+  "baselinesRelaxedByThisSlice": false,
+  "flagDefaultsChanged": false,
+  "newProductionDependencies": false,
+  "normalPushGates": {
+    "status": "passed; source accepted directly on canonical21Oct, result verified on resumption23Oct",
+    "typecheckErrors": 0,
+    "typecheckExit": 0,
+    "heapMb": 12288,
+    "hooksBypassed": false,
+    "initialAttempts": [
+      {
+        "result": "cancelled before compiler",
+        "exit": 130,
+        "reason": "Synchronize concurrent canonical source by normal merge",
+        "log": "verification/source-push-cancelled-before-catchup.log.gz"
+      },
+      {
+        "result": "normal ownership gate refused duplicate lock-only query before compiler",
+        "exit": 1,
+        "correction": "Existing full-facts reader locks program only; canonical authority helper unchanged",
+        "log": "program/prepush-ownership-refusal.log"
+      },
+      {
+        "result": "full compiler refused6type errors",
+        "exit": 1,
+        "compilerExit": 2,
+        "typeErrors": 6,
+        "anchor": "785dc0500f75b21291baad187c2f5856af8187e2",
+        "correction": "Canonical binding type reused, optional dispatch values normalized, malformed fixture cast explicit through unknown",
+        "log": "verification/source-push-compiler-refusal.log.gz"
+      }
+    ],
+    "acceptedSource": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+    "allPrePushGatesPassed": true,
+    "eslintWarningGrowth": -1,
+    "acceptedLog": "verification/source-push-accepted.log.gz"
+  },
+  "openAcceptance": [
+    "Human witness checklist in target test environment",
+    "Verified real applicant/DUNS/contact records",
+    "Legal/agency-asset vendoring prerequisites and actual corpus qualification",
+    "FDA telephone-number-type vocabulary and DTD-derived heading/form conformance",
+    "Remaining D7 deployment/agency acceptance criteria",
+    "Non-US application-number signature coverage handed on by P-44; outside this historical FDA integration"
+  ],
+  "sourcePinSummary": {
+    "latestManifestCount": 10,
+    "latestPinOccurrences": 127,
+    "latestTrackedGitBlobMatches": 122,
+    "latestUntrackedHarnessFilesystemMatches": 5,
+    "latestPinMismatchCount": 0,
+    "latestUniqueInputPaths": 109,
+    "implementationProductionPathsChecked": 32,
+    "uncoveredChangedProductionPaths": [],
+    "requiresAdditionalWorkForPinMismatch": false
+  },
+  "cleanup": "verification/cleanup.json",
+  "resumptionCanonicalRefresh": "canonical-refresh.json",
+  "publicationSecretScan": {
+    "findings": 0,
+    "unchangedConfig": ".gitleaks.toml",
+    "log": "verification/evidence-gitleaks.log.gz"
+  }
+}

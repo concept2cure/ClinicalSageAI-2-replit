@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > bounds oversized legacy facts in the audit without inventing a shortened prior value
+{
+  "timestamp": "2026-10-21T01:24:40.602Z",
+  "level": "info",
+  "message": "[ind-master-data-service] Created IND sponsor",
+  "context": {
+    "sponsorId": "9c11d645-74f9-470f-b163-2198f8cdb67b",
+    "organizationId": 1,
+    "auditRowPersisted": true
+  }
+}
+
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 401 when unauthenticated
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 403 with the wrong role
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > POST /sponsors → 201
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors → 200 includes the created sponsor
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 200
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > PATCH /sponsors/:id → 200 updates
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 404 for an unknown id
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > cannot identity-spoof organizationId via the body
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > tenant isolation > does not return another org's records
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /agents → 201
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /investigators → 201
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > requires a stated reason before creating a sponsor
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses an out-of-range reason
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses unknown business fields but keeps the trusted identity strip
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":null}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"   "}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"Applicant\u0001"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12-345-6789"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"duns":"12345678"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactPhone":"call tomorrow"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactEmail":"not email"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"contactName":"Contact\u0001"}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > refuses a malformed supplied field {"city":22}
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > saves incomplete drafts, trims values and returns the full raw row plus audit and revision
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor governed input and exact receipt > keeps all microseconds in reads and compares exactly on update
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > requires a revision, a reason and a business change on PATCH
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > admits only one concurrent update using the same revision
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > does not leak another tenant through get or CAS update
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > records the reason and bounded before/after facts without governance fields in sponsor columns
+ × server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > bounds oversized legacy facts in the audit without inventing a shortened prior value 180ms
+   → expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to match object { Object (omitted, characters) }
+ ↓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > reports a committed sponsor mutation when the ancillary audit receipt fails
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CAS, tenant and audit receipts > bounds oversized legacy facts in the audit without inventing a shortened prior value
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to match object { Object (omitted, characters) }
+
+- Expected:
+{
+  "characters": 5000,
+  "omitted": "exceeds-audit-limit",
+}
+
++ Received:
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ server/routes/__tests__/ind-master-data.contract.integration.test.ts:247:19
+    245|     expect(saved.status).toBe(200);
+    246|     const prior = holder.audit.mock.calls.at(-1)?.[0].details.before.a…
+    247|     expect(prior).toMatchObject({ omitted: 'exceeds-audit-limit', char…
+       |                   ^
+    248|     expect(prior.sha256).toMatch(/^[a-f0-9]{64}$/);
+    249|     expect(JSON.stringify(holder.audit.mock.calls.at(-1)?.[0].details)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)
+   Start at  01:24:25
+   Duration  15.24s (transform 1.71s, setup 641ms, import 4.19s, tests 8.53s, environment 0ms)
+
