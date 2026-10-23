@@ -177,3 +177,10 @@ completion's 13 owned paths or 71 qualified source pins. Planning remains
 internal/manual without filing authority; Unicode reads retain current access
 and receipt-span checks. The separate late-incoming evidence records the
 affected 14-suite run and fresh whole-tree build/compiler results.
+
+Final upstream release-identity work at `4cd0215a5` merged cleanly at
+`6794c76f6`. Its identity reader and default snapshot bytes are unchanged;
+regional facts bind the existing non-US release proof. This completion's 13
+paths remain unchanged. The sole original-pin overlap is a comment in
+`SubmissionSeqWorkspaces.tsx`. Final integration evidence preserves prior
+counts separately and records focused merged checks and whole-tree gates.

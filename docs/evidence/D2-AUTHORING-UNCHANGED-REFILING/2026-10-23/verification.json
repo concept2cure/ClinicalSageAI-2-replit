@@ -65,5 +65,18 @@
     "fullTypecheckErrors": 0,
     "typecheckProcessExit": 0,
     "earlier595CountPreserved": true
+  },
+  "finalIntegration": {
+    "supplement": "final-integration.json",
+    "qualifiedSourceCommit": "6794c76f67f375a7d716a5a7a80fc9a22035cffa",
+    "incomingUpstreamCommit": "4cd0215a5152ea813c68d1d0b2cd341ae7abca3f",
+    "passed": 244,
+    "files": 8,
+    "productionBuildPassed": true,
+    "fullTypecheckErrors": 0,
+    "typecheckProcessExit": 0,
+    "originalPinsUnchanged": 70,
+    "reviewedCommentOnlyPinDifference": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+    "earlier595And499CountsPreserved": true
   }
 }

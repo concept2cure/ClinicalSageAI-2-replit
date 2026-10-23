@@ -107,6 +107,16 @@ and results; `late-incoming-test-files.json` selects the affected suites,
 including both unchanged callers of modified fixtures. These results are
 kept separate from the earlier 595/32 run.
 
+The final incoming release-identity work at `4cd0215a5` then merged cleanly
+at `6794c76f6`. `final-integration.json` records **244 passes across
+eight focused interoperability suites**, a fresh passing production build and
+full zero-error TypeScript check. All 13 feature paths and 24 late-input pins
+are unchanged; 70 of the original 71 pins match, with one reviewed comment-only
+difference in `SubmissionSeqWorkspaces.tsx`. All 44 incoming identity manifest
+pins match the merged source. Historical upstream cohorts remain separate;
+native concurrency was not rerun here. The original 595/32 and 499/14 counts
+remain unchanged.
+
 ## Reproduction and limits
 
 ```sh
