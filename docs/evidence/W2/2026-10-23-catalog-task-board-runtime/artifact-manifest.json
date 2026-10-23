@@ -1,11 +1,26 @@
 {
   "qualifiedCommit": "66110e1a7",
-  "finalIntegrationCommit": "d6ce8f9250e6b42cd1778576773376f45f1f48d3",
+  "finalIntegrationCommit": "77f1914ed8815c238ac75523257e10829c0557a6",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 11884,
-      "sha256": "1d513db7db564582c6ed704f34427231f849bdcf3c05438ecb1ed0ae24b751be"
+      "bytes": 12782,
+      "sha256": "f54324fa097bc01db0b0ffe20173cbde59cb1166ef6503c3a5e85af18914b3bc"
+    },
+    {
+      "path": "assembly-build.log.gz",
+      "bytes": 4703,
+      "sha256": "52aaad09a137b9bdd2ce64e0dbe7d33055501def8f0def9d0ae5f909619ff7ec"
+    },
+    {
+      "path": "assembly-catchup.json",
+      "bytes": 657,
+      "sha256": "b991c53d4f7cb956c85bbed5625d08fff8de6d6f4853537e11154fef1aa0ca52"
+    },
+    {
+      "path": "assembly-tests.log.gz",
+      "bytes": 7746,
+      "sha256": "e41b9eeb0ca14cd5626a695ee085916e6a20829ae5447ce7b92afecb87d71779"
     },
     {
       "path": "auth/green.txt",
@@ -146,6 +161,11 @@
       "path": "second-push.log.gz",
       "bytes": 4486,
       "sha256": "8a3bd91886c2125a2e82f6e799cf8eacb562a8912e053d3f7574f92d4586177c"
+    },
+    {
+      "path": "third-push.log.gz",
+      "bytes": 4488,
+      "sha256": "29a086dea802aa5c60fd510b65cc3030e8968f5a78073cb2ea7f8cc062075148"
     },
     {
       "path": "typecheck.log",

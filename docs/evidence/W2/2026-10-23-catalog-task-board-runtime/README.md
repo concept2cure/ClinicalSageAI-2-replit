@@ -1,6 +1,6 @@
 # W2 / D1 — catalog and task-board runtime recovery
 
-Status: engineering correction qualified across canonical catch-ups, most recently `d6ce8f925`; source change `bf47a6964`. Affected hosted deployment remains unverified. No deployed incident cause or deployment readiness claimed. Contract: `docs/design/CATALOG_TASK_BOARD_RUNTIME_2026-10-23.md`. Baseline `381a42fda`.
+Status: engineering correction qualified across canonical catch-ups, most recently `77f1914ed`; source change `bf47a6964`. Affected hosted deployment remains unverified. No deployed incident cause or deployment readiness claimed. Contract: `docs/design/CATALOG_TASK_BOARD_RUNTIME_2026-10-23.md`. Baseline `381a42fda`.
 
 ## What already exists
 
@@ -58,3 +58,9 @@ The second normal push also passed all gates and a complete **0-error** compiler
 The final integration passed **220 tests / 18 suites**, including the prior cohort, current workflow discovery, shell navigation and command-palette licensing (`workflow-tests.log.gz`). Client/server/audit-verifier builds passed (`workflow-build.log.gz`). Fresh actual-app HTTP controls in `http.json` still return 200 with matching identity, 403 with stale organization and 401 unauthenticated; `http-before-workflow.json` preserves the first run.
 
 `browser-cross-tab-current.json` requalifies the actual **Workflows** screen and saved task board on this source: a second tab changes shared organization to100391 after bootstrap; the original session retains391, both product controls load data, actual APIs return200 under391 and shared storage remains100391. No uncaught errors. The first rerun used an expired synthetic session and correctly signed out; a fresh session was obtained through the existing local dev-login endpoint. No authentication/lifetime guard was changed. Final normal publication again requires the full compiler and all push gates.
+
+## Final assembly catch-up
+
+The third normal push passed all gates and a complete **0-error** compiler check (`third-push.log.gz`), then was refused because canonical advanced to `1eca721b1`. Merge `77f1914ed` retains that existing editor's searchable template selection and preserves both work-order rows. The auth, Workflows/catalog, board, transport and unified reader remain byte-identical to the browser-qualified `d6ce8f925`.
+
+`assembly-tests.log.gz`: **196 passed / 13 suites**, a bounded overlapping cohort of auth/catalog/board/workflow recovery plus the incoming picker/search/workbench integration. `assembly-build.log.gz`: client, server and audit-verifier builds pass. Independent review confirms assembly still uses captured-actor headers and its existing session/document/project guards. `assembly-catchup.json` records these results; final publication again uses all normal gates.
