@@ -1,0 +1,11 @@
+{
+  "inputArgv": [
+    "git",
+    "show",
+    "HEAD:shared/regulatory/global-document-registry.ts"
+  ],
+  "stdinTo": "baseline-registry-lint.json",
+  "inputSha256": "2ec8929bfad2ce60ff9934b97200d270cb3fa52d110f88b7011e7f45f4c7f80d",
+  "sameAsMeaningfulRedRegistryInput": true,
+  "reason": "Baseline ESLint used canonical HEAD bytes through stdin without changing the working tree; before/after source pins in its recorder describe the current tree, not stdin."
+}

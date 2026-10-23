@@ -32,6 +32,7 @@ const SECOND = 'aaaaaaaa-0000-4000-8000-000000000182';
 const THIRD = 'aaaaaaaa-0000-4000-8000-000000000183';
 const TEMPLATE = 'cccccccc-0000-4000-8000-000000000181';
 const OTHER = 'bbbbbbbb-0000-4000-8000-000000000182';
+const SECTIONS_READ = `/api/authoring/docs/${DOC}/sections?programId=${PID}`;
 const AT = '2026-10-17T20:00:00Z';
 const doc = { id: DOC, title: 'Assembly working document', module: 'M3', product_code: null,
   section_count: 1, status: 'DRAFT', updated_at: AT, client_program_id: PID };
@@ -212,9 +213,9 @@ describe('structural assembly retains the actual editor host', () => {
     await buildDocument(); await screen.findByRole('button', { name: 'Check saved document' });
     fireEvent.click(screen.getByTestId('workbench-back'));
     expect(onBack).not.toHaveBeenCalled();
-    const reads = apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`).length;
+    const reads = apiRequest.mock.calls.filter(([, url]) => url === SECTIONS_READ).length;
     await act(async () => setEditorTarget({ docType: null, docId: DOC, code: emptySection.code, programId: PID }));
-    expect(apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(reads);
+    expect(apiRequest.mock.calls.filter(([, url]) => url === SECTIONS_READ)).toHaveLength(reads);
     expect(editorNode().getAttribute('aria-label')).toContain(section.code);
     expect(editorNode().textContent).toContain('Existing saved stability evidence.');
     expect(assemblyCalls('commit')).toHaveLength(1); expect(aiCalls()).toHaveLength(0);
@@ -227,7 +228,7 @@ describe('structural assembly retains the actual editor host', () => {
     const check = await screen.findByRole('button', { name: 'Check saved document' });
     const normal = apiRequest.getMockImplementation()!; let reads = 0;
     apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections` && ++reads === 2) {
+      if (method === 'GET' && url === SECTIONS_READ && ++reads === 2) {
         return mode === '503' ? ok({ success: false }, 503)
           : ok({ success: true, sections: [{ ...section, doc_id: 'foreign-document' }] });
       }
@@ -263,7 +264,7 @@ describe('structural assembly retains the actual editor host', () => {
     const check = await screen.findByRole('button', { name: 'Check saved document' });
     const pending = deferred<Response>(); const normal = apiRequest.getMockImplementation()!; let reads = 0;
     apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) =>
-      method === 'GET' && url === `/api/authoring/docs/${DOC}/sections` && ++reads === 2
+      method === 'GET' && url === SECTIONS_READ && ++reads === 2
         ? pending.promise : normal(method, url, body));
     fireEvent.click(check); await waitFor(() => expect(reads).toBe(2));
     const session = authService.captureSessionReadGuard();
@@ -459,7 +460,7 @@ it('refuses retained candidate navigation when a governed ceremony opens during 
   const pending = deferred<Response>(); const normal = apiRequest.getMockImplementation()!;
   let reading = false;
   apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) { reading = true; return pending.promise; }
+    if (method === 'GET' && url === SECTIONS_READ) { reading = true; return pending.promise; }
     return normal(method, url, body);
   });
   fireEvent.click(screen.getByRole('button', { name: `Review ${emptySection.code}` }));

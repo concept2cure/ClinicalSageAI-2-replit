@@ -1,0 +1,20 @@
+{
+  "reason": "Incoming static review: precise real template-search host and saved-source export overlap plus changed PDF/Vault outcome guards and native provenance safety consumers. See incoming-review.md.",
+  "files": [
+    "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+    "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts",
+    "server/routes/__tests__/authoringExportPdf.test.ts",
+    "server/routes/__tests__/authoringExportHistory.test.ts",
+    "server/routes/__tests__/authoringWorkingCopy.test.ts",
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+    "server/services/ana/__tests__/turn-record-loop.test.ts",
+    "server/services/authoring/__tests__/turn-served-models.pglite.test.ts"
+  ]
+}
