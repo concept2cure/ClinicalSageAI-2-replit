@@ -1,0 +1,9 @@
+{
+  "contract": "CONTRACT.md",
+  "reviewers": {
+    "stale_passage_inventory": "CLEAR: bounded membership and snapshot correction preserves legacy hit-only behavior and exact-span verifier",
+    "stale_passage_revalidation": "CLEAR: verify every available context fingerprint and both initial retrieval arms"
+  },
+  "production_changed": false,
+  "tests_run": false
+}
