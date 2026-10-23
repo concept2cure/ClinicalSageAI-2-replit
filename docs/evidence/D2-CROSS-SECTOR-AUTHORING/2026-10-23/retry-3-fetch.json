@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-23T18:11:53.159268+00:00",
+  "base": "8ba496f6989dfee0c92d5bb994fb2ac817faac97",
+  "remote": "0ef71516c9efe22960a752a485b89ec208471bbc",
+  "incomingPaths": [
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/README.md",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/artifact-manifest.json",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/canonical-publication-attempt-1.json",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/canonical-publication-attempt-1.log.gz",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/canonical-push-final.json",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/canonical-push-final.log.gz",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/publication-source-pins.json",
+    "docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/qualification-summary.json"
+  ]
+}

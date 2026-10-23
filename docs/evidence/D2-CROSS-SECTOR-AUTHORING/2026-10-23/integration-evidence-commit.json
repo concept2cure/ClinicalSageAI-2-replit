@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "commit",
+    "-m",
+    "Record merged editor and Vault integration qualification"
+  ],
+  "exitCode": 0,
+  "head": "e4d22df5d65423b9b3e893481d02f0725e35ba86",
+  "rawOutput": "integration-evidence-commit.log.gz",
+  "rawGzipSha256": "7610c2e8d0218532ae548c58b9b0a39f736ce8c37ac3922f1abb63853c3c69d9"
+}

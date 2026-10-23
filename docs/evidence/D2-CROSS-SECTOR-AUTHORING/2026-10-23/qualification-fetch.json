@@ -1,0 +1,10 @@
+{
+  "base": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "remote": "aa09f55f55385a843b26057210cc26f973539f1c",
+  "incomingPaths": [
+    "docs/design/NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md",
+    "docs/evidence/W5/2026-10-23-nonus-release-identity/README.md",
+    "docs/work-orders/README.md"
+  ],
+  "overlappingPaths": []
+}

@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+    "server/services/ana/__tests__/document-template-preparation.test.ts",
+    "server/services/ana/__tests__/document-template-description.test.ts",
+    "server/services/market-specs/__tests__/document-preparation.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:34:08.280671+00:00",
+  "elapsedSeconds": 14.633,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourcesBefore": {
+    "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourcesAfter": {
+    "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourceDrift": [],
+  "rawOutput": "final-green.log.gz",
+  "rawGzipSha256": "bfc79d4b7eccb90bde46dc6826f7c8ff36e0303067737afb1175eeec6becfaad",
+  "testSummary": [
+    "Test Files  4 passed (4)",
+    "Tests  159 passed (159)",
+    "Duration  14.11s (transform 6.53s, setup 122ms, import 9.48s, tests 3.76s, environment 0ms)"
+  ]
+}
