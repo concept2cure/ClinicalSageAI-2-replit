@@ -212,8 +212,27 @@ export function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     ...(h.lifecycleStage !== undefined ? { lifecycleStage: h.lifecycleStage } : {}),
   };
 }
+/** One dimension's counts as the search returns them: each value and how many it selects. */
+export type VaultFacetBucket = { value: string | null; count: number };
+export type VaultFacets = Partial<Record<keyof VaultFindFilters | 'folderId', VaultFacetBucket[]>>;
+
+/** A dimension's counts, or null when the read did not carry well-formed ones (never zeros). */
+export function facetCounts(facets: unknown, key: string): Map<string, number> | null {
+  const list = facets && typeof facets === 'object' ? (facets as Record<string, unknown>)[key] : undefined;
+  if (!Array.isArray(list)) return null;
+  const counts = new Map<string, number>();
+  for (const b of list) {
+    if (!b || typeof b !== 'object' || !Number.isSafeInteger((b as VaultFacetBucket).count) || (b as VaultFacetBucket).count < 0) return null;
+    const v = (b as VaultFacetBucket).value;
+    if (typeof v === 'string') counts.set(v, (b as VaultFacetBucket).count);
+  }
+  return counts;
+}
+
 export interface VaultSearchShape {
   query: string;
+  /** Counts per filter value, when asked for (facets=true) on the first page. */
+  facets?: VaultFacets;
   includeSuperseded?: boolean;
   total: number;
   limit: number;

@@ -23,7 +23,10 @@
 import { supersededSql } from './vault-version-family.js';
 import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
-import { hasVaultFilters, vaultFilterSql, vaultLifecycleStageSql, type VaultDocumentFilters } from './vault-document-filter.js';
+import {
+  hasVaultFilters, vaultFacetValueSql, vaultFilterSql, vaultFiltersWithout, vaultLifecycleStageSql,
+  VAULT_FACET_DIMENSIONS, VAULT_FILTER_PARAMETERS, type VaultDocumentFilters, type VaultFacets,
+} from './vault-document-filter.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -49,6 +52,13 @@ export interface VaultSearchParams {
   allowedProgramIds?: readonly string[];
   /** Metadata filters, already validated (parseVaultFilters). They only narrow. */
   filters?: VaultDocumentFilters;
+  /**
+   * Count each filter's values (VR-18): one GROUP BY per dimension, over the same
+   * predicate less that dimension's own filter, so the counts say what choosing
+   * a value would select. Asked for on the first page only; a failed count fails
+   * the search, never reads as zero.
+   */
+  facets?: boolean;
 }
 
 /**
@@ -107,7 +117,33 @@ function isoOrNull(v: unknown): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse' }> {
+/**
+ * Facet counts, each over the search's own predicate (`whereFor`) less one
+ * dimension's filter, with its own bind list that starts with the same three
+ * tenant, query and program positions.
+ */
+async function readFacets(
+  db: Queryable, p: VaultSearchParams, base: readonly unknown[],
+  whereFor: (filterSql: string) => string,
+): Promise<VaultFacets> {
+  const facets: VaultFacets = {};
+  // A folder is one project's cabinet: counted within a project only.
+  const dimensions = VAULT_FACET_DIMENSIONS.filter((d) => d !== 'folderIds' || p.programId !== null);
+  for (const dimension of dimensions) {
+    const params = [...base];
+    const where = whereFor(vaultFilterSql(vaultFiltersWithout(p.filters, dimension), params, 'd'));
+    // Two fixed fragments: the dimension's value expression (a code map, no
+    // request value) and the search's own predicate, whose values are bound.
+    const counted = await db.query(`SELECT ${vaultFacetValueSql(dimension, 'd')} AS value, count(*)::int AS count
+       FROM vault.documents d
+      WHERE ${where}
+      GROUP BY 1 ORDER BY 2 DESC, 1`, params);
+    facets[VAULT_FILTER_PARAMETERS[dimension]] = counted.rows.map((r) => ({ value: r.value ?? null, count: Number(r.count) }));
+  }
+  return facets;
+}
+
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets }> {
   p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
@@ -121,18 +157,20 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   // pins it; with no rank, the order is the tie-break the search already uses.
   const browse = !p.q.trim() && hasVaultFilters(p.filters);
   const params: unknown[] = [p.organizationId, browse ? null : p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
+  const base = [...params];
   const filterSql = vaultFilterSql(p.filters, params, 'd');
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+  const whereFor = (filters: string) => `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
           AND d.organization_id = $1
           AND d.program_id = ANY($3::uuid[])
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
           )
-          AND ${browse ? '$2::text IS NULL' : MATCH}${filterSql}${p.includeSuperseded ? '' : `
+          AND ${browse ? '$2::text IS NULL' : MATCH}${filters}${p.includeSuperseded ? '' : `
           AND NOT ${supersededSql('d')}`}`;
+  const where = whereFor(filterSql);
 
   // The count and the page share `where`, each on its own line after FROM.
   const counted = await db.query(`SELECT count(*)::int AS total
@@ -166,8 +204,10 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  const facets = p.facets ? await readFacets(db, p, base, whereFor) : undefined;
   await requireProgramScopeStillCurrent(db, identity, scope);
   return {
+    ...(facets ? { facets } : {}),
     mode: browse ? 'browse' : 'search',
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({
