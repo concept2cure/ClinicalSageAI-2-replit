@@ -67,7 +67,7 @@
     "server/services/csr/project-scope.ts": "b2e9a752971593a17890782730b6d19fc94035c504bffdd35d8f920abb235092",
     "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
     "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
-    "server/services/submission-service/submission-service.ts": "c28f18ad87e3fcb0a9824c162a64be2ab0e5916b188880403ea862961a3ec2ff",
+    "server/services/submission-service/submission-service.ts": "ea60306b96ff7b151997452436072d76fd3ad6225ed16e1c7c12fc1724a86021",
     "shared/__tests__/project-intake-workspace.test.ts": "1147162854341aecb702bda5d720475a6b52c6e49edab9aaa8494fa67da6aa0d",
     "shared/project-intake-workspace.ts": "5dd5aa19a6174f5f9ab81fa52b47b711e69e60667203ddc7a5a25f1dae222244",
     "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
@@ -90,5 +90,6 @@
       "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx"
     ],
     "meaning": "Only an exact verified current 201 receipt selects the existing TenantContext workspace before the confirmed handoff; backend/native inputs unchanged."
-  }
+  },
+  "integrationNote": "Upstream non-US release identity changed submission-service.ts; exact insertSubmissionRow/refuseForeignProgram/createSubmissionTx declarations remain unchanged. Retained PM HTTP/SQL and caller suites rerun at integration; all other72 pinned inputs unchanged."
 }

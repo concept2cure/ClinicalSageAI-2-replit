@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > ends before a split pair when preceding text still fits 10ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > moves a requested low-surrogate start backward rather than skipping its character 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset1 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > returns one whole pair for max_chars1 from requested offset2 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual shortened bounds when nominal fit.size is larger 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > uses actual expanded bounds when one whole pair exceeds nominal fit.size 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > retains UTF-16 totals and offsets for Japanese and scientific supplementary text 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > registered Vault reads preserve complete Unicode characters > walks by actual end at max_chars1 without gaps, code-point reindexing or stalled progress 10ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > keeps escaped Unicode text intact after budget-driven candidate shrinking 2ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > fits control-heavy text by serialized size without losing the actual source span 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > records the selected span even when the fitter last rendered a rejected larger candidate 8ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode read windows compose with the existing serialized budget fitter > withholds oversized comprehension through the same fitter and retains an intact useful window 4ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for ABCDEFGH 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves exact existing ASCII/BMP window for 日本語αβ測定値 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps finite flooring, negative-offset clamping and minimum requested size 0ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > keeps nonfinite request defaults and a short source verbatim 4ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > refuses a past-end offset without returning text or deferring a receipt 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > outside a settling host returns intact text but no prospective new coverage 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > historical reads stay disclosed and earn no current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-read-unicode-windows.test.ts > Unicode correction preserves existing read controls > preserves complete source characters across a deterministic 180-window corpus 100ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested start' 69ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'one-unit whole-character minimum' 23ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > 'split requested end' 24ms
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned
+{
+  "timestamp": "2026-10-23T18:44:59.324Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload
+{
+  "timestamp": "2026-10-23T18:44:59.364Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000081",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > actual safe windows reach the guarded writer and SQL row unchanged > fits escaped text without a split and persists every selected actual span 140ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > retains an ordinary ASCII result and exact legacy SQL span 24ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing when the current extraction changed after the handler returned 37ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a amended host result 6ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > writes nothing for a withheld host result 6ms
+ ✓ server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts > guarded writer preserves the existing admission controls > refuses an internally deferred span that disagrees with the unchanged rendered payload 29ms
+
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+   Start at  18:44:43
+   Duration  15.53s (transform 3.07s, setup 169ms, import 6.14s, tests 8.36s, environment 0ms)
