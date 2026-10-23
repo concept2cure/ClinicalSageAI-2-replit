@@ -12,7 +12,7 @@ import { readSubmissionPackageIdentity, recordedPackageIdentitySnapshot, type Re
 
 const normalized = (value: string) => value.normalize('NFKC').trim().replaceAll(/\s+/g, ' ').toLocaleLowerCase('en');
 const recordedText = (value: unknown): string | null => typeof value === 'string' ? value : null;
-const applicantOfRecord = (identity: RecordedPackageIdentity, country: string | null) =>
+const applicantOfRecord = (identity: RecordedPackageIdentity, country: ReturnType<typeof canonicalRegionOf>) =>
   country === 'US' && !identity.applicantSponsorId ? null : identity.applicantName;
 export function compareCompanyFilingIdentity(company: { companyName: string; address: string }, filing: { applicantName: string | null; sponsorAddress: string | null }) {
   const differences: Array<{ field: 'name' | 'address'; companyValue: string; filingValue: string | null; missing: boolean }> = [];
