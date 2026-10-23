@@ -1,0 +1,379 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects unrelated ancestor 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects bare module ancestor 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects unrelated part-of marker 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects unexpected exact target 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > accepts a proper assembled ancestor without inventing a content revision 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects a different documentId source token 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects a different sectionId source token 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects a different programId source token 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects a different filingDocumentId source token 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > saved-section receipt agrees with canonical filing identity > rejects a different updatedAt source token 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > unchanged filing retains one attempt and its exact reviewed owner > does not show an old success when A is revisited before its reply 535ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > unchanged filing retains one attempt and its exact reviewed owner > rechecks the actual editor at confirmation even before a dirty render 75ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'bodyless success' across close/reopen and A → B → A 136ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'malformed success' across close/reopen and A → B → A 151ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'contradictory outcome' across close/reopen and A → B → A 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'contradictory status' across close/reopen and A → B → A 158ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'error alias' across close/reopen and A → B → A 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'reason alias' across close/reopen and A → B → A 130ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'wrong destination' across close/reopen and A → B → A 168ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'contradictory refusal' across close/reopen and A → B → A 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'nested result array' across close/reopen and A → B → A 140ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'unconfirmed refusal' across close/reopen and A → B → A 141ms
+stderr | client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds a lost network reply instead of saying nothing was written
+An update to GovernedConfirmDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds 'server uncertainty' across close/reopen and A → B → A 114ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > uncertain or contradictory filing replies never permit blind replay > holds a lost network reply instead of saying nothing was written 86ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > confirmed refusals and successful filing remain deliberate > retains the server refusal and allows a fresh explicit confirmation 189ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx > confirmed refusals and successful filing remain deliberate > sends only pinned intent and the dedicated reason, then confirms no content revision 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > deliberately re-filing unchanged saved text > offers a deliberate filing action without making an arbitrary edit or ordinary save 1460ms
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason 661ms
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so 595ms
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into 786ms
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing 816ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  19:12:06
+   Duration  22.46s (transform 9.13s, setup 450ms, import 12.36s, tests 6.91s, environment 2.18s)
