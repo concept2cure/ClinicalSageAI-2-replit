@@ -1,0 +1,18 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/_refilingVisual.capture.test.tsx",
+    "-t",
+    "captures actual mounted",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/ui/dom-capture.results.json"
+  ],
+  "sourceSha256": "b20043b53dcce2f018803dbf50c727c0da752b3995520246fa627b0e4d2d91d2",
+  "captures": {
+    "/workspace/scratch/refiling-visual/receipt.html": "6daea1f0ab7d9718ad11bd2f1a41dd20bbf3613476c7b7800dd90e4366e61e60",
+    "/workspace/scratch/refiling-visual/form.html": "00e4a3bd5027c5973f74597786dd0a13f0e86b58244c17b75a5b84e9a88236c4"
+  }
+}

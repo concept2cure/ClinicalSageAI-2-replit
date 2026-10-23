@@ -1,0 +1,19 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx"
+  ],
+  "sourceSha256": {
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "9bf0a0f2d543655287f1b5744e5d72a682296088578e7ab0a1e7d2d874f09d6b",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "ce267db4995d4d0da3c41a47bec97ba2252a4456cdb155a7cb465c9d826421fe",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "e7f568eccb12c110a6c10075b661a9e80055da4a3f740b63444ffdfdc6460a8a"
+  },
+  "errorCount": 0,
+  "warningCount": 0
+}

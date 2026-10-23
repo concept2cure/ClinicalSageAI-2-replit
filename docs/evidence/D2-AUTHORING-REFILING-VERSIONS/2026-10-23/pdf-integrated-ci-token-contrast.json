@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "startedAt": "2026-10-23T17:55:18Z",
+  "elapsedSeconds": 0.123,
+  "exitCode": 0,
+  "output": "pdf-integrated-ci-token-contrast.log.gz",
+  "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

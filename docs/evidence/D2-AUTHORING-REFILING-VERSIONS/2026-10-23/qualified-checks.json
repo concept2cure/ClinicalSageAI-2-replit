@@ -1,0 +1,128 @@
+[
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.33,
+    "exitCode": 0,
+    "output": "qualified-ci-surface-text-ramp.log.gz",
+    "outputSha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.09,
+    "exitCode": 0,
+    "output": "qualified-ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.143,
+    "exitCode": 0,
+    "output": "qualified-ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.279,
+    "exitCode": 0,
+    "output": "qualified-ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:check-shell-css-collisions"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.129,
+    "exitCode": 0,
+    "output": "qualified-ci-check-shell-css-collisions.log.gz",
+    "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "startedAt": "2026-10-23T17:39:24Z",
+    "elapsedSeconds": 0.149,
+    "exitCode": 0,
+    "output": "qualified-ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "startedAt": "2026-10-23T17:39:25Z",
+    "elapsedSeconds": 13.347,
+    "exitCode": 0,
+    "output": "qualified-build.log.gz",
+    "outputSha256": "8fac6179c9c7744a14e154de02ff43b83bfd3ce7f580e98d4b5a5542b281a40f",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/typecheck-no-regression.mjs",
+      "--incremental"
+    ],
+    "startedAt": "2026-10-23T17:39:38Z",
+    "elapsedSeconds": 198.137,
+    "exitCode": 1,
+    "output": "qualified-typecheck.log.gz",
+    "outputSha256": "1496660ccef0c756b143c4718a8bbfe5599341746a01a41aeb06b4356f2506bb",
+    "sourceFreeze": "qualified-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  }
+]

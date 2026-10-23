@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "audit:repo-health:ceiling"
+  ],
+  "startedAt": "2026-10-23T17:38:04Z",
+  "elapsedSeconds": 0.727,
+  "exitCode": 0,
+  "output": "release-audit-repo-health-ceiling.log.gz",
+  "outputSha256": "bc006650bac33421593d4c6dc620fbd7811a731fdcd343594639a1259aa2dde7",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

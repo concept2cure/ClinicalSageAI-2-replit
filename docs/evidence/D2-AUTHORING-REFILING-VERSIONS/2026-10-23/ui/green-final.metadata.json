@@ -1,0 +1,32 @@
+{
+  "phase": "green-final",
+  "startedAt": "2026-10-23T17:29:44.494452+00:00",
+  "finishedAt": "2026-10-23T17:29:50.888058+00:00",
+  "sourceHead": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/ui/green-final.results.json"
+  ],
+  "exitCode": 0,
+  "sourceSha256": {
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "3213c087a517b6d22c5a26b76b88d009f7f4f912f70f2d1d8661fec205df44d2",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "ce267db4995d4d0da3c41a47bec97ba2252a4456cdb155a7cb465c9d826421fe",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "0c0e94d1f6baae885c4eb976d46cfd7d1b66dcc4542d1dec5a87775c40017700"
+  },
+  "rawLogSha256": "fbb9cfe1ca54d761dfb42011b74d16a448334c90496d8a8642c5c47cf76500e7",
+  "counts": {
+    "numTotalTests": 79,
+    "numPassedTests": 79,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTestSuites": 8,
+    "numPassedTestSuites": 8,
+    "numFailedTestSuites": 0
+  }
+}

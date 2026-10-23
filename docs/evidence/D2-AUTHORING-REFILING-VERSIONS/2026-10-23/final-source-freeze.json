@@ -1,0 +1,20 @@
+{
+  "baseCommit": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "dirtySource": {
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx": "e7f568eccb12c110a6c10075b661a9e80055da4a3f740b63444ffdfdc6460a8a",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx": "b865e2643f596fbc74ada2b2d171c0b6ff7793be0298e0092c63eef4f8c293d9",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "b20043b53dcce2f018803dbf50c727c0da752b3995520246fa627b0e4d2d91d2",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94",
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts": "9d51ceb39b2e343f2174754edac44362e4eab48d9306e6f0f4801d4055ac284b",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts": "365621b0195c1166d42c0334c4bc5436396c0d1a26a3f0a231b5ca4c84e7e985",
+    "server/routes/authoring.router.ts": "5e805a78d639e07d50a8c20039ef68d3b2bce7a6d2ff339a8117f1c6a67d4c1a",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts": "12107cab8dda657ebfb70ec9397f61fa45ca6f1aa29ca61625e711edb84bf5b7",
+    "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts": "077a8e15c854c731e26e46bc3d2d952513f22db1f17137250299dc70426c0491",
+    "server/services/authoring/authoring-file-to-vault.ts": "f2df8e736949fa80aeab48a3d6bd55b983d2431351dbcc562e28c0242464b760",
+    "server/services/authoring/authoring-vault-version-plan.ts": "5d045c7b9460ccabb4c09cfe50c685d5d25a14af68097c9be7b63b5ebaaccafc",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "28eb783dafecccf2b8be6d53f114cf522a0cc804b7b8db11960c663e9817ebed",
+    "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "690c43cca33400535b75bd372a65e63bad59b2c0156bbb9fe205240fb01b9d2a",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "83e66292657318b02608db5af724440a703feef2430a4df9570e9836f538372e",
+    "server/services/vault/vault-version-checkin.ts": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f"
+  }
+}

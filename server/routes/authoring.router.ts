@@ -6576,7 +6576,7 @@ router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => 
 // filing service) and record ONE governed action (WM, 2026-09-21).
 //
 // body { format: 'pdf' | 'docx', folderId?, documentType? }
-// → 201 { data: { vaultDocumentId, folder, sha256, format } }
+// → 201 { data: { vaultDocumentId, version, supersedesDocumentId, folder, sha256, format } }
 // 409 DOCUMENT_HAS_NO_PROGRAM / DOCUMENT_MID_FREEZE; the ingest's own refusals
 // (400/403/409/503) pass through with their codes. Only a proven new admission
 // can be compensated; uncertain transaction/cleanup outcomes require review
@@ -6621,6 +6621,8 @@ router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) =>
       success: true,
       data: {
         vaultDocumentId: outcome.vaultDocumentId,
+        version: outcome.version,
+        supersedesDocumentId: outcome.supersedesDocumentId,
         folder: outcome.folder,
         sha256: outcome.sha256,
         format: outcome.format,

@@ -21,7 +21,8 @@
  *                          the document row (FOR UPDATE NOWAIT refused), or the
  *                          row carries a lock without a sealed status
  *   • unsealed documents are filed — as WORKING DRAFTS, said so on page one of
- *     the rendered file and in the vault version label. The export route's
+ *     the rendered file and filing receipt. Version numbers remain immutable
+ *     sequential majors for each PDF/Word rendition. The export route's
  *     Part 11 filing-artifact gate stays where it is; the project vault holds
  *     working files as well as sealed ones, and lying about which is which is
  *     the only thing refused.
@@ -48,7 +49,7 @@ import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraf
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
 import { savedImportSource } from './import-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
-import { ingestVaultDocument } from '../vault/vault-ingest.service';
+import { ingestVaultDocument, type VaultIngestResult } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
 import { resolveVaultView, isFolderInView, folderLabel } from '../vault/vault-filing.service';
 import { VAULT_INGEST_DOCUMENT_TYPES } from '../../../shared/constants/domain/vault-taxonomy';
@@ -58,6 +59,7 @@ import {
   type CarryOutcome,
 } from '../regulatory/authoring-approval-carryover';
 import type { CanonicalStoreDb } from '../regulatory/canonicalDocumentStore';
+import { assertAuthoringVaultVersionPlan, planAuthoringVaultVersion } from './authoring-vault-version-plan';
 
 const logger = createScopedLogger('authoring-file-to-vault');
 
@@ -92,6 +94,8 @@ export type FileToVaultOutcome =
       fileName: string;
       programId: string;
       sealed: boolean;
+      version: string;
+      supersedesDocumentId: string | null;
       /** Whether the Authoring approval carried to the Vault version (FD5 (c)), and why not when it did not. */
       approval: CarryOutcome;
     };
@@ -111,6 +115,23 @@ interface DocRow {
   product_code: string | null;
   template_id: string | null;
   c2c_document_id: string | null;
+}
+
+interface AdmittedFiling {
+  id: string;
+  folder: VaultFilingRecord;
+  version: string;
+  supersedesDocumentId: string | null;
+}
+
+/** Only the admission's proven UUID/version can authorize subsequent writes. */
+function confirmedAdmission(ingested: VaultIngestResult, supersedesDocumentId: string | null): AdmittedFiling | FileToVaultOutcome {
+  if (!ingested.ok) return refuse(ingested.status, ingested.code, ingested.message);
+  if (ingested.admission?.created === false) return refuse(409, 'VAULT_VERSION_ALREADY_RECORDED',
+    'This document version is already recorded in the Vault. Review the existing Vault record before filing again.');
+  if (ingested.admission?.created !== true || !/^[1-9][0-9]{0,5}\.0$/.test(ingested.document.version)) return outcomeUnknown();
+  return { id: ingested.document.id, version: ingested.document.version, supersedesDocumentId,
+    folder: { ...ingested.filing, folderLabel: ingested.filing.folderLabel ?? '' } };
 }
 
 const refuse = (status: number, code: string, error: string): FileToVaultOutcome => ({ kind: 'refused', status, code, error });
@@ -254,7 +275,7 @@ async function recordFiling(
   args: FileToVaultArgs,
   doc: DocRow,
   snapshot: { rendered: RenderedExport; sections: ExportSectionRow[] },
-  vault: { id: string; folder: VaultFilingRecord; exportId: string },
+  vault: AdmittedFiling & { exportId: string },
 ): Promise<void> {
   const { pool, tenantId, actor, docId } = args;
   const { rendered, sections } = snapshot;
@@ -306,6 +327,8 @@ async function recordFiling(
       artifactSha256: rendered.artifactSha256,
       fileName: rendered.fileName,
       vaultDocumentId: vault.id,
+      version: vault.version,
+      supersedesDocumentId: vault.supersedesDocumentId,
       programId: doc.client_program_id,
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
@@ -428,19 +451,23 @@ async function ingestAndFile(
   doc: DocRow,
   rendered: RenderedExport,
   programId: string,
-): Promise<{ id: string; folder: VaultFilingRecord } | FileToVaultOutcome> {
+): Promise<AdmittedFiling | FileToVaultOutcome> {
   const { tenantId, actor } = args;
-  const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
+  const versionContext = { organizationId: tenantId, programId,
+    sourceDocumentId: doc.id, format: args.format, folderId: args.folderId };
+  const plan = await planAuthoringVaultVersion(args.pool, versionContext);
+  if (!plan.ok) return refuse(plan.status, plan.code, plan.message);
   const userId = /^\d+$/.test(actor.id) ? Number(actor.id) : null;
   const ingested = await ingestVaultDocument({
     organizationId: tenantId,
     userId,
     programId,
-    documentCode: `authoring-${doc.id}`,
+    documentCode: plan.documentCode,
     documentTitle: doc.title,
     documentType: ingestDocumentType(args.documentType, doc.module),
-    version: `${sealed ? String(doc.version ?? '1.0') : 'draft'}-${rendered.artifactSha256.slice(0, 8)}`,
-    classification: 'INTERNAL',
+    ...(plan.supersedesDocumentId ? { supersedesDocumentId: plan.supersedesDocumentId } : { version: '1.0' }),
+    ...(!plan.supersedesDocumentId ? { classification: 'INTERNAL' } : {}),
+    assertSourceAccess: q => assertAuthoringVaultVersionPlan(q, versionContext, plan),
     fileBuffer: rendered.fileContent,
     fileName: rendered.fileName,
     mimeType: rendered.contentType,
@@ -448,25 +475,24 @@ async function ingestAndFile(
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
   });
-  if (!ingested.ok) return refuse(ingested.status, ingested.code, ingested.message);
-  if (ingested.admission?.created === false) return refuse(409, 'VAULT_VERSION_ALREADY_RECORDED',
-    'This document version is already recorded in the Vault. Review the existing Vault record before filing again.');
-  if (ingested.admission?.created !== true) return outcomeUnknown();
+  const admitted = confirmedAdmission(ingested, plan.supersedesDocumentId);
+  if ('kind' in admitted) return admitted;
+  // Canonical check-in inherits the predecessor's placement. Calling the
+  // placement writer here would silently override that governed decision.
+  if (plan.supersedesDocumentId) return admitted;
 
   const target = await filingTarget(args, doc, programId);
-  if (!target) {
-    return { id: ingested.document.id, folder: { ...ingested.filing, folderLabel: ingested.filing.folderLabel ?? '' } };
-  }
-  const placed = await placeAdmittedDocument({ args, doc, programId, target, vaultDocumentId: ingested.document.id, userId });
+  if (!target) return admitted;
+  const placed = await placeAdmittedDocument({ args, doc, programId, target, vaultDocumentId: admitted.id, userId });
   if ('kind' in placed) return placed;
   if (!placed.ok) {
     const reverted = await revertIngest({
-      pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: ingested.document.id, programId,
+      pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: admitted.id, programId,
       why: `filing refused: ${placed.code}`,
     });
     return reverted ? refuse(placed.status, placed.code, `${placed.message} Nothing was filed.`) : outcomeUnknown();
   }
-  return { id: ingested.document.id, folder: placed.filing };
+  return { ...admitted, folder: placed.filing };
 }
 
 async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections: ExportSectionRow[]): Promise<RenderedExport | FileToVaultOutcome> {
@@ -535,7 +561,7 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
 
   const exportId = crypto.randomUUID();
   try {
-    await recordFiling(args, doc, { rendered, sections: sectionsRes.rows }, { id: admitted.id, folder: admitted.folder, exportId });
+    await recordFiling(args, doc, { rendered, sections: sectionsRes.rows }, { ...admitted, exportId });
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
     logger.error('file-to-vault record transaction failed', { docId, why });
@@ -553,6 +579,8 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
     fileName: rendered.fileName,
     programId,
     sealed,
+    version: admitted.version,
+    supersedesDocumentId: admitted.supersedesDocumentId,
     approval,
   };
 }

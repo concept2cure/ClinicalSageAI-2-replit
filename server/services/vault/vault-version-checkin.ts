@@ -23,6 +23,7 @@
  *
  * @module server/services/vault/vault-version-checkin
  */
+import { isDeepStrictEqual } from 'node:util';
 
 /** A pg-style client: the pool, or the ingest's transaction client. */
 export interface CheckInQueryable {
@@ -53,16 +54,43 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /**
  * The next version per FD1: the next major after the head's. `1.0` → `2.0`, and
- * `1.3` → `2.0`. Null for a version that is not a number (eSTAR retains its
- * artifact under a hash prefix, authoring under `draft-<sha8>`): no successor
- * is invented for a scheme the server cannot read.
+ * `1.3` → `2.0`. Null for exhausted six-digit majors or a version that is not
+ * a number (eSTAR hash labels and historical Authoring `draft-<sha8>` labels):
+ * no successor is invented for a scheme the server cannot read.
  */
 export function nextMajorVersion(version: string): string | null {
   const m = /^(\d{1,6})(?:\.\d{1,6})?$/.exec(version.trim());
-  return m ? `${Number(m[1]) + 1}.0` : null;
+  return m && Number(m[1]) < 999999 ? `${Number(m[1]) + 1}.0` : null;
 }
 
 const NOTHING = 'Nothing was saved.';
+
+/** Numeric labels stay reserved after retirement; never revive or skip a live slot. */
+async function assignNextRetainedVersion(q: CheckInQueryable, p: {
+  programId: string; organizationId: number;
+}, head: CheckInHead): Promise<{ ok: true; version: string } | CheckInRefusal> {
+  const retired = await q.query(
+    `SELECT max(split_part(btrim(version), '.', 1)::integer) AS major
+       FROM vault.documents
+      WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3
+        AND deleted_at IS NOT NULL AND btrim(version) ~ '^[0-9]{1,6}(\\.[0-9]{1,6})?$'`,
+    [p.programId, p.organizationId, head.document_code],
+  );
+  const nextFromHead = nextMajorVersion(head.version);
+  const reservedMajor = retired.rows[0]?.major;
+  const version = nextFromHead && (reservedMajor == null || Number(reservedMajor) < Number(nextFromHead.split('.')[0])
+    ? nextFromHead : nextMajorVersion(String(reservedMajor)));
+  if (!version) return { ok: false, status: 409, code: 'VERSION_SCHEME_UNKNOWN',
+    message: `Version "${head.version}" or its retained version slots cannot be advanced within the supported numeric range. ${NOTHING}` };
+  const occupied = await q.query(
+    `SELECT id FROM vault.documents WHERE program_id = $1::uuid AND organization_id = $2
+       AND document_code = $3 AND version = $4 LIMIT 1`,
+    [p.programId, p.organizationId, head.document_code, version],
+  );
+  if (occupied.rows[0]) return { ok: false, status: 409, code: 'VERSION_SLOT_OCCUPIED',
+    message: `Version ${version} is already recorded for this document. Review its version history before adding a version. ${NOTHING}` };
+  return { ok: true, version };
+}
 
 /**
  * Plan a check-in against `headId`: refusals in the order a person can act on
@@ -157,16 +185,6 @@ export async function planCheckIn(
     };
   }
 
-  const version = nextMajorVersion(head.version);
-  if (!version) {
-    return {
-      ok: false,
-      status: 409,
-      code: 'VERSION_SCHEME_UNKNOWN',
-      message: `Version "${head.version}" is not a number, so no next version can be assigned. ${NOTHING}`,
-    };
-  }
-
   const same = await q.query(
     `SELECT version FROM vault.documents
       WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND content_hash = $4
@@ -182,7 +200,8 @@ export async function planCheckIn(
     };
   }
 
-  return { ok: true, head, version };
+  const assigned = await assignNextRetainedVersion(q, p, head);
+  return assigned.ok ? { ok: true, head, version: assigned.version } : assigned;
 }
 
 /**
@@ -266,7 +285,14 @@ export async function recheckUnderLock(
 ): Promise<CheckInRefusal | null> {
   const locked = await planCheckIn(client, { ...p, headId: planned.head.id, lock: true });
   if (!locked.ok) return locked;
-  if (locked.version === planned.version) return null;
-  return { ok: false, status: 409, code: 'VERSION_NOT_CURRENT',
+  if (locked.version !== planned.version) return { ok: false, status: 409, code: 'VERSION_NOT_CURRENT',
     message: `This document changed while the new version was being added. ${NOTHING}` };
+  // Placement and governed metadata were prepared before storage. A current
+  // head can have moved without gaining a successor; never restore stale
+  // classification, retention or filing on its new version.
+  if (!isDeepStrictEqual(locked.head, planned.head)) return {
+    ok: false, status: 409, code: 'VERSION_METADATA_CHANGED',
+    message: `The document’s filing or metadata changed while the new version was being prepared. Review its current Vault record and try again. ${NOTHING}`,
+  };
+  return null;
 }
