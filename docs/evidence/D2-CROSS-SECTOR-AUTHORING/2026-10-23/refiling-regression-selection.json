@@ -1,0 +1,14 @@
+{
+  "reason": "Reviewed concurrent versioned-refiling changes; precise actual route/PDF/admission/approval, snapshots/version-plan, locked Vault check-in, pinned leaf and current UI outcome contracts. Six planning sources and all16 owned TS paths unchanged.",
+  "files": [
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+    "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx"
+  ]
+}

@@ -4,6 +4,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { publishShellProject } from '../shellProject';
 
@@ -13,6 +15,9 @@ vi.mock('@/lib/queryClient', async original => ({
 }));
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
+const ACTOR = { id: '7', organizationId: '12', email: 'template-author@example.test', roles: ['admin'], permissions: ['governed:write'] };
+const BEARER = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
+const ACTOR_HEADERS = { Authorization: `Bearer ${BEARER}`, 'x-organization-id': '12' };
 const TEMPLATES = [
   { id: 41, name: 'Protocol scaffold', title: 'Dose protocol', template_name: 'Clinical master', module: 'M5',
     description: 'Dose escalation narrative', template_type: 'Clinical protocol', category: 'Sponsor standards', regions: ['FDA'] },
@@ -42,8 +47,16 @@ function listedTemplates() {
   return within(picker()).getAllByRole('option').filter(option => option.getAttribute('value') && option.getAttribute('value') !== '(blank document)');
 }
 
-beforeEach(() => { apiRequest.mockReset(); publishShellProject({ id: PROJECT, title: 'Selected project' }); wire(); });
-afterEach(() => { cleanup(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; sessionStorage.clear(); });
+beforeEach(() => {
+  clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(BEARER, ACTOR, 'fixture-refresh', 3600);
+  apiRequest.mockReset(); publishShellProject({ id: PROJECT, title: 'Selected project' }); wire();
+});
+afterEach(() => {
+  cleanup(); authService.endSession(null); clearAuthToken();
+  publishShellProject({ id: '' }); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  localStorage.clear(); sessionStorage.clear();
+});
 
 describe('template search in the existing New document picker', () => {
   it('browses the returned catalog with a count and no additional reads', async () => {
@@ -93,7 +106,7 @@ describe('template search in the existing New document picker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', {
       title: 'My protocol', module: 'M5', template_id: 41, client_program_id: PROJECT,
-    }));
+    }, ACTOR_HEADERS));
     await waitFor(() => expect(p.onDocCreated).toHaveBeenCalledWith({ id: 'created-document', title: 'My protocol' }));
   });
 
@@ -106,7 +119,7 @@ describe('template search in the existing New document picker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', {
       title: 'Preparation', module: null, template_id: 'regional-template', client_program_id: PROJECT,
-    }));
+    }, ACTOR_HEADERS));
   });
 
   it('permits keyboard typing, clearing, native selection, submission focus and dialog close', async () => {
@@ -150,7 +163,7 @@ describe('catalog state stays truthful in the picker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', {
       title: 'Blank draft', module: 'M2', client_program_id: PROJECT,
-    }));
+    }, ACTOR_HEADERS));
   });
 
   it.each(['http', 'network', 'malformed'])('keeps a %s failure separate from an empty list', async failure => {

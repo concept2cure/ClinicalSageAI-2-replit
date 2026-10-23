@@ -1,0 +1,23 @@
+{
+  "frozenAt": "2026-10-23T17:35:29.988445+00:00",
+  "files": {
+    "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b"
+  },
+  "observedDependencyAndRegressionPinsAfterFinalChecks": {
+    "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+    "server/services/ana/document-template-tool.ts": "285e685591fc790b626e257bd5ccc7374f59e8ed453b1feb2784de30692772dd",
+    "server/services/ana/__tests__/document-template-preparation.test.ts": "1d51c5335bcb2b0f18e300c1f1c435594d843f7f5a9b29a3bbd7c4b97990c85e",
+    "server/services/ana/__tests__/document-template-description.test.ts": "640df78283231e6f38e67d6bf071e8aae7594484d22f95d13d3ceaef011446ee",
+    "server/services/market-specs/__tests__/document-preparation.test.ts": "37f70b55eae625b99e65024af96e339dca9d7b3f8e1138b1351e7d38675cd95e"
+  },
+  "verificationScope": "Before/after owned source pins are in individual receipts. Additional dependency/regression pins here are observed after final checks; root qualifies the full integrated source set.",
+  "finalChecks": {
+    "final-green.json": "159 passed across four suites, exit 0",
+    "final-lint.json": "Four owned files, zero errors/warnings; exit 0"
+  }
+}

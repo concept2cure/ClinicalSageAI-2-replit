@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-10-23T18:06:05.519067+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "head": "2d8ad4352da1a5256cf19c17f7ed54d03a28851b",
+  "elapsedSeconds": 0.196,
+  "exitCode": 0,
+  "rawOutput": "retry-merge.log.gz",
+  "rawGzipSha256": "e559da2aef77368891bffd5f60092c578364c9de13c3f1e7d54336c9aa152988",
+  "hooks": "Normal configured hooks; no force, bypass, amend or PR"
+}

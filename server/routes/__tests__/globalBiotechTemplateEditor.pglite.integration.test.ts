@@ -37,6 +37,7 @@ templateEditorFixture([
 const regions = ['US', 'CA', 'EU', 'JP', 'GLOBAL'];
 const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)) && regions.includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
+const sharedPlanningIds = ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'];
 interface ListedTemplate extends IndAuthoringTemplate {
   category: string;
   filingContext: { registryId: string | null; region: string; agency: string };
@@ -135,6 +136,17 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   await verifySavedReview(doc.id, saved.length, doc.provenance.templateSource);
   return saved.length;
 }
+
+describe('shared planning documents reach the existing editor without a filing binding', () => {
+  it.each(sharedPlanningIds)('loads, saves and reviews the exact %s working outline', async registryId => {
+    const row = await selected(`registry:${registryId}`);
+    expect(row).toMatchObject({ module: null, families: [], kind: 'preparation', aiDraftable: false,
+      originalFormat: 'none', filingContext: { registryId, region: 'GLOBAL', agency: 'ICH' } });
+    const outline = await getRegistryDocumentTemplate(registryId);
+    expect(outline?.outlineSource).toMatchObject({ kind: 'project-blueprint', registryId });
+    expect(await verifyCopy(row, outline)).toBe(5);
+  });
+});
 
 describe('every supported active medicinal, device and diagnostics filing and component reaches the one editor', () => {
   it('lists exact registry and component identities with explicit regional scope, without writes', async () => {

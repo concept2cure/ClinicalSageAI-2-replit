@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings",
+    "0",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:49:02.740620+00:00",
+  "elapsedSeconds": 1.12,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}
