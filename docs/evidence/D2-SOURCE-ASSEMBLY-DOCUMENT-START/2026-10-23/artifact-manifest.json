@@ -1,9 +1,9 @@
 {
-  "scope": "Packet artifacts before final normal code commit/publication. Excludes this manifest itself. Actual publication evidence follows in a documentation-only canonical commit.",
+  "scope": "Final pre-publication packet, including actual rejected push and canonical merge/test receipts. Excludes this manifest. Accepted publication follows separately.",
   "files": {
     "README.md": {
-      "sha256": "75409a220d57880c51124eb3388618dc5601b52ff8a2dc439dde1f07f5ce57b4",
-      "bytes": 14607
+      "sha256": "02062a08c36ff156046536ff32c8f0fd86faa84bccf16fe0f24ae83c00bbe029",
+      "bytes": 15450
     },
     "bounded-cohorts.json": {
       "sha256": "c7cdfe9dc8f39a08c054c9e8b7091f066818b024d7ee11cf06d94e2de62a45b9",
@@ -389,6 +389,14 @@
       "sha256": "7a6c287c19944493cc5cf95a93c8cc119ae13fba121c1831137aedb9e0eb1757",
       "bytes": 1072
     },
+    "final-backfill-integration.json": {
+      "sha256": "7ace2fc233e1771943a4962bcb7cb8dc61dfcc5c7d82717387fbf77f313eb7a6",
+      "bytes": 176107
+    },
+    "final-backfill-integration.log.gz": {
+      "sha256": "35b40f3595b1471d538258e17b7e2457cf50e06a0ac80d83ee795185503cf031",
+      "bytes": 1936
+    },
     "final-build.json": {
       "sha256": "7f6e92632215eb6f9dbbf784c09ad333b2cfcdb081315fd21bc551dfd9878c30",
       "bytes": 174343
@@ -413,6 +421,22 @@
       "sha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
       "bytes": 173
     },
+    "final-documentation-merge-resolution.json": {
+      "sha256": "5b58a6b9aa5b1f6d812e18cd574c49a38778263e4c9ec42789c10491a0c52577",
+      "bytes": 174374
+    },
+    "final-documentation-merge-resolution.log.gz": {
+      "sha256": "669aa08eeec28741de0ef22a18933f344cd84270b7257fa5e819cce08fe2a109",
+      "bytes": 162
+    },
+    "final-documentation-merge.json": {
+      "sha256": "d9065842a548d2b9cb6a81b77a7a58cc64159460060ae21fbe126d8b87bfd737",
+      "bytes": 174392
+    },
+    "final-documentation-merge.log.gz": {
+      "sha256": "18463f3712438fcf30652b0a54292330f799d675b261553f4b234f8923347e4f",
+      "bytes": 145
+    },
     "final-estar-ui.json": {
       "sha256": "5fa800efd432a8721f81d473d28f751845d15a3cf9cd85ba219ed02d1e1e362b",
       "bytes": 175258
@@ -421,9 +445,21 @@
       "sha256": "59e4d7e29804353102f0bb844e6478be94080c1dfb9ca0ddf69e531f87ffba41",
       "bytes": 5662
     },
+    "final-evidence-review.json": {
+      "sha256": "20da70205400cb0c138297a4b66a92f96874dd19a909b9f33ee51d1545cd7b09",
+      "bytes": 779
+    },
+    "final-export-integration-commit.json": {
+      "sha256": "f0c1bfc1e8cd1420426435b1e5f52ade569807b15e1c0d10edd4d527f7b8e258",
+      "bytes": 174433
+    },
+    "final-export-integration-commit.log.gz": {
+      "sha256": "5f7182881fa85dd26bcb54e340ebbd79dfbb7cf8e9ffbe1a4ce15e0b0378a594",
+      "bytes": 915
+    },
     "final-publication-qualification.json": {
-      "sha256": "e4288f92263cbf53553a6e0241e559e5a2bcea20f01e6de0581b2526a32eb7a7",
-      "bytes": 6201
+      "sha256": "e9d1388318157fcdc729c49afa31a6aa21889337d9171020c1144082fb4924e9",
+      "bytes": 7051
     },
     "final-publication-source-freeze.json": {
       "sha256": "2fb4fea203f5e86591f203356da3cc0bfef2ec186e4b628b492856c74f2a375c",
@@ -460,6 +496,14 @@
     "implementation-commit.log.gz": {
       "sha256": "dfb5fa3a9c7c00503067cf3292e81735d236bc124fe9f4416680776078e3069d",
       "bytes": 1493
+    },
+    "implementation-push-retry.json": {
+      "sha256": "694712e2d12c8e6f07d2f65c4e8f3ebeaf179bdf067614764a249499ce493205",
+      "bytes": 174399
+    },
+    "implementation-push-retry.log.gz": {
+      "sha256": "8460c4777dcd90ea58d64fe2e35bd3d132d08e70e57a643a8d25f762465c4be1",
+      "bytes": 4611
     },
     "implementation-push.json": {
       "sha256": "1c3acce25963ee58dd3a0ba229dda22a7e99c49aee39914d0c07c05b9295120d",
@@ -929,6 +973,10 @@
       "sha256": "af9afdabbac3245f918f3c37350eecc04627096a17315a831da093a68d0a5a1d",
       "bytes": 169
     },
+    "published-source-freeze.json": {
+      "sha256": "0708c05f9de7c65bac6eabea4a54a576dd629e76da5529e83c100fe60cc9e7de",
+      "bytes": 87850
+    },
     "push-retry-fetch.json": {
       "sha256": "b1cb171c06ba5703db7cb2b3926915fed1ce91c13850fa570d8e04fbc97796dc",
       "bytes": 203
@@ -1192,6 +1240,22 @@
     "saved-refiling-merge.log.gz": {
       "sha256": "7753602c0912fef3dcf3c93ecfee7fc69fbc369d2f99b8dac2e923d01ff45ec5",
       "bytes": 1063
+    },
+    "second-retry-fetch.json": {
+      "sha256": "bc6bc58e5f3acd5290706d1fe8e76715244e1c0dfc9095d64176c629cd6e9757",
+      "bytes": 174375
+    },
+    "second-retry-fetch.log.gz": {
+      "sha256": "aa77aaaf94bfde487fa21c6860fa212185aedc04ae6ae7ace2bac923de51db56",
+      "bytes": 144
+    },
+    "second-retry-merge.json": {
+      "sha256": "cb8bfdfbba07b9a0da4c37f39e545e27f32789e5e433bca9bfb86ffc7f6c9d63",
+      "bytes": 174385
+    },
+    "second-retry-merge.log.gz": {
+      "sha256": "b9a19efe8ffe0c926b6004cbd930823650d2cf62ff30d3f08b3adece56e28f6c",
+      "bytes": 949
     },
     "source-freeze.json": {
       "sha256": "b7faf77bfcdd6ceb0911a4dcf21d5fd6abc23abd85c635d99adc99fb09a5e0b2",

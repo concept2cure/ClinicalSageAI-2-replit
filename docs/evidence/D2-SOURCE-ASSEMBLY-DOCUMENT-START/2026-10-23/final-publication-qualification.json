@@ -1,9 +1,9 @@
 {
   "at": "2026-10-23T19:52:05.217037+00:00",
   "scope": "Final publication envelope after canonical workspace intake and official eSTAR attachment integration; final-qualification.json retains its historical 623-input epoch. Cohorts overlap and must not be summed.",
-  "sourceFreeze": "final-publication-source-freeze.json",
-  "sourceFreezeSha256": "2fb4fea203f5e86591f203356da3cc0bfef2ec186e4b628b492856c74f2a375c",
-  "sourceCount": 674,
+  "sourceFreeze": "published-source-freeze.json",
+  "sourceFreezeSha256": "0708c05f9de7c65bac6eabea4a54a576dd629e76da5529e83c100fe60cc9e7de",
+  "sourceCount": 678,
   "sourceDrift": [],
   "coreQualification": "final-qualification.json",
   "checks": [
@@ -122,6 +122,18 @@
       "sourceFreeze": "final-publication-source-freeze.json",
       "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
       "testSummary": []
+    },
+    {
+      "receipt": "final-backfill-integration.json",
+      "sha256": "7ace2fc233e1771943a4962bcb7cb8dc61dfcc5c7d82717387fbf77f313eb7a6",
+      "exitCode": 0,
+      "sourceFreeze": "published-source-freeze.json",
+      "rawGzipSha256": "35b40f3595b1471d538258e17b7e2457cf50e06a0ac80d83ee795185503cf031",
+      "testSummary": [
+        "Test Files  3 passed (3)",
+        "Tests  27 passed (27)",
+        "Duration  5.26s (transform 1.16s, setup 120ms, import 2.27s, tests 2.33s, environment 0ms)"
+      ]
     }
   ],
   "workerRefreshQualification": "estar-owner/qualified-hooks.json",
@@ -145,5 +157,13 @@
     "Synthetic HTTP/auth and selected PGlite/mock suites; no current human acceptance session.",
     "No live provider or agency transmission, deployment, or universal sector/region completeness.",
     "No durable creation idempotency across remount/reload/another tab."
-  ]
+  ],
+  "previousPublicationFreeze": "final-publication-source-freeze.json",
+  "priorCurrentCompiler": {
+    "receipt": "implementation-push-retry.json",
+    "typeScriptErrors": 0,
+    "allHooksPassed": true,
+    "pushAccepted": false,
+    "reason": "Concurrent canonical advancement after hooks; normal merge retained incoming backfill fix."
+  }
 }

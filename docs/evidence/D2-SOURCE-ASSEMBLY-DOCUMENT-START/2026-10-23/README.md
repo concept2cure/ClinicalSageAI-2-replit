@@ -221,3 +221,16 @@ actual receipt and Git source-object verification are retained with publication.
 The last pre-publication fetch found only documentation/work-order additions at
 `df869f281`. No declared source input changed; normal merge preserves these
 concurrent contracts. The human checklist remains 91 cases, all Not run.
+
+
+A second normal push again passed every gate, including actual whole-project
+TypeScript **0 errors / tsc exit 0**, then lost a canonical-ref race. Its failure
+is retained in `implementation-push-retry.*`; it is not represented as accepted
+publication. `second-retry-merge.*` records the normal merge of `41ce35bac`.
+The only incoming production change preserves stored extraction bytes in the
+existing Vault chunk backfill, using trim solely to detect blank text. This
+preserves source coordinates for Data Room/AnA consumers. Three incoming suites
+pass **27 tests** locally. The previous 674 pins remain byte-identical;
+`published-source-freeze.json` extends them by those four incoming source/test
+paths to **678** inputs. The publication envelope names this final freeze and
+keeps the preceding cohorts' original receipt scopes explicit.
