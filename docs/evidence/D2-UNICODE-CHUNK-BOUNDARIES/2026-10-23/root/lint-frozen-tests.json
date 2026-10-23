@@ -1,0 +1,33 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts"
+  ],
+  "exit": 0,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}
