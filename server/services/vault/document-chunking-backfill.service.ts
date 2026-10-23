@@ -185,8 +185,9 @@ export async function backfillVaultChunks(
   };
 
   for (const doc of candidates) {
-    const text = (doc.extracted_text ?? '').trim();
-    if (text.length === 0) {
+    // Chunk coordinates must use the stored source; trim only to detect blanks.
+    const text = doc.extracted_text ?? '';
+    if (text.trim().length === 0) {
       /* No text is not a chunking failure — it is an EXTRACTION outcome, and
          the catalog already records it (or records nothing, for a document
          that predates the catalog entirely). Saying so here keeps the two

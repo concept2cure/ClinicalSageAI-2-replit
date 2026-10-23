@@ -1,0 +1,26 @@
+{
+  "testsPassed": 219,
+  "testFiles": 19,
+  "failures": 0,
+  "skips": 0,
+  "newTests": 27,
+  "baselineSemanticFailures": 10,
+  "baselinePassingControls": 17,
+  "productionFilesChanged": [
+    "server/services/vault/document-chunking-backfill.service.ts"
+  ],
+  "frozenTestFilesUnchanged": 3,
+  "selectedInputCount": 55,
+  "sourceHashesStableDuringRun": true,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "lintGrowth": 0,
+  "typecheck": "pending normal code push",
+  "limits": [
+    "owner-mode PGlite; no native RLS/pgvector/live provider qualification",
+    "PGlite SQL fixtures keep BOM behind CRLF; initial-BOM handoff uses controlled seams",
+    "no automatic historical repair or changed catalog count convention",
+    "no new indexing snapshot protocol or changed candidate policy",
+    "no production data repair, deployment or agency acceptance claim"
+  ]
+}
