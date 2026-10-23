@@ -206,7 +206,7 @@ fixture is also checked against the new request SQL-client/resolver contract;
 fixture mismatches are not counted as product RED or fixed by weakening guards.
 
 
-The final 674-input publication envelope is `final-publication-qualification.json`.
+The 674-input publication epoch is retained in `final-publication-qualification.json`.
 The combined current editor/export/Vault UI selection passes **177 tests / 8 suites**;
 the official eSTAR server selection passes **125 tests / 5 suites**. The legacy
 request-client fixture alignment passes 46 tests and is not a product RED. The
@@ -247,3 +247,27 @@ review is clear. `market-integration-source-freeze.json` explicitly updates that
 one prior source pin and adds nine incoming production/test pins: **687** inputs.
 The six changed suites pass **76 tests** with no source drift. Their qualification
 and build are captured separately rather than attributed to earlier freezes.
+
+
+## Accepted canonical publication
+
+Normal direct push **`fa906adc3ac130b73e33d0118a8391eba3abcc10`** succeeded on `concept2cure-v2`, with all
+mandatory hooks passing and actual whole-project TypeScript **0 errors / tsc exit 0**.
+The current final envelope uses the explicit **687-input** market integration
+freeze. `publication.json` identifies the accepted receipt;
+`source-git-verification.json` hashes all 687 actual Git blobs at that accepted
+commit and confirms the freshly fetched canonical remote equals it. No source
+mismatch, force, bypass, PR, alternate branch, dependency or baseline change
+occurred. Initial canonical/source/export/backfill/market ancestors are retained.
+
+The last rejected push and subsequent documentation-only normal merge are kept
+in `implementation-push-market-merge.*` and `fourth-retry-merge.*`; every source
+pin stayed unchanged through that last merge. Historical qualification epochs
+and rejected pushes remain explicitly distinct from the accepted publication.
+This record and the actual push receipt follow in a normal documentation-only
+canonical commit. The final remote check is read-only.
+
+Human testing remains **91 cases, all Not run**, with source-start cases 84–91.
+This increment establishes the tested code workflow; no live provider/agency
+transmission, deployment, human acceptance, durable cross-remount creation
+idempotency, or universal sector/regional completeness is claimed.

@@ -158,7 +158,13 @@
   ],
   "workerRefreshQualification": "estar-owner/qualified-hooks.json",
   "independentReview": "final-readonly-review.json",
-  "fullCurrentCompiler": "Actual normal pre-push hook output is captured at publication; do not infer it from historical compiler runs.",
+  "fullCurrentCompiler": {
+    "receipt": "implementation-push-documentation-sync.json",
+    "typeScriptErrors": 0,
+    "tscExitCode": 0,
+    "allMandatoryHooksPassed": true,
+    "pushAccepted": true
+  },
   "humanCases": 91,
   "humanStatus": "All Not run",
   "sourceStartHumanCases": [
@@ -185,5 +191,6 @@
     "allHooksPassed": true,
     "pushAccepted": false,
     "reason": "Concurrent canonical advancement after hooks; normal merge retained incoming backfill fix."
-  }
+  },
+  "publication": "publication.json"
 }

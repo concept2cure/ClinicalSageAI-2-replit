@@ -1,9 +1,9 @@
 {
-  "scope": "Pre-publication packet after explicit687-input market identity epoch; excludes this manifest. Accepted push and source-object evidence follows.",
+  "scope": "Final accepted-publication packet and source Git-object verification. Excludes this manifest itself. The documentation-only evidence push and final clean/sync observation are intentionally not recursively captured here.",
   "files": {
     "README.md": {
-      "sha256": "d96ca2d5c8aa64fdbeb7f7a85ada2f26ddc70031343508231c3d0332e16aaf91",
-      "bytes": 16326
+      "sha256": "4264e50001534326f062ded55528e71263dbf42eb522b36d1b5e1ef47d2f9c52",
+      "bytes": 17767
     },
     "bounded-cohorts.json": {
       "sha256": "c7cdfe9dc8f39a08c054c9e8b7091f066818b024d7ee11cf06d94e2de62a45b9",
@@ -462,8 +462,8 @@
       "bytes": 522
     },
     "final-publication-qualification.json": {
-      "sha256": "cd4152244cbe5390ddbe2ef259b8b8c0813068ba929371fbcd5adee82be0efbe",
-      "bytes": 7925
+      "sha256": "296a5e81addea3f5411554f57fc47e9aa0cacb6eaeccf9dc01c0d20bbacb08a3",
+      "bytes": 8029
     },
     "final-publication-source-freeze.json": {
       "sha256": "2fb4fea203f5e86591f203356da3cc0bfef2ec186e4b628b492856c74f2a375c",
@@ -493,6 +493,22 @@
       "sha256": "d01d71255bc6094d186ca69ce666472c362fd5016a1ea24955707a9218a155ad",
       "bytes": 169
     },
+    "fourth-retry-fetch.json": {
+      "sha256": "03677ac83adba0f87c6dcde2bb59ebd4084b0718bcc750c7e9e62060b9b2eb28",
+      "bytes": 178172
+    },
+    "fourth-retry-fetch.log.gz": {
+      "sha256": "75252029584091f3083a5be6ef2a3adc2acfc52633b8b2a897f531235b7621dd",
+      "bytes": 144
+    },
+    "fourth-retry-merge.json": {
+      "sha256": "e48bd7ec78309e1df4c711a51094806c3b7e1daae170ba86dbe94391b5221219",
+      "bytes": 178182
+    },
+    "fourth-retry-merge.log.gz": {
+      "sha256": "09bc4aa9662a97c8436dfa0c96d46cf20314c5d3155bfd98873b3562afb7a0f0",
+      "bytes": 340
+    },
     "implementation-commit.json": {
       "sha256": "2466f4361c7377c5bff34f23285ebacbe183037f5dc7c7dbcedee646c4e82839",
       "bytes": 155803
@@ -501,6 +517,14 @@
       "sha256": "dfb5fa3a9c7c00503067cf3292e81735d236bc124fe9f4416680776078e3069d",
       "bytes": 1493
     },
+    "implementation-push-documentation-sync.json": {
+      "sha256": "e8e18f5e3acdf35a083410e9d0c21e2c7b44685c3cde974811e83fb3989b691f",
+      "bytes": 178208
+    },
+    "implementation-push-documentation-sync.log.gz": {
+      "sha256": "fcd657e0321d405b4a56315de131feb580270ef5a0bc0ea7589ba08acb89e12a",
+      "bytes": 4412
+    },
     "implementation-push-final.json": {
       "sha256": "58372d57b44dcb8e98a3b44dc85ec124ad5823873c855da0cfcd132bcf5c9dcb",
       "bytes": 175638
@@ -508,6 +532,14 @@
     "implementation-push-final.log.gz": {
       "sha256": "232097fde08309c8c18c4d0745802ae079c3e3c155251091e66932cce9784a4b",
       "bytes": 4512
+    },
+    "implementation-push-market-merge.json": {
+      "sha256": "b54d60cd6acdec93ca006dc85ba627e0b768ac9ff67fff49605a546e44f9d074",
+      "bytes": 178203
+    },
+    "implementation-push-market-merge.log.gz": {
+      "sha256": "e326bcfb91a04584ea664528a4d818ba973b5bc3a0092a68a0428509aa252547",
+      "bytes": 4610
     },
     "implementation-push-retry.json": {
       "sha256": "694712e2d12c8e6f07d2f65c4e8f3ebeaf179bdf067614764a249499ce493205",
@@ -997,6 +1029,14 @@
       "sha256": "3d086496622dd339faae8c5d1704e545e7b76b6efab918dfa68ca747042138e2",
       "bytes": 3525
     },
+    "publication-verification-fetch.json": {
+      "sha256": "9cfca0b2923ea3c04c02da79007f7d9dd37fccb5917b61810e616f640bfa87fb",
+      "bytes": 178184
+    },
+    "publication-verification-fetch.log.gz": {
+      "sha256": "912622cc564a006c997ef32d6424bc48bb495574d6afbf6aeed3b9d9224d3c0b",
+      "bytes": 112
+    },
     "publication-warning-ratchet.json": {
       "sha256": "6a6a735bd83f7f678891c680a01198b9f1557ee33f96c8230ff3510568dc1fb2",
       "bytes": 155843
@@ -1004,6 +1044,10 @@
     "publication-warning-ratchet.log.gz": {
       "sha256": "af9afdabbac3245f918f3c37350eecc04627096a17315a831da093a68d0a5a1d",
       "bytes": 169
+    },
+    "publication.json": {
+      "sha256": "6210426e08d313927b25afdb3fc7517c058a3eddafc46f8cdc20b49e32c27759",
+      "bytes": 1479
     },
     "published-source-freeze.json": {
       "sha256": "0708c05f9de7c65bac6eabea4a54a576dd629e76da5529e83c100fe60cc9e7de",
@@ -1292,6 +1336,10 @@
     "source-freeze.json": {
       "sha256": "b7faf77bfcdd6ceb0911a4dcf21d5fd6abc23abd85c635d99adc99fb09a5e0b2",
       "bytes": 76693
+    },
+    "source-git-verification.json": {
+      "sha256": "6106f6a6776e955cbfcf13a91f08002525258d060f03cbda601356300d845e70",
+      "bytes": 89582
     },
     "third-retry-fetch.json": {
       "sha256": "01f357a4f420253d3265a95423ddcd9e452050b7de181e7965c8f7c2985d9c4b",
