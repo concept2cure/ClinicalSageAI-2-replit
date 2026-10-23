@@ -37,42 +37,15 @@
  * @module server/services/clinical-regulatory-evidence/span-lineage.service
  */
 
-import { createHash } from 'node:crypto';
-
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
 import { CRE_SOURCE_CITATION } from './source-usage.service';
 import { MACHINE_AUTHOR_IDS } from '../authoring/revision-ledger';
 
-export class SpanLineageError extends Error {}
-
-/**
- * Anything that can run a query — the pool, or a client inside a transaction.
- *
- * The write paths take one so a caller can enlist lineage in the SAME
- * transaction as the content it describes. That is what makes "content does not
- * persist without its lineage" an invariant rather than an intention: written
- * on the pool, the lineage is a separate commit that can fail on its own and
- * leave saved text with no provenance.
- */
-export interface Queryable {
-  query: <R = any>(
-    sql: string,
-    params?: unknown[],
-  ) => Promise<{ rows: R[]; rowCount?: number | null }>;
-}
-
-/** Default executor — the pool, i.e. its own transaction per statement.
- *
- *  Resolved at CALL time, not at import. `pool as Queryable` dereferenced the
- *  db module's `pool` export while this file loaded, and this file is loaded
- *  by the lineage gate, which is loaded by every governed writer — so any test
- *  that mocks `../db` without a `pool` export (the CMC route suites mock only
- *  `getPool`) died at import with "No pool export is defined on the mock".
- *  Four suites were red on the trunk for exactly that. */
-export const defaultExec: Queryable = {
-  query: (sql, params) => (pool as unknown as Queryable).query(sql, params),
-};
+import { defaultExec, hashSpanText, SpanLineageError, type Queryable } from './span-lineage-integrity';
+export {
+  assertLineageHashesMatchContent, defaultExec, hashSpanText, SpanLineageError, type Queryable,
+} from './span-lineage-integrity';
 
 /** How a source was used to produce a span. Mirrors the SQL CHECK constraint. */
 export type SpanUsage =
@@ -218,11 +191,6 @@ export interface SpanLineageRow {
   /** Present on forward/propagation reads, which join the source. */
   state?: SpanState;
   sourceTitle?: string | null;
-}
-
-/** sha256 of the span's text — how a link is detected as stale rather than trusted. */
-export function hashSpanText(text: string): string {
-  return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
 export function assertSpan(charStart: number, charEnd: number): void {

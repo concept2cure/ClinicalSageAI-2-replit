@@ -1,0 +1,72 @@
+{
+  "qualifiedSourceCommit": "7442c4cfab3f7f9000987c91aec85ea799cb24c1",
+  "scope": "Three focused Vault freshness/Authoring adapter checks; historical cohorts remain separate.",
+  "files": 3,
+  "passed": 38,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "processExit": 0,
+  "selection": [
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts"
+  ],
+  "reportSha256": "7900965e44ba9ca8a7c69e97371e09ae1185eb597fa457b7dd8154457e85d909",
+  "transcriptSha256": "5e190ed9f52a4bbb7edbe7388c49c684d4894442fde51af118286176ec9dc438",
+  "results": [
+    {
+      "path": "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+      "tests": [
+        "Vault extraction freshness gates actual answer generation refuses an already stale retrieval snapshot before dispatching a generator",
+        "Vault extraction freshness gates actual answer generation refuses same-ID chunk text replacement even when original bytes and extraction hash match",
+        "Vault extraction freshness gates actual answer generation rechecks after the actual corrective grading await before answer generation",
+        "Vault extraction freshness gates actual answer generation withholds the entire answer when one source changes during generator dispatch",
+        "Vault extraction freshness gates actual answer generation rechecks after the actual faithfulness await before returning the answer",
+        "Vault extraction freshness gates actual answer generation rejects an obsolete available-context fingerprint even without expandedContent",
+        "Vault extraction freshness gates actual answer generation refuses unpinned legacy compressedContent rather than inventing a derivation basis",
+        "Vault extraction freshness gates actual answer generation refuses unpinned legacy expandedContent rather than inventing a derivation basis",
+        "Vault extraction freshness gates actual answer generation keeps unchanged pinned compressedContent usable with the existing precedence",
+        "Vault extraction freshness gates actual answer generation keeps unchanged pinned expandedContent usable with the existing precedence",
+        "Vault extraction freshness gates actual answer generation retains a current available-context reference when no expanded text is requested"
+      ]
+    },
+    {
+      "path": "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+      "tests": [
+        "real Vault SQL pins and rechecks extraction currency pins the extraction hash and UTF-16 coordinates in actual lexical mapper output",
+        "real Vault SQL pins and rechecks extraction currency rejects same-original-file re-extraction after initial selection",
+        "real Vault SQL pins and rechecks extraction currency rejects a changed extraction even when the complete hit still occurs in it",
+        "real Vault SQL pins and rechecks extraction currency rejects an already-stale stored chunk absent from the current extraction",
+        "real Vault SQL pins and rechecks extraction currency rejects same-ID chunk text replacement without replacing candidate text silently",
+        "real Vault SQL pins and rechecks extraction currency rejects in-place coordinate replacement under unchanged text and extraction",
+        "real Vault SQL preserves honest legacy hit-only behavior retains an unchanged literal Unicode/regex-like hit without normalization",
+        "real Vault SQL preserves honest legacy hit-only behavior preserves NULL-offset hits with unavailable context rather than fabricating spans",
+        "real Vault SQL preserves honest legacy hit-only behavior preserves trimmed-backfill own text without inventing corrected coordinates",
+        "real Vault SQL preserves honest legacy hit-only behavior allows an unchanged NULL extraction only as legacy own text without context",
+        "real Vault SQL preserves honest legacy hit-only behavior rejects extraction appearance after a NULL extraction was selected",
+        "real Vault SQL preserves honest legacy hit-only behavior rejects extraction disappearance after source text was selected",
+        "freshness extends existing access and disposition SQL refuses a valid current candidate under another organization UUID",
+        "freshness extends existing access and disposition SQL keeps retained extracted data clearly labelled, then refuses later withdrawal"
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-draft-sources.test.ts",
+      "tests": [
+        "source receipt reservation at draft accept reserves the existing source stores and verifies the same program, bytes and version",
+        "source receipt reservation at draft accept refuses stale, withdrawn, superseded/missing or foreign sources: null",
+        "source receipt reservation at draft accept refuses stale, withdrawn, superseded/missing or foreign sources: {\"id\":\"22222222-2222-4222-8222-222222222222\",\"programId\":\"11111111-1111-4111-8111-111111111111\",\"contentHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"version\":\"1.0\",\"catalog\":{\"contentHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"status\":\"extracted\"}}",
+        "source receipt reservation at draft accept refuses stale, withdrawn, superseded/missing or foreign sources: {\"id\":\"22222222-2222-4222-8222-222222222222\",\"programId\":\"11111111-1111-4111-8111-111111111111\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"version\":\"2.0\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\"}}",
+        "source receipt reservation at draft accept refuses stale, withdrawn, superseded/missing or foreign sources: {\"id\":\"22222222-2222-4222-8222-222222222222\",\"programId\":\"11111111-1111-4111-8111-111111111111\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"version\":\"1.0\",\"disposition\":\"remove_data\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\"}}",
+        "source receipt reservation at draft accept refuses stale, withdrawn, superseded/missing or foreign sources: {\"id\":\"22222222-2222-4222-8222-222222222222\",\"programId\":\"22222222-2222-4222-8222-222222222222\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"version\":\"1.0\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\"}}",
+        "source receipt reservation at draft accept preserves legacy candidates but refuses a malformed recorded receipt",
+        "section source capture uses current verified caller access uses one scoped executor and records the actual retrieval actor without creating source identities",
+        "section source capture uses current verified caller access keeps an unregistered actual Vault source uncited rather than inventing a registry entry",
+        "section source capture uses current verified caller access refuses an invalid current principal 0 before source retrieval",
+        "section source capture uses current verified caller access refuses an invalid current principal NaN before source retrieval",
+        "section source capture uses current verified caller access refuses an invalid current principal -5 before source retrieval",
+        "section source capture uses current verified caller access rechecks with the current accepting principal rather than the receipt retrieval actor"
+      ]
+    }
+  ]
+}

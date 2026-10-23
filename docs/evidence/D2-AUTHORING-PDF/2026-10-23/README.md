@@ -119,3 +119,13 @@ Before publication, the incoming native AnA model-provenance update at
 files, the production build and the full zero-error TypeScript gate. All 50
 Authoring PDF source pins remain unchanged. These 43 cases are separate from the
 522 PDF cases above; see `concurrent-ana.json` for exact scope and report hashes.
+
+## Subsequent saved-section and Vault-version completions
+
+The later unchanged saved-section filing completion is qualified separately in
+`docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/`. Its combined checks
+also include the incoming Vault rendition-version work documented in
+`docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/`, which replaces the
+separate parity TODO with versioned-PDF filing proof while retaining historical
+hash-labelled family refusals. These later checks do not relabel the 522 cases
+or source pins above as current qualification.
