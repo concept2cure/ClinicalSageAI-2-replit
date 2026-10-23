@@ -21,6 +21,8 @@ beforeAll(async () => {
     ALTER TABLE rag_documents ADD COLUMN title text;
     ALTER TABLE rag_documents ALTER COLUMN organization_id DROP NOT NULL;
     ALTER TABLE rag_chunks ADD COLUMN chunk_index integer DEFAULT 0;
+    ALTER TABLE vault.document_chunks ADD COLUMN char_start integer;
+    ALTER TABLE vault.document_chunks ADD COLUMN char_end integer;
   `);
 });
 afterAll(async () => { await harness.close(); });
@@ -29,6 +31,12 @@ async function sources(f: DispositionFixture) {
   const uuid = randomUUID();
   await f.pg.query('UPDATE organizations SET uuid=$2 WHERE id=$1', [f.org, uuid]);
   const chunk = (await f.pg.query<{ id: string }>('SELECT id FROM vault.document_chunks WHERE document_id=$1', [f.vault])).rows[0].id;
+  // tenant-isolation-safe: this fixture's own Vault chunk and extraction must agree with the candidate.
+  await f.pg.query('UPDATE vault.document_chunks SET chunk_text=$2 WHERE id=$1 AND document_id=$3',
+    [chunk, 'Captured stored study passage', f.vault]);
+  // tenant-isolation-safe: exact fixture document and its organization, no cross-tenant read/write.
+  await f.pg.query('UPDATE vault.documents SET extracted_text=$2 WHERE id=$1 AND organization_id=$3',
+    [f.vault, 'Captured stored study passage', f.org]);
   const rag = (await f.pg.query<{ id: string; document_id: string }>(`SELECT c.id,d.id AS document_id FROM rag_chunks c
     JOIN rag_documents d ON d.id=c.document_id WHERE d.organization_id=$1`, [f.org])).rows[0];
   const atom = (await f.pg.query<{ id: number }>(`SELECT id FROM lumen_data_atoms

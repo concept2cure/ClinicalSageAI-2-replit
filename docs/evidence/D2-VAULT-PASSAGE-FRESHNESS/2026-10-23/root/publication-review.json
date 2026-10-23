@@ -1,0 +1,19 @@
+{
+  "reviewer": "stale_passage_inventory",
+  "verdict": "CLEAR",
+  "checks": {
+    "testsPassed": 269,
+    "testFiles": 27,
+    "testFailuresOrSkips": 0,
+    "selectedInputs": 65,
+    "typedFrozenFiles": 4,
+    "historicalManifestEntries": 293,
+    "retainedAncestors": 103,
+    "lintErrors": 0,
+    "existingProductionWarnings": 9,
+    "testWarnings": 0,
+    "wholeProjectTypeScriptErrors": 0
+  },
+  "limits": "owner-mode PGlite/scripted providers, no native RLS/planner/live provider/latency/deployment or agency acceptance claim; legacy and citation writer limits explicit",
+  "remainingAtReview": "root adds this receipt + manifest, normal evidence-only push, final read-only remote check"
+}

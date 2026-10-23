@@ -83,7 +83,8 @@ describe('existing RAG actor programme filtering', () => {
     expect(sql).toContain('vault.documents succ');
   });
   it('actor-scoped retrieval refuses a selected source when its byte identity changes', async () => {
-    h.query.mockImplementation(async (sql: string) => ({ rows: /SELECT id FROM organizations/.test(sql) ? [{ id: 7 }] : /SELECT c.id::text AS id/.test(sql) ? [{ id: 'chunk', document_id: DOCUMENT, program_id: PROGRAM, content_hash: 'b'.repeat(64), title: 'Current source', original_file_available: true }] : [] }));
+    h.query.mockImplementation(async (sql: string) => ({ rows: /SELECT id FROM organizations/.test(sql) ? [{ id: 7 }] : /SELECT c.id::text AS id/.test(sql) ? [{ id: 'chunk', document_id: DOCUMENT, program_id: PROGRAM, content_hash: 'b'.repeat(64), title: 'Current source', original_file_available: true,
+      chunk_text: 'Current source text', char_start: null, char_end: null, extracted_text_sha256: null, chunk_in_extraction: null }] : [] }));
     await expect(pipeline().revalidateCandidates([{ id: 'chunk', chunkId: 'chunk', documentId: DOCUMENT, programId: PROGRAM, contentHash: HASH, atomType: 'vault_chunk' }], { strategy: 'basic', organizationUuid: UUID, sourceReadScope: SCOPE, filters: { allowedProgramIds: [PROGRAM] } })).rejects.toThrow('source identity changed');
   });
   it('refuses source actor authority on a corpus that cannot apply its programme constraint', async () => {

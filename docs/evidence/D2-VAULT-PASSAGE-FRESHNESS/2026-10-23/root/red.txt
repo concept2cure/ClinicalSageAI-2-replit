@@ -1,0 +1,1388 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+{
+  "timestamp": "2026-10-23T18:46:25.773Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:46:25.774Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+{
+  "timestamp": "2026-10-23T18:46:25.774Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-boundaries.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a changed extraction basis even when the own hit text still survives 11ms
+   → expected [ { id: 'first', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a previously indexed own text absent from the current extraction 1ms
+   → expected [ { id: 'old-index', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects same-ID chunk text replacement without refreshing old ranked content 2ms
+   → expected [ { id: 'same-id', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived expandedContent before reranking 1ms
+   → expected [ { id: 'unknown-basis', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived compressedContent before reranking 1ms
+   → expected [ { id: 'unknown-basis', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after reranking before embedding candidates for MMR 1ms
+   → expected [ …(3) ] to deeply equal [ …(2) ]
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after MMR before sending a selected source to compression 1ms
+   → expected [ { id: 'first', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > does not return cached compression when the extraction changes during its await 1ms
+   → expected [ { id: 'cached', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rejects changed coordinates after compression even with unchanged text and extraction 1ms
+   → expected [ { id: 'coordinates', …(12) } ] to deeply equal []
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > keeps unchanged own text through real reranking, MMR and cached compression 1ms
+ × server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > keeps a current plain legacy hit and pins the checked basis before later work 2ms
+   → expected { id: 'legacy', …(10) } to match object { vaultPassageSnapshot: { …(3) } }
+(11 matching properties omitted from actual)
+ ✓ server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > does not apply Vault extraction rules to guidance, project atoms or memories 2ms
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:46:27.012Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:46:27.013Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T18:46:27.013Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > pins the extraction hash and UTF-16 coordinates in actual lexical mapper output 52ms
+   → expected undefined to deeply equal { …(3) }
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-original-file re-extraction after initial selection 34ms
+   → expected [ { …(17) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects a changed extraction even when the complete hit still occurs in it 25ms
+   → expected [ { …(17) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects an already-stale stored chunk absent from the current extraction 22ms
+   → expected [ { …(17) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-ID chunk text replacement without replacing candidate text silently 19ms
+   → expected [ { …(17) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects in-place coordinate replacement under unchanged text and extraction 23ms
+   → expected [ { …(17) } ] to deeply equal []
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > retains an unchanged literal Unicode/regex-like hit without normalization 18ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves NULL-offset hits with unavailable context rather than fabricating spans 21ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves trimmed-backfill own text without inventing corrected coordinates 22ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > allows an unchanged NULL extraction only as legacy own text without context 20ms
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction appearance after a NULL extraction was selected 19ms
+   → expected [ { …(17) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction disappearance after source text was selected 22ms
+   → expected [ { …(17) } ] to deeply equal []
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > refuses a valid current candidate under another organization UUID 34ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > keeps retained extracted data clearly labelled, then refuses later withdrawal 168ms
+stdout | server/services/__tests__/rag-vault-freshness-generation.test.ts
+{
+  "timestamp": "2026-10-23T18:46:30.365Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:46:30.366Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-generation.test.ts
+{
+  "timestamp": "2026-10-23T18:46:30.366Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-generation.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses an already stale retrieval snapshot before dispatching a generator 11ms
+   → expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses same-ID chunk text replacement even when original bytes and extraction hash match 1ms
+   → expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual corrective grading await before answer generation 1ms
+   → expected "vi.fn()" to be called once, but got 2 times
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > withholds the entire answer when one source changes during generator dispatch 2ms
+   → expected [ { id: 'chunk-1', …(11) }, …(1) ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual faithfulness await before returning the answer 1ms
+   → expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rejects an obsolete available-context fingerprint even without expandedContent 2ms
+   → expected [ { id: 'chunk-1', …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy compressedContent rather than inventing a derivation basis 1ms
+   → expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy expandedContent rather than inventing a derivation basis 1ms
+   → expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > keeps unchanged pinned compressedContent usable with the existing precedence 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > keeps unchanged pinned expandedContent usable with the existing precedence 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > retains a current available-context reference when no expanded text is requested 1ms
+stdout | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+{
+  "timestamp": "2026-10-23T18:46:31.252Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:46:31.253Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+{
+  "timestamp": "2026-10-23T18:46:31.253Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness-mapping.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > dense retrieval pins the same-statement extraction fingerprint and UTF-16 coordinates 8ms
+   → expected undefined to deeply equal { …(3) }
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > lexical retrieval pins its own snapshot even without an embedding provider 2ms
+   → expected undefined to deeply equal { …(3) }
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > pins explicit NULL extraction and coordinates without inventing source identity 1ms
+   → expected undefined to deeply equal { extractedTextSha256: null, …(2) }
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing chunk text rather than interpreting absent proof as legacy NULL 2ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses non-text chunk rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing extraction fingerprint rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses malformed extraction fingerprint rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing start rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string start rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses nonfinite end rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing membership fact rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string membership fact rather than interpreting absent proof as legacy NULL 1ms
+   → promise resolved "[ { …(11) } ]" instead of rejecting
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > first-pins a plain current legacy candidate after comparing its text 1ms
+   → expected undefined to deeply equal { …(3) }
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text 2ms
+   → expected [ { …(12) } ] to deeply equal []
+ × server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text 1ms
+   → expected [ { …(12) } ] to deeply equal []
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > preserves unchanged NULL-extraction and NULL-offset own text without a span claim 1ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > retains a current literal hit with shifted backfill coordinates, without inventing a remap 0ms
+ ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts > honest legacy hit-only behavior remains available > does not confuse an unavailable neighboring context with stale own-hit text 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 41 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a changed extraction basis even when the own hit text still survives
+AssertionError: expected [ { id: 'first', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "first",
++     "content": "Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-first",
++     "finalScore": 0.9,
++     "id": "first",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "rerankScore": 1,
++     "title": "Study first",
++     "vaultPassageSnapshot": {
++       "charEnd": 1220,
++       "charStart": 0,
++       "extractedTextSha256": "bbb21ff6f5251d062ba8e2a1c16d35f4a80446bcba8cc76f5cd8d03abfb4af5d",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:78:30
+     76|     h.update(source.id, { extracted_text_sha256: sha(`${source.content…
+     77|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+     78|     expect(result.documents).toEqual([]);
+       |                              ^
+     79|     expect(h.score).not.toHaveBeenCalled();
+     80|     expect(h.embedBatch).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects a previously indexed own text absent from the current extraction
+AssertionError: expected [ { id: 'old-index', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "old-index",
++     "content": "Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. Study old-index: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-old-index",
++     "finalScore": 0.9,
++     "id": "old-index",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "rerankScore": 1,
++     "title": "Study old-index",
++     "vaultPassageSnapshot": {
++       "charEnd": 1300,
++       "charStart": 0,
++       "extractedTextSha256": "65ca3b7f19e7e3bb298ecf2d81af7d8df7118ee1b9e6128188b31093c8ff6c14",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:90:30
+     88|     h.update(source.id, { chunk_in_extraction: false });
+     89|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+     90|     expect(result.documents).toEqual([]);
+       |                              ^
+     91|     expect(h.score).not.toHaveBeenCalled();
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > rejects same-ID chunk text replacement without refreshing old ranked content
+AssertionError: expected [ { id: 'same-id', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "same-id",
++     "content": "Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. Study same-id: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-same-id",
++     "finalScore": 0.9,
++     "id": "same-id",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "rerankScore": 1,
++     "title": "Study same-id",
++     "vaultPassageSnapshot": {
++       "charEnd": 1260,
++       "charStart": 0,
++       "extractedTextSha256": "3f3dfb86bf170251ecdd31baaf2160dbd4e20eaa3f585a19c4098ce5cd896fc1",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:99:30
+     97|     h.update(source.id, { chunk_text: 'The current same-ID row contain…
+     98|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+     99|     expect(result.documents).toEqual([]);
+       |                              ^
+    100|     expect(h.score).not.toHaveBeenCalled();
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived expandedContent before reranking
+AssertionError: expected [ { id: 'unknown-basis', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "unknown-basis",
++     "content": "Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-unknown-basis",
++     "expandedContent": "Derived text with no retained extraction basis.",
++     "finalScore": 0.9,
++     "id": "unknown-basis",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "rerankScore": 1,
++     "title": "Study unknown-basis",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:109:30
+    107|     const h = harness([source]);
+    108|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+    109|     expect(result.documents).toEqual([]);
+       |                              ^
+    110|     expect(h.score).not.toHaveBeenCalled();
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness before the first text provider, with context expansion disabled > refuses unpinned derived compressedContent before reranking
+AssertionError: expected [ { id: 'unknown-basis', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "unknown-basis",
++     "compressedContent": "Derived text with no retained extraction basis.",
++     "content": "Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. Study unknown-basis: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-unknown-basis",
++     "finalScore": 0.9,
++     "id": "unknown-basis",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "rerankScore": 1,
++     "title": "Study unknown-basis",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:109:30
+    107|     const h = harness([source]);
+    108|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+    109|     expect(result.documents).toEqual([]);
+       |                              ^
+    110|     expect(h.score).not.toHaveBeenCalled();
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after reranking before embedding candidates for MMR
+AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
++   "Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. ",
+    "Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. Study second: validated diagnostic sensitivity is 97 percent. ",
+    "Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. Study third: validated diagnostic sensitivity is 97 percent. ",
+  ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:126:43
+    124|     });
+    125|     expect(h.embedBatch).toHaveBeenCalledOnce();
+    126|     expect(h.embedBatch.mock.calls[0][0]).toEqual([sources[1].content,…
+       |                                           ^
+    127|     expect(result.documents.map(d => d.id)).toEqual(['second']);
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rechecks after MMR before sending a selected source to compression
+AssertionError: expected [ { id: 'first', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "first",
++     "compressedContent": "Cached compressed passage",
++     "content": "Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. Study first: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-first",
++     "finalScore": 0.8,
++     "id": "first",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "title": "Study first",
++     "vaultPassageSnapshot": {
++       "charEnd": 1220,
++       "charStart": 0,
++       "extractedTextSha256": "bbb21ff6f5251d062ba8e2a1c16d35f4a80446bcba8cc76f5cd8d03abfb4af5d",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:141:30
+    139|     });
+    140|     expect(h.embedBatch).toHaveBeenCalledOnce();
+    141|     expect(result.documents).toEqual([]);
+       |                              ^
+    142|     expect(h.routeCached).not.toHaveBeenCalled();
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > does not return cached compression when the extraction changes during its await
+AssertionError: expected [ { id: 'cached', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "cached",
++     "compressedContent": "Old cached diagnostic claim",
++     "content": "Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. Study cached: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-cached",
++     "finalScore": 0.8,
++     "id": "cached",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "title": "Study cached",
++     "vaultPassageSnapshot": {
++       "charEnd": 1240,
++       "charStart": 0,
++       "extractedTextSha256": "cc4d8dce69104e7d4ace291994911e6a814d607a61eacb120c5248a3cc550e2c",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:154:30
+    152|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+    153|     expect(h.routeCached).toHaveBeenCalledOnce();
+    154|     expect(result.documents).toEqual([]);
+       |                              ^
+    155|   });
+    156|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > Vault freshness after asynchronous transformations > rejects changed coordinates after compression even with unchanged text and extraction
+AssertionError: expected [ { id: 'coordinates', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "coordinates",
++     "compressedContent": "Derived passage before coordinate replacement",
++     "content": "Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. Study coordinates: validated diagnostic sensitivity is 97 percent. ",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-coordinates",
++     "finalScore": 0.8,
++     "id": "coordinates",
++     "initialScore": 0.8,
++     "originalFileAvailable": true,
++     "programId": "programme",
++     "title": "Study coordinates",
++     "vaultPassageSnapshot": {
++       "charEnd": 1340,
++       "charStart": 0,
++       "extractedTextSha256": "a23708bd681cc1ef7b579af02d505b7dc268d385fe09cbe265aac5988bafaa11",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:166:30
+    164|     const result = await h.instance.retrieve('sensitivity?', { ...opti…
+    165|     expect(h.routeCached).toHaveBeenCalledOnce();
+    166|     expect(result.documents).toEqual([]);
+       |                              ^
+    167|   });
+    168| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-boundaries.test.ts > unchanged retrieval and other corpora remain usable > keeps a current plain legacy hit and pins the checked basis before later work
+AssertionError: expected { id: 'legacy', …(10) } to match object { vaultPassageSnapshot: { …(3) } }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "vaultPassageSnapshot": {
+-     "charEnd": null,
+-     "charStart": null,
+-     "extractedTextSha256": "fbfda3d82bdc9aef980e8fe1fdd2108b1a1d0abbf136200121b18fbab73d78f8",
+-   },
++   "atomType": "vault_chunk",
++   "chunkId": "legacy",
++   "content": "Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. Study legacy: validated diagnostic sensitivity is 97 percent. ",
++   "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "documentId": "document-legacy",
++   "finalScore": 0.8,
++   "id": "legacy",
++   "initialScore": 0.8,
++   "originalFileAvailable": true,
++   "programId": "programme",
++   "title": "Study legacy",
+  }
+
+ ❯ server/services/__tests__/rag-vault-freshness-boundaries.test.ts:194:33
+    192|     expect(result.documents).toHaveLength(1);
+    193|     expect(result.documents[0].content).toBe(source.content);
+    194|     expect(result.documents[0]).toMatchObject({ vaultPassageSnapshot: {
+       |                                 ^
+    195|       extractedTextSha256: sha(source.content), charStart: null, charE…
+    196|     } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses an already stale retrieval snapshot before dispatching a generator
+AssertionError: expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:88:28
+     86|     h.reextract('chunk-1'); // Original bytes, chunk ID and hit text a…
+     87|     const result = await h.instance.queryWithGeneration('What was the …
+     88|     expect(result.sources).toEqual([]);
+       |                            ^
+     89|     expect(result.context.documents).toEqual([]);
+     90|     expect(result.answer).toContain('could not find relevant informati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses same-ID chunk text replacement even when original bytes and extraction hash match
+AssertionError: expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:98:28
+     96|     h.current.get('chunk-1')!.chunk_text = 'The comparator was indepen…
+     97|     const result = await h.instance.queryWithGeneration('What was the …
+     98|     expect(result.sources).toEqual([]);
+       |                            ^
+     99|     expect(h.route).not.toHaveBeenCalled();
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual corrective grading await before answer generation
+AssertionError: expected "vi.fn()" to be called once, but got 2 times
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:109:27
+    107|     });
+    108|     const result = await h.instance.queryWithGeneration('What was the …
+    109|     expect(h.routeCached).toHaveBeenCalledOnce();
+       |                           ^
+    110|     expect(result.sources).toEqual([]);
+    111|     expect(h.route).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > withholds the entire answer when one source changes during generator dispatch
+AssertionError: expected [ { id: 'chunk-1', …(11) }, …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-2",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-2",
++     "finalScore": 1,
++     "id": "chunk-2",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:122:28
+    120|     const result = await h.instance.queryWithGeneration('Compare the s…
+    121|     expect(h.route).toHaveBeenCalledOnce();
+    122|     expect(result.sources).toEqual([]);
+       |                            ^
+    123|     expect(result.context.documents).toEqual([]);
+    124|     expect(result.answer).not.toContain('A stale answer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rechecks after the actual faithfulness await before returning the answer
+AssertionError: expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:138:28
+    136|     expect(h.route).toHaveBeenCalledOnce();
+    137|     expect(h.routeCached).toHaveBeenCalledTimes(2);
+    138|     expect(result.sources).toEqual([]);
+       |                            ^
+    139|     expect(result.answer).not.toContain('Sensitivity was 94%');
+    140|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > rejects an obsolete available-context fingerprint even without expandedContent
+AssertionError: expected [ { id: 'chunk-1', …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "passageContext": {
++       "chunkRange": [
++         0,
++         0,
++       ],
++       "clipped": false,
++       "reference": {
++         "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++         "documentId": "document-1",
++         "extractedTextSha256": "a067561655eb58cd24d96acb68ecce061f6cd24880d6614281a0f25cc15ae24d",
++         "span": {
++           "end": 91,
++           "start": 29,
++           "totalChars": 137,
++         },
++         "spanSha256": "875990f48463d7ac9ce841e0fcee4c52b57f0e8355b4d8371d950c3be7397289",
++         "version": 2,
++       },
++       "status": "available",
++       "text": "The device sensitivity was 94% in the prespecified population.",
++     },
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++     "vaultPassageSnapshot": {
++       "charEnd": 91,
++       "charStart": 29,
++       "extractedTextSha256": "064c8584dab244a147198ca591ab504415324e23e6aa098f83514b9c820a61d8",
++     },
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:147:28
+    145|     const h = harness([source]);
+    146|     const result = await h.instance.queryWithGeneration('What was the …
+    147|     expect(result.sources).toEqual([]);
+       |                            ^
+    148|     expect(h.route).not.toHaveBeenCalled();
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy compressedContent rather than inventing a derivation basis
+AssertionError: expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "compressedContent": "Unknown-basis derived clinical evidence.",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:156:28
+    154|     const h = harness([source]);
+    155|     const result = await h.instance.queryWithGeneration('What was the …
+    156|     expect(result.sources).toEqual([]);
+       |                            ^
+    157|     expect(h.route).not.toHaveBeenCalled();
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-generation.test.ts > Vault extraction freshness gates actual answer generation > refuses unpinned legacy expandedContent rather than inventing a derivation basis
+AssertionError: expected [ { id: 'chunk-1', …(11) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "chunk-1",
++     "content": "The device sensitivity was 94% in the prespecified population.",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "document-1",
++     "expandedContent": "Unknown-basis derived clinical evidence.",
++     "finalScore": 1,
++     "id": "chunk-1",
++     "initialScore": 1,
++     "originalFileAvailable": true,
++     "programId": "program-1",
++     "title": "Diagnostics validation",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-generation.test.ts:156:28
+    154|     const h = harness([source]);
+    155|     const result = await h.instance.queryWithGeneration('What was the …
+    156|     expect(result.sources).toEqual([]);
+       |                            ^
+    157|     expect(h.route).not.toHaveBeenCalled();
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > dense retrieval pins the same-statement extraction fingerprint and UTF-16 coordinates
+AssertionError: expected undefined to deeply equal { …(3) }
+
+- Expected:
+{
+  "charEnd": 41,
+  "charStart": 7,
+  "extractedTextSha256": "40d24b68a58a35f6c23eebdd509c0ff6bdae03cccff2d85ad385673d1ae25a15",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:78:42
+     76|     expect(docs).toHaveLength(1);
+     77|     expect(docs[0].content).toBe(TEXT);
+     78|     expect(docs[0].vaultPassageSnapshot).toEqual(snapshot());
+       |                                          ^
+     79|     const [sql, params] = h.query.mock.calls.find(([s]) => /WITH scope…
+     80|     expect(sql).toMatch(/sha256\(convert_to\(d\.extracted_text,\s*'UTF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > lexical retrieval pins its own snapshot even without an embedding provider
+AssertionError: expected undefined to deeply equal { …(3) }
+
+- Expected:
+{
+  "charEnd": 41,
+  "charStart": 7,
+  "extractedTextSha256": "40d24b68a58a35f6c23eebdd509c0ff6bdae03cccff2d85ad385673d1ae25a15",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:95:42
+     93|     });
+     94|     expect(docs).toHaveLength(1);
+     95|     expect(docs[0].vaultPassageSnapshot).toEqual(snapshot());
+       |                                          ^
+     96|     expect(docs[0].lexicalOnly).toBe(true);
+     97|     const [sql, params] = h.query.mock.calls.find(([s]) => /websearch_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the existing Vault retrieval mappers pin the extraction selected with the hit > pins explicit NULL extraction and coordinates without inventing source identity
+AssertionError: expected undefined to deeply equal { extractedTextSha256: null, …(2) }
+
+- Expected:
+{
+  "charEnd": null,
+  "charStart": null,
+  "extractedTextSha256": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:110:38
+    108|       query: 'passage', limit: 5, organizationUuid: ORG, keyless: true,
+    109|     });
+    110|     expect(doc.vaultPassageSnapshot).toEqual({ extractedTextSha256: nu…
+       |                                      ^
+    111|     expect(doc.hitSpan).toBeUndefined();
+    112|     expect(doc.passageContext).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing chunk text rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses non-text chunk rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing extraction fingerprint rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses malformed extraction fingerprint rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing start rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string start rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses nonfinite end rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses missing membership fact rather than interpreting absent proof as legacy NULL
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses string membership fact rather than interpreting absent proof as legacy NULL
+AssertionError: promise resolved "[ { …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "atomType": "vault_chunk",
+    "chunkId": "40000000-0000-4000-8000-000000000001",
+    "content": "日本語 β 𝄞 own literal [.*] passage.",
+    "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "documentId": "30000000-0000-4000-8000-000000000001",
+    "finalScore": 0.9,
+    "id": "40000000-0000-4000-8000-000000000001",
+    "initialScore": 0.9,
+    "originalFileAvailable": true,
+    "programId": "50000000-0000-4000-8000-000000000001",
+    "title": "Study report",
+  },
+]
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:129:60
+    127|   ])('refuses %s rather than interpreting absent proof as legacy NULL'…
+    128|     const h = pipeline(currentRow(invalid));
+    129|     await expect(h.p.revalidateCandidates([hit()], options)).rejects.t…
+       |                                                            ^
+    130|   });
+    131|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > first-pins a plain current legacy candidate after comparing its text
+AssertionError: expected undefined to deeply equal { …(3) }
+
+- Expected:
+{
+  "charEnd": 41,
+  "charStart": 7,
+  "extractedTextSha256": "40d24b68a58a35f6c23eebdd509c0ff6bdae03cccff2d85ad385673d1ae25a15",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:136:38
+    134|     const [doc] = await h.p.revalidateCandidates([hit()], options);
+    135|     expect(doc.content).toBe(TEXT);
+    136|     expect(doc.vaultPassageSnapshot).toEqual(snapshot());
+       |                                      ^
+    137|     expect(doc.hitSpan).toBeUndefined();
+    138|     expect(doc.passageContext).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text
+AssertionError: expected [ { …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "40000000-0000-4000-8000-000000000001",
++     "content": "日本語 β 𝄞 own literal [.*] passage.",
++     "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
++     "documentId": "30000000-0000-4000-8000-000000000001",
++     "expandedContent": "Unknown old expanded text",
++     "finalScore": 0.9,
++     "id": "40000000-0000-4000-8000-000000000001",
++     "initialScore": 0.9,
++     "originalFileAvailable": true,
++     "programId": "50000000-0000-4000-8000-000000000001",
++     "title": "Study report",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:147:20
+    145|     const h = pipeline(currentRow());
+    146|     const result = await h.p.revalidateCandidates([hit(derived)], opti…
+    147|     expect(result).toEqual([]);
+       |                    ^
+    148|   });
+    149| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness-mapping.test.ts > the canonical Vault fence decodes its selected freshness metadata strictly > refuses unknown derived basis without refreshing its stale text
+AssertionError: expected [ { …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "40000000-0000-4000-8000-000000000001",
++     "compressedContent": "Unknown old compressed text",
++     "content": "日本語 β 𝄞 own literal [.*] passage.",
++     "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
++     "documentId": "30000000-0000-4000-8000-000000000001",
++     "finalScore": 0.9,
++     "id": "40000000-0000-4000-8000-000000000001",
++     "initialScore": 0.9,
++     "originalFileAvailable": true,
++     "programId": "50000000-0000-4000-8000-000000000001",
++     "title": "Study report",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness-mapping.test.ts:147:20
+    145|     const h = pipeline(currentRow());
+    146|     const result = await h.p.revalidateCandidates([hit(derived)], opti…
+    147|     expect(result).toEqual([]);
+       |                    ^
+    148|   });
+    149| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > pins the extraction hash and UTF-16 coordinates in actual lexical mapper output
+AssertionError: expected undefined to deeply equal { …(3) }
+
+- Expected:
+{
+  "charEnd": 95,
+  "charStart": 0,
+  "extractedTextSha256": "5145da4c0538d25b67f3108269368b6aec04736e8f0090bed8a60e7f0f6329a2",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:76:47
+     74|   it('pins the extraction hash and UTF-16 coordinates in actual lexica…
+     75|     const s = await fixture();
+     76|     expect(s.initial[0].vaultPassageSnapshot).toEqual({
+       |                                               ^
+     77|       extractedTextSha256: sha(STUDY), charStart: s.chunk.charStart, c…
+     78|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-original-file re-extraction after initial selection
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "3089016f-9849-48e6-a82c-ef64f5f3d1f6",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "1571fccc-d3fc-4e2e-9ce6-c7c59d54a73d",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "3089016f-9849-48e6-a82c-ef64f5f3d1f6",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "4a6c1957-9249-4f7f-80a4-49f9fbbc7c7e",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:84:66
+     82|     const s = await fixture();
+     83|     await extract(s, STUDY.replace('42 responders', '24 responders'));
+     84|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects a changed extraction even when the complete hit still occurs in it
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "b0f6cd79-1365-457f-8817-e97934806576",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "79d96fa4-dc01-4988-954b-68b1adb2773a",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "b0f6cd79-1365-457f-8817-e97934806576",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "ef7789db-2329-4755-8686-d2172fc44094",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:90:66
+     88|     const s = await fixture();
+     89|     await extract(s, `${STUDY}\nA corrected safety table follows.`);
+     90|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects an already-stale stored chunk absent from the current extraction
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "e3636886-4167-41aa-9654-156c105873e8",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "ca3d8deb-ce48-4a87-aea6-6b148fcfa38f",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "e3636886-4167-41aa-9654-156c105873e8",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "e051ba61-f7c0-4309-ae96-9faea7b4dc29",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:95:66
+     93|   it('rejects an already-stale stored chunk absent from the current ex…
+     94|     const s = await fixture({ extracted: 'The endpoint assessment has …
+     95|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-ID chunk text replacement without replacing candidate text silently
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "74436eca-19fb-4fc4-bffa-0070375fd287",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "3327df01-9529-47f4-9741-b477b5c84995",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "74436eca-19fb-4fc4-bffa-0070375fd287",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "7666dbdf-0cc8-4b73-a712-cecd79214d0b",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:103:66
+    101|     await s.f.pg.query('UPDATE vault.document_chunks SET chunk_text=$2…
+    102|       [s.chunkId, 'The endpoint changed independently.', s.f.vault]);
+    103|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+    104|     expect(s.initial[0].content).toBe(STUDY);
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects in-place coordinate replacement under unchanged text and extraction
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "3ae301eb-e8cb-4807-8854-36328b27bd6e",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "b9a19ac9-020c-4e0a-89fe-3fa4fde9b2bb",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "3ae301eb-e8cb-4807-8854-36328b27bd6e",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "e586c908-2297-469c-aff7-43bb542fc77c",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:111:66
+    109|     // tenant-isolation-safe: exact chunk and fixture-owned parent; so…
+    110|     await s.f.pg.query('UPDATE vault.document_chunks SET char_start=1 …
+    111|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+    112|   });
+    113| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction appearance after a NULL extraction was selected
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "bdcfcb2f-7d45-4d92-a088-725d5b65ab2d",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "b3a68746-347f-491d-844d-cdca139a5747",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "bdcfcb2f-7d45-4d92-a088-725d5b65ab2d",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "364a3e00-5161-41bf-81e5-7cdd55ee416f",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:157:66
+    155|     const s = await fixture({ extracted: null, offsets: false });
+    156|     await extract(s, STUDY);
+    157|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/41]⎯
+
+ FAIL  server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction disappearance after source text was selected
+AssertionError: expected [ { …(17) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atomType": "vault_chunk",
++     "chunkId": "b0c44145-f12e-4576-b308-52244d51cf1c",
++     "chunkIndex": 0,
++     "content": "The endpoint assessment recorded 42 responders with no device malfunction. 科学 🧬 [a-z]+ $1 (.*)",
++     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "documentId": "54e6d0bd-6b28-4815-853a-f038e018aab6",
++     "embedding": undefined,
++     "finalScore": 0.09090909361839294,
++     "id": "b0c44145-f12e-4576-b308-52244d51cf1c",
++     "initialScore": 0.09090909361839294,
++     "lexicalOnly": true,
++     "locator": undefined,
++     "originalFileAvailable": true,
++     "pageNumber": undefined,
++     "programId": "d5d97cfe-d9f8-4772-82ed-6226d80a4b60",
++     "sectionTitle": null,
++     "title": "Study PDF",
++   },
++ ]
+
+ ❯ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts:163:66
+    161|     const s = await fixture();
+    162|     await extract(s, null);
+    163|     expect(await s.p.revalidateCandidates(s.initial, s.options)).toEqu…
+       |                                                                  ^
+    164|   });
+    165| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/41]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  41 failed | 14 passed (55)
+   Start at  18:46:24
+   Duration  7.12s (transform 1.12s, setup 97ms, import 3.97s, tests 2.41s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-VAULT-PASSAGE-FRESHNESS/2026-10-23/root/red.results.json

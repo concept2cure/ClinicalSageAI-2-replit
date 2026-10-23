@@ -1,0 +1,10 @@
+{
+  "before": {
+    "HEAD": "557c4a31dd622114bc4e7cb3617ee483e8dba193",
+    "origin/concept2cure-v2": "526e86cba58dcca26e4b42b536e8315d45bdd9d1"
+  },
+  "incomingCommits": 0,
+  "head": "557c4a31dd622114bc4e7cb3617ee483e8dba193",
+  "selectedInputsUnchanged": 65,
+  "unmergedEntries": ""
+}
