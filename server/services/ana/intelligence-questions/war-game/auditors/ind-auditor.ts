@@ -74,15 +74,21 @@ const rules: AuditRule[] = [
     question:
       'The IND application must identify the drug substance per 21 CFR 312.23(a)(7). ' +
       'What is the active pharmaceutical ingredient, and where is its characterization data?',
+    /* 2026-10-22 (D2): reads the interview's `drug_substance` textarea
+       (drug_substance_characterization). A free-text answer has no explicit
+       negative, and it is optional, so its blank alone is not a finding. The
+       rule fires when the substance is identified NOWHERE: identity, the
+       required generic name (drug_info) and the required compound code are
+       all blank. */
     check(answers) {
-      if (isBlank(answers.drug_substance)) {
+      if (isBlank(answers.drug_substance) && isBlank(answers.drug_name_generic) && isBlank(answers.drug_code_number)) {
         return finding(
           this.id, this.dimension, 'critical', this.title, this.question,
-          'No drug substance has been specified in the submission.',
+          'No drug substance has been specified in the submission: no substance identity, generic name or compound code is given.',
           '21 CFR 312.23(a)(7) requires full identification of the drug substance including its physical, chemical, and biological characteristics.',
           '21 CFR 312.23(a)(7)(i); ICH Q6A/Q6B',
           'Provide the drug substance identity, including structural formula (or biological characterization for biologics), molecular weight, physicochemical properties, and specification limits.',
-          ['drug_substance', 'drug_name'],
+          ['drug_substance', 'drug_name_generic', 'drug_code_number'],
         );
       }
       return null;

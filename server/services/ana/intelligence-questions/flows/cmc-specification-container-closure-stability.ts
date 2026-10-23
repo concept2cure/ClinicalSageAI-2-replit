@@ -208,6 +208,22 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
           helpText:
             'Stability-indicating analytical methods must discriminate between the drug substance/product and its degradation products. Forced degradation studies (stress testing) are used to demonstrate that methods are stability-indicating.',
         },
+        /* 2026-10-22 (D2): asked so the war-game rule cmc_q1a_stability_gaps
+           is assessed. */
+        {
+          id: 'stability_protocol',
+          label: 'Does the stability protocol follow ICH Q1A(R2)?',
+          type: 'select',
+          required: false,
+          options: [
+            { value: 'q1a_compliant', label: 'Yes: storage conditions, test intervals and stability-indicating tests per ICH Q1A(R2)' },
+            { value: 'phase_appropriate', label: 'Phase-appropriate protocol for early clinical supplies (justified)' },
+            { value: 'not_q1a_compliant', label: 'No: the protocol departs from ICH Q1A(R2) without justification' },
+            { value: 'no_protocol', label: 'No written stability protocol yet' },
+          ],
+          helpText:
+            'ICH Q1A(R2) sets the long-term, intermediate and accelerated storage conditions, test frequency and attributes for a stability study; ICH Q5C applies to biotechnological products. 21 CFR 211.166 requires a written stability testing program.',
+        },
       ],
       issueChecks: [
         {

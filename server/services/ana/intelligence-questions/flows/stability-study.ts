@@ -639,6 +639,30 @@ export function createStabilityStudyFlow(): FlowDefinition {
           '- Accelerated: 6 months\n\n' +
           'Standard testing intervals per ICH Q1A(R2) Section 2.2.6 (Testing Frequency; Section 2.1.6 for drug substance): every 3 months over the first year, every 6 months over the second year, and annually thereafter (e.g., 0, 3, 6, 9, 12, 18, 24, 36 months).',
         fields: [
+          /* 2026-10-22 (D2): asked so the war-game rules
+             stab_no_stability_protocol and stab_q1a_testing_not_followed are
+             assessed. */
+          {
+            id: 'stability_protocol',
+            label: 'Is there a written stability protocol for this study?',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              '21 CFR 211.166 requires a written stability testing program covering sample size, test intervals, storage conditions and test methods. The protocol is the document the stability data are read against.',
+          },
+          {
+            id: 'ich_q1a_compliance',
+            label: 'Does the study design follow ICH Q1A(R2)?',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'followed', label: 'Yes, as written' },
+              { value: 'justified_deviations', label: 'Yes, with deviations that are justified in the protocol' },
+              { value: 'not_followed', label: 'No' },
+            ],
+            helpText:
+              'ICH Q1A(R2) sets the batches, storage conditions, test frequency and attributes for stability studies of new drug substances and products; ICH Q5C adds the expectations for biotechnological products.',
+          },
           {
             id: 'long_term_duration_months',
             label: 'Planned Long-Term Study Duration (months)',

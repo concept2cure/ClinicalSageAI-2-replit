@@ -276,6 +276,21 @@ export function createLabelingFlow(): FlowDefinition {
         provideExpertFeedback: true,
         fields: [
           {
+            /* 2026-10-22 (D2): asked so lbl_no_highlights can be assessed. */
+            id: 'highlights_section',
+            label: 'Status of the Highlights of Prescribing Information',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'drafted', label: 'Drafted' },
+              { value: 'in_progress', label: 'In progress' },
+              { value: 'not_started', label: 'Not started' },
+              { value: 'not_applicable', label: 'Not applicable — older-format labeling not subject to the PLR content and format requirements' },
+            ],
+            helpText:
+              'Prescription drug labeling in PLR format must open with Highlights of Prescribing Information (21 CFR 201.57(a)). Labeling still in the older format under 21 CFR 201.80 has no Highlights.',
+          },
+          {
             id: 'initial_us_approval_year',
             label: 'Initial U.S. Approval Year',
             type: 'number',

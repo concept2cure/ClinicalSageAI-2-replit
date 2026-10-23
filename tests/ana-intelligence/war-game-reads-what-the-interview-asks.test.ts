@@ -87,9 +87,10 @@ describe('a war game finds only what its interview could have told it', () => {
  */
 /* 2026-10-22, after converging the auditors onto their interviews' real field
    ids: 299 of 435 (from 94). The rest read questions no interview asks. */
+/* 2026-10-23: the interviews now ask what 23 critical checks need: 325 of 435. */
 const MIN_ASSESSED: Record<WarGameCategory, number> = {
-  protocol: 22, ind: 22, csr: 21, '510k': 24, cer: 22, sop: 23, nda: 15, bla: 33,
-  pma: 22, cmc: 15, risk_management: 17, safety_narrative: 14, labeling: 18, briefing_book: 11, stability: 21,
+  protocol: 23, ind: 23, csr: 24, '510k': 24, cer: 22, sop: 26, nda: 18, bla: 33,
+  pma: 22, cmc: 19, risk_management: 19, safety_narrative: 16, labeling: 19, briefing_book: 14, stability: 23,
 };
 
 describe('assessable checks only rise', () => {
@@ -143,5 +144,25 @@ describe('a converged rule fires on the case it names, and only then', () => {
   it('a "No" to a required yes/no draws its finding (it read as answered before)', () => {
     expect(ids('nda', 'nda_submission', { cover_letter_prepared: false })).toContain('nda_missing_cover_letter');
     expect(ids('nda', 'nda_submission', { cover_letter_prepared: 'yes' })).not.toContain('nda_missing_cover_letter');
+  });
+});
+
+/* 2026-10-23 (D2): critical checks that no interview could feed. The
+   interviews now ask the question (optional), and the check fires on the
+   explicit negative only. Each case fails on the tree before the change,
+   where the rule was not assessed and so produced no finding. */
+describe('a critical check fires on its own interview\'s explicit negative', () => {
+  const ids = (category: WarGameCategory, flowCase: FlowCategory, answers: Record<string, unknown>) =>
+    runWarGame(category, getFlowDefinition(flowCase, {} as never)!.id, { n: answers }).findings.map((f) => f.id);
+  it.each([
+    ['cmc', 'cmc_specification', { nitrosamine_risk_evaluation: 'not_started' }, 'cmc_nitrosamine_risk_not_evaluated'],
+    ['cmc', 'cmc_specification', { manufacturing_facility_gmp: false }, 'cmc_no_gmp_compliance'],
+    ['nda', 'nda_submission', { integrated_summary_effectiveness: 'no' }, 'nda_no_ise'],
+    ['protocol', 'protocol_development', { safety_monitoring_plan: false }, 'protocol_no_safety_monitoring'],
+    ['safety_narrative', 'safety_narrative', { investigator_signed: false }, 'sn_investigator_signature_missing'],
+    ['stability', 'stability_study', { stability_protocol: false }, 'stab_no_stability_protocol'],
+  ] as const)('%s: %s', (category, flowCase, answers, ruleId) => {
+    expect(ids(category as WarGameCategory, flowCase as FlowCategory, answers)).toContain(ruleId);
+    expect(ids(category as WarGameCategory, flowCase as FlowCategory, {})).not.toContain(ruleId);
   });
 });

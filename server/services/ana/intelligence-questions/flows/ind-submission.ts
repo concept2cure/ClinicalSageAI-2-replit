@@ -1287,6 +1287,17 @@ export function createIndSubmissionFlow(): FlowDefinition {
           'Per 21 CFR 312.23(a)(7)(iv)(a) and ICH Q6A (Specifications: Test Procedures and Acceptance Criteria for New Drug Substances and New Drug Products: Chemical Substances), the IND must include a description of the drug substance, its physical and chemical characteristics, stability, and analytical controls. For chiral compounds, identify the stereochemistry and enantiomeric purity. Describe any known polymorphs (ICH Q6A Decision Tree #4) and their impact on bioavailability. Include stability-indicating analytical methods.',
         fields: [
           {
+            /* 2026-10-22 (D2): asked so ind_drug_substance can be assessed. */
+            id: 'drug_substance',
+            label: 'Drug Substance Identity and Source',
+            type: 'textarea',
+            required: false,
+            placeholder:
+              'e.g., ABC-1234 free base (proposed INN: exampletinib). Synthetic small molecule, manufactured by Example API Co., Site X, by a 6-step chemical synthesis. Or: recombinant humanised IgG1 expressed in CHO cells.',
+            helpText:
+              'The CMC section of an IND describes the drug substance, including its physical, chemical or biological characteristics, its manufacturer and its general method of preparation (21 CFR 312.23(a)(7)). For a biologic, name the expression system or source material.',
+          },
+          {
             id: 'molecular_formula',
             label: 'Molecular Formula and Weight',
             type: 'text',

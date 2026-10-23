@@ -535,7 +535,7 @@ const rules: AuditRule[] = [
           'ISO 14971:2019 defines "state of the art" and references it throughout. MDR 2017/745 Annex I Section 2 requires risk reduction reflecting the state of the art.',
           'ISO 14971:2019 Clause 3.28; MDR 2017/745 Annex I Section 2; ISO/TR 24971 Clause 4.2',
           'Conduct and document a state-of-the-art review covering relevant standards, literature, competitor device labeling, regulatory guidance, and clinical best practices for the device type.',
-          ['state_of_art_review', 'risk_management_plan'],
+          ['state_of_art_review', 'risk_management_plan_exists'],
         );
       }
       return null;
@@ -648,18 +648,22 @@ const rules: AuditRule[] = [
     title: 'Risk Management Plan Missing',
     question: 'The risk management file does not contain a risk management plan. Without a plan defining scope, responsibilities, and criteria, how was the risk management process initiated and governed?',
     check(answers) {
-      if (isBlank(answers.risk_management_plan)) {
+      /* 2026-10-22 (D2): the interview asked only whether the plan is
+         complete, so this rule read an unasked key and was not assessed. It
+         now reads the optional yes_no `risk_management_plan_exists`
+         (regulatory_context node); only an explicit No is the finding. */
+      if (isNo(answers.risk_management_plan_exists)) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No risk management plan is present in the risk management file.',
+          'The manufacturer states that no documented risk management plan exists.',
           'ISO 14971:2019 Clause 4.4 requires a documented risk management plan that includes scope, assignment of responsibilities, review requirements, risk acceptability criteria, verification and validation activities, and collection of production and post-production information.',
           'ISO 14971:2019 Clause 4.4; MDR 2017/745 Annex I Section 3 and Annex II Section 5; ISO/TR 24971 Clause 4.4',
           'Create a risk management plan covering: scope of the risk management activities, roles and responsibilities, review milestones, acceptability criteria, lifecycle phases, and reference to applicable standards.',
-          ['risk_management_plan', 'risk_management_standard'],
+          ['risk_management_plan_exists', 'risk_management_plan_complete'],
         );
       }
       return null;
@@ -721,10 +725,12 @@ const rules: AuditRule[] = [
     title: 'Risk Management File Incomplete',
     question: 'The risk management file is missing one or more mandatory components. Per ISO 14971:2019 Clause 4.5, the file shall contain or reference the risk management plan, risk analysis records, risk evaluation records, risk control records, residual risk evaluation, and the risk management report. Which components are absent?',
     check(answers) {
-      // Five components are asked; whether a risk management plan exists is
-      // not (only whether it is complete), so this rule stays not assessed.
+      /* 2026-10-22 (D2): whether a risk management plan exists was not asked
+         (only whether it is complete), so this rule was not assessed. It now
+         reads the optional yes_no `risk_management_plan_exists`; only an
+         explicit No counts the plan as missing. */
       const requiredComponents = [
-        isBlank(answers.risk_management_plan),
+        isNo(answers.risk_management_plan_exists),
         isBlank(answers.hazard_identification_methods),
         isBlank(answers.risk_matrix_type),
         isBlank(answers.control_option_analysis),
@@ -743,7 +749,7 @@ const rules: AuditRule[] = [
           'ISO 14971:2019 Clause 4.5 specifies the required contents of the risk management file. All elements must be present or referenced for the file to be considered complete.',
           'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 5; FDA 21 CFR 820.10 (QMSR, incorporating ISO 13485:2016 Clause 7.1)',
           'Conduct a gap analysis against ISO 14971:2019 Clause 4.5 requirements. Systematically create or reference all missing components before the file can be considered audit-ready.',
-          ['risk_management_plan', 'hazard_identification_methods', 'risk_matrix_type', 'control_option_analysis', 'residual_risk_summary', 'risk_management_report_generated'],
+          ['risk_management_plan_exists', 'hazard_identification_methods', 'risk_matrix_type', 'control_option_analysis', 'residual_risk_summary', 'risk_management_report_generated'],
         );
       }
       return null;

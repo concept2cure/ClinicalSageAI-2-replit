@@ -610,7 +610,11 @@ const rules: AuditRule[] = [
     title: 'Investigator Signature Missing',
     question: 'The narrative and SAE report lack the principal investigator\'s signature or attestation. Under GCP, the investigator is responsible for the accuracy of all data submitted from the site. How does the sponsor verify investigator review?',
     check(answers) {
-      if (isBlank(answers.investigator_signed) || answers.investigator_signed === false || answers.investigator_signed === 'no') {
+      /* 2026-10-22 (D2): the interview never asked this, so the rule was not
+         assessed. It now reads the optional yes_no `investigator_signed`
+         (narrative_finalization node); only an explicit No is the finding,
+         a blank answer is not. */
+      if (answers.investigator_signed === false) {
         return finding(
           this.id,
           this.dimension,
@@ -621,7 +625,7 @@ const rules: AuditRule[] = [
           'ICH E6(R3) Annex 1 §2.12 (Records) requires the investigator to ensure the accuracy, completeness, and timeliness of data reported to the sponsor.',
           'ICH E6(R3) Annex 1 §2.12; 21 CFR 312.62(b); 21 CFR 312.64',
           'Obtain the principal investigator\'s signature or electronic attestation on the SAE report. Implement a workflow that requires investigator sign-off before narrative finalization.',
-          ['investigator_signed', 'investigator_name'],
+          ['investigator_signed'],
         );
       }
       return null;
@@ -633,18 +637,24 @@ const rules: AuditRule[] = [
     title: 'Regulatory Authority Notification Gaps',
     question: 'The documentation does not confirm that all applicable regulatory authorities and IRBs/ECs have been notified of this serious adverse event. Can the sponsor provide evidence of complete regulatory notification?',
     check(answers) {
-      if (isBlank(answers.regulatory_notifications_complete) || answers.regulatory_notifications_complete === false || answers.regulatory_notifications_complete === 'no') {
+      /* 2026-10-22 (D2): the interview never asked this, so the rule was not
+         assessed. It now reads the optional select
+         `regulatory_notifications_complete` (narrative_finalization node):
+         complete | in_progress | not_started | not_applicable. Only
+         not_started is the finding; in_progress is within its timeline, and
+         not_applicable and a blank answer are not gaps. */
+      if (answers.regulatory_notifications_complete === 'not_started') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'Documentation does not confirm notification of all applicable regulatory authorities and IRBs/Ethics Committees.',
+          'Notification of the applicable regulatory authorities and IRBs/Ethics Committees is stated as not started.',
           'ICH E2A Section III sets the standards for expedited reporting of serious, unexpected adverse drug reactions to regulatory authorities; for a US IND, 21 CFR 312.32(c)(1) requires IND safety reports to FDA and all participating investigators. ICH E6(R3) Annex 1 §2.7 requires investigator notification to the IRB/EC.',
           'ICH E2A Section III; ICH E6(R3) Annex 1 §2.7; 21 CFR 312.32(c)(1); 21 CFR 312.66',
           'Verify and document that all applicable regulatory authorities (FDA, EMA, Health Canada, etc.) and all IRBs/ECs at participating sites have been notified per local requirements. Maintain a notification log.',
-          ['regulatory_notifications_complete', 'authorities_notified'],
+          ['regulatory_notifications_complete', 'susar_regulatory_authority', 'irb_ec_notification_date'],
         );
       }
       return null;

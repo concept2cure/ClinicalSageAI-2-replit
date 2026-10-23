@@ -51,24 +51,30 @@ function finding(
 
 const rules: AuditRule[] = [
   /* ========== COMPLETENESS (4 rules) ========== */
+  /* 2026-10-22 (D2): read benefit_risk_framework_narrative, which the
+     interview now asks (benefit_risk_assessment node). The summary table is
+     already asked as benefit_risk_table_prepared and audited by
+     no_structured_benefit_risk; this rule audits the narrative that weighs
+     the four dimensions, so one answer is not counted twice. Fires on an
+     explicit "no" only; the question is optional. */
   {
     id: rid('no_benefit_risk_framework'),
     dimension: 'completeness',
     title: 'Benefit-Risk Framework Missing',
     question: 'The briefing document does not include a structured benefit-risk framework. How does the sponsor expect the Advisory Committee to weigh the totality of evidence without a systematic benefit-risk assessment?',
     check(answers) {
-      if (isBlank(answers.benefit_risk_framework)) {
+      if (answers.benefit_risk_framework_narrative === false) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No structured benefit-risk framework is presented in the briefing document.',
+          'The benefit-risk narrative does not weigh each of the four Benefit-Risk Framework dimensions with its evidence and uncertainties.',
           'FDA\'s Benefit-Risk Framework, described in FDA\'s final guidance on benefit-risk assessment for new drug and biological products (October 2023), is the structured approach FDA reviewers use. It assesses four dimensions: analysis of condition, current treatment options, benefit, and risk and risk management. Like all FDA guidance it is non-binding; it recommends, but does not require, that sponsors present benefit-risk information in a way that supports this assessment.',
           'FDA Benefit-Risk Framework (2023); 21 CFR Part 14; PDUFA VII Commitment Letter Section III',
           'Include a structured benefit-risk table using FDA\'s Benefit-Risk Framework: the four dimensions (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk and Risk Management, followed by an overall Benefit-Risk Summary Assessment (conclusions). Populate each factor with evidence from the development program.',
-          ['benefit_risk_framework', 'efficacy_summary', 'safety_summary'],
+          ['benefit_risk_framework_narrative', 'benefit_summary', 'risk_summary', 'uncertainty_factors'],
         );
       }
       return null;
@@ -245,13 +251,16 @@ const rules: AuditRule[] = [
   },
 
   /* ========== REGULATORY ALIGNMENT (4 rules) ========== */
+  /* 2026-10-22 (D2): fda_questions_addressed is now asked (voting_questions
+     node, yes_no). Fires on an explicit "no"; a blank optional answer is not
+     a finding. */
   {
     id: rid('fda_questions_not_addressed'),
     dimension: 'regulatory_alignment',
     title: 'FDA Questions Not Addressed',
     question: 'The Agency has posed specific questions for Committee discussion, yet several of these questions are not directly addressed in the briefing document. How does the sponsor expect the Committee to deliberate on questions for which no supporting data have been presented?',
     check(answers) {
-      if (isBlank(answers.fda_questions_addressed) || answers.fda_questions_addressed === false || answers.fda_questions_addressed === 'no' || answers.fda_questions_addressed === 'No') {
+      if (answers.fda_questions_addressed === false) {
         return finding(
           this.id,
           this.dimension,
@@ -262,7 +271,7 @@ const rules: AuditRule[] = [
           'The sponsor\'s briefing document should directly address the specific questions identified by FDA for Advisory Committee discussion; this is expected good practice so the Committee can deliberate on the data, although 21 CFR 14.25 itself only describes the portions of an advisory committee meeting and does not impose this requirement.',
           'FDA Advisory Committee Guidance (2008); PDUFA VII Commitment Letter',
           'Structure the briefing document to explicitly address each FDA-specified discussion question with dedicated sections. Map each question to the supporting data and analyses.',
-          ['fda_questions_addressed', 'fda_discussion_questions', 'briefing_document_structure'],
+          ['fda_questions_addressed', 'discussion_questions_anticipated', 'proposed_voting_questions'],
         );
       }
       return null;
@@ -545,19 +554,21 @@ const rules: AuditRule[] = [
           'FDA Advisory Committee Guidance recommends that briefing documents be concise and focused to allow Committee members adequate time for review, typically distributed 2-3 weeks before the meeting.',
           'FDA Advisory Committee Guidance (2008); 21 CFR Part 14',
           'Condense the briefing document to under 300 pages by moving detailed data tables, case narratives, and supporting analyses to appendices. Focus the main body on key findings and their interpretation.',
-          ['page_count', 'executive_summary', 'appendices'],
+          ['page_count', 'executive_summary_included', 'appendices'],
         );
       }
       return null;
     },
   },
+  /* 2026-10-22 (D2): read executive_summary_included, which the interview now
+     asks (final_review node, yes_no). Fires on an explicit "no" only. */
   {
     id: rid('no_executive_summary'),
     dimension: 'documentation',
     title: 'No Executive Summary',
     question: 'The briefing document lacks an executive summary. Advisory Committee members review multiple lengthy documents and rely on executive summaries for efficient preparation. Why has the sponsor omitted this essential section?',
     check(answers) {
-      if (isBlank(answers.executive_summary)) {
+      if (answers.executive_summary_included === false) {
         return finding(
           this.id,
           this.dimension,
@@ -568,7 +579,7 @@ const rules: AuditRule[] = [
           'An executive summary is expected in Advisory Committee briefing documents to provide Committee members with a concise overview of the key data and regulatory issues.',
           'FDA Advisory Committee Guidance (2008); 21 CFR Part 14; Industry Best Practice',
           'Include a 5-10 page executive summary covering: (1) product and indication overview, (2) development program summary, (3) key efficacy results, (4) safety profile summary, (5) benefit-risk assessment, and (6) questions for Committee discussion.',
-          ['executive_summary', 'briefing_document_structure'],
+          ['executive_summary_included'],
         );
       }
       return null;

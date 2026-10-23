@@ -133,3 +133,35 @@ The floor in the test is raised to these counts.
   - For a REMS, an explicit "No Medication Guide" counts as well.
 - **Correction:** the convergence agent's note, that the flow's `visibleWhen: 'yes'` gates never open in the UI, was wrong. `shared/ana/question-predicate.ts` coerces yes/no on both sides.
 - **Red → green:** the new labeling behaviour case fails on trunk at cf07e244c+ and passes after. The labeling floor rises to 18 assessable checks on empty answers; the two Medication Guide rules stop at their gate there.
+
+## Fourth change (2026-10-23): the interviews ask what 23 critical checks need
+
+**Decision.** This was taken under the founder's delegation ("you decide based on what's best for our clients"; "get cooking", 2026-10-23). 23 CRITICAL war-game checks could not run because no interview asked their question. Each is an item an FDA or EU reviewer expects, and each sits inside the launch catalog. The questions were added, not left as gaps.
+
+**How the questions were added.**
+- Every new field is `required: false`, so no interview is blocked.
+- Each field sits in the node where an author expects it.
+- Its help text gives the basis at Part, guideline or topic level. All of it is recall; no sub-paragraphs or years are stated.
+- Each check fires only on an explicit negative (`false` / `not_started` / `not_q1a_compliant` / `no_protocol`), never on a blank. A free-text conclusion left blank draws a warning, not a critical.
+
+**The 23 checks:**
+- **CMC:** nitrosamine risk evaluation, GMP compliance of the facility, microbiological controls (critical for sterile or parenteral products, a warning otherwise), and the Q1A stability protocol.
+- **Stability:** a written stability protocol (21 CFR 211.166), and conformance with Q1A(R2).
+- **Briefing book:** FDA's discussion questions addressed, the benefit-risk framework narrative (kept separate from the existing table question), and an executive summary.
+- **CSR:** the GCP compliance statement, efficacy conclusions and safety conclusions (ICH E3).
+- **NDA:** DDI assessment status (ICH M12), CTD modules present (a supplement is exempt), and the ISE.
+- **Labeling:** Highlights.
+- **IND:** drug substance identity.
+- **Protocol:** safety monitoring plan.
+- **Risk management:** a risk management plan exists (ISO 14971 Clause 4.4), checked on its own and as one component of the file.
+- **SOP:** detailed procedure steps.
+- **Safety narrative:** investigator signature, and regulatory and IRB/EC notification.
+
+**Coverage.** Assessable checks went from 300 to 325 of 435, and the floor was raised to match.
+- **Red:** six behaviour cases fail on the tree before the change: nitrosamine, GMP, ISE, safety monitoring, investigator signature and stability protocol.
+- **Green:** they pass after. The suites run 30 files and 558 tests.
+
+**Left as is, as follow-ups:**
+- The new CTD-modules question overlaps the existing `module_3_included` yes/no.
+- `cmc_no_stability_protocol_doc` could read the new `stability_protocol` select.
+- `sop_026` can never fire, because `sop_007` covers every case below 50 characters.

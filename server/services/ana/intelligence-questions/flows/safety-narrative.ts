@@ -1097,6 +1097,30 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             required: true,
           },
           {
+            // 2026-10-22 (D2): read by sn_investigator_signature_missing.
+            id: 'investigator_signed',
+            label: 'Investigator Has Signed or Attested to the SAE Report',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'Under ICH E6(R3) the investigator is responsible for the accuracy and completeness of the data the site reports to the sponsor, and 21 CFR Part 312 requires the investigator to report serious adverse events to the sponsor. A signature or electronic attestation shows that review.',
+          },
+          {
+            // 2026-10-22 (D2): read by sn_regulatory_notification_gaps.
+            id: 'regulatory_notifications_complete',
+            label: 'Regulatory Authority and IRB/EC Notifications',
+            type: 'select',
+            required: false,
+            helpText:
+              'A serious, unexpected suspected adverse reaction is reported on an expedited basis to the regulatory authorities (ICH E2A; for a US IND, 21 CFR 312.32 IND safety reports to FDA and all participating investigators), and the IRBs/ECs are informed as their requirements state. Choose Not applicable when the case does not require expedited notification.',
+            options: [
+              { value: 'complete', label: 'Complete: all applicable authorities and IRBs/ECs notified' },
+              { value: 'in_progress', label: 'In progress: within the reporting timeline' },
+              { value: 'not_started', label: 'Not started' },
+              { value: 'not_applicable', label: 'Not applicable: no expedited notification required' },
+            ],
+          },
+          {
             id: 'regulatory_submission_deadline',
             label: 'Regulatory Submission Deadline',
             type: 'date',

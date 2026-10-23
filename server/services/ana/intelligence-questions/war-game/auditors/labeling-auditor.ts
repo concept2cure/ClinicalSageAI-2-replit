@@ -97,15 +97,19 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Highlights Section Missing',
     question: 'The labeling does not include a Highlights of Prescribing Information section. How does the sponsor expect prescribers to quickly identify the most critical safety and efficacy information for this product?',
+    /* 2026-10-22 (D2): reads the interview's `highlights_section` select
+       (plr_highlights), asked on the prescribing path only. Fires on an
+       explicit 'not_started'; 'not_applicable' (older-format labeling) and a
+       blank answer are not findings. */
     check(answers) {
-      if (isBlank(answers.highlights_section)) {
+      if (onPrescribingPath(answers) && answers.highlights_section === 'not_started') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No Highlights of Prescribing Information section was provided in the labeling submission.',
+          'The Highlights of Prescribing Information section is stated as not started.',
           'The Highlights section is required for all new and recently approved prescription drug products per 21 CFR 201.57(a) under the Physician Labeling Rule (PLR).',
           '21 CFR 201.57(a); FDA PLR Guidance (2013); 71 FR 3922',
           'Draft a Highlights section that includes the product name, initial U.S. approval year, boxed warning reference (if applicable), indications, dosage, contraindications, warnings/precautions summary, and adverse reactions summary.',

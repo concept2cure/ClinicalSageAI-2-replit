@@ -761,6 +761,13 @@ export function createBriefingBookFlow(): FlowDefinition {
             helpText: 'FDA\'s Benefit-Risk Framework (PDUFA VI) recommends a structured summary table with four dimensions: Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management.',
           },
           {
+            id: 'benefit_risk_framework_narrative',
+            label: 'Does the Benefit-Risk Narrative Weigh Each of the Four Framework Dimensions, With Its Evidence and Uncertainties?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Separate from the summary table: FDA\'s guidance on benefit-risk assessment for new drug and biological products describes an assessment that discusses the evidence and uncertainties for each dimension (condition, current treatment options, benefit, risk and risk management) and explains how they were weighed to reach the conclusion. The guidance is non-binding, but it is the framework FDA reviewers apply.',
+          },
+          {
             id: 'uncertainty_factors',
             label: 'Key Uncertainties and Limitations',
             type: 'textarea',
@@ -929,6 +936,13 @@ export function createBriefingBookFlow(): FlowDefinition {
             placeholder: 'e.g., 1. Please discuss the adequacy of the safety database for the proposed indication.\n2. Please discuss the appropriateness of PFS as the primary endpoint in this setting.\n3. Please discuss any additional post-marketing studies that should be required.',
           },
           {
+            id: 'fda_questions_addressed',
+            label: 'Does the Briefing Document Directly Address Each Question FDA Has Identified for Committee Discussion?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Advisory committee meetings are held under 21 CFR Part 14, and FDA frames the questions the Committee discusses and votes on. The sponsor\'s briefing document is what the Committee deliberates from, so map every FDA question to the section and analyses that answer it. This is expected good practice; Part 14 does not itself prescribe the document\'s content.',
+          },
+          {
             id: 'voting_question_alignment',
             label: 'Are Voting Questions Aligned with Proposed Label Claims?',
             type: 'yes_no',
@@ -1044,6 +1058,13 @@ export function createBriefingBookFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText: 'Verify that all efficacy numbers, safety data, and patient counts are consistent throughout the document. Inconsistencies undermine credibility.',
+          },
+          {
+            id: 'executive_summary_included',
+            label: 'Does the Briefing Document Open With an Executive Summary?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Advisory committee meetings are held under 21 CFR Part 14, and members review several long briefing documents before the meeting. An executive summary of the product, the key efficacy and safety results, the benefit-risk assessment and the questions for the Committee is standard practice; FDA guidance does not prescribe the document\'s structure.',
           },
           {
             id: 'fda_pre_meeting_feedback_addressed',

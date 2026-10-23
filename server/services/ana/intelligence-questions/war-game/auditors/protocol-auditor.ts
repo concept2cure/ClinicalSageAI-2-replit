@@ -298,18 +298,22 @@ const rules: AuditRule[] = [
     title: 'Safety Monitoring Plan Absent',
     question: 'The protocol lacks a safety monitoring plan. How does the sponsor intend to meet its obligations under 21 CFR 312.32 for expedited reporting and ongoing safety evaluation?',
     check(answers) {
-      if (isBlank(answers.safety_monitoring)) {
+      /* 2026-10-22 (D2): the interview asked only the grading scale and SAE
+         timeline, so this rule read an unasked key and was not assessed. It
+         now reads the yes_no `safety_monitoring_plan` (safety_plan node); only
+         an explicit No is the finding, a blank answer is not. */
+      if (answers.safety_monitoring_plan === false) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No safety monitoring procedures are described.',
+          'The sponsor states that no safety monitoring plan is defined.',
           'A safety monitoring plan is required per 21 CFR 312.32 and ICH E6(R3) Annex 1 §2.7 and §3.13 to ensure timely detection and reporting of adverse events.',
           '21 CFR 312.32; ICH E6(R3) Annex 1 §2.7; ICH E6(R3) Annex 1 §3.13; ICH E2A',
           'Develop a comprehensive safety monitoring plan including AE/SAE definitions, grading criteria (e.g., CTCAE v5.0), reporting timelines, and procedures for safety signal detection.',
-          ['safety_monitoring'],
+          ['safety_monitoring_plan'],
         );
       }
       return null;

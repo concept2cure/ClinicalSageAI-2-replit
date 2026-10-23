@@ -818,6 +818,22 @@ export function createNdaSubmissionFlow(): FlowDefinition {
           'Per ICH M12 "Drug Interaction Studies" (FDA final guidance, August 2024), which superseded FDA\'s two January 2020 in vitro and clinical drug interaction guidances, the NDA must include a comprehensive DDI assessment. In vitro: CYP reaction phenotyping (substrate identification), CYP inhibition (reversible and TDI), CYP induction (PXR/CAR activation and mRNA), and transporter interactions (P-gp, BCRP, OATP1B1/1B3, OCT2, OAT1/3, MATE1/2-K). Clinical DDI studies should follow the decision criteria in ICH M12. Results directly impact labeling (contraindications, dose adjustments, interaction tables).',
         fields: [
           {
+            /* 2026-10-22 (D2): asked so nda_ddi_not_addressed can be assessed.
+               The CYP/transporter multi-selects below have no "none" position,
+               so a blank there cannot say whether the assessment was done. */
+            id: 'ddi_assessment_status',
+            label: 'Status of the Drug Interaction Assessment (ICH M12)',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'completed', label: 'Completed — in vitro and, where triggered, clinical DDI evaluation done' },
+              { value: 'not_applicable_justified', label: 'Not applicable — justification for omitting DDI studies documented' },
+              { value: 'not_started', label: 'Not started' },
+            ],
+            helpText:
+              'ICH M12 (Drug Interaction Studies) sets out the in vitro enzyme and transporter evaluation and the criteria for clinical DDI studies. An NDA is expected to present this evaluation in the clinical pharmacology summary, or justify why it is not needed.',
+          },
+          {
             id: 'cyp_substrate',
             label: 'CYP Enzyme(s) — Drug is a Substrate of',
             type: 'multi_select',
@@ -1021,6 +1037,15 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             validation: { min: 1 },
             helpText:
               'FDA generally expects two adequate and well-controlled studies, though a single pivotal study may suffice with strong evidence (large effect size, high statistical significance, consistency across subgroups) per FDA Guidance "Providing Clinical Evidence of Effectiveness for Human Drug and Biological Products" (1998).',
+          },
+          {
+            /* 2026-10-22 (D2): asked so nda_no_ise can be assessed; mirrors integrated_safety_summary. */
+            id: 'integrated_summary_effectiveness',
+            label: 'Integrated Summary of Effectiveness (ISE) Prepared',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'The NDA clinical section must include an integrated summary of the data demonstrating substantial evidence of effectiveness (21 CFR 314.50(d)(5)). Per ICH M4E it is summarised in Module 2.7.3 (Summary of Clinical Efficacy), with the full ISE in Module 5.3.5.3.',
           },
           {
             id: 'indication_statement',
@@ -1568,6 +1593,22 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'ectd_v3', label: 'eCTD v3.2.2 (FDA-supported standard)' },
               { value: 'paper', label: 'Paper Submission', flagsIssue: true },
             ],
+          },
+          {
+            /* 2026-10-22 (D2): asked so nda_missing_ctd_modules can be assessed. */
+            id: 'ctd_modules',
+            label: 'CTD Modules Populated in This Submission',
+            type: 'multi_select',
+            required: false,
+            options: [
+              { value: 'm1', label: 'Module 1 — Regional Administrative Information' },
+              { value: 'm2', label: 'Module 2 — CTD Summaries' },
+              { value: 'm3', label: 'Module 3 — Quality' },
+              { value: 'm4', label: 'Module 4 — Nonclinical Study Reports' },
+              { value: 'm5', label: 'Module 5 — Clinical Study Reports' },
+            ],
+            helpText:
+              'ICH M4 organises the CTD into five modules, and an original NDA in eCTD format is expected to populate all of them; Module 1 carries the FDA regional content. Content previously submitted (for example to the IND or a DMF) may be cross-referenced rather than resubmitted.',
           },
           {
             id: 'publishing_tool',

@@ -299,6 +299,16 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             placeholder: 'Provide a high-level description of the entire process',
           },
           {
+            // 2026-10-22 (D2): read by sop_007 (and sop_024, sop_026).
+            id: 'procedure_steps',
+            label: 'Detailed Procedure Steps',
+            type: 'textarea',
+            required: false,
+            placeholder: 'Numbered, sequential steps: who does what, with parameters and acceptance criteria where they apply',
+            helpText:
+              'The overview above is not the procedure. 21 CFR 211.100 (drugs) and the QMSR via ISO 13485 (devices) require written procedures that personnel follow, so each step must be specific enough for a trained person to execute it the same way every time.',
+          },
+          {
             id: 'num_major_steps',
             label: 'Number of Major Steps',
             type: 'number',

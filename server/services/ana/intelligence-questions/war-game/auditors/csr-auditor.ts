@@ -18,10 +18,12 @@ import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '
 
 /* 2026-10-22 (D2): rules converged onto the field ids the CSR interview
    (flows/csr-report.ts) actually asks. A rule still reading a key the interview
-   does not ask (gcp_compliance_statement, statistical_analysis_plan_deviations,
-   data_monitoring_committee as a DMC charter, efficacy_conclusions,
-   safety_conclusions, secondary_objectives, enrollment durations) is left as
-   is and reported NOT ASSESSED by the engine: no equivalent question exists. */
+   does not ask (statistical_analysis_plan_deviations, data_monitoring_committee
+   as a DMC charter, secondary_objectives, enrollment durations) is left as
+   is and reported NOT ASSESSED by the engine: no equivalent question exists.
+   Later the same day the interview gained gcp_compliance_statement (study_id),
+   efficacy_conclusions and safety_conclusions (study_conclusions), so those
+   three rules are assessed. */
 
 /* ─── Helpers ──────────────────────────────────────────────────────────── */
 
@@ -611,6 +613,9 @@ const rules: AuditRule[] = [
    *  16. GCP Compliance Statement
    * ════════════════════════════════════════════════════════════════════════ */
 
+  /* 2026-10-22 (D2): gcp_compliance_statement is now asked (study_id node,
+     yes_no). Fires on an explicit "no"; a blank optional answer is not a
+     finding. */
   {
     id: rid('gcp_compliance'),
     dimension: 'regulatory_alignment',
@@ -620,10 +625,10 @@ const rules: AuditRule[] = [
       'study was conducted in accordance with GCP, applicable regulations, and the ' +
       'ethical principles of the Declaration of Helsinki. Is this statement present?',
     check(answers) {
-      if (isBlank(answers.gcp_compliance_statement)) {
+      if (answers.gcp_compliance_statement === false) {
         return makeFinding(
           this.id, this.dimension, 'critical', this.title, this.question,
-          'No GCP compliance statement is included. The absence of this statement is a ' +
+          'The CSR does not state GCP compliance. The absence of this statement is a ' +
           'fundamental regulatory deficiency that could render the CSR non-approvable.',
           'The CSR must include an explicit statement attesting GCP compliance, IRB/IEC ' +
           'approval at each investigational site, and confirmation that informed consent ' +
@@ -861,6 +866,9 @@ const rules: AuditRule[] = [
    *  23. Efficacy Conclusions Consistency
    * ════════════════════════════════════════════════════════════════════════ */
 
+  /* 2026-10-22 (D2): efficacy_conclusions is now asked (study_conclusions
+     node, optional textarea). There is no explicit negative for free text, so
+     a blank answer is reported as "not stated" at warning, not critical. */
   {
     id: rid('efficacy_conclusions'),
     dimension: 'consistency',
@@ -873,7 +881,7 @@ const rules: AuditRule[] = [
     check(answers) {
       if (isBlank(answers.efficacy_conclusions)) {
         return makeFinding(
-          this.id, this.dimension, 'critical', this.title, this.question,
+          this.id, this.dimension, 'warning', this.title, this.question,
           'No efficacy conclusions are stated. The FDA medical and statistical reviewers ' +
           'independently formulate efficacy conclusions; the absence of sponsor conclusions ' +
           'prevents comparison and may signal uncertainty about the data.',
@@ -884,7 +892,7 @@ const rules: AuditRule[] = [
           'State efficacy conclusions that explicitly reference: (1) the primary endpoint, ' +
           '(2) the treatment effect estimate, (3) the p-value and CI, (4) clinical ' +
           'significance, and (5) consistency with sensitivity and secondary analyses.',
-          ['efficacy_conclusions', 'primary_result_value', 'p_value', 'confidence_interval'],
+          ['efficacy_conclusions', 'primary_endpoint_result_summary', 'p_value', 'effect_size'],
         );
       }
       return null;
@@ -895,6 +903,9 @@ const rules: AuditRule[] = [
    *  24. Safety Conclusions
    * ════════════════════════════════════════════════════════════════════════ */
 
+  /* 2026-10-22 (D2): safety_conclusions is now asked (study_conclusions
+     node, optional textarea), separately from overall_conclusion. A blank
+     answer is reported as "not stated" at warning, not critical. */
   {
     id: rid('safety_conclusions'),
     dimension: 'completeness',
@@ -906,7 +917,7 @@ const rules: AuditRule[] = [
     check(answers) {
       if (isBlank(answers.safety_conclusions)) {
         return makeFinding(
-          this.id, this.dimension, 'critical', this.title, this.question,
+          this.id, this.dimension, 'warning', this.title, this.question,
           'No safety conclusions are provided. The FDA cannot formulate the benefit-risk ' +
           'assessment without an explicit sponsor safety summary.',
           'Safety conclusions must address overall tolerability, the AE profile relative to ' +
@@ -917,7 +928,7 @@ const rules: AuditRule[] = [
           'tolerability, (2) SAE patterns, (3) laboratory and vital sign abnormalities, ' +
           '(4) identified safety signals with proposed label language, and (5) an overall ' +
           'benefit-risk statement.',
-          ['safety_conclusions', 'adverse_events_summary', 'serious_adverse_events'],
+          ['safety_conclusions', 'most_common_aes', 'total_saes', 'deaths'],
         );
       }
       return null;

@@ -311,19 +311,26 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'ICH Q1A Stability Protocol Deficiencies',
     question: 'The stability protocol does not appear to comply with ICH Q1A(R2) requirements. Can the sponsor address the missing storage conditions, test intervals, or required attributes?',
+    /* 2026-10-22 (D2): the interview now asks stability_protocol (select:
+       q1a_compliant | phase_appropriate | not_q1a_compliant | no_protocol,
+       optional). Fires on a stated departure or a stated absence; a justified
+       phase-appropriate protocol and a blank do not fire. */
     check(answers) {
-      if (isBlank(answers.stability_protocol) || answers.stability_protocol_compliant === false || answers.stability_protocol_compliant === 'no') {
+      const protocol = answers.stability_protocol;
+      if (protocol === 'not_q1a_compliant' || protocol === 'no_protocol') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'The stability protocol is either missing or does not meet ICH Q1A(R2) requirements for storage conditions, testing intervals, and stability-indicating parameters.',
+          protocol === 'no_protocol'
+            ? 'The sponsor states that there is no written stability protocol yet.'
+            : 'The sponsor states that the stability protocol departs from ICH Q1A(R2) for storage conditions, testing intervals, or stability-indicating parameters without justification.',
           'ICH Q1A(R2) requires long-term (25C/60%RH or 30C/65%RH) and accelerated (40C/75%RH) stability studies, with intermediate (30C/65%RH) studies required when long-term storage is 25C/60%RH and significant change occurs at the accelerated condition, all with defined testing intervals and stability-indicating assays.',
           'ICH Q1A(R2) Sections 2.2.1-2.2.7; ICH Q1B; ICH Q1C; ICH Q1D',
           'Develop a stability protocol compliant with ICH Q1A(R2) covering all required conditions, time points (0, 3, 6, 9, 12, 18, 24, 36 months minimum), and stability-indicating tests. Include photostability per ICH Q1B.',
-          ['stability_protocol', 'stability_protocol_compliant', 'stability_conditions', 'stability_data_duration_months'],
+          ['stability_protocol', 'ds_stability_conditions', 'dp_stability_conditions', 'dp_stability_duration'],
         );
       }
       return null;
@@ -380,19 +387,22 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'GMP Compliance Not Demonstrated',
     question: 'The submission does not provide evidence that the manufacturing facility operates under current Good Manufacturing Practice (cGMP). How does the sponsor assure the Agency that product quality can be consistently achieved?',
+    /* 2026-10-22 (D2): the interview now asks manufacturing_facility_gmp
+       (yes_no, optional); gmp_certification was the same question and is no
+       longer read. Fires on the stated "No"; a blank is not a stated absence. */
     check(answers) {
-      if (isBlank(answers.gmp_certification) && isBlank(answers.manufacturing_facility_gmp)) {
+      if (answers.manufacturing_facility_gmp === false) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No evidence of cGMP compliance for the manufacturing facility is provided.',
+          'The sponsor states that not all manufacturing and testing sites operate under cGMP.',
           'Manufacturing of drug substances and drug products must comply with 21 CFR Parts 210/211 (drugs) or 21 CFR Part 600 (biologics) and ICH Q7 GMP for APIs.',
           '21 CFR Parts 210/211; ICH Q7; 21 CFR 314.50(d)(1); FDA Guidance: Process Validation (2011)',
           'Provide documentation of cGMP compliance for all manufacturing and testing sites, including FDA establishment registration numbers, recent inspection history, and any relevant certifications.',
-          ['gmp_certification', 'manufacturing_facility_gmp', 'manufacturing_sites'],
+          ['manufacturing_facility_gmp', 'manufacturing_sites', 'dp_manufacturing_site'],
         );
       }
       return null;
@@ -775,19 +785,23 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Nitrosamine Risk Not Evaluated',
     question: 'The submission does not include a nitrosamine risk evaluation. Given recent FDA enforcement actions and the serious carcinogenicity concerns, how does the sponsor justify the absence of a nitrosamine assessment?',
+    /* 2026-10-22 (D2): the interview now asks nitrosamine_risk_evaluation
+       (select: completed | in_progress | not_started | not_applicable,
+       optional); nitrosamine_assessment was the same question and is no longer
+       read. Fires on the stated "Not started"; a blank is not a stated absence. */
     check(answers) {
-      if (isBlank(answers.nitrosamine_assessment) && isBlank(answers.nitrosamine_risk_evaluation)) {
+      if (answers.nitrosamine_risk_evaluation === 'not_started') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No nitrosamine risk evaluation is provided. FDA requires assessment of N-nitrosamine impurity risk for all drug products.',
+          'The sponsor states that the nitrosamine risk evaluation has not been started. FDA expects assessment of N-nitrosamine impurity risk for all drug products.',
           'FDA requires nitrosamine risk evaluations per its guidance Control of Nitrosamine Impurities in Human Drugs (Revision 2, September 2024), including assessment of all potential root causes (amine + nitrite, nitrosating conditions, cross-contamination).',
           'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (Rev. 2, 2024); ICH M7(R2); EMA Referral on Nitrosamines (2020)',
           'Conduct a comprehensive nitrosamine risk evaluation: (1) assess all potential sources of N-nitrosamine formation; (2) test for NDSRIs using sufficiently sensitive methods (LOD at AI level); (3) implement controls if risk is identified; (4) establish confirmatory testing program.',
-          ['nitrosamine_assessment', 'nitrosamine_risk_evaluation', 'synthesis_route', 'amine_containing_components'],
+          ['nitrosamine_risk_evaluation', 'synthesis_overview', 'mutagenic_impurity_assessment'],
         );
       }
       return null;
@@ -822,25 +836,30 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Microbiological Controls Inadequate',
     question: 'The submission does not describe adequate microbiological controls for a product that may be susceptible to microbial contamination. How does the sponsor ensure microbial quality throughout the manufacturing process and shelf life?',
+    /* 2026-10-22 (D2): the interview now asks microbiological_controls
+       (select: established | in_development | not_established |
+       not_applicable, optional). Fires on the stated "Not established":
+       critical for a sterile, parenteral or ophthalmic product, a warning
+       otherwise. A blank and a justified "Not applicable" do not fire. */
     check(answers) {
+      if (answers.microbiological_controls !== 'not_established') return null;
       const route = String(answers.route_of_administration ?? '').toLowerCase();
       const dosageForm = String(answers.dosage_form ?? '').toLowerCase();
-      const isHighRisk = route.includes('inject') || route.includes('intraven') || route.includes('ophthalm') || dosageForm.includes('sterile') || dosageForm.includes('injection');
-      if (isBlank(answers.microbiological_controls) && (isHighRisk || isBlank(route))) {
-        return finding(
-          this.id,
-          this.dimension,
-          'critical',
-          this.title,
-          this.question,
-          'Microbiological controls (bioburden, endotoxin, sterility) are not adequately described for a product with potential microbial contamination risk.',
-          'USP <61>/<62> (microbial enumeration and specified organisms), USP <85> (endotoxin), and USP <71> (sterility) requirements apply based on route of administration. 21 CFR 211.113 requires appropriate controls.',
-          '21 CFR 211.113; USP <61>/<62>/<71>/<85>; ICH Q6A Decision Tree #8 (non-sterile drug products)',
-          'Define microbiological specifications appropriate to the dosage form and route. For sterile products, describe the sterility assurance strategy (terminal sterilization or aseptic processing) and include media fill and environmental monitoring programs.',
-          ['microbiological_controls', 'route_of_administration', 'dosage_form', 'sterility_assurance'],
-        );
-      }
-      return null;
+      const isHighRisk = answers.is_sterile === true
+        || ['intravenous', 'subcutaneous', 'intramuscular', 'intrathecal', 'ophthalmic'].includes(route)
+        || /injection|infusion|syringe|autoinjector|lyophilized|ophthalmic/.test(dosageForm);
+      return finding(
+        this.id,
+        this.dimension,
+        isHighRisk ? 'critical' : 'warning',
+        this.title,
+        this.question,
+        'The sponsor states that microbiological controls (microbial limits, or sterility and endotoxin) are not established in the specifications.',
+        'USP <61>/<62> (microbial enumeration and specified organisms), USP <85> (endotoxin), and USP <71> (sterility) requirements apply based on route of administration. 21 CFR 211.113 requires appropriate controls.',
+        '21 CFR 211.113; USP <61>/<62>/<71>/<85>; ICH Q6A Decision Tree #8 (non-sterile drug products)',
+        'Define microbiological specifications appropriate to the dosage form and route. For sterile products, describe the sterility assurance strategy (terminal sterilization or aseptic processing) and include media fill and environmental monitoring programs.',
+        ['microbiological_controls', 'is_sterile', 'route_of_administration', 'dosage_form', 'sterile_manufacturing'],
+      );
     },
   },
 ];

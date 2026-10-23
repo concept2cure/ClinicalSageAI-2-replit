@@ -257,8 +257,13 @@ export function createSopAuditor(): WarGameAuditor {
       question:
         'I see no step-by-step procedure in this SOP. Under 21 CFR 211.100, written procedures must be established and followed. Where are the operational steps your personnel are expected to execute?',
       check(answers): WarGameFinding | null {
+        /* 2026-10-22 (D2): the interview asked only a high-level process
+           overview, so this rule read an unasked key and was not assessed. It
+           now reads `procedure_steps` (process_steps node). The question is
+           optional, so a blank answer is not stated and draws no critical;
+           steps that are given but too short to execute are the finding. */
         const steps = str(answers.procedure_steps);
-        if (steps.length >= 50) return null;
+        if (steps.length === 0 || steps.length >= 50) return null;
         return {
           id: rid('007'),
           dimension: 'completeness',
@@ -267,7 +272,7 @@ export function createSopAuditor(): WarGameAuditor {
           question:
             'I see no step-by-step procedure in this SOP. Under 21 CFR 211.100, written procedures must be established and followed. Where are the operational steps your personnel are expected to execute?',
           observation:
-            `The procedure steps section is ${steps.length === 0 ? 'empty' : `only ${steps.length} characters, which is insufficient for an operational procedure`}. ` +
+            `The procedure steps section is only ${steps.length} characters, which is insufficient for an operational procedure. ` +
             'An SOP without detailed, sequential steps cannot serve its fundamental purpose as a controlled document.',
           requirement:
             '21 CFR 211.100(a) requires written procedures for production and process control designed to assure that drug products have the identity, strength, quality, and purity they purport to possess. ' +

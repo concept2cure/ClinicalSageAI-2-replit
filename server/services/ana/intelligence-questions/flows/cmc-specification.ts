@@ -788,6 +788,22 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             ],
             helpText: 'Primary control strategy for mutagenic impurities per ICH M7(R2) Section 8.1 (control options 1–4).',
           },
+          /* 2026-10-22 (D2): asked so the war-game rule
+             cmc_nitrosamine_risk_not_evaluated is assessed. */
+          {
+            id: 'nitrosamine_risk_evaluation',
+            label: 'Has a nitrosamine (N-nitrosamine / NDSRI) risk evaluation been performed for the drug substance and drug product?',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'completed', label: 'Completed (with confirmatory testing and controls where a risk was found)' },
+              { value: 'in_progress', label: 'In progress' },
+              { value: 'not_started', label: 'Not started' },
+              { value: 'not_applicable', label: 'Not applicable (justified, e.g. no plausible nitrosamine source)' },
+            ],
+            helpText:
+              "FDA's guidance on control of nitrosamine impurities in human drugs expects manufacturers to assess the risk of N-nitrosamine formation or contamination, test where a risk is found, and control it. Nitrosamines are a 'cohort of concern' under ICH M7.",
+          },
         ],
         issueChecks: [
           {
@@ -1091,6 +1107,16 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             required: true,
             validation: { minLength: 5, maxLength: 2000 },
           },
+          /* 2026-10-22 (D2): asked so the war-game rule cmc_no_gmp_compliance
+             is assessed. */
+          {
+            id: 'manufacturing_facility_gmp',
+            label: 'Do all drug substance and drug product manufacturing and testing sites operate under CGMP?',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              "Drug products are manufactured under the CGMP regulations in 21 CFR Parts 210 and 211 (with Parts 600–680 for biologics), and drug substances under ICH Q7. Phase 1 investigational material may instead follow FDA's guidance on CGMP for Phase 1 investigational drugs.",
+          },
           {
             id: 'equipment_type',
             label: 'Key Manufacturing Equipment',
@@ -1347,6 +1373,22 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               'Per ICH Q6A, universal tests include description, identification, assay, and impurities/degradation products. Dosage-form specific tests (e.g., dissolution, uniformity, sterility) as applicable.',
             required: true,
             validation: { minLength: 30, maxLength: 5000 },
+          },
+          /* 2026-10-22 (D2): asked so the war-game rule
+             cmc_no_microbiological_controls is assessed. */
+          {
+            id: 'microbiological_controls',
+            label: 'Are microbiological controls (microbial limits, or sterility and endotoxin for sterile products) established in the specifications?',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'established', label: 'Established' },
+              { value: 'in_development', label: 'In development' },
+              { value: 'not_established', label: 'Not established' },
+              { value: 'not_applicable', label: 'Not applicable (omission justified for a non-sterile product)' },
+            ],
+            helpText:
+              'ICH Q6A expects microbial limits for non-sterile products unless their omission is justified, and sterility and bacterial endotoxin testing for sterile products. 21 CFR Part 211 requires written procedures to prevent microbiological contamination.',
           },
           {
             id: 'specification_justification',

@@ -172,6 +172,17 @@ export function createRiskManagementFlow(): FlowDefinition {
             visibleWhen: { field: 'prior_risk_file_exists', operator: 'eq', value: true },
           },
           {
+            // 2026-10-22 (D2): read by rm_no_risk_management_plan and
+            // rm_rm_file_incomplete. Whether the plan is complete is asked
+            // separately, at the risk management review.
+            id: 'risk_management_plan_exists',
+            label: 'Is there a documented risk management plan for this product?',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'ISO 14971:2019 requires a documented risk management plan (Clause 4.4) covering scope, responsibilities, risk acceptability criteria, verification activities and production and post-production information. It is part of the risk management file.',
+          },
+          {
             id: 'product_category',
             label: 'Product Category',
             type: 'select',

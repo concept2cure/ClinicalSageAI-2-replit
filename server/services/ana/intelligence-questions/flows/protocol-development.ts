@@ -1250,6 +1250,15 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             ],
           },
           {
+            // 2026-10-22 (D2): read by protocol_no_safety_monitoring.
+            id: 'safety_monitoring_plan',
+            label: 'Safety Monitoring Plan Defined (AE/SAE Definitions, Ongoing Safety Review, Signal Detection)',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'ICH E6(R3) expects the protocol to describe how safety is assessed and reported, and 21 CFR 312.32 requires the sponsor to review safety information promptly and submit IND safety reports. The plan names who reviews accumulating safety data, how often, and how signals are escalated.',
+          },
+          {
             id: 'dose_escalation_scheme',
             label: 'Dose Escalation Scheme',
             type: 'select',

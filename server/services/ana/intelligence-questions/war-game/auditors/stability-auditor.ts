@@ -291,15 +291,18 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'ICH Q1A(R2) Testing Protocol Not Followed',
     question: 'The stability testing program does not appear to conform to ICH Q1A(R2) requirements. Can the sponsor identify which elements are missing and provide a remediation plan?',
+    /* 2026-10-22 (D2): the interview now asks ich_q1a_compliance (select:
+       followed | justified_deviations | not_followed, optional). Fires on the
+       stated "No"; a blank is not a stated non-conformance. */
     check(answers) {
-      if (isBlank(answers.ich_q1a_compliance) || String(answers.ich_q1a_compliance).toLowerCase() === 'no') {
+      if (answers.ich_q1a_compliance === 'not_followed') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'The stability program does not conform to ICH Q1A(R2) requirements or conformance has not been documented.',
+          'The sponsor states that the stability program does not follow ICH Q1A(R2), and no justification for the departure is given.',
           'ICH Q1A(R2) is the foundational guideline for stability testing of new drug substances and products. FDA expects compliance per 21 CFR 211.166.',
           'ICH Q1A(R2); 21 CFR 211.166; FDA Guidance for Industry: Q1A(R2) Stability Testing of New Drug Substances and Products (2003)',
           'Conduct a gap analysis against ICH Q1A(R2) and develop a remediation plan addressing all deficiencies including study design, storage conditions, testing parameters, and data evaluation.',
@@ -596,15 +599,17 @@ const rules: AuditRule[] = [
     dimension: 'documentation',
     title: 'No Stability Protocol',
     question: 'A written stability protocol has not been submitted. How does the sponsor document the study design, acceptance criteria, and testing schedule to ensure reproducibility and regulatory compliance?',
+    /* 2026-10-22 (D2): the interview now asks stability_protocol (yes_no,
+       optional). Fires on the stated "No"; a blank is not a stated absence. */
     check(answers) {
-      if (isBlank(answers.stability_protocol)) {
+      if (answers.stability_protocol === false) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No written stability protocol or study plan is included in the submission.',
+          'The sponsor states that there is no written stability protocol for the study.',
           '21 CFR 211.166(a) requires a written testing program designed to assess the stability characteristics of drug products, including sample size, test intervals, storage conditions, and test methods.',
           '21 CFR 211.166(a); ICH Q1A(R2) Section 2.2.1',
           'Develop and submit a comprehensive stability protocol that includes: study design (batches, conditions, time points), test parameters, acceptance criteria, methods references, and data evaluation procedures.',

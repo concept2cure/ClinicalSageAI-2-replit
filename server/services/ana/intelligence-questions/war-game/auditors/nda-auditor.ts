@@ -90,20 +90,28 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'CTD Modules Incomplete',
     question: 'The NDA submission appears to lack one or more of the required CTD modules (M1-M5). Under 21 CFR 314.50, all five modules must be present for filing. Which modules are missing and when does the applicant intend to provide them?',
+    /* 2026-10-22 (D2): reads the interview's `ctd_modules` multi-select
+       (ctd_organization). A blank inventory is not stated, so it is not a
+       finding; an inventory that leaves a module out is. A supplement
+       populates only the modules it changes, so it is not judged here. */
     check(answers) {
+      if (answers.nda_type === 'supplement') return null;
       const modules = answers.ctd_modules;
-      if (isBlank(modules)) {
+      if (!Array.isArray(modules) || modules.length === 0) return null;
+      const present = new Set(modules.map(String));
+      const missing = ['m1', 'm2', 'm3', 'm4', 'm5'].filter((m) => !present.has(m));
+      if (missing.length > 0) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'CTD module inventory is not specified; one or more required modules (M1 through M5) may be absent from the submission.',
+          `The CTD module inventory does not include ${missing.map((m) => 'Module ' + m.slice(1)).join(', ')}.`,
           'A complete NDA must include all five CTD modules per 21 CFR 314.50 and ICH M4: Module 1 (Regional Administrative), Module 2 (Summaries), Module 3 (Quality/CMC), Module 4 (Nonclinical), and Module 5 (Clinical).',
           '21 CFR 314.50; ICH M4 (Organization of the CTD); FDA Guidance: eCTD Technical Specification (2023)',
           'Conduct a completeness check against the eCTD Module Checklist and ensure all five modules are populated with the required documents before submission.',
-          ['ctd_modules', 'ctd_format'],
+          ['ctd_modules', 'ctd_format', 'nda_type'],
         );
       }
       return null;
@@ -137,15 +145,17 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Integrated Summary of Effectiveness (ISE) Missing',
     question: 'The NDA does not appear to contain an Integrated Summary of Effectiveness. Without this document, how does the applicant expect the Agency to assess whether substantial evidence of effectiveness exists under 21 CFR 314.126?',
+    /* 2026-10-22 (D2): reads the interview's yes_no `integrated_summary_effectiveness`
+       (efficacy_overview). Optional, so only an explicit "no" is a finding. */
     check(answers) {
-      if (isBlank(answers.integrated_summary_effectiveness)) {
+      if (answers.integrated_summary_effectiveness === false) {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No Integrated Summary of Effectiveness (ISE) was found in the submission.',
+          'The applicant states that no Integrated Summary of Effectiveness (ISE) has been prepared.',
           'The ISE is required under 21 CFR 314.50(d)(5)(v) to integrate efficacy results across studies and demonstrate substantial evidence of effectiveness.',
           '21 CFR 314.50(d)(5)(v); 21 CFR 314.126; ICH M4E(R2) Section 2.7.3',
           'Prepare an ISE that integrates efficacy data across all adequate and well-controlled studies, including individual study results, pooled analyses, consistency of effect across subgroups, and dose-response relationships.',
@@ -816,19 +826,23 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Drug-Drug Interactions Not Adequately Addressed',
     question: 'The NDA does not include a comprehensive evaluation of drug-drug interactions (DDIs). Without in vitro and clinical DDI studies, the Agency cannot assess the potential for harmful interactions in patients receiving concomitant medications. Can the applicant provide the DDI evaluation?',
+    /* 2026-10-22 (D2): reads the interview's `ddi_assessment_status` select
+       (node ddi_assessment), asked because the CYP multi-selects have no "none"
+       position. Fires on an explicit 'not_started'; a documented
+       not-applicable justification and a blank answer are not findings. */
     check(answers) {
-      if (isBlank(answers.ddi_assessment)) {
+      if (answers.ddi_assessment_status === 'not_started') {
         return finding(
           this.id,
           this.dimension,
           'critical',
           this.title,
           this.question,
-          'No drug-drug interaction assessment is provided in the NDA.',
+          'The drug-drug interaction assessment is stated as not started.',
           'A comprehensive DDI assessment including in vitro metabolism studies (CYP enzymes, transporters) and clinical DDI studies is required per 21 CFR 314.50(d)(5) and ICH M12.',
           '21 CFR 314.50(d)(5); ICH M12 Drug Interaction Studies (FDA final guidance, 2024); ICH M4E(R2) Section 2.7.2',
           'Provide a complete DDI evaluation including in vitro CYP inhibition/induction studies (CYP3A4, 2D6, 2C9, etc.), transporter studies (P-gp, OATP, BCRP), and clinical DDI studies with sensitive substrates and strong inhibitors/inducers. Include DDI recommendations in the proposed labeling.',
-          ['ddi_assessment', 'clinical_ddi_completed', 'uspi_draft_complete'],
+          ['ddi_assessment_status', 'clinical_ddi_completed', 'uspi_draft_complete'],
         );
       }
       return null;
