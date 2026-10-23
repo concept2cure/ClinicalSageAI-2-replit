@@ -2,6 +2,7 @@ import type { AssemblyCommitData, AssemblyPlan, AssemblySection } from '@shared/
 import type { AiDraftReviewSession, AiDraftReviewState } from './authoringDraftTransport';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import type { SavedAssemblySourcesCache, SavedAssemblySourcesControls } from './savedAssemblySourcesState';
+import type { AuthoringTemplate } from '../surfaces/AuthoringTemplatePicker';
 
 export interface AssemblyBuildOptions {
   docId: string | null; programId: string | null; docSealed: boolean; editorDirty: boolean;
@@ -12,7 +13,7 @@ export interface AssemblyBuildOptions {
   onRecoveryChecked?: (current: () => boolean, headers: Record<string, string>) => boolean | Promise<boolean>;
   onReviewSection: (sectionId: string) => void;
 }
-export interface AssemblyTemplate { id: string; name: string }
+export interface AssemblyTemplate extends AuthoringTemplate { id: string; name: string }
 export type AssemblyBuildPhase = 'idle' | 'outline' | 'previewing' | 'previewed' | 'building' | 'unknown' | 'checking' | 'checked' | 'built' | 'drafting' | 'stopped';
 export interface AssemblyDraftSlot {
   section: AssemblySection;
@@ -27,7 +28,7 @@ export interface AssemblyDraftSlot {
 }
 export interface AssemblyBuildState {
   templates: AssemblyTemplate[]; rosterLoading: boolean; rosterError: string | null; globalCatalogUnavailable: boolean;
-  templateId: string; targetCode: string; outline: AssemblyPlan | null; plan: AssemblyPlan | null;
+  templateId: string; templateQuery: string; targetCode: string; outline: AssemblyPlan | null; plan: AssemblyPlan | null;
   phase: AssemblyBuildPhase; message: string; reason: string; withAna: boolean; requirements: string;
   slots: AssemblyDraftSlot[]; receipt: AssemblyCommitData | null;
   sourceSelection?: AssemblySourceSelector[]; disclosureRequest: number;
@@ -35,6 +36,7 @@ export interface AssemblyBuildState {
 export interface AssemblyBuildController extends AssemblyBuildState, SavedAssemblySourcesControls {
   busy: boolean; disabledReason: string | null; reviewSessions: Record<string, AiDraftReviewSession>;
   chooseTemplate: (id: string) => Promise<void>; chooseTarget: (code: string) => void;
+  setTemplateQuery: (query: string) => void;
   setReason: (reason: string) => void; setWithAna: (value: boolean) => void; setRequirements: (value: string) => void;
   preview: () => Promise<void>; build: () => Promise<void>; check: () => Promise<void>; retryDrafts: () => Promise<void>;
   stop: () => void; review: (sectionId: string) => void; markAccepted: (sectionId: string) => void;
@@ -50,7 +52,7 @@ export interface AssemblyBucket {
 }
 export const initialAssemblyState = (): AssemblyBuildState => ({
   templates: [], rosterLoading: false, rosterError: null, globalCatalogUnavailable: false,
-  templateId: '', targetCode: '', outline: null, plan: null, phase: 'idle', message: '', reason: '', withAna: false, requirements: '', slots: [], receipt: null, disclosureRequest: 0,
+  templateId: '', templateQuery: '', targetCode: '', outline: null, plan: null, phase: 'idle', message: '', reason: '', withAna: false, requirements: '', slots: [], receipt: null, disclosureRequest: 0,
 });
 export const assemblyBusy = (phase: AssemblyBuildPhase): boolean => ['outline', 'previewing', 'building', 'checking', 'drafting'].includes(phase);
 export function assemblyDisabledReason(options: AssemblyBuildOptions): string | null {

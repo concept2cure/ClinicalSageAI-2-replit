@@ -1,0 +1,54 @@
+{
+  "sourceFreezeSha256": "6346d5bb3ea91c63d0bc65e25fb3692c48074b3a0b50055adcc19ee7ea9b2d9c",
+  "currentPinsVerified": 23,
+  "receipts": [
+    {
+      "receipt": "green-cohort.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "green-expanded.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "green-initial.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-baseline.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-final.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "lint-initial.json",
+      "exitCode": 0,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "qualified-red.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    },
+    {
+      "receipt": "red.json",
+      "exitCode": 1,
+      "rawHashVerified": true,
+      "sourceDrift": []
+    }
+  ]
+}
