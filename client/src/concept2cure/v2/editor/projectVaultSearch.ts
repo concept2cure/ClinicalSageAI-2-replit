@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
-import type { VaultDoc } from '../fixtures/vault-data';
+import type { VaultSearchHit } from '../surfaces/VaultLibraryResults';
 
-export interface SearchHit {
-  originalFileAvailable?: boolean; disposition?: VaultDoc['disposition']; current?: boolean; version?: string | null;
-  id: string; title: string; fileName: string | null; documentType: string | null; size: string | null;
-  folderId: string | null; ctdSection: string | null; placementStatus: string | null; snippet: string | null;
-}
+/** One search hit: the find view's contract (VaultLibraryResults.tsx), not a second copy of it. */
+export type SearchHit = VaultSearchHit;
 type ReadState = 'idle' | 'loading' | 'ready' | 'error';
 interface SearchSnapshot {
   key: string; state: ReadState; hits: SearchHit[]; total: number; nextOffset: number;

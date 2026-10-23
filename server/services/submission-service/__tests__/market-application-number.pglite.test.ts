@@ -22,7 +22,7 @@ vi.mock('../../../db', () => ({
   getPool: () => h.pool,
 }));
 
-import { recordMarketApplicationNumber } from '../market-application-number';
+import { readMarketApplicationNumber, recordMarketApplicationNumber } from '../market-application-number';
 import { readSubmissionPackageIdentity } from '../../ectd/package-identity';
 
 const ORG = 7;
@@ -90,6 +90,14 @@ describe("recording a market's own application number (P-44)", () => {
     expect((await readSubmissionPackageIdentity(jdb.pool as never, ORG, 1)).applicationNumber).toBe('214321');
   });
 
+  it("the audit row names the project, so the project's feed shows it; the row's read says who recorded it, when and why", async () => {
+    expect((await audits())[0].new_values).toMatchObject({ programId: NDA });
+    const read = await readMarketApplicationNumber(2, { organizationId: ORG });
+    expect(read).toMatchObject({ home: false, market: 'EU', applicationNumber: 'EMEA-H-C-005124', homeAgency: 'FDA' });
+    expect(read.lastRecorded).toMatchObject({ by: 'Robin Lead', reason: REASON });
+    expect((await readMarketApplicationNumber(1, { organizationId: ORG })).lastRecorded).toBeNull();
+  });
+
   it('the same number again writes nothing', async () => {
     expect((await record(2, 'EMEA-H-C-005124')).changed).toBe(false);
     expect(await audits()).toHaveLength(1);
@@ -107,8 +115,23 @@ describe("recording a market's own application number (P-44)", () => {
     expect(await audits()).toEqual(before);
   });
 
-  it('a manager may record it, and the FDA rule takes a six-digit number', async () => {
+  it('a manager may record it, and the FDA rule takes a six-digit number; a frozen sequence does not stop a first recording', async () => {
+    await jdb.pool.query(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, organization_id, created_by, status, frozen_at)
+       VALUES (3, 'fda', '0000', $1, $2, 'frozen', now())`, [ORG, LEAD]);
     const out = await record(3, '214399', { organizationId: ORG, userId: MEMBER, orgRole: 'admin' });
     expect(out).toMatchObject({ market: 'US', applicationNumber: '214399', changed: true });
+  });
+
+  it('a number a frozen or dispatched sequence was built under is not changed, and nothing is written', async () => {
+    await jdb.pool.query(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status)
+       VALUES (2, 'eu', '0000', $1, $2, 'dispatched', 'sent')`, [ORG, LEAD]);
+    const before = await audits();
+    await expect(record(2, 'EMEA-H-C-005125')).rejects.toMatchObject({
+      code: 'INVALID_STATE', message: expect.stringMatching(/Sequence 0000 of this market is frozen or dispatched under EMEA-H-C-005124/),
+    });
+    expect(await audits()).toEqual(before);
+    expect((await readMarketApplicationNumber(2, { organizationId: ORG })).applicationNumber).toBe('EMEA-H-C-005124');
   });
 });

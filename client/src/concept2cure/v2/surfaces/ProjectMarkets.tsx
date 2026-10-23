@@ -428,7 +428,8 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChang
         </span>
       </div>
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
-        number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange} />} />
+        number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
+          onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
   );
 }

@@ -1,0 +1,24 @@
+M1 no wait for the re-read -> RED
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > opens a new document where it landed, in place of the one that 
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not
+    Tests  2 failed | 2 passed (4)
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+M2 staged upload opens nothing -> RED
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > opens a new document where it landed, in place of the one that 
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a recorded document the re-read does not hold is said, not sile
+    Tests  2 failed | 2 passed (4)
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+M3 check-in opens nothing -> RED
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not
+    Tests  1 failed | 3 passed (4)
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+M4 missing id stringified -> RED
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a response that names no document opens nothing: the document i
+    Tests  1 failed | 3 passed (4)
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+M5 note says filed for an upload -> RED
+    × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a recorded document the re-read does not hold is said, not sile
+    Tests  1 failed | 3 passed (4)
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+H1 missing id stringified -> RED ['Tests  1 failed | 9 passed (10)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']
+H2 ids not collected -> RED ['Tests  1 failed | 9 passed (10)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']

@@ -51,5 +51,8 @@ describe('the Project home feed names a governed act and its reason', () => {
   it('a row with no governed event reads as recorded', () => {
     expect(activityLabel(ACTIVITY[1])).toBe('c2c.project.evidence.unpin · regulatory_program');
     expect(activityLabel({ ...ACTIVITY[0], event_agency: null })).toBe('Market added');
+    // A market's own application number recorded (P-44) is named in words.
+    expect(activityLabel({ action: 'SUBMISSION_APPLICATION_NUMBER_RECORDED', resource_type: 'submission', event: null, event_agency: null }))
+      .toBe('Market application number recorded');
   });
 });

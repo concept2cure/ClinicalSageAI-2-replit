@@ -726,6 +726,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
   const [threadLoadError, setThreadLoadError] = useState<UseAnaChatReturn['threadLoadError']>(null);
+  const [threadSkills, setThreadSkills] = useState<UseAnaChatReturn['threadSkills']>(null);
   const threadLoadRef = useRef<AbortController | null>(null);
   const threadLoadErrorRef = useRef<UseAnaChatReturn['threadLoadError']>(null);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
@@ -1565,10 +1566,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         recoveryMessage = historyRecoveryText(res.status);
         throw new Error(`loadThread ${res.status}`);
       }
-      const body = (await Promise.race([deadline.promise, res.json()])) as { messages?: HistoryRow[] };
+      const body = (await Promise.race([deadline.promise, res.json()])) as { messages?: HistoryRow[]; skills?: unknown };
       if (threadLoadRef.current !== loading) return;
       if (!Array.isArray(body?.messages)) throw new Error('Incomplete conversation history response');
       const hydrated = hydrateHistory(body.messages, threadId);
+      // The conversation's picked skills, when the read names them (ANA_SKILLS §10).
+      setThreadSkills(
+        Array.isArray(body.skills)
+          ? { threadId, keys: body.skills.filter((k): k is string => typeof k === 'string') }
+          : null,
+      );
       threadIdRef.current = threadId;
       messagesRef.current = hydrated;
       setMessages(hydrated);
@@ -1859,9 +1866,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           const tools = sendOpts?.toolsOverride ?? options.selectedTools;
           return tools && tools.length > 0 ? tools : undefined;
         })(),
-        // Skills picked in the composer for this conversation. Omitted when
-        // none are, so AnA chooses on her own.
-        skills: sendOpts?.skills && sendOpts.skills.length > 0 ? sendOpts.skills : undefined,
+        // Skills picked in the composer for this conversation; the stream also
+        // keeps them on the thread. Omitted by a host with no Skills menu.
+        // An empty list says the person let AnA choose again; absent says nothing.
+        skills: Array.isArray(sendOpts?.skills) ? sendOpts.skills : undefined,
         // Model/effort picker. Both omitted when unset so the server keeps its
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
@@ -2812,5 +2820,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     threadId: threadIdRef.current,
     isLoadingThread,
     threadLoadError,
+    threadSkills,
   };
 }

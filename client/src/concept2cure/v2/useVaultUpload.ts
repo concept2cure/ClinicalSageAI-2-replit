@@ -39,6 +39,11 @@ export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 export interface VaultUploadOutcome {
   /** Files the server accepted and recorded. */
   succeeded: string[];
+  /** The documents those files were recorded as, by the id the server returned
+   *  (`document.id`), in the order sent. A response that names none adds none,
+   *  so a surface that opens the document just uploaded opens one the server
+   *  named, never one it guessed. */
+  recorded: string[];
   /** Files it refused, each with the reason as the server phrased it. */
   failed: Array<{ name: string; reason: string }>;
   /** Per-file filing outcome, as the server stored it: the classifier's
@@ -160,6 +165,7 @@ async function uploadOne(
       placement: VaultPlacement;
       already: { title: string; differs: boolean } | null;
       version: string | null;
+      documentId: string | null;
     }
   | { ok: false; reason: string; code: string | null }
 > {
@@ -222,7 +228,7 @@ async function uploadOne(
     const body = (await res.json().catch(() => null)) as
       | {
           filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean; placementStatus?: string };
-          document?: { documentTitle?: string; version?: string };
+          document?: { id?: unknown; documentTitle?: string; version?: string };
           reupload?: { differs?: unknown[] };
         }
       | null;
@@ -238,6 +244,7 @@ async function uploadOne(
         ? { title: body.document?.documentTitle || file.name, differs: (body.reupload.differs?.length ?? 0) > 0 }
         : null,
       version: body?.document?.version ?? null,
+      documentId: typeof body?.document?.id === 'string' && body.document.id ? body.document.id : null,
     };
   }
 
@@ -320,7 +327,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
   const upload = React.useCallback(
     async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
-      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
+      const empty: VaultUploadOutcome = { succeeded: [], recorded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
       if (list.length === 0) return empty;
       if (!programId) {
         setNote({
@@ -332,7 +339,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
 
       setUploading(true);
       setNote(null);
-      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
+      const outcome: VaultUploadOutcome = { succeeded: [], recorded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
@@ -346,6 +353,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already) }
             : { state: 'refused', reason: r.reason });
+          if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {
             outcome.succeeded.push(file.name);
             outcome.alreadyRecorded.push({ name: file.name, ...r.already });
