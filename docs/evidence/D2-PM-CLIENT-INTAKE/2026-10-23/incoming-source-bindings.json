@@ -1,6 +1,6 @@
 {
   "incomingHead": "0a7abf314",
-  "scope": "Retained incoming AnA/PDF, refiling, Unicode storage/read windows, editor/shared-planning, recorded release identity, and reporting current-access inputs.",
+  "scope": "Retained incoming AnA/PDF, refiling, Unicode storage/read windows, editor/shared-planning, recorded release identity, reporting current-access, and Vault passage-freshness inputs.",
   "files": {
     "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
     "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx": "e0b1baf0b9100f4ffe8a48f01680ea2f427145fb4eecd0b19cf4df5bc1f422e4",
@@ -45,8 +45,17 @@
     "server/routes/ectd-compile.ts": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8",
     "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
     "server/routes/submission-sign-release.ts": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f",
+    "server/services/__tests__/rag-actor-programme-scope.test.ts": "412dee391935a46d6255adc2715a39e85fae8cda055d3be5b8f4c10cf112b333",
+    "server/services/__tests__/rag-disposition-revalidation.test.ts": "1b2bbbf64fbbf808f8e8db9fa35d0dadd745ab48ff0ebfd9bae3dfcf5b5eeb17",
+    "server/services/__tests__/rag-disposition.pglite.integration.test.ts": "270a192761b4006a55a4bcefaa0af3c79ea70fe9d11fad1127e24b799e29587e",
+    "server/services/__tests__/rag-generation-request.test.ts": "1120d8daab238783e2040a8b619a606c5ea8cf2d2dc513b1ca7f2aa3046a26c0",
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts": "893204d8034c840a3aaefeeb1c203fc87c2ebef755f46aebd040595ff840fc00",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts": "67e2be1e1996597285b8bb9e0e13e18180d7b1c341a18ba14e6be8400a75d587",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts": "28decbf647853a4a6d06ab1fc40200ee03dd1178ade8566b21a7a8ea2feaa51f",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts": "3b761c6ea7a93d75fe815dad362b1c101c33ef0baee64345793d0da4833b297b",
     "server/services/__tests__/sign-payload-snapshot.test.ts": "84844bbfc16077f1ecf1a1a03967a3f81e2c33b604fea4f4c936705197339ff9",
     "server/services/__tests__/submission-orchestrator-continuation.test.ts": "70645c1e8ba5a8d05c590bf3d46a79e1d2928359a4f102f4ad9c9e7cd2cf990a",
+    "server/services/advancedRAGPipeline.ts": "af0fb02c578e42ba43282e9e53afc019b36b97abac0c006ebe29e9d05e320786",
     "server/services/ana/__tests__/document-read-unicode-executor.test.ts": "e18899e5e13cf94e8ce7376050ed397992a0681baeec773a4fec0af9af0e317b",
     "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe",
     "server/services/ana/__tests__/document-read-unicode-windows.test.ts": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7",
@@ -120,5 +129,6 @@
   "unicodeIncomingHead": "26d850156",
   "editorIncomingHead": "56a076306",
   "readWindowAndReleaseIncomingHead": "4cd0215a5152ea813c68d1d0b2cd341ae7abca3f",
-  "reportingIncomingHead": "b3e5746f63946e2819e1467d7d49a86b1b3ac6cb"
+  "reportingIncomingHead": "b3e5746f63946e2819e1467d7d49a86b1b3ac6cb",
+  "vaultFreshnessIncomingHead": "7fab2aa653d39b3d5be402245b95fb2f57517be1"
 }
