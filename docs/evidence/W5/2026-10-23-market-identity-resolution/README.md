@@ -103,3 +103,16 @@ source/test inputs remain unchanged. A focused five-file Authoring/package
 cohort passed **161 checks**, and a fresh production build passed on the merged
 tree, with all thirty catch-up inputs unchanged. These overlapping results
 are not summed. Final normal push/compiler gates are pending on that tree.
+
+
+## Canonical project-intake catch-up
+
+The second normal push again passed every gate and full TypeScript with zero
+errors, but the remote advanced to `66ad10eaf` before its update could land.
+`verification/push-second-ref-race.txt.gz` preserves that result. Ordinary merge
+`e7f38d5fd` retains explicit client-workspace project intake and all preceding
+work. All thirty previous catch-up pins still match. The four-file project
+creation/workspace/market-reader cohort passes **92 checks** and a fresh
+production build passes, with all fifty-seven latest pins unchanged. These are
+source-bound overlapping cohorts, not a summed full-suite total. Normal gates
+and publication remain pending on the latest candidate.

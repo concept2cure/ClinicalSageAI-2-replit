@@ -34,7 +34,7 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "Normal gates pending on the final merged candidate; first full compiler already passed0 with unchanged baseline.",
+  "fullCompilerAndPush": "Two completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
   "humanWitness": "unexecuted",
   "agencyQualification": "unexecuted",
   "firstFullCompilerAndPush": {
@@ -59,6 +59,30 @@
     },
     "productionBuildExit": 0,
     "pinnedInputs": 30,
+    "changedInputs": []
+  },
+  "secondFullCompilerAndPush": {
+    "candidate": "175a4194e3c55fb8a9da3e5fa6d00c08d4a53ca9",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Remote ref advanced to66ad10eaf during compiler; normal ordinary merge preserved new project intake.",
+    "receipt": "push-second-ref-race.txt.gz"
+  },
+  "intakeCatchup": {
+    "head": "e7f38d5fd22bc8330212534dcdee3cd1f81a7415",
+    "incoming": "66ad10eaf",
+    "earlier57InputsChanged": [],
+    "tests": {
+      "files": 4,
+      "passed": 92,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts shared/__tests__/project-intake-workspace.test.ts client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 57,
     "changedInputs": []
   }
 }
