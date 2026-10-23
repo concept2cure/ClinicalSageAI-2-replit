@@ -110,8 +110,8 @@ const rules: AuditRule[] = [
           observation:
             'One or more of the following are missing or incomplete: device name, device description, intended purpose.',
           requirement:
-            'EU MDR Annex XIV Part A Section 1 requires clear identification of the device, including trade name, model/size variants, and a precise statement of intended purpose.',
-          reference: 'EU MDR 2017/745 Annex XIV Part A, Section 1; MEDDEV 2.7/1 Rev 4 Section 6 and Appendix A3',
+            'EU MDR Annex XIV Part A Section 1(a) requires the clinical evaluation plan to give a precise specification of the device\'s intended purpose; identification of the device, including trade name and model/size variants, is required in the technical documentation under Annex II Section 1.1.',
+          reference: 'EU MDR 2017/745 Annex XIV Part A, Section 1; Annex II, Section 1.1; MEDDEV 2.7/1 Rev 4 Section 6 and Appendix A3',
           recommendation:
             'Provide the full device description covering design, materials, and functional principles, and state the intended purpose verbatim as declared in the technical documentation.',
           relatedFields: ['cer_device_name', 'device_description_summary', 'cer_intended_purpose'],
@@ -792,7 +792,7 @@ const rules: AuditRule[] = [
           observation: 'No discussion of unmet clinical needs has been provided.',
           requirement:
             'While not explicitly mandated, MEDDEV 2.7/1 Rev 4 and Notified Body expectations include a discussion of the clinical context, including unmet needs that justify the device. This strengthens the benefit-risk determination.',
-          reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Recital 1',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Article 61(3) and Annex XIV Part A',
           recommendation:
             'Describe the unmet clinical need or gap in current treatment that the device is intended to address. This contextualises the benefit-risk assessment and strengthens the clinical rationale.',
           relatedFields: ['unmet_clinical_need'],

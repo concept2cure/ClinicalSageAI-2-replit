@@ -268,7 +268,7 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
           checkId: 'xn_pediatric_without_safety_monitoring',
           severity: 'critical',
           title: 'Pediatric Study Without Independent Safety Monitoring',
-          message: 'Pediatric populations require enhanced safety monitoring. FDA and EMA both expect an independent Data Safety Monitoring Board (DSMB) for studies involving children.',
+          message: 'Pediatric populations require enhanced safety monitoring. FDA and EMA guidance on data monitoring committees identifies studies in children as a setting where an independent Data Safety Monitoring Board (DSMB) should be considered, weighed alongside trial risk, endpoints and duration.',
           reference: 'ICH E11(R1); FDA Guidance on Pediatric Study Plans (2020)',
           questionId: '_cross_node',
           triggerValues: { target_population: flat['target_population'], has_dsmb: flat['has_dsmb'] },
@@ -350,7 +350,7 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
           severity: 'critical',
           title: 'Accelerated Approval Without Confirmatory Trial Plan',
           message: 'Accelerated approval requires a post-marketing confirmatory trial per FDORA §3210. FDA has increased enforcement of confirmatory study requirements and can initiate withdrawal proceedings if not met.',
-          reference: 'FDORA §3210; 21 CFR 314.530; FDA Guidance on Expedited Programs (2014, updated 2023)',
+          reference: 'FDORA §3210; 21 CFR 314.530 (NDAs) / 21 CFR 601.43 (BLAs); FDA Guidance \'Expedited Programs for Serious Conditions — Drugs and Biologics\' (2014); FDA draft guidance on accelerated approval of drugs and biologics (2024)',
           questionId: '_cross_node',
           triggerValues: { regulatory_pathway: flat['regulatory_pathway'] },
         };
@@ -371,7 +371,7 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
           severity: 'warning',
           title: 'Orphan Drug Without Natural History Data',
           message: 'Orphan drug applications benefit significantly from natural history data to contextualize clinical endpoints and establish external controls. FDA reviewers frequently request this.',
-          reference: 'FDA Guidance on Rare Disease Drug Development (2019); Orphan Drug Act §526',
+          reference: 'FDA Guidance: Rare Diseases: Natural History Studies for Drug Development (2019); FD&C Act §526 (orphan designation, added by the Orphan Drug Act)',
           questionId: '_cross_node',
           triggerValues: { expedited_designations: flat['expedited_designations'] },
         };
@@ -504,9 +504,9 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
         return {
           checkId: 'xn_rems_without_etasu',
           severity: 'warning',
-          title: 'REMS Required Without ETASU Elements Defined',
-          message: 'If a REMS is required, the Elements to Assure Safe Use (ETASU) must be clearly defined. Common ETASU include prescriber certification, pharmacy certification, patient registries, and restricted distribution.',
-          reference: 'FDAAA §505-1; FDA REMS Guidance (2022)',
+          title: 'REMS Required Without Its Elements Defined',
+          message: 'If a REMS is required, confirm its elements are defined. A REMS may consist of a Medication Guide, a patient package insert and/or a communication plan; Elements to Assure Safe Use (ETASU) are required only where FDA determines they are necessary (FD&C Act 505-1(f)), and if included they must be clearly defined. Common ETASU include prescriber certification, pharmacy certification, patient registries, and restricted distribution.',
+          reference: 'FD&C Act §505-1 (21 U.S.C. 355-1), added by FDAAA; FDA REMS Guidance (2022)',
           questionId: '_cross_node',
           triggerValues: { rems_required: flat['rems_required'] },
         };
@@ -524,12 +524,15 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
     check(flat) {
       const shelfLife = numVal(flat['proposed_shelf_life'] ?? flat['shelf_life_months']);
       const dataMonths = numVal(flat['long_term_data_months'] ?? flat['stability_data_months']);
-      if (shelfLife !== null && dataMonths !== null && shelfLife > dataMonths * 2) {
+      /* ICH Q1E's most favourable case: up to twice the long-term period, and
+         no more than 12 months beyond it. Anything above that is past the
+         limit in every case; less favourable data allow less still. */
+      if (shelfLife !== null && dataMonths !== null && shelfLife > Math.min(dataMonths * 2, dataMonths + 12)) {
         return {
           checkId: 'xn_stability_insufficient_for_shelf_life',
           severity: 'critical',
           title: 'Proposed Shelf Life Exceeds Extrapolation Limits',
-          message: `Proposed shelf life of ${shelfLife} months exceeds 2x the available long-term stability data (${dataMonths} months). ICH Q1E limits extrapolation to 2x the period covered by long-term data.`,
+          message: `Proposed shelf life of ${shelfLife} months exceeds the most ICH Q1E allows from ${dataMonths} months of long-term stability data (${Math.min(dataMonths * 2, dataMonths + 12)} months). ICH Q1E allows extrapolation to at most twice the period covered by long-term data, and no more than 12 months beyond it, and only where the data support it. Less favourable cases (for example, refrigerated storage, or significant change at accelerated conditions) allow less.`,
           reference: 'ICH Q1E; FDA Guidance on Stability Data (2004)',
           questionId: '_cross_node',
           triggerValues: { proposed_shelf_life: flat['proposed_shelf_life'], long_term_data_months: flat['long_term_data_months'] },

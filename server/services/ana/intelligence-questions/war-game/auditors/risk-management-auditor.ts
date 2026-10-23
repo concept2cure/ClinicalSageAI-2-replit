@@ -149,7 +149,7 @@ const rules: AuditRule[] = [
           this.question,
           'The risk management file does not contain a risk estimation matrix with defined severity and probability scales.',
           'ISO 14971:2019 Clause 5.5 requires risk estimation for each identified hazardous situation using defined severity of harm and probability of occurrence categories.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6; ICH Q9(R1) Section 4.3',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 5.5; ICH Q9(R1) Section 4.3',
           'Develop a risk estimation matrix with clearly defined severity levels (e.g., negligible, marginal, critical, catastrophic) and probability categories supported by available data.',
           ['risk_matrix_type', 'severity_scale', 'probability_scale'],
         );
@@ -195,8 +195,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'None of the hazard identification methods recorded is a structured failure or hazard analysis (FMEA, FTA, HAZOP or HACCP).',
-          'ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. ISO/TR 24971 recommends FMEA, FTA, HAZOP, or equivalent methods.',
-          'ISO 14971:2019 Clause 5.4; ISO/TR 24971 Annex A; IEC 60812 (FMEA); IEC 61025 (FTA)',
+          'ISO 14971:2019 Clause 5.4 requires the manufacturer to identify and document known and foreseeable hazards in both normal and fault conditions; it does not mandate a technique. ISO/TR 24971 describes supporting techniques such as FMEA, FTA, HAZOP or HACCP that are commonly used to demonstrate this was done systematically.',
+          'ISO 14971:2019 Clause 5.4; ISO/TR 24971:2020 Annex B; IEC 60812 (FMEA); IEC 61025 (FTA)',
           'Conduct at least one systematic risk analysis (FMEA, FTA, or HAZOP) covering design, manufacturing, and use-related failure modes. Document the methodology, participants, and outputs.',
           ['hazard_identification_methods'],
         );
@@ -222,7 +222,7 @@ const rules: AuditRule[] = [
           this.question,
           `Severity rating inconsistencies have been identified: ${severityInconsistency}. Similar harms are assigned different severity levels without documented rationale.`,
           'ISO 14971:2019 Clause 5.5 requires consistent application of severity categories. The risk estimation process shall be repeatable and traceable.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.2',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971:2020 Clause 5.5',
           'Review all severity assignments for consistency. Create a severity calibration table with explicit examples for each severity level and retrain the risk team.',
           ['severity_inconsistencies', 'severity_scale', 'risk_estimation_matrix'],
         );
@@ -245,7 +245,7 @@ const rules: AuditRule[] = [
           this.question,
           'Probability estimates in the risk analysis are not substantiated by clinical data, complaint trending, literature review, or predicate device history.',
           'ISO 14971:2019 Clause 5.5 requires that probability of occurrence be estimated using available data. Where data are unavailable, the rationale for the estimate shall be documented.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.3; FDA Guidance: Factors to Consider Regarding Benefit-Risk',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971:2020 Clause 5.5; FDA Guidance: Factors to Consider Regarding Benefit-Risk',
           'Support probability estimates with quantitative data from complaint databases (MAUDE), published literature, bench testing, or clinical study data. Where data are insufficient, clearly document assumptions.',
           ['probability_data_sources', 'probability_scale', 'clinical_data_references'],
         );
@@ -269,8 +269,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The risk management file does not contain a traceability matrix linking risk control measures to their corresponding identified hazards.',
-          'ISO 14971:2019 Clause 7.1 requires implementation of risk control measures for each risk requiring reduction, with traceability to the hazardous situation being addressed.',
-          'ISO 14971:2019 Clause 7.1; ISO 14971:2019 Clause 4.5 (traceability); MDR 2017/745 Annex II Section 4',
+          'ISO 14971:2019 Clauses 7.1–7.2 require selection and implementation of risk control measures for each risk requiring reduction, with traceability to the hazardous situation being addressed.',
+          'ISO 14971:2019 Clauses 7.1–7.2; ISO 14971:2019 Clause 4.5 (traceability); MDR 2017/745 Annex II Section 5',
           'Create a comprehensive traceability matrix mapping each identified hazard to its risk control measures, verification activities, and resulting residual risk level.',
           ['traceability_matrix_exists', 'control_option_analysis'],
         );
@@ -294,7 +294,7 @@ const rules: AuditRule[] = [
           this.question,
           'Post-mitigation severity levels are shown as lower than pre-mitigation levels for some hazards. Risk controls typically reduce probability of occurrence, not severity of harm.',
           'ISO 14971:2019 Clause 5.5 distinguishes between severity and probability. Severity is an intrinsic property of the harm and generally cannot be reduced by risk control measures.',
-          'ISO 14971:2019 Clause 5.5; ISO/TR 24971 Clause 6.2; ICH Q9(R1) Section 4.3',
+          'ISO 14971:2019 Clause 5.5; ISO/TR 24971:2020 Clause 5.5; ICH Q9(R1) Section 4.3',
           'Review all risk entries where severity was reduced post-mitigation. Unless the control changes the nature of the potential harm itself, only the probability component should change.',
           ['severity_reduced_by_controls', 'risk_estimation_matrix', 'risk_controls'],
         );
@@ -321,7 +321,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'ISO 14971:2019 is not cited as the governing standard for the risk management process.',
-          'ISO 14971:2019 is the harmonized standard for medical device risk management recognized by FDA (via the RHTF) and under EU MDR 2017/745. Compliance is a regulatory expectation.',
+          'ISO 14971:2019 is the harmonized standard for medical device risk management recognized by FDA as a consensus standard (FDA Recognized Consensus Standards program, FD&C Act section 514(c)) and under EU MDR 2017/745. Compliance is a regulatory expectation.',
           'ISO 14971:2019; MDR 2017/745 Article 10(2); FDA Guidance: Factors to Consider Regarding Benefit-Risk',
           'Explicitly reference ISO 14971:2019 in the risk management plan and ensure all process steps align with its clauses.',
           ['applicable_standards', 'product_category'],
@@ -417,8 +417,8 @@ const rules: AuditRule[] = [
   {
     id: rid('no_benefit_risk_analysis'),
     dimension: 'regulatory_alignment',
-    title: 'No Benefit-Risk Analysis per ISO 14971 Clause 8',
-    question: 'The file does not contain an overall benefit-risk analysis as required by ISO 14971:2019 Clause 8. How does the manufacturer conclude that the medical benefits of the device outweigh the overall residual risk?',
+    title: 'No Overall Residual Risk or Benefit-Risk Evaluation per ISO 14971 Clause 8',
+    question: 'The file does not contain the evaluation of overall residual risk required by ISO 14971:2019 Clause 8, or a benefit-risk analysis where that residual risk is not judged acceptable (MDR 2017/745 Annex I requires a benefit-risk determination in all cases). How does the manufacturer conclude that the medical benefits of the device outweigh the overall residual risk?',
     check(answers) {
       // `benefit_risk_conclusion`: required select in the benefit_risk_analysis node.
       if (isBlank(answers.benefit_risk_conclusion)) {
@@ -459,7 +459,7 @@ const rules: AuditRule[] = [
           this.question,
           `Device class "${answers.device_class}" but probability is estimated on a qualitative scale only (${answers.probability_scale}). Higher-risk devices warrant quantitative estimation.`,
           'ISO 14971:2019 Clause 5.5 allows qualitative or quantitative estimation but notes that quantitative methods should be used when sufficient data exist. ICH Q9(R1) Section 4.3 (Risk Assessment) addresses risk estimation, which may be quantitative or qualitative, as part of risk analysis based on the available data.',
-          'ISO 14971:2019 Clause 5.5; ICH Q9(R1) Section 4.3; ISO/TR 24971 Clause 6',
+          'ISO 14971:2019 Clause 5.5; ICH Q9(R1) Section 4.3; ISO/TR 24971:2020 Clause 5.5',
           'Supplement qualitative assessments with quantitative probability data from complaint databases (e.g., MAUDE), clinical studies, reliability testing, or published failure rate data.',
           ['probability_scale', 'device_class'],
         );
@@ -481,8 +481,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No structured methodology for failure mode identification is documented. The analysis may be incomplete if failure modes were identified without a systematic approach.',
-          'ISO 14971:2019 Clause 5.4 requires systematic techniques for hazard identification. IEC 60812 provides a standardized methodology for FMEA.',
-          'ISO 14971:2019 Clause 5.4; IEC 60812; IEC 61025; ISO/TR 24971 Annex A',
+          'ISO 14971:2019 Clause 5.4 requires identification of known and foreseeable hazards but does not mandate a technique. IEC 60812 provides a standardized methodology for FMEA, one of the techniques commonly used to do this systematically.',
+          'ISO 14971:2019 Clause 5.4; IEC 60812; IEC 61025; ISO/TR 24971:2020 Annex B',
           'Apply a recognized structured methodology (e.g., process FMEA, design FMEA, FTA) with documented worksheets, severity-occurrence-detection ratings, and cross-functional team participation.',
           ['failure_mode_methodology', 'fmea', 'fta', 'risk_analysis_techniques'],
         );
@@ -510,7 +510,7 @@ const rules: AuditRule[] = [
           this.question,
           'High-severity hazards have been identified but no root cause analysis (e.g., fishbone diagram, 5-Why, FTA) is documented.',
           'ISO 14971:2019 Clause 5.4 and ISO/TR 24971 recommend causal analysis for significant hazards to ensure risk controls target root causes rather than proximate events.',
-          'ISO 14971:2019 Clause 5.4; ISO/TR 24971 Annex A; ICH Q9(R1) Section 4.1',
+          'ISO 14971:2019 Clause 5.4; ISO/TR 24971:2020 Annex B; ICH Q9(R1) Section 4.3',
           'Perform root cause analysis for all hazards rated as critical or catastrophic severity. Document the causal chain from root cause to hazardous situation to harm.',
           ['root_cause_analysis', 'highest_severity_identified', 'hazard_identification_methods'],
         );
@@ -557,8 +557,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `Risk control feasibility concerns have been identified: ${answers.impractical_controls}.`,
-          'ISO 14971:2019 Clause 7.1 requires that risk control measures be implemented and verified. Controls that are not technically feasible or practical do not constitute effective risk reduction.',
-          'ISO 14971:2019 Clause 7.1; ISO/TR 24971 Clause 7.1; ICH Q9(R1) Section 4.4',
+          'ISO 14971:2019 Clause 7.2 requires that the selected risk control measures be implemented and that their implementation and effectiveness be verified. Controls that are not technically feasible or practical do not constitute effective risk reduction.',
+          'ISO 14971:2019 Clauses 7.1–7.2; ISO/TR 24971 Clauses 7.1–7.2; ICH Q9(R1) Section 4.4',
           'Review each proposed risk control for technical feasibility. Where controls are impractical, document the engineering rationale and select alternative measures following the risk control hierarchy (inherent safety, protective measures, information for safety).',
           ['impractical_controls', 'risk_controls', 'design_constraints'],
         );
@@ -605,7 +605,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No documented review of residual risks after implementation of risk control measures is provided.',
-          'ISO 14971:2019 Clause 7.3 requires evaluation of residual risk after each risk control is implemented, including assessment of whether new hazards or hazardous situations have been introduced.',
+          'ISO 14971:2019 Clause 7.3 requires each residual risk to be evaluated against the risk acceptability criteria after risk control measures are implemented, and Clause 7.5 requires review of whether those measures have introduced new hazards or hazardous situations.',
           'ISO 14971:2019 Clause 7.3; ISO 14971:2019 Clause 7.5; ISO/TR 24971 Clause 7.3',
           'Conduct and document a residual risk review for every controlled hazard. Evaluate whether new hazards are introduced by controls, confirm residual risk levels against acceptability criteria, and update the risk analysis accordingly.',
           ['residual_risk_summary', 'controls_introduce_new_risks'],
@@ -657,7 +657,7 @@ const rules: AuditRule[] = [
           this.question,
           'No risk management plan is present in the risk management file.',
           'ISO 14971:2019 Clause 4.4 requires a documented risk management plan that includes scope, assignment of responsibilities, review requirements, risk acceptability criteria, verification and validation activities, and collection of production and post-production information.',
-          'ISO 14971:2019 Clause 4.4; MDR 2017/745 Annex II Section 4; ISO/TR 24971 Clause 4.4',
+          'ISO 14971:2019 Clause 4.4; MDR 2017/745 Annex I Section 3 and Annex II Section 5; ISO/TR 24971 Clause 4.4',
           'Create a risk management plan covering: scope of the risk management activities, roles and responsibilities, review milestones, acceptability criteria, lifecycle phases, and reference to applicable standards.',
           ['risk_management_plan', 'risk_management_standard'],
         );
@@ -682,7 +682,7 @@ const rules: AuditRule[] = [
           this.question,
           'No risk management report is provided as the concluding document of the risk management process.',
           'ISO 14971:2019 Clause 9 requires a risk management report that reviews the risk management plan, confirms all planned activities have been completed, and states whether the overall residual risk is acceptable.',
-          'ISO 14971:2019 Clause 9; ISO/TR 24971 Clause 9; MDR 2017/745 Annex II Section 4',
+          'ISO 14971:2019 Clause 9; ISO/TR 24971 Clause 9; MDR 2017/745 Annex II Section 5',
           'Prepare a risk management report that summarizes: completeness of the risk management plan execution, overall residual risk evaluation, benefit-risk conclusion, and any open items requiring post-market surveillance.',
           ['risk_management_report_generated', 'risk_management_plan_complete'],
         );
@@ -707,7 +707,7 @@ const rules: AuditRule[] = [
           this.question,
           'No traceability matrix or equivalent mechanism links hazards through risk analysis, controls, verification, and residual risk documentation.',
           'ISO 14971:2019 Clause 4.5 requires that the risk management file provide traceability for each identified hazard to the risk analysis, risk evaluation, risk control, and residual risk evaluation.',
-          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4',
+          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 5',
           'Develop a comprehensive traceability matrix that links each hazard ID through risk estimation, risk evaluation decision, risk control measure, verification evidence, and post-control residual risk level.',
           ['traceability_matrix_exists', 'risk_management_file_complete'],
         );
@@ -741,7 +741,7 @@ const rules: AuditRule[] = [
           this.question,
           `The risk management file is missing ${missingCount} of 6 key components. This constitutes a substantially incomplete risk management file.`,
           'ISO 14971:2019 Clause 4.5 specifies the required contents of the risk management file. All elements must be present or referenced for the file to be considered complete.',
-          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 4; FDA 21 CFR 820.10 (QMSR, incorporating ISO 13485:2016 Clause 7.1)',
+          'ISO 14971:2019 Clause 4.5; MDR 2017/745 Annex II Section 5; FDA 21 CFR 820.10 (QMSR, incorporating ISO 13485:2016 Clause 7.1)',
           'Conduct a gap analysis against ISO 14971:2019 Clause 4.5 requirements. Systematically create or reference all missing components before the file can be considered audit-ready.',
           ['risk_management_plan', 'hazard_identification_methods', 'risk_matrix_type', 'control_option_analysis', 'residual_risk_summary', 'risk_management_report_generated'],
         );
@@ -820,7 +820,7 @@ const rules: AuditRule[] = [
           this.question,
           'No evaluation of emerging or newly recognized risk categories (e.g., cybersecurity, AI/ML-related risks, interoperability, supply chain) is documented.',
           'ISO 14971:2019 Clause 10.3 requires that new or revised information be evaluated for its impact on previously identified risks and for identification of new hazards.',
-          'ISO 14971:2019 Clause 10.3; FDA Guidance: Cybersecurity in Medical Devices (2023); IMDRF Guidance on Software as a Medical Device',
+          'ISO 14971:2019 Clause 10.3; FDA Guidance: Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions (current final version); IMDRF Guidance on Software as a Medical Device',
           'Evaluate emerging risk categories applicable to the device type (cybersecurity, AI/ML, interoperability, supply chain disruptions) and document the assessment, even if such risks are determined to be not applicable.',
           ['emerging_risks', 'cybersecurity_risk', 'software_risks'],
         );

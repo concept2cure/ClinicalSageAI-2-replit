@@ -255,7 +255,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the key physicochemical properties of the drug substance.',
         guidance:
-          'Per ICH Q6A (Section 3) and Q6B (Section 3), characterize relevant physicochemical properties including physical form, solubility, polymorphism (for small molecules), and higher-order structure (for biologics). These properties directly impact formulation strategy and bioavailability.',
+          'Per ICH Q6A (Section 3) and Q6B (Section 2.1, Characterisation), characterize relevant physicochemical properties including physical form, solubility, polymorphism (for small molecules), and higher-order structure (for biologics). These properties directly impact formulation strategy and bioavailability.',
         fields: [
           {
             id: 'physical_form',
@@ -506,7 +506,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Risk Assessment Not Performed',
             message:
               'A formal quality risk assessment is expected by regulators to justify the identification of CPPs and CQAs. Consider performing at least an FMEA or risk ranking and filtering exercise before submission.',
-            reference: 'ICH Q9 Quality Risk Management, ICH Q8(R2) Section 2.6',
+            reference: 'ICH Q9 Quality Risk Management, ICH Q8(R2) Part II (Annex) Section 2.3 (Risk Assessment)',
           },
         ],
         defaultNext: 'starting_materials',
@@ -527,7 +527,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             placeholder:
               'List each starting material with its chemical name, supplier, and quality standard (e.g., USP, Ph. Eur., in-house).',
             helpText:
-              'Per ICH Q11, starting materials should be commercially available substances with well-defined specifications. Include chemical name, CAS number, and quality standard for each.',
+              'Per ICH Q11, starting materials should be substances with defined chemical properties and structure, controlled by appropriate specifications, and incorporated as significant structural fragments of the drug substance; commercial availability is not itself a requirement. Include chemical name, CAS number, and quality standard for each.',
             required: true,
             validation: { minLength: 10, maxLength: 5000 },
           },
@@ -578,7 +578,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Single-Source Supply Chain Risk',
             message:
               'A single-source starting material creates supply chain vulnerability. Consider qualifying a second supplier or documenting a robust contingency plan. Regulators may issue an information request on supply chain continuity.',
-            reference: 'ICH Q11, FDA Guidance on Drug Shortages (2023)',
+            reference: 'ICH Q11; FDA draft guidance, Risk Management Plans to Mitigate the Potential for Drug Shortages',
           },
         ],
         defaultNext: 'structural_characterization',
@@ -592,7 +592,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the structural characterization studies performed on the drug substance.',
         guidance:
-          'Per ICH Q6A (Section 3.1) for small molecules and Q6B (Section 3) for biologics, provide evidence confirming the molecular structure. For small molecules this includes spectroscopic data (NMR, MS, IR, UV); for biologics it includes primary, secondary, tertiary, and quaternary structure characterization.',
+          'Per ICH M4Q (CTD Section 3.2.S.3.1, Elucidation of Structure and other Characteristics), and for biologics ICH Q6B (Section 2.1, Characterisation), provide evidence confirming the molecular structure. For small molecules this includes spectroscopic data (NMR, MS, IR, UV); for biologics it includes primary, secondary, tertiary, and quaternary structure characterization.',
         fields: [
           /* Recorded under this title in cmc_characterization_studies by the
              interview commit (interview-commit.ts); asked, never defaulted. */
@@ -677,7 +677,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             placeholder:
               'List known impurities with structure (if identified), origin (starting material, intermediate, degradant), and observed levels.',
             helpText:
-              'Per ICH Q3A(R2): Reporting threshold ≥ 0.05% (dose ≤ 2g/day) or ≥ 0.03% (dose > 2g/day). Identification threshold ≥ 0.10% or ≥ 0.05%. Qualification threshold ≥ 0.15% or ≥ 0.05%. Provide structure or structural class for all identified impurities.',
+              'Per ICH Q3A(R2): Reporting threshold ≥ 0.05% (dose ≤ 2g/day) or ≥ 0.03% (dose > 2g/day). Identification threshold: 0.10% or 1.0 mg/day total daily intake, whichever is lower (dose ≤ 2g/day), or 0.05% (dose > 2g/day). Qualification threshold: 0.15% or 1.0 mg/day total daily intake, whichever is lower (dose ≤ 2g/day), or 0.05% (dose > 2g/day). Provide structure or structural class for all identified impurities.',
             required: true,
             validation: { minLength: 20, maxLength: 5000 },
           },
@@ -763,7 +763,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
           },
           {
             id: 'confirmed_mutagens',
-            label: 'Confirmed mutagenic impurities (Class 1, 2, or 3)',
+            label: 'Mutagenic impurities requiring control (confirmed Class 1 or 2, or alerting Class 3)',
             type: 'textarea',
             placeholder: 'List confirmed mutagenic impurities with ICH M7 class, control strategy, and acceptance limit.',
             helpText:
@@ -1125,7 +1125,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the process validation strategy for the drug product.',
         guidance:
-          'Per FDA Process Validation Guidance (January 2011, Revision 1) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Commercial processes must be validated before NDA/BLA approval.',
+          'Per FDA Process Validation Guidance (January 2011, Revision 1) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Under that guidance, PPQ must be completed successfully before the product is commercially distributed; for BLAs, process validation data are generally expected in the application.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1169,7 +1169,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'FDA expects PPQ to be complete before NDA/BLA approval. If PPQ will not be complete, a robust justification and commitment are required.',
+              'PPQ must be completed successfully before commercial distribution; for BLAs, FDA generally expects process validation data in the application. If PPQ will not be complete at submission, a robust justification and commitment are required.',
           },
         ],
         issueChecks: [
@@ -1179,7 +1179,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Process Validation Incomplete at Submission',
             message:
-              'FDA expects process performance qualification (PPQ) to be complete before NDA/BLA approval. If PPQ data will not be available, discuss with FDA pre-approval. Include a detailed validation plan with timeline and commitment to complete PPQ prior to commercial distribution.',
+              'Process performance qualification (PPQ) must be completed successfully before commercial distribution, and for BLAs FDA generally expects process validation data in the application. If PPQ data will not be available at submission, discuss with FDA pre-approval. Include a detailed validation plan with timeline and commitment to complete PPQ prior to commercial distribution.',
             reference: 'FDA Guidance for Industry: Process Validation — General Principles and Practices (January 2011, Rev. 1)',
           },
           {

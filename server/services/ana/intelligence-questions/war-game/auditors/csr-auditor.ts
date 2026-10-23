@@ -339,8 +339,9 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'Primary endpoint not defined',
     question:
-      'ICH E3 Section 9.5 and ICH E9 Section 2.2 require a single, clearly defined ' +
-      'primary efficacy endpoint that is clinically meaningful and linked to the ' +
+      'ICH E3 Section 9.5 and ICH E9 Section 2.2 require a clearly defined, pre-specified ' +
+      'primary efficacy endpoint (generally one; multiple or co-primary endpoints need ' +
+      'multiplicity control) that is clinically meaningful and linked to the ' +
       'primary objective. Is the primary endpoint specified with its measurement ' +
       'instrument, time point, and responder definition (if applicable)?',
     check(answers) {
@@ -349,7 +350,8 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', this.title, this.question,
           'No primary efficacy endpoint is specified. Without a defined primary endpoint, ' +
           'the FDA cannot evaluate the statistical evidence for efficacy.',
-          'Every confirmatory trial must designate a single primary endpoint that is clinically ' +
+          'Every confirmatory trial must pre-specify its primary endpoint (generally one; multiple or ' +
+          'co-primary endpoints require multiplicity control) that is clinically ' +
           'meaningful, reproducible, and aligned with the primary objective.',
           'ICH E3, Section 9.5; ICH E9, Section 2.2; 21 CFR 314.126',
           'Define the primary endpoint including: (1) the clinical variable measured, ' +
@@ -679,9 +681,10 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Interim analyses performed without documented DMC',
     question:
-      'ICH E9 Section 4.5 requires that interim analyses be pre-specified and ' +
-      'conducted under DMC oversight with alpha-spending rules to preserve Type I ' +
-      'error. Were interim analyses performed, and if so, is DMC oversight documented?',
+      'ICH E9 Section 4.5 expects interim analyses to be pre-planned with a method ' +
+      'that preserves the Type I error and the confidentiality of interim results; ICH E9 ' +
+      'and FDA DMC guidance recommend independent DMC oversight for many trials with ' +
+      'interim looks. Were interim analyses performed, and if so, is DMC oversight documented?',
     check(answers) {
       const performed = answers.interim_analyses_performed;
       if (performed === true || performed === 'yes' || performed === 'Yes') {
@@ -693,9 +696,10 @@ const rules: AuditRule[] = [
             'Interim analyses were performed but no DMC oversight is documented. This ' +
             'raises serious concerns about the integrity of the interim analysis and ' +
             'the preservation of the Type I error rate.',
-            'Interim analyses must be overseen by an independent DMC operating under a ' +
-            'pre-specified alpha-spending function (e.g., O\'Brien-Fleming, Lan-DeMets). ' +
-            'Unmonitored interim analyses create bias risk.',
+            'Interim analyses should be pre-specified with a method that controls Type I error ' +
+            '(e.g., group-sequential boundaries or an O\'Brien-Fleming / Lan-DeMets alpha-spending ' +
+            'function), and ICH E9 and FDA DMC guidance recommend independent DMC oversight for many ' +
+            'trials with interim efficacy or safety looks. Unmonitored interim analyses create bias risk.',
             'ICH E9, Section 4.5; FDA Guidance on DMCs (2006); ICH E3, Section 11.4.2.3',
             'Document: (1) the alpha-spending function used, (2) number and timing of ' +
             'interim looks, (3) stopping boundaries, (4) DMC composition and charter, ' +
@@ -751,20 +755,20 @@ const rules: AuditRule[] = [
     dimension: 'scientific_rigor',
     title: 'Missing data handling strategy not described',
     question:
-      'Per the NRC/FDA report "The Prevention and Treatment of Missing Data in ' +
-      'Clinical Trials" (2010), ICH E9(R1), and FDA Guidance (2020), the CSR must ' +
+      'Per the National Research Council report "The Prevention and Treatment of Missing ' +
+      'Data in Clinical Trials" (2010, commissioned by FDA) and ICH E9(R1), the CSR should ' +
       'describe the estimand framework, the primary imputation method, the assumed ' +
       'missing data mechanism, and sensitivity analyses. Is this strategy described?',
     check(answers) {
       if (isBlank(answers.handling_of_missing_data)) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
-          'No missing data handling strategy is described. FDA considers this a significant ' +
-          'omission, particularly for trials with discontinuation rates above 10%.',
+          'No missing data handling strategy is described. FDA reviewers treat this as a significant ' +
+          'omission, and its impact grows with the discontinuation rate.',
           'The missing data approach must be pre-specified in the SAP. The CSR must describe ' +
-          'the primary assumption (e.g., MAR, MNAR), the analytical method, and at least ' +
-          'two sensitivity analyses under alternative assumptions.',
-          'ICH E9(R1) Addendum on Estimands; NRC Report (2010); FDA Guidance on Missing Data (2020)',
+          'the primary assumption (e.g., MAR, MNAR), the analytical method, and the pre-specified ' +
+          'sensitivity analyses that test the robustness of the primary analysis under alternative assumptions.',
+          'ICH E9(R1) Addendum on Estimands; NRC Report (2010), The Prevention and Treatment of Missing Data in Clinical Trials (commissioned by FDA)',
           'Describe: (1) the estimand (treatment policy, composite, hypothetical, or ' +
           'principal stratum), (2) the primary imputation/modeling approach, (3) the missing ' +
           'data rate by treatment arm, (4) whether missingness was differential, and ' +
@@ -929,9 +933,10 @@ const rules: AuditRule[] = [
     dimension: 'risk_identification',
     title: 'Potential efficacy-safety imbalance: deaths without benefit-risk discussion',
     question:
-      'The FDA benefit-risk framework (PDUFA VI) requires explicit weighing of ' +
-      'efficacy benefits against safety signals. When deaths have occurred on study, ' +
-      'the CSR must include a structured benefit-risk assessment. Is this provided?',
+      'FDA weighs efficacy benefits against safety signals explicitly, using its Benefit-Risk ' +
+      'Framework (introduced under PDUFA V and carried forward since). When deaths have occurred ' +
+      'on study, ICH E3 expects death narratives and analysis, and the CSR\'s discussion and overall ' +
+      'conclusions should address the relationship of benefits to risks in light of that mortality. Is this provided?',
     check(answers) {
       const deaths = toNumber(answers.deaths);
       if (deaths !== null && deaths > 0 && isBlank(answers.benefit_risk_assessment)) {
@@ -940,10 +945,10 @@ const rules: AuditRule[] = [
           `${deaths} death(s) reported on study but no integrated benefit-risk statement is provided. ` +
           'The FDA medical officer will demand an explicit benefit-risk justification ' +
           'when deaths occur in a clinical trial.',
-          'When deaths occur, the CSR must include a detailed benefit-risk assessment ' +
-          'addressing whether the drug\'s benefits outweigh the observed mortality signal, ' +
+          'When deaths occur, the CSR should analyse them (ICH E3 Section 12.3) and its discussion ' +
+          'and conclusions should address whether the drug\'s benefits outweigh the observed mortality signal, ' +
           'with comparison to background rates and the comparator arm.',
-          'FDA Benefit-Risk Framework (PDUFA VI); ICH E3, Section 12.6; 21 CFR 314.50(d)(5)(vi)',
+          'FDA Benefit-Risk Framework (introduced under PDUFA V); ICH E3, Sections 12.3 and 12.6; 21 CFR 314.50(d)(5)(vi)',
           'Provide: (1) a structured benefit-risk analysis using the four dimensions of FDA\'s Benefit-Risk ' +
           'framework, (2) an individual narrative for each death, (3) causality adjudication ' +
           'by the sponsor, and (4) comparison with expected background mortality rates.',
@@ -995,7 +1000,7 @@ const rules: AuditRule[] = [
     dimension: 'completeness',
     title: 'Study population not described',
     question:
-      'ICH E3 Section 10 and 21 CFR 314.50(d)(5)(ii) require a description of ' +
+      'ICH E3 Sections 9.3 and 11.2 and 21 CFR 314.50(d)(5)(ii) require a description of ' +
       'the study population including demographics, baseline characteristics, and ' +
       'eligibility criteria. Is the target population adequately described?',
     check(answers) {
@@ -1014,7 +1019,7 @@ const rules: AuditRule[] = [
           'The CSR must describe the study population including key inclusion/exclusion ' +
           'criteria, demographics (age, sex, race/ethnicity), and baseline disease ' +
           'characteristics by treatment arm.',
-          'ICH E3, Section 10; 21 CFR 314.50(d)(5)(ii); FDA Guidance on Diversity (2020)',
+          'ICH E3, Sections 9.3 and 11.2; 21 CFR 314.50(d)(5)(ii); FDA Guidance on Diversity (2020)',
           'Provide a demographics and baseline characteristics table by treatment arm. ' +
           'Include age, sex, race/ethnicity, geographic region, baseline disease severity, ' +
           'and relevant medical history.',

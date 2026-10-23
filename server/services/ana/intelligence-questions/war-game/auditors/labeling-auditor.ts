@@ -278,7 +278,7 @@ const rules: AuditRule[] = [
           this.question,
           `The labeled dose "${answers.recommended_dosage}" differs from the clinical trial dose "${answers.clinical_trial_dose}". The labeling dose must be supported by the pivotal trial evidence.`,
           'The recommended dosage must reflect the dosing used in clinical trials that demonstrated efficacy per 21 CFR 201.57(c)(3) and 21 CFR 314.126.',
-          '21 CFR 201.57(c)(3); 21 CFR 314.126; FDA Guidance: Dosage and Administration Section (2018)',
+          '21 CFR 201.57(c)(3); 21 CFR 314.126; FDA Guidance: Dosage and Administration Section of Labeling for Human Prescription Drug and Biological Products -- Content and Format',
           'Reconcile the label dose with clinical trial evidence. If the recommended dose differs from trial doses, provide pharmacokinetic or dose-response data justifying the selected dose.',
           ['recommended_dosage', 'clinical_trial_dose'],
         );
@@ -326,7 +326,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The labeling does not conform to the Physician Labeling Rule (PLR) format with the required Highlights, Table of Contents, and Full Prescribing Information structure.',
-          'All new drug labeling must follow the PLR format per 21 CFR 201.56(d) and 21 CFR 201.57. Previously approved drugs must convert per the implementation timeline in 71 FR 3922.',
+          'All new drug labeling must follow the PLR format per 21 CFR 201.56(d) and 21 CFR 201.57. Drugs approved on or after June 30, 2001 were required to convert under the implementation schedule in 21 CFR 201.56(c) (71 FR 3922); labeling for drugs approved before that date may remain in the 21 CFR 201.80 format unless the sponsor converts voluntarily.',
           '21 CFR 201.56(d); 21 CFR 201.57; 71 FR 3922 (PLR Final Rule, 2006)',
           'Restructure the labeling into the three required sections: Highlights of Prescribing Information, Full Prescribing Information Table of Contents, and Full Prescribing Information with all required subsections in the prescribed order.',
           ['plr_format_confirmed', 'fpi_sections_included'],
@@ -351,7 +351,7 @@ const rules: AuditRule[] = [
           this.question,
           'The labeling uses legacy pregnancy categories (A/B/C/D/X) instead of the narrative subsections required by the Pregnancy and Lactation Labeling Rule (PLLR).',
           'The PLLR (effective June 30, 2015) requires removal of pregnancy categories and replacement with narrative subsections: Pregnancy, Lactation, and Females and Males of Reproductive Potential per 21 CFR 201.57(c)(9).',
-          '21 CFR 201.57(c)(9); PLLR Final Rule (79 FR 72064, 2014); FDA Guidance: Labeling for Human Prescription Drug and Biological Products -- Content and Format of the Pregnancy and Lactation Subsections',
+          '21 CFR 201.57(c)(9); PLLR Final Rule (79 FR 72064, 2014); FDA Draft Guidance: Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drug and Biological Products -- Content and Format',
           'Replace legacy pregnancy categories with the three PLLR-mandated subsections containing narrative summaries of risk, clinical considerations, and data from human and animal studies.',
           ['pregnancy_category_legacy', 'pregnancy_risk_summary', 'lactation_risk_summary'],
         );
@@ -472,7 +472,7 @@ const rules: AuditRule[] = [
           this.question,
           'No drug-drug interaction study data is cited in the Drug Interactions section of the labeling.',
           'The Drug Interactions section per 21 CFR 201.57(c)(8) must include clinically significant interactions based on in vitro and in vivo studies, including effects on CYP enzymes, transporters, and any required dose adjustments.',
-          '21 CFR 201.57(c)(8); FDA Guidance: In Vitro Drug Interaction Studies (2020); FDA Guidance: Clinical Drug Interaction Studies (2020)',
+          '21 CFR 201.57(c)(8); ICH M12 Drug Interaction Studies (FDA final guidance, 2024)',
           'Include results from in vitro CYP inhibition/induction studies and transporter studies, along with any clinical DDI trials. Provide specific dose adjustment recommendations for significant interactions.',
           ['ddi_studies_conducted', 'cyp_inhibition_profile', 'transporter_interactions', 'clinically_significant_ddis'],
         );
@@ -517,7 +517,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Neither hepatic nor renal impairment dosing data is included in the labeling.',
-          'Per 21 CFR 201.57(c)(9), the Use in Specific Populations section must address dosing in hepatic and renal impairment per FDA Guidance on Pharmacokinetics in Patients with Impaired Hepatic/Renal Function.',
+          'Under 21 CFR 201.57(c)(9), the Use in Specific Populations section may include additional subsections such as hepatic and renal impairment, and FDA recommends that labeling address dosing in hepatic and renal impairment per FDA Guidance on Pharmacokinetics in Patients with Impaired Hepatic/Renal Function.',
           '21 CFR 201.57(c)(9); FDA Guidance: Pharmacokinetics in Patients with Impaired Renal Function (2020); FDA Guidance: Pharmacokinetics in Patients with Impaired Hepatic Function (2003)',
           'Conduct hepatic impairment (Child-Pugh A/B/C) and renal impairment (mild/moderate/severe/ESRD) studies or provide population PK analyses. Include dose adjustment recommendations or state that no adjustment is needed with supporting data.',
           ['hepatic_impairment', 'renal_impairment', 'special_pk_populations', 'dose_modifications'],
@@ -706,8 +706,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No FDA Establishment Identifier (FEI) is provided for the manufacturing facility.',
-          'Manufacturing establishments must be registered with FDA per 21 CFR 207.20 and must have an FEI number. The FEI links the product to an inspected, registered facility.',
-          '21 CFR 207.20; 21 CFR 207.25; FDCA Section 510',
+          'Manufacturing establishments must be registered with FDA under FD&C Act Section 510 and 21 CFR Part 207 (21 CFR 207.17 and 207.25), and FDA assigns each registered establishment an FEI number. The FEI links the product to an inspected, registered facility.',
+          '21 CFR 207.17; 21 CFR 207.25; FDCA Section 510',
           'Provide the FEI number for each manufacturing facility involved in production, testing, and packaging. Ensure all facilities are registered in the FDA Unified Registration and Listing System (FURLS).',
           ['fei_number', 'manufacturer_info'],
         );
@@ -759,7 +759,7 @@ const rules: AuditRule[] = [
           this.question,
           'A REMS is required but no Medication Guide has been submitted as part of the REMS program.',
           'Under FDCA Section 505-1 and 21 CFR 208, FDA may require a Medication Guide as an element of a REMS to ensure patients are informed of serious risks. Most REMS programs include a Medication Guide or communication plan.',
-          'FDCA Section 505-1; 21 CFR 208; FDA Guidance: Format and Content of Proposed REMS (2009)',
+          'FDCA Section 505-1; 21 CFR 208; FDA Guidance: Format and Content of a REMS Document',
           'Develop a Medication Guide as a REMS element, or justify why alternative ETASU (Elements to Assure Safe Use) are sufficient for patient risk communication. Include the REMS assessment timeline.',
           ['rems_required', 'medication_guide_required', 'medication_guide_status'],
         );
@@ -854,7 +854,7 @@ const rules: AuditRule[] = [
           this.question,
           'No Pediatric Use subsection is included in the labeling.',
           'Per 21 CFR 201.57(c)(9)(iv), the Pediatric Use subsection must either describe adequate pediatric studies or state that safety and effectiveness have not been established, along with any available pediatric pharmacokinetic data.',
-          '21 CFR 201.57(c)(9)(iv); Pediatric Research Equity Act (PREA); FDA Guidance: General Clinical Pharmacology Considerations for Pediatric Studies (2014)',
+          '21 CFR 201.57(c)(9)(iv); Pediatric Research Equity Act (PREA); FDA Guidance: General Clinical Pharmacology Considerations for Pediatric Studies of Drugs, Including Biological Products (2022)',
           'Include a Pediatric Use subsection that either summarizes pediatric clinical data supporting use in specific age groups, or states that safety and effectiveness have not been established. Reference any pediatric study plans or waivers/deferrals under PREA.',
           ['pediatric_use', 'pediatric_studies_conducted'],
         );

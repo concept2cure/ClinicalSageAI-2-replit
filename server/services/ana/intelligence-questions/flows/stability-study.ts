@@ -2,7 +2,7 @@
  * Stability Study flow definition for the AnA Intelligence Questioning system.
  *
  * Guides pharma/biotech sponsors through stability study design and reporting
- * per ICH Q1A-Q1F, covering product and formulation overview, study design and
+ * per ICH Q1A(R2)-Q1E and the WHO stability guideline, covering product and formulation overview, study design and
  * conditions, testing schedule and parameters, data analysis and shelf-life
  * determination, and post-approval commitments.
  *
@@ -20,7 +20,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
     category: 'stability_study',
     name: 'Stability Study',
     description:
-      'Stability study design and reporting questionnaire per ICH Q1A-Q1F, covering product and formulation overview, study design and conditions, testing schedule and parameters, data analysis and shelf-life determination, and commitments and post-approval obligations.',
+      'Stability study design and reporting questionnaire per ICH Q1A(R2)-Q1E and the WHO stability guideline, covering product and formulation overview, study design and conditions, testing schedule and parameters, data analysis and shelf-life determination, and commitments and post-approval obligations.',
     clientTypes: ['pharma', 'biotech'],
     entryNode: 'product_formulation',
     estimatedMinutes: 35,
@@ -68,7 +68,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
         question:
           'Let\'s begin your stability study design. Tell me about the product, its formulation, and the current development stage. The product type and dosage form will determine the scope of the stability program required under ICH Q1A(R2).',
         guidance:
-          'ICH Q1A(R2) Section 1 establishes that stability testing is required for drug substances and drug products to determine their retest period or shelf life under defined storage conditions. The scope of the stability program depends on the development stage: early clinical studies may use abbreviated protocols, while registration applications require formal, long-term data on at least three primary batches. ICH Q1A(R2) Section 2.1 further distinguishes requirements for drug substances versus drug products. For biological/biotechnological products, ICH Q5C imposes additional requirements including potency, aggregation, and higher-order structure monitoring.',
+          'ICH Q1A(R2) Section 1 establishes that stability testing is required for drug substances and drug products to determine their retest period or shelf life under defined storage conditions. The scope of the stability program depends on the development stage: early clinical studies may use abbreviated protocols, while registration applications require formal, long-term data on at least three primary batches. ICH Q1A(R2) sets out separate requirements for drug substances (Section 2.1) and drug products (Section 2.2). For biological/biotechnological products, ICH Q5C imposes additional requirements including potency, aggregation, and higher-order structure monitoring.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -268,7 +268,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
         question:
           'Describe the container closure system used for the stability studies. ICH Q1A(R2) Section 2.2.4 (Container Closure System) requires that stability testing be conducted in the container closure system proposed for marketing.',
         guidance:
-          'The container closure system is integral to the stability profile of the product. ICH Q1A(R2) Section 2.2.4 (Section 2.1.4 for the drug substance) requires stability testing in the marketed container closure system. For semi-permeable containers (e.g., LDPE bags for parenterals), additional studies at low humidity may be needed per FDA Guidance for Industry "Container Closure System Guidance for Human Drug Products." Container closure integrity testing (CCIT) per USP <1207> is critical for sterile products and should be part of the stability protocol.',
+          'The container closure system is integral to the stability profile of the product. ICH Q1A(R2) Section 2.2.4 (Section 2.1.4 for the drug substance) requires stability testing in the marketed container closure system. For semi-permeable containers (e.g., LDPE bags for parenterals), additional studies at low relative humidity may be needed per ICH Q1A(R2) (storage conditions for drug products packaged in semi-permeable containers); packaging qualification is addressed in FDA Guidance for Industry "Container Closure Systems for Packaging Human Drugs and Biologics." Container closure integrity testing (CCIT) per USP <1207> is critical for sterile products and should be part of the stability protocol.',
         fields: [
           {
             id: 'container_closure_description',
@@ -341,7 +341,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
           'What storage conditions are included in your stability protocol? ICH Q1A(R2) defines standard conditions for long-term, intermediate, and accelerated studies. The choice depends on the product type and the climatic zones where you intend to market.',
         guidance:
           'ICH Q1A(R2) Section 2.2.7 specifies the following standard conditions:\n\n' +
-          '- Long-term: 25 +/- 2 C / 60% +/- 5% RH (Zone I-II) or 30 +/- 2 C / 65% +/- 5% RH (Zone III-IVa) or 30 +/- 2 C / 75% +/- 5% RH (Zone IVb per WHO TRS 953 Annex 2; ICH Q1F, withdrawn in 2006, did not define Zone IVb)\n' +
+          '- Long-term: 25 +/- 2 C / 60% +/- 5% RH (Zone I-II) or 30 +/- 2 C / 65% +/- 5% RH (Zone IVa). Beyond ICH Q1A(R2), the WHO stability guideline (TRS 1010 Annex 10, which replaced TRS 953 Annex 2) sets 30 +/- 2 C / 35% +/- 5% RH for Zone III and 30 +/- 2 C / 75% +/- 5% RH for Zone IVb (ICH Q1F, withdrawn in 2006, did not define Zone IVb)\n' +
           '- Intermediate: 30 +/- 2 C / 65% +/- 5% RH\n' +
           '- Accelerated: 40 +/- 2 C / 75% +/- 5% RH\n\n' +
           'Additional conditions apply for refrigerated products (5 +/- 3 C), frozen products (-20 +/- 5 C), and products stored below -20 C. ICH Q5C provides supplementary conditions for biologics.',
@@ -356,10 +356,10 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'zone_i', label: 'Zone I — Temperate (21 C / 45% RH)', description: 'Northern Europe, Canada, Russia' },
               { value: 'zone_ii', label: 'Zone II — Subtropical/Mediterranean (25 C / 60% RH)', description: 'USA, Japan, Southern Europe' },
               { value: 'zone_iii', label: 'Zone III — Hot/Dry (30 C / 35% RH)', description: 'Iraq, Sudan' },
-              { value: 'zone_iva', label: 'Zone IVa — Hot/Humid (30 C / 65% RH)', description: 'Brazil, Ghana, Philippines' },
-              { value: 'zone_ivb', label: 'Zone IVb — Hot/Very Humid (30 C / 75% RH)', description: 'Hot/very humid markets per WHO TRS 953 Annex 2' },
+              { value: 'zone_iva', label: 'Zone IVa — Hot/Humid (30 C / 65% RH)', description: 'Hot/humid markets per WHO TRS 1010 Annex 10 (Brazil, Ghana and the Philippines are Zone IVb, not IVa)' },
+              { value: 'zone_ivb', label: 'Zone IVb — Hot/Very Humid (30 C / 75% RH)', description: 'Hot/very humid markets per WHO TRS 1010 Annex 10 (e.g., Brazil, ASEAN countries)' },
             ],
-            helpText: 'WHO TRS 953 Annex 2 defines long-term storage conditions by climatic zone (ICH Q1F, which covered Zones III and IV, was withdrawn in 2006). Selecting Zone IVb requires 30 C/75% RH long-term testing.',
+            helpText: 'WHO TRS 1010 Annex 10 (2018, which replaced TRS 953 Annex 2) defines long-term storage conditions by climatic zone (ICH Q1F, which covered Zones III and IV, was withdrawn in 2006). Selecting Zone IVb requires 30 C/75% RH long-term testing.',
           },
           {
             id: 'long_term_condition',
@@ -377,10 +377,10 @@ export function createStabilityStudyFlow(): FlowDefinition {
           },
           {
             id: 'has_accelerated_data',
-            label: 'Is accelerated stability testing (40 C +/- 2 C / 75% RH +/- 5% RH) included?',
+            label: 'Is accelerated stability testing (e.g., 40 C +/- 2 C / 75% RH +/- 5% RH for room-temperature storage) included?',
             type: 'yes_no',
             required: true,
-            helpText: 'Six months of accelerated data is required at the time of submission per ICH Q1A(R2) Section 2.2.7.',
+            helpText: 'Per ICH Q1A(R2) Section 2.2.7, six months of accelerated data are expected at submission: 40 C/75% RH for room-temperature storage, or 25 C/60% RH for refrigerated storage. Freezer products have no accelerated condition; a single batch is tested at an elevated temperature instead.',
           },
           {
             id: 'accelerated_significant_change',
@@ -426,7 +426,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             severity: 'critical',
             title: 'No Accelerated Stability Data',
             message:
-              'ICH Q1A(R2) Section 2.2.7 requires six months of accelerated stability data (40 C/75% RH) at the time of submission. Absence of accelerated data is a significant deficiency that will likely result in a Refuse-to-File or information request from regulatory authorities.',
+              'ICH Q1A(R2) Section 2.2.7 expects six months of accelerated stability data at the time of submission: 40 C/75% RH for products stored at room temperature, or 25 C/60% RH for products stored in a refrigerator. For products stored in a freezer, there is no accelerated condition; a single batch is tested at an elevated temperature (e.g., 5 C or 25 C) instead. Where an accelerated study applies, absence of accelerated data is a significant deficiency that will likely result in a Refuse-to-File or information request from regulatory authorities.',
             reference: 'ICH Q1A(R2) Section 2.2.7',
           },
           {
@@ -469,9 +469,9 @@ export function createStabilityStudyFlow(): FlowDefinition {
         id: 'climatic_zone_branching',
         section: 'study_design_conditions',
         question:
-          'Based on your target climatic zones, let\'s verify the specific storage conditions and data package requirements. ICH Q1F provides guidance for registration in Climatic Zones III and IV, while WHO Technical Report Series No. 953 defines the zone classification system.',
+          'Based on your target climatic zones, let\'s verify the specific storage conditions and data package requirements. ICH Q1F, which once covered Climatic Zones III and IV, was withdrawn in 2006; the WHO stability guideline (Technical Report Series No. 1010, Annex 10) now defines the zone classification system.',
         guidance:
-          'ICH Q1F was withdrawn from the ICH process in 2006 but remains adopted by WHO and several national regulatory authorities. The WHO Stability Guidance (TRS 953, Annex 2) classifies zones I through IVb with specific long-term conditions for each. For global filings, the most stringent condition (typically Zone IVb: 30 C/75% RH) covers all zones. For Zone I-II only submissions, 25 C/60% RH is standard. When filing in multiple zones, consider whether a single condition covers all targets or if separate data sets are needed.',
+          'ICH Q1F was withdrawn from the ICH process in 2006; storage conditions for Climatic Zones III and IV are now set by the WHO stability guideline and by regional regulatory authorities (for example, ASEAN at 30 C/75% RH), rather than by Q1F. The WHO stability guideline (TRS 1010, Annex 10, which replaced TRS 953 Annex 2) classifies zones I through IVb with specific long-term conditions for each. For global filings, the most stringent condition (typically Zone IVb: 30 C/75% RH) covers all zones. For Zone I-II only submissions, 25 C/60% RH is standard. When filing in multiple zones, consider whether a single condition covers all targets or if separate data sets are needed.',
         fields: [
           {
             id: 'zone_specific_conditions',
@@ -490,7 +490,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             id: 'who_prequalification',
             label: 'Is WHO Prequalification targeted?',
             type: 'yes_no',
-            helpText: 'WHO Prequalification requires stability data per WHO Technical Report Series No. 953, Annex 2. Long-term conditions of 30 C/75% RH for Zone IVb are typically required.',
+            helpText: 'WHO Prequalification requires stability data per WHO Technical Report Series No. 1010, Annex 10 (which replaced TRS 953 Annex 2). Long-term conditions of 30 C/75% RH for Zone IVb are typically required.',
           },
           {
             id: 'zone_regulatory_authorities',
@@ -902,7 +902,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
           '2. If batches can be pooled, estimate the shelf life from the combined data. If not, use the shortest individual batch estimate.\n' +
           '3. Regression analysis: determine the time at which the 95% one-sided confidence limit for the mean curve intersects the acceptance criterion.\n' +
           '4. Extrapolation beyond the period covered by long-term data may be possible if supported by accelerated data showing no significant change.\n\n' +
-          'The proposed shelf life should generally not exceed 2x the period covered by long-term data when extrapolation is used.',
+          'When extrapolation is used, the proposed shelf life may generally be up to 2x the period covered by long-term data, but no more than 12 months beyond it; narrower limits apply to refrigerated products (up to 1.5x, no more than 6 months beyond) and frozen products generally get no extrapolation.',
         fields: [
           {
             id: 'statistical_approach',
@@ -979,7 +979,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
         guidance:
           'ICH Q1E Section 2.3 addresses extrapolation:\n\n' +
           '- Extrapolation may be used when long-term data show little to no change or variability, and accelerated data show no significant change.\n' +
-          '- The proposed shelf life should not exceed the available long-term data by more than 2x (e.g., 12 months data allows a maximum 24-month shelf-life claim).\n' +
+          '- The proposed shelf life may extend beyond the available long-term data by up to 2x, but by no more than 12 months (e.g., 12 months data allows a maximum 24-month claim; 24 months data allows a maximum 36-month claim). Narrower limits apply to refrigerated products (up to 1.5x, no more than 6 months beyond), and frozen products generally get no extrapolation.\n' +
           '- For drug substances, a retest period rather than an expiration date is assigned per ICH Q1A(R2) Section 2.1.9 (Evaluation) and the Glossary definition of re-test period.\n' +
           '- For drug products, an expiration date is assigned.',
         fields: [
@@ -988,7 +988,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             label: 'Is extrapolation beyond available long-term data being used?',
             type: 'yes_no',
             required: true,
-            helpText: 'ICH Q1E permits limited extrapolation when justified by the stability profile. The extrapolated period should generally not exceed 2x the period covered by long-term data.',
+            helpText: 'ICH Q1E permits limited extrapolation when justified by the stability profile. The extrapolated shelf life should generally not exceed 2x the period covered by long-term data, nor extend more than 12 months beyond it (narrower limits apply to refrigerated and frozen products).',
           },
           {
             id: 'extrapolation_justification',
@@ -1043,7 +1043,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Proposed Shelf Life Exceeds Available Data by >2x',
             message:
-              'ICH Q1E Section 2.3 (with Appendix A) limits extrapolation to generally no more than twice the period covered by long-term data. A proposed shelf life exceeding this threshold requires exceptional justification and is likely to be challenged by FDA, EMA, and other regulatory authorities. Consider either reducing the proposed shelf life or generating additional long-term data before filing.',
+              'ICH Q1E Section 2.3 (with Appendix A) limits extrapolation to generally no more than twice the period covered by long-term data and no more than 12 months beyond it, with narrower limits for refrigerated and frozen products. A proposed shelf life exceeding this threshold requires exceptional justification and is likely to be challenged by FDA, EMA, and other regulatory authorities. Consider either reducing the proposed shelf life or generating additional long-term data before filing.',
             reference: 'ICH Q1E Section 2.3; Appendix A',
           },
         ],
@@ -1136,14 +1136,14 @@ export function createStabilityStudyFlow(): FlowDefinition {
         question:
           'What post-approval stability commitments are planned? Regulatory authorities expect ongoing stability monitoring after approval to confirm the shelf life throughout the product lifecycle. ICH Q1A(R2) Section 2.2.8 outlines the expected commitment.',
         guidance:
-          'ICH Q1A(R2) Section 2.2.8 states that a post-approval stability protocol and commitment should be provided in the registration application. The commitment typically includes placing at least one production batch per year (or per strength, per manufacturing site) on long-term stability through the approved shelf life. For FDA, 21 CFR 211.166 requires a written testing program for assessing the stability characteristics of drug products. Annual stability data are reviewed during cGMP inspections.',
+          'ICH Q1A(R2) Section 2.2.8 states that where the available long-term data on production batches do not cover the proposed shelf life, a commitment should be made to continue the stability studies through the proposed shelf life, or to place additional production batches on study to a total of at least three, using the same protocol as the primary batches. Separately, as an ongoing cGMP stability program, the commitment typically includes placing at least one production batch per year (or per strength, per manufacturing site) on long-term stability through the approved shelf life. For FDA, 21 CFR 211.166 requires a written testing program for assessing the stability characteristics of drug products. Annual stability data are reviewed during cGMP inspections.',
         fields: [
           {
             id: 'post_approval_protocol_submitted',
             label: 'Is a post-approval stability protocol included in the submission?',
             type: 'yes_no',
             required: true,
-            helpText: 'ICH Q1A(R2) Section 2.2.8 expects the post-approval stability protocol to be described in CTD Module 3.2.P.8.2 (drug product) or 3.2.S.7.2 (drug substance).',
+            helpText: 'ICH Q1A(R2) describes the stability commitment (Sections 2.1.8 and 2.2.8); under ICH M4Q, the post-approval stability protocol and commitment are placed in CTD Module 3.2.P.8.2 (drug product) or 3.2.S.7.2 (drug substance).',
           },
           {
             id: 'annual_batches',
@@ -1278,7 +1278,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             label: 'Is a process in place for FDA Field Alert Reports (21 CFR 314.81(b)(1))?',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 314.81(b)(1), a field alert report must be submitted within 3 working days of a confirmed stability failure on a distributed batch.',
+            helpText: 'Per 21 CFR 314.81(b)(1), a field alert report must be submitted within 3 working days of receiving information that a distributed batch has failed to meet specification or shown significant change or deterioration (confirmation is not required; submit follow-up reports as the investigation proceeds).',
           },
           {
             id: 'prior_stability_failures',

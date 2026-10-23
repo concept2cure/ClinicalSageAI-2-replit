@@ -2,8 +2,8 @@
  * CMC Specification flow — Section 7: Container Closure & Stability nodes.
  *
  * Sibling module of `cmc-specification.ts`: defines the container closure
- * system and stability program question nodes (per ICH Q1A(R2)–Q1F, Q1B,
- * Q1E, and FDA Container Closure guidance) that
+ * system and stability program question nodes (per ICH Q1A(R2)–Q1E and FDA
+ * Container Closure guidance; ICH Q1F was withdrawn in 2006) that
  * `createCmcSpecificationFlow()` composes into the flow's `nodes` array.
  *
  * @module server/services/ana/intelligence-questions/flows/cmc-specification-container-closure-stability
@@ -124,7 +124,7 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
       question:
         'Describe the stability program for the drug substance and drug product.',
       guidance:
-        'Per ICH Q1A(R2)–Q1F, stability studies must be conducted under defined storage conditions to establish shelf life (retest period for drug substance, expiration date for drug product). Include long-term, accelerated, and (if applicable) intermediate conditions. Photostability per ICH Q1B is also required.',
+        'Per ICH Q1A(R2)–Q1E, stability studies must be conducted under defined storage conditions to establish shelf life (retest period for drug substance, expiration date for drug product). Include long-term, accelerated, and (if applicable) intermediate conditions. Photostability per ICH Q1B is also required.',
       provideExpertFeedback: true,
       fields: [
         {
@@ -134,7 +134,7 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
           required: true,
           options: [
             { value: 'long_term_25', label: '25°C / 60% RH (Long-Term)' },
-            { value: 'long_term_30', label: '30°C / 65% RH (Long-Term, Zone III/IV)' },
+            { value: 'long_term_30', label: '30°C / 65% RH (Long-Term, Zone IVa)' },
             { value: 'intermediate', label: '30°C / 65% RH (Intermediate)' },
             { value: 'accelerated', label: '40°C / 75% RH (Accelerated)' },
             { value: 'refrigerated', label: '5°C ± 3°C (Refrigerated)' },
@@ -161,7 +161,7 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
           required: true,
           options: [
             { value: 'long_term_25', label: '25°C / 60% RH (Long-Term)' },
-            { value: 'long_term_30', label: '30°C / 65% RH (Long-Term, Zone III/IV)' },
+            { value: 'long_term_30', label: '30°C / 65% RH (Long-Term, Zone IVa)' },
             { value: 'intermediate', label: '30°C / 65% RH (Intermediate)' },
             { value: 'accelerated', label: '40°C / 75% RH (Accelerated)' },
             { value: 'refrigerated', label: '5°C ± 3°C (Refrigerated)' },
