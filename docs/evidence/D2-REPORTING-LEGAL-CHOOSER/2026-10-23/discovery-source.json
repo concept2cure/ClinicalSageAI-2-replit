@@ -1,0 +1,22 @@
+{
+  "commit": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx": "55994b3043d114430ad785dc344fc5818cdc005fa5f612e55a7bd5157e3c6540",
+    "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx": "08ab5b13bab2331605a5e6275a1be75946d2a9a193c98d14e314ddd69c786273",
+    "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx": "8b553b100ebf71b7857aaf354fa51787d3b64b65922194eeb4125803cb9a5dcc",
+    "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f",
+    "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx": "5d49d619ccacf5fa7c7daf19d5584ba756b8e4baca9fe6459ef273b9931d69d9",
+    "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts": "40f523f58260df8f4694579002c7a164c5643ae419869904022e7ef06946aa51",
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts": "a260ff641e4f73e9ba7ece650ea3ee6ca4ba7078738cf2225851a9bf64781df7",
+    "client/src/concept2cure/v2/apiCall.ts": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "shared/company-documents.ts": "bf68cc6955dcfb1f88050d9542d6410a8a45affa790367347e9a876429adb3ff",
+    "server/routes/company-legal-inventory.ts": "65da9bcd99031e97d9954c1fa55d60e5fd3ae76a2409abdc2a6ed7929fb9d605",
+    "server/services/company-documents/legal-inventory.ts": "4fb64b71f443cf004969ae2b39b9806310bd8048e6b06b65bcc307c78f26cb1f",
+    "server/services/company-documents/profile.ts": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+    "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+    "server/services/report-os/report-package.ts": "3a08a1482cc89d0877a154a556411c3468ac9625c0950270eb96df7bc297ca21",
+    "server/services/report-os/report-package-legal.ts": "6cc156c395b89577c4c52cf2a007dfe2c11c5f02d9a0892868fdbdce6d2da5c5"
+  }
+}
