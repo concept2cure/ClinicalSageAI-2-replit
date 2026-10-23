@@ -31,6 +31,8 @@ import { MEDICAL_WRITING_SKILLS } from './medical-writing.js';
 import { QUALITY_SYSTEMS_SKILLS } from './quality-systems.js';
 import { DEVICE_SKILLS } from './device.js';
 import { DIAGNOSTICS_SKILLS } from './diagnostics.js';
+import { MARKETS_EUROPE_SKILLS } from './markets-europe.js';
+import { MARKETS_INTERNATIONAL_SKILLS } from './markets-international.js';
 import { therapeuticAreaSkills } from './therapeutic-areas.js';
 
 const logger = createScopedLogger('ana-skills-library');
@@ -50,6 +52,10 @@ export const LIBRARY_MODULES: ReadonlyArray<readonly LibrarySkillSource[]> = [
   QUALITY_SYSTEMS_SKILLS,
   DEVICE_SKILLS,
   DIAGNOSTICS_SKILLS,
+  // Second wave (2026-10-23): markets outside the US, as children of
+  // regulatory-strategy.global-planning.
+  MARKETS_EUROPE_SKILLS,
+  MARKETS_INTERNATIONAL_SKILLS,
 ];
 
 /**
