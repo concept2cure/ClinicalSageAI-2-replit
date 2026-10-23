@@ -1,0 +1,15 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Actual Tailwind Button sizing must be loaded
+    at file:///workspace/ClinicalSageAI-2-replit/docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-check.mjs:169:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.4

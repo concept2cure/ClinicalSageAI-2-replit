@@ -487,11 +487,9 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
       };
     }
     const all = groups.flatMap((g) => g.apps);
-    const on = all.filter((a) => a.on);
     return {
       summary:
-        `Workflows: ${all.length} feature(s), ${on.length} available for ` +
-        `this organisation` +
+        'Workflows support the project journey: Evidence → Author → Review → Submit → Respond' +
         (lic
           ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
             `${usagePhrase(pj, 'projects')} and ${usagePhrase(us, 'users')} used`
@@ -513,11 +511,9 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
             }
           : null,
         licenceUnavailable: licState.error ? 'the licence read failed' : null,
-        totalApps: all.length,
-        enabledApps: on.length,
         groups: groups.map((g) => ({
           group: g.group,
-          apps: (g.apps ?? []).map((a) => ({
+          features: (g.apps ?? []).map((a) => ({
             id: a.id,
             name: a.name ?? null,
             tier: a.tier,

@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-23T21:25:46Z",
+  "source": {
+    "repository": "concept2cure/ClinicalSageAI-2-replit",
+    "branch": "concept2cure-v2",
+    "commit": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+    "verification_scope": "Read-only GitHub release/deployment/governance observations and existing repository release contracts. This receipt does not qualify a live environment."
+  },
+  "observations": [
+    {
+      "name": "commit_workflow_runs",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/runs?head_sha=62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e&per_page=100",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:46 GMT",
+      "response_projection": "total_count and workflow identity/verdict fields; unrelated repository and actor metadata omitted",
+      "response": {
+        "total_count": 6,
+        "workflow_runs": [
+          {
+            "id": 40024567855,
+            "name": "CodeQL",
+            "workflow_id": 227250987,
+            "event": "push",
+            "status": "queued",
+            "conclusion": null,
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567855",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:08:34Z"
+          },
+          {
+            "id": 40024567782,
+            "name": "C2C Agent \u2014 Validate & Audit",
+            "workflow_id": 236797482,
+            "event": "push",
+            "status": "queued",
+            "conclusion": null,
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567782",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:08:34Z"
+          },
+          {
+            "id": 40024567900,
+            "name": "CI",
+            "workflow_id": 226617950,
+            "event": "push",
+            "status": "queued",
+            "conclusion": null,
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567900",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:08:34Z"
+          },
+          {
+            "id": 40024567802,
+            "name": "Tier 5 Browser Smoke",
+            "workflow_id": 323742027,
+            "event": "push",
+            "status": "queued",
+            "conclusion": null,
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567802",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:08:34Z"
+          },
+          {
+            "id": 40024567783,
+            "name": "Semgrep",
+            "workflow_id": 252137066,
+            "event": "push",
+            "status": "queued",
+            "conclusion": null,
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567783",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:08:34Z"
+          },
+          {
+            "id": 40024567911,
+            "name": "Repo Health Baseline Refresh",
+            "workflow_id": 292611419,
+            "event": "push",
+            "status": "completed",
+            "conclusion": "cancelled",
+            "head_sha": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+            "head_branch": "concept2cure-v2",
+            "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40024567911",
+            "created_at": "2026-10-23T21:08:34Z",
+            "updated_at": "2026-10-23T21:25:03Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "aws_deployment_workflow_runs",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/workflows/247092455/runs?per_page=5",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": {
+        "total_count": 0,
+        "workflow_runs": []
+      }
+    },
+    {
+      "name": "database_provisioning_workflow_runs",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/workflows/366274297/runs?per_page=5",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": {
+        "total_count": 0,
+        "workflow_runs": []
+      }
+    },
+    {
+      "name": "github_deployments",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/deployments?per_page=10",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": []
+    },
+    {
+      "name": "history_ruleset",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/rulesets/11855901",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": {
+        "id": 11855901,
+        "name": "JMSMITH",
+        "target": "branch",
+        "source_type": "Repository",
+        "source": "concept2cure/ClinicalSageAI-2-replit",
+        "enforcement": "disabled",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": []
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          },
+          {
+            "type": "non_fast_forward"
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5BVEGLzgC06B0",
+        "created_at": "2026-01-15T19:15:48.531-08:00",
+        "updated_at": "2026-01-15T19:15:48.549-08:00",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/rulesets/11855901"
+          },
+          "html": {
+            "href": "https://github.com/concept2cure/ClinicalSageAI-2-replit/rules/11855901"
+          }
+        }
+      }
+    },
+    {
+      "name": "effective_product_branch_rules",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/rules/branches/concept2cure-v2",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": []
+    },
+    {
+      "name": "production_environment",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/environments/production",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 404,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:45 GMT",
+      "response": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/deployments/environments#get-an-environment",
+        "status": "404"
+      }
+    },
+    {
+      "name": "github_releases",
+      "observed_at_utc": "2026-10-23T21:25:45Z",
+      "method": "GET",
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/releases?per_page=20",
+      "authentication": "none; public GitHub REST read",
+      "http_status": 200,
+      "github_response_date": "Fri, 23 Oct 2026 21:25:46 GMT",
+      "response_projection": "release identity/version fields; unrelated metadata omitted",
+      "response": [
+        {
+          "id": 285846468,
+          "name": "v1.0.0 \u2014 CERV2 Production Release",
+          "tag_name": "v1.0.0",
+          "target_commitish": "concept2cure-v2",
+          "created_at": "2026-02-12T20:09:45Z",
+          "published_at": "2026-02-12T20:10:11Z",
+          "draft": false,
+          "prerelease": false,
+          "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/releases/tag/v1.0.0"
+        }
+      ]
+    }
+  ],
+  "assessment": {
+    "commit_ci": {
+      "workflow_count": 6,
+      "queued": 5,
+      "pending": 0,
+      "completed_failures": 0,
+      "completed_cancelled": 1,
+      "release_evidence_pass_verified": false,
+      "note": "Five workflows remain queued. Repo Health Baseline Refresh changed from pending in the earlier audit to completed/cancelled (updated_at 2026-10-23T21:25:03Z). No workflow was rerun or cancelled by this audit. Queued checks are not passing release evidence. No failure attribution is possible before a completed failing verdict."
+    },
+    "deployment": "No AWS deployment workflow runs, database-provisioning workflow runs, or GitHub deployment records were returned. This does not prove that no environment exists outside these records.",
+    "history_protection": "Ruleset 11855901 is disabled with an empty ref include list; the effective rules endpoint returned an empty list for concept2cure-v2.",
+    "production_reviewer": {
+      "verified": false,
+      "note": "Public GET of environments/production returned 404. This is unverified reviewer/environment configuration, not proof of definite absence; visibility or access restrictions can also prevent readback."
+    },
+    "live_runtime": {
+      "verified": false,
+      "deployed_commit": null,
+      "note": "No live application origin or AWS service was queried for this receipt. Runtime readiness and current deployed SHA remain unverified."
+    }
+  },
+  "existing_release_contracts": {
+    "deployment_workflow": {
+      "path": ".github/workflows/deploy-aws.yml",
+      "triggers": [
+        "workflow_dispatch",
+        "push of v* tags",
+        "push of rc-* tags"
+      ],
+      "branch_push_deploys": false,
+      "gate": "Exact-commit branch-push CI, Semgrep and CodeQL must succeed. Staging builds/verifies; production promotes a staging-verified digest."
+    },
+    "live_version_endpoint": {
+      "path": "server/startup/inline-endpoints.ts",
+      "route": "GET /api/version",
+      "response_fields": [
+        "commit",
+        "startedAt"
+      ]
+    },
+    "policy_sources": [
+      "docs/runbooks/protected-release-setup.md",
+      "docs/LAUNCH_DEFINITION_OF_DONE.md#p-3--repository-and-release-controls-fit-the-one-branch-model",
+      "config/release-evidence-policy.v1.json"
+    ],
+    "permitted_next_verification": [
+      "Observe the existing exact-commit CI and release-evidence verdicts without rerunning workflows.",
+      "Read an existing authorized runtime /api/version and /readyz, then inspect authenticated project workflows; compare the served commit to the published source."
+    ]
+  },
+  "performed_mutations": {
+    "repository_source": false,
+    "github_settings": false,
+    "workflow_dispatch_or_rerun": false,
+    "deployment": false,
+    "evidence_write_only": true
+  },
+  "transport_note": "The GitHub connector rejected workflow collection/numeric workflow and effective-branch-rule URLs as unsupported. The observations here use unauthenticated GET requests to the public GitHub REST API; no credential was supplied."
+}

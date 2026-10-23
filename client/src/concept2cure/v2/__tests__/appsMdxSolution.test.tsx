@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -9,6 +9,7 @@ vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
 import { Apps } from '../surfaces/AdminSurfaces';
+import { useActiveSurfaceContext } from '../surfaceContext';
 
 const surface = { id: 'apps', label: 'Workflows' } as UiSurface;
 const license = {
@@ -42,6 +43,19 @@ function revealAccess() {
 afterEach(() => { cleanup(); apiRequest.mockReset(); });
 
 describe('Apps catalog reaches MDX through Projects', () => {
+  it('grounds AnA in the project journey and feature access without an app-count product model', async () => {
+    mockCatalog([row('projects', 'Projects'), row('device-cer', 'Clinical evaluation')]);
+    mount();
+    await screen.findByTestId('mdx-catalog-solution');
+    const { result } = renderHook(() => useActiveSurfaceContext('apps'));
+    await waitFor(() => expect(result.current?.summary).toContain('project journey'));
+    expect(result.current?.facts).not.toHaveProperty('totalApps');
+    expect(result.current?.facts).not.toHaveProperty('enabledApps');
+    expect(result.current?.facts?.groups).toEqual(expect.arrayContaining([
+      expect.objectContaining({ features: expect.arrayContaining([expect.objectContaining({ id: 'device-cer' })]) }),
+    ]));
+  });
+
   it('groups features across catalog categories into one solution and keeps shared apps reachable', async () => {
     mockCatalog([
       row('quality', 'Quality'),

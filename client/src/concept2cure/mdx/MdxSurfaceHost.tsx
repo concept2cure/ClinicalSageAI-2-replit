@@ -29,7 +29,6 @@
  */
 
 import * as React from 'react';
-import { Button } from '@/components/ui/button';
 import { isIvdFamily } from '@shared/constants/domain/product-types';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
@@ -457,13 +456,13 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <section data-testid="mdx-project-required">
         <EmptyState title={selectedId ? 'The selected device or diagnostic project is unavailable' : 'Open a project to continue'}
           hint="Choose the client project from Projects to open its MDX workflow and evidence." />
-        <Button type="button" variant="outline" onClick={() => onNav('projects')}>Open projects</Button>
+        <button type="button" className="btn ghost" onClick={() => onNav('projects')}>Open projects</button>
       </section>;
     } else if (nav === 'device-cer' && isIvdFamily(programForContext.productType)) {
       surface = <section data-testid="mdx-per-required">
         <EmptyState title="Diagnostics use a performance evaluation report"
           hint="Open the diagnostic workflow for scientific validity, analytical performance, clinical performance and the IVDR PER." />
-        <Button type="button" variant="outline" onClick={() => onNav('device-diagnostics')}>Open diagnostic evidence</Button>
+        <button type="button" className="btn ghost" onClick={() => onNav('device-diagnostics')}>Open diagnostic evidence</button>
       </section>;
     }
   }
@@ -490,7 +489,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         <div className="page-inner">
           {nav !== 'device-workstream' && programForContext && !liveProgramsResult.loading && !liveProgramsResult.error && (
             <nav aria-label="Project context" className="page-actions">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onNav('project-home')}>Return to project workflow</Button>
+              <button type="button" className="btn ghost" onClick={() => onNav('project-home')}>Return to project workflow</button>
               <span>{programForContext.title}</span>
               {scopeNotice && <span>{scopeNotice}</span>}
             </nav>
