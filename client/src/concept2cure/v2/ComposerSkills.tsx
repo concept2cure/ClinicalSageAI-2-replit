@@ -43,6 +43,7 @@ function matches(s: AvailableSkillDto, q: string): boolean {
 function metaOf(s: AvailableSkillDto): string {
   return [
     disciplineOf(s),
+    s.regions?.length ? s.regions.join(', ') : null,
     s.source === 'organization' ? 'your organization' : null,
     s.projectOnly ? 'this project' : null,
     s.projectState === 'always' ? 'always on in this project' : null,

@@ -16,6 +16,7 @@ import { getGuideline } from '../../../ana-ri/ich-guideline-corpus.js';
 import { REGULATORY_FACTS } from '../../../regulatory-currency/currency-registry.js';
 import { getApplicationType } from '../../../../../shared/regulatory/global-document-registry.js';
 import { THERAPEUTIC_AREAS } from '../../../../../shared/constants/domain/therapeutic-areas.js';
+import { REGION_IDENTITY } from '../../../../../shared/regulatory/region-identity.js';
 import {
   SKILL_DISCIPLINES,
   SKILL_SEGMENT_IDS,
@@ -92,6 +93,12 @@ describe('the platform skill library', () => {
     }
     for (const ta of THERAPEUTIC_AREAS.filter(t => t.value !== 'other')) {
       expect(library.skills.some(s => s.therapeuticAreas.includes(ta.value)), `no skill for ${ta.value}`).toBe(true);
+    }
+  });
+
+  it('gives every market the platform files in a skill written for it', () => {
+    for (const region of Object.keys(REGION_IDENTITY)) {
+      expect(library.skills.some(s => s.regions.includes(region as never)), `no skill written for ${region}`).toBe(true);
     }
   });
 

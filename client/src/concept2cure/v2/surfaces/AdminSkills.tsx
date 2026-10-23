@@ -11,9 +11,11 @@ import {
   type LibrarySkillSummaryDto,
   type OrgSkillDto,
   type SkillSelectionDto,
+  type SkillUsageDto,
 } from '@shared/ana/skills';
 import {
   DISCIPLINE_OPTIONS,
+  MARKET_OPTIONS,
   REASON_REQUIRED,
   SEGMENT_OPTIONS,
   reasonOf,
@@ -57,10 +59,37 @@ function refusalOf(e: unknown, fallback: string): string {
   return (e instanceof ApiRequestError ? serverMessage(e.payload) : null) ?? fallback;
 }
 
-function matchesFilters(s: LibrarySkillSummaryDto, q: string, segment: string, discipline: string): boolean {
-  if (segment && s.segments.length > 0 && !s.segments.includes(segment as never)) return false;
-  if (discipline && !s.disciplines.includes(discipline as never)) return false;
-  return !q || s.name.toLowerCase().includes(q) || s.key.includes(q) || s.description.toLowerCase().includes(q);
+interface LibraryFilters {
+  q: string;
+  segment: string;
+  discipline: string;
+  /** A market the skill is written for; a skill for every market is not "written for" one. */
+  market: string;
+  /** 'used' or 'unused' in the usage window; '' for either. */
+  use: string;
+}
+
+type UsageRow = SkillUsageDto['skills'][number];
+
+function matchesFilters(s: LibrarySkillSummaryDto, f: LibraryFilters, used: ReadonlyMap<string, UsageRow> | null): boolean {
+  if (f.segment && s.segments.length > 0 && !s.segments.includes(f.segment as never)) return false;
+  if (f.discipline && !s.disciplines.includes(f.discipline as never)) return false;
+  if (f.market && !s.regions.includes(f.market as never)) return false;
+  if (f.use && used && (f.use === 'used') !== used.has(s.key)) return false;
+  return !f.q || s.name.toLowerCase().includes(f.q) || s.key.includes(f.q) || s.description.toLowerCase().includes(f.q);
+}
+
+/** A usage read, whole; anything else is a failed read, never "unused". */
+function isUsage(value: unknown): value is SkillUsageDto {
+  const v = value as Partial<SkillUsageDto> | null;
+  return !!v && typeof v.days === 'number' && typeof v.turnsRead === 'number' && Array.isArray(v.skills);
+}
+
+const USAGE_DAYS = 30;
+
+function usesLabel(row: UsageRow | undefined): string {
+  if (!row) return 'not used';
+  return row.turns === 1 ? 'used once' : `used ${row.turns}×`;
 }
 
 function orgStatusPill(status: OrgSkillDto['status']): string {
@@ -154,14 +183,14 @@ function SkillLibrary({
   onSelect: (key: string) => void;
   onEdit: (e: Editing) => void;
 }) {
-  const [query, setQuery] = useState('');
-  const [segment, setSegment] = useState('');
-  const [discipline, setDiscipline] = useState('');
+  const [filters, setFilters] = useState<LibraryFilters>({ q: '', segment: '', discipline: '', market: '', use: '' });
+  const usage = useLiveData<SkillUsageDto>(`/api/ana-skills/usage?days=${USAGE_DAYS}`, [epoch], isUsage);
+  const used = useMemo(() => (usage.data ? new Map(usage.data.skills.map((r) => [r.key, r])) : null), [usage.data]);
   const skills = useMemo(() => library.data?.skills ?? [], [library.data]);
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return skills.filter((s) => matchesFilters(s, q, segment, discipline));
-  }, [skills, query, segment, discipline]);
+    const f = { ...filters, q: filters.q.trim().toLowerCase() };
+    return skills.filter((s) => matchesFilters(s, f, used));
+  }, [skills, filters, used]);
   const onCount = skills.filter((s) => s.enabled).length;
   const reviewedCount = skills.filter((s) => s.review.state === 'reviewed').length;
 
@@ -174,27 +203,8 @@ function SkillLibrary({
             {library.data ? `${skills.length} skills · ${onCount} on for this organization · ${reviewedCount} reviewed by a named reviewer` : ''}
           </span>
         </div>
-        <div className="adm-skills-toolbar">
-          <input
-            type="search"
-            className="adm-skills-search"
-            aria-label="Search skills"
-            placeholder="Search skills"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <select aria-label="Client segment" className="adm-skills-filter" value={segment} onChange={(e) => setSegment(e.target.value)}>
-            {SEGMENT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <select aria-label="Discipline" className="adm-skills-filter" value={discipline} onChange={(e) => setDiscipline(e.target.value)}>
-            <option value="">Every discipline</option>
-            {DISCIPLINE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
+        <LibraryToolbar filters={filters} onChange={setFilters} usageRead={Boolean(usage.data)} />
+        <UsageSummary usage={usage} />
       </section>
 
       {library.loading ? (
@@ -220,19 +230,102 @@ function SkillLibrary({
             {visible.length === 0 ? (
               <div className="adm-empty">No skill matches these filters.</div>
             ) : (
-              <LibraryRows skills={visible} selectedKey={selectedKey} onSelect={onSelect} />
+              <LibraryRows skills={visible} selectedKey={selectedKey} onSelect={onSelect} used={used} />
             )}
           </section>
 
-          {selectedKey && <SkillDrawer skillKey={selectedKey} epoch={epoch} reload={reload} onEdit={onEdit} />}
+          {selectedKey && (
+            <SkillDrawer skillKey={selectedKey} epoch={epoch} reload={reload} onEdit={onEdit} usage={used ? (used.get(selectedKey) ?? null) : undefined} />
+          )}
         </div>
       )}
     </>
   );
 }
 
+/** Search and the filters: segment, discipline, the market a skill is written for, and use. */
+function LibraryToolbar({
+  filters,
+  onChange,
+  usageRead,
+}: {
+  filters: LibraryFilters;
+  onChange: (f: LibraryFilters) => void;
+  /** The use filter needs the use read; without it, it is not offered. */
+  usageRead: boolean;
+}) {
+  const set = (key: keyof LibraryFilters) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    onChange({ ...filters, [key]: e.target.value });
+  return (
+    <div className="adm-skills-toolbar">
+      <input type="search" className="adm-skills-search" aria-label="Search skills" placeholder="Search skills" value={filters.q} onChange={set('q')} />
+      <select aria-label="Client segment" className="adm-skills-filter" value={filters.segment} onChange={set('segment')}>
+        {SEGMENT_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <select aria-label="Discipline" className="adm-skills-filter" value={filters.discipline} onChange={set('discipline')}>
+        <option value="">Every discipline</option>
+        {DISCIPLINE_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <select aria-label="Written for a market" className="adm-skills-filter" value={filters.market} onChange={set('market')}>
+        {MARKET_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <select aria-label="Use" className="adm-skills-filter" value={filters.use} onChange={set('use')} disabled={!usageRead}>
+        <option value="">Any use</option>
+        <option value="used">Used by AnA in the last {USAGE_DAYS} days</option>
+        <option value="unused">Not used in the last {USAGE_DAYS} days</option>
+      </select>
+    </div>
+  );
+}
+
+/** How much AnA used the library in the window, or why that cannot be said. */
+function UsageSummary({ usage }: { usage: { data: SkillUsageDto | null; loading: boolean; error?: string } }) {
+  if (usage.loading) return null;
+  if (usage.error || !usage.data) {
+    return (
+      <p className="adm-sub" role="status">
+        Couldn&apos;t read how often AnA used each skill. The library below is complete; only its use is not shown.
+      </p>
+    );
+  }
+  const u = usage.data;
+  const scope = u.capped ? `the latest ${u.turnsRead} turns of the last ${u.days} days` : `the last ${u.days} days`;
+  return (
+    <p className="adm-sub" data-testid="skills-usage-summary">
+      In {scope}, AnA answered {u.turnsRead} turn{u.turnsRead === 1 ? '' : 's'}; {u.turnsWithSkills} followed at least one skill, and{' '}
+      {u.skills.length} different skill{u.skills.length === 1 ? ' was' : 's were'} used.
+    </p>
+  );
+}
+
+function usageSentence(row: UsageRow | null): string {
+  if (!row) return `Not loaded by AnA in the last ${USAGE_DAYS} days.`;
+  const chosen = [row.picked ? `${row.picked} picked in a conversation` : null, row.deployed ? `${row.deployed} deployed to a project` : null]
+    .filter(Boolean)
+    .join(', ');
+  const last = row.lastUsedAt ? ` Last used ${new Date(row.lastUsedAt).toLocaleDateString()}.` : '';
+  return `Loaded in ${row.turns} turn${row.turns === 1 ? '' : 's'} in the last ${USAGE_DAYS} days${chosen ? ` (${chosen}; the rest chosen by AnA)` : ', each chosen by AnA'}.${last}`;
+}
+
 /** The library skills that pass the filters, one button each. */
-function LibraryRows({ skills, selectedKey, onSelect }: { skills: LibrarySkillSummaryDto[]; selectedKey: string | null; onSelect: (key: string) => void }) {
+function LibraryRows({
+  skills,
+  selectedKey,
+  onSelect,
+  used,
+}: {
+  skills: LibrarySkillSummaryDto[];
+  selectedKey: string | null;
+  onSelect: (key: string) => void;
+  /** Use in the window, by key; null while unread or unreadable (then nothing is said about use). */
+  used: ReadonlyMap<string, UsageRow> | null;
+}) {
   return (
     <div className="ctable" aria-label="Skill library">
       {skills.map((s) => (
@@ -247,7 +340,10 @@ function LibraryRows({ skills, selectedKey, onSelect }: { skills: LibrarySkillSu
             <span className="ctable-strong">{s.name}</span>
             <span className="mono tiny adm-muted">{s.key}</span>
           </span>
-          <span className="adm-sub">{segmentsLabel(s.segments)}</span>
+          <span className="adm-sub">
+            {segmentsLabel(s.segments)}
+            {used && <span className="adm-muted"> · {usesLabel(used.get(s.key))}</span>}
+          </span>
           <span>
             <span className={`status-pill ${s.enabled ? 'active' : 'idle'}`}>{s.enabled ? 'On' : 'Off'}</span>
           </span>
@@ -261,7 +357,20 @@ function LibraryRows({ skills, selectedKey, onSelect }: { skills: LibrarySkillSu
 }
 
 /** One library skill, whole: what selects it, what it cites, its method, and what to do with it. */
-function SkillDrawer({ skillKey, epoch, reload, onEdit }: { skillKey: string; epoch: number; reload: () => void; onEdit: (e: Editing) => void }) {
+function SkillDrawer({
+  skillKey,
+  epoch,
+  reload,
+  onEdit,
+  usage,
+}: {
+  skillKey: string;
+  epoch: number;
+  reload: () => void;
+  onEdit: (e: Editing) => void;
+  /** The skill's use in the window: a row, null for not used, undefined when use could not be read. */
+  usage?: UsageRow | null;
+}) {
   const detail = useLiveData<{ skill: LibrarySkillDetailDto }>(`/api/ana-skills/library/${encodeURIComponent(skillKey)}`, [skillKey, epoch]);
   const sel = detail.data?.skill ?? null;
   if (detail.loading) {
@@ -295,6 +404,7 @@ function SkillDrawer({ skillKey, epoch, reload, onEdit }: { skillKey: string; ep
         <div><div className="k">Discipline</div><div className="v">{sel.disciplines.map((d) => SKILL_DISCIPLINE_LABELS[d]).join(', ')}</div></div>
       </div>
       <p className="adm-sub">{sel.review.note}</p>
+      {usage !== undefined && <p className="adm-sub" data-testid="skill-usage">{usageSentence(usage)}</p>}
       <div className="drawer-section-lbl">Loaded when a question mentions</div>
       <div className="adm-scopes">
         {sel.triggers.length === 0 ? <span className="adm-sub">No phrases: loaded on its screen or document only.</span> : sel.triggers.map((t) => <span key={t} className="adm-scope mono tiny">{t}</span>)}

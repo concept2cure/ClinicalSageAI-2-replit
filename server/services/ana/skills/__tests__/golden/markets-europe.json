@@ -1,0 +1,79 @@
+[
+  {
+    "question": "Is our new oncology antibody within the mandatory scope of the centralised procedure, and when should we send EMA the eligibility request?",
+    "expect": "regulatory-strategy.global-planning.eu-medicines",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Who will the CHMP appoint as rapporteur and co-rapporteur for our gene therapy, and does the CAT get involved?",
+    "expect": "regulatory-strategy.global-planning.eu-medicines",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Walk me through the EMA MAA timeline from validation to the Commission decision, including how the clock stops work.",
+    "expect": "regulatory-strategy.global-planning.eu-medicines",
+    "context": { "segments": ["pharma"], "submissionType": "EU_MAA" }
+  },
+  {
+    "question": "We still have a major objection open at day 180. Should we prepare for an oral explanation or think about withdrawing?",
+    "expect": "regulatory-strategy.global-planning.eu-medicines",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Which country should be the reporting member state for our phase 2 trial in Germany, France and Spain under the EU CTR?",
+    "expect": "regulatory-strategy.global-planning.eu-clinical-trials",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "What goes in the Part I dossier versus Part II in CTIS, and which documents need translating for each member state?",
+    "expect": "regulatory-strategy.global-planning.eu-clinical-trials"
+  },
+  {
+    "question": "What will CTIS publish from our application, and how should we prepare the documents redacted for publication?",
+    "expect": "regulatory-strategy.global-planning.eu-clinical-trials",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Our phase 3 started under the Clinical Trials Directive. Should it have been transitioned to CTIS, and what if it wasn't?",
+    "expect": "regulatory-strategy.global-planning.eu-clinical-trials",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Can we use the MHRA International Recognition Procedure off our FDA approval, and what has to match?",
+    "expect": "regulatory-strategy.global-planning.uk",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we apply for a UK clinical trial through IRAS, and is MHRA review combined with the ethics committee?",
+    "expect": "regulatory-strategy.global-planning.uk",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Do we need UKCA marking to sell in Great Britain or will our CE mark still be accepted, and do we need a UK Responsible Person?",
+    "expect": "regulatory-strategy.global-planning.uk",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Does the Windsor Framework change how we license our medicine for Northern Ireland?",
+    "expect": "regulatory-strategy.global-planning.uk"
+  },
+  {
+    "question": "Can Swissmedic rely on our EMA approval, or is the fast-track authorisation a better route into Switzerland?",
+    "expect": "regulatory-strategy.global-planning.switzerland",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Since the Swiss MRA wasn't updated, do we need a Swiss authorised representative to keep selling our devices?",
+    "expect": "regulatory-strategy.global-planning.switzerland",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Our IVD is certified under the IVDR. What does Swissmedic expect from us, and when do we have to register in swissdamed?",
+    "expect": "regulatory-strategy.global-planning.switzerland",
+    "context": { "segments": ["ivd"] }
+  },
+  {
+    "question": "Is Switzerland in the Access Consortium, and would a Swiss filing under the Article 13 TPA route be faster for us?",
+    "expect": "regulatory-strategy.global-planning.switzerland"
+  }
+]
