@@ -6,7 +6,7 @@ import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 
 export const intakeFixture = { actorUserId: 12, organizationId: 7 };
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: String(intakeFixture.actorUserId), organizationId: String(intakeFixture.organizationId) }) }));
-vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: intakeFixture.organizationId }, currentClientWorkspace: { id: 999 } }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: intakeFixture.organizationId }, currentClientWorkspace: { id: 999 }, setCurrentClientWorkspace: vi.fn() }) }));
 beforeEach(() => {
   intakeFixture.organizationId = 7;
   setAuthToken(`e30.${btoa(JSON.stringify({ userId: intakeFixture.actorUserId, organizationId: intakeFixture.organizationId }))}.signature`);

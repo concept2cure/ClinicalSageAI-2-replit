@@ -10,6 +10,8 @@
       "foreignDirectoryBlocked": true,
       "unknownAndBadReceiptBlockReplay": true,
       "pendingCancelAndEscapeBlocked": true,
+      "savedWorkspaceSelectedBeforeNavigation": true,
+      "unverifiedSaveKeepsPriorWorkspace": true,
       "actorSwitchRetiresSponsorForm": true,
       "horizontalOverflow": false,
       "pageErrors": []
@@ -23,6 +25,8 @@
       "foreignDirectoryBlocked": true,
       "unknownAndBadReceiptBlockReplay": true,
       "pendingCancelAndEscapeBlocked": true,
+      "savedWorkspaceSelectedBeforeNavigation": true,
+      "unverifiedSaveKeepsPriorWorkspace": true,
       "actorSwitchRetiresSponsorForm": true,
       "horizontalOverflow": false,
       "pageErrors": []

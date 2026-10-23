@@ -3,9 +3,9 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-const fixture = vi.hoisted(() => ({ actor: 12, org: 7, tenantOrg: 7, globalClient: 22, request: vi.fn() }));
+const fixture = vi.hoisted(() => ({ actor: 12, org: 7, tenantOrg: 7, globalClient: 22, request: vi.fn(), setWorkspace: vi.fn() }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: String(fixture.actor), organizationId: String(fixture.org) }) }));
-vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: fixture.tenantOrg }, currentClientWorkspace: { id: fixture.globalClient } }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: fixture.tenantOrg }, currentClientWorkspace: { id: String(fixture.globalClient), organizationId: String(fixture.org) }, setCurrentClientWorkspace: fixture.setWorkspace }) }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: fixture.request }));
 vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ onChange }: { onChange: (id: string) => void }) => <button onClick={() => onChange('510k')}>Pick filing</button> }));
 vi.mock('../surfaces/RegistryBridge', () => ({ getSubmissionTypeContext: () => ({ id: 'us_510k', displayName: 'Traditional 510(k)', pathwayKey: '510k', agency: 'FDA', region: 'US' }) }));
@@ -14,6 +14,8 @@ import { ApiRequestError } from '@/lib/queryClient';
 import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 import { NewProjectWizard } from '../surfaces/Projects';
 import { clearShellProject, readShellProject } from '../shellProject';
+import { ProjectTeamSharing } from '../surfaces/ProjectTeamSharing';
+import { TaskAssignmentControls } from '../surfaces/TaskAssignmentControls';
 
 const programId = 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05';
 const clients = [{ id: '21', name: 'Sponsor A', organizationId: '7', status: 'active' }, { id: '22', name: 'Sponsor B', organizationId: '7', status: 'active' }];
@@ -37,6 +39,8 @@ async function review() {
 beforeEach(() => {
   clearShellProject();
   Object.assign(fixture, { actor: 12, org: 7, tenantOrg: 7, globalClient: 22 });
+  fixture.setWorkspace.mockReset();
+  fixture.setWorkspace.mockImplementation((workspace: { id: string }) => { fixture.globalClient = Number(workspace.id); });
   token();
   fixture.request.mockImplementation(async (method: string) => method === 'GET' ? response(options()) : response(receipt(), 201));
 });
@@ -55,6 +59,8 @@ describe('New project workspace intake', () => {
     fireEvent.click(screen.getByRole('button', { name: /create project/i }));
     await waitFor(() => expect(onNav).toHaveBeenCalledWith('project-home'));
     expect(readShellProject()?.id).toBe(programId);
+    expect(fixture.setWorkspace).toHaveBeenCalledExactlyOnceWith({ id: '21', name: 'Sponsor A', organizationId: '7' });
+    expect(fixture.setWorkspace.mock.invocationCallOrder[0]).toBeLessThan(onNav.mock.invocationCallOrder[0]);
     expect(postCalls()[0][2]).toMatchObject({ clientWorkspaceId: 21 });
     expect(postCalls()[0][3]).toMatchObject({ 'x-client-id': '21', 'x-organization-id': '7', Authorization: expect.stringContaining('Bearer ') });
     expect(fixture.request.mock.calls.filter(([method, path]) => method === 'GET' && path === '/api/clients?purpose=project-intake')).toHaveLength(2);
@@ -80,6 +86,7 @@ describe('New project workspace intake', () => {
     await screen.findByText(/client workspaces could not be verified/i);
     expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(true);
     expect(postCalls()).toHaveLength(0);
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
   });
   it.each(['workspace', 'actor', 'anchor', 'uuid', 'json'])('blocks resubmission and navigation after an unverified %s creation receipt', async (defect) => {
     const onNav = vi.fn();
@@ -96,6 +103,7 @@ describe('New project workspace intake', () => {
     await screen.findByRole('button', { name: /check projects/i });
     expect(onNav).not.toHaveBeenCalled();
     expect(readShellProject()).toBeNull();
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
     expect((screen.getByRole('button', { name: /create project/i }) as HTMLButtonElement).disabled).toBe(true);
   });
@@ -109,6 +117,7 @@ describe('New project workspace intake', () => {
     fireEvent.click(screen.getByRole('button', { name: /create project/i }));
     await screen.findByRole('button', { name: /check projects/i });
     expect(postCalls()).toHaveLength(1);
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
     expect((screen.getByRole('button', { name: /create project/i }) as HTMLButtonElement).disabled).toBe(true);
   });
@@ -122,6 +131,7 @@ describe('New project workspace intake', () => {
     fireEvent.click(screen.getByRole('button', { name: /create project/i }));
     fireEvent.click(await screen.findByRole('button', { name: /try again/i }));
     await waitFor(() => expect(postCalls()).toHaveLength(2));
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
     expect(fixture.request.mock.calls.filter(([, path]) => path === '/api/clients?purpose=project-intake' || path === '/api/c2c/projects').map(([method]) => method)).toEqual(['GET', 'GET', 'POST', 'GET', 'POST']);
   });
 });
@@ -136,6 +146,7 @@ describe('New project intake session retirement', () => {
     expect(screen.getByRole('button', { name: 'Pick filing' })).toBeTruthy();
     expect(screen.queryByText('A trial')).toBeNull();
     expect(screen.queryByRole('button', { name: /create project/i })).toBeNull();
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
   });
   it('does not send a stale write after a token switch', async () => {
     render(<NewProjectWizard onClose={vi.fn()} onNav={vi.fn()} />);
@@ -144,6 +155,7 @@ describe('New project intake session retirement', () => {
     fireEvent.click(screen.getByRole('button', { name: /create project/i }));
     await waitFor(() => expect(document.body.textContent).toMatch(/account or organization changed/i));
     expect(postCalls()).toHaveLength(0);
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
   });
   it('retires a late workspace read when the bearer changes without a render', async () => {
     let finish: (value: unknown) => void = () => {};
@@ -158,6 +170,7 @@ describe('New project intake session retirement', () => {
     expect(document.body.textContent).toMatch(/account or organization changed/i);
     expect(screen.queryByRole('textbox', { name: /project name/i })).toBeNull();
     expect(postCalls()).toHaveLength(0);
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
   });
   it('does not publish or navigate after an old create receipt arrives under another bearer', async () => {
     let finish: (value: unknown) => void = () => {};
@@ -171,6 +184,7 @@ describe('New project intake session retirement', () => {
     await act(async () => finish(response(receipt(), 201)));
     expect(onNav).not.toHaveBeenCalled();
     expect(readShellProject()).toBeNull();
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
     expect(screen.queryByText('A trial')).toBeNull();
     expect(document.body.textContent).toMatch(/account or organization changed/i);
   });
@@ -198,7 +212,66 @@ describe('New project intake session retirement', () => {
     const banner = await screen.findByTestId('new-project-outcome');
     expect(banner.textContent).toMatch(/project was created/i);
     expect(banner.textContent).not.toMatch(/could not be confirmed/i);
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
+  });
+});
+
+describe('New project verified workspace handoff', () => {
+  it('hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard', async () => {
+    const onClose = vi.fn();
+    const onNav = vi.fn();
+    fixture.setWorkspace.mockImplementation((workspace: { id: string }) => {
+      expect(readShellProject()).toBeNull(); // Context precedes project publication.
+      fixture.globalClient = Number(workspace.id);
+    });
+    fixture.request.mockImplementation(async (method: string, path: string) => {
+      if (path.startsWith('/api/concept2cure/projects/31/sharing?')) return response({ success: true, data: {
+        projectId: 'proj_31', programId, organizationId: 7, actorUserId: 12, clientWorkspaceId: 21,
+        visibility: 'private', legacyFallbackApplied: false, canManage: true, members: [], candidates: [{ userId: 13, label: 'Sponsor A colleague' }],
+      } });
+      if (path.startsWith('/api/task-management/assignees?')) return response({ success: true,
+        data: [{ id: '13', name: 'Sponsor A colleague', label: 'Sponsor A colleague · Account #13' }], total: 1,
+        meta: { taskId: 'TASK-A', projectId: 31, actorUserId: 12, organizationId: 7, clientWorkspaceId: 21,
+          status: 'review', canAssign: true, assigneeId: null, assignmentVersion: 'a'.repeat(64) },
+      });
+      return method === 'POST' ? response(receipt(), 201) : response(options());
+    });
+    function Host() {
+      const [open, setOpen] = React.useState(true);
+      return open ? <NewProjectWizard onClose={() => { onClose(); setOpen(false); }} onNav={onNav} /> : <>
+        <ProjectTeamSharing programId={programId} projectId={31} onChanged={() => {}} />
+        <TaskAssignmentControls taskId="TASK-A" projectId={31} status="review" actorScope={{ userId: '12', organizationId: '7' }} isCurrent={() => true} onSaved={() => {}} />
+      </>;
+    }
+    render(<Host />);
+    await review();
+    expect(fixture.globalClient).toBe(22); // Local choice does not alter context before save.
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
+    await screen.findByLabelText('Organization member');
+    fireEvent.click(screen.getByRole('button', { name: 'Change assignee' }));
+    await screen.findByLabelText('New assignee');
+    expect(fixture.setWorkspace).toHaveBeenCalledExactlyOnceWith({ id: '21', name: 'Sponsor A', organizationId: '7' });
+    expect(fixture.setWorkspace.mock.invocationCallOrder[0]).toBeLessThan(onClose.mock.invocationCallOrder[0]);
+    expect(fixture.setWorkspace.mock.invocationCallOrder[0]).toBeLessThan(onNav.mock.invocationCallOrder[0]);
+    const consumers = fixture.request.mock.calls.filter(([, path]) => String(path).includes('/sharing?') || String(path).startsWith('/api/task-management/assignees?'));
+    expect(consumers).toHaveLength(2);
+    for (const call of consumers) expect(call[3]).toMatchObject({ 'x-client-id': '21', 'x-organization-id': '7' });
+    expect(screen.queryByText(/could not be verified/i)).toBeNull();
+  });
+  it('hands off the verified workspace for a confirmed scaffold notice without navigating', async () => {
+    const onNav = vi.fn();
+    fixture.request.mockImplementation(async (method: string) => method === 'GET' ? response(options()) : response(receipt({ scaffoldSkipped: 'NO_RULE_PACK', scaffoldDetail: 'The project was created without a dossier outline.' }), 201));
+    render(<NewProjectWizard onClose={vi.fn()} onNav={onNav} />);
+    await review();
+    expect(fixture.setWorkspace).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
+    const notice = await screen.findByTestId('new-project-outcome');
+    expect(notice.textContent).toMatch(/created without a dossier outline/i);
+    expect(fixture.setWorkspace).toHaveBeenCalledExactlyOnceWith({ id: '21', name: 'Sponsor A', organizationId: '7' });
+    expect(onNav).not.toHaveBeenCalled();
+    expect(readShellProject()).toBeNull();
   });
 });
 

@@ -10,19 +10,21 @@
     "client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx": "cb198a0660cb4e396d4bd69ea3d29588b049579030d109e4e02dc043c1d2462d",
     "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx": "99fce96c1403b97e46d683a1be2e2cd20d90eb1118579ca1609d1acb33027c17",
     "client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx": "778496b966f7a3cf30e8d0472343f9fda6e3018ad0e683e5e38b4b6e89a24a7e",
-    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx": "0c7567f680f560368fbdc39b966ae65f7e8ebf6806e67dc08e7bbfbe733dc027",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx": "a0375e6d1c59959e86a1a6fc92113791b095affe9ec22c3674eb8711bf0bcbd4",
     "client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx": "9242a7d91df4cddfd5b2a94f482bbce5c78f59911673ae49e6eb2adcc156981d",
-    "client/src/concept2cure/v2/__tests__/projectIntakeFixture.ts": "fec0ea4436308ce677f0a48b01d0a2d16824513821b0ea75e0dc9126130f3589",
+    "client/src/concept2cure/v2/__tests__/projectIntakeFixture.ts": "6520acc9251e9b52b8495362c33c593d7d09b8ddeac068f5b8533ef125fcf3c6",
     "client/src/concept2cure/v2/styles/app-v2.css": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75",
     "client/src/concept2cure/v2/styles/project-home-v2.css": "82443905c6f3c4985a0e4fa69804d03dad4416b2e33beea1eb7047639e57c006",
-    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f0c4841a2660ef358190205a18f6192ef308e578032cf475bb753b1cc423cb85",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamSharing.tsx": "2017a2462f7e8e952ef2b2569666cd9107f8d1f735e483731f0559fbadd7c691",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "ef35d6b4836a57110796b4293b0ce0a593a1bcb3d0000e7202ff0b4cdc59b56a",
+    "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56",
     "client/src/concept2cure/v2/surfaces/projectIntakeRequest.ts": "950f135639e15dafa2c2f1b4d9b8231e8000206a8b54fcad1fbf10a7deea693f",
     "client/src/contexts/TenantContext.tsx": "716e80a1c3912f4953d5efa655cd3b52946696258c4f19a462d4096cc2d73387",
     "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
     "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
     "db/migrations/20260813_audit_tamper_proof_log.sql": "5bea04a83860c357b96b106e0acca7367eeb049a70120cb1d9aae064102c7d7c",
     "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
-    "docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-check.mjs": "d1103458bc90b535004bb1df77fecb8820a9bbc8cb54d5d87f3ff30bc9787650",
+    "docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-check.mjs": "c4ad219bb6c6f9f65d0500d9a817ec5815e89e11da6743fead9945a9c39180ec",
     "migrations/0000_sweet_joseph.sql": "4ad13ecd8dcb8b996674c816e8a54d34604610b8a4293619a1a1861b88c8ad56",
     "migrations/20260524_program_workbench_schema.sql": "823ff0a86b256e9053dd761b7af1567ed7534edfcd5869486564a19cabbca522",
     "migrations/20260527_mutation_primitives.sql": "cb439a03ab53338895f54ecd89605f67342b5cb7e191bef8e77d6cf33c3d10d7",
@@ -75,5 +77,18 @@
     "vitest.db.config.ts": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
   },
   "finalTestCorrection": "Precise pending-exit parameter union and removal of unsupported Testing Library ByRoleOptions.exact; product/runtime inputs unchanged.",
-  "securityAnnotation": "Comment-only security-allow records that x-client-id is parsed as a consistency claim, then verified against the actual selected active organization-owned row by the canonical anchor writer in the creation transaction; runtime unchanged."
+  "securityAnnotation": "Comment-only security-allow records that x-client-id is parsed as a consistency claim, then verified against the actual selected active organization-owned row by the canonical anchor writer in the creation transaction; runtime unchanged.",
+  "postSaveWorkspaceHandoff": {
+    "changedInputs": [
+      "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+      "client/src/concept2cure/v2/__tests__/projectIntakeFixture.ts",
+      "client/src/concept2cure/v2/surfaces/Projects.tsx",
+      "docs/evidence/D2-PM-CLIENT-INTAKE/2026-10-23/browser-check.mjs"
+    ],
+    "addedRetainedConsumerInputs": [
+      "client/src/concept2cure/v2/surfaces/ProjectTeamSharing.tsx",
+      "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx"
+    ],
+    "meaning": "Only an exact verified current 201 receipt selects the existing TenantContext workspace before the confirmed handoff; backend/native inputs unchanged."
+  }
 }

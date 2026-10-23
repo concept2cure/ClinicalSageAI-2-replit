@@ -216,6 +216,7 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
 }
 
 function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+  const { setCurrentClientWorkspace } = useTenant();
   const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
   // Retain the pending outcome in this view. A ref also protects an Escape or
   // second click in the same turn, before the creating state has rendered.
@@ -438,6 +439,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
       // A confirmed save also closes the duplicate-create path on scaffold notices.
       setWriteStopped(true);
       const { data: created, meta } = answer.receipt;
+      // The verified saved parent becomes the context for the project's sharing
+      // and assignment controls. Global selection never supplies intake intent.
+      setCurrentClientWorkspace({ id: String(meta.clientWorkspaceId), name: meta.clientWorkspaceName, organizationId: String(meta.organizationId) });
       if (meta.scaffoldSkipped) {
         setOutcome({
           kind: 'notice',

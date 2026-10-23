@@ -16,10 +16,10 @@ const bundle = await build({
   stdin: { resolveDir: repo, loader: 'tsx', contents: `
     import React from 'react'; import {createRoot} from 'react-dom/client';
     import {NewProjectWizard} from './client/src/concept2cure/v2/surfaces/Projects';
-    window.fixture={actor:7,org:9,tenantOrg:9};
+    window.fixture={actor:7,org:9,tenantOrg:9,workspace:{id:'72',name:'Consultancy own',organizationId:'9'}};
     window.token=()=>sessionStorage.setItem('trialsage_access_token','fixture.'+btoa(JSON.stringify({userId:window.fixture.actor,organizationId:window.fixture.org}))+'.unsigned');
     window.token(); const root=createRoot(document.getElementById('root'));
-    window.render=()=>root.render(<NewProjectWizard onClose={()=>window.fixtureClosed=true} onNav={id=>window.navigated=id}/>);
+    window.render=()=>root.render(<NewProjectWizard onClose={()=>window.fixtureClosed=true} onNav={id=>{window.navigated=id;window.navWorkspace=window.fixture.workspace.id;}}/>);
     window.render();
   ` }, bundle: true, write: false, outfile: '/tmp/pm05-browser/bundle.js', format: 'iife', platform: 'browser',
   define: { 'process.env.NODE_ENV': '"production"', 'import.meta.env': '{}' },
@@ -29,7 +29,7 @@ const bundle = await build({
     b.onResolve({ filter: /^\.\/AnaVerbs$/ }, args => args.importer.endsWith('/surfaces/Projects.tsx') ? { path: args.path, namespace: 'fixture-filing' } : undefined);
     b.onResolve({ filter: /^\.\/RegistryBridge$/ }, args => args.importer.endsWith('/surfaces/Projects.tsx') ? { path: args.path, namespace: 'fixture-registry' } : undefined);
     b.onLoad({ filter: /.*/, namespace: 'fixture-auth' }, () => ({ loader: 'js', contents: 'export const useAuthUser=()=>({id:String(window.fixture.actor),organizationId:String(window.fixture.org)});' }));
-    b.onLoad({ filter: /.*/, namespace: 'fixture-tenant' }, () => ({ loader: 'js', contents: 'export const useTenant=()=>({currentOrganization:{id:window.fixture.tenantOrg},currentClientWorkspace:{id:72,organizationId:9}});' }));
+    b.onLoad({ filter: /.*/, namespace: 'fixture-tenant' }, () => ({ loader: 'js', contents: 'export const useTenant=()=>({currentOrganization:{id:window.fixture.tenantOrg},currentClientWorkspace:window.fixture.workspace,setCurrentClientWorkspace:workspace=>{window.fixture.workspace=workspace;window.handoffs=(window.handoffs||0)+1;}});' }));
     b.onLoad({ filter: /.*/, namespace: 'fixture-filing' }, () => ({ loader: 'tsx', resolveDir: repo, contents: 'import React from "react"; export const RegistryPicker=({onChange})=><button className="btn" onClick={()=>onChange("510k")}>Select Traditional 510(k)</button>;' }));
     b.onLoad({ filter: /.*/, namespace: 'fixture-registry' }, () => ({ loader: 'js', contents: 'export const getSubmissionTypeContext=()=>({id:"us_510k",displayName:"Traditional 510(k)",pathwayKey:"510k",agency:"FDA",region:"US"});' }));
   } }],
@@ -104,6 +104,8 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => window.fixtureClosed), undefined);
     await page.waitForFunction(() => window.navigated === 'project-home');
+    assert.equal(await page.evaluate(() => window.navWorkspace), '71');
+    assert.equal(await page.evaluate(() => window.handoffs), 1);
     for (const mode of ['empty', 'error', 'foreign']) {
       await page.goto(origin + '/?mode=' + mode); await configure(page);
       await page.getByText(mode === 'empty' ? /No active client workspace is available/ : /Client workspaces could not be verified/).waitFor();
@@ -115,6 +117,8 @@ try {
       await page.getByRole('button', { name: /check projects/i }).waitFor();
       assert.ok(await page.getByRole('button', { name: /create project/i }).isDisabled());
       assert.equal(await page.evaluate(() => window.navigated), undefined);
+      assert.equal(await page.evaluate(() => window.fixture.workspace.id), '72');
+      assert.equal(await page.evaluate(() => window.handoffs), undefined);
       await page.screenshot({ path: out + `intake-${mode}-${width}.png`, fullPage: true });
     }
     await page.goto(origin); await review(page);
@@ -126,7 +130,8 @@ try {
     assert.deepEqual(errors, []);
     results.push({ width, explicitMultiClientChoice: true, matchingBodyAndHeader: true, namedReview: true,
       emptyAndFailedDirectoryBlocked: true, foreignDirectoryBlocked: true, unknownAndBadReceiptBlockReplay: true,
-      pendingCancelAndEscapeBlocked: true, actorSwitchRetiresSponsorForm: true, horizontalOverflow: false, pageErrors: errors });
+      pendingCancelAndEscapeBlocked: true, savedWorkspaceSelectedBeforeNavigation: true, unverifiedSaveKeepsPriorWorkspace: true,
+      actorSwitchRetiresSponsorForm: true, horizontalOverflow: false, pageErrors: errors });
     await page.close();
   }
   assert.equal(writes.length, 6);
