@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-10-23T18:23:22.348360+00:00",
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "HEAD:refs/heads/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 73.192,
+  "head": "f5f685a87faea1fd5197bfac362249aefec3481f",
+  "rawOutput": "publication-retry-1-push.log.gz",
+  "rawGzipSha256": "994c8391aa15f68cddf972d9b9bfae56b199cae64fc1557af284c70fff63dcb3",
+  "verifiedInputCount": 140,
+  "hooks": "Normal configured hooks; no force, bypass or amend",
+  "observedRemoteHead": "f5f685a87faea1fd5197bfac362249aefec3481f"
+}

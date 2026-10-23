@@ -2,6 +2,12 @@
 
 W1 / D2; canonical `concept2cure-v2`; local/Codespaces only.
 
+**Current publication:** see [publication.md](publication.md) and
+`publication-source-verification.json` for the exact pushed head, 140 final input
+pins, reviewed incoming work and qualification epochs. The current human guide
+has 75 Not run cases; shared planning is cases 73–75. Earlier review counts
+and freezes remain historical records.
+
 ## What already exists
 
 - `client/src/concept2cure/v2/editor/DocumentWorkbench.tsx`, `DocumentCanvas.tsx`
@@ -109,7 +115,7 @@ records a later documentation-only fast-forward with all qualified pins intact.
 ## Human testing and limits
 
 The [local guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)
-contains 70 sequential cases, all Not run. Cases 68–70 cover these shared documents,
+contains 75 sequential cases, all Not run. Cases 73–75 cover these shared documents,
 source assembly, saved oversight, scope refusals and the existing governed QMS
 path across the named customer use cases. Existing UI principles are preserved.
 
@@ -134,8 +140,8 @@ pin actor headers. Production UI/access policy and negative assertions are
 unchanged. See `preparation/ui-fixture/` and `ui-fixtures/`; this historical failure
 is retained rather than labelled feature RED or GREEN.
 
-`final-document-review.md` verifies the six production hashes and corrected
-70-case human handoff. It also records the initial duplicate case numbers,
+`final-document-review.md` verifies the six production hashes and the earlier
+70-case human handoff; current 75-case verification is recorded in publication.md. It also records the initial duplicate case numbers,
 which were resolved while preserving existing case IDs 1–67.
 
 The reviewed canonical fast-forward `aa09f55f` → `0a7abf31` preserves every owned
@@ -162,7 +168,7 @@ recorded separately in `publication.md` and its linked receipts.
 | Production build | Passed |
 | Single editor, UI tokens/design, gateway, SQL, migration and repo-health gates | All 16 passed |
 | Final 122 pinned inputs | No drift |
-| Human acceptance | 70 cases, all Not run |
+| Human acceptance | 75 cases, all Not run; see current publication |
 
 The two regression rows overlap and are not a combined unique-case count.
 All results above have actual command/exit/raw-output/source-pin receipts in
