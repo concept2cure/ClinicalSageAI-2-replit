@@ -1,0 +1,45 @@
+{
+  "sourcePhase": {
+    "local": "70a3db998872d1b790cfdbcaac30d30580f4bbbe",
+    "canonical": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+    "commonAncestor": "3cae08d236ba5be6dd96284bca2c47b4605c007d"
+  },
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "backend": {
+    "exitCode": 0,
+    "suites": 8,
+    "passed": 181,
+    "skipped": 0,
+    "durationSeconds": 69.28
+  },
+  "memory": {
+    "exitCode": 0,
+    "suites": 9,
+    "passed": 119,
+    "skipped": 0,
+    "durationSeconds": 37.96
+  },
+  "liveDemoAcceptance": "blocked: specified Codespace unavailable to current GitHub session; no configured provider credentials reported by managed environment",
+  "qualification": "PGlite and mock-provider checks; no native/agency/commercial qualification claimed",
+  "build": {
+    "exitCode": 0,
+    "clientSeconds": 25.55,
+    "server": "dist/index.js",
+    "auditChainVerifier": "dist/ops/verify-audit-chain.mjs",
+    "phase": "First merged runtime, before warning refactors; final successor build recorded separately"
+  },
+  "resolvedSourceLint": {
+    "files": 13,
+    "errors": 0,
+    "warnings": 63,
+    "scope": "Current source snapshot; changed-file warning gate compared with canonical is recorded separately"
+  },
+  "initialWarningGate": {
+    "exitCode": 1,
+    "netGrowth": 5,
+    "productionWarningsIntroduced": 6,
+    "sealedObserverWarningUnchanged": true,
+    "repair": "bounded semantic refactors recorded in client successor"
+  }
+}

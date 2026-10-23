@@ -1,0 +1,30 @@
+[
+  {
+    "report": "lint-baseline.json",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "command": [
+      "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--stdin",
+      "--stdin-filename",
+      "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "--format",
+      "json"
+    ]
+  },
+  {
+    "report": "lint-current.json",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "command": [
+      "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "--format",
+      "json"
+    ]
+  }
+]

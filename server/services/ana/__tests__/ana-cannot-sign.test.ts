@@ -32,6 +32,12 @@ vi.mock('../../../db.js', () => ({
 }));
 vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction }));
 vi.mock('../../../routes/c2c/actions.js', () => ({ recordGovernedAction }));
+// The registry wrapper's editor-role read (part11/editor-role.ts), for the one
+// confirm-class tool below that reaches its handler: an editor.
+vi.mock('../../part11/editor-role', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../part11/editor-role')>()),
+  editorRoleDecision: async () => ({ allowed: true, role: 'admin' }),
+}));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
@@ -142,5 +148,62 @@ describe('the register lets a handler refuse only where the handler is pinned', 
     const refusedByHandler = Object.entries(TOOL_REGISTER).filter(([, e]) => e.refusedBy === 'handler').map(([n]) => n).sort();
     const pinned = [...SIGNING_TOOLS, ...OTHER_HANDLER_REFUSALS].map(([n]) => n).concat(PINNED_ELSEWHERE).sort();
     expect(refusedByHandler).toEqual(pinned);
+  });
+});
+
+/*
+ * P-41 (2026-10-19): recording a PMR, PMC or REMS as fulfilled is a signed act
+ * that names the sequence or Vault version that met it. AnA's
+ * fulfill_regulatory_commitment cannot sign, so for those three it reads the
+ * commitment's type, writes nothing and hands the act to the screen. Its own
+ * describe: unlike SIGNING_TOOLS it does connect, because the type is read
+ * from the record, never taken from the model.
+ */
+describe('fulfill_regulatory_commitment refuses a signed fulfilment (P-41)', () => {
+  function clientWith(type: string) {
+    const sql: string[] = [];
+    const client = {
+      query: vi.fn(async (text: string) => {
+        sql.push(text);
+        return { rows: /regulatory_commitments/.test(text) ? [{ id: 3, commitment_type: type, status: 'open', submission_id: null, project_id: null, source_communication_event_id: null, visibility_tier: null, fulfilled_date: '2026-10-01' }] : [] };
+      }),
+      release: vi.fn(),
+    };
+    connect.mockResolvedValueOnce(client as never);
+    return sql;
+  }
+
+  it.each(['pmr', 'pmc', 'rems'])('a %s: writes nothing, says AnA cannot sign, and points to Meetings & commitments', async (type) => {
+    const sql = clientWith(type);
+    const out = JSON.parse(await getToolHandler('fulfill_regulatory_commitment')!(
+      { commitment_id: 3, fulfilled_date: '2026-10-01', reason: 'Final study report filed.' },
+      { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    ));
+    expect(out.ok).toBe(false);
+    expect(out.signatureRequired).toBe(true);
+    expect(out.message).toMatch(/AnA cannot sign/);
+    expect(out.message).toMatch(/Meetings & commitments/);
+    expect(out.message).toMatch(/nothing was recorded/i);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(sql.some((s) => /UPDATE\s+regulatory_commitments/i.test(s))).toBe(false);
+  });
+
+  it('a meeting commitment is still fulfilled from chat, as a governed resolve', async () => {
+    const sql = clientWith('meeting_commitment');
+    recordGovernedAction.mockResolvedValueOnce({ actionId: 'a', auditId: 'b', sha256Chain: 'c' });
+    const out = JSON.parse(await getToolHandler('fulfill_regulatory_commitment')!(
+      { commitment_id: 3, fulfilled_date: '2026-10-01', reason: 'Minutes sent as agreed.' },
+      { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    ));
+    expect(out.ok, JSON.stringify(out)).toBe(true);
+    expect(sql.some((s) => /UPDATE\s+regulatory_commitments/i.test(s))).toBe(true);
+    expect(recordGovernedAction).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ command: 'resolve', target: 'regulatory-commitment:3' }));
+  });
+
+  it('is described as handing a PMR, PMC or REMS to the person', () => {
+    const def = ALL_ANA_TOOLS.find((t) => t.name === 'fulfill_regulatory_commitment');
+    expect(def?.description).toMatch(/AnA cannot sign/);
+    expect(def?.description).toMatch(/PMR/);
+    expect(def?.description).toMatch(/fulfilled/);
   });
 });

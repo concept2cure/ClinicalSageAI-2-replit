@@ -1,0 +1,57 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/chat/send-message.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/ana-ri/stream.ts (3932 lines)
+  server/routes/chat/send-message.ts (1370 lines)
+  server/services/ana/AnaToolExecutor.ts (22061 lines)
+  server/services/ana/agentic-loop.ts (866 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3313 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 7780de83f] Enforce strict raw tool-round body handoff in AnA hosts
+ 36 files changed, 9655 insertions(+), 32 deletions(-)
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/executor/README.md
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/initial-frozen-tests.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/production-before.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/production-restore.patch.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/red-command.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/red.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/refrozen.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/strict-round-body-executor.test.ts.diff.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/strict-round-body-executor.test.ts.original.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/strict-round-body-read-integrity.test.ts.diff.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/layout-review/strict-round-body-read-integrity.test.ts.original.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/frozen-tests-commit.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/green-command.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/green-exit.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/green-results.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/green.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-green-command.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-green-exit.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-green.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-lint-green-stderr.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-lint-green-stdout.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/initial-lint-green-summary.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-green-stderr.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-green-stdout.txt
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/lint-green-summary.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/qualification.json
+ create mode 100644 docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/reviews.json

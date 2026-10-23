@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-20T22:36:04.082653+00:00",
+  "argv": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "elapsedSeconds": 271.193,
+  "exitCode": 1,
+  "sourceFreeze": "source-freeze.json",
+  "sourceDrift": [],
+  "rawOutput": "typecheck-before-final-corrections-output.txt.gz",
+  "outputSha256": "8ecd18062b08a966d78fa7c8cc0877090f0febf5c4e8b15e5e1d2f5a799f48bd",
+  "stdout": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 2 (tsc exit 2)\n",
+  "stderr": "[ci:typecheck-no-regression] FAIL \u2014 error count 2 exceeds baseline 0 (+2).\n  Either fix the new errors, or \u2014 if intentional \u2014 update the baseline:\n    npm run ci:typecheck:write-baseline\n\n  Tail of tsc output (most recent first):\n    server/routes/c2c/__tests__/projects-create-regional-devices.test.ts(53,94): error TS2345: Argument of type '[\"jp_cdx\" | \"us_hde\" | \"ca_mdl\" | \"ca_ivd_licence\" | \"jp_shonin\" | \"jp_nintei\" | \"jp_todokede\" | \"jp_ivd_approval\", \"mdl\" | \"shonin\" | \"ninsho\" | \"todokede\" | \"ivd_licence\" | \"ivd_approval\" | \"jp_cdx\" | \"hde\", \"FDA\" | ... 2 more ... | \"Registered certification body\", \"device\" | ... 1 more ... | \"cdx\"]' is not assignable to parameter of type 'readonly [\"us_hde\", \"hde\", \"FDA\", \"device\"] | readonly [\"ca_mdl\", \"mdl\", \"Health Canada\", \"device\"] | readonly [\"ca_ivd_licence\", \"ivd_licence\", \"Health Canada\", \"ivd\"] | readonly [\"jp_shonin\", \"shonin\", \"PMDA\", \"device\"] | readonly [...] | readonly [...] | readonly [...] | readonly [...]'.\n    server/routes/c2c/__tests__/projects-create-regional-devices.test.ts(61,99): error TS2345: Argument of type '[\"jp_cdx\" | \"us_hde\" | \"ca_mdl\" | \"ca_ivd_licence\" | \"jp_shonin\" | \"jp_nintei\" | \"jp_todokede\" | \"jp_ivd_approval\", \"mdl\" | \"shonin\" | \"ninsho\" | \"todokede\" | \"ivd_licence\" | \"ivd_approval\" | \"jp_cdx\" | \"hde\", \"FDA\" | ... 2 more ... | \"Registered certification body\", \"device\" | ... 1 more ... | \"cdx\"]' is not assignable to parameter of type 'readonly [\"us_hde\", \"hde\", \"FDA\", \"device\"] | readonly [\"ca_mdl\", \"mdl\", \"Health Canada\", \"device\"] | readonly [\"ca_ivd_licence\", \"ivd_licence\", \"Health Canada\", \"ivd\"] | readonly [\"jp_shonin\", \"shonin\", \"PMDA\", \"device\"] | readonly [...] | readonly [...] | readonly [...] | readonly [...]'.\n"
+}

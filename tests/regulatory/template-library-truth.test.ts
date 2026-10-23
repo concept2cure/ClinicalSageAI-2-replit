@@ -35,12 +35,16 @@ describe('template library — CSR outline is the ICH E3 tree', () => {
   });
 });
 
-describe('template library — PBRER outline is ICH E2C(R2) §1–§19', () => {
-  it('carries every numbered section in order', () => {
+describe('template library — PBRER outline is ICH E2C(R2) §1–§20', () => {
+  it('carries every numbered section in order, after the title page and executive summary', () => {
     const p = getDocumentTemplate('pbrer')!;
+    // §20 Appendices, the title page and the executive summary added 2026-10-18 (review finding).
     expect(p.sections.map((s) => s.number)).toEqual(
-      Array.from({ length: 19 }, (_, i) => String(i + 1)),
+      Array.from({ length: 20 }, (_, i) => String(i + 1)),
     );
+    expect(p.frontMatter?.map((s) => s.heading)).toEqual(['Title Page', 'Executive Summary']);
+    // GVP Module VII asks every section to be completed, stating none where there is none.
+    expect(p.sections.filter((s) => ['8', '9', '10', '11', '12'].includes(s.number)).every((s) => s.required)).toBe(true);
   });
 
   it('§12–§19 carry the E2C(R2) headings', () => {

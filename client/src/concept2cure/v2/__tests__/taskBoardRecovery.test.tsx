@@ -6,10 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getSurface } from '@shared/constants/ui-surface-registry';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 const auth = vi.hoisted(() => ({ canWrite: true }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '1', permissions: auth.canWrite ? ['governed:write'] : [] } }) }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: auth.canWrite ? ['governed:write'] : [] } }) }));
 import { TaskBoard } from '../surfaces/TaskBoard';
 import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 const TASK = {
@@ -23,6 +24,7 @@ let board: typeof TASK[];
 let assign: () => Promise<Response>;
 let readFailed = false;
 beforeEach(() => {
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.fixture`);
   auth.canWrite = true;
   board = [TASK];
   readFailed = false;
@@ -41,7 +43,7 @@ beforeEach(() => {
     return ok({ data: [] });
   });
 });
-afterEach(() => { cleanup(); clearNavParams(); window.history.replaceState(null, '', '/'); });
+afterEach(() => { cleanup(); clearAuthToken(); clearNavParams(); window.history.replaceState(null, '', '/'); });
 const mount = (strict = false) => {
   const props: React.ComponentProps<typeof TaskBoard> = {
     surface: getSurface('tasks')!, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma',
@@ -57,7 +59,8 @@ describe('saved task assignment recovery', () => {
   it('reuses the saved task id, re-reads its assignee and creates no replacement', async () => {
     mount(); const detail = await open();
     fireEvent.click(within(detail).getByRole('button', { name: 'Auto-assign task' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/tasks/tasks/auto-assign', { taskIds: [TASK.taskId] }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/tasks/tasks/auto-assign', { taskIds: [TASK.taskId] },
+      expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' })));
     await within(detail).findByText('Rae');
     expect(apiRequest.mock.calls.some(([method, path]) => method === 'POST' && path === '/api/tasks/tasks')).toBe(false);
   });
@@ -82,6 +85,19 @@ describe('saved task assignment recovery', () => {
   });
 });
 describe('notification target', () => {
+  it.each([
+    { taskId: TASK.taskId, taskActor: '', taskOrg: '' },
+    { taskId: TASK.taskId, taskActor: 7, taskOrg: null },
+    { taskActor: '7' },
+  ])('refuses supplied blank, malformed or partial handoff scope without copied-link fallback: %#', async params => {
+    stashNavParamsForTarget('tasks', params as unknown as Record<string, string>); mount();
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    await screen.findByRole('button', { name: `Open ${TASK.title}` });
+    expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
+    expect(window.C2C_NAV_PARAMS).toBeUndefined();
+    expect(apiRequest.mock.calls.filter(([, path]) => path === '/api/task-management/board')).toHaveLength(1);
+  });
+
   it('opens the exact authorized task from a copied task URL under StrictMode', async () => {
     window.history.replaceState(null, '', `/concept2cure/tasks?taskId=${TASK.taskId}&program=00000000-0000-4000-8000-000000000007`);
     mount(true);
@@ -91,14 +107,14 @@ describe('notification target', () => {
   it('refuses a copied URL task absent from the authorized board', async () => {
     window.history.replaceState(null, '', '/concept2cure/tasks?taskId=TASK-ANOTHER-ORG');
     mount();
-    expect((await screen.findByRole('alert')).textContent).toMatch(/not available.*board/i);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/no longer available.*board/i);
     expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
   });
   it('reports an unread board rather than treating a copied URL task as missing', async () => {
     readFailed = true;
     window.history.replaceState(null, '', `/concept2cure/tasks?taskId=${TASK.taskId}`);
     mount();
-    expect(await screen.findByText(/The task board could not be read, so the requested task/)).toBeTruthy();
+    expect(await screen.findByText(/The task board could not be read\. Retry from Your work/)).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
   });
   it.each(['TASK-RECOVERY%2Fother', 'TASK-RECOVERY&taskId=TASK-SECOND', 'OTHER-RECOVERY'])('does not select a malformed or ambiguous task query: %s', async query => {
@@ -138,7 +154,7 @@ describe('notification target', () => {
     stashNavParamsForTarget('tasks', { taskId: TASK.taskId }); mount(true);
     expect((await screen.findByRole('dialog', { name: 'Task detail' })).textContent).toContain(TASK.title);
   });
-  it('preserves an archive justification while a second notification waits', async () => {
+  it('preserves an archive justification, refuses replacement and requires an explicit notification retry', async () => {
     board = [TASK, { ...TASK, taskId: 'TASK-SECOND', title: 'Second notification' }];
     mount(); const detail = await open();
     fireEvent.click(within(detail).getByRole('button', { name: `Archive "${TASK.title}"` }));
@@ -146,18 +162,20 @@ describe('notification target', () => {
     fireEvent.change(reason, { target: { value: 'Keep this unsaved reason' } });
     act(() => { stashNavParamsForTarget('tasks', { taskId: 'TASK-SECOND' }); });
     expect((reason as HTMLTextAreaElement).value).toBe('Keep this unsaved reason');
-    expect(within(detail).getByText(/Finish or close/)).toBeTruthy();
+    expect(within(detail).getByText(/task detail is open.*close it first/i)).toBeTruthy();
     fireEvent.click(within(detail).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
+    act(() => { stashNavParamsForTarget('tasks', { taskId: 'TASK-SECOND' }); });
     expect((await screen.findByRole('dialog', { name: 'Task detail' })).textContent).toContain('Second notification');
   });
   it('says a missing task is unavailable, never opens another task', async () => {
     stashNavParamsForTarget('tasks', { taskId: 'TASK-ANOTHER-ORG' }); mount();
-    expect((await screen.findByRole('alert')).textContent).toMatch(/not available.*board/i);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/no longer available.*board/i);
     expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
   });
   it('does not call an unread board a missing task', async () => {
     readFailed = true; stashNavParamsForTarget('tasks', { taskId: TASK.taskId }); mount();
-    expect(await screen.findByText(/The task board could not be read, so the requested task/)).toBeTruthy();
+    expect(await screen.findByText(/The task board could not be read\. Retry from Your work/)).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Task detail' })).toBeNull();
   });
 });

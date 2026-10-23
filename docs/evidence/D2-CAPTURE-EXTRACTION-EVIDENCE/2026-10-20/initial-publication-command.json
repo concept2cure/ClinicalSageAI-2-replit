@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "head": "7efdd69d44ef085f7f16f972abeec7be221ad58b",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "hooksPath": ".husky",
+  "note": "Normal hooks, inherited proxies/CA/authentication; no bypass"
+}

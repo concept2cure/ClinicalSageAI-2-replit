@@ -41,8 +41,8 @@ beforeAll(async () => {
   pglite = new PGlite();
   const ddl = readFileSync(join(ROOT, 'db/migrations/20260520_regulatory_intelligence_layer.sql'), 'utf8');
   const grab = (table: string) => {
-    // nosemgrep: detect-non-literal-regexp -- table is a test literal; the subject is a repo migration file
-    const m = ddl.match(new RegExp(`CREATE TABLE IF NOT EXISTS intelligence\\.${table} \\([\\s\\S]*?\\n\\);`));
+    const m = [...ddl.matchAll(/CREATE TABLE IF NOT EXISTS intelligence\.([a-z_]+) \([\s\S]*?\n\);/g)]
+      .find(match => match[1] === table);
     if (!m) throw new Error(`DDL for ${table} not found`);
     return m[0];
   };

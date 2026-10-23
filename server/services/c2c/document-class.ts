@@ -26,6 +26,9 @@
  * document that says so.
  */
 
+import { FILING_DOCUMENT_CLASSES } from '../../../shared/regulatory/filing-document-classes.js';
+import { REGIONAL_DEVICE_APPLICATION_CLASSES, regionalDeviceApplicationClassOf, resolveFilingCatalogEntry } from '../../../shared/regulatory/filing-catalog.js';
+
 /**
  * program_type (lowercase, as projects.ts normalises it) → c2c_documents.doc_type.
  *
@@ -42,6 +45,7 @@
  * migrations/20260806b supplies both, so they are mapped here.
  */
 export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(REGIONAL_DEVICE_APPLICATION_CLASSES.map(c => [c.docType, c.docType])),
   ind: 'ind', cta: 'cta', nda: 'nda', anda: 'anda', bla: 'bla', maa: 'maa', jnda: 'jnda',
   '510k': 'k510', de_novo: 'denovo', pma: 'pma', ide: 'ide', cer: 'cer',
   // EU MDR / IVDR technical documentation. Mapped for the same reason anda and
@@ -54,6 +58,12 @@ export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
   // because no agency seeds a dmf-specific pack — the ICH baseline is the right
   // claim for a master file whose applicant's part maps to 3.2.S per ICH M4Q.
   dmf: 'mod3',
+  // A filing that is a document, not an application — a supplement, an annual
+  // report, an IND amendment, a meeting package, a designation request, a CSR —
+  // is its own class: the program type IS the doc type, as for the class's own
+  // pack (shared/regulatory/filing-document-classes.ts). Until 2026-10-18 each of
+  // them reached this map as 'nda' or 'ind' and was scaffolded as that dossier.
+  ...Object.fromEntries(FILING_DOCUMENT_CLASSES.map((c) => [c.docType, c.docType])),
 };
 
 /**
@@ -67,7 +77,42 @@ export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
 export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
   FDA: 'fda', EMA: 'ema', PMDA: 'pmda', MHRA: 'mhra', ICH: 'ich',
   TGA: 'tga', NMPA: 'nmpa', MFDS: 'mfds', HC: 'hc', HEALTH_CANADA: 'hc',
+  // The catalog's label for the harmonised documents (filing-catalog.ts
+  // AGENCY_LABEL), which the wizard sends as the program's agency for a CSR,
+  // protocol or IB (2026-10-18).
+  ICH_GLOBAL: 'ich',
+  REGISTERED_CERTIFICATION_BODY: 'jp_rcb', JP_RCB: 'jp_rcb',
 };
+
+/**
+ * An agency that names a region without being that region's own agency
+ * (added 2026-10-08, F19b review).
+ *
+ * The EU device lane: an MDR or IVDR technical file, or a clinical evaluation
+ * report, is assessed by a Notified Body, not by the EMA. The catalog names the
+ * agency 'EU / Notified Body' (filing-catalog.ts AGENCY_LABEL), and neither the
+ * region identity nor AGENCY_TO_CODE knows that string, so every such filing
+ * read "Refused at creation" and the EU MDR/IVDR lane had no way in, while its
+ * packs exist (mdr:ema, ivdr:ema, cer:ema). Those packs are keyed 'ema' by
+ * their own migration's choice (migrations/20260810b, "WHY agency 'ema'": the
+ * c2c_documents agency CHECK has no Notified Body value), so a Notified Body
+ * filing of those three classes reads the 'ema' outline. The statement still
+ * names the Notified Body, and its channel is judged from the Notified Body's
+ * own registered filings. Any other class at a Notified Body has no outline:
+ * a Notified Body takes no NDA or MAA.
+ */
+export const NOTIFIED_BODY = {
+  keys: new Set(['notified_body', 'eu_notified_body', 'nb']),
+  region: 'EU' as const,
+  agency: 'Notified_Body',
+  documentAgency: 'EMA',
+  docTypes: new Set(['mdr', 'ivdr', 'cer']),
+};
+
+/** 'Health Canada', 'health-canada', 'HEALTH_CANADA' and 'ICH / Global' → the AGENCY_TO_CODE key. */
+function agencyKey(primaryAgency: string): string {
+  return String(primaryAgency).trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
 
 /**
  * Agencies to try, in order, when the project's own agency has no rule pack.
@@ -97,6 +142,12 @@ export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
  */
 export const AGENCY_FALLBACKS = ['ich'] as const;
 
+/** Regional application identities cannot borrow a harmonised outline or binding. */
+export function documentAgencyCandidates(docType: string, agency: string): readonly string[] {
+  const regional = regionalDeviceApplicationClassOf(docType);
+  return regional ? regional.packAgency === agency ? [agency] : [] : [agency, ...AGENCY_FALLBACKS];
+}
+
 export interface DocumentClass {
   docType: string;
   agency: string;
@@ -107,7 +158,8 @@ export interface DocumentClass {
  * class, or null when either side is unmapped.
  *
  * The agency key is normalised the way the wizard sends it — 'Health Canada',
- * 'health-canada' and 'HEALTH_CANADA' all reach the same entry.
+ * 'health-canada' and 'HEALTH_CANADA' all reach the same entry, and the
+ * catalog's 'ICH / Global' reaches ICH.
  */
 export function resolveDocumentClass(
   programType: string | null | undefined,
@@ -116,11 +168,14 @@ export function resolveDocumentClass(
   if (!programType || !primaryAgency) return null;
 
   const docType = PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()];
-  const agency = AGENCY_TO_CODE[
-    String(primaryAgency).trim().toUpperCase().replace(/[\s-]+/g, '_')
-  ];
+  const authorityKey = agencyKey(primaryAgency);
+  let agency = AGENCY_TO_CODE[authorityKey];
+  if (NOTIFIED_BODY.keys.has(authorityKey.toLowerCase()) && NOTIFIED_BODY.docTypes.has(docType)) {
+    agency = AGENCY_TO_CODE[NOTIFIED_BODY.documentAgency];
+  }
 
   if (!docType || !agency) return null;
+  if (!documentAgencyCandidates(docType, agency).length) return null;
   return { docType, agency };
 }
 
@@ -134,5 +189,8 @@ export function describeUnmappedClass(
   if (!PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()]) {
     return `No document class is defined for program type '${programType}'.`;
   }
+  const regional = regionalDeviceApplicationClassOf(programType);
+  const filing = regional ? resolveFilingCatalogEntry(regional.registryId) : null;
+  if (filing) return `Choose ${filing.agency} for ${filing.displayName}. The selected authority '${primaryAgency}' does not match this filing.`;
   return `No document agency is defined for '${primaryAgency}'.`;
 }

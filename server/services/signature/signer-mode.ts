@@ -62,6 +62,8 @@ export const SIGNER_ENV = {
   KMS_KEY_ID: 'CONCEPT2CURE_SIGNER_KMS_KEY_ID',
   KMS_REGION: 'CONCEPT2CURE_SIGNER_KMS_REGION',
   KMS_SIGNING_ALGORITHM: 'CONCEPT2CURE_SIGNER_KMS_SIGNING_ALGORITHM',
+  /** Retained keys still trusted to have signed (SOP §5): comma-separated ids, ARNs or aliases. */
+  KMS_VERIFY_KEY_IDS: 'CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS',
   AWS_REGION: 'AWS_REGION',
   AUDIT_HMAC_KEY: 'AUDIT_HMAC_KEY',
 } as const;
@@ -87,7 +89,17 @@ export interface SignerPosture {
   /** hmac in production: the operator explicitly accepted a symmetric seal as the signer. */
   hmacAccepted: boolean;
   /** kms: the configured key id / ARN / alias and region. */
-  kms?: { keyId: string; region: string; signingAlgorithm: KmsSigningAlgorithm };
+  kms?: {
+    keyId: string;
+    region: string;
+    signingAlgorithm: KmsSigningAlgorithm;
+    /**
+     * Previous signing keys kept enabled for Verify only (SOP §5), so a release
+     * signed before a rotation still verifies after it. Never used to sign.
+     * Absent or empty: only the current key is trusted.
+     */
+    verifyKeyIds?: string[];
+  };
 }
 
 function isProduction(env: NodeJS.ProcessEnv): boolean {
@@ -140,7 +152,18 @@ function readKmsConfig(env: NodeJS.ProcessEnv): SignerPosture['kms'] | undefined
     );
   }
   if (!keyId || !region) return undefined;
-  return { keyId, region, signingAlgorithm: algRaw as KmsSigningAlgorithm };
+  const verifyKeyIds = read(env, SIGNER_ENV.KMS_VERIFY_KEY_IDS)
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0 && id !== keyId);
+  // Omitted when none are configured, so a deployment with no retained keys has
+  // exactly the posture it had before retained keys existed.
+  return {
+    keyId,
+    region,
+    signingAlgorithm: algRaw as KmsSigningAlgorithm,
+    ...(verifyKeyIds.length > 0 ? { verifyKeyIds } : {}),
+  };
 }
 
 /**

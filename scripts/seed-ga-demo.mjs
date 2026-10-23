@@ -22,6 +22,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { orderDomainParts } from './seed/ga-demo-order.mjs';
 import { assertLocalDatabase } from './seed/local-only.mjs';
+import { ensureOrganizationWorkspace } from './seed/organization-workspace.mjs';
 
 const { Pool } = pg;
 
@@ -203,27 +204,17 @@ async function seed() {
     console.log('[4/6] Creating demo projects...');
 
     // Several core tables (projects, documents, …) have a NOT NULL
-    // client_workspace_id. Ensure a default workspace exists for the org and
-    // reuse its id across the seed.
+    // client_workspace_id. The organisation's own workspace comes from the
+    // deploy repair sweep, the one writer for seeded organisations (HT-01,
+    // 2026-10-18); this used to INSERT an unmarked 'Default Workspace' beside
+    // whatever the organisation already had.
     let workspaceId = null;
     const wsTableExists = await client.query(
       `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_workspaces')`,
     );
     if (wsTableExists.rows[0].exists) {
-      const wsRes = await client.query(
-        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-         VALUES ($1, 'Default Workspace', 'default', 'active', $2)
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-        [org.id, admin.id],
-      );
-      workspaceId = wsRes.rows[0]?.id
-        ?? (await client.query(
-              `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
-              [org.id],
-           )).rows[0]?.id
-        ?? null;
-      console.log(`   ✓ Client workspace: Default Workspace (id ${workspaceId})`);
+      workspaceId = await ensureOrganizationWorkspace(client, org.id);
+      console.log(`   ✓ Client workspace (id ${workspaceId})`);
     }
 
     // Check if projects table exists

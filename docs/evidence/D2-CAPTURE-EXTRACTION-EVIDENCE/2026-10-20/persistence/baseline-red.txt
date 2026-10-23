@@ -1,0 +1,219 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > persists an exact source/text/method receipt with the existing page map and OCR score 80ms
+   → expected undefined to deeply equal { version: 1, …(5) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > persists a valid supplied receipt without rerunning extraction 49ms
+   → expected undefined to deeply equal { version: 1, …(5) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > replaces stale evidence when a successful reread returns different text and method 85ms
+   → expected { method: 'pdf-ocr', version: 1, …(4) } to deeply equal { version: 1, …(4) }
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > clears a stale receipt when successful legacy cached text has no optional evidence 81ms
+   → expected { …(7) } to not have property "extractionEvidence"
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > keeps the old receipt with retained text when a failed reread produces no text 75ms
+ × server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > clears stale evidence after a failed reread when no readable old text remains 71ms
+   → expected { …(8) } to not have property "extractionEvidence"
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > supports a legacy supplied extraction without fabricating evidence or a new read 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > does not issue evidence for an empty initial extraction 35ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > refuses a receipt-bearing derived write without a genuine processing authorization 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > retains the foreign-tenant admission refusal without extraction or a receipt write 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > retains the superseded admission refusal without extraction or a receipt write 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > retains the wrong-workspace admission refusal without extraction or a receipt write 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > does not attach evidence when the capture is superseded during extraction 30ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > existing capture authority and lifecycle remain the write boundary > keeps completed same-identity processing idempotent without a second receipt write 53ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > persists an exact source/text/method receipt with the existing page map and OCR score
+AssertionError: expected undefined to deeply equal { version: 1, …(5) }
+
+- Expected:
+{
+  "extractedTextSha256": "efc341c920a2ef2df5f3ec683ffdf49d378f6d8b1bbb95c08d53b040dfda8e8e",
+  "method": "pdf-ocr",
+  "ocrConfidence": 72.5,
+  "pageSpans": [
+    {
+      "end": 39,
+      "page": 3,
+      "start": 0,
+    },
+    {
+      "end": 74,
+      "page": 7,
+      "start": 40,
+    },
+  ],
+  "sourceSha256": "26d6bb8495807706d8d78e7ad14217dc6b2a84d091bc8d831fdc9ca3e84b279f",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts:108:47
+    106|     expect(row.extracted_text).toBe(TEXT);
+    107|     expect(hash(TEXT)).not.toBe(SOURCE_HASH);
+    108|     expect(row.provenance.extractionEvidence).toEqual(receipt());
+       |                                               ^
+    109|     expect(row.provenance.unrelatedProvenance).toBe('preserve');
+    110|     expect(row.metadata.unrelatedMetadata).toBe('preserve');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > persists a valid supplied receipt without rerunning extraction
+AssertionError: expected undefined to deeply equal { version: 1, …(5) }
+
+- Expected:
+{
+  "extractedTextSha256": "efc341c920a2ef2df5f3ec683ffdf49d378f6d8b1bbb95c08d53b040dfda8e8e",
+  "method": "pdf-ocr",
+  "ocrConfidence": 72.5,
+  "pageSpans": [
+    {
+      "end": 39,
+      "page": 3,
+      "start": 0,
+    },
+    {
+      "end": 74,
+      "page": 7,
+      "start": 40,
+    },
+  ],
+  "sourceSha256": "26d6bb8495807706d8d78e7ad14217dc6b2a84d091bc8d831fdc9ca3e84b279f",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts:117:61
+    115|     expect((await processCapturedSource(organization, id, input({ preE…
+    116|     expect(seam.extract).not.toHaveBeenCalled();
+    117|     expect((await state(id)).provenance.extractionEvidence).toEqual(re…
+       |                                                             ^
+    118|   });
+    119|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > replaces stale evidence when a successful reread returns different text and method
+AssertionError: expected { method: 'pdf-ocr', version: 1, …(4) } to deeply equal { version: 1, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "extractedTextSha256": "f3696358d456113ea1482cfc48633cf19f990991a8f48075c246faac613ba9c0",
+-   "method": "pdf-text",
++   "extractedTextSha256": "efc341c920a2ef2df5f3ec683ffdf49d378f6d8b1bbb95c08d53b040dfda8e8e",
++   "method": "pdf-ocr",
++   "ocrConfidence": 72.5,
+    "pageSpans": [
+      {
+-       "end": 58,
+-       "page": 11,
++       "end": 39,
++       "page": 3,
+        "start": 0,
++     },
++     {
++       "end": 74,
++       "page": 7,
++       "start": 40,
+      },
+    ],
+    "sourceSha256": "26d6bb8495807706d8d78e7ad14217dc6b2a84d091bc8d831fdc9ca3e84b279f",
+    "version": 1,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts:127:47
+    125|     const row = await state(id);
+    126|     expect(row.extracted_text).toBe(NEXT);
+    127|     expect(row.provenance.extractionEvidence).toEqual(receipt(NEXT, 'p…
+       |                                               ^
+    128|       pageSpans: [{ page: 11, start: 0, end: NEXT.length }],
+    129|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > clears a stale receipt when successful legacy cached text has no optional evidence
+AssertionError: expected { …(7) } to not have property "extractionEvidence"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "extractedTextSha256": "efc341c920a2ef2df5f3ec683ffdf49d378f6d8b1bbb95c08d53b040dfda8e8e",
+  "method": "pdf-ocr",
+  "ocrConfidence": 72.5,
+  "pageSpans": [
+    {
+      "end": 39,
+      "page": 3,
+      "start": 0,
+    },
+    {
+      "end": 74,
+      "page": 7,
+      "start": 40,
+    },
+  ],
+  "sourceSha256": "26d6bb8495807706d8d78e7ad14217dc6b2a84d091bc8d831fdc9ca3e84b279f",
+  "version": 1,
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts:140:46
+    138|     expect(seam.extract).toHaveBeenCalledTimes(1); // Only the priming…
+    139|     expect((await state(id)).extracted_text).toBe(NEXT);
+    140|     expect((await state(id)).provenance).not.toHaveProperty('extractio…
+       |                                              ^
+    141|   });
+    142|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts > capture extraction evidence through real processing SQL > clears stale evidence after a failed reread when no readable old text remains
+AssertionError: expected { …(8) } to not have property "extractionEvidence"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "extractedTextSha256": "efc341c920a2ef2df5f3ec683ffdf49d378f6d8b1bbb95c08d53b040dfda8e8e",
+  "method": "pdf-ocr",
+  "ocrConfidence": 72.5,
+  "pageSpans": [
+    {
+      "end": 39,
+      "page": 3,
+      "start": 0,
+    },
+    {
+      "end": 74,
+      "page": 7,
+      "start": 40,
+    },
+  ],
+  "sourceSha256": "26d6bb8495807706d8d78e7ad14217dc6b2a84d091bc8d831fdc9ca3e84b279f",
+  "version": 1,
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/capture-extraction-evidence.pglite.test.ts:159:32
+    157|     const row = await state(id);
+    158|     expect(row.extracted_text).toBeNull();
+    159|     expect(row.provenance).not.toHaveProperty('extractionEvidence');
+       |                                ^
+    160|   });
+    161|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)
+   Start at  22:02:27
+   Duration  7.43s (transform 958ms, setup 89ms, import 1.53s, tests 5.52s, environment 0ms)
+

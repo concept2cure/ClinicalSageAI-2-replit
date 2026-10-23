@@ -1,0 +1,13 @@
+{
+  "phase": "70a3db998 + canonical 30afd3bd1 conflict reconciliation, prior to merged regressions",
+  "sources": {
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "1175bf3615b5e1ef4f79634313ab48da734bc509e3599bb81a36532c8a64d150",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "8a64c460c3206e65ec3f4d2cdd69017a1a7765c2727d0d9024cc86cf442a311f",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx": "7fecbf2088c707a674ee130f5ac90a7433fbe5645b0c7687bf23b661cd3d2e26",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "5250d13c9146bd72e0be535d9710acdd3e49d0e58783d13137e888cb20865595",
+    "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx": "5b9d927f2423682fc66217c8ade7ec9ba8ea766e3f5a46bd83b5018965c9856e",
+    "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx": "165073e65edf2e31c31421dec178e847d9d21a9f3f8a3a1c7787732b09237de6",
+    "client/src/concept2cure/v2/editor/documentRecordRead.ts": "63dacff8f0e8923fa848707d766f08b7406167d9201cf9b1983cfbb65068d07c",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695"
+  }
+}

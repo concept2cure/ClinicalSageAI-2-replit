@@ -1,0 +1,1949 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:08.877Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:08.878Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:08.878Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:09.452Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt
+{
+  "timestamp": "2026-10-21T01:03:15.069Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000032",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > bounds a floor-overflowing ordinary round while preserving every call, raw callback and exact staged body 10ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > stages accepted large-payload cap bytes exactly, without a second cap after allocation 43ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > strict raw-body admission through the actual classic host > refuses an irreducible passage count before settlement, staging or another gateway call, though tools ran 11ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects late guard growth before staging and retains a prior successful receipt honestly 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > rejects settlement-withdrawal growth without claiming rollback of an earlier written receipt 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > bounds redirected checkpoint rounds at staging even though executeTools and every handler were bypassed 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-executor.test.ts > classic late-source and redirected-round handoff > CONTROL: a fitting native read remains exact and writes its existing legacy receipt 1ms
+stderr | server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome
+{
+  "timestamp": "2026-10-21T01:03:15.784Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000002",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > reduces ordinary floor overflow while keeping every identity and the original array unchanged 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > keeps a crowding-withheld read at its exact trusted offset and records no receipt 3ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > retains a fitting read byte for byte and settles only that exact host admission 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict aggregate budget preserves private receipt decisions > private map identity takes precedence over a passage name without adopting payload offsets 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > passage fields and ordinary fake receipt fields cannot mint private settlement authority 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > refuses irreducible passage minima before entering receipt settlement 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > strict passage minima and cancelled source admission > cancellation after strict allocation withdraws source context and settles no new receipt 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects actual guard-envelope growth without mutating accepted bodies 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-read-integrity.test.ts > final assertion at the post-allocator receipt seam > rejects settlement withdrawal growth while retaining a real earlier acknowledged outcome 3ms
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-21T01:03:17.874Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:17.875Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-21T01:03:17.875Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-21T01:03:18.441Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":"11111111-2222-4333-8444-555555555555"} despite stale token admin role 34ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":42} despite stale token admin role 10ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 9ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 8ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval 7ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn 15ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads 3ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > rejects another member’s unbound file_id before thread or model work 8ms
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:24.379Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:24.380Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:24.380Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path
+[AnA] AI Gateway call failed: Synthetic provider failure
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal
+[AnA] AI Gateway call failed: Untrusted copied code
+
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > returns the typed handoff refusal instead of presenting a provider outage 80ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > preserves a recorded failed-turn reference in the typed refusal 5ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > keeps an ordinary provider failure on its existing response path 4ms
+ ✓ server/routes/chat/__tests__/send-message-result-budget.test.ts > classic chat result-bound refusal keeps operation uncertainty > does not accept a plain error with a copied budget name and code as a typed refusal 3ms
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-21T01:03:26.513Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:26.513Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-21T01:03:26.514Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > caps a 20-call ordinary floor-overflow round without dropping calls or grounding on raw output 56ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call 39ms
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > uses the accepted ordinary envelope rather than a raw zero-result statement in adaptation guidance 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > stages accepted raw bodies exactly without a second cap after recorder and corpus admission 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: a fitting ordinary result retains its raw body, corpus and existing miss guidance 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: fitting protected passage strings remain complete with locators and escaped framing 6ms
+stdout | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+{
+  "timestamp": "2026-10-21T01:03:29.551Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:29.552Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+{
+  "timestamp": "2026-10-21T01:03:29.552Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (a) a hosting turn > asks for run_agent, offers it, and lends the call a host 54ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (c) a tenant that denies run_agent > lends no host when the model names it 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (d) only run_agent is lent a host > another tool in the same step gets none, and no context carries a confirmation 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > the client and the next model call read no trace; provenance comes from the child 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > a failed agent adds no provenance (intended) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the child's report is not evidence; its tool results are 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the checks' echo of the parent's own text is not evidence 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > a kept child result is exactly what the child read: budgeted over its whole round 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (g) agent frames > go out as agent_event under the call's id, whatever the frame says, before the call's result 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (k) an incomplete agent keeps its provenance, and the ledger says it was cut short 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (l) a completed verify is a success whatever its verdict 3ms
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-21T01:03:32.310Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:32.311Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-21T01:03:32.311Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 49ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 21ms
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal)
+{
+  "timestamp": "2026-10-21T01:03:33.369Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission)
+{
+  "timestamp": "2026-10-21T01:03:33.373Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Synthetic receipt INSERT permission denied"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > withdraws changed exact source text before the follow-up gateway and writes no span 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > does not send a new follow-up request or write a span when cancellation occurs at handoff 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal) 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission) 5ms
+stdout | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:34.089Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:34.091Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:34.091Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > is 7,500 characters: under the 8,000-character cap, so the cap never cuts this result 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the default limit, every context available (~6,000 + a ~4,000 chunk): within the budget, in rank order, nothing load-bearing dropped 10ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 8 hits, available and ~4,000-character unavailable alternating: within the budget, in rank order, nothing load-bearing dropped 5ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 8 hits, every context unavailable (~4,000-character text): within the budget, in rank order, nothing load-bearing dropped 6ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > 12 hits, mostly short contexts: within the budget, in rank order, nothing load-bearing dropped 4ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the maximum limit, every context available: within the budget, in rank order, nothing load-bearing dropped 26ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the budget > the maximum limit, mixed: within the budget, in rank order, nothing load-bearing dropped 28ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 1 alone: the lowest-ranked contexts lose their text first and get the hit back; the top keeps its context 3ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 2 starts only once every passage has lost its context text, and takes hit text from the bottom up 3ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > pass 3 drops whole passages from the end, counts them, and keeps the top ones 26ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > the three passes, lowest rank first > omits every passage when even the top complete locator cannot fit, and says matches existed 2ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > a result that already fits > is unchanged except that an available context is not sent twice 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a miss is still a miss with its coverage note 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > an unavailable index is reported as unavailable, not as zero passages 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a scope refusal is returned as it was 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > an unexpected failure is a stated error, never a silent empty 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools-budget.test.ts > controls: the paths that return no passages are unchanged > a query too short to retrieve on is refused before any search 0ms
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-21T01:03:35.051Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:35.052Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-21T01:03:35.052Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-21T01:03:35.130Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a child cannot start an agent (depth) 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > no live run, no agent 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > the switch: off when set false; off in production unless set true (ADR-0015 §2) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: no scope is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: the system scope '0' is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: another tenant is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: a host of another organization is refused 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a blank text_to_check is refused up front (D5) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a verify agent with no checker offered is refused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 11ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 4ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError', code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' } gives AGENT_FAILED MODEL_NOT_APPROVED 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError' } gives AGENT_FAILED RATE_OR_POLICY_LIMIT 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'Error' } gives AGENT_FAILED ERROR 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > a failure after a call says it could not finish 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 30ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > an organization has at most 8 live agents per process; the next is busy 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the budgets a child stops at > the token budget stops the child, at most two calls past it (D23) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the budgets a child stops at > the round limit stops the child as incomplete 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a pause before the start delays the first call; a run that will not resume starts nothing 22ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a run cancelled while the child waits between rounds is cancelled, not a time budget 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a Stop mid-call is cancelled, not a failure 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > an expired hold stops the child, and says so 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > a call still running at the active-time limit is aborted: incomplete, time budget 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the person's controls over a running child > the active-time timer excludes time held for a person 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > a refused read is recorded not-ok, and is not evidence for the answer 8ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > control: a real result is recorded ok, and is evidence 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's own gateway calls are attributed to the child (review 2026-10-11) > a tool running inside the child sees the child run, with the parent named 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-21T01:03:37.405Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:37.406Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-21T01:03:37.406Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-21T01:03:37.499Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-21T01:03:38.919Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:38.920Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-21T01:03:38.920Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-21T01:03:38.920Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds 5ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before 30ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before 0ms
+stdout | tests/services/agentic-loop.test.ts
+{
+  "timestamp": "2026-10-21T01:03:39.697Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:39.698Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/services/agentic-loop.test.ts
+{
+  "timestamp": "2026-10-21T01:03:39.698Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/services/agentic-loop.test.ts
+[database] Database connection successful
+
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle 19ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order 31ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit 21ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case 0ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, in the doing form 1ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > never carries an argument value in the label 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > reads "Running a step" for an unknown tool, never its name 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully 0ms
+stdout | server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+{
+  "timestamp": "2026-10-21T01:03:41.442Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:41.443Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+{
+  "timestamp": "2026-10-21T01:03:41.443Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > keeps the first three complete bodies, withholds the fourth and records/cites only staged bodies 48ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > uses the withheld body, not the raw miss, in adaptation guidance 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > passage bodies survive the actual crowded stream handoff > uses the withheld body, not the raw known-omission, in adaptation guidance 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: a single fitting passage keeps the same body, corpus and recorded result 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: a genuine fitting miss retains its ordinary no-results guidance 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts > ordinary stream controls > CONTROL: another tool retains its ordinary raw shortfall note 7ms
+stdout | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+{
+  "timestamp": "2026-10-21T01:03:43.289Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:43.291Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+{
+  "timestamp": "2026-10-21T01:03:43.291Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts > run_agent, real, through the stream > the child's model call is governed and linked to the parent run, and its finished frame precedes the result 63ms
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-21T01:03:46.081Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:46.083Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-21T01:03:46.083Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-21T01:03:46.163Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > tool output reaches the model framed as untrusted data > a tool result that carries an instruction is fenced, labelled, and cannot close its frame 2ms
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target)
+{
+  "timestamp": "2026-10-21T01:03:48.423Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for function is_vault_program_owner"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity)
+{
+  "timestamp": "2026-10-21T01:03:48.426Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "unexpected integrity failure"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero)
+{
+  "timestamp": "2026-10-21T01:03:48.427Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor)
+{
+  "timestamp": "2026-10-21T01:03:48.427Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws
+{
+  "timestamp": "2026-10-21T01:03:48.434Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt settlement notification failed",
+  "context": {
+    "toolUseId": "server-tool"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback
+{
+  "timestamp": "2026-10-21T01:03:48.435Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence
+{
+  "timestamp": "2026-10-21T01:03:48.436Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count
+{
+  "timestamp": "2026-10-21T01:03:48.437Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry 4ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > does not reuse one admission ID for two different tool deferrals 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > refuses direct durable writing without a genuine server deferral identity 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "0" 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "true" 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "" 0ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > records exact viewer source/slice/payload identities with the fresh role after actual COMMIT 17ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > keeps a custom reader role without promoting stale request/model role claims 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence 7ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target) 3ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves stable ID on identical retry and distinguishes it from a new row 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response 4ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > logs only explicit recovery IDs from an unconfirmed error, never attached payload or secret fields 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > cancellation after actual COMMIT retains the committed count 1ms
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-21T01:03:49.202Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:49.203Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-21T01:03:49.203Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\"quoted\" \\ path" 8ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\u0000\u0001\n\t" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "結果🧬有害事象" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "</data><script>text</script>" 2ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references when a long escaped query echo must be omitted 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references and coverage counts when diagnostic reasons are enormous 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (0) 4ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (1) 5ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > CONTROL: a genuine miss stays distinct from matched-but-omitted evidence and keeps unknown outside coverage 1ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:50.197Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:50.198Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:50.198Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:50.290Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 9ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 5ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 4ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 9ms
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T01:03:52.662Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:52.663Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T01:03:52.663Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent-passage-staging.test.ts
+{
+  "timestamp": "2026-10-21T01:03:52.754Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > pins server call identity and exact framed-request body, keeping raw result and public trace boundaries 12ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > records call-order admission when workers finish in another order; withheld raw citations never enter grounding 7ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > correlates a reused id independently in different rounds 2ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > does not assign one ambiguous same-round call id to two different tools 3ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > real child runner records host staging > CONTROL: the currently offered passage tool really executes and its raw data stays in the record 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > uses a recorded withheld body rather than full raw source text 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > takes the staged bodies of a mixed private-read round without inferring receipts or replay order 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":null,"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"","modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"   ","modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":7,"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":null} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"toolUseId":"a","modelContent":7} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":"EXACT_HOST_STAGED_BODY"} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > never falls back to raw data for an incomplete or invalid modern pair {"modelContent":null} 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > an empty staged body does not revive raw evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > rejects duplicate same-round ids even under different tools 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > allows the same id in separate rounds without merging their evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > a partly modern round contributes only valid staged rows, never its legacy sibling 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > even an invalid modern field marks its round; legacy siblings cannot downgrade it to replay 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy search_document_passages round or its other calls 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > does not reconstruct a legacy read_project_document round or its other calls 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: a failed modern step contributes no evidence 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: payload-nested staging fields remain data, never the trace authority 0ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: ordinary legacy replay still budgets failed siblings before filtering successes 1ms
+ ✓ server/services/ana/__tests__/sub-agent-passage-staging.test.ts > exact staged child grounding without private-map replay > CONTROL: malformed top-level result has no trace evidence 0ms
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+{
+  "timestamp": "2026-10-21T01:03:55.143Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+{
+  "timestamp": "2026-10-21T01:03:55.145Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+{
+  "timestamp": "2026-10-21T01:03:55.146Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+{
+  "timestamp": "2026-10-21T01:03:55.147Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+{
+  "timestamp": "2026-10-21T01:03:55.148Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+{
+  "timestamp": "2026-10-21T01:03:55.148Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+{
+  "timestamp": "2026-10-21T01:03:55.149Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero)
+{
+  "timestamp": "2026-10-21T01:03:55.155Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor)
+{
+  "timestamp": "2026-10-21T01:03:55.156Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error)
+{
+  "timestamp": "2026-10-21T01:03:55.157Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "internal insert failed"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT
+{
+  "timestamp": "2026-10-21T01:03:55.158Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check
+{
+  "timestamp": "2026-10-21T01:03:55.159Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it
+{
+  "timestamp": "2026-10-21T01:03:55.160Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure
+{
+  "timestamp": "2026-10-21T01:03:55.161Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT permission denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count
+{
+  "timestamp": "2026-10-21T01:03:55.161Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts
+{
+  "timestamp": "2026-10-21T01:03:55.162Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal
+{
+  "timestamp": "2026-10-21T01:03:55.163Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > uses fresh read authority and only legacy storage columns for a mocked successful INSERT 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > clears a pre-cancelled round without opening a receipt connection 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > retains the actual committed count when cancellation arrives after COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > canonical withdrawal after observed source refusal does not invent a receipt rollback outcome 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > keeps an unchanged admitted read without writing or claiming provider service 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (source_changed) 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (private_revoked) 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > preserves an existing budget replacement and drops its receipt candidate without a source query 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > does not accept a post-deferral amended payload 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > withholds a pending source read when cancellation occurs during verification 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > late cancellation also withdraws earlier amended/budget-safe source results 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > rejects mutation through the publicly visible deferred map value 5ms
+stdout | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:55.952Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:55.953Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:55.954Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts
+{
+  "timestamp": "2026-10-21T01:03:56.039Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer throw mutation/failure cannot change the already formatted request
+{
+  "timestamp": "2026-10-21T01:03:57.547Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolResultsForModel threw; the loop carries on: observer fixture failure",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > whole passage results in classic model requests > keeps the first three complete 7400-character results and withholds the fourth without its evidence 8ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > whole passage results in classic model requests > keeps private read admission ahead of passages and never cuts the admitted read 5ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > observes exact capped body, call id, tool name and round after formatting 3ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > captures terminal narration rounds even when tool choice is withdrawn 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > reports every round independently when a call id is reused in a later round 3ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > observes source-refused handoff content rather than the earlier readable body 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer entry mutation/failure cannot change the already formatted request 2ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer array mutation/failure cannot change the already formatted request 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > exact host staging observer > an observer throw mutation/failure cannot change the already formatted request 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > small passage rounds reach the gateway unchanged without installing an observer 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > small ordinary results keep their exact bytes 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > an admitted source read keeps exact text and its existing legacy receipt 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > a fast answer has no staged tool-result observation 1ms
+ ✓ server/services/ana/__tests__/passage-round-executor.test.ts > controls for existing classic behavior > a cancellation after execution but before model handoff has no staged observation 1ms
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:58.324Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:58.325Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:03:58.325Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 2ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 4ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=0 instead of dropping, slicing or enlarging a private outcome 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 13ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=false omits only the response echo and remains complete JSON 6ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'long plain query', hit=true omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=false omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped control query', hit=true omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=false omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'JSON-escaped quote query', hit=true omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=false omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > 'Japanese and astral query', hit=true omits only the response echo and remains complete JSON 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > preserves the exact response echo at the serialized 1000-character boundary 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > response query echo never changes the actual retrieval query > omits a serialized 1001-character query instead of silently shortening the search 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'unknown unfiled count' 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'bounded count with more' 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > oversized reasons retain counters and 'known no unfiled uploads' 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > uses serialized diagnostic size so control characters do not escape the field limit 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > keeps ordinary reasons exactly at their serialized 1000-character boundary 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > omits the entire reason array one serialized character past the limit 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > diagnostic omission preserves coverage facts and source objects > retains explicitly unknown coverage instead of inventing zero or full coverage 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'title' or rerank around it 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'locator with escaped controls' or rerank around it 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > cannot keep an oversized 'section title' or rerank around it 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > an oversized highest-ranked locator is omitted intact, never turned into a miss > combines huge query, diagnostics and metadata without losing coverage or claiming no match 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps a genuine small miss and its exact query wording distinct from omitted matches 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps ordinary passage fields byte-exact and does not mutate retrieval output 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-bound.test.ts > ordinary output and existing prefix priority controls > keeps the highest-ranked text before dropping lower-ranked text 1ms
+stdout | server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+{
+  "timestamp": "2026-10-21T01:03:59.911Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:03:59.912Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+{
+  "timestamp": "2026-10-21T01:03:59.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion) 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before 0ms
+stdout | server/services/ana/__tests__/document-passage-result-cap.test.ts
+{
+  "timestamp": "2026-10-21T01:04:00.731Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:00.733Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-result-cap.test.ts
+{
+  "timestamp": "2026-10-21T01:04:00.733Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-result-cap.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized plain unavailable error without turning it into a miss 5ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized escaped unavailable error without turning it into a miss 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > bounds an oversized defensive early scope refusal before retrieval starts 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > guards oversized program error output produced by the real caught-error wrapper 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > the registered final size guard includes unavailable and early refusal paths > guards oversized project error output produced by the real caught-error wrapper 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps success JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps miss JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > complete registered results pass the real single-result model handoff intact > keeps all-locators-omitted JSON intact through budgeting, capping and framing 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains the organization gate before scope or retrieval 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains the actor gate before scope or retrieval 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains a short query refusal before scope or retrieval 1ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains a short scope refusal verbatim 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > retains ordinary unavailable output instead of pretending the index had no matches 0ms
+ ✓ server/services/ana/__tests__/document-passage-result-cap.test.ts > ordinary gate and error classifications remain exact > the real safe-outcome wrapper still withholds even a huge unexpected error 0ms
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:04:01.706Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:01.707Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-budget.test.ts
+{
+  "timestamp": "2026-10-21T01:04:01.707Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-budget.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > admits the first three 7500-character bodies and withholds the fourth intact 5ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > reserves every later replacement instead of filling the target with four of five 6000-character bodies 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 8001-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 12000-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > uses one fixed withholding body irrespective of payload fields or search outcome 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > does not make an over-custom-ceiling body eligible again after other bodies are withheld 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps an eligible body shorter than its replacement even with negative available room 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=0 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=1 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=50 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps complete fixed JSON when custom total=180 cannot promise a hard bound 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps every small success, miss, omission, error and refusal byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > reserves the same read floors/admission before allocating non-read passages in call order 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > gives a private-map entry precedence even when its server tool name is passage search 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > private read placement keeps priority and its existing replacement > keeps ordinary results under their per-result ceiling when passage withholding frees a larger share 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps a small non-passage round byte-identical 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old equal-share slicing without passage calls 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains the old floor even when twenty ordinary calls exceed the total target 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > retains exact old read placement and ordinary shares when no passage calls are present 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > does not protect an ordinary tool merely because its payload requests protection or forges passage fields 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "search_document_passages_extra" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "SEARCH_DOCUMENT_PASSAGES" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not " search_document_passages" 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps the existing empty-round result 0ms
+stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-10-21T01:04:02.596Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "30000000-0000-4000-8000-000000000005",
+    "error": "database unavailable"
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 3ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > with nothing deferred, writes nothing and touches no database 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > without any, a squeezed round is exactly what it was 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > reads are placed first and whole; the cuttable results share what is left, never below the floor 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > a read larger than the per-result cap is replaced, never cut 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > the replacement says where to read again from, in the shape the design names 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > is the recorded spans plus this window 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > with nothing recorded, is this window alone 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > fitReadWindow > keeps a window that fits, and shrinks one that does not to the largest that does 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so 3ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 1ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 1 explicitly omitted matches without declaring a miss 2ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 2 explicitly omitted matches without declaring a miss 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > recognizes 9007199254740991 explicitly omitted matches without declaring a miss 1ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > uses the structured omission count even when the response gives no explanatory prose 1ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > successful passage matches omitted from the tool response > keeps an omitted response detail bounded like existing shortfall details 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 0 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages -1 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 1.5 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages "2" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages true 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a real empty list empty for invalid omittedPassages 9007199254740992 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than "true" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires strict ok: true, rather than 1 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than {} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > requires an actual empty passage list, rather than "not a list" 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > does not apply a passage-specific omission count to an unrelated empty lookup 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > invalid or incomplete omission declarations do not manufacture matches > keeps a genuine passage miss empty with its existing classification 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"error":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"refused":true,"reason":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not reinterpret an existing refusal as omitted matches: {"ok":false,"code":"PASSAGE_RESULT_TOO_LARGE","resultOmitted":true} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'unavailable' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'lookup_failed' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'needs_parameters' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves a declared 'not_found' status over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > preserves an unavailable flag over omission metadata 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not turn an old indexing-failure diagnostic into a whole-search outage after known matches 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: undefined 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: 0 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > keeps the existing detail-only outage heuristic without a valid omission count: 1.5 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"passages":[{"documentId":"source-1","locator":"p.3"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"records":[{"id":"record-1"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records an omitted-only shortfall: {"molecules":[{"chemblId":"CHEMBL25"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > names omitted matches and guides narrowing/reading without saying nothing matched 1ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > keeps a mixed round truthful about omission, a real miss and returned records 1ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > keeps the previous note byte-identical when no omitted shortfall exists 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"status":"error"} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"status":"stopped"} 0ms
+ ✓ tests/services/tool-outcome-passage-omission.test.ts > the next model turn receives omission guidance instead of absence > does not add omission guidance for a failed/stopped/held step: {"heldBack":true} 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > recognizes the code and strict false delivery flag without inferring matches 2ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > keeps withholding separate from both a genuine miss and known omitted matches 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > bounds the message using the existing 160-character detail policy 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not turn copied diagnostic prose into a service outage after explicit withholding 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer an empty result from stray zero counters beside the withholding declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > the exact structured passage withholding declaration > does not infer known matches from stray omission metadata on an undelivered result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than true 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than 0 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than "false" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires delivered to be strictly false rather than {} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than undefined 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than null 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "passage_result_withheld" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "PASSAGE_RESULT_WITHHELD " 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than "OTHER_RESULT_WITHHELD" 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > requires the exact code rather than 1 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'top-level array' declarations 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'nested payload' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not promote 'JSON string' declarations 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret ordinary prose about a withheld result as the structured declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > does not interpret incomplete JSON as withholding authority 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps a true empty list empty when the delivery flag is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps the ordinary diagnostic outage heuristic when the code is invalid 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > partial or unstructured signals are not withholding authority > keeps successful known-match omission distinct when there is no withholding declaration 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"error":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"refused":true,"reason":"Source access refused."} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not override an existing refusal: {"ok":false} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'unavailable' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'lookup_failed' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'needs_parameters' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves declared 'not_found' ahead of the withholding marker 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > preserves an explicit unavailable flag 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"passages":[{"documentId":"source-1","locator":"p.3"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"records":[{"id":"record-1"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > existing higher-priority outcomes remain authoritative > does not call returned records withheld: {"molecules":[{"chemblId":"CHEMBL25"}]} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > names the withheld result and guides recovery without asserting matches or a miss 1ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps mixed-round withholding, known omitted matches, a true miss and returned records distinct 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps ordinary notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > keeps known-omitted notes byte-identical without a withheld result 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"error"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"status":"stopped"} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > does not add a shortfall note for a failed/stopped/held result: {"heldBack":true} 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note when a structured declaration also returned records 0ms
+ ✓ tests/services/tool-outcome-passage-withheld.test.ts > adaptation guidance distinguishes withholding, omission and absence > adds no note to an empty round 0ms
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-21T01:04:03.819Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:03.820Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-21T01:04:03.820Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable 5ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > states how much of the vault is NOT indexed, and refuses to call it absence 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > gives the RECORDED reason a document failed to index, not just a count 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > does not invent a reason when none was recorded 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says the coverage is unknown rather than implying it searched everything 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says plainly when the vault holds no documents at all 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > will not claim full coverage while chat uploads sit outside the corpus 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > marks the count as a floor when there are more than it probed for 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > says nothing extra when there is nothing outside 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > an uncounted probe is reported as unchecked, never as zero 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > covers an EMPTY vault too — no documents filed is not "nothing to search" 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > reports an unavailable index as unavailable, not as zero passages 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > turns an unexpected failure into a stated error, never a silent empty 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > refuses a query too short to retrieve on 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > requires an organization context 0ms
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-21T01:04:04.644Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:04.645Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-21T01:04:04.645Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-21T01:04:04.726Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 1 active lanes 7ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 4 active lanes 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > an uninterrupted queued tool round > still runs each handler and carries its result into the next model turn 1ms
+stdout | server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts
+{
+  "timestamp": "2026-10-21T01:04:06.848Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:06.849Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts
+{
+  "timestamp": "2026-10-21T01:04:06.849Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > produces one entry per call, with the ids preserved 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > every entry SAYS it was cancelled rather than being empty 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > names the tool, so the record says WHICH step was stopped 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > its barge-in branch returns a mapped result, not an empty array 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > passes the abort signal to the gateway, not only to its own checks 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > forwards the round-boundary checkpoint the loop has always accepted 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > drains the queued operator turns into the next round 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > places them AFTER the tool results, as the streaming route does 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > is declared on the public options, beside the checkpoint it serves 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > races each handler against the signal 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > puts the signal INTO the handler context, not only around it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a genuine tool failure still carries its errorMessage 1ms
+stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+{
+  "timestamp": "2026-10-21T01:04:07.605Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:07.607Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+{
+  "timestamp": "2026-10-21T01:04:07.607Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > scales the round ceiling by effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > falls back to the balanced allowance for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > extends past maxRounds while every round tries novel work 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > does NOT extend when the model is repeating itself 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > squeezes an oversized round into the total budget 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > never squeezes a result below the floor 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > returns empty when nothing failed 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > truncates a pathological error message 0ms
+stdout | server/services/ana/__tests__/sub-agent-toolset.test.ts
+{
+  "timestamp": "2026-10-21T01:04:08.454Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:08.456Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+{
+  "timestamp": "2026-10-21T01:04:08.456Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent-toolset.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+{
+  "timestamp": "2026-10-21T01:04:08.540Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > project_knowledge_search is registered, classed read, and in launch scope 2ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_document_passages is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_project_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_project_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_vault_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_vault_document is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > get_document_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_governed_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_governed_document is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > compare_vault_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > lookup_ich_guideline is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_regulatory_currency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_guidance_freshness is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_literature is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_clinical_evidence is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_drug_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_device_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_grounding is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_numerical_integrity is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_dossier_consistency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > never includes a tool that delegates, calls a model, checks for the agent, or reads a path 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > no input of any child tool or check names a path, a directory or a folder 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > is the research tools the parent was offered, and nothing the parent was not 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > a hosted tool is never offered to a child, even under a research name 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > a tool the tenant denied (absent from the parent set) is absent from the child set 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > run_agent itself > is registered under RUN_AGENT_TOOL, the name the run policy and the toolset read 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the child never reads the tenant policy, the full tool list or a model override 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the host carries no provider or model 1ms
+stdout | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+{
+  "timestamp": "2026-10-21T01:04:10.876Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:10.877Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+{
+  "timestamp": "2026-10-21T01:04:10.877Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2)
+{
+  "timestamp": "2026-10-21T01:04:10.922Z",
+  "level": "error",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_ENFORCE=off in production: the launch boundary is off and every surface outside the launch catalog is served",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a door that does not host agents is never offered it 2ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a hosting turn is offered it 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > an org-less turn is never offered it 0ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read that resolves applies the deny list to the whole set 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a tenant that denies run_agent is never offered it 0ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a door that does not host keeps the soft read, untouched 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a tool that needs input it was not given 2ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a service that could not be reached 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 1ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a vault passage search that matched nothing (document-passage-tools.ts) 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a project search that answers in a sentence of its own (project_knowledge_search) 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > a sentence that is a finding, or an analysis that opens with one, is a result 0ms
+ ✓ tests/services/tool-outcome.test.ts > what a tool result says about itself > records under a field this reader does not know still count as returned 0ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 1ms
+ ✓ tests/services/tool-outcome.test.ts > the note the model reads after the round > is empty when every step returned something, and ignores failed or held steps 0ms
+stdout | server/services/ana/__tests__/sub-agent-hostable.test.ts
+{
+  "timestamp": "2026-10-21T01:04:11.852Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:11.853Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-hostable.test.ts
+{
+  "timestamp": "2026-10-21T01:04:11.853Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/sub-agent-hostable.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: 7 } → true 1ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: '7' } → true 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: '7', orgId: 7 } → true 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: undefined, runOrgId: 7, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: '', runOrgId: 7, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: null, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: null } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 8, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > reads 'incomplete' off the wire 1ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > still drops a status nobody sends 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > says the run stayed paused, not that the person stopped it 1ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > control: a person's Stop still reads as theirs 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > the runner marks an expired hold on the result it returns 0ms
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-10-21T01:04:12.626Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T01:04:12.627Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/passage-round-read-priority.test.ts
+{
+  "timestamp": "2026-10-21T01:04:12.627Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves the sixth read as not delivered when a new replacement makes a previously crowded round fit 3ms
+ ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves an admitted read when an irreducible passage replacement makes a previously fitting round crowded 1ms
+
+ Test Files  37 passed (37)
+      Tests  613 passed (613)
+   Start at  01:03:06
+   Duration  66.20s (transform 9.26s, setup 483ms, import 57.29s, tests 3.56s, environment 3ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-ROUND-BODY-BOUND/2026-10-21/root/green-results.json

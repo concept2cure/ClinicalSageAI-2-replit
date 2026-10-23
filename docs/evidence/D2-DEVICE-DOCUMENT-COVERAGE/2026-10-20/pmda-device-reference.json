@@ -1,0 +1,16 @@
+{
+  "url": "https://www.pmda.go.jp/english/review-services/reviews/0004.html",
+  "httpStatus": 200,
+  "sha256": "1c0aa3cdc477ba782f0a7a875a0f8b16d248345bd43443507c0bf866b382c377",
+  "qualification": "Official source retrieval; the route information is separate from qualification of the platform authoring groups.",
+  "retrievedAt": "2026-10-20",
+  "sourceBytes": 58261,
+  "sourceContentRetained": "Bounded route excerpts and relevant links, not the complete HTML page.",
+  "routeExcerpts": [
+    "Class I devices: Notification to the PMDA",
+    "Class II devices: for those certification standards exist: Certification by registered certification body; other Class II devices: Approval of the MHLW",
+    "Class III devices: for those certification standards exist: Certification by registered certification body; other Class III devices: Approval of the MHLW",
+    "Class IV devices: Approval of the MHLW"
+  ],
+  "outlineQualification": "Only the cited route distinctions were checked against this page. Platform heading groups and current notification/application forms were not verified by this read."
+}

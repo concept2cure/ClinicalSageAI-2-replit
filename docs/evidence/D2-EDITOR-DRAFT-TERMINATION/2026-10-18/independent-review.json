@@ -1,0 +1,21 @@
+{
+  "mode": "Independent read-only production review; reviewer did not rerun tests",
+  "baseline": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "productionSha256": {
+    "server/routes/authoring.router.ts": "8f2778f3d6ee62309432fbde7c7075bd976d4a643dcf322ed9a434cbb335b38a",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "c6609bb3a5ef8de40b69e656ff147820fc9a229a03064282b7742f2cd56ccad8",
+    "server/services/authoring/authoring-draft-termination.ts": "e924661f0ce3e40970a3b2bb8c5c4ef373c36a0924c486bad5dcbce22c654b2b"
+  },
+  "disposition": "No blockers against committed contract",
+  "findings": [
+    "Gateway served response recorded once; canonical refusal precedes parsing, answered filing and candidate construction.",
+    "Stored server facts checked after candidate consumption and before source reservation/content/lineage/filing writes; caller metadata cannot override them.",
+    "422 mapping occurs only after successful existing rollback. Unconfirmed commit/rollback and connection eviction branches remain unchanged.",
+    "Optional metadata retains exact reason strings, null, boolean flags and historical absent-key shapes; other source/base/turn receipts unchanged."
+  ],
+  "limits": [
+    "Review only; root owns runtime verification.",
+    "Unknown/legacy status remains unconfirmed and existing no-base refusals remain.",
+    "Not generic-save authority, scientific completeness, native PostgreSQL concurrency or arbitrary malformed database metadata attestation."
+  ]
+}

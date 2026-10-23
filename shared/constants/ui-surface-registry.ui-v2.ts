@@ -329,16 +329,19 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    // P-32 (2026-10-15): only what HaqManager.tsx calls; correspondence and precedent stay with their own surfaces.
-    // Outside the launch catalog until approval is a signed act (launch-scope.ts, Submission Center entry).
-    apiPrefixes: ['/api/haq-manager'],
+    // 2026-10-18: the /api/haq-manager store is retired. This screen is a view of the
+    // project's agency inbox (AgencyInbox/AgencyResponses, the record Communication and
+    // Respond work), and claims no prefix: the paths it calls belong to those launch
+    // surfaces, and a locked surface claiming them would lock them for everyone.
+    // Still outside the launch catalog: the capability ships in Communication and
+    // Respond, and a second home for it is the founder's call, not a session's (P-32, P-36).
+    apiPrefixes: [],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    // P-32: "governed e-sign into the response package" removed; approve records a status, no signature.
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL questions logged by round, routed to review and approval, and assembled into a response package from the approved answers.',
+    notes: 'The agency letters on this project that ask for a response: each question as the agency worded it, a response to each approved by Part 11 signature, and the response package assembled from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
@@ -1376,7 +1379,26 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // admin console's. Admin → Settings reads and changes the connector for Claude there
     // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
     // settings writer (server/services/tenant/tenant-settings-writer.ts).
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
+    // 2026-10-18 (ci:launch-scope-api): the Company documents panel, same rule — company
+    // identity, letterhead and the legal-document library ARE organisation settings, and
+    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, AdminSurfaces.tsx).
+    // Both prefixes were refused in production: company-documents was claimed by no surface
+    // at all, and templates/extract resolved to template-library + authoring-engine, neither
+    // of which is a launch surface — so the letterhead import was a button that answered
+    // "Import failed" every time it was pressed, in a release that ships the panel.
+    // Narrow on purpose, and the narrowness is the point: '/api/client-branding' also serves
+    // /upload-logo and /upload-letterhead, and '/api/c2c/templates' is the template library's
+    // whole namespace. Claiming either parent would make every route under it answer as
+    // launch — the same mistake '/api/mdx' made before it was narrowed to /api/mdx/gateways.
+    // Noted, not introduced, and not fixed here: 'admin-console' is a SHELL surface and no
+    // row in available_modules, so moduleEntitlementGate resolves every prefix claimed only
+    // by it through canAccessModule, which answers "Module 'admin-console' does not exist".
+    // That is inert today because MODULE_ENFORCEMENT defaults to 'off' (enforcement-mode.ts),
+    // which is why /api/tenant-config, /api/api-keys, /api/tenant-users, /api/mdx/admin and
+    // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
+    // these two together — one condition across six prefixes, a packaging decision to make
+    // deliberately rather than a line to widen here.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/client-branding/company-documents', '/api/c2c/templates/extract'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

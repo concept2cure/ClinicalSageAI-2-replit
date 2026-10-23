@@ -9,7 +9,7 @@ import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
-import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
@@ -32,7 +32,7 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultLibraryResults, isVaultSearchShape, type VaultSearchHit, type VaultSearchShape } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
 import { VaultAnnotations } from './VaultAnnotations';
@@ -47,7 +47,7 @@ import {
 import { readShellProject } from '../shellProject';
 import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
-import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from '../editor/SourceAssemblyDialog';
+import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -588,42 +588,8 @@ function UploadsLane({
   );
 }
 
-/* GET /api/c2c/project-vault/:id/search — the find view's contract. `total` is
-   the real count, not the page length, so the surface can say "12 of 340"
-   instead of implying the page is everything. */
-interface VaultSearchHit {
-  originalFileAvailable?: boolean;
-  disposition?: VaultDoc['disposition'];
-  id: string;
-  title: string;
-  fileName: string | null;
-  documentType: string | null;
-  size: string | null;
-  folderId: string | null;
-  ctdSection: string | null;
-  placementStatus: string | null;
-  /** A body excerpt when the match was in the content; null when it was not. */
-  snippet: string | null;
-  /** The version, and whether it is the document's current one (VR-09). */
-  version?: string | null;
-  current?: boolean;
-}
-interface VaultSearchShape {
-  query: string;
-  includeSuperseded?: boolean;
-  total: number;
-  limit: number;
-  offset: number;
-  results: VaultSearchHit[];
-}
-
-const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value is VaultSearchShape => {
-  if (!value || typeof value !== 'object') return false;
-  const read = value as Partial<VaultSearchShape>;
-  return Array.isArray(read.results) && Number.isSafeInteger(read.total) &&
-    typeof read.total === 'number' && read.total >= read.results.length &&
-    read.results.every(hit => hit && typeof hit.id === 'string' && typeof hit.title === 'string');
-};
+/* GET /api/c2c/project-vault/:id/search — the find view's contract is VaultSearchShape
+   (VaultLibraryResults.tsx), the one guard every reader of that route uses. */
 
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
@@ -678,13 +644,6 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
       aria-describedby={unavailable ? reasonId : undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
-}
-
-function VaultSourceBuildAction({ source, projectId, onNav }: { source: VaultDoc; projectId: string | null; onNav: (id: string) => void }) {
-  if (source.src !== 'upload' || !source.docId || !projectId) return null;
-  return <SourceAssemblyAction programId={projectId} onNav={onNav} titles={[source.title]}
-    sources={[{ kind: 'vault', documentId: source.docId, ...(source.hash ? { expectedChecksum: source.hash } : {}) }]}
-    unavailable={sourceAssemblyUnavailableReason({ ...source, isCurrent: source.earlierVersion ? false : undefined })} />;
 }
 
 /* The Vault for the project open now. The body is keyed by the project, so a
@@ -2085,7 +2044,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 <div className="vd-d-actions">
-                  <VaultSourceBuildAction source={sel} projectId={projectId} onNav={onNav} />
+                  <VaultSourceBuildAction source={sel} programId={projectId} onNav={onNav} />
                   {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
                   {sel.src !== 'upload' && (
                     <button

@@ -38,7 +38,7 @@ import { loopToolCollector, recordLoopTurn } from '../../services/ana/turn-recor
 import type { TurnRecordStatus } from '../../services/ana/turn-record.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { requestsReadOnly, readOnlyToolRefusal, readOnlyAnswer, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
-import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
+import { resolveMaxRounds, ToolResultBudgetExceededError } from '../../services/ana/agentic-loop.js';
 import {
   isSubstantiveTurn,
   resolveModelTier,
@@ -953,7 +953,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         outcome: 'success',
       });
     } catch (gwError: any) {
-      console.error('[AnA] AI Gateway call failed:', gwError.message);
+      const budgetRefusal = gwError instanceof ToolResultBudgetExceededError ? gwError : null;
+      console.error(budgetRefusal ? '[AnA] Tool result handoff refused:' : '[AnA] AI Gateway call failed:', gwError.message);
       void logKernelDecision({
         requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
         threadId,
@@ -965,14 +966,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
         selectedTools: [],
-        decisionRationale: 'AnA chat failed during AI Gateway call.',
+        decisionRationale: budgetRefusal ? 'AnA tool results exceeded the handoff limit.' : 'AnA chat failed during AI Gateway call.',
         outcome: 'failed',
         errorMessage: gwError?.message || 'AI Gateway call failed',
       });
       const turnRecord = await fileTurn('failed', undefined, gwError);
-      return res.status(503).json({
-        error: 'AI provider call failed',
-        code: 'AI_PROVIDER_UNAVAILABLE',
+      return res.status(budgetRefusal ? 422 : 503).json({
+        error: budgetRefusal?.message ?? 'AI provider call failed',
+        code: budgetRefusal?.code ?? 'AI_PROVIDER_UNAVAILABLE',
         turnRecord,
       });
     }

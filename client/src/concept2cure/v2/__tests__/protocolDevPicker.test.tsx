@@ -105,4 +105,19 @@ describe('protocol development — choosing the protocol', () => {
     expect(picker().value).toBe('41');
     expect(screen.getByRole('combobox', { name: 'Protocol scope' })).toBeTruthy();
   });
+
+  it('both selects sit inside the styled picker bar, not under the shell reset (DS-F1)', async () => {
+    // protocol-dev-editing.css styles `.pde-picker select` (a --border-control
+    // border, padding, background). The bar that replaced the old picker on
+    // 2026-10-17 dropped the class, so both selects fell to `.c2c-v2 select`
+    // (no border, no background) and read as plain text. jsdom does not apply
+    // the stylesheet, so this pins the structure the stylesheet depends on.
+    rows = [OLDER];
+    await mount();
+    const scope = screen.getByRole('combobox', { name: 'Protocol scope' });
+    expect(scope.closest('.pde-picker'), 'the scope select is outside the styled picker').toBeTruthy();
+    const doc = screen.queryByRole('combobox', { name: 'Protocol document' });
+    if (doc) expect(doc.closest('.pde-picker'), 'the protocol select is outside the styled picker').toBeTruthy();
+  });
 });
+

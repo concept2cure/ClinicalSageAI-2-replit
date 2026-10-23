@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "mergeHead": "62782e020f7ad289fa2a95cf56bc49fd21490c27",
+  "selectedQualificationInputsUnchanged": 67,
+  "unmergedEntries": 0,
+  "completedAt": "2026-10-21T00:30:10.202431+00:00",
+  "testDisposition": "All 67 selected code/test/config/harness hashes are unchanged; targeted 552-test / 31-suite qualification retained. Incoming authoring changes are inspected separately; full-project TypeScript runs in normal pre-push."
+}

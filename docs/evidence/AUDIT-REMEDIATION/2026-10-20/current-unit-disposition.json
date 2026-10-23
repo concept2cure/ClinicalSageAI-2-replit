@@ -1,0 +1,890 @@
+{
+  "completedUtc": "2026-10-20T19:56:51.406784+00:00",
+  "purpose": "Diagnostic-only reconciliation of existing current-CI server/tests reds before further remedy assignment. No edits, commits, index changes, whole-project TSC or scanners by thisagent.",
+  "sourceAnchor": {
+    "localHeadAtStart": "bc7b4c782542b5fea67ed0a8eeaf7b0428df741e",
+    "canonicalOriginAtStart": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d"
+  },
+  "What already exists": {
+    "currentTestInventory": "Current e1c unitartifact already records172 failed cases across67 files; this slice selects remaining server/tests failures and excludes owned authoring/reporting/client/UI and root Trivy work.",
+    "currentImplementation": "All services, routes, request-client helpers, canonical actor/source access, secure AS2/MDN transport, signature/audit guards and fixtures referenced below already exist. Recommendations complete or correct those paths, not replacement implementations."
+  },
+  "currentCi": {
+    "sourceCommit": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+    "originalFailedCases": 172,
+    "originalFailedFiles": 67,
+    "selectedOriginalFailedCases": 112,
+    "selectedOriginalFiles": 40
+  },
+  "execution": {
+    "node": "22.23.3",
+    "seconds": 94.19,
+    "exitCode": 1,
+    "passed": 343,
+    "failed": 110,
+    "pending": 0,
+    "distinctFiles": 40,
+    "failingFiles": 38,
+    "sameCurrentCiFailedIdentities": 110,
+    "sameExactFirstDiagnosticLineAsCi": 110,
+    "newFailureIdentities": 0,
+    "differentFirstDiagnosticLines": 0,
+    "originalCiFailuresNowPassing": 2,
+    "sourceChangesDuringExecution": [],
+    "limits": "This is a453-case bounded mocked/PGlite/local-wire cohort, not the entire59135-case unit run, native PostgreSQL, production deployment, agency acceptance, scientific qualification or humanUAT. Matching identities and first diagnostics do not establish that all underlying product behavior is correct.",
+    "nowPassingInterpretation": "The two isolated current passes are observed, not attributed to a product fix by this diagnostic; ordering/environment may need separate investigation."
+  },
+  "selectedFiles": [
+    "tests/cer-mdr-routes.test.ts",
+    "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+    "tests/socket-tenant-isolation.contract.test.ts",
+    "tests/lineage/founder-path-lineage.pglite.test.ts",
+    "tests/services/autoExtractionPipeline.governance.test.ts",
+    "tests/routes/chat-governed-upload.test.ts",
+    "tests/routes/chat-upload-to-memory.test.ts",
+    "server/routes/__tests__/qms-document-approval-signature.test.ts",
+    "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+    "server/routes/__tests__/qms-governed-writes-audited.test.ts",
+    "server/routes/__tests__/reviewer-simulation-route-reads-nonclinical-by-ctd-program-id.test.ts",
+    "server/routes/__tests__/session-open-contract.test.ts",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+    "server/routes/biopharma/__tests__/bla-workbench-read.test.ts",
+    "server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts",
+    "server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts",
+    "server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts",
+    "server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts",
+    "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+    "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+    "server/services/ana/__tests__/ana-launch-scope-execution.test.ts",
+    "server/services/ana/__tests__/ana-launch-scope.test.ts",
+    "server/services/ana/__tests__/billing-credits-not-metered.test.ts",
+    "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+    "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+    "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+    "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+    "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+    "server/services/forms/__tests__/pdf-attach.test.ts",
+    "server/services/forms/__tests__/pdf-object-store.test.ts",
+    "server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts",
+    "server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts",
+    "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+    "server/services/regulatory/__tests__/market-support.test.ts",
+    "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+    "server/services/submission-gateways/__tests__/refused-before-wire.test.ts",
+    "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+    "server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts",
+    "server/services/truth-engine/__tests__/consistency-deterministic.test.ts"
+  ],
+  "selectedTestSha256": {
+    "tests/cer-mdr-routes.test.ts": "055f45dca2763ce5188530c3e13286ad7122fd8f3bc8ad1d0321565f21d4ca5d",
+    "tests/mdx-qms-labeling-search-analytics-routes.test.ts": "c439973834ec007810293f93455a606c73293bb4f41071063cdcb61468d83aae",
+    "tests/socket-tenant-isolation.contract.test.ts": "960face9bd5f07d97289e5f32a28e8c50a70902057ef6109a9d857d050109944",
+    "tests/lineage/founder-path-lineage.pglite.test.ts": "a58cdf360ca0a6fad6f8612d484a5a9b48d9dad858b78388f66b4c47286e872b",
+    "tests/services/autoExtractionPipeline.governance.test.ts": "099044830d99c9fe9028c24900c560b63987c042875286b6d1316c92e5182e13",
+    "tests/routes/chat-governed-upload.test.ts": "df134512ff50d6156401e137ba2876a688515a5c8e2068a42d007d4512c916f5",
+    "tests/routes/chat-upload-to-memory.test.ts": "c9ff9beb3761e223cc73c3b6dc624dcc183a09980b1a6b984c40801ac331d4ed",
+    "server/routes/__tests__/qms-document-approval-signature.test.ts": "bb7487b5d192c378eb4037c4ee3de52a990c6364924ea3fd3effcc0a89df8fce",
+    "server/routes/__tests__/qms-effective-only-by-signature.test.ts": "b514808450879cc7dabc84a094ce925e400d3cae0ab763938a67f63c8c560341",
+    "server/routes/__tests__/qms-governed-writes-audited.test.ts": "e456a943fd490c3a36432112fef815b4c1a66bc17ec355e3db4019a2f27831f0",
+    "server/routes/__tests__/reviewer-simulation-route-reads-nonclinical-by-ctd-program-id.test.ts": "26e412bb41332071c8ae436996b34b2d583fe1cd4bb3490a95d759e3b21fe4ec",
+    "server/routes/__tests__/session-open-contract.test.ts": "a2c8c564bd1b8d71321cb8def609d19cbb865c1179e38497acc072c2d2b2065e",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": "ae02ed991cfc348c27576d17f666ccd20ecffbad3776a9e03f517c2037fa5c7a",
+    "server/routes/biopharma/__tests__/bla-workbench-read.test.ts": "b894b3a8d7073c046fca26ae7d58822a4fdffc97c8ed9644530acb53de04840b",
+    "server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts": "38fa726c70e40ca8ffb6c032336fff50aeb8a413006cf922e1e3271a36e2cfa7",
+    "server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts": "c085b9cc7b7981fbc3a3ed8fd4c82946a6b4d16598787339a318b636f0daa9d0",
+    "server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts": "512baf9d4270b482490c2e8a25622c6cbb27cb9dd03ab433d0b3095592c6e00c",
+    "server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts": "a06f7d1d208766669dbd26ac2177c37cb2a96a04f36c61533bf4ac871dc38ca8",
+    "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts": "ced387b197d4fc17e9cee2578e4efc025f324a34fba2a3f9b19a54eaf3b4ab03",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "042b69aeffcbdf5dbaba12e2f5d3d8066862ced22910293c23949a83a06611f6",
+    "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts": "d14804b8db26d76d25aaa199470e769de34bb7b9186d88667c9faf412db1e45a",
+    "server/services/ana/__tests__/ana-launch-scope-execution.test.ts": "f26c0cc208c3936af4de6f8a6db399417044e37597a059fb127dc61f92a3882c",
+    "server/services/ana/__tests__/ana-launch-scope.test.ts": "d79a0b967cc8ac13014e8e92895a09bd780cf66bf69aa755c7e4314afb0ebd6f",
+    "server/services/ana/__tests__/billing-credits-not-metered.test.ts": "37b6df0ffb15b5f21e99242ee79ccd881ead37df93bbc853efebdf6b23dc7807",
+    "server/services/ana/__tests__/capa-governed-service-handoff.test.ts": "10e71598add715c7218af5a9261f6b14d0d1345d26b57a5a534213ca39fd0c2a",
+    "server/services/ana/__tests__/document-catalog-program-binding.test.ts": "6939be494608ddcf6a34e36ab443ba2b101d37918718c723c4ee1a59e2401690",
+    "server/services/ana/__tests__/governed-reason-not-invented.test.ts": "32117166ce4c53fc02895396d3173b5bf78a8b927c70b7d6dfd2f8e2c3308ddf",
+    "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts": "e57e56db6e56bda63704329388e3a05cf33d75b1f1271acbd8028402f42db3e8",
+    "server/services/ectd/__tests__/submission-gate-posture.test.ts": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017",
+    "server/services/forms/__tests__/pdf-attach.test.ts": "2a20230b0770556e852caa4a37fd4c1b8f8cb0b90e0522e4b1c7edbebab5d045",
+    "server/services/forms/__tests__/pdf-object-store.test.ts": "72cc2534aea98fa2551a0fc73ccc3b82dc3d2d1182b180bafda5ed99a7d88677",
+    "server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts": "dce51ee2cee9ddbaa05e739d6de4cd94ec0f228667ac19320c455a546b8ce9fb",
+    "server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts": "d4711f884e1a4be049797014f8482255816703a565bdba84c85f70f5cf0b7838",
+    "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts": "c60bd8d2f04e656e9a69b7b0ac94e9267ff8975f41a18c61ef0f71c886a163aa",
+    "server/services/regulatory/__tests__/market-support.test.ts": "7b68109e9c21a0251b66186a784afb99263b208b23618e4b2205bdcb09b73ec0",
+    "server/services/submission-gateways/__tests__/gateway-accounts.test.ts": "eca119e5835422117e7c556a9098917c129b3336a661ab9e4a0a3289c3857a0e",
+    "server/services/submission-gateways/__tests__/refused-before-wire.test.ts": "ecb984a3b46af3fa3cd8d5598976330d14dbef9811059b575c2d16d99aa06d58",
+    "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts": "78df1a43616a0c1e38bc4cd2a90e9463ecc2d56be83c40f64dbc5ba4f586ac28",
+    "server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts": "4e0604bf5db0a668202f0ded7f2723231c41a68bcfca53d5c4d7c027f6376d49",
+    "server/services/truth-engine/__tests__/consistency-deterministic.test.ts": "2df35e6551401796379443b4943323dde45b272430fa4c86cb1ae44d24513c5d"
+  },
+  "perFileCountsAndIdentities": [
+    {
+      "path": "tests/cer-mdr-routes.test.ts",
+      "currentPassed": 8,
+      "currentFailed": 3,
+      "currentPending": 0,
+      "ciFailed": 3,
+      "sameFailedIdentities": 3,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+      "currentPassed": 26,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/socket-tenant-isolation.contract.test.ts",
+      "currentPassed": 11,
+      "currentFailed": 0,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 0,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [
+        "C2C-COLLAB-002: collaboration identity and object binding rejects lock theft: a non-holder cannot release another user's section lock"
+      ],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "currentPassed": 11,
+      "currentFailed": 4,
+      "currentPending": 0,
+      "ciFailed": 4,
+      "sameFailedIdentities": 4,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/routes/chat-governed-upload.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/routes/chat-upload-to-memory.test.ts",
+      "currentPassed": 3,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "tests/services/autoExtractionPipeline.governance.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-approval-signature.test.ts",
+      "currentPassed": 17,
+      "currentFailed": 5,
+      "currentPending": 0,
+      "ciFailed": 5,
+      "sameFailedIdentities": 5,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+      "currentPassed": 11,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/qms-governed-writes-audited.test.ts",
+      "currentPassed": 11,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/reviewer-simulation-route-reads-nonclinical-by-ctd-program-id.test.ts",
+      "currentPassed": 1,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/session-open-contract.test.ts",
+      "currentPassed": 3,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+      "currentPassed": 18,
+      "currentFailed": 3,
+      "currentPending": 0,
+      "ciFailed": 3,
+      "sameFailedIdentities": 3,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "currentPassed": 13,
+      "currentFailed": 5,
+      "currentPending": 0,
+      "ciFailed": 5,
+      "sameFailedIdentities": 5,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "currentPassed": 6,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/forms/__tests__/pdf-attach.test.ts",
+      "currentPassed": 9,
+      "currentFailed": 5,
+      "currentPending": 0,
+      "ciFailed": 5,
+      "sameFailedIdentities": 5,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/forms/__tests__/pdf-object-store.test.ts",
+      "currentPassed": 9,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts",
+      "currentPassed": 4,
+      "currentFailed": 16,
+      "currentPending": 0,
+      "ciFailed": 16,
+      "sameFailedIdentities": 16,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts",
+      "currentPassed": 3,
+      "currentFailed": 3,
+      "currentPending": 0,
+      "ciFailed": 3,
+      "sameFailedIdentities": 3,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/ana-launch-scope-execution.test.ts",
+      "currentPassed": 4,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/ana-launch-scope.test.ts",
+      "currentPassed": 5,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/billing-credits-not-metered.test.ts",
+      "currentPassed": 1,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+      "currentPassed": 2,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 6,
+      "currentPending": 0,
+      "ciFailed": 6,
+      "sameFailedIdentities": 6,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "currentPassed": 73,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+      "currentPassed": 18,
+      "currentFailed": 0,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 0,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [
+        "IND pharmacology canonical record and hierarchy fidelity preserves every original record and moves exactly seven headings between the canonical halves"
+      ],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+      "currentPassed": 4,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/regulatory/__tests__/market-support.test.ts",
+      "currentPassed": 28,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+      "currentPassed": 10,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/refused-before-wire.test.ts",
+      "currentPassed": 13,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+      "currentPassed": 2,
+      "currentFailed": 6,
+      "currentPending": 0,
+      "ciFailed": 6,
+      "sameFailedIdentities": 6,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts",
+      "currentPassed": 2,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/services/truth-engine/__tests__/consistency-deterministic.test.ts",
+      "currentPassed": 3,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/biopharma/__tests__/bla-workbench-read.test.ts",
+      "currentPassed": 1,
+      "currentFailed": 3,
+      "currentPending": 0,
+      "ciFailed": 3,
+      "sameFailedIdentities": 3,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 4,
+      "currentPending": 0,
+      "ciFailed": 4,
+      "sameFailedIdentities": 4,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 8,
+      "currentPending": 0,
+      "ciFailed": 8,
+      "sameFailedIdentities": 8,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 2,
+      "currentPending": 0,
+      "ciFailed": 2,
+      "sameFailedIdentities": 2,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts",
+      "currentPassed": 0,
+      "currentFailed": 3,
+      "currentPending": 0,
+      "ciFailed": 3,
+      "sameFailedIdentities": 3,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+      "currentPassed": 10,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+      "currentPassed": 3,
+      "currentFailed": 1,
+      "currentPending": 0,
+      "ciFailed": 1,
+      "sameFailedIdentities": 1,
+      "newCurrentFailedIdentities": [],
+      "ciFailuresNowPassing": [],
+      "suiteFailureWithoutAssertion": false
+    }
+  ],
+  "nowPassingPriorCiControls": [
+    {
+      "path": "tests/socket-tenant-isolation.contract.test.ts",
+      "tests": [
+        "C2C-COLLAB-002: collaboration identity and object binding rejects lock theft: a non-holder cannot release another user's section lock"
+      ]
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+      "tests": [
+        "IND pharmacology canonical record and hierarchy fidelity preserves every original record and moves exactly seven headings between the canonical halves"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "path": "tests/authoring-market-document-binding.pglite.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "tests/ci/trivy-steps-run-after-failures.contract.test.ts",
+      "reason": "workflow security owned by root"
+    },
+    {
+      "path": "tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "tests/golden-journeys/haq-correction.journey.test.ts",
+      "reason": "already reproduced and repaired, current4journeygreen"
+    },
+    {
+      "path": "tests/ui-readiness/ui-surface-registry.test.ts",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-section-figure-refs.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/authoringTemplateStartFrom.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-audit-recording.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-delivery-recording.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+      "reason": "authoring/draft/reporting owned elsewhere"
+    },
+    {
+      "path": "client/src/i18n/__tests__/locale-integrity.test.ts",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts",
+      "reason": "requires separate actual nativePostgreSQL execution; not represented by unitmock qualification"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/biostatWorkbenchFreshness.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/navTargets.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx",
+      "reason": "client/UI owned elsewhere"
+    }
+  ],
+  "highestRiskNextRemedies": [
+    "Resolve founder first transmit500 before accepting downstream lineage walks.",
+    "Qualify secure-wire fixtures with separateTLSCA/CMSrecipient/MDNsigner and actualtamper-proofstore for void/refusal transitions; never disableverification.",
+    "Resolve session-mint and schedule-reason source contracts with real negative controls, not waivers.",
+    "Restore positive current-actor/request-client/QMS paths through canonical existing harnesses and preserve denials/uncertaincommit recovery.",
+    "Verify eSTAR currentbyte object references and deterministic numeric/finalization outputs before changing expectations."
+  ],
+  "causeGroups": [
+    {
+      "name": "Current actor and pinned request SQL fixture contracts",
+      "files": [
+        "tests/cer-mdr-routes.test.ts",
+        "server/routes/__tests__/reviewer-simulation-route-reads-nonclinical-by-ctd-program-id.test.ts",
+        "server/routes/biopharma/__tests__/bla-workbench-read.test.ts",
+        "server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts",
+        "server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts",
+        "server/routes/c2c/__tests__/export-pptx-renders-the-submitted-content.test.ts",
+        "server/routes/c2c/__tests__/exports-record-the-review-assertion.test.ts",
+        "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+        "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts"
+      ],
+      "failedCases": 26,
+      "classification": "mixed: confirmed missing request/actor fixtures plus current intake/query expectations needing a bounded check",
+      "cause": "BLA and reviewer-simulation log MissingRequestDbContext; their tests provide organization-only/global-pool mocks. CER now calls requireCurrentProjectActor before body validation. AI/export middleware requires current admitted actor/project; old tests bypass auth without installing the actual actor/client. The project access test fixes the exact SQL-call count; project create now applies canonical filing/product taxonomy.",
+      "boundedNextStep": "Use the canonical request-client/current-membership test harness with explicit positive admission and retain the existing denial controls. Confirm the intake refusal and SQL order before adjusting exact expectations. Never add a global pool fallback or weaken actor/project admission.",
+      "priority": "high"
+    },
+    {
+      "name": "QMS approval and controlled-content harness",
+      "files": [
+        "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+        "server/routes/__tests__/qms-document-approval-signature.test.ts",
+        "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+        "server/routes/__tests__/qms-governed-writes-audited.test.ts"
+      ],
+      "failedCases": 9,
+      "classification": "current service/mocked SQL contract; positive-path cause still requires focused qualification",
+      "cause": "The current QMS path binds authored content, current signing authority and filing agreement before effective/signature writes. The approval suite logs a missing request-client context and current mocked positive cases return500 before their intended signature/audit assertions. These are not evidence that approvals are safe or successful merely because they refuse.",
+      "boundedNextStep": "First identify the earliest missing client/content/SQL fixture condition, then reuse the real QMS lifecycle PGlite harness for positive approval and uncertain-COMMIT controls. Preserve no-effective-without-signature and no-self-approval assertions.",
+      "priority": "high"
+    },
+    {
+      "name": "Signature-voiding suite lacks the actual tamper-proof audit store",
+      "files": [
+        "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts"
+      ],
+      "failedCases": 6,
+      "classification": "confirmed fixture schema gap plus cascading state failures",
+      "cause": "Raw execution logs name missing audit.tamper_proof_log five times. A fail-closed audit write can stop the intended refusal/void transition and leave later fixture sequence lookups out of the intended state.",
+      "boundedNextStep": "Apply the actual audit store creator in fixture dependency order and rerun the existing refused-step/void/retry controls; do not stub successful audit outcomes or loosen signature validity.",
+      "priority": "high"
+    },
+    {
+      "name": "Task sync governed write transaction",
+      "files": [
+        "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts"
+      ],
+      "failedCases": 3,
+      "classification": "unresolved current governed transaction/fixture contract",
+      "cause": "Three sync assertions return500/INTERNAL_ERROR or lack expected data rather than their intended committed/audit-failed outcomes. Other18 controls pass. Exact first diagnostics match currentCI; the underlying first failing statement was not isolated in this diagnostic.",
+      "boundedNextStep": "Instrument the existing fixture SQL boundary to identify the first failed write/read and preserve same-transaction audit, cross-tenant source filtering and rollback controls.",
+      "priority": "high"
+    },
+    {
+      "name": "Founder lineage transmit and dependent walks",
+      "files": [
+        "tests/lineage/founder-path-lineage.pglite.test.ts"
+      ],
+      "failedCases": 4,
+      "classification": "existing end-to-end integration blocker; not established as a stale assertion",
+      "cause": "The first failure is transmit returning500 at founder-path-lineage.hops-filing.ts:269. Later backward/forward walks read undefined document/program/transmittal state; these are downstream symptoms. The verified-baseline contract also fails.",
+      "boundedNextStep": "Resolve the first actual transmit failure against the existing authenticated/gated fixture, then rerun both provenance walks. Do not make downstream checks optional or grow the verified-finding baseline.",
+      "priority": "highest"
+    },
+    {
+      "name": "Gateway TLS and verified AS2/MDN contracts",
+      "files": [
+        "server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts",
+        "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+        "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+        "server/services/submission-gateways/__tests__/refused-before-wire.test.ts"
+      ],
+      "failedCases": 24,
+      "classification": "confirmed ICSR fixture TLS role mismatch; other secure-wire fixture/guard outcomes require a bounded check",
+      "cause": "ICSR now separates tlsCaPath from AS2 recipient encryption and MDN signer certificates. The loopback fixture supplies agencyCertPath but omits tlsCaPath, producing self-signed trust refusals. Its accepting MDN is plaintext while current classifyVerifiedAs2Delivery checks signed MDN/MIC. The MDX ESG mock also predates the current authenticated socket/envelope contract. These are local synthetic-wire tests, not evidence of an external agency outage.",
+      "boundedNextStep": "Reuse current real local CA/CMS fixtures with separate TLS CA, encryption recipient and MDN signer. Preserve all NOT_DELIVERED versus DELIVERED_UNCONFIRMED, no-resend, client-account and before-wire assertions. Never disable TLS verification or replace a verified MDN with fabricated acceptance.",
+      "priority": "highest"
+    },
+    {
+      "name": "Session mint static security contract",
+      "files": [
+        "server/routes/__tests__/session-open-contract.test.ts"
+      ],
+      "failedCases": 2,
+      "classification": "unresolved source security contract; potential product or scanner drift",
+      "cause": "The SSO openSession call-count contract and access-token session-spread inventory fail. This diagnostic does not establish whether a session is actually omitted or the scanner is stale.",
+      "boundedNextStep": "Inspect the actual callback/helper mint paths and prove every access token carries a real opened/continued session. Fix a missing session in production if confirmed; update a scanner only with positive and negative controls for the actual helper shape.",
+      "priority": "highest"
+    },
+    {
+      "name": "Schedule reason admission static contract",
+      "files": [
+        "server/services/ana/__tests__/governed-reason-not-invented.test.ts"
+      ],
+      "failedCases": 2,
+      "classification": "confirmed current tool/prompt/static contract mismatch; not evidence of a fabricated literal reason",
+      "cause": "The schedule handler carries an optional trimmed input.reason to generation, while the source contract expects canonical stated-reason admission and every carrying tool in REASON_REQUIRED_TOOLS. The implementation shown forwards caller input or undefined; no invented reason literal was identified here.",
+      "boundedNextStep": "Reconcile the existing generation revision/audit reason contract with the canonical reason reader and confirmation prompt, and keep both absence and supplied-reason controls. Do not waive the source gate or silently synthesize approval/reason text.",
+      "priority": "high"
+    },
+    {
+      "name": "AnA launch inventory probes",
+      "files": [
+        "server/services/ana/__tests__/ana-launch-scope.test.ts",
+        "server/services/ana/__tests__/ana-launch-scope-execution.test.ts"
+      ],
+      "failedCases": 4,
+      "classification": "confirmed stale inventory/probe expectations after communication-center admission",
+      "cause": "create_ha_interaction serves both agency-meetings and communication-center. communication-center is already in LAUNCH_APPS; the runtime deliberately admits a tool touching any launch surface. Tests still treat that tool as exclusively hidden and subtract every inventory entry regardless of current admitted surfaces.",
+      "boundedNextStep": "Use a genuinely hidden write as the refusal probe and derive expected offered tools through the same declared surface policy; retain direct-dispatch negative controls and do not reopen a hidden capability.",
+      "priority": "follow-up"
+    },
+    {
+      "name": "AnA service handoff fixture contracts",
+      "files": [
+        "server/services/ana/__tests__/billing-credits-not-metered.test.ts",
+        "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+        "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+        "server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts"
+      ],
+      "failedCases": 10,
+      "classification": "mixed: confirmed stale billing/CAPA fixture inputs; catalog/consistency handler contracts unresolved",
+      "cause": "Billing mock omits getCreditCapabilities now called by the handler. CAPA complaint fixture omits explicitly required patientHarm/severityAssessment, so two controls stop at needs_parameters before service handoff. Catalog6 and consistency handoff1 still fail their existing current actor/program/audit-result expectations; no production defect was established from those assertion mismatches alone.",
+      "boundedNextStep": "Supply truthful current capability and explicit harm/severity inputs, keeping absent-input refusals. Then isolate catalog admission/serving-program binding and consistency audit-result propagation through existing service fixtures; never default patient harm or bypass current source access.",
+      "priority": "high"
+    },
+    {
+      "name": "eSTAR PDF object fixtures",
+      "files": [
+        "server/services/forms/__tests__/pdf-attach.test.ts",
+        "server/services/forms/__tests__/pdf-object-store.test.ts"
+      ],
+      "failedCases": 7,
+      "classification": "strong stale-fixture candidate; requires actual current-PDF object validation",
+      "cause": "Tests hardcode catalog/Names/JavaScript object numbers measured from older templates, while the retained device journey qualifies vendored version7.1. Failures concern compressed object references and embedded JavaScript/attachment preservation. This diagnostic did not recompute the current PDF object map.",
+      "boundedNextStep": "Resolve object references from each exact retained PDF/xref or qualify new measured constants against pinned bytes; preserve original JavaScript and field data after attachment and repeated updates.",
+      "priority": "high"
+    },
+    {
+      "name": "Licensing acceptance SQL fixture",
+      "files": [
+        "server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts"
+      ],
+      "failedCases": 3,
+      "classification": "confirmed stale SQL matcher",
+      "cause": "wireAgreements matches SELECT DISTINCT agreement_id FROM license_acceptances. getOutstandingAgreements now joins agreements, qualifies acceptance.agreement_id and separates user and organization scopes; the mock throws on that legitimate current query.",
+      "boundedNextStep": "Model the current scoped join and both acceptance scopes, retaining unreadable-store rejection and the no-user not-assessed assertion.",
+      "priority": "follow-up"
+    },
+    {
+      "name": "Upload/extraction governed fixture outcomes",
+      "files": [
+        "tests/services/autoExtractionPipeline.governance.test.ts",
+        "tests/routes/chat-governed-upload.test.ts",
+        "tests/routes/chat-upload-to-memory.test.ts"
+      ],
+      "failedCases": 4,
+      "classification": "unresolved current extraction/classification/admission fixture contract",
+      "cause": "Four controls no longer reach their expected governed extraction error/artifact persistence/UI extraction metadata. Existing broad SQL/model/router stubs can stop the path earlier; this diagnostic did not isolate the earliest refusal. No external provider operation was qualified.",
+      "boundedNextStep": "Trace the first failed current safety/classification/actor/contract stage, then use valid existing fixtures to reach the governed refusal and actual text/atom persistence. Never store a filename placeholder or bypass upload safety.",
+      "priority": "high"
+    },
+    {
+      "name": "Regulatory projections and deterministic consistency",
+      "files": [
+        "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+        "server/services/regulatory/__tests__/market-support.test.ts",
+        "server/services/truth-engine/__tests__/consistency-deterministic.test.ts"
+      ],
+      "failedCases": 4,
+      "classification": "unresolved semantic expectations; cannot dismiss as formatting alone",
+      "cause": "The MDR finalization count, market-support wording and canonical labelled-figure consistency outputs differ from old expected results. Current code has newer signature/finalization and one shared figure lexicon, but correctness of every changed result was not established by this diagnostic.",
+      "boundedNextStep": "Compare actual approved/signed fixture state and canonical figure labels/values, retaining the conflict/no-model/no-comparison controls and honest unsupported-market behavior.",
+      "priority": "high"
+    },
+    {
+      "name": "Submission gate posture result contract",
+      "files": [
+        "server/services/ectd/__tests__/submission-gate-posture.test.ts"
+      ],
+      "failedCases": 2,
+      "classification": "unresolved gate posture expectation",
+      "cause": "Two existing controls fail around ESTAR_REQUIRE_TEMPLATE/GATE_POSTURE under the current artifact gate. Other six posture controls pass; no complete posture qualification is claimed.",
+      "boundedNextStep": "Trace the actual current gate verdict for missing-template and posture-warning cases; preserve named refusal behavior and do not widen export eligibility to satisfy expectations.",
+      "priority": "high"
+    }
+  ],
+  "completeOutsideSummarySha256": "a41912ba80e7a7af5d53786aa413cb6e96ae46ccaa23903898a0f62747d26149",
+  "qualificationLimit": "This is a bounded current failing-test diagnostic, not a full unit rerun or a claim that all failures are stale tests. All110 failures matched current CI by identity and first diagnostic line; the positive controls and risk groups remain as stated."
+}

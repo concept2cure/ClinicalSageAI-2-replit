@@ -1,0 +1,10 @@
+{
+  "file": "server/services/clinical-regulatory-evidence/__tests__/capture-extraction-cache.pglite.test.ts",
+  "sha256": "8750e336d0f9004938fb9614b4833fd0d31442b32d88ca1de693797a6d30d5d6",
+  "baselineFailures": 22,
+  "baselinePassingControls": 5,
+  "total": 27,
+  "productionBeforeAfterEqual": true,
+  "lintErrors": 0,
+  "lintWarnings": 0
+}

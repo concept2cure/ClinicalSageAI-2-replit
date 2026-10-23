@@ -1,0 +1,155 @@
+{
+  "executionBase": "e1c63ae9b024ed0ecde835f61c07ecb589eab67d",
+  "node": "v22.23.3",
+  "commandStatuses": {
+    "current-lint-strict": 0,
+    "current-vault-lint": 0,
+    "head-vault-lint": 0
+  },
+  "currentFiles": [
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFileActions.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'VaultForProject' has too many lines (1180). Maximum allowed is 100.",
+          "line": 657,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 657,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'VaultForProject' has a complexity of 184. Maximum allowed is 15.",
+          "line": 657,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 657,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1639). Maximum allowed is 500.",
+          "line": 740,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2115,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 41. Maximum allowed is 15.",
+          "line": 1099,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 1099,
+          "endColumn": 35
+        }
+      ]
+    }
+  ],
+  "vaultBaseline": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'VaultForProject' has too many lines (1180). Maximum allowed is 100.",
+          "line": 664,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 664,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'VaultForProject' has a complexity of 184. Maximum allowed is 15.",
+          "line": 664,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 664,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1645). Maximum allowed is 500.",
+          "line": 740,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2122,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 41. Maximum allowed is 15.",
+          "line": 1106,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 1106,
+          "endColumn": 35
+        }
+      ]
+    }
+  ],
+  "sourcePinsBefore": {
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": "0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e",
+    "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx": "661aa7bdb6f2f5794f5868d4612268d6000422f57d4b411066bb4e36888598e1",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "c771aa68d5c64ed96fc2e995b9a37b683ec538e4b488597b334ee21592bb0068",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "349d394df951937e5c87a0ab34af43af4f8f01bff7734c99c6d3db002afb95b5"
+  },
+  "sourcePinsAfter": {
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": "0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "31da69bf0a1af80a7c548f4affdb841ab0bc245ab242b1e5b6c1ac248b667057",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "3bdc2b83cb0df267ef4b4cdd4105f806a4252cecee1bcc8dc1c2ecf7b51db64e",
+    "client/src/concept2cure/v2/editor/VaultSourceBuildAction.tsx": "661aa7bdb6f2f5794f5868d4612268d6000422f57d4b411066bb4e36888598e1",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "c771aa68d5c64ed96fc2e995b9a37b683ec538e4b488597b334ee21592bb0068",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "349d394df951937e5c87a0ab34af43af4f8f01bff7734c99c6d3db002afb95b5"
+  },
+  "pinsStable": true,
+  "noTemporaryTsFile": true
+}

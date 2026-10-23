@@ -135,6 +135,26 @@ export const BINDING_BASIS = {
    */
   INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
   /**
+   * sha256 over one answer to an agency: the inbox letter's id, the question as
+   * the agency numbered and worded it, and the exact response text
+   * (agency-responses/response-logic.ts agencyResponseDigest, the one recipe the
+   * approval read uses too). No revision, author or time, so the signature
+   * stops approving the response the moment its words change, and only then.
+   * Added 2026-10-18 with agency_communication_questions.
+   */
+  AGENCY_RESPONSE_CONTENT: 'agency-response-content-sha256',
+  /**
+   * sha256 (recipe commitment-fulfilment/v1, ha-interactions/ha-logic.ts
+   * commitmentFulfilmentDigest) over a regulatory commitment's fulfilment: the
+   * commitment's type, words, basis and due date, the date it was met, and
+   * what met it, the sequence (id, number, submission) and the Vault version
+   * (id and the sha256 of its bytes). Signed on `regulatory-commitment:<id>`
+   * when a PMR, PMC or REMS is recorded fulfilled (P-41, 2026-10-19). The
+   * database refuses that fulfilment at COMMIT unless its signature carries
+   * this basis (migrations/20261019_commitment_fulfilment_evidence.sql).
+   */
+  COMMITMENT_FULFILMENT_CONTENT: 'commitment-fulfilment-content-sha256',
+  /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
    * identity (see submission-package-orchestrator.computeBoundPayloadDigest).
@@ -602,17 +622,21 @@ export async function deriveGovernedTargetBinding(
            content", as with the 2026-09-21 amendment. */
         const leaves = await client.query(
           `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
-                  document_content_sha256, checksum, title
+                  document_content_sha256, checksum, title, study_id, stf_file_tag
              FROM submission_leaves
             WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             ORDER BY section_code, id`,
           [rest, orgId],
         );
-        const payload = canonicalJson({ sequence: seq.rows[0], leaves: leaves.rows });
+        // Preserve pre-existing untagged signatures. Once either field exists,
+        // bind both so changing STF content requires a fresh signature/waiver.
+        const boundLeaves = leaves.rows.map(({ study_id, stf_file_tag, ...leaf }) =>
+          study_id == null && stf_file_tag == null ? leaf : { ...leaf, study_id: study_id ?? null, stf_file_tag: stf_file_tag ?? null });
+        const payload = canonicalJson({ sequence: seq.rows[0], leaves: boundLeaves });
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata) at signing time.`,
         };
       }
       case 'document': {

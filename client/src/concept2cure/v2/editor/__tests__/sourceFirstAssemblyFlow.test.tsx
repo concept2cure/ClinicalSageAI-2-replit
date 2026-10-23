@@ -64,7 +64,7 @@ const user = { id: '281', organizationId: '28', organizationName: null, email: '
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
-  await authService.adoptSession('synthetic-source-first-session'); publishShellProject({ id: PROGRAM });
+  await authService.adoptSession(`fixture.${btoa(JSON.stringify({ userId: 281, organizationId: 28 }))}.synthetic`); publishShellProject({ id: PROGRAM });
   commitReply = input => ok({ success: true, data: { docId: TARGET, programId: PROGRAM, plan: plan(input), sections: targetSections } });
   apiRequest.mockReset().mockImplementation(async (method: string, url: string, input?: AssemblyPreviewInput) => {
     const pathname = new URL(url, 'http://localhost').pathname;
@@ -73,7 +73,7 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: `Candidate ${url}`, draftId: `draft-${url}`, metadata: {}, check: null } });
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM })) });
-    if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: pathname.endsWith(PRIOR) ? priorDoc : targetDoc });
+    if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(pathname.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
     if (pathname === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
     if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
@@ -239,7 +239,9 @@ describe('source changes preserve unresolved structural writes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Build document' }));
     await waitFor(() => expect(postCalls('/assembly/commit')).toHaveLength(1));
     handoff([{ kind: 'data-room', sourceId: 13, expectedChecksum: 'f'.repeat(64) }]);
-    await waitFor(() => expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 13'));
+    await screen.findByText(/Document structure is still being built/i);
+    expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 12');
+    expect(screen.getByTestId('assembly-selected-sources').textContent).not.toContain('Data Room source 13');
     await act(async () => { pending.resolve(new Response('unconfirmed response', { status: 502 })); await pending.promise; });
     await screen.findByRole('button', { name: 'Check saved document' });
     fireEvent.click(screen.getByRole('button', { name: 'Clear selected sources' }));
@@ -251,6 +253,11 @@ describe('source changes preserve unresolved structural writes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check saved document' }));
     await screen.findByText(/cannot identify the interrupted request/i);
     expect(postCalls('/assembly/commit')).toHaveLength(1);
+    expect(screen.queryByText('Data Room source 13')).toBeNull();
+    handoff([{ kind: 'data-room', sourceId: 13, expectedChecksum: 'f'.repeat(64) }]);
+    await waitFor(() => expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 13'));
+    expect(postCalls('/assembly/commit')).toHaveLength(1);
+    expect(postCalls('/ai/draft')).toHaveLength(0);
   });
 });
 

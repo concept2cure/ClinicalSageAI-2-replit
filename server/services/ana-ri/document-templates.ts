@@ -218,7 +218,7 @@ function m11TemplateSections(): TemplateSection[] {
 }
 
 /**
- * The PBRER chat drafting uses: ICH E2C(R2) §1–§19 from the platform's outline
+ * The PBRER chat drafting uses: ICH E2C(R2) title page, executive summary and §1–§20 from the platform's outline
  * (market-specs 'pbrer'). Until 2026-10-15 this was sixteen headings that
  * dropped §13–§15 and renumbered the rest. Drafting guidance and word ranges
  * stay local, keyed by E2C(R2) section number.
@@ -249,13 +249,25 @@ function pbrerOutline() {
 
 const PBRER_BASIS = pbrerOutline().regulatoryBasis;
 
+/**
+ * Front matter, then every section and its subsections, in outline order: the
+ * chat template asks for what the governed pack holds, not its first level
+ * (review critic, 2026-10-19: the title page, executive summary and 5.1–18.2
+ * were missing while the reference line claimed them).
+ */
 function pbrerTemplateSections(): TemplateSection[] {
-  return pbrerOutline().sections.map((s) => ({
+  const outline = pbrerOutline();
+  type Node = (typeof outline.sections)[number];
+  const flat: Node[] = [];
+  const walk = (list: Node[]) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk(outline.sections);
+  const front = (outline.frontMatter ?? []).map((s) => ({ heading: s.heading, required: s.required, guidance: s.purpose }));
+  return [...front, ...flat.map((s) => ({
     heading: `${s.number}. ${s.heading}`,
     required: s.required,
     guidance: PBRER_DRAFTING[s.number]?.guidance ?? s.purpose,
     ...(PBRER_DRAFTING[s.number]?.targetWords ? { targetWords: PBRER_DRAFTING[s.number].targetWords } : {}),
-  }));
+  }))];
 }
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {

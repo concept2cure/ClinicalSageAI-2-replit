@@ -323,7 +323,7 @@ async function openStandards(standardsBody: unknown, profile = PROFILE) {
     return okJson({ profile });
   });
   render(<DeviceProfilePanel ident={profile.id} />);
-  await waitFor(() => expect(screen.getByText(new RegExp(`code ${profile.productCode}`))).toBeTruthy());
+  await waitFor(() => expect(screen.getByText(text => text.includes(`code ${profile.productCode}`))).toBeTruthy());
   fireEvent.click(screen.getByText('Edit'));
   fireEvent.click(screen.getByText('Recognized standards'));
 }

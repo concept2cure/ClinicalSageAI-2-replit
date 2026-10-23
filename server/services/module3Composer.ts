@@ -449,14 +449,49 @@ function stabilityResultRows(payload: Record<string, unknown>): string[][] {
     ]);
 }
 
-/** The proposed shelf life, and the data it is subject to review of — named, never "above". */
-function shelfLifeSentence(shelf: string | null | undefined, results: GeneratedTable | null): string {
+/**
+ * Has any study that carries this shelf-life claim been closed out under a
+ * signature?
+ *
+ * The claim and the signature live on the same row, so a claim is accepted when
+ * the study carrying it was closed out (`shelfLifeAccepted`, written by the
+ * governed close-out and carried by `mapStabilityPayload`). A study still
+ * running carries a claim nobody has signed for, and §3.2.P.8.1 must not state
+ * the two the same way.
+ */
+function shelfLifeAccepted(sources: CanonicalSource[], material: 'drug_substance' | 'drug_product'): boolean {
+  return sources.some((source) => {
+    const payload = (source.sourcePayload ?? {}) as Record<string, unknown>;
+    if (!payload.shelfLifeAccepted) return false;
+    const claim = material === 'drug_product' ? payload.drugProductShelfLifeClaim : payload.shelfLifeClaim;
+    return Boolean(String(claim ?? '').trim());
+  });
+}
+
+/**
+ * The proposed shelf life, the data it is subject to review of — named, never
+ * "above" — and whether the organisation has SIGNED for the claim.
+ *
+ * Added 2026-10-19 with the governed close-out (URS-CMC-028). Before it, every
+ * shelf life was an ordinary edit and there was nothing to distinguish; now
+ * there is, and a section that printed "A shelf life of 36 months is proposed"
+ * from a study still running would state a claim the organisation has not
+ * accepted. The sentence is deterministic, from a recorded fact: the signature
+ * is on the row or it is not.
+ */
+function shelfLifeSentence(
+  shelf: string | null | undefined,
+  results: GeneratedTable | null,
+  accepted = false,
+): string {
   const basis = results
     ? `the ${results.rows.length} recorded result(s) tabulated in the stability results table`
     : 'stability results, none of which is recorded on the drug product studies yet';
-  return shelf
-    ? `A shelf life of ${shelf} is proposed, subject to review of ${basis}. `
-    : `The proposed shelf life is subject to review of ${basis}. `;
+  if (!shelf) return `The proposed shelf life is subject to review of ${basis}. `;
+  const provenance = accepted
+    ? 'accepted on a signed study close-out'
+    : 'recorded on a study that has not been closed out under signature';
+  return `A shelf life of ${shelf} is proposed, ${provenance}, subject to review of ${basis}. `;
 }
 
 /**
@@ -2925,7 +2960,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     if (hasStability) {
       narrative += `Stability studies for the drug product were conducted under ${condition || '[condition not specified]'}` +
         (timePoints.length > 0 ? ` at time points: ${timePoints.join(', ')} months` : '') + `. `;
-      narrative += shelfLifeSentence(shelf, dpResults);
+      narrative += shelfLifeSentence(shelf, dpResults, shelfLifeAccepted(stabilitySources, 'drug_product'));
       narrative += `${stabilityConclusion(stabilitySources, 'drug product')} `;
     } else {
       narrative += `No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here. `;

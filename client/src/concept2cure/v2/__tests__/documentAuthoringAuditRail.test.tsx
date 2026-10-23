@@ -19,10 +19,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', async original => ({
-  ...(await original<typeof import('@/services/portal/authService')>()),
-  useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
+  };
+});
 
 /* jsdom has no layout; ProseMirror asks for client rects on mount. */
 const emptyRects = function () {
@@ -160,7 +168,7 @@ describe('the heuristic section check', () => {
     });
 
     render(<DocumentAuthoring {...props()} />);
-    const btn = await screen.findByRole('button', { name: /check/i });
+    const btn = await screen.findByRole('button', { name: /^Check$/ });
     fireEvent.click(btn);
 
     await waitFor(() => expect(scan).toHaveBeenCalled());
@@ -185,7 +193,7 @@ describe('the heuristic section check', () => {
     });
 
     render(<DocumentAuthoring {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: /check/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Check$/ }));
     const panel = await screen.findByTestId('section-check');
     expect(panel.textContent).toContain('this is not a review');
     expect(panel.textContent).not.toMatch(/compliant/i);

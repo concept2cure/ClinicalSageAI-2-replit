@@ -152,7 +152,9 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
 
     // ── 2. Deterministic contradiction detection (no LLM in the loop) ────────
     await R.step('detect-assumption-drift', async () => {
-      const findings = await contradictionEngineService.detectAssumptionDrift(ORG, PROJECT);
+      const { findings, coverage } = await contradictionEngineService.detectAssumptionDrift(ORG, PROJECT);
+      expect(coverage).toMatchObject({ detector: 'assumption_drift', read: 2, compared: 1, recorded: findings.length,
+        readTruncated: false, recordTruncated: false, comparedNothing: false });
       expect(findings.length).toBeGreaterThanOrEqual(1);
       const f = findings[0];
       findingId = f.id;
@@ -166,6 +168,7 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
         reviewState: f.reviewState,
         deterministicRule: f.deterministicRule,
         llmRole: f.llmRole,
+        coverage,
       };
     });
 

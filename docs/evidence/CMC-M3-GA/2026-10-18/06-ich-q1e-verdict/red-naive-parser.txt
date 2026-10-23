@@ -1,0 +1,19 @@
+# The parser's own test, with the naive parser put back
+
+The whole reason monthsIn exists: a storage condition reads "25C/60%RH".
+A parser that took the first integer it saw would report a 25-month claim
+the register never made — and a real 24-month claim would then look like an
+extrapolation beyond 25 months of data that does not exist.
+
+  const m = t.match(/(\d{1,3})(?:\.\d+)?\s*(months?|...)?/);   // unit made optional
+
+  × monthsIn > refuses a storage condition, a percentage and a temperature
+    → expected 25 to be null
+  × monthsIn > does not read the temperature out of a condition that also names a period
+    → expected 25 to be 24
+  × statedClaim > reports the unreadable claims rather than ignoring them
+    → expected 25 to be null
+
+  Tests  3 failed | 19 passed (22)
+
+With the unit required, all 22 pass.

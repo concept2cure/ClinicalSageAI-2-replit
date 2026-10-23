@@ -15,6 +15,13 @@ The app reads a large schema. A partial one is worse than none — surfaces rend
 their honest empty states and you will think features are broken when the
 schema is simply absent. Provision it properly, once:
 
+> **Shorter, and verified more recently** (2026-10-18, `aa4ee1e29`: 408 of 408
+> migrations on an empty PostgreSQL 16 with pgvector, 36 s): `npm run db:provision`
+> with `DATABASE_OWNER_URL`, `APP_SERVICE_DB_PASSWORD` and `APP_DATABASE_URL` set.
+> The full recipe, with the open issues a tester will meet on each journey, is
+> [`docs/testing/HUMAN_TESTING_KNOWN_ISSUES_2026-10-13.md`](testing/HUMAN_TESTING_KNOWN_ISSUES_2026-10-13.md).
+> The steps below are the 2026-09-08 path and still work.
+
 ```bash
 # pgvector is required; four migrations and several tables need it.
 apt-get install -y postgresql-16-pgvector
@@ -47,7 +54,11 @@ ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='<pick one>' node scripts/seed-admin.
 npx tsx scripts/seed-local-testing.ts
 ```
 
-The first creates the organization, your sign-in account and its membership.
+The first creates the organization, its own client workspace, your sign-in
+account and its membership. (Until 2026-10-18 it wrote no workspace, so on a
+freshly provisioned database every "create program" failed with
+`NO_CLIENT_WORKSPACE` until `deploy-migrate` ran again — HT-01. It now runs that
+same repair sweep itself: `scripts/seed/organization-workspace.mjs`.)
 The second adds the smallest realistic workspace: one program (BX-301 Oncology
 IND), two study designs written through the product's own persist path — one
 complete enough for the engine to size, one with blocking gaps so the refusal is
@@ -64,6 +75,63 @@ DATABASE_URL=... NODE_ENV=development PORT=5000 npx tsx server/index.ts
 
 Open `http://localhost:5000`, which redirects to the sign-in form. Sign in with
 the account from step 2.
+
+### Virus scanning (uploads)
+
+Production mode scans every upload with ClamAV and refuses one it cannot scan
+(`server/middleware/uploadSafety.ts`: 503 `FILE_SCAN_UNAVAILABLE`). Since
+MR-08 stage 1 it also refuses to **boot** without a scanner: the security
+self-test fails `clamav_connectivity` and the process exits.
+
+- **`npm run dev`** (and the `NODE_ENV=development` command above) is
+  unchanged. With `CLAMAV_HOST` unset the scan is skipped, each upload logs
+  `Virus scan bypassed (non-production)`, and `/readyz` reports
+  `virusScan: "skipped"`.
+- **`npm start`** (`NODE_ENV=production node dist/index.js`) now needs a
+  scanner. Run the image production runs and point the server at it. The
+  image is read from `terraform/stack/variables.tf` (`scanner_image`'s
+  default) with the same one-liner CI uses, so this page never names a stale
+  digest:
+
+  ```bash
+  IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+  # Configured as Terraform, compose and CI configure it. Without these two,
+  # clamd answers OK for a file larger than its default limits after scanning
+  # only part of it, and that reads as a clean scan.
+  MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
+  docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+    -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
+  # Wait until clamd has loaded its signature database (up to ~5 minutes):
+  until docker exec clamav clamdcheck.sh; do sleep 5; done
+  CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3310 npm start
+  ```
+
+  The image is linux/amd64 only; on Apple silicon Docker runs it under
+  emulation. clamd holds about 1.3 GB of memory, twice that while it reloads
+  signatures. `/readyz` reports `virusScan: "ok"` while clamd answers and
+  `"down"` (503) when it does not.
+- **The compose stacks** (`docker-compose.yml`, `docker-compose.beta.yml`)
+  need no manual step: each runs a `clamav` service and the app waits for it
+  to be healthy. The first `up` waits up to 5 minutes while clamd loads its
+  database; give the host about 8 GB of RAM for app plus scanner.
+- **`SECURITY_SELF_TEST_NONBLOCKING=true` is not a way round this.**
+  Production refuses to boot with it set (`server/startup/env.ts`); outside
+  production it changes nothing.
+
+**Deploy paths that now refuse to boot.** Each runs the server with
+`NODE_ENV=production` and no scanner, so since MR-08 stage 1 each exits at
+boot naming `clamav_connectivity`. That is the honest outcome: before, each
+booted and then refused every upload. Whether each stays, and gets a scanner,
+is MR-14's call; this change adds no scanner plumbing to them.
+
+- **Replit deployment** (`.replit`, `[deployment]`: `npm run start`, which is
+  `NODE_ENV=production`; no `CLAMAV_HOST`).
+- **The Terraform ECS worker task** (`terraform/stack/main.tf`,
+  `worker_environment`): no scanner beside it and no `CLAMAV_HOST`, by design
+  (`terraform/stack/tests/boot_contract.tftest.hcl`). No worker image exists
+  to run either (`.github/workflows/deploy-aws.yml`, "No worker image").
+- **The Helm chart** (`charts/concept2cure-app/values.yaml`, `NODE_ENV:
+  production`) and **App Engine** (`app.yaml`, `NODE_ENV: production`).
 
 ---
 

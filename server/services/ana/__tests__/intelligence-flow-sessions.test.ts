@@ -404,10 +404,12 @@ describe('commit_intelligence_flow', () => {
     expect(out.status).toBe('intelligence_flow_committed');
     const calls = Object.entries(registerCreates).filter(([name]) => name.startsWith('create')).flatMap(([, c]) => c.mock.calls);
     expect(calls.length).toBeGreaterThan(0);
-    for (const [orgId, body, link] of calls) {
+    for (const [orgId, body, actor, link] of calls) {
       expect(orgId).toBe(ORG);
       // The SESSION's project (the stored row's program uuid), not the caller's context.
       expect(body).toMatchObject({ projectId: '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e' });
+      // The §11.10(e) operator the row is recorded against: the committing session's user.
+      expect(actor).toMatchObject({ userId: 7 });
       expect(link).toEqual({ projectId: '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e' });
     }
     expect(statements.some(s => /status = 'committed'/.test(s.text))).toBe(true);

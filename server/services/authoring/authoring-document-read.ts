@@ -119,7 +119,8 @@ export async function readAuthoringDocument(q:RequestSqlClient,input:AuthoringDo
   const readScope=projection(access,captured.documentId);
   const result=await q.query(`SELECT d.id,d.title,d.module,d.product_code,d.locale,d.status,d.created_at,d.updated_at,d.created_by,
     d.template_id,d.submitted_at,d.current_workflow_id,d.approved_at,d.frozen_at,d.locked_at,d.locked_by,d.tenant_id,d.version,
-    to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,COUNT(DISTINCT s.id) AS section_count,
+    to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,to_jsonb(d)->>'client_program_id' AS client_program_id,
+    COUNT(DISTINCT s.id) AS section_count,
     COUNT(DISTINCT c.id) AS comment_count,COUNT(DISTINCT r.id) AS revision_count
     FROM authoring_documents d
     LEFT JOIN authoring_sections s ON s.doc_id=d.id AND s.tenant_id=d.tenant_id AND s.id=ANY($3::uuid[])

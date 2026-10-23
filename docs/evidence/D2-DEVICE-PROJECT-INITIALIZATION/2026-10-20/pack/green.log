@@ -1,0 +1,184 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:02.006Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T22:13:02.007Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:02.007Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+[database] Database connection successful
+
+stderr | tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-filing-class-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:02.256Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > every class has a pack spec, and every spec names a class 2226ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > each live pack is the outline its class derives, node for node, with its provenance 1830ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > every parent_key resolves and every key is unique inside each class pack 1977ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > the CSR is ICH E3 to its full depth, not the 8-of-16 stub 1997ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the packs carry what their filings need > a supplement carries its own parts, not the NDA dossier 1947ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the packs carry what their filings need > a CBE-0 needs its change description and environmental claim as much as a CBE-30 does 2332ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > every superseded prior version is superseded by exactly the version that replaced it 2403ms
+stderr | tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > scaffolding a class writes its own outline; an application still gets its dossier
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > scaffolding a class writes its own outline; an application still gets its dossier 2112ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > the next deploy replays the set over a supplement document without error or change 2255ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the review corrections supersede 20261018 on a deployed database > v1.0 is live, a document is bound to it; two deploys later the corrections are live and the document keeps its outline 2335ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > a superseded version says why, and keeps no withdrawn claim > the v1.0 IND safety report and NDA annual report packs no longer claim what the review withdrew 2067ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > without the migration, a supplement has no outline to scaffold 1774ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > a pack row whose tree is not the file's stops the deploy 1558ms
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > a live-version row with the right node count and one flag flipped stops the file that seeds it 1591ms
+stdout | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:32.822Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-20T22:13:32.824Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:32.824Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+[database] Database connection successful
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts
+{
+  "timestamp": "2026-10-20T22:13:32.947Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > US_HDE has its exact low-confidence, unreviewed-source pack specification 5ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_MDL has its exact low-confidence, unreviewed-source pack specification 1ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > CA_IVD_LICENCE has its exact low-confidence, unreviewed-source pack specification 1ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_SHONIN has its exact low-confidence, unreviewed-source pack specification 1ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_NINTEI has its exact low-confidence, unreviewed-source pack specification 1ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_TODOKEDE has its exact low-confidence, unreviewed-source pack specification 1ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_IVD_APPROVAL has its exact low-confidence, unreviewed-source pack specification 0ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > new immutable regional device preparation packs > JP_CDX has its exact low-confidence, unreviewed-source pack specification 0ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > the new migration is actually on the applier after provenance and prior class packs 1ms
+stderr | tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > every exact application starts at zero/draft, binds its source tree and discloses provenance without a transmit channel
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > without the migration, an exact admitted class cannot substitute another agency pack 2124ms
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > every exact application starts at zero/draft, binds its source tree and discloses provenance without a transmit channel 1716ms
+ × tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > replays old wideners over bound old/new records without narrowing, changing existing provenance or losing review attribution 1972ms
+   → column "superseded_by" does not exist
+ ✓ tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > a same-length altered regional pack refuses the deploy instead of accepting ON CONFLICT 1943ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > a fresh database converges on the newest definition 2281ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > the next deploy succeeds over a row only the newest definition admits 2157ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > a fresh database converges on the newest definition 1998ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > the next deploy succeeds over a row only the newest definition admits 1714ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > a fresh database converges on the newest definition 1675ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > the next deploy succeeds over a row only the newest definition admits 1428ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > US_ANDA resolves in the registry but has no artifact matrix 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > most of the registry has no artifact matrix, so this is the common path 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does NOT report 100% artifact completeness 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > marks the artifact half as not assessed 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > raises a critical gap naming the cause 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does not fold a fabricated artifact figure into the overall score 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — modelled artifact requirements still score normally > US_IND is assessed, and a missing required artifact still counts against it 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > counts approved and locked, and nothing else 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > a drafted section is NOT complete — this is the whole defect 0ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > an absent or unrecognised status is 0, never a guess 0ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > a section is complete only when the filing says so > never returns an invented middle value 1ms
+ ✓ tests/schema-contract/c2c-section-completion.contract.test.ts > the definition matches the trigger that maintains readiness > the TypeScript set is exactly the SQL FILTER set 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > does NOT claim 100% artifact completeness when requirements are unknown 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > surfaces a CRITICAL gap so the orchestrator raises a blocker 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > reports the strongest not-ready level, never "early" 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > a RESOLVABLE registry id is unaffected by the fallback change 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE has unassessed section requirements, not complete requirements 3ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL has unassessed section requirements, not complete requirements 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE has unassessed section requirements, not complete requirements 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN has unassessed section requirements, not complete requirements 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI has unassessed section requirements, not complete requirements 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE has unassessed section requirements, not complete requirements 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL has unassessed section requirements, not complete requirements 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX has unassessed section requirements, not complete requirements 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > US_HDE approved optional authoring groups do not determine an unknown requirement set 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_MDL approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > CA_IVD_LICENCE approved optional authoring groups do not determine an unknown requirement set 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_SHONIN approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_NINTEI approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_TODOKEDE approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_IVD_APPROVAL approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > JP_CDX approved optional authoring groups do not determine an unknown requirement set 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.optional-device-outlines.test.ts > empty regional working outlines do not establish submission requirements > retains normal assessment for modelled FDA IND sections 1ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > uses the pathway domain set and averages scores 10ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > verdict is ready only when every required domain is complete 1ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > nearly-ready when overall ≥ 0.8 but a gap remains 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > prioritizes gaps lowest-score first 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > rejects an unknown pathway or out-of-range score 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/c2c-regional-device-packs.contract.test.ts > regional device packs scaffold and replay on an installed database > replays old wideners over bound old/new records without narrowing, changing existing provenance or losing review attribution
+error: column "superseded_by" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 114, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '106', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn', query: 'SELECT effective_review_state FROM c2c_rule_packs_review_state WHERE doc_type=\'nda\' AND agency=\'fda\' AND superseded_by IS NULL', params: [], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 70 passed (71)
+   Start at  22:13:00
+   Duration  53.29s (transform 1.87s, setup 169ms, import 4.27s, tests 47.49s, environment 1ms)
+
+JSON report written to /workspace/ClinicalSageAI/docs/evidence/D2-DEVICE-PROJECT-INITIALIZATION/2026-10-20/pack/green.json

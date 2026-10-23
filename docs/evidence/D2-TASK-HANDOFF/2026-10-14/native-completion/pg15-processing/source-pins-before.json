@@ -1,0 +1,22 @@
+[
+  {
+    "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+    "sha256": "b9cae6bb9b9102af929335f0647546d720c338edfb87add543c89d9124c1f931"
+  },
+  {
+    "path": "tests/db/data-room-processing.dbtest.ts",
+    "sha256": "e1639a6a053fc393b5c6087c9640e746ed2c00aa33e5108fcecf6eb3792b59b7"
+  },
+  {
+    "path": "tests/db/catalog-native-fixture.ts",
+    "sha256": "0711edcd607f5f99433cf124a5d12b4210500fb9b386c8ac123eeb97b7bcf507"
+  },
+  {
+    "path": "tests/db/vault-current-access-fixture.ts",
+    "sha256": "203fa05d37c735303ef6a55ad0ac4c8a654b0ade3e5ae3d42c68cb2e32e6eed0"
+  },
+  {
+    "path": "vitest.db.config.ts",
+    "sha256": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+  }
+]

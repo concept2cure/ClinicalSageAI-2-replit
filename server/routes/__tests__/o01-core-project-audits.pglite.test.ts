@@ -31,6 +31,7 @@ let pg: PGlite;
 function app(userId = 7, orgId = 9, claimedRole = 'admin') {
   const a = express(); a.use(express.json()); a.use((req, _res, next) => {
     Object.assign(req, { userId, userRole: claimedRole, userEmail: 'member@example.test',
+      dbClient: { query: (sql: string, params?: unknown[]) => pg.query(sql, params) },
       user: { id: userId, organizationId: orgId, role: claimedRole },
       tenantContext: { organizationId: orgId, clientWorkspaceId: orgId === 9 ? 1 : 2 }, tenantId: orgId }); next();
   }); a.use('/api/concept2cure', routes); return a;
@@ -39,7 +40,10 @@ beforeAll(async () => {
   pg = new PGlite(); h.pg = pg; h.db = drizzle(pg);
   const base = await readFile('migrations/0000_sweet_joseph.sql', 'utf8');
   for (const table of [schema.organizations, schema.users, schema.organizationUsers, schema.clientWorkspaces, schema.projects,
-    schema.concept2cureConversations, schema.concept2cureMessages, schema.concept2cureArtifacts, schema.concept2cureArtifactVersions, schema.regulatoryAuditLogs]) {
+    schema.concept2cureConversations, schema.concept2cureMessages, schema.concept2cureArtifacts, schema.concept2cureArtifactVersions, schema.regulatoryAuditLogs,
+    // Read by getOwnershipDerivationData, which the ownership-preferences PATCH calls (IAM-31 cases below);
+    // its sixth table, concept2cure_review_tasks, comes from the phase13 migration applied below.
+    schema.concept2cureSignatures, schema.concept2cureSubmissionSnapshots, schema.projectActivities]) {
     const cfg = getTableConfig(table);
     const ddl = base.match(new RegExp(`CREATE TABLE "${cfg.name}" \\([\\s\\S]*?\\n\\);`))?.[0];
     if (!ddl) throw new Error(`Canonical DDL missing: ${cfg.name}`);
@@ -47,7 +51,8 @@ beforeAll(async () => {
     const known = new Set((await pg.query<{ column_name: string }>('SELECT column_name FROM information_schema.columns WHERE table_name=$1', [cfg.name])).rows.map(r => r.column_name));
     for (const column of cfg.columns) if (!known.has(column.name)) await pg.exec(`ALTER TABLE "${cfg.name}" ADD COLUMN "${column.name}" ${column.getSQLType()}`);
   }
-  for (const path of ['db/migrations/20260314_phase12_multi_user_review.sql', 'db/migrations/20260401_project_sharing_visibility.sql']) await pg.exec(await readFile(path, 'utf8'));
+  // phase13 creates concept2cure_review_tasks, the other table getOwnershipDerivationData reads.
+  for (const path of ['db/migrations/20260314_phase12_multi_user_review.sql', 'db/migrations/20260401_project_sharing_visibility.sql', 'migrations/phase13_review_threads_tasks.sql']) await pg.exec(await readFile(path, 'utf8'));
   await pg.exec(`INSERT INTO organizations(id,name,slug) VALUES(9,'Synthetic nine','o-nine'),(10,'Synthetic ten','o-ten');
     INSERT INTO client_workspaces(id,organization_id,name,slug) VALUES(1,9,'Workspace nine','w-nine'),(2,10,'Workspace ten','w-ten');`);
   for (const id of [7, 8, 9, 10, 11]) await pg.query("INSERT INTO users(id,name,email,password_hash) VALUES($1,'Actual member',$2,'fixture-hash')", [id, `member${id}@example.test`]);
@@ -208,5 +213,92 @@ describe('the canonical persisted project authority applies to these actions', (
     expect((await pg.query('SELECT visibility FROM project_visibility_settings WHERE project_id=$1', [id])).rows).toEqual([{ visibility: 'private' }]);
     expect((await pg.query('SELECT user_id,role FROM project_members WHERE project_id=$1', [id])).rows).toEqual([{ user_id: 8, role: 'owner' }]);
     expect((await request(app(7)).post(`/api/concept2cure/projects/${id}/export`)).status).toBe(404);
+  });
+});
+
+/**
+ * IAM-31 (weekly review 2026-10-19). PATCH /projects/:id/ownership-preferences
+ * writes settings.customInstructions — the text getProjectInstructionsBlock
+ * puts into AnA's prompt for every session on the project — with the router's
+ * organization check only. Its sibling PUT /projects/:id writes the same field
+ * behind projectRecordAdmission(true) and an audit row. So any member, a
+ * viewer included, could rewrite the instructions of a private project they
+ * were never shared on, unaudited. The PATCH now carries the PUT's authority
+ * and audit, and these pin it to the same rules the PUT is held to above.
+ */
+describe('the ownership-preferences PATCH is held to the PUT’s authority and audit (IAM-31)', () => {
+  const patch = (userId: number) =>
+    request(app(userId)).patch('/api/concept2cure/projects/3/ownership-preferences')
+      .send({ projectInstructions: 'Injected instructions for every AnA session' });
+  const instructions = async () =>
+    (await pg.query<{ c: string }>("SELECT settings->>'customInstructions' AS c FROM projects WHERE id=3")).rows[0].c;
+
+  it('an organization member never shared on the private project is refused, and nothing changes', async () => {
+    const res = await patch(10);
+    expect([403, 404]).toContain(res.status);
+    expect(await instructions()).toBe('Retain these reusable instructions');
+    expect(await auditRows()).toHaveLength(0);
+  });
+
+  it.each([[8, 'a read ("use") share'], [9, 'a viewer with an edit share']])('user %s, %s, is refused, and nothing changes', async (userId) => {
+    const res = await patch(userId as number);
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(await instructions()).toBe('Retain these reusable instructions');
+    expect(await auditRows()).toHaveLength(0);
+  });
+
+  it.each([true, false])('the owner may change them, and the change is audited (audit unavailable=%s)', async failed => {
+    if (failed) await unavailableAudit();
+    const res = await patch(7);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.meta?.auditTrail).toMatchObject(expected(failed));
+    expect(await instructions()).toBe('Injected instructions for every AnA session');
+    expect(await auditRows()).toEqual(failed ? [] : [{ action: 'UPDATE', entity_id: '3' }]);
+  });
+});
+
+/**
+ * DP-80 (weekly review 2026-10-19). Visibility changes, member grants and
+ * member removal were authorized (canManageProject) but wrote no audit row, so
+ * a private project could be opened to the organization, or a member removed,
+ * with nothing reviewable left behind. Each now records an UPDATE on the
+ * project with the sharing state before and after, and discloses the outcome.
+ */
+describe('project sharing changes are audited, with what changed (DP-80)', () => {
+  const rows = async () =>
+    (await pg.query<{ action: string; entity_id: string; previous_value: unknown; new_value: unknown }>(
+      'SELECT action, entity_id, previous_value, new_value FROM regulatory_audit_logs ORDER BY id')).rows;
+
+  it.each([
+    ['visibility opened to the organization', (a: ReturnType<typeof app>) => request(a).patch('/api/concept2cure/projects/3/sharing/visibility').send({ visibility: 'org_public' })],
+    ['a member granted edit', (a: ReturnType<typeof app>) => request(a).put('/api/concept2cure/projects/3/sharing/members/10').send({ role: 'edit' })],
+    ['a member removed', (a: ReturnType<typeof app>) => request(a).delete('/api/concept2cure/projects/3/sharing/members/8')],
+  ])('%s writes an audited UPDATE with the state before and after', async (_label, send) => {
+    const res = await send(app(7));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.meta?.auditTrail).toMatchObject({ persisted: true });
+    const written = await rows();
+    expect(written).toHaveLength(1);
+    expect(written[0]).toMatchObject({ action: 'UPDATE', entity_id: '3' });
+    const before = JSON.stringify(written[0].previous_value), after = JSON.stringify(written[0].new_value);
+    expect(before).toMatch(/sharing/);
+    expect(after, 'the row records no change in the sharing state').not.toBe(before);
+  });
+
+  it('an audit store that refuses the row is disclosed, not reported as recorded', async () => {
+    await unavailableAudit();
+    const res = await request(app(7)).patch('/api/concept2cure/projects/3/sharing/visibility').send({ visibility: 'org_public' });
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+  });
+
+  it('a caller who may not manage the project changes nothing and writes no row', async () => {
+    // req.userRole is what production's authMiddleware re-reads from
+    // organization_users on every request — never the token's claim — so user 8
+    // is given the role it actually holds ('member'), not the harness's
+    // default 'admin' claim, which would be an org manager.
+    const res = await request(app(8, 9, 'member')).patch('/api/concept2cure/projects/3/sharing/visibility').send({ visibility: 'org_public' });
+    expect(res.status).toBe(403);
+    expect(await rows()).toHaveLength(0);
   });
 });

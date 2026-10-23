@@ -108,6 +108,32 @@ export interface RunQuery {
 }
 
 /**
+ * What a truncated bundle register must say, or null when it is complete.
+ *
+ * `GET /api/report-os/bundles` scans a bounded number of
+ * `project_memory_entries` rows, and a bundle is stored once per covered
+ * project — so the scan is in rows and the register is in bundles, and an
+ * organisation past the bound lost its oldest packs with nothing saying so.
+ * The route now sends `meta.truncated` with the register's own SQL count, and
+ * only when the scan actually truncated.
+ *
+ * The sentence deliberately does NOT claim how many packs the reader may see:
+ * `registerTotal` is counted before the per-project read check, so offering it
+ * as "N of M yours" would overstate it. It says what is true — the register
+ * holds more than this page shows — and why older ones are missing.
+ */
+export function bundleRegisterCaveat(meta: unknown): string | null {
+  const m = (meta ?? null) as { truncated?: unknown; registerTotal?: unknown } | null;
+  if (!m || m.truncated !== true) return null;
+  const total = typeof m.registerTotal === 'number' && Number.isInteger(m.registerTotal) && m.registerTotal >= 0
+    ? m.registerTotal
+    : null;
+  const count = total == null ? 'More report packs' : `This register holds ${total} report packs, and more`;
+  return `${count} exist than are shown here — the newest are listed and older ones were not read. ` +
+    'Some packs may also sit outside the projects you can access.';
+}
+
+/**
  * The run-history URL for a query, or null when there is nothing to ask for.
  * PURE, so the query building is testable without a DOM or a server.
  */

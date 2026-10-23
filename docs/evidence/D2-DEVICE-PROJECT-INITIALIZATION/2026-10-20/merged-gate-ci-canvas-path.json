@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:canvas-path"
+  ],
+  "at": "2026-10-20T22:54:19.606712+00:00",
+  "elapsedSeconds": 0.243,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-merged.json",
+  "stdout": "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline\n",
+  "stderr": ""
+}

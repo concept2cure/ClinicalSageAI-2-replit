@@ -1,0 +1,14 @@
+{
+  "file": "server/services/ana/__tests__/passage-round-executor.test.ts",
+  "sha256": "311a2b62d1009eead544ad66d8f12ba0e463ba35f597a1af8c6d867d64104e25",
+  "tests": 14,
+  "baselineExpectedFailures": 9,
+  "baselinePassingControls": 5,
+  "rootBaselineInputsUnchanged": 26,
+  "allRecordedInputsUnchanged": 29,
+  "baselineExitCode": 1,
+  "lintExitCode": 0,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "frozenAt": "2026-10-21T00:22:30.067575+00:00"
+}

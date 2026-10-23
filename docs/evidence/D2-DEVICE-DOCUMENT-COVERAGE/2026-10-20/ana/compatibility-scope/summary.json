@@ -1,0 +1,46 @@
+{
+  "recordedAt": "2026-10-20T21:00:09.195186+00:00",
+  "red": {
+    "failed": 12,
+    "executed": 12,
+    "skipped": 41,
+    "exitCode": 1,
+    "sourcePinsStable": true,
+    "receipt": "red.json",
+    "testSource": "red-test.ts.txt"
+  },
+  "green": {
+    "passed": 222,
+    "suites": 4,
+    "newCompatibilityCases": 53,
+    "exitCode": 0,
+    "sourceAndDependencyPins": 10,
+    "receipt": "current-tests.json",
+    "pinsStableDuringFocusedRun": true,
+    "allDependencyPinsStillCurrent": false,
+    "qualification": "The focused run was stable at execution. Later root canonical device-entry helper extraction and device-only QMS completion change shared/preparation dependencies; the final root combined replay qualifies final bytes."
+  },
+  "lint": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0,
+    "receipt": "lint.json"
+  },
+  "scope": "Named components and editor UUID references share the existing preparation entry. Exact registry/component mappings, canonical FDA 510(k) application type and declared EU MDR/IVDR parent relationships determine component compatibility, not broad eSTAR format or common country. These are preparation compatibility checks, never client regulatory eligibility or readiness decisions.",
+  "positiveControls": {
+    "compatiblePreparedReferences": 20,
+    "explicitOutlineOnlyReferences": 12,
+    "standaloneComponents": 8,
+    "exactRegistryOnlyMapping": 1
+  },
+  "unchanged": [
+    "Outline-only reference availability for same-region mixed scopes",
+    "Standalone component preparation",
+    "Medicinal preparation behavior",
+    "AI eligibility and provider/approval gates",
+    "Existing component records and UUID identity"
+  ],
+  "supersedingRootReceipt": "../../integration.json",
+  "updatedAt": "2026-10-20T21:02:12.220299+00:00"
+}

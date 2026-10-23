@@ -1,0 +1,7 @@
+ × server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts > the picker carries the whole outline > EU_PSUR: the picker document holds every node of the psur pack, in order
+ × server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts > the picker carries the whole outline > US_NDA_SUPP: the picker document holds every node of the pas pack, in order
+ × server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts > the picker carries the whole outline > US_CBE: the picker document holds every node of the cbe pack, in order
+ × server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts > the picker carries the whole outline > section order is the outline order, front matter first
+ × server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts > a coverage row names only the outline it serves > a lifecycle-record or component outline reports no blueprint id
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)

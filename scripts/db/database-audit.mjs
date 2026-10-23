@@ -22,6 +22,19 @@
  *   • not preloaded        → nothing to create. Fine on a laptop or in CI;
  *                            a FAILURE when DB_AUDIT_REQUIRED=pgaudit, which the
  *                            stack sets on every task (terraform/stack/main.tf).
+ *   • cannot be READ       → `shared_preload_libraries` is superuser-only to
+ *                            examine, and `current_setting(…, true)` suppresses
+ *                            an UNSET parameter, not a permission error. On a
+ *                            single-role non-superuser estate — a laptop, a CI
+ *                            container, any deployment whose applier is the
+ *                            owner and not a superuser — this threw
+ *                            `permission denied to examine
+ *                            "shared_preload_libraries"` and failed the deploy
+ *                            AFTER all 375 migrations had committed, which is
+ *                            the opposite of "fine on a laptop" above
+ *                            (2026-10-18). It is now reported as undetermined
+ *                            and, where the audit is REQUIRED, still refused:
+ *                            could-not-tell is not recording.
  *
  * A required audit that is not recording stops the deploy before the services
  * roll, naming what is missing. Any other DB_AUDIT_REQUIRED value is refused
@@ -50,10 +63,28 @@ const preloads = value =>
 /**
  * @param {{ query: (sql: string) => Promise<{ rows: any[] }> }} client  owner connection
  * @param {{ required: boolean, log?: (m: string) => void }} options
- * @returns {Promise<{ state: 'recording' | 'not-loaded', classes?: string }>}
+ * @returns {Promise<{ state: 'recording' | 'not-loaded' | 'undetermined', classes?: string }>}
  */
 export async function ensureDatabaseAudit(client, { required, log = () => {} }) {
-  const preload = (await client.query(`SELECT current_setting('shared_preload_libraries', true) AS v`)).rows[0]?.v;
+  let preload;
+  try {
+    preload = (await client.query(`SELECT current_setting('shared_preload_libraries', true) AS v`)).rows[0]?.v;
+  } catch (err) {
+    /* Only a permission error is tolerated here. Anything else — a dead
+       connection, a syntax error — is a real failure and is re-thrown. */
+    const message = err instanceof Error ? err.message : String(err);
+    if (!/permission denied to examine/i.test(message)) throw err;
+    if (required) {
+      throw new Error(
+        `database-level audit is required (${DB_AUDIT_ENV}=pgaudit) and this connection may not examine ` +
+          `shared_preload_libraries, so whether pgaudit is recording cannot be established. Run this step as ` +
+          `a role that can read it (on RDS, the master, a member of rds_superuser). Refusing rather than ` +
+          `reporting an unverified control as satisfied.`,
+      );
+    }
+    log(`  • cannot examine shared_preload_libraries on this connection; database-level audit is not required here`);
+    return { state: 'undetermined' };
+  }
   if (!preloads(preload).includes('pgaudit')) {
     if (required) {
       throw new Error(

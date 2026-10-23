@@ -21,9 +21,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import multer from 'multer';
-import { receiveUpload } from '../../middleware/uploadAllowlist';
-import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
+import { receiveTemplateFile, uploadedTemplateIsSafe, extractTemplatePreview } from './template-upload';
 import {
   extractTemplateFromFile,
   renderDocxWithTemplate,
@@ -39,19 +37,6 @@ import type { DocxInput } from '../../services/docx/docxFactory';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../../services/export/governedExportConsequence';
 
 const router = Router();
-
-const TEMPLATE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: TEMPLATE_UPLOAD_MAX_BYTES, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    if (/\.(docx|pdf)$/i.test(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only .docx or .pdf files are supported'));
-    }
-  },
-});
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -103,43 +88,10 @@ router.get('/', async (req: Request, res: Response) => {
 
 // ── extract (preview, no save) ───────────────────────────────────────────────
 
-const receiveTemplateFile = receiveUpload(upload.single('file'), { maxBytes: TEMPLATE_UPLOAD_MAX_BYTES });
-
-/**
- * The bytes are what the declared type says, and clean (magic number + malware
- * scan through the platform guard; fail-closed in production). Answers the
- * refusal itself and returns false (audit IAM-14, P1-5).
- */
-async function uploadedTemplateIsSafe(req: Request, res: Response): Promise<boolean> {
-  const file = req.file!;
-  try {
-    await assertUploadSafe(file.buffer, file.mimetype, file.originalname);
-    return true;
-  } catch (err) {
-    if (err instanceof UploadSafetyError) {
-      res.status(err.status).json({ error: err.body.code, detail: err.body.error });
-      return false;
-    }
-    throw err;
-  }
-}
-
 router.post('/extract', receiveTemplateFile, async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  if (!req.file) return res.status(400).json({ error: 'FILE_REQUIRED' });
-  if (!(await uploadedTemplateIsSafe(req, res))) return;
-  try {
-    const result = await extractTemplateFromFile(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype,
-    );
-    return res.json(result);
-  } catch (err: any) {
-    console.error('[c2c/templates] extract', err?.message);
-    return res.status(500).json({ error: 'EXTRACTION_FAILED' });
-  }
+  return extractTemplatePreview(req, res);
 });
 
 // ── extract + save ───────────────────────────────────────────────────────────

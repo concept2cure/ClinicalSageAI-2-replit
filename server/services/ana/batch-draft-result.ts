@@ -27,8 +27,9 @@ import { isTruncated } from '../ai-gateway/finish-reason';
 import type { DocumentDraftResponse } from './AnaDocumentDraftingService';
 
 export interface BatchDraftFailure {
-  /** A gateway classification, or DRAFT_FAILED for a fault of ours. */
-  error: GatewayErrorCode | 'DRAFT_FAILED';
+  /** A gateway classification, DRAFT_FAILED for a fault of ours, or
+   * DRAFT_CANCELLED when the person stopped the run before it was drafted. */
+  error: GatewayErrorCode | 'DRAFT_FAILED' | 'DRAFT_CANCELLED';
   /** A sentence the author can act on. Internals are never placed here. */
   message: string;
   /** The section the request named, so the failure can be matched to its card. */
@@ -36,6 +37,38 @@ export interface BatchDraftFailure {
 }
 
 export type BatchDraftResult = DocumentDraftResponse | BatchDraftFailure;
+
+/**
+ * The person stopped the run. Thrown by drafting before work starts and after
+ * an await settles post-stop, so a late result is never offered as a draft.
+ */
+export class DraftCancelledError extends Error {
+  constructor() {
+    super('Drafting was stopped before this section completed.');
+    this.name = 'DraftCancelledError';
+  }
+}
+
+/** Only a real AbortSignal is honoured. JSON cannot produce one, so a
+ * body-supplied `signal` on an HTTP route is ignored rather than trusted. */
+export function trustedSignal(signal: unknown): AbortSignal | undefined {
+  return signal instanceof AbortSignal ? signal : undefined;
+}
+
+export function throwIfDraftCancelled(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new DraftCancelledError();
+}
+
+/** Matched by name: tests and callers mock the gateway module, and the SDK's
+ * own abort error is not a stable class to import. */
+export function isDraftCancellation(reason: unknown): boolean {
+  const name = reason instanceof Error ? reason.name : undefined;
+  return name === 'DraftCancelledError' || name === 'GatewayAbortedError' || name === 'AbortError';
+}
+
+export function cancelledDraft(sectionType: string): BatchDraftFailure {
+  return { error: 'DRAFT_CANCELLED', message: 'Drafting was stopped before this section completed. Nothing was saved.', sectionType };
+}
 
 /** True for a failed slot. A draft has `content`; a failure has `error` and none. */
 export function isBatchDraftFailure(result: unknown): result is BatchDraftFailure {
@@ -73,7 +106,7 @@ export function batchDraftReceipt(
     }
     const result = byIndex.get(requestIndex);
     if (isBatchDraftFailure(result)) {
-      return { ...base, status: 'failed', error: result.error, message: result.message };
+      return { ...base, status: result.error === 'DRAFT_CANCELLED' ? 'cancelled' : 'failed', error: result.error, message: result.message };
     }
     const termination = draftTermination(result);
     if (termination.truncated) {
@@ -91,15 +124,22 @@ export function batchDraftReceipt(
       sources: context?.sources.map(({ text: _text, ...receipt }) => receipt) ?? [],
       sourceQualification: 'unassessed' };
   });
+  // A stop is the person's decision, not a failure to repair: cancelled slots
+  // are reported apart from retryIndices and are retried only if asked again.
   const retryIndices = sections.filter((s) => s.status === 'failed').map((s) => s.requestIndex);
+  const cancelledIndices = sections.filter((s) => s.status === 'cancelled').map((s) => s.requestIndex);
   const failed = retryIndices.length;
+  const cancelled = cancelledIndices.length;
+  const count = sections.length - failed - cancelled;
   return {
-    status: failed === 0 ? 'drafted' : failed === sections.length ? 'failed' : 'partial',
-    count: sections.length - failed,
+    status: cancelled > 0 ? 'cancelled' : failed === 0 ? 'drafted' : count === 0 ? 'failed' : 'partial',
+    count,
     failed,
+    cancelled,
     requested: sections.length,
     savedCount: 0,
     sections,
     retryIndices,
+    cancelledIndices,
   };
 }

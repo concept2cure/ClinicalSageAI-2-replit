@@ -1,0 +1,31 @@
+{
+  "head": "cb4065898efa6c1422ea5fb3b3a995de069e7569",
+  "files": {
+    "server/services/ana/agentic-loop.ts": "92d50798e39ea550e3207328b057db3897911f68b66515a3a56cb2c34dd154ff",
+    "server/services/ana/tool-outcome.ts": "e32bef67da8f61db7b8a15fd636505ae2c572d3830e293e9600cf8de087761ed",
+    "server/services/ana/AnaToolExecutor.ts": "32237592c1ca6d1fde9c9b8226a8471debfe78fce0ea656c7e62bfb57d62b934",
+    "server/routes/ana-ri/stream.ts": "d3d3d37b631d94e5abe177ad3c3889f2a104ec8bdb77f5bb4addc86d025e1838",
+    "server/services/ana/sub-agent.ts": "fef0ba01ad72d371f506afcc4aaf12ff94949a5b25259ef22e7653598e7986b2",
+    "server/services/ana/sub-agent-shape.ts": "571eff6f1f3c98af8301394b7342fd651b4b787643169713c306a9ede70dea68",
+    "server/services/ana/sub-agent-stream.ts": "751eacc19b131be0fd3eaeb4e364050da8800d89cc01a156f4e1cfbff5e8f8c0",
+    "server/services/ana/read-receipts.ts": "41327c0cd6cabb31eaa82e4ff057caa253548541c38b5b55e48cf63612fa87aa",
+    "server/services/ana/source-read-receipt.ts": "acb08a8e5a05334e005f4452b88ee1fd2d487b0bd18147288af137d047558097",
+    "server/services/ana/document-passage-tools.ts": "593c291d3a588a9825678cffe98a41a122150b74fa41617d3b9cd83a06bdab9d",
+    "server/services/ana/tool-output-frame.ts": "b90e0a4e095e93fb1d8faf23e008906f5e7ab2ea32e802ba59da8ac57c95a5f1",
+    "server/services/ana/tool-trace.ts": "04c88f5259f8587cacfdca616b822db1d168896b8af900e1cd17840298c2660d",
+    "server/services/ana/agentic-tool-dispatch.ts": "b6002d07479b2d6c384169081ad33a36909295e55088b8094321d6067c1207d5",
+    "server/services/ana/answer-grounding.ts": "3c2f89c15232c94a5ce69e36791a087ddf1136e17e333fe6a5fd7d6d08acf4c4",
+    "server/services/ana/turn-record.ts": "a46ea7c30d44c7acd514f4eee3bf17d8c382c479aba2353672aed2fac1bcf932",
+    "server/services/ana/__tests__/read-receipts.test.ts": "9862520d539b24a430846f2364a0289022650184718ad4d48e3f52993a44b429",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "eslint.config.js": "8980ee711992c0d216296b9cfe4351531569582b130ccb3e3f856e62901f8804",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "package.json": "a5ca393c8923bde7985b7080931cc6ec98ac13ccf59430f8e526904f26a5b7f7",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    ".husky/pre-commit": "4d8cde3b21f91140935b021db7861221633d6feb8641fde6f884bae7cd834f40",
+    ".husky/pre-push": "6e06c1338bebc01155c20eebcf2ebb2bfe474b1656ec920e7c6e7952a23bd053",
+    "AGENTS.md": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+    "CLAUDE.md": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37"
+  }
+}

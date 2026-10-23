@@ -1,0 +1,216 @@
+{
+  "artifact": "oct18-postmerge-reporting.acceptance.json",
+  "sha256": "3bfd4697b827c1a071b7edbf80fbd8143a891c279e5fe4776eb6858549fb62b7",
+  "bytes": 6458,
+  "receipt": {
+    "headBefore": "b4af13fe38146c9acfb3bdc8bbaaede03da8127b",
+    "headAfter": "b4af13fe38146c9acfb3bdc8bbaaede03da8127b",
+    "node": "v22.23.3",
+    "status": "passed",
+    "totals": {
+      "files": 28,
+      "passed": 289,
+      "failed": 0,
+      "skipped": 0,
+      "distinctNames": 289,
+      "duplicateNames": 0
+    },
+    "files": [
+      {
+        "path": "server/routes/__tests__/report-os-audit-recording.test.ts",
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/routes/__tests__/report-os-run-engine.test.ts",
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/__tests__/report-state-memory-isolation.pglite.test.ts",
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/capability-inventory.test.ts",
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/compute-run-regional.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/domain-project-sql.test.ts",
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/domain-provenance.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts",
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/lifecycle-calendar.pglite.test.ts",
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/project-access-integration.test.ts",
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/report-engine.test.ts",
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/__tests__/run-history.test.ts",
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/render/__tests__/render-market-assessment.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/render/__tests__/render-one-readiness.test.ts",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/render/__tests__/render.test.ts",
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/scheduling/__tests__/generate-deliver.test.ts",
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts",
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "testSourcesChangedDuringRun": [],
+    "uncommittedReportingSourceDiffAtCompletion": [],
+    "lint": {
+      "files": 1,
+      "errors": 0,
+      "warnings": 5,
+      "receipt": "/workspace/audit/oct18-postmerge-reporting.lint.json"
+    },
+    "boundaries": [
+      "All 20 frozen reporting acceptance companions rerun after merge",
+      "Actual PGlite lifecycle SQL, canonical current actor/private source admission and recheck, overflow and unreadable refusal",
+      "Actual manual route and canonical persistence callback; scheduled creator/recipient rechecks and atomic side effects",
+      "Saved source metadata, malformed evidence, history filtering before totals/pagination and reserved bundle bindings",
+      "Actual mounted launch Insights plus actual extracted calendar/label PDF text; unknown legal currency finalization remains blocked",
+      "Incoming company branding over actual PDF overflow pages; mandatory identity/watermark/seal/signer semantics and actual export audit routes",
+      "Real raw-memory SQL isolation with direct-seeded reserved manifests and ordinary memory positives; producer binding proof remains a separate fixture"
+    ],
+    "limitations": [
+      "No new enabled-branding calendar overflow cross-product fixture added (root requested no new tests); calendar PDF and branded generic overflow/retained-pack PDF independently exercised.",
+      "PGlite/source adapter checks do not claim native RLS or deployed browser qualification; root owns native DB, whole-project TypeScript/build/browser and publication.",
+      "No source edits, Git mutations, migrations/baselines/dependency changes or parallel TSC performed."
+    ],
+    "evidence": {
+      "vitest": "/workspace/audit/oct18-postmerge-reporting.json",
+      "log": "/workspace/audit/oct18-postmerge-reporting.log",
+      "testSources": "/workspace/audit/oct18-postmerge-reporting.files.json"
+    }
+  }
+}

@@ -50,6 +50,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { authService, useAuth } from '@/services/portal/authService';
+import { captureDocumentRefreshOwner, readDocumentRecord, type DocRow, type SectionRow } from './documentRecordRead';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
@@ -72,12 +73,11 @@ import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
-import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
+import { useCanvasEscape, useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
 import { originForSavedSection } from './authoringConversationOrigin';
 import { sourceMetadataUnavailable } from './savedTemplateContext';
-import { captureAuthoringSession, changedSectionCodes, readCanvasDocumentRecord, useAuthoringReadSession,
-  type CanvasDocumentRow as DocRow, type CanvasSectionRow as SectionRow } from './authoringCurrentRead';
+import { captureAuthoringSession, changedSectionCodes, useAuthoringReadSession } from './authoringCurrentRead';
 
 export interface DocumentCanvasProps {
   docId: string;
@@ -240,11 +240,21 @@ export function DocumentCanvas({
      controls (`aria-controls`) rather than only that it is expanded. */
   const expandedId = useId();
 
+  const loadScopeKey = readKey;
+  const loadScope = useRef({ key: loadScopeKey });
+  if (loadScope.current.key !== loadScopeKey) loadScope.current = { key: loadScopeKey };
   const loadSequence = useRef(0);
-  const load = useCallback(async (quiet = false) => {
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const load = useCallback(async (quiet = false, recovery = false) => {
+    const scope = loadScope.current;
+    if (scope.key !== readKey) return false;
+    const owner = captureDocumentRefreshOwner(recovery);
+    if (!owner) return false;
     const sequence = ++loadSequence.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
-    const current = () => sequence === loadSequence.current && currentReadKey.current === readKey && readSession.sameRevision() && revision();
+    const currentRead = () => alive.current && loadScope.current === scope && loadSequence.current === sequence
+      && currentReadKey.current === readKey && readSession.sameRevision() && revision() && owner.current();
     if (!quiet) {
       setLoadedKey(readKey);
       setState('loading');
@@ -253,21 +263,21 @@ export function DocumentCanvas({
       setSections([]);
       setAccess(UNKNOWN_DOCUMENT_ACCESS);
     }
-    const read = await readCanvasDocumentRecord<DocRow, SectionRow>(docId, programId, current);
-    if (!read || !current()) return;
+    const read = await readDocumentRecord(docId, recovery, programId, { headers: owner.headers, current: currentRead });
+    if (!read || !currentRead()) return false;
     if (!read.ok) {
       /* A refresh that failed is not an empty document: keep the record on
          screen and say the refresh did not land. */
       if (quiet && !read.refused) {
         setRefreshFailed(true);
-        return;
+        return false;
       }
       setState('error');
       setError(read.message);
       if (read.refused) {
         setDoc(null); setSections([]); setAccess(UNKNOWN_DOCUMENT_ACCESS);
       } else if (read.doc) setDoc(read.doc);
-      return;
+      return false;
     }
     setLoadedKey(readKey);
     setUpdatedCodes(quiet ? changedSectionCodes(sectionsRef.current, read.sections) : []);
@@ -277,6 +287,7 @@ export function DocumentCanvas({
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
+    return true;
   }, [docId, programId, readKey, readSession]);
 
   useEffect(() => {
@@ -293,40 +304,7 @@ export function DocumentCanvas({
     void load(true);
   }, [refreshKey, load]);
 
-  /* Escape collapses, from anywhere the key is not already owned by something
-     inside; focus returns to the header control that expands.
-
-     The listener is on the DOCUMENT, not on the canvas element. Bound to the
-     element it only ever saw a keydown that bubbled from a descendant, so
-     Escape worked while a control inside the editor held focus and did
-     nothing the moment focus was on the body — which is where focus sits
-     after a click on any non-focusable chrome. The way out of a region that
-     fills the conversation was then the mouse alone. Only the expanded canvas
-     binds it (`expanded` gates the effect) and the thread expands one at a
-     time, so two canvases never both answer the key. */
-  useEffect(() => {
-    if (!expanded) return undefined;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return;
-      if (escapeBelongsToInner(e.target)) return;
-      /* 2026-09-28 (GA-4): an open workbench rail other than AnA closes on
-         this Escape first (DocumentWorkbench's own listener); the canvas
-         collapses on the next one. Both listen on the document, so the order
-         they run in is not something to rely on — the canvas yields here,
-         for the Escapes the workbench takes: from inside it, or from the
-         body. One from the canvas's own bar is still the canvas's. */
-      const railOpen = (expandedRef.current ?? rootRef.current)?.querySelector('.ed[data-rail]:not([data-rail="ana"])');
-      const t = e.target;
-      if (railOpen && (t === document.body || (t instanceof Node && railOpen.contains(t)))) return;
-      /* An open modal owns Escape wherever focus happens to be — closing the
-         canvas underneath it would leave the dialog over a collapsed card. */
-      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
-      e.preventDefault();
-      onExpandedChange(false);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [expanded, onExpandedChange]);
+  useCanvasEscape({ expanded, expandedRef, rootRef, onExpandedChange });
 
   useEffect(() => {
     if (expanded && !workbenchMounted) setWorkbenchMounted(true);
@@ -379,6 +357,7 @@ export function DocumentCanvas({
   const reloadDoc = useCallback(async () => {
     await load();
   }, [load]);
+  const refreshCreationContext = useCallback(() => load(true, true), [load]);
 
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
 
@@ -633,6 +612,7 @@ export function DocumentCanvas({
               readRefusal={state === 'error' ? error ?? 'The current document read is unavailable.' : null}
               status="all"
               reloadDocs={reloadDoc}
+              refreshCreationContext={refreshCreationContext}
               programId={programId}
               pinnedDocId={docId}
               embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}
@@ -647,8 +627,10 @@ export function DocumentCanvas({
         return beside && paneEl ? createPortal(region, paneEl) : region;
       })()}
 
-      {fileToVaultOpen === readKey && readSession.sameRevision() && (
+      {readSession.sameRevision() && (
         <FileToVaultDialog
+          key={readKey}
+          open={fileToVaultOpen === readKey}
           docId={docId}
           docTitle={doc?.title ?? 'Authoring document'}
           docStatus={doc?.status ?? null}

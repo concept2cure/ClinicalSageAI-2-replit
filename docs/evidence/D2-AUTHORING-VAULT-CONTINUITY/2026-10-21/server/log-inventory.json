@@ -1,0 +1,86 @@
+[
+  {
+    "file": "ambiguity-red.raw.log.gz",
+    "rawSha256": "4d2e254fd0b63cc39c4168cbf546f35d7feae87ed3541c1c82dff5690242ab0d",
+    "gzipSha256": "b43cfd5285aa285106400d5a8280d4432f8fad1729f3a2092d080e5a89af9746",
+    "rawBytes": 43867,
+    "exitCode": 1
+  },
+  {
+    "file": "final-green.raw.log.gz",
+    "rawSha256": "f1459fd71bb22d85786e7343f7c1f0b2f38090867049cb562ecf510bbdd101f7",
+    "gzipSha256": "b424a56bdf8473622c016c108d743848c1e4c47bc2abc24cefe0932206b614aa",
+    "rawBytes": 181565,
+    "exitCode": 0
+  },
+  {
+    "file": "fixture-failure.raw.log.gz",
+    "rawSha256": "20ab45a37f82f2b70db86a00625cb8077499c24a1966287314123a49f25c4063",
+    "gzipSha256": "221ae54220b218780913764ab5d4b4bf0e50a20fe23f581d4336a783f9d85faf",
+    "rawBytes": 186404,
+    "exitCode": 1
+  },
+  {
+    "file": "green.raw.log.gz",
+    "rawSha256": "5ed204d8358e583a70819266f8035ee4db100b42f5d3823cc04ee94eabce5e3e",
+    "gzipSha256": "572c3cfbb569941f64ddeaceec91f6732cfb5a741ecf446992c5b20ed781d6f8",
+    "rawBytes": 63881,
+    "exitCode": 0
+  },
+  {
+    "file": "ingest-commit-red.raw.log.gz",
+    "rawSha256": "bb00f1929d369f67de4a793705a6ff744079a742963f393ef6ce6dbd60e90697",
+    "gzipSha256": "2b28ff78494294656a02a56e28032f95844d221624fd94e57134564a2f0a7860",
+    "rawBytes": 31603,
+    "exitCode": 1
+  },
+  {
+    "file": "ingest-lint.raw.log.gz",
+    "rawSha256": "9b8b8a32332096447cbbc0efc5bdcaa1ae1899e29cef586ccec2e18d1df55448",
+    "gzipSha256": "542b50e8fe82d19254bb25af486163f2951389dfd54d0c51641e73116163e402",
+    "rawBytes": 355,
+    "exitCode": 0
+  },
+  {
+    "file": "lint-final.raw.log.gz",
+    "rawSha256": "198f0e3e26c99528d163064aa3d2ef1e0de40af06e09bb6f98fa2a48e71940a0",
+    "gzipSha256": "e8331fc71e523bde711bd5bc82aa2fb41da50e422144e35ad41a76af83e83b24",
+    "rawBytes": 400,
+    "exitCode": 1
+  },
+  {
+    "file": "lint-initial.raw.log.gz",
+    "rawSha256": "77cfb50c07ca59a778c2428f555c69a9479cf4c9b0879a3e67cee45e58c1216b",
+    "gzipSha256": "60ef9d8479ffe2e750f7edea3a1c3d6388afd96c4cf5b4f3f98e7708770b1c35",
+    "rawBytes": 744,
+    "exitCode": 1
+  },
+  {
+    "file": "lint-second.raw.log.gz",
+    "rawSha256": "00ff5f16aef42f415ee90749130915f535601b35f4e275d12868ab6578bfc19f",
+    "gzipSha256": "e3984b3a012a86d704dc29a78eb877f9e75893a125e99b508cbb9045fc233daf",
+    "rawBytes": 602,
+    "exitCode": 1
+  },
+  {
+    "file": "red.raw.log.gz",
+    "rawSha256": "5176e1994a636df38b0453d19e5ec97dc09add75862348762bbb02bc09e86ed4",
+    "gzipSha256": "0f5e8c5bdf9816675265e7f7631c28097ddd5d0ef1741c70cf84c38d11db26bf",
+    "rawBytes": 73923,
+    "exitCode": 1
+  },
+  {
+    "file": "runner-attempt.raw.log.gz",
+    "rawSha256": "87169927f4744b576162e6c4c2e39dc5673b540cb7567a74e5d81762e083d98e",
+    "gzipSha256": "9050418dddaa098e0efaa322e18da58efb155ee06a1c7da5f44f99c1c1b4eaa6",
+    "rawBytes": 45,
+    "exitCode": 127
+  },
+  {
+    "file": "strict-lint.raw.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "rawBytes": 0,
+    "exitCode": 0
+  }
+]

@@ -73,7 +73,7 @@ export async function recordChainFailures(pool, broken, { window, totalEntries }
       );
       outcomes.push({ organizationId, recorded: true });
     } catch (err) {
-      console.error(`[chain-verify] The failure event for organisation ${organizationId} was not recorded:`, err.message);
+      console.error('[chain-verify] The failure event for organisation %s was not recorded: %s', organizationId, err.message);
       outcomes.push({ organizationId, recorded: false, error: err.message });
     }
   }

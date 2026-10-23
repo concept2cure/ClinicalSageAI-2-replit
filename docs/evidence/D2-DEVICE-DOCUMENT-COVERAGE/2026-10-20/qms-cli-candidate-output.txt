@@ -1,0 +1,16 @@
+file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:698
+			throw new TypeError(`Unexpected value "--silent=${value}". Use "--silent=true ${value}" instead.`);
+			      ^
+
+TypeError: Unexpected value "--silent=server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts". Use "--silent=true server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts" instead.
+    at Object.transform (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:698:10)
+    at transform (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:2196:39)
+    at setDotProp (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:209:22)
+    at CAC.mri (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:593:9)
+    at CAC.parse (file:///workspace/ClinicalSageAI/node_modules/vitest/dist/chunks/cac.BuBILSID.js:510:27)
+    at file:///workspace/ClinicalSageAI/node_modules/vitest/dist/cli.js:11:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.3

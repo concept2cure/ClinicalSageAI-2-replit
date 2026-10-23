@@ -1,0 +1,172 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 208ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > New conversation opens Home, where the one conversation starts 58ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 78ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 95ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 261ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 113ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 42ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers the Apps catalog 116ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers every client type once, the current one checked, by more than colour 80ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing a client type sets it 70ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu 79ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 65ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 55ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 112ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core, a device workbench 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD") 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb 39ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing 15ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25) 9ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes 10ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+stderr | client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top
+An update to NavEntitlementsProvider inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and lists no client category beside it 325ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it 3ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button 10ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > segmentForShellProject (pure) > maps product type first, workstream second, nothing otherwise 2ms
+ × client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with an IVD program open and a pharma preference, it names the program and no client type 33ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with no program open, it shows no client type either 7ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > when the program publishes its product type, the top bar still names the program 10ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the account menu's Client type is the one place the type is chosen > opening an IVD program does not change the setting: the preference stays checked 217ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the account menu's Client type is the one place the type is chosen > choosing another type there sets it 110ms
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the chip names it and opens its project page 65ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > has no "Switch client domain" control: the client type is chosen in the account menu 12ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, reads "No project open", says it opens Projects, and does 12ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code 11ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > follows the channel when another project is opened 13ms
+   → [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center
+ FAIL  client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with an IVD program open and a pharma preference, it names the program and no client type
+ FAIL  client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with no program open, it shows no client type either
+ FAIL  client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > when the program publishes its product type, the top bar still names the program
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the chip names it and opens its project page
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > has no "Switch client domain" control: the client type is chosen in the account menu
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, reads "No project open", says it opens Projects, and does
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > follows the channel when another project is opened
+Error: [vitest] No "useAuthUser" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ TaskTray client/src/concept2cure/v2/TaskTray.tsx:109:32
+    107|
+    108| export function TaskTray(props: TaskTrayProps) {
+    109|   const scope = taskActorScope(useAuthUser());
+       |                                ^
+    110|   return <TaskTrayOwner key={scope ? `${scope.userId}:${scope.organiza…
+    111| }
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  14 failed | 38 passed (52)
+   Start at  22:05:32
+   Duration  9.39s (transform 1.32s, setup 494ms, import 2.40s, tests 2.80s, environment 2.54s)
+

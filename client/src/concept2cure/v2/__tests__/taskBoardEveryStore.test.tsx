@@ -19,6 +19,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -26,7 +27,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 'u-1', permissions: ['governed:write'] } }),
+  useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: ['governed:write'] } }),
 }));
 const shell = vi.hoisted(() => ({ publishShellProject: vi.fn() }));
 vi.mock('../shellProject', async (importOriginal) => ({
@@ -60,6 +61,7 @@ let boardMeta: Record<string, unknown> = { partial: false, unreadSources: [] };
 let onNav: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.fixture`);
   boardMeta = { partial: false, unreadSources: [] };
   onNav = vi.fn();
   shell.publishShellProject.mockReset();
@@ -72,7 +74,7 @@ beforeEach(() => {
     return ok({ data: [] });
   });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); clearAuthToken(); });
 
 const mount = () =>
   render(

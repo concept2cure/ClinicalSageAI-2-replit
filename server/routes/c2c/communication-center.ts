@@ -52,6 +52,7 @@ import { createNotification } from './notifications';
 import { projectAdmissionMiddleware } from './project-access';
 import { requestPgClient } from '../../db/requestDb';
 import { requireCurrentProgramAccess, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { closeLetter, registerAgencyResponseRoutes } from './agency-responses';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -736,6 +737,11 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
       return sendError(res, 403, 'Visibility tier not permitted for current role');
     }
+    // A letter that asks for a response is not logged as already answered
+    // (2026-10-18): it closes once its responses are signed, through Advance.
+    if (input.responseRequired && (input.closureStatus === 'closed' || input.humanReviewStatus === 'actioned')) {
+      return sendError(res, 400, 'A letter that requires a response cannot be logged as closed. Log it open; it closes once every response is signed.', undefined, 'RESPONSE_REQUIRED_NOT_CLOSED');
+    }
     const foreignLetter = await refuseForeignLetterSources(organizationId, projectId, input.linkedArtifactIds);
     if (foreignLetter) return sendError(res, 400, foreignLetter);
     const now = new Date().toISOString();
@@ -870,15 +876,31 @@ router.patch(
         return sendError(res, 409, 'That communication has already been actioned.');
       }
 
-      // The table has no updated_at column (20260331_communication_center_scaffold.sql);
-      // when the transition happened is the audit entry's.
-      const updated = await pool.query(
-        `UPDATE concept2cure_agency_communications
-            SET human_review_status = $4, closure_status = $5
-          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
-          RETURNING event_id, human_review_status, closure_status`,
-        [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
-      );
+      // Closing a letter says it has been answered (2026-10-18). Until then
+      // this closed a letter whether or not anyone had answered it. Now the
+      // close is one transaction (agency-responses.ts closeLetter): the letter
+      // is locked, then a letter that requires a response closes only with its
+      // questions recorded and every response approved by signature as it
+      // stands, and the check cannot be overtaken by a save in between. A
+      // letter that requires no response, with nothing recorded, closes as
+      // before: an acknowledgement asks nothing.
+      let row: { event_id: string; human_review_status: string; closure_status: string };
+      if (next.closureStatus === 'closed') {
+        const closed = await closeLetter(req, { orgId: organizationId, projectId }, eventId, next);
+        if (!closed.ok) return sendError(res, 409, closed.message, undefined, 'RESPONSES_NOT_APPROVED');
+        row = closed.row;
+      } else {
+        // The table has no updated_at column (20260331_communication_center_scaffold.sql);
+        // when the transition happened is the audit entry's.
+        const updated = await pool.query(
+          `UPDATE concept2cure_agency_communications
+              SET human_review_status = $4, closure_status = $5
+            WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
+            RETURNING event_id, human_review_status, closure_status`,
+          [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
+        );
+        row = updated.rows[0];
+      }
 
       const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
         agencyCommunicationEventId: eventId,
@@ -887,7 +909,6 @@ router.patch(
         closureStatusTo: next.closureStatus,
       });
 
-      const row = updated.rows[0];
       return sendSuccess(res, {
         id: row.event_id,
         humanReviewStatus: row.human_review_status,
@@ -902,6 +923,10 @@ router.patch(
     }
   }
 );
+
+/* The questions on an inbox letter, their signed responses, the commitments
+   made in them and the response package (2026-10-18): agency-responses.ts. */
+registerAgencyResponseRoutes(router, canViewVisibilityTier);
 
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {

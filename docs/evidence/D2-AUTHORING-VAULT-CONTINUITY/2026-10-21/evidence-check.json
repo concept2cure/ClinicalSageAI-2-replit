@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-21T01:34:01.891384+00:00",
+  "receiptCompressedAndDeclaredRawHashesChecked": [
+    "release-warning-ratchet.json",
+    "gate-migration-drop-safety.json",
+    "warning-ratchet.json",
+    "gate-sql-interpolation.json",
+    "gate-gateway-bypass.json",
+    "release-regressions.json",
+    "typecheck-final.json",
+    "gate-check-editor-integrity.json",
+    "gate-migration-guard-order.json",
+    "gate-canvas-path.json",
+    "release-changed-file-lint.json",
+    "gate-design-system.json",
+    "gate-token-contrast.json",
+    "merged-regressions.json",
+    "gate-repo-health.json",
+    "gate-migration-deploy-path.json",
+    "changed-file-lint.json",
+    "gate-migration-prefix-collisions.json",
+    "gate-token-cascade.json",
+    "gate-check-phantom-tokens.json",
+    "gate-sql-interpolation-final.json",
+    "typecheck.json",
+    "build.json",
+    "gate-migration-set-order.json",
+    "gate-single-native-canvas.json",
+    "gate-migration-reachability.json",
+    "server/red.receipt.json",
+    "server/ingest-lint.receipt.json",
+    "server/fixture-failure.receipt.json",
+    "server/ingest-commit-red.receipt.json",
+    "server/ambiguity-red.receipt.json",
+    "server/green.receipt.json",
+    "server/strict-lint.receipt.json",
+    "server/final-green.receipt.json",
+    "client/green-final.json",
+    "client/lint-envelope-final.json",
+    "client/lint-strict.json",
+    "client/red-host.json",
+    "client/lint-final.json",
+    "client/green-envelope-final.json",
+    "client/green.json",
+    "client/red-review.json",
+    "client/lint.json",
+    "client/red-envelope.json",
+    "client/red.json",
+    "client/lint-envelope-strict.json",
+    "client/binding-fixture/lint-strict.json",
+    "client/binding-fixture/green.json",
+    "client/initial/red.json"
+  ],
+  "releaseInputPinsMatched": 80,
+  "manualCases": 58,
+  "humanTestsRun": 0,
+  "manualStatuses": [
+    "Not run"
+  ],
+  "markdownLinksChecked": [
+    [
+      "README.md",
+      "../../../design/AUTHORING_VAULT_CONTINUITY_2026-10-21.md"
+    ],
+    [
+      "README.md",
+      "client/README.md"
+    ],
+    [
+      "README.md",
+      "server/README.md"
+    ]
+  ],
+  "existingUILiteralClassCountsUnchanged": true,
+  "existingUIButtonMarkupCountUnchanged": true,
+  "changedStylesheets": [],
+  "visualHumanAcceptance": "Not run"
+}

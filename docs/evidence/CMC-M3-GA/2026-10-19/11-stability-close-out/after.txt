@@ -1,0 +1,22 @@
+── the create ──
+  a study created already COMPLETED                      409  Closing out a stability study with its shelf life is a governed action and is recorded with 
+  an ordinary study                                      ok  id=332
+
+── the ordinary edit ──
+  PUT status COMPLETED with a shelf life                 409  Closing out a stability study with its shelf life is a governed action and is recorded with 
+  PUT the signature columns directly                     400  Invalid payload
+  the stored row after both attempts                     status=ACTIVE shelfLife=None
+
+── the ceremony ──
+  close out with no reason                               400  Invalid input data
+  with a reason, no re-authentication                    401  REAUTH_PASSWORD_REQUIRED
+  with both, but no shelf life recorded                  409  This study records no shelf life, so there is nothing to sign for: a closed-out study states
+  shelf life recorded, but no results pulled             409  This study has no recorded pull-point results, so "24 months at 25C/60%RH" is a claim over n
+  a recorded series that cannot be read                  409  This study’s recorded results could not be read, so what the shelf life rests on cannot be e
+  with everything recorded                               200  status=COMPLETED shelfLife='24 months at 25C/60%RH' signedBy=3 signedAt=2026-10-19T03:31:02
+
+── after the signature ──
+  an ordinary edit of the closed-out study               409  This stability study is COMPLETED under a recorded signature, so its content cannot be chang
+  returning it to ACTIVE                                 409  This stability study is COMPLETED under a recorded signature, so its content cannot be chang
+  closing it out twice                                   409  This stability study is already COMPLETED
+  the §11.50 signature row                              1 row(s): meaning=approval signer=JM Smith

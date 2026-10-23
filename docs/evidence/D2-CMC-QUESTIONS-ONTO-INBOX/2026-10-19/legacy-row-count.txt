@@ -1,0 +1,24 @@
+# The decision input for the deferred move act, run on the local PostgreSQL 16 (c2c_test) as postgres (superuser, bypasses row security), 2026-10-19.
+# A deployed estate runs the same three statements as its owner role (or a role with BYPASSRLS, or with app.rls_enforce unset), and says which.
+# (One row, id 8 in the dbtest's own organisation 404, had been written by the RED run: the unchanged legacy POST answered 201 and inserted it.
+#  It was removed as the owner before this count, which the read-only file then still allowed: DELETE was left for a purge door.)
+# (Review of 2026-10-19: that is no longer so. 20261019b was amended in place to refuse DELETE and TRUNCATE too, for every role,
+#  because URS-CMC-030 says the file refuses every write; see README "Review" and mutation-review-16. Re-run after the amendment,
+#  the three statements below still return 0 rows / 0 / 0.)
+
+$ psql -c "SELECT organization_id, coalesce(status,'(null)') AS status, count(*), min(created_at), max(updated_at) FROM public.reg_questions GROUP BY 1,2 ORDER BY 1,2;"
+ organization_id | status | count | min | max 
+-----------------+--------+-------+-----+-----
+(0 rows)
+
+$ psql -c "SELECT organization_id, count(*) FILTER (WHERE upper(status) IS DISTINCT FROM 'CLOSED') AS not_closed, count(*) AS total FROM public.reg_questions GROUP BY 1 ORDER BY 1;"
+ organization_id | not_closed | total 
+-----------------+------------+-------
+(0 rows)
+
+$ psql -c "SELECT (SELECT count(*) FROM public.reg_responses) AS reg_responses, (SELECT count(*) FROM public.reg_messages) AS reg_messages;"
+ reg_responses | reg_messages 
+---------------+--------------
+             0 |            0
+(1 row)
+

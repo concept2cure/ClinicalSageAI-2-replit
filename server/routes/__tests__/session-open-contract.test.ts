@@ -18,6 +18,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import ts from 'typescript';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const serverRoot = join(here, '..', '..');
@@ -79,6 +80,117 @@ const ACCESS = /\btype\s*:\s*['"]access['"]/;
 const SESSION_SPREAD = /\.\.\.\s*(?:\(\s*await\s+)?(?:open(?:Connector)?Session\(|continuedSessionClaims\(|[\w$]*[sS]ession[\w$]*\b)/;
 const SESSION_SOURCE = /\b(?:openSession|openConnectorSession|continuedSessionClaims)\(/;
 
+interface FederatedSources { sso: string; challenge: string; mfa: string; auth: string }
+const federatedSources: FederatedSources = {
+  sso: read('sso.ts'), challenge: read('../services/auth/saml-login-challenge.ts'),
+  mfa: read('../services/mfaService.ts'), auth: read('auth.ts'),
+};
+const parsed = (text: string) => ts.createSourceFile('session.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+function nodes<T extends ts.Node>(root: ts.Node, predicate: (node: ts.Node) => node is T): T[] {
+  const result: T[] = [];
+  const visit = (node: ts.Node) => { if (predicate(node)) result.push(node); ts.forEachChild(node, visit); };
+  visit(root);
+  return result;
+}
+const named = (node: ts.Node | undefined, name: string) => !!node && ts.isIdentifier(node) && node.text === name;
+function calls(root: ts.Node, name: string): ts.CallExpression[] {
+  return nodes(root, ts.isCallExpression).filter(call => named(call.expression, name)
+    || ts.isPropertyAccessExpression(call.expression) && call.expression.getText().replace(/\s/g, '') === name);
+}
+function imported(source: ts.SourceFile, name: string, module: string): boolean {
+  return source.statements.some(statement => ts.isImportDeclaration(statement)
+    && ts.isStringLiteral(statement.moduleSpecifier) && statement.moduleSpecifier.text === module
+    && !statement.importClause?.isTypeOnly && statement.importClause?.namedBindings
+    && ts.isNamedImports(statement.importClause.namedBindings)
+    && statement.importClause.namedBindings.elements.some(binding => !binding.isTypeOnly
+      && named(binding.name, name) && !binding.propertyName));
+}
+function fn(source: ts.SourceFile, name: string): ts.FunctionDeclaration | undefined {
+  return source.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && named(node.name, name));
+}
+function route(source: ts.SourceFile, path: string): ts.Block | undefined {
+  const handler = calls(source, 'router.post').find(call => ts.isStringLiteral(call.arguments[0]) && call.arguments[0].text === path)?.arguments.at(-1);
+  if (!handler || !ts.isArrowFunction(handler) || !ts.isBlock(handler.body)) return undefined;
+  return handler.body.statements.find(ts.isTryStatement)?.tryBlock;
+}
+function directAwait(block: ts.Block, name: string): ts.CallExpression | undefined {
+  return calls(block, name).find(call => ts.isAwaitExpression(call.parent) && ts.isVariableDeclaration(call.parent.parent)
+    && call.parent.parent.initializer === call.parent && call.parent.parent.parent.parent.parent === block);
+}
+function refusal(block: ts.Block, name: string): ts.IfStatement | undefined {
+  return block.statements.find((node): node is ts.IfStatement => ts.isIfStatement(node)
+    && ts.isAwaitExpression(node.expression) && ts.isCallExpression(node.expression.expression)
+    && named(node.expression.expression.expression, name) && ts.isReturnStatement(node.thenStatement) && !node.elseStatement);
+}
+
+/** Bounded source hand-off/order check; runtime SSO/MFA companions exercise the factors. */
+function samlSessionFindings(texts: FederatedSources): string[] {
+  const unreadable = Object.values(texts).some(text => ts.transpileModule(text, {
+    fileName: 'session.ts', reportDiagnostics: true, compilerOptions: { target: ts.ScriptTarget.Latest },
+  }).diagnostics?.some(diagnostic => diagnostic.category === ts.DiagnosticCategory.Error));
+  if (unreadable) return ['unreadable session source'];
+  const [sso, challenge, mfa, auth] = [texts.sso, texts.challenge, texts.mfa, texts.auth].map(parsed);
+  return [...samlChallengeFindings(sso, challenge), ...challengeMintFindings(mfa), ...mfaSessionFindings(auth)];
+}
+
+function samlChallengeFindings(sso: ts.SourceFile, challenge: ts.SourceFile): string[] {
+  const first = route(sso, '/saml/callback');
+  const issuer = fn(challenge, 'issueSamlLoginChallenge');
+  if (!first || !imported(sso, 'issueSamlLoginChallenge', '../services/auth/saml-login-challenge')
+    || !directAwait(first, 'issueSamlLoginChallenge') || calls(first, 'openSession').length || calls(first, 'jwt.sign').length
+    || !issuer?.body || !imported(challenge, 'createSamlMfaChallengeToken', '../mfaService')
+    || !calls(issuer.body, 'createSamlMfaChallengeToken').length || calls(issuer.body, 'openSession').length
+    || calls(issuer.body, 'jwt.sign').length) return ['SAML must delegate its first factor to the canonical challenge issuer without opening a session'];
+  return [];
+}
+
+function challengeMintFindings(mfa: ts.SourceFile): string[] {
+  const wrapper = fn(mfa, 'createSamlMfaChallengeToken');
+  const signer = fn(mfa, 'signMfaChallenge');
+  const mint = signer && calls(signer, 'jwt.sign')[0];
+  if (!wrapper || !calls(wrapper, 'signMfaChallenge').length || !mint || !ts.isObjectLiteralExpression(mint.arguments[0])
+    || !mint.arguments[0].properties.some(property => ts.isPropertyAssignment(property) && named(property.name, 'type')
+      && ts.isStringLiteral(property.initializer) && property.initializer.text === 'mfa_challenge')) return ['SAML must issue the shared MFA challenge token type'];
+  return [];
+}
+
+function canonicalStanding(auth: ts.SourceFile, standing: ts.Block): boolean {
+  return imported(auth, 'openSession', '../services/session-inactivity')
+    && imported(auth, 'readAccountStanding', '../services/account-standing')
+    && !!directAwait(standing, 'readAccountStanding') && calls(standing, 'sessionEndedByStanding').length === 1
+    && calls(standing, 'isAccountLocked').length === 1;
+}
+
+function registeredAccessSession(session: ts.CallExpression, access: ts.CallExpression): boolean {
+  return ts.isPropertyAccessExpression(session.arguments[0]) && session.arguments[0].getText() === 'challenge.userId'
+    && ts.isObjectLiteralExpression(access.arguments[0])
+    && access.arguments[0].properties.some(property => ts.isSpreadAssignment(property) && named(property.expression, 'session'));
+}
+
+function mfaSessionFindings(auth: ts.SourceFile): string[] {
+  const block = route(auth, '/mfa/verify');
+  const standing = fn(auth, 'refuseAccountAtSecondFactor');
+  if (!block || !standing?.body) return ['canonical MFA completion is missing'];
+  const gate = refusal(block, 'refuseAccountAtSecondFactor');
+  const factorGate = block.statements.find((node): node is ts.IfStatement => ts.isIfStatement(node)
+    && ts.isPrefixUnaryExpression(node.expression) && node.expression.operator === ts.SyntaxKind.ExclamationToken
+    && named(node.expression.operand, 'isValid') && ts.isReturnStatement(node.thenStatement)
+    && calls(node.thenStatement, 'refuseWrongSecondFactor').length === 1);
+  const session = directAwait(block, 'openSession');
+  const access = calls(block, 'jwt.sign').find(call => ts.isObjectLiteralExpression(call.arguments[0])
+    && call.arguments[0].properties.some(property => ts.isPropertyAssignment(property) && named(property.name, 'type')
+      && ts.isStringLiteral(property.initializer) && property.initializer.text === 'access'));
+  const factorCalls = [...calls(block, 'emailOtpService.verifyEmailOtp'), ...calls(block, 'mfaService.verifyLoginSecondFactor')];
+  if (!gate || !factorGate || !session || !access
+    || !canonicalStanding(auth, standing.body) || factorCalls.length !== 2
+    || !factorCalls.every(call => call.pos > gate.end && call.end < factorGate.pos)
+    || gate.end >= factorGate.pos || factorGate.end >= session.pos || session.end >= access.pos
+    || !registeredAccessSession(session, access)) {
+    return ['MFA must check standing and factors before opening and spreading the registered session'];
+  }
+  return [];
+}
+
 describe('sign-in mints register their session', () => {
   it('no route mints session claims without registering them', () => {
     for (const file of ['auth.ts', 'authEnterprise.ts', 'sso.ts']) {
@@ -91,8 +203,8 @@ describe('sign-in mints register their session', () => {
     expect(read('auth.ts').match(/\bopenSession\(/g)?.length ?? 0).toBeGreaterThanOrEqual(4);
     // authEnterprise.ts: the MFA completion.
     expect(read('authEnterprise.ts').match(/\bopenSession\(/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
-    // sso.ts: the SAML callback and the development callback.
-    expect(read('sso.ts').match(/\bopenSession\(/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    // sso.ts: development only; SAML completes at the shared MFA door below.
+    expect(read('sso.ts').match(/\bopenSession\(/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
     // setup.ts: the first-run bootstrap token.
     expect(read('setup.ts').match(/\bopenSession\(/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
   });
@@ -116,7 +228,8 @@ describe('every access token the server signs carries a session (P1-38)', () => 
 
   it('a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it', () => {
     const access = mints.filter(m => m.payload !== null && ACCESS.test(m.payload));
-    expect(access.length).toBeGreaterThanOrEqual(12);
+    // SAML's former direct mint is now the shared MFA completion's mint.
+    expect(access.length).toBeGreaterThanOrEqual(11);
     const bare = access.filter(m => !SESSION_SPREAD.test(m.payload as string));
     expect(bare.map(name), 'access tokens minted outside openSession / openConnectorSession: no slot, no idle window, no lifetime').toEqual([]);
   });
@@ -128,5 +241,30 @@ describe('every access token the server signs carries a session (P1-38)', () => 
       expect(source, `${rel} mints an access token without opening or continuing a session`).toMatch(SESSION_SOURCE);
       expect(source, `${rel} mints a session the concurrent-session limit never sees`).not.toMatch(/\bnewSessionClaims\(/);
     }
+  });
+});
+
+describe('SAML first factor reaches the registered canonical MFA session', () => {
+  it('delegates the challenge and checks current standing and factors before access issuance', () => {
+    expect(samlSessionFindings(federatedSources)).toEqual([]);
+  });
+
+  const mutations: Array<[string, keyof FederatedSources, string, string]> = [
+    ['unreadable SAML source', 'sso', 'const router = Router();', 'const = Router();'],
+    ['missing first-factor delegation', 'sso', 'await issueSamlLoginChallenge({', 'await bypassSamlChallenge({'],
+    ['alternate challenge issuer', 'sso', "from '../services/auth/saml-login-challenge'", "from '../services/auth/alternate-challenge'"],
+    ['premature SAML session', 'sso', 'const challenge = await issueSamlLoginChallenge({', "await openSession('unexpected'); const challenge = await issueSamlLoginChallenge({"],
+    ['missing shared challenge signer', 'challenge', 'createSamlMfaChallengeToken({', 'bypassSamlMfaChallengeToken({'],
+    ['access token instead of a challenge', 'mfa', "{ ...claims, type: 'mfa_challenge' }", "{ ...claims, type: 'access' }"],
+    ['missing account-standing refusal', 'auth', 'if (await refuseAccountAtSecondFactor(req, res, challenge, userId, challengeId)) return;', 'if (false) return;'],
+    ['missing email factor', 'auth', 'emailOtpService.verifyEmailOtp(userId, code)', 'emailOtpService.skippedFactor(userId, code)'],
+    ['missing authenticator factor', 'auth', 'mfaService.verifyLoginSecondFactor(userId, code)', 'mfaService.skippedFactor(userId, code)'],
+    ['missing factor refusal', 'auth', 'if (!isValid) return await refuseWrongSecondFactor(req, res, challenge, userId, authenticatorAccount);', 'if (false) return;'],
+    ['missing session registration', 'auth', 'await openSession(challenge.userId, sessionOrg?.settings)', 'await skippedSession(challenge.userId, sessionOrg?.settings)'],
+    ['missing access session spread', 'auth', "...(challenge.provider === 'saml' ? { provider: 'saml', sessionIndex: challenge.sessionIndex } : {}),\n        ...session,", "...(challenge.provider === 'saml' ? { provider: 'saml', sessionIndex: challenge.sessionIndex } : {}),"],
+  ];
+  it.each(mutations)('refuses %s in the actual source', (_name, file, before, after) => {
+    expect(federatedSources[file]).toContain(before);
+    expect(samlSessionFindings({ ...federatedSources, [file]: federatedSources[file].replace(before, after) })).not.toEqual([]);
   });
 });

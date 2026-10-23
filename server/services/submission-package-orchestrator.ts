@@ -3343,6 +3343,17 @@ export class OrchestratorReadError extends Error {
   }
 }
 
+function readRecordedRunTimestamps(
+  row: Record<string, unknown>
+): Pick<OrchestratorRun, 'startedAt' | 'completedAt'> {
+  const startedAt = isoInstantOrNull(row.started_at);
+  const completedAt = row.completed_at == null ? null : isoInstantOrNull(row.completed_at);
+  if (!startedAt || (row.completed_at != null && !completedAt)) {
+    throw new Error('The recorded orchestrator timestamps could not be read.');
+  }
+  return { startedAt, completedAt: completedAt ?? undefined };
+}
+
 export async function getRun(
   runId: string,
   organizationId: number
@@ -3380,6 +3391,7 @@ export async function getRun(
       const n = Number(rawFk);
       if (Number.isFinite(n) && n > 0) submissionFkOut = n;
     }
+    const { startedAt, completedAt } = readRecordedRunTimestamps(row);
     return {
       runId: String(row.run_id),
       organizationId: Number(row.organization_id),
@@ -3388,8 +3400,8 @@ export async function getRun(
       applicationNumber: String(row.application_number),
       region: String(row.region) as RegionCode,
       submissionType: String(row.submission_type),
-      startedAt: String(row.started_at),
-      completedAt: row.completed_at ? String(row.completed_at) : undefined,
+      startedAt,
+      completedAt,
       status: String(row.status) as OrchestratorRun['status'],
       steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : (row.steps as StepRecord[]),
       workflowVersion: typeof row.workflow_version === 'string' ? row.workflow_version : null,

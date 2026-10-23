@@ -625,7 +625,7 @@ function ProjectFilesForProgram({
           programName={programName} onRetry={() => void load()} editorAttached={editorAttached} />
       )}
       {selected && (
-        <SelectedFileActions doc={selected} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
+        <SelectedFileActions doc={selected} programId={programId} onNav={onNav} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
           busy={opening === selected.id} onOpen={() => void openDoc(selected)} editorAttached={editorAttached}
           onPull={() => setPullDoc(selected)}
           onCite={() => cite(selected)} onInsertRef={() => insertRef(selected)} />

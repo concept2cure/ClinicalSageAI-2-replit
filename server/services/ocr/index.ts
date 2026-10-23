@@ -6,9 +6,11 @@
  */
 
 export { ocrService } from './ocrService';
-export type { OcrCapabilities, OcrPdfResult, OcrPdfTextResult } from './ocrService';
+export type { OcrCapabilities, OcrPdfCoverage, OcrPdfOptions, OcrPdfResult, OcrPdfTextResult } from './ocrService';
 export {
+  DEFAULT_MAX_PAGE_PIXELS,
   rasterizePdf,
+  rasterizePdfDocument,
   rasterizePdfPages,
   type RasterizeOptions,
   type RasterizeRegion,
@@ -22,8 +24,11 @@ export {
   type PdfPageTextStat,
 } from './pdfInspector';
 export {
+  AUTOMATIC_PDF_OCR_BUDGET,
   extractDocumentText,
+  type ExtractDocumentTextOptions,
   type ExtractedDocumentText,
+  type ExtractionCoverage,
   type ExtractionMethod,
 } from './extractDocumentText';
 export {

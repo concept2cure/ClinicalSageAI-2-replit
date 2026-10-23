@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "argv": [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/db/emit-filing-class-packs.ts",
+        "migrations/20261020_regional_device_application_packs.sql"
+      ],
+      "exitCode": 0,
+      "stdout": "migrations/20261020_regional_device_application_packs.sql is unchanged: it is still what FILING_CLASS_PACKS produces.\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/db/emit-filing-class-packs.ts"
+      ],
+      "exitCode": 0,
+      "stdout": "seeded   pas:fda fda-pas-lifecycle-v1.2  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   cbe:fda fda-cbe-lifecycle-v1.1  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   annual_report:fda fda-annual-report-lifecycle-v1.1  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   rems:fda fda-rems-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   pader:fda fda-pader-v1.1  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   ind_amendment:fda fda-ind-amendment-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   ind_safety_report:fda fda-ind-safety-report-v1.2  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   ind_annual_report:fda fda-ind-annual-report-lifecycle-v1.1  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   briefing:fda fda-formal-meetings-2026-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   orphan:fda fda-orphan-request-v1.2  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   designation:fda fda-btd-request-v1.2  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   fast_track:fda fda-fast-track-request-v1.0  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   rmat:fda fda-rmat-request-v1.1  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   psp:fda fda-psp-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   csr:ich ich-e3-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   protocol:ich ich-m11-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   ib:ich ich-e6r3-appendix-a-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   sap:ich c2c-sap-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   icf:ich c2c-icf-v1.2  (20261019b_filing_class_packs_v1_2_critic_followups.sql)\nseeded   dsur:ich ich-e2f-v1.0  (20261018_filing_class_rule_packs.sql)\nseeded   psur:ema ich-e2c-r2-v2.1  (20261018c_filing_class_packs_review_corrections.sql)\nseeded   hde:fda fda-hde-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   mdl:hc hc-mdl-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   ivd_licence:hc hc-ivd-licence-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   shonin:pmda pmda-shonin-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   ninsho:jp_rcb jp_rcb-ninsho-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   todokede:pmda pmda-todokede-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   ivd_approval:pmda pmda-ivd-approval-preparation-v1.0  (20261020_regional_device_application_packs.sql)\nseeded   jp_cdx:pmda pmda-jp-cdx-preparation-v1.0  (20261020_regional_device_application_packs.sql)\n",
+      "stderr": ""
+    }
+  ],
+  "before": "cce555240ce810bd3bcb91b9f44514aa8ac236d0fbd5d393bb0c6ab451aecce5",
+  "after": "cce555240ce810bd3bcb91b9f44514aa8ac236d0fbd5d393bb0c6ab451aecce5",
+  "unchanged": true
+}

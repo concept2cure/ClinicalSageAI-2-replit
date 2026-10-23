@@ -281,10 +281,18 @@ try {
     console.error('❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:');
     for (const t of added) console.error(`  - ${t}`);
     console.error(
-      '\nEither add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON DELETE',
+      '\nFirst: confirm the table still exists on a CURRENT schema. This gate reads the',
     );
-    console.error('CASCADE path from a table already there. A tenant that asks to be erased');
-    console.error('must not keep rows in a table nobody remembered to list.');
+    console.error('live database, and a table some migration drops can linger on a local one');
+    console.error('that has not replayed it — in which case the fix is to migrate, not to list');
+    console.error('a table that a correctly-migrated database does not have. Listing a phantom');
+    console.error('here makes the purge look more complete than it is, which is the opposite of');
+    console.error('what this gate is for.');
+    console.error(
+      '\nIf it is real: add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON',
+    );
+    console.error('DELETE CASCADE path from a table already there. A tenant that asks to be');
+    console.error('erased must not keep rows in a table nobody remembered to list.');
     process.exit(1);
   }
 

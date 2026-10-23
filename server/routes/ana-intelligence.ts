@@ -184,6 +184,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     // Set up SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
+      'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
       'X-Accel-Buffering': 'no',
@@ -220,6 +221,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       content: result.content,
       usage: result.usage,
     });
+    // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
     res.write(`data: ${JSON.stringify({
       type: 'done',
       model: result.model,

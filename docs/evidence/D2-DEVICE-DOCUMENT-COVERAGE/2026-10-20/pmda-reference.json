@@ -1,0 +1,19 @@
+{
+  "url": "https://www.pmda.go.jp/english/review-services/regulatory-info/0002.html",
+  "httpStatus": 200,
+  "sha256": "653201c6c8fbb0b7fa025f47af5eea17cedf47ded7137bd756d424b5e10e86ae",
+  "qualification": "Official landing-page retrieval only; not a current source verification of each platform outline.",
+  "retrievedAt": "2026-10-20",
+  "sourceBytes": 56859,
+  "sourceContentRetained": "Bounded route excerpts and relevant links, not the complete HTML page.",
+  "relevantLinks": [
+    {
+      "title": "Regulations and Approval/Certification of Medical Devices",
+      "url": "https://www.pmda.go.jp/english/review-services/reviews/0004.html"
+    },
+    {
+      "title": "Assessments to Registered Certification Bodies",
+      "url": "https://www.pmda.go.jp/english/review-services/gmp-qms-gctp/0005.html"
+    }
+  ]
+}

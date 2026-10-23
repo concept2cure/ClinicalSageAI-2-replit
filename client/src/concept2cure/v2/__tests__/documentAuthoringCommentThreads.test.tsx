@@ -22,10 +22,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', async original => ({
-  ...(await original<typeof import('@/services/portal/authService')>()),
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  };
+});
 
 /* jsdom implements no layout — stub the geometry ProseMirror asks for. */
 const emptyRects = function () { return [] as unknown as DOMRectList; };

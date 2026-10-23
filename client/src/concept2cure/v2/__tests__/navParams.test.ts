@@ -26,6 +26,16 @@ import { INITIAL_DRIVE_STATE, driveReducer } from '../liveDrive';
 afterEach(() => clearNavParams());
 
 describe('stash → consume', () => {
+  it('retains task identity presence for strict admission, including blank or malformed scope values', () => {
+    stashNavParamsForTarget('tasks', { taskId: 'TASK-7', taskActor: '', taskOrg: ' ' });
+    expect(consumeNavParams('tasks', Date.now(), true)).toEqual({
+      taskId: 'TASK-7', taskActor: '', taskOrg: ' ',
+    });
+    expect(consumeNavParams('tasks')).toBeNull();
+    stashNavParamsForTarget('tasks', { taskId: 'TASK-7', taskActor: 42, taskOrg: null } as unknown as Record<string, string>);
+    expect(consumeNavParams('tasks', Date.now(), true)).toEqual({ taskId: 'TASK-7', taskActor: '', taskOrg: '' });
+  });
+
   it('notifies a mounted destination with the resolved id while retaining one-shot consumption', () => {
     const receive = vi.fn((event: Event) => {
       expect((event as CustomEvent).detail.surfaceId).toBe('tasks');

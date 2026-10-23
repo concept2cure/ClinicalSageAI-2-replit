@@ -24,7 +24,7 @@ import { vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown,
-  objects: new Map<string, Buffer>(),
+  objects: new Map<string, Buffer>(), discard: vi.fn(),
   engine: 'stand-in' as 'stand-in' | 'shipped',
 }));
 vi.mock('../../../db', () => ({
@@ -47,7 +47,7 @@ vi.mock('../../storage/index', async (orig) => {
       const bytes = h.objects.get(id);
       return bytes ? { bytes, sizeBytes: bytes.length, sha256: '', mime: 'application/pdf', filename: 'v.pdf' } : null;
     },
-    delete: vi.fn(),
+    delete: h.discard,
   };
   return { ...(await orig<object>()), getStorageProvider: () => fake, getStorageProviderFor: () => fake };
 });
@@ -83,6 +83,7 @@ import { LEAF_SOURCE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/
 import {
   PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
 } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { ingestVaultDocument, type VaultIngestArgs } from '../../vault/vault-ingest.service';
 import { computeDocHash } from '../../authoring/authoring-export';
 import { takeAuthoringSnapshot } from '../../coauthor/coauthor-snapshot';
 import { upsertLeaf, type UpsertedLeaf } from '../../submission-service/submission-service';
@@ -151,6 +152,7 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  h.discard.mockImplementation(async (id: string) => h.objects.delete(id));
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../../../routes/authoring.router');
   app = makeApp(router);
@@ -160,6 +162,72 @@ beforeAll(async () => {
 afterAll(async () => {
   await jdb?.close();
   if (stageRoot) await fs.rm(stageRoot, { recursive: true, force: true });
+});
+
+describe('canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT', () => {
+  function admissionArgs(): VaultIngestArgs {
+    const code = randomUUID();
+    return { ...CTX, programId: PROGRAM, documentCode: code, documentTitle: 'Admission identity',
+      documentType: 'OTHER', version: '1.0', fileBuffer: Buffer.from(`%PDF-1.7\n${code}`),
+      fileName: 'identity.pdf', mimeType: 'application/pdf', origin: 'platform-generated', executor: jdb.pool };
+  }
+
+  it('proves a new row once and retains the original row on an ordinary same-byte re-upload', async () => {
+    const args = admissionArgs();
+    const first = await ingestVaultDocument(args);
+    expect(first).toMatchObject({ ok: true, admission: { created: true } });
+    if (!first.ok) throw new Error(JSON.stringify(first));
+    const second = await ingestVaultDocument(args);
+    expect(second).toMatchObject({ ok: true, document: { id: first.document.id }, admission: { created: false } });
+    expect(second).toHaveProperty('reupload');
+    expect(await q('SELECT id, deleted_at FROM vault.documents WHERE program_id=$1 AND document_code=$2', [PROGRAM, args.documentCode]))
+      .toEqual([{ id: first.document.id, deleted_at: null }]);
+  });
+
+  it.each(['COMMIT', 'ROLLBACK'])('retains bytes and reports an unknown ingest outcome after lost %s acknowledgement', async lostReply => {
+    const args = admissionArgs();
+    h.discard.mockClear();
+    const executor = { ...jdb.pool, connect: async () => {
+      const client = await jdb.pool.connect();
+      return { ...client, query: async (sql: string, params?: unknown[]) => {
+        if (lostReply === 'ROLLBACK' && /INSERT INTO audit_logs/.test(sql)) throw new Error('audit failed before commit');
+        const result = await client.query(sql, params);
+        if (sql === lostReply) throw new Error(`${lostReply} acknowledgement lost after PostgreSQL executed it`);
+        return result;
+      } };
+    } };
+    const result = await ingestVaultDocument({ ...args, executor });
+    expect(result).toMatchObject({ ok: false, status: 503, code: 'OUTCOME_UNKNOWN' });
+    expect('message' in result && result.message).not.toMatch(/nothing (?:was )?(?:recorded|saved|changed)/i);
+    const rows = await q<{ storage_version_id: string }>('SELECT storage_version_id FROM vault.documents WHERE program_id=$1 AND document_code=$2',
+      [PROGRAM, args.documentCode]);
+    expect(rows).toHaveLength(lostReply === 'COMMIT' ? 1 : 0);
+    expect(h.objects.get(`ver-${sha(args.fileBuffer)}`)).toEqual(args.fileBuffer);
+    expect(h.discard).not.toHaveBeenCalled();
+  });
+
+  it('proves a raced existing row was reused even when the pre-read missed it', async () => {
+    const args = admissionArgs();
+    const first = await ingestVaultDocument(args);
+    if (!first.ok) throw new Error(JSON.stringify(first));
+    // Statement-timing seam for an empty pre-read followed by a concurrent
+    // winner. The UPSERT and returned row identity are actual PGlite SQL;
+    // this is not a claim about native multi-connection locking.
+    let missed = 0;
+    const executor = { ...jdb.pool, connect: async () => {
+      const client = await jdb.pool.connect();
+      return { ...client, query: async (sql: string, params?: unknown[]) => {
+        if (/SELECT id, content_hash, document_title/.test(sql)) { missed++; return { rows: [], rowCount: 0 }; }
+        return client.query(sql, params);
+      } };
+    } };
+    const raced = await ingestVaultDocument({ ...args, executor });
+    expect(missed).toBe(1);
+    expect(raced).toMatchObject({ ok: true, document: { id: first.document.id }, admission: { created: false } });
+    expect(raced).not.toHaveProperty('reupload');
+    expect(await q('SELECT id, deleted_at FROM vault.documents WHERE id=$1', [first.document.id]))
+      .toEqual([{ id: first.document.id, deleted_at: null }]);
+  });
 });
 
 /** One authoring document; APPROVED = reviewed and approved by two other members, sealed. */
@@ -375,6 +443,10 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
     expect(g.errors).toBeGreaterThan(0);
   }, T);
 
-  it.todo('step 4: placement passes an approved Vault version (or files one) and upsertLeaf records a vault_documents leaf — no product path does yet');
+  // The mounted existing File to vault → Open in Vault → Place into filing
+  // path and exact vault_documents UUID are covered by the composed
+  // client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx.
+  // This file
+  // qualifies the actual authoring/ingest/leaf services and approval gates.
   it.todo('step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today');
 });

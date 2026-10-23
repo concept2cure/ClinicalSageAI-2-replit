@@ -1,0 +1,38 @@
+# tests/regulatory/ctd-component-outlines.test.ts on 6c0e21ba + the 2.5.6.x record rows + the projection module, BEFORE the template library and the 2.6 blueprint read it (2026-10-20)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_OVERVIEW serves every heading the record holds below 2.4, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_OVERVIEW serves every heading the record holds below 2.5, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_SUMMARY serves every heading the record holds below 2.6, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_SUMMARY serves every heading the record holds below 2.7, in CTD order
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_OVERVIEW: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_OVERVIEW: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_SUMMARY: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_SUMMARY: every heading is the record’s wording for its number (no second heading tree)
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the headings the hand copies did not have are there, nested under their parents
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the component template id serves the same tree as the registry id
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the outline names the record it is read from and does not claim a checked text
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_NONCLIN_OVERVIEW: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_CLIN_OVERVIEW: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_NONCLIN_SUMMARY: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_CLIN_SUMMARY: no purpose is empty, and an attributed line is in the brief it names
+ × tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > a benefit-risk subdivision carries what the 2.5.6 brief says of it
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_NONCLIN_OVERVIEW: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_CLIN_OVERVIEW: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_NONCLIN_SUMMARY: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_CLIN_SUMMARY: the picker document holds every node of the served outline
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '2.5.1', '2.5.2', '2.5.3', …(4) ] to deeply equal [ '2.5.1', '2.5.2', '2.5.3', …(11) ]
+- Expected
++ Received
+AssertionError: expected [ '2.6.1', '2.6.2', '2.6.2.1', …(11) ] to deeply equal [ '2.6.1', '2.6.2', '2.6.2.1', …(31) ]
+- Expected
++ Received
+AssertionError: expected [ '2.7.1', '2.7.2', '2.7.3', …(3) ] to deeply equal [ Array(49) ]
+- Expected
++ Received
+AssertionError: expected undefined to deeply equal [ '2.5.6.1', '2.5.6.2', …(3) ]
+- Expected:
++ Received:
+AssertionError: expected undefined to deeply equal { kind: 'document-outline', …(2) }
+- Expected:
++ Received:
+      Tests  6 failed | 14 passed (20)

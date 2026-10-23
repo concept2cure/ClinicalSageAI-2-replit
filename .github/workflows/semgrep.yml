@@ -44,6 +44,10 @@ jobs:
     # push — then a red commit becomes the next push's baseline and its finding
     # is waved through. A finding stays red until it is fixed, or marked inline
     # as a reviewed false positive with `nosemgrep: <rule-id>` and a reason.
+    # Fixed-byte historical evidence has a separate reviewed manifest: it is
+    # excluded only from this runtime diff, never from the full Security scan.
+    # Changing a reviewed byte, adding a path or approving application source
+    # cannot silently inherit the exception.
     #
     # Pinned by tests/ci/ci-honesty.contract.test.ts;
     # evidence docs/evidence/D6/2026-10-01-tranche-4/P1-12/.
@@ -82,10 +86,36 @@ jobs:
             // Completed runs, newest first by their own date. Listed with
             // status=success, GitHub returned a 2026-09-19 run ahead of that
             // day's green one (2026-10-05), so the order is not the API's.
-            let runs;
+            //
+            // PAGED, and that is not a detail (2026-10-19). One page of 100 was
+            // a window, not a history: after 2026-10-15T07:02 this job failed
+            // more than 100 times in a row, which pushed the last green run —
+            // 6ffcb4252, 2026-10-14 — out of view. The step then reported "No
+            // passing Semgrep run on concept2cure-v2 to compare against" and
+            // SKIPPED the blocking scan, so for a hundred runs the gate that
+            // exists to stop new findings was inert while showing red: no
+            // scan, no protection, no list of what to fix, and no way back,
+            // because clearing the red needs a green run and a green run needs
+            // a baseline.
+            //
+            // Widening the window does NOT weaken the rule. The baseline is
+            // still the NEWEST green trunk commit and never the previous push,
+            // so a red commit is still never waved through and a finding still
+            // stays red until it is fixed or marked `nosemgrep` with a reason.
+            // The further back the last green run, the more a commit is held to
+            // — which is the ratchet working, not a reason to look away from it.
+            const PAGES = 6; // 600 completed runs; beyond that, say so rather than guess.
+            const runs = [];
             try {
-              const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'completed', per_page: 100 });
-              runs = res.data.workflow_runs || [];
+              for (let page = 1; page <= PAGES; page++) {
+                const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'completed', per_page: 100, page });
+                const batch = res.data.workflow_runs || [];
+                runs.push(...batch);
+                // Stop at the first page carrying a usable baseline: the sort
+                // below picks the newest, and older pages cannot beat it.
+                if (batch.some((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK)) break;
+                if (batch.length < 100) break;
+              }
             } catch (err) {
               return core.setFailed(`Could not read Semgrep's run history (${err.status || err.message}). A scan with no baseline is not a pass.`);
             }
@@ -94,7 +124,7 @@ jobs:
               .filter((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK
                 && r.head_repository && r.head_repository.full_name === own && /^[0-9a-f]{40}$/.test(r.head_sha))
               .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || (b.id - a.id));
-            if (!green.length) return core.setFailed(`No passing Semgrep run on ${TRUNK} to compare against. A scan with no baseline is not a pass.`);
+            if (!green.length) return core.setFailed(`No passing Semgrep run on ${TRUNK} in the last ${PAGES} pages of ${runs.length} completed run(s). A scan with no baseline is not a pass — pick a baseline commit deliberately rather than widening this further.`);
             core.info(`Baseline: ${green[0].head_sha}, the newest ${TRUNK} commit whose Semgrep run passed (run ${green[0].id}).`);
             core.setOutput('sha', green[0].head_sha);
             // Every green commit, newest first: the scan takes the first one in its own history.
@@ -123,10 +153,15 @@ jobs:
             exit 1
           fi
           echo "Findings this commit adds over $BASELINE:"
+          python3 scripts/ci/review-semgrep-evidence.py --write-excludes "$RUNNER_TEMP/semgrep-reviewed-evidence.txt"
+          set --
+          while IFS= read -r evidence_path; do
+            set -- "$@" "--exclude=$evidence_path"
+          done < "$RUNNER_TEMP/semgrep-reviewed-evidence.txt"
           status=0
           # SEMGREP_CONFIGS is a list of --config flags and is split on purpose.
           # shellcheck disable=SC2086
-          semgrep scan $SEMGREP_CONFIGS --metrics=off --error \
+          semgrep scan $SEMGREP_CONFIGS "$@" --metrics=off --error \
             --baseline-commit "$BASELINE" \
             --sarif-output="$RUNNER_TEMP/semgrep-new.sarif" || status=$?
           case "$status" in
@@ -165,5 +200,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: semgrep-sarif
-          path: semgrep.sarif
+          path: |
+            semgrep.sarif
+            ${{ runner.temp }}/semgrep-new.sarif
           if-no-files-found: warn

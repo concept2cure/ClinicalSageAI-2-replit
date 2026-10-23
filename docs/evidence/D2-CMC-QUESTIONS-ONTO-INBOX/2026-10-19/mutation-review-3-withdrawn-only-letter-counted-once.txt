@@ -1,0 +1,93 @@
+# MUTATION-REVIEW 3 a Module 3 letter whose only question is withdrawn: named only by its own codes, and counted 'not counted' as well
+# Finding: Finding 7: such a letter was counted overdue and also 'not counted (no CTD section)'.
+# File: server/services/agency-responses/module-view.ts
+# Replaced:
+#   -     if (placed || sections.length > 0) {
+# With:
+#   +     if (letterCodesInModule(l.linkedSectionCodes, module).length > 0) {
+# File: server/services/agency-responses/module-view.ts
+# Replaced:
+#   -     } else if (lateLetter && !anyClassified && letterCodes(l.linkedSectionCodes).length === 0) {
+# With:
+#   +     } else if (lateLetter && letterCodes(l.linkedSectionCodes).length === 0) {
+# Command: npx vitest run server/services/agency-responses/__tests__/module-view.test.ts client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+# Exit code with the mutation: 1 (non-zero = the test caught it)
+# Restored server/services/agency-responses/module-view.ts: sha256 63475f75c7a80d26… before = 63475f75c7a80d26… after (byte-identical)
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a positive count is a button that opens the Module 3 questions 344ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > shows the server's figure: an approved answer on an overdue letter is not counted, a zero is a plain figure 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a read that failed is unknown, never zero, and the lead says so 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > with no program open it claims no count and issues no read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > its action opens the overdue letter in Communication; it neither drafts nor promises sign-offs 71ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > says what it did not count, each as what it counts: questions as questions, letters as letters, and the earlier file as organization-wide 24ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a failed read of the earlier file is said on the Overview, never taken for "nothing open" 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero is green only as an all-clear: never over letters withheld from this person 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — Module 3 questions overdue on this program > a zero over a measured, complete figure is green 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > an approved Module 3 answer on a letter overdue only on a Clinical question: no Module 3 overdue, no "no question recorded" 55ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > a Module 3 letter with nothing recorded, past its date: said as that, and the action opens that letter 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — what the server counts is said as what it is > one question overdue on one letter, and another letter overdue only on a Clinical question: "on 1 letter" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > names the section, and opens the question on its letter 119ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > counts by the server's "outstanding", and says "at least" when the server listed a page 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with an outstanding agency question > matches whole segments: a question at 3.2.S.20 is not about 3.2.S.2 77ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > with no program open it asks for one and reads nothing 11ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > lists each question with the server's state and one door: open it on its letter 81ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > offers no working act of its own 134ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > a failed read is an error, never the empty list 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > says what it did not count, and names a Module 3 letter with no question recorded 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty program says where questions are recorded 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > an empty list over letters withheld from this person speaks only for the letters read 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue 40ms
+ × client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the program's Module 3 questions, read from the letters > as the server counts them: a Module 3 letter whose only question is withdrawn is named once, and not "not counted" 5020ms
+   → Unable to find an element with the text: /Module 3 letters with no question to answer recorded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > renders nothing when the file holds nothing 34ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > says what each row holds, and nothing it does not 55ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the earlier CMC question file, read-only history > a failed read of the earlier file is said, not hidden 35ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.P.7" is stored as "3.2.P.7" 2ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "m3.2.s.4.1" is stored as "3.2.S.4.1" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "M3.2.P.5" is stored as "3.2.P.5" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "  3.2.p.8.1  " is stored as "3.2.P.8.1" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3" is stored as "3" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.P.100" is stored as "3.2.P.100" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.R.US" is stored as "3.2.R.US" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "2.3.S" is stored as "2.3.S" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "5.3.5.1" is stored as "5.3.5.1" 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "foo" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "6.1" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3.2.S.4.1 (impurities)" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "3..2" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > "§3.2.P.7" is stored as null 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > every stored form matches the CHECK the migration declares 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > the CTD section rule is the repository one (shared case table with the SQL CHECK) > membership is by whole segment: 3.2.P.5 holds 3.2.P.5.1, not 3.2.P.50 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > utcDay > reads the stored instant as its UTC calendar day, and nothing for no date 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a response-required letter past its date with an unanswered question is overdue 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a letter whose questions are all approved is not overdue, though it is not yet closed 8ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a response-required letter with no question recorded is overdue past its date (nothing recorded is not answered) 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > due today is not overdue; a due date late on the UTC day is still that day 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > no due date, a closed letter, or a letter needing no response is never overdue 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > letterOverdue — one definition, the server's > a question is overdue only when its letter is and it is not answered as it stands 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > the question's own section decides, even against the letter and the discipline 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > then the letter's codes, normalised; codes that do not parse are ignored 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > then, for Module 3 only, the CMC discipline (any case), with no section claimed 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > classifyForModule — the question's section, then the letter's, then (Module 3) the CMC discipline > whole segments: a question at 3.2.P.50 is in Module 3, and a letter at 30.1 is not a code 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > an approved answer on an overdue letter is never counted overdue; the unanswered one beside it is 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > the letter is overdue on ALL its questions, the module's count is of the module's: a Clinical question keeps a CMC letter overdue, and Module 3 does not call it its own 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > each overdue letter lands in one count: questions overdue on 1 letter, another overdue on its other questions 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > decides "outstanding" once, per question: not answered as it stands, on a letter not closed 1ms
+ × server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a Module 3 letter whose only question is withdrawn is named once, as a letter with nothing to answer, never also "not counted" 12ms
+   → expected [] to deeply equal [ [ 'ace_late', true, [ '3.2.P.7' ] ] ]
+ × server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a letter whose only question is withdrawn and placed in another module is that module's, not "not counted" 2ms
+   → expected { unclassifiedOutstanding: +0, …(1) } to deeply equal { unclassifiedOutstanding: +0, …(1) }
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > counts an outstanding question it cannot classify, rather than dropping it 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a Module 3 letter with no question recorded is named; an overdue one it cannot classify is counted as not counted 1ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > a closed letter's questions are listed after the open ones and are neither outstanding nor overdue 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > carries the owner recorded on the letter, and none when none is 0ms
+ ✓ server/services/agency-responses/__tests__/module-view.test.ts > moduleQuestionsView — Module 3's view of a program's letters > lists a page and counts the whole: the summary is of every row read 1ms
+ Test Files  2 failed (2)
+      Tests  3 failed | 62 passed (65)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to deeply equal [ [ 'ace_late', true, [ '3.2.P.7' ] ] ]
+- Expected
++ Received
+AssertionError: expected { unclassifiedOutstanding: +0, …(1) } to deeply equal { unclassifiedOutstanding: +0, …(1) }
+- Expected
++ Received

@@ -117,7 +117,7 @@ import {
   editorTargetFromSearch,
   type EditorTarget,
 } from '../editorTarget';
-import { consumeNavParams } from '../navParams';
+import { consumeNavParams, registerSurfaceLeaveGuard } from '../navParams';
 import { ceremonyOpen } from '../ceremony';
 import {
   advertisedScreenActions,
@@ -781,10 +781,10 @@ function sourceStateLabel(s: SectionSource): {
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
 async function readJson<T = any>(
-  path: string
+  path: string, headers?: Record<string, string>
 ): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
-    const res = await apiRequest('GET', path);
+    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
@@ -793,6 +793,25 @@ async function readJson<T = any>(
     return { ok: false, status: err instanceof ApiRequestError ? err.status : 0,
       body: err instanceof ApiRequestError ? err.payload as T : null };
   }
+}
+
+function verifiedRecoveryStructure(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object') return false;
+  const structure = value as Record<string, unknown>;
+  const strings = (items: unknown) => Array.isArray(items) && items.every(item => typeof item === 'string');
+  return strings(structure.duplicateCodes) && typeof structure.outOfOrder === 'boolean' && strings(structure.suggestedOrder);
+}
+
+function verifiedRecoverySections(body: { success?: boolean; sections?: AuthSection[]; structure?: unknown } | null, docId: string): boolean {
+  return body?.success === true && verifiedRecoveryStructure(body.structure) && Array.isArray(body.sections) && body.sections.every(row =>
+    row && typeof row.id === 'string' && row.id.trim() && row.doc_id === docId && typeof row.code === 'string'
+    && typeof row.title === 'string' && (row.content === null || typeof row.content === 'string'));
+}
+
+function usableSectionRead<T extends { success?: boolean; sections?: AuthSection[] }>(ok: boolean, body: T | null, docId: string, recovery: boolean): body is T {
+  if (!ok || !body) return false;
+  return !recovery || verifiedRecoverySections(body, docId);
 }
 
 /* ── What the caller may do to this document (GE-P-3, 2026-09-28) ──
@@ -1146,6 +1165,8 @@ export interface DocumentWorkbenchProps {
   onStatusChange?: (status: string) => void;
   /** Re-read the list — after a create, a freeze, a filing change. */
   reloadDocs: () => Promise<void>;
+  /** Confirm that the current native host applied its verified recovery read. */
+  refreshCreationContext?: () => Promise<boolean>;
   /** The designated project (regulatory_programs UUID) or null. */
   programId: string | null;
   /** Pin the workbench to one document (the canvas). The tree lists only it
@@ -1223,6 +1244,7 @@ export function DocumentWorkbench({
   status,
   onStatusChange,
   reloadDocs,
+  refreshCreationContext,
   programId,
   pinnedDocId = null,
   embedded = null,
@@ -1610,6 +1632,18 @@ export function DocumentWorkbench({
   pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
   const navigationSequence = useRef(0);
+  const authoringBusyGuardRef = useRef<() => { ok: false; reason: string } | null>(() => null);
+  const assemblyLeaveRefusalRef = useRef<() => string | null>(() => null);
+  const linkedTargetRefusal = useCallback(() => ceremonyOpen()
+    ? 'Finish or cancel the open governed form, then retry the linked document.'
+    : authoringBusyGuardRef.current()?.reason ?? null, []);
+  const refuseStructuralLeave = useCallback((target: LeaveTarget): boolean => {
+    const reason = assemblyLeaveRefusalRef.current();
+    if (!reason) return false;
+    if (target.kind === 'program') target.onCancel();
+    fireToast(reason, 'error');
+    return true;
+  }, [fireToast]);
   const assemblyReceiver = useRef<{ token: object; target: EditorTarget; intent: AssemblySourceIntent | null } | null>(null);
   const receiverInitialized = useRef(false);
   const receiverAlive = useRef(true);
@@ -1676,6 +1710,7 @@ export function DocumentWorkbench({
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      if (refuseStructuralLeave(target)) return false;
       if (!workbenchAssemblyIntent(target)) assemblyReceiver.current = null;
       if (target.kind === 'conversation' && programSwitchHeld) {
         fireToast('Finish the project switch before opening a conversation.', 'error');
@@ -1697,7 +1732,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, status, admitAssemblyNavigation]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, status, refuseStructuralLeave, admitAssemblyNavigation]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -2050,21 +2085,26 @@ export function DocumentWorkbench({
   const structure = sectionsCurrent && sectionsState === 'ready' && !partialRead ? storedStructure : null;
   const sectionsGeneration = useRef(0);
   const loadedSectionsKey = useRef<string | null>(null);
-  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const generation = ++sectionsGeneration.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const current = () => aliveRef.current && currentReadKey.current === readKey &&
-      creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision();
+      creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision() && recoveryOwner?.current() !== false;
     setSectionsState('loading');
     if (loadedSectionsKey.current !== readKey) setSections([]);
     loadedSectionsKey.current = readKey;
     setSectionsRead({ key: readKey });
-    const { ok, body, status } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure; readScope?: unknown }>(
-      authoringCurrentReadPath(docId, programId, true)
+    const { ok, body, status } = await readJson<{ success?: boolean; sections?: AuthSection[]; structure?: SectionStructure; readScope?: unknown }>(
+      authoringCurrentReadPath(docId, programId, true), recoveryOwner?.headers
     );
-    if (!current()) return;
-    if (!ok || !body) {
+    if (!current()) {
+      if (recovery) throw new Error('The section recovery context changed.');
+      return;
+    }
+    if (!usableSectionRead(ok, body, docId, recovery)) {
       if (authoringReadRefused(status, body)) {
         metadataGeneration.current += 1;
         setMetadataRead({ key: readKey, refused: true });
@@ -2072,6 +2112,7 @@ export function DocumentWorkbench({
       setSectionsState('error');
       setSections([]);
       setStructure(null);
+      if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
@@ -2089,9 +2130,10 @@ export function DocumentWorkbench({
     // by a load of the document it names: a stale in-flight load of another
     // document must not swallow the target.
     const target = targetSectionRef.current;
+    const targetForDocument = target?.docId === docId;
     const landTarget =
-      target != null && target.docId === docId && list.some(s => s.id === target.sectionId);
-    if (target != null && target.docId === docId) targetSectionRef.current = null;
+      targetForDocument && list.some(s => s.id === target.sectionId);
+    if (targetForDocument) targetSectionRef.current = null;
     setActiveSectionId(cur => {
       if (landTarget) return target!.sectionId;
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
@@ -2111,16 +2153,19 @@ export function DocumentWorkbench({
   }, [activeDocId, programSwitchHeld, loadSections]);
 
   const checkCreation = useCallback(async (kind: 'document' | 'section') => {
-    if (programSwitchHeld || openProgramRef.current !== programId) return;
-    if (kind === 'section') {
-      if (activeDocId) await loadSections(activeDocId);
-    } else if (pinnedDocId) {
-      requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
-    } else {
-      if (status !== 'all' && !requestLeaveRef.current({ kind: 'filter', status: 'all' })) return;
-      await reloadDocs();
-    }
-  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, status, reloadDocs]);
+    if (programSwitchHeld || openProgramRef.current !== programId) return false;
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
+    try {
+      if (kind === 'section') {
+        if (!activeDocId) return false;
+        await loadSections(activeDocId, undefined, true);
+      } else if (await refreshCreationContext?.() !== true) return false;
+      if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+      if (kind === 'document' && !pinnedDocId && status !== 'all' && !requestLeaveRef.current({ kind: 'filter', status: 'all' })) return false;
+      return true;
+    } catch { return false; }
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, status, refreshCreationContext]);
 
   const assemblyHostScope = creationScopeRef.current;
   const assembly = useAuthoringAssemblyBuild({
@@ -2140,10 +2185,25 @@ export function DocumentWorkbench({
       await loadSections(data.docId);
       if (creationScopeRef.current === assemblyHostScope && aliveRef.current) void reloadDocs();
     },
+    onRecoveryChecked: async (ownerCurrent, headers) => {
+      const scope = creationScopeRef.current;
+      const sequence = navigationSequence.current;
+      const current = () => ownerCurrent() && aliveRef.current && creationScopeRef.current === scope
+        && creationScopeRef.current === assemblyHostScope && navigationSequence.current === sequence
+        && !programSwitchHeld && openProgramRef.current === programId;
+      if (!activeDocId || !current()) return false;
+      try {
+        await loadSections(activeDocId, undefined, true, { current, headers });
+        return current();
+      } catch { return false; }
+    },
     onReviewSection: sectionId => {
+      const refusal = linkedTargetRefusal();
+      if (refusal) { fireToast(refusal, 'error'); return; }
       requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
     },
   });
+  assemblyLeaveRefusalRef.current = assembly.leaveRefusal;
 
   const markAssemblyAccepted = assembly.markAccepted;
   const assemblySourceScope = assemblySelectionKey(assembly.sourceSelection);
@@ -2216,9 +2276,9 @@ export function DocumentWorkbench({
       if (!consumeDeepLinks && !target?.assemblySources) return;
       clearEditorTarget();
       if (!target) return;
-      assemblyReceiver.current = null;
-      if (ceremonyOpen()) {
-        setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
+      const refusal = linkedTargetRefusal();
+      if (refusal) {
+        setTargetNotice(refusal);
         return;
       }
       if (target.assemblySources) captureSourceTarget(target);
@@ -2229,14 +2289,21 @@ export function DocumentWorkbench({
     };
     window.addEventListener(EDITOR_TARGET_EVENT, handoff);
     return () => window.removeEventListener(EDITOR_TARGET_EVENT, handoff);
-  }, [consumeDeepLinks, captureSourceTarget]);
+  }, [consumeDeepLinks, linkedTargetRefusal, captureSourceTarget]);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  const linkedReadStillCurrent = useCallback((scope: { key: string }, sequence: number): boolean => {
+    if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+    const refusal = linkedTargetRefusal();
+    if (refusal) setTargetNotice(refusal);
+    return !refusal;
+  }, [linkedTargetRefusal]);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+    const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const reply = await readJson<{ sections?: AuthSection[] }>(authoringCurrentReadPath(docId, programId, true));
     if (!aliveRef.current || currentReadKey.current !== readKey || !revision() || !readSession.sameRevision() ||
-      openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+      openProgramRef.current !== programId || !linkedReadStillCurrent(scope, sequence)) return;
     if (ceremonyOpen()) {
       setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
       return;
@@ -2249,16 +2316,26 @@ export function DocumentWorkbench({
     setTargetNotice(null);
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
-  }, [programId, readKey, readSession]);
+  }, [programId, readKey, readSession, linkedReadStillCurrent]);
+  const rejectLinkedTarget = useCallback((target: EditorTarget): boolean => {
+    const refusal = linkedTargetRefusal();
+    if (refusal) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(refusal);
+      return true;
+    }
+    if (target.programId && target.programId !== projectIdForOutline) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different program'}. Open that program and retry.`);
+      return true;
+    }
+    return false;
+  }, [linkedTargetRefusal, projectIdForOutline]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
     const t = sectionOpenTarget;
-    if (t.programId && t.programId !== projectIdForOutline) {
-      targetAttemptedRef.current = true;
-      setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
-      return;
-    }
+    if (rejectLinkedTarget(t)) return;
     if (docsState === 'error') {
       /* A failed docs read must NOT spend the one attempt: the ref stays
          unlatched, so when the list does load (a retry, a status-filter
@@ -2343,6 +2420,8 @@ export function DocumentWorkbench({
       );
       return;
     }
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
     void (async () => {
       const revision = authService.captureSessionReadGuard().sameRevision;
       const current = () => aliveRef.current && currentReadKey.current === readKey && revision() && readSession.sameRevision();
@@ -2353,7 +2432,7 @@ export function DocumentWorkbench({
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           authoringCurrentReadPath(d.id, programId, true)
         );
-        if (!current()) return;
+        if (!current() || !linkedReadStillCurrent(scope, sequence)) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
@@ -2364,21 +2443,20 @@ export function DocumentWorkbench({
           // the section is selected only once its list — and therefore its
           // content — is in state. Selecting directly here could sync an empty
           // buffer over a section that has text.
-          targetSectionRef.current = { docId: d.id, sectionId: match.id };
-          if (d.id === activeDocId) void loadSections(d.id);
-          else setActiveDocId(d.id);
+          const opened = requestLeaveRef.current({ kind: 'document', id: d.id, sectionId: match.id });
           // A docs-error notice from before the list loaded must not outlive
           // the successful open.
           setTargetNotice(null);
           setTreeScrollNonce(n => n + 1);
-          fireToast(
+          fireToast(opened ?
             `Opened ${match.code} · ${match.title}` +
               (family ? ` — from the ${family} workspace.` : ' — as requested in chat.')
+              : `${match.code} · ${match.title} will open once you decide about the unsaved work here.`
           );
           return;
         }
       }
-      if (!current()) return;
+      if (!current() || !linkedReadStillCurrent(scope, sequence)) return;
       setTargetNotice(
         `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
@@ -2401,6 +2479,8 @@ export function DocumentWorkbench({
     openExactDocumentSection,
     programSwitchHeld,
     readKey, readSession,
+    rejectLinkedTarget,
+    linkedReadStillCurrent,
     pinnedDocId,
   ]);
 
@@ -2461,6 +2541,8 @@ export function DocumentWorkbench({
      AnA-driven switch would discard or race the person's work. Specific per
      flag, because "busy" tells the subscriber nothing they can act on. */
   const authoringGuard = (): { ok: false; reason: string } | null => {
+    const structuralRefusal = assemblyLeaveRefusalRef.current();
+    if (structuralRefusal) return { ok: false, reason: structuralRefusal };
     if (pendingLeave)
       return { ok: false, reason: 'An unsaved-changes dialog is open — resolve it first.' };
     if (leaving)
@@ -2472,6 +2554,7 @@ export function DocumentWorkbench({
       return { ok: false, reason: 'A comment is being anchored — post or cancel it first.' };
     return null;
   };
+  authoringBusyGuardRef.current = authoringGuard;
   /* Separate from the busy flags because it needs the honest specifics: AnA
      never discards typing, and the refusal names the section holding it. */
   const dirtyGuard = (): { ok: false; reason: string } | null => {
@@ -2479,6 +2562,11 @@ export function DocumentWorkbench({
     const where = activeSection?.code ? `§${activeSection.code}` : 'the open section';
     return { ok: false, reason: `There are unsaved edits in ${where} — save or leave them first.` };
   };
+  // The persistent task drawer shares these same refusal reasons. Keep the
+  // current render's guard in a ref so a click cannot observe an older draft.
+  const surfaceLeaveGuardRef = useRef<() => string | null>(() => null);
+  surfaceLeaveGuardRef.current = () => (authoringGuard() ?? dirtyGuard())?.reason ?? null;
+  useEffect(() => registerSurfaceLeaveGuard(() => surfaceLeaveGuardRef.current()), []);
   useSurfaceActionHandlers(surfaceActionId, {
     'authoring.open-document': params => {
       const guarded = authoringGuard() ?? dirtyGuard();
@@ -4203,6 +4291,8 @@ export function DocumentWorkbench({
                 type="button"
                 className="ed-back"
                 onClick={() => {
+                  const refusal = linkedTargetRefusal();
+                  if (refusal) { fireToast(refusal, 'error'); return; }
                   if (embedded) requestLeave({ kind: 'host-back', label: embedded.backLabel ?? 'the previous workspace', onContinue: embedded.onBack });
                   else if (returnTo && !programSwitchHeld) requestLeave({ kind: 'host-back', label: 'the AnA conversation', onContinue: () => openConversationWithPrompt(null, onNav, returnTo.conversationId) });
                 }}
@@ -6244,9 +6334,11 @@ export function DocumentWorkbench({
       )}
 
       </>}
-      {fileToVaultOpen?.context === writerContext && (!activeDocId || fileToVaultOpen.documentId === activeDocId) && readSession.sameRevision() && (
+      {activeDocId && readSession.sameRevision() && (
         <FileToVaultDialog
-          docId={fileToVaultOpen.documentId}
+          key={writerContext}
+          open={fileToVaultOpen?.context === writerContext && fileToVaultOpen.documentId === activeDocId}
+          docId={activeDocId}
           docTitle={!activeDoc || currentMetadata?.refused ? 'Authoring document' : activeDoc.title}
           docStatus={currentMetadata?.refused ? null : activeDoc?.status ?? null}
           refusal={!activeDoc ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(docAccess.fileToVault)}

@@ -2,13 +2,13 @@
 import { createHash } from 'node:crypto';
 import type { RecordedTemplateFilingContext } from '../../../shared/authoring/recorded-template-source';
 import type { IndAuthoringTemplateRef } from '../../../shared/authoring/ind-document-catalog';
-import { GLOBAL_REGISTRY } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import {
   DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getDocumentTemplate, getRegistryDocumentTemplate,
   type DocumentTemplateStructure,
 } from '../market-specs/document-template-library';
-import { documentComponentRegion } from '../market-specs/document-preparation';
+import { documentComponentContext, documentComponentRegion } from '../market-specs/document-preparation';
 import { searchTemplates, type CatalogTemplateEntry } from '../regulatory/templateCatalog';
 import {
   getIndAuthoringTemplate, getIndAuthoringTemplates, indTemplateReference, indTemplateSnapshot,
@@ -62,8 +62,18 @@ function sourceReference(outline: DocumentTemplateStructure): string {
     : `${source.kind}:${source.registryId}:${source.record}`;
 }
 
+/**
+ * Every section a template carries: front matter, then each section followed
+ * by its subsections, in outline order. The picker's document holds the same
+ * nodes as the governed pack minted from the same outline (review finding,
+ * 2026-10-18: a PBRER's title page and 16.2, a PAS's 3.2.P, were in the pack
+ * and not in the picker's document).
+ */
 function outlineSections(outline: DocumentTemplateStructure): IndTemplateOutlineSection[] {
-  return outline.sections.map((section, ordering) => ({
+  const flat: DocumentTemplateStructure['sections'] = [];
+  const walk = (list: DocumentTemplateStructure['sections']) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk([...(outline.frontMatter ?? []), ...outline.sections]);
+  return flat.map((section, ordering) => ({
     code: section.number, title: section.heading, content: '', ordering,
     guidance: {
       guidance_text: `${section.purpose}\n\nExisting scaffold expectation: ${section.required ? 'marked required' : 'not marked required'}. This flag does not determine legal applicability or waive applicable content.`,
@@ -108,15 +118,17 @@ async function registryTemplate(entry: RegulatoryApplicationType): Promise<Built
 }
 
 function componentTemplate(outline: DocumentTemplateStructure): BuiltinAuthoringTemplate {
-  const region = documentComponentRegion(outline.id);
+  const { region, agency } = documentComponentContext(outline.id);
   const metadata = exactComponentMetadata(outline.id);
   return projectOutline({
     entryId: `component:${outline.id}`, outline,
-    filingContext: { registryId: null, region, agency: region === 'EU' ? 'EMA' : 'ICH' },
+    filingContext: { registryId: null, region, agency },
     metadata, originalFormat: metadata?.format ?? 'source-dependent',
     limitations: [region === 'GLOBAL'
       ? 'Shared document structure only. Confirm the target jurisdiction and regional placement; harmonization does not establish identical regional requirements.'
-      : 'EU document structure. Confirm the current applicable European procedure and client template.'],
+      : region === 'EU' && agency === 'EMA'
+        ? 'EU document structure. Confirm the current applicable European procedure and client template.'
+        : `${region} device document structure. Confirm the current applicable procedure, device/assay/version and client template.`],
   });
 }
 
@@ -139,17 +151,17 @@ function leafletPreparation(): BuiltinAuthoringTemplate {
 }
 
 function regionalEntries(): RegulatoryApplicationType[] {
-  return GLOBAL_REGISTRY.filter(entry => entry.active && entry.segment === 'pharma_biotech'
+  return GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry))
     && REGIONS.includes(entry.region as typeof REGIONS[number]));
 }
 
-function medicinalComponents(): DocumentTemplateStructure[] {
-  return DOCUMENT_TEMPLATES.filter(outline => outline.families.some(family => family === 'ectd' || family === 'ctis'));
+function authoringComponents(): DocumentTemplateStructure[] {
+  return DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 }
 
 export async function getBuiltinAuthoringTemplates(): Promise<BuiltinAuthoringTemplate[]> {
   return [...getIndAuthoringTemplates(), ...await Promise.all(regionalEntries().map(registryTemplate)),
-    ...medicinalComponents().map(componentTemplate), leafletPreparation()];
+    ...authoringComponents().map(componentTemplate), leafletPreparation()];
 }
 
 export async function getBuiltinAuthoringTemplate(id: string): Promise<BuiltinAuthoringTemplate | undefined> {
@@ -158,7 +170,7 @@ export async function getBuiltinAuthoringTemplate(id: string): Promise<BuiltinAu
   const normalized = id.toLowerCase();
   const entry = regionalEntries().find(row => builtinAuthoringTemplateId(`registry:${row.id}`) === normalized);
   if (entry) return registryTemplate(entry);
-  const component = medicinalComponents().find(row => builtinAuthoringTemplateId(`component:${row.id}`) === normalized);
+  const component = authoringComponents().find(row => builtinAuthoringTemplateId(`component:${row.id}`) === normalized);
   if (component) return componentTemplate(component);
   return builtinAuthoringTemplateId('component:pil') === normalized ? leafletPreparation() : undefined;
 }

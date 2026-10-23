@@ -1,0 +1,18 @@
+
+> concept2cure-riai@1.0.0 ci:pushed-lint-warnings
+> node scripts/ci/check-pushed-lint-warnings.mjs
+
+[ci:eslint-warning-ratchet] --since cb4065898efa6c1422ea5fb3b3a995de069e7569 (cb4065898) -- 12 lintable file(s) changed; linting both versions of each...
+
+    +3  docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/browser-check.mjs  (0 -> 3)
+         docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/browser-check.mjs:76:17  no-undef  'innerWidth' is not defined.
+         docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/browser-check.mjs:77:15  no-undef  'getComputedStyle' is not defined.
+         docs/evidence/D2-PM-RESPONSIBILITY/2026-10-18/browser-check.mjs:94:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +1  tests/db/project-team-responsibility.dbtest.ts  (0 -> 1)
+         tests/db/project-team-responsibility.dbtest.ts:116:77  max-lines-per-function  Arrow function has too many lines (114). Maximum allowed is 100.
+
+[ci:eslint-warning-ratchet] net +4 warning(s) across the files changed since cb4065898efa6c1422ea5fb3b3a995de069e7569.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 4 warning(s) (listed above).

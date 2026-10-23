@@ -1,0 +1,36 @@
+const {chromium}=require('/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const fs=require('fs'),assert=require('assert/strict');
+const out='/workspace/scratch/task-handoff-audit-browser-task';
+const user={id:'42',organizationId:'7',email:'tester@example.test',displayName:'Synthetic tester',roles:['member'],permissions:['governed:write']};
+const jwt='synthetic.'+Buffer.from(JSON.stringify({userId:42,organizationId:7,exp:Date.now()/1000+7200})).toString('base64url')+'.synthetic';
+const base={title:'Same task title',moduleType:'authoring',taskType:'review',status:'pending',priority:'high',assignee:'42',assignedBy:'41',progress:0,impactScore:null,criticalPath:false,regulatoryImpact:false,approvalRequired:false,approvalStatus:'pending',approvalHistory:[],dependsOn:[],blocks:[],comments:0,attachments:0,source:'section',due:'',dueDateIso:null,phase:null,blocked:false,estimatedHours:null};
+const tasks=[{...base,taskId:'TASK-A',project:'12',description:'Instructions for A.'},{...base,taskId:'TASK-B',project:'13',description:'Instructions for B.'}];
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox']});const results=[];
+try{for(const scenario of [{name:'light-desktop',width:1440,theme:'light'},{name:'dark-phone',width:390,theme:'dark'},{name:'removed-task',width:1440,theme:'light',removed:true},{name:'changed-account',width:390,theme:'dark',swap:true}]){
+ const context=await browser.newContext({viewport:{width:scenario.width,height:960}});let boardReads=0,writes=0;
+ await context.addInitScript(({user,jwt,theme})=>{for(const storage of[localStorage,sessionStorage]){storage.setItem('trialsage_access_token',jwt);storage.setItem('trialsage_user',JSON.stringify(user));storage.setItem('trialsage_token_expiry',new Date(Date.now()+7200000).toISOString());}addEventListener('DOMContentLoaded',()=>{document.documentElement.dataset.theme=theme;document.documentElement.classList.toggle('dark',theme==='dark');});},{user,jwt,theme:scenario.theme});
+ await context.route('**/api/**',async route=>{const request=route.request(),path=new URL(request.url()).pathname;let body={data:[]};if(request.method()!=='GET')writes++;
+ if(path==='/api/v1/auth/session')body={authenticated:true,user};
+ else if(path==='/api/task-management/board'){boardReads++;body={data:scenario.removed&&boardReads>1?[tasks[0]]:tasks,meta:{partial:false,unreadSources:[]}};}
+ else if(path==='/api/task-management/my-work')body={success:true,data:{items:tasks.map(t=>({taskId:t.taskId,title:t.title,projectId:Number(t.project),moduleType:t.moduleType,status:t.status,priority:t.priority,dueDate:null,overdue:false,dueSoon:false,blocked:false,approvalRequired:false,approvalStatus:'pending',criticalPath:false})),total:2,overdue:0,dueSoon:0,blocked:0,approvalsPending:0}};
+ else if(path==='/api/projects')body={data:[{id:12,name:'Synthetic program A'},{id:13,name:'Synthetic program B'}]};
+ else if(path==='/api/task-management/assignees')body={data:[{id:42,name:'Synthetic tester'}]};
+ else if(path==='/api/mdx/notifications/unread-count')body={data:{unread:0}};
+ else if(path==='/api/concept2cure/reviews/my-queue')body={data:{tasks:[],threads:[],totalTasks:0,totalThreads:0,unreadNotifications:0,overdueTasks:0}};
+ else if(path==='/api/approval-workflows/pending')body={data:{approvals:[]}};
+ await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});});
+ const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('http://127.0.0.1:5173/task-handoff-verification.html');
+ await page.getByLabel('Filter by project').selectOption('12');
+ await page.getByRole('button',{name:/^Your work/}).click();
+ const tray=page.getByRole('dialog',{name:'Your work'});await tray.getByRole('button',{name:/Same task title/}).nth(1).waitFor();
+ if(scenario.swap)await page.evaluate(()=>{sessionStorage.setItem('trialsage_access_token','synthetic.'+btoa(JSON.stringify({userId:43,organizationId:7}))+'.synthetic');});
+ await tray.getByRole('button',{name:/Same task title/}).nth(1).click();
+ if(scenario.swap){await tray.getByRole('alert').waitFor();assert.match(await tray.getByRole('alert').innerText(),/account or organization changed/);assert.equal(await page.getByRole('dialog',{name:'Task detail'}).count(),0);}
+ else if(scenario.removed){await page.getByRole('alert').waitFor();assert.match(await page.getByRole('alert').innerText(),/no longer|not available|could not|unavailable/i);assert.equal(await page.getByRole('dialog',{name:'Task detail'}).count(),0);}
+ else{const detail=page.getByRole('dialog',{name:'Task detail'});await detail.getByText('Instructions for B.',{exact:true}).waitFor();await detail.getByText('TASK-B',{exact:true}).waitFor();assert.equal(await detail.getByText('Instructions for A.',{exact:true}).count(),0);assert.equal(await page.getByLabel('Filter by project').inputValue(),'all');assert.ok(boardReads>=2);}
+ await page.waitForFunction(()=>!document.getAnimations().some(animation=>animation.playState==='running'));
+ await page.screenshot({path:`${out}/${scenario.name}.png`});
+ const dimensions=await page.evaluate(()=>({dialogOverflow:Array.from(document.querySelectorAll('[role=dialog]')).some(dialog=>dialog.scrollWidth>dialog.clientWidth),overflow:document.documentElement.scrollWidth>innerWidth,accent:getComputedStyle(document.documentElement).getPropertyValue('--accent-100').trim(),background:getComputedStyle(document.documentElement).getPropertyValue('--bg-000').trim()}));if(dimensions.overflow) console.log(JSON.stringify(await page.evaluate(()=>({width:innerWidth,documentWidth:document.documentElement.scrollWidth,offenders:Array.from(document.querySelectorAll('*')).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).filter(e=>e.right>innerWidth+1).slice(0,25)}))));assert.equal(dimensions.overflow,false);assert.equal(dimensions.dialogOverflow,false);assert.ok(dimensions.accent&&dimensions.background);assert.deepEqual(errors,[]);assert.equal(writes,0);
+ results.push({scenario:scenario.name,viewport:scenario.width,boardReads,writes,exactTaskOpened:!scenario.swap&&!scenario.removed,refused:!!(scenario.swap||scenario.removed),...dimensions,pageErrors:errors});await context.close();
+}}finally{await browser.close();}fs.writeFileSync(out+'/browser-results.json',JSON.stringify({boundary:'Real TaskTray, TaskBoard, AuthProvider, query and navigation components on Vite. Synthetic intercepted API/account records; no deployed backend or human witness.',results},null,2)+'\n');console.log(JSON.stringify(results));})().catch(error=>{console.error(error);process.exitCode=1;});

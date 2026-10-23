@@ -1,0 +1,7 @@
+[ci:baseline-justifications] FAIL — justification rows for files NO LONGER in the baseline:
+  - server/routes/module-access-requests.ts
+  - server/services/advancedRAGPipeline.ts
+  - server/services/deep-research-orchestrator.ts
+  - server/services/kernel-adaptive-policy.ts
+  - server/services/kernel-observability.ts
+  → Move the row to the "Resolved (no longer in baseline)" section.

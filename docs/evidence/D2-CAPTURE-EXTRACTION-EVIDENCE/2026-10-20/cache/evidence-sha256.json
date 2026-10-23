@@ -1,0 +1,12 @@
+{
+  "README.md": "d9a31e54663e466e7a4083bd005e9a98e6bc27b3bdd955856f535410ca01bc1d",
+  "baseline-command.json": "2317aef1d54336eb073e2177002df551f02b4a477cfae54ef8e4bc34d9b9860e",
+  "baseline-red.txt": "0198ed48c9465d90c67a7710e1e26683cfd1591012c74711e5ab6a7c9930847c",
+  "first-baseline-command.json": "b2020b133a01849c1c3851b37e4d87ea7a6dcaf8c0110fcd883bacc4e0ff5d5c",
+  "first-baseline-red.txt": "8de2ec0b36d9df713357678d7d8a48ce7d423ae950b6505fc1947405fa210563",
+  "first-lint-command.json": "ce8e18602a2633ef85a444ec53cd54d281dbbbac57c423a4830e0a9861cd8ec8",
+  "first-lint-raw.txt": "2909e81cc35b37325c6214ea41e35ca8ebf677ac9cf1cb399769814d59caebb8",
+  "frozen-test.json": "5f4bb5b560fd7f7d96fd27d8deac7ee53a8999a95b0b09541084bd8491b752ef",
+  "lint-command.json": "453b9801314127caa69313022f55a65e78313f6c8744da480a2c74e21144a795",
+  "lint-raw.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

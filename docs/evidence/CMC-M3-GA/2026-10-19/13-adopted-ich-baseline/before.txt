@@ -1,0 +1,16 @@
+— before: the two knowledge tools disagreed about whether the record knows —
+
+  91 questions (13 authorities × 7 topics)
+    get_cmc_requirements answers   91/91
+    find_cmc_guidance answers      49/91
+
+  42 questions for which the document search found nothing, among them:
+    · EMA / stability          · MHRA / specification     · ANVISA / process validation
+    · Swissmedic / impurities  · MFDS / stability         · PMDA / batch release
+    · CDSCO / specification    · WHO / impurities         · NMPA / container closure
+
+  In each case the governing document is an ICH guideline the authority has
+  adopted, filed under ICH, and the strict authority filter excluded it — so
+  AnA was instructed to answer 'not indexed'.
+
+(the after state is in after.txt)

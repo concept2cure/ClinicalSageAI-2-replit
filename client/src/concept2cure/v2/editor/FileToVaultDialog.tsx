@@ -7,7 +7,7 @@
  * through the existing export path, ingests through the existing vault ingest
  * service, files through the existing filing service, audits the whole thing
  * as one governed action and answers
- * `201 { data: { vaultDocumentId, folder, sha256, format, approval } }`. It
+ * `201 { data: { vaultDocumentId, programId, folder, sha256, format, approval } }`. It
  * refuses a document with no program and never files a document that is
  * mid-freeze. `approval` says whether the Authoring approval carried to the
  * Vault version (FD5 (c)) and, when it did not, why.
@@ -16,19 +16,23 @@
  * folder the server chose, the SHA-256 it recorded — and on failure the
  * server's sentence. Nothing here composes a success.
  */
-import React, { useState } from 'react';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import React, { useEffect, useRef, useState } from 'react';
+import { authService } from '@/services/portal/authService';
+import { isCanonicalId } from '@shared/regulatory/canonical-document';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { setVaultTarget } from '../vaultTarget';
+import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
+import { mutateVerbatim, mutationUnconfirmed } from '../surfaces/SubmissionSeqWorkspaces';
+import { useSubmissionReadSession, type SubmissionReadSession } from '../surfaces/submissionScopedRead';
 import type { FireToast } from '../toast';
-import { captureAuthoringSession } from './authoringCurrentRead';
 
 export interface FileToVaultResult {
   vaultDocumentId: string;
+  programId: string;
   folder: string | null;
-  sha256: string | null;
-  format: string;
+  sha256: string;
+  format: 'pdf' | 'docx';
   /** What the server said about the Authoring approval; null when it said nothing. */
   approval: FiledApproval | null;
 }
@@ -60,6 +64,8 @@ export function filedApprovalLine(approval: FiledApproval | null): string {
 }
 
 export interface FileToVaultDialogProps {
+  /** Keep the filing outcome while the host closes and reopens this dialog. */
+  open?: boolean;
   docId: string;
   docTitle: string;
   docStatus: string | null;
@@ -82,19 +88,27 @@ function readFolderLabel(raw: unknown): string | null {
   return typeof r.folderId === 'string' && r.folderId.trim() ? r.folderId.trim() : null;
 }
 
-/** The route's success body, read strictly — a missing id is a failure. */
-export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
-  const data = (body as { data?: Record<string, unknown> } | null)?.data;
-  if (!data || typeof data !== 'object') return null;
-  const id = typeof data.vaultDocumentId === 'string' ? data.vaultDocumentId : null;
-  if (!id) return null;
+/** Confirm this request's project, admitted version, bytes and requested format. */
+export function readFileToVaultResult(body: unknown, expected: { programId: string; format: 'pdf' | 'docx' }): FileToVaultResult | null {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const envelope = body as Record<string, unknown>;
+  if (envelope.error != null) return null;
+  if ('success' in envelope && envelope.success !== true) return null;
+  if (!envelope.data || typeof envelope.data !== 'object' || Array.isArray(envelope.data)) return null;
+  const data = envelope.data as Record<string, unknown>;
+  const identities = [data.vaultDocumentId, data.programId];
+  if (!identities.every((id): id is string => typeof id === 'string' && isCanonicalId(id))) return null;
+  const [vaultDocumentId, programId] = identities;
+  if (programId !== expected.programId ||
+      typeof data.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(data.sha256) || data.format !== expected.format) return null;
   return {
-    vaultDocumentId: id,
+    vaultDocumentId,
+    programId,
     // The route returns the vault's filing record ({ folderId, folderLabel, … });
     // an older shape was a bare label. Read both; a record with no folder is null.
     folder: readFolderLabel(data.folder),
-    sha256: typeof data.sha256 === 'string' ? data.sha256 : null,
-    format: typeof data.format === 'string' ? data.format : '',
+    sha256: data.sha256,
+    format: expected.format,
     approval: readFiledApproval(data.approval),
   };
 }
@@ -102,37 +116,28 @@ export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
 /** Either the vault record the server wrote, or the sentence to show instead. */
 type FileToVaultAttempt =
   | { ok: true; result: FileToVaultResult }
-  | { ok: false; message: string };
+  | { ok: false; message: string; unconfirmed: boolean };
 
 /**
  * The POST, its status handling and the strict read of its body, in one place:
  * every way this can fail becomes the same shape, so the component only picks
  * what to show and can never compose a success out of a failure.
  */
-async function attemptFileToVault(docId: string, format: 'pdf' | 'docx'): Promise<FileToVaultAttempt> {
-  try {
-    const res = await apiRequest('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/file-to-vault`, { format });
-    const json = await res.json().catch(() => null);
-    if (res.status === 401) {
-      return { ok: false, message: 'Not filed — your session isn’t authenticated. Sign in and retry.' };
-    }
-    const parsed = res.ok ? readFileToVaultResult(json) : null;
-    if (!res.ok || !parsed) {
-      return {
-        ok: false,
-        message:
-          'The document was not filed — ' +
-          (serverMessage(json) ?? (res.ok ? 'the server answered without a vault record' : `the server refused it (HTTP ${res.status})`)) +
-          '. Nothing was written to the vault.',
-      };
-    }
-    return { ok: true, result: parsed };
-  } catch (e) {
-    return {
-      ok: false,
-      message: 'The document was not filed — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was written to the vault.',
-    };
-  }
+async function attemptFileToVault(docId: string, programId: string, format: 'pdf' | 'docx'): Promise<FileToVaultAttempt> {
+  const reply = await mutateVerbatim<unknown>('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/file-to-vault`, { format });
+  const parsed = readFileToVaultResult(reply.data, { programId, format });
+  if (parsed) return { ok: true, result: parsed };
+  const existingVersion = reply.code === 'VAULT_VERSION_ALREADY_RECORDED';
+  const unconfirmed = existingVersion || !!reply.unconfirmed || reply.data != null || mutationUnconfirmed(reply.status, reply.code);
+  return {
+    ok: false,
+    unconfirmed,
+    message: existingVersion
+      ? 'This version is already recorded in the Vault. Check the existing Vault record before retrying.'
+      : unconfirmed
+        ? 'We cannot confirm whether this document was filed. It may be present in the Vault. Check the Vault before retrying.'
+        : reply.error ?? 'The server refused the filing without a reason.',
+  };
 }
 
 /**
@@ -168,17 +173,12 @@ function FileToVaultOutcome({
   result,
   error,
   chosenFormat,
-  programId,
-  onClose,
-  onNav,
+  onOpenVault,
 }: {
   result: FileToVaultResult | null;
   error: string | null;
   chosenFormat: string;
-  /** The program the document was filed under; the Vault opens on it only there. */
-  programId: string | null | undefined;
-  onClose: () => void;
-  onNav?: (id: string) => void;
+  onOpenVault?: () => void;
 }) {
   return (
     <>
@@ -207,17 +207,13 @@ function FileToVaultOutcome({
           {filedNextStep(filedFormatLabel(result, chosenFormat), result.approval?.carried === true)}
         </div>
       )}
-      {result && onNav && (
+      {result && onOpenVault && (
         <div className="de-field">
           <button
             className="btn ghost"
             style={{ height: 30 }}
             data-testid="ftv-open-vault"
-            onClick={() => {
-              if (programId) setVaultTarget({ documentId: result.vaultDocumentId, programId });
-              onClose();
-              onNav('vault');
-            }}
+            onClick={onOpenVault}
           >
             {I.vault} Open in Vault
           </button>
@@ -227,41 +223,99 @@ function FileToVaultOutcome({
   );
 }
 
-export function FileToVaultDialog({ docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast, refusal = null }: FileToVaultDialogProps) {
-  const [owner] = useState(captureAuthoringSession);
+export function FileToVaultDialog(props: FileToVaultDialogProps) {
+  const shellProject = useShellProject();
+  const project = shellProgramId(shellProject);
+  const session = useSubmissionReadSession();
+  const context = JSON.stringify([props.docId, props.programId, project, session.key]);
+  // Reuse the project-visit boundary: A → B → A retires the previous request too.
+  const visit = useRef({ context, generation: 0, projectCurrent: captureShellProjectGuard() });
+  if (visit.current.context !== context || !visit.current.projectCurrent()) {
+    visit.current = { context, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  }
+  return <FileToVaultDialogForDocument key={`${context}:${visit.current.generation}`} {...props} session={session} projectCurrent={visit.current.projectCurrent} projectMatches={!shellProject || project === props.programId} />;
+}
+
+function FileToVaultDialogForDocument({ open = true, docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast, session, projectCurrent, projectMatches, refusal = null }: FileToVaultDialogProps & {
+  session: SubmissionReadSession; projectCurrent: () => boolean; projectMatches: boolean;
+}) {
   const [filing, setFiling] = useState(false);
   const ref = useDialog(() => {
-    if (!filing) onClose();
-  });
+    if (!pending.current) onClose();
+  }, open);
   const [format, setFormat] = useState<'pdf' | 'docx'>('pdf');
   const [result, setResult] = useState<FileToVaultResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const currentRef = React.useRef({ refusal, title: docTitle });
   currentRef.current = { refusal, title: docTitle };
 
+  const [needsReconciliation, setNeedsReconciliation] = useState(false);
+  const generation = useRef(0);
+  const pending = useRef(false);
+  const active = useRef(true);
+  const receiptCurrent = useRef<() => boolean>(() => false);
+  useEffect(() => { active.current = true; return () => { active.current = false; generation.current += 1; }; }, []);
+  useEffect(() => {
+    if (!open && !filing && !needsReconciliation) {
+      setResult(null); setError(null); setFormat('pdf'); receiptCurrent.current = () => false;
+    }
+  }, [open, filing, needsReconciliation]);
+
   const sealed = ['FROZEN', 'APPROVED'].includes(String(docStatus ?? '').toUpperCase());
-  const canFile = Boolean(programId) && !filing && !result && !refusal;
+  const canFile = open && projectMatches && Boolean(programId && isCanonicalId(programId)) && !filing && !result && !needsReconciliation && !refusal;
 
   const file = async () => {
-    if (!canFile || currentRef.current.refusal) return;
-    if (!owner.sameRevision()) return setError('Your session changed. Close and reopen this document before filing it.');
+    if (!canFile || currentRef.current.refusal || !programId || pending.current || !active.current || !session.sameRevision() || !projectCurrent()) return;
+    const started = generation.current;
+    const sessionGuard = authService.captureSessionReadGuard();
+    const current = () => active.current && started === generation.current && session.sameRevision() && sessionGuard.sameRevision() && projectCurrent();
+    pending.current = true;
     setFiling(true);
     setError(null);
     try {
-      const attempt = await attemptFileToVault(docId, format);
-      if (!owner.sameRevision()) return;
+      const attempt = await attemptFileToVault(docId, programId, format);
+      if (!current()) return;
       if (!attempt.ok) {
+        setNeedsReconciliation(attempt.unconfirmed);
         setError(attempt.message);
         return;
       }
       setResult(attempt.result);
+      receiptCurrent.current = current;
       onFiled?.(attempt.result);
-      fireToast(`Filed “${currentRef.current.title}” to the vault as ${filedFormatLabel(attempt.result, format)}${attempt.result.folder ? ` under ${attempt.result.folder}` : ''}.`);
+      if (current()) fireToast(`Filed “${currentRef.current.title}” to the vault as ${filedFormatLabel(attempt.result, format)}${attempt.result.folder ? ` under ${attempt.result.folder}` : ''}.`);
     } finally {
-      setFiling(false);
+      if (current()) { pending.current = false; setFiling(false); }
     }
   };
 
+  if (!open) return null;
+  return <FileToVaultForm {...{ docTitle, docStatus, programId, programName, onClose, filing, format, setFormat, canFile, sealed, result, error, file, refusal }} dialogRef={ref}
+    onOpenVault={onNav ? () => {
+      if (!result || !receiptCurrent.current()) return;
+      const current = receiptCurrent.current;
+      onClose();
+      if (!current()) return;
+      setVaultTarget({ documentId: result.vaultDocumentId, programId: result.programId });
+      onNav('vault');
+    } : undefined} />;
+}
+
+interface FileToVaultFormProps extends Pick<FileToVaultDialogProps, 'docTitle' | 'docStatus' | 'programId' | 'programName' | 'onClose' | 'refusal'> {
+  dialogRef: ReturnType<typeof useDialog>;
+  filing: boolean;
+  format: 'pdf' | 'docx';
+  setFormat: (format: 'pdf' | 'docx') => void;
+  canFile: boolean;
+  sealed: boolean;
+  result: FileToVaultResult | null;
+  error: string | null;
+  file: () => Promise<void>;
+  onOpenVault?: () => void;
+}
+
+/** The existing dialog markup; its controller owns all filing and context decisions. */
+function FileToVaultForm({ docTitle, docStatus, programId, programName, onClose, dialogRef, filing, format, setFormat, canFile, sealed, result, error, file, onOpenVault, refusal }: FileToVaultFormProps) {
   return (
     <div
       className="de-bd"
@@ -269,7 +323,7 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
         if (e.target === e.currentTarget && !filing) onClose();
       }}
     >
-      <div className="de" ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="ftv-title" data-testid="file-to-vault-dialog">
+      <div className="de" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="ftv-title" data-testid="file-to-vault-dialog">
         <div className="de-h">
           <div>
             <div className="de-h-eye">Authoring → vault</div>
@@ -316,7 +370,7 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
               One governed action: export, ingest and filing are recorded together in the audit trail. The vault folder is decided by the project’s filing rules and shown below once recorded.
             </span>
           </div>
-          <FileToVaultOutcome result={result} error={error} chosenFormat={format} programId={programId} onClose={onClose} onNav={onNav} />
+          <FileToVaultOutcome result={result} error={error} chosenFormat={format} onOpenVault={onOpenVault} />
         </div>
         <div className="de-f">
           <button className="de-btn ghost" onClick={onClose} disabled={filing}>{result ? 'Close' : 'Cancel'}</button>

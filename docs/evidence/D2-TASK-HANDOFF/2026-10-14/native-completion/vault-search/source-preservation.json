@@ -1,0 +1,113 @@
+{
+  "mergedHead": "23502318f439237cd2cc9a2246cba263f3b18f33",
+  "scope": "Eight native Vault fixture files only; production and shared helpers unchanged.",
+  "caseCount": 45,
+  "files": [
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "sha256": "878cbda45fe33f7748e55855a2d56b0bbed9416f20d8ceb1d772f55e7d6f2e72",
+      "afterSha256": "b154f4c003f6dbd895e29d8004bc0e650619cc7ed935bacb3fc389599ca94c14",
+      "originalCaseCount": 5,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 16,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "sha256": "038542d40ae0f6f170f485b57296da4791b1cf742d2bb70047c9db320afbf393",
+      "afterSha256": "8631a29ee2400705cfd33c957136015650015690bf0260c81e0474168f07f154",
+      "originalCaseCount": 4,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 17,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "sha256": "e12245cc819fc01b2f8407451c022230b2ebca9422584b5debd824091abd76fb",
+      "afterSha256": "b2f2c274ea89e6e1868e1144e2b862316d0b6ccc3dea503c6823b340fbb21c98",
+      "originalCaseCount": 9,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 39,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "sha256": "fbfd802f3ffeddf1b8a3b5653976cc0fc6cd419e34997f7394220c0b3d67baf0",
+      "afterSha256": "96d96dc58865b6996af59def145a6f9c003db5a8ad5494a8a90d5aa1fd00ac2b",
+      "originalCaseCount": 4,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 16,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "sha256": "ea9d057c1285bd1d8a063011db394fe2d23d52ca0f9a2ff1a04bcd1ff1d84fce",
+      "afterSha256": "0b53cc97507e5139e8f0a288f9a5e865063cc29c6b758eecfeb9029e2f7dbb4f",
+      "originalCaseCount": 4,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 15,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "sha256": "6999bfc170f56352b1ea02f7f1649ef0b7375fff8defbe768a367cd56d43914b",
+      "afterSha256": "8786dd32be55325470b1131f3af1550280dda853820d10e3d64627b4e64d325e",
+      "originalCaseCount": 6,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 19,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "sha256": "74c5817e6a73bbab596408d13b6d8de5d8a06f7393895192a098bef6f4f41fbc",
+      "afterSha256": "352339670078f6c5db152a100d63d75caf5c46f67655a1d7a31e9b5e518039a2",
+      "originalCaseCount": 10,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 38,
+      "originalExpectationLinesUnchanged": true
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "sha256": "f3711f4bb381a429ff08ac5459cad91cdcc81db21c9ab399b0b8570c86705c6c",
+      "afterSha256": "941e672f328a0f04a7cc1128f16cdc42f910ae273e5a390abe6b7e4b6cee4146",
+      "originalCaseCount": 3,
+      "caseDeclarationsUnchanged": true,
+      "originalExpectationLines": 16,
+      "originalExpectationLinesUnchanged": true
+    }
+  ],
+  "sharedHelpers": [
+    {
+      "path": "tests/db/vault-current-access-fixture.ts",
+      "sha256": "203fa05d37c735303ef6a55ad0ac4c8a654b0ade3e5ae3d42c68cb2e32e6eed0",
+      "unchangedFromMergedHead": true
+    },
+    {
+      "path": "tests/db/catalog-native-fixture.ts",
+      "sha256": "0711edcd607f5f99433cf124a5d12b4210500fb9b386c8ac123eeb97b7bcf507",
+      "unchangedFromMergedHead": true
+    }
+  ],
+  "lintPhases": [
+    {
+      "phase": "before",
+      "files": 8,
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "phase": "firstPrepared",
+      "files": 8,
+      "errors": 0,
+      "warnings": 1
+    },
+    {
+      "phase": "final",
+      "files": 8,
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "nativeExecution": "First serialized native run completed exit0: all45 original cases passed across8 suites, zero skipped/failed. See native-result.json and retained JSON/verbose artifacts.",
+  "retention": "No broad prefix cleanup, audit trigger disabling or teardown storage erasure; existing explicit relationships purge and fixity witness corruption remain test subjects."
+}

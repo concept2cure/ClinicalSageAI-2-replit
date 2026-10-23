@@ -74,6 +74,7 @@ import {
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
 import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
 import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
+import { filingAgreesWithEditing } from '../c2c/filing-section-target';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
 import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 
@@ -163,7 +164,7 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
   return computeQmsDocumentContentDigest({ ...row, metadata });
 }
 
-export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP';
+export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {
@@ -171,6 +172,44 @@ export class QmsApprovalRefusedError extends Error {
     super(message);
     this.name = 'QmsApprovalRefusedError';
   }
+}
+
+/**
+ * P-29.2: a seal may not be applied over a filing that no longer holds this
+ * document's text.
+ *
+ * The approval below stamps `authoring_documents.status = 'APPROVED'`, a
+ * sealing status, and binds a §11.50 signature to the content. So the filed
+ * copy must have been proven equal FIRST — this is the fourth seal, found by
+ * `ci:filing-exit-agreement` on its own first run rather than by any list.
+ *
+ * Only the `different` subset refuses, exactly as `filingBlocksSeal` in
+ * authoring.router.ts decides it: `empty` is a section the filing has no row
+ * for, which the authoring seal reports and seals anyway. Two answers to one
+ * question is the divergence the D2 consolidation removed.
+ *
+ * Called before any write, so nothing has been signed or stamped when it
+ * throws — the contract QmsApprovalRefusedError already states.
+ */
+async function refuseIfFilingDiverged(
+  client: SignatureDbClient, authoringDocId: string, orgId: number,
+): Promise<void> {
+  const agreement = await filingAgreesWithEditing(client, { authoringDocId, tenantId: orgId });
+  const rewritten = agreement.diverged.filter((d) => d.filed === 'different');
+  if (rewritten.length === 0) return;
+  /* Name what the approver can OPEN, not only the filing node: for an
+     assembled node the key is `2.5` and no authoring section carries that
+     code, so a refusal naming only the key sends them looking for a section
+     that does not exist. Same rule, same reason, as the authoring refusal. */
+  const named = rewritten.map((d) => (d.section.code === d.key ? d.key : `${d.section.code} (filed at ${d.key})`));
+  const one = named.length === 1;
+  throw new QmsApprovalRefusedError(
+    'FILING_DIVERGED',
+    `Not approved — the filed copy of ${one ? 'section' : 'sections'} ${named.join(', ')} ${one ? 'is' : 'are'} `
+    + 'not the text this document holds. Approving seals the text for filing, so the signature would attest to '
+    + `text the submission does not contain. Re-file it from the editor: open ${one ? 'that section' : 'those sections'}, `
+    + 'make any edit and save, which rewrites the filed copy. Then approve again. Nothing was signed.',
+  );
 }
 
 export interface ApproveQmsDocumentSignedParams {
@@ -332,6 +371,7 @@ export async function approveQmsDocumentSigned(
   if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
     throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
   if (authoredContent) await authorizeQmsAuthoredSignature(client, orgId, userId, authoredContent);
+  if (authoredContent) await refuseIfFilingDiverged(client, authoredContent.documentId, orgId);
   const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
   const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';

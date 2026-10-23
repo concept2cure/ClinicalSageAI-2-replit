@@ -1,5 +1,8 @@
 /** Runtime receipts for assembly in the existing saved document. */
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { capturedActorHeaders } from '@/utils/authToken';
+import { taskActorScope } from '../taskTarget';
 import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
 import { authoringCurrentReadPath } from './authoringCurrentRead';
 import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
@@ -69,39 +72,53 @@ export function readAssemblyCommit(raw: unknown, docId: string, input: AssemblyP
 }
 
 function assemblyResponse<T>(response: Response, body: Record<string, unknown> | null, decode: (raw: unknown) => T | null, current: boolean, writing: boolean): AssemblyResult<T> {
-  if (!response.ok) return { ok: false, unknown: writing && response.status >= 500, message: serverMessage(body) ?? `HTTP ${response.status}` };
+  if (!response.ok) return { ok: false, unknown: writing && (response.status === 408 || response.status >= 500), message: serverMessage(body) ?? `HTTP ${response.status}` };
   const data = body?.success === true ? decode(body.data) : null;
   if (data && (current || writing)) return { ok: true, data };
   return { ok: false, unknown: writing, message: current ? 'The server did not confirm the exact assembly receipt. Check the saved document before continuing.' : 'The document context changed. Inspect the saved document before continuing.' };
 }
 function assemblyException(error: unknown, writing: boolean): AssemblyFailure {
-  const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500;
+  const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500 && error.status !== 408;
   return { ok: false, unknown: writing && !refused, message: error instanceof Error ? redactInternals(error.message, 'The assembly request failed.') : 'The assembly request failed.' };
 }
-export async function requestAssembly<T>(path: string, input: unknown, decode: (raw: unknown) => T | null, current: () => boolean, writing = false): Promise<AssemblyResult<T>> {
+export function captureAssemblyHeaders(): Record<string, string> {
+  const actor = taskActorScope(authService.getUser());
+  if (!actor) throw new Error('Sign in and reopen this document before building.');
+  return capturedActorHeaders({ userId: Number(actor.userId), organizationId: Number(actor.organizationId) });
+}
+export async function requestAssembly<T>(path: string, input: unknown, decode: (raw: unknown) => T | null, current: () => boolean, options: { writing?: boolean; headers?: Record<string, string> } = {}): Promise<AssemblyResult<T>> {
+  const { writing = false, headers } = options;
   if (!current()) return { ok: false, unknown: false, message: 'The document context changed. No later action was started.' };
   try {
-    const response = await apiRequest('POST', path, input);
+    const response = await apiRequest('POST', path, input, headers ?? captureAssemblyHeaders());
     const body = record(await response.json().catch(() => null));
     return assemblyResponse(response, body, decode, current(), writing);
   } catch (error) { return assemblyException(error, writing); }
 }
 
-/** Inventory membership is required because document detail omits project ID. */
-export async function inspectAssemblyDocument(docId: string, programId: string, current: () => boolean): Promise<AssemblySection[] | null> {
+function inventoryAdmitsWholeDocument(inventory: Record<string, unknown> | null, docId: string, programId: string): boolean {
+  return Array.isArray(inventory?.documents) && inventory.documents.every(row => record(row)?.program_id === programId)
+    && inventory.documents.some(row => record(row)?.id === docId && record(row)?.readScope !== 'sections');
+}
+
+/** Both the scoped inventory and exact detail must confirm the saved parent. */
+export async function inspectAssemblyDocument(docId: string, programId: string, current: () => boolean, capturedHeaders?: Record<string, string>): Promise<AssemblySection[] | null> {
+  let headers: Record<string, string>;
   const read = async (path: string) => {
     if (!current()) return null;
-    const response = await apiRequest('GET', path);
+    const response = await apiRequest('GET', path, undefined, headers);
     if (!current()) return null;
     const body = record(await response.json().catch(() => null));
     return current() && response.ok && body?.success === true ? body : null;
   };
   try {
+    if (!current()) return null;
+    headers = capturedHeaders ?? captureAssemblyHeaders();
     const inventory = await read(`/api/authoring/docs?status=all&programId=${encodeURIComponent(programId)}`);
-    if (!Array.isArray(inventory?.documents) || !inventory.documents.every(row => record(row)?.program_id === programId)
-      || !inventory.documents.some(row => record(row)?.id === docId && record(row)?.readScope !== 'sections')) return null;
+    if (!inventoryAdmitsWholeDocument(inventory, docId, programId)) return null;
     const detail = await read(authoringCurrentReadPath(docId, programId));
-    if (record(detail?.document)?.id !== docId || record(detail?.document)?.readScope === 'sections') return null;
+    const document = record(detail?.document);
+    if (document?.id !== docId || document.client_program_id !== programId || document.readScope === 'sections') return null;
     const body = await read(authoringCurrentReadPath(docId, programId, true));
     return body?.readScope === 'sections' ? null : readAssemblySections(body?.sections, docId);
   } catch { return null; }

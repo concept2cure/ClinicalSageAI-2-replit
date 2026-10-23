@@ -1,0 +1,22 @@
+# AFTER (this fix round). 2026-10-18T19:53:42Z
+$ npx vitest run server/startup/__tests__/security-self-test-no-production-optout.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > does not exit outside production
+{
+  "timestamp": "2026-10-18T19:53:43.774Z",
+  "level": "warn",
+  "message": "[security-self-test] Security self-test FAILED in non-production — would have blocked boot in prod",
+  "context": {}
+}
+
+ ✓ server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > exits on a critical failure even with SECURITY_SELF_TEST_NONBLOCKING=true 5ms
+ ✓ server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > does not exit outside production 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  19:53:43
+   Duration  357ms (transform 94ms, setup 72ms, import 44ms, tests 11ms, environment 0ms)
+
+exit=0

@@ -170,7 +170,7 @@ describe('authoritative projection and source store wire facts',()=>{
     expect(detail.body.document).toMatchObject({readScope:'sections',sourceMetadataState:'unavailable'});
     expect(detail.body).not.toHaveProperty('provenanceStore');
     const sections=await get(`/docs/${DOC.partial}/sections`,partialToken);expect(sections.body.readScope).toBe('sections');
-    const full=await get(`/docs/${DOC.full}`);expect(full.body.document).toMatchObject({readScope:'document',sourceMetadataState:'available',provenance:null});
+    const full=await get(`/docs/${DOC.full}`);expect(full.body.document).toMatchObject({readScope:'document',sourceMetadataState:'available',provenance:null,client_program_id:PROGRAM});
     const fullSections=await get(`/docs/${DOC.full}/sections`);expect(fullSections.body.readScope).toBe('document');
   });
   it('preserves recorded whole-document provenance for a real full grant',async()=>{

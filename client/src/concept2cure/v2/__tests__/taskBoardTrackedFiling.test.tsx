@@ -5,10 +5,11 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TaskFilingHome } from '@shared/types/task-filing-home';
 import { getSurface } from '@shared/constants/ui-surface-registry';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '1', permissions: [] } }) }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: [] } }) }));
 const publishShellProject = vi.hoisted(() => vi.fn());
 vi.mock('../shellProject', () => ({ publishShellProject }));
 import { TaskBoard } from '../surfaces/TaskBoard';
@@ -36,6 +37,7 @@ const body = (): TaskFilingHome => ({
 const ok = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => data }) as Response;
 let filingRead: () => Promise<Response>;
 beforeEach(() => {
+  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.fixture`);
   clearNavParams(); publishShellProject.mockReset(); apiRequest.mockReset();
   filingRead = async () => ok({ success: true, data: body() });
   apiRequest.mockImplementation(async (_method: string, path: string) => {
@@ -45,7 +47,7 @@ beforeEach(() => {
     return ok({ data: [] });
   });
 });
-afterEach(() => { cleanup(); clearNavParams(); });
+afterEach(() => { cleanup(); clearAuthToken(); clearNavParams(); });
 async function open() {
   const onNav = vi.fn();
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -59,7 +61,7 @@ describe('task board exact native filing handoff', () => {
     const { dialog, onNav } = await open();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Open in Submission Center' }));
     await waitFor(() => expect(onNav).toHaveBeenCalledWith('submission-center'));
-    expect(apiRequest).toHaveBeenCalledWith('GET', PATH);
+    expect(apiRequest).toHaveBeenCalledWith('GET', PATH, undefined, expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' }));
     expect(publishShellProject).toHaveBeenCalledWith({ id: PROGRAM, title: 'Verified owner' });
     expect(consumeNavParams('submission-center')).toEqual({ filingId: FILING, ws: 'portfolio' });
     expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
@@ -96,7 +98,7 @@ describe('task board exact native filing handoff', () => {
     filingRead = () => new Promise(resolve => { finish = resolve; });
     const { dialog, onNav } = await open();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Open in Submission Center' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', PATH));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', PATH, undefined, expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' })));
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     await act(async () => { finish(ok({ success: true, data: body() })); });
     expect(onNav).not.toHaveBeenCalled(); expect(publishShellProject).not.toHaveBeenCalled();
@@ -107,11 +109,23 @@ describe('task board exact native filing handoff', () => {
     filingRead = () => new Promise(resolve => { finish = resolve; });
     const { dialog, onNav } = await open();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Open in Submission Center' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', PATH));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', PATH, undefined, expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' })));
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     fireEvent.click(screen.getByRole('button', { name: `Open ${card.title}` }));
     await act(async () => { finish(ok({ success: true, data: body() })); });
     expect(onNav).not.toHaveBeenCalled(); expect(publishShellProject).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: 'Task detail' })).toBeTruthy();
+  });
+  it('never publishes a filing programme or target after the bearer changes during its read', async () => {
+    let finish!: (response: Response) => void;
+    filingRead = () => new Promise(resolve => { finish = resolve; });
+    const { dialog, onNav } = await open();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Open in Submission Center' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', PATH, undefined,
+      expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' })));
+    setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 8, organizationId: 8 }))}.fixture`);
+    await act(async () => { finish(ok({ success: true, data: body() })); });
+    expect(onNav).not.toHaveBeenCalled(); expect(publishShellProject).not.toHaveBeenCalled();
+    expect(consumeNavParams('submission-center')).toBeNull();
   });
 });

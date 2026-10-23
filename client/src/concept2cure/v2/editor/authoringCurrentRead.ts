@@ -1,37 +1,11 @@
 /** Current response ownership for the existing authoring canvas and editor. No write authority is granted here. */
 import { useEffect, useReducer, useRef } from 'react';
-import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { authService, type AuthUser } from '@/services/portal/authService';
-import type { AuthoringReadProjection, AuthoringSourceMetadataState } from '@shared/authoring/read-projection';
-
-/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-/* c2c_document_id: the filing this is the editing copy of, or null (F4). */
-export interface CanvasDocumentRow {
-  created_by?: string | number | null;
-  c2c_document_id?: string | null;
-  id: string;
-  title: string;
-  module: string | null;
-  product_code: string | null;
-  status: string;
-  updated_at: string | null;
-  section_count: number | string | null;
-  provenance?: unknown;
-  readScope?: AuthoringReadProjection;
-  sourceMetadataState?: AuthoringSourceMetadataState;
-}
-
-export interface CanvasSectionRow {
-  id: string;
-  code: string;
-  title: string;
-  content: string | null;
-  order_index: number | null;
-  updated_at?: string | null;
-}
+import type { SectionRow } from './documentRecordRead';
+export type { DocRow as CanvasDocumentRow, SectionRow as CanvasSectionRow } from './documentRecordRead';
 
 /** The codes of sections that are new, or whose stored text changed, between two reads. */
-export function changedSectionCodes(before: readonly CanvasSectionRow[], next: readonly CanvasSectionRow[]): string[] {
+export function changedSectionCodes(before: readonly SectionRow[], next: readonly SectionRow[]): string[] {
   const was = new Map(before.map(x => [x.id, x.content ?? '']));
   return next.filter(x => !was.has(x.id) || was.get(x.id) !== (x.content ?? '')).map(x => x.code);
 }
@@ -72,46 +46,4 @@ export function authoringReadRefused(status: number, body: unknown): boolean {
   const code = error?.code ?? value?.code;
   return [401, 403, 404].includes(status) ||
     (status === 503 && ['AUTHORING_READ_ACCESS_CHANGED', 'AUTHORING_READ_ACCESS_UNAVAILABLE', 'PROJECT_ACCESS_UNAVAILABLE'].includes(String(code)));
-}
-
-/** One read of the record: the document row, the caller's access, the sections. */
-export type CanvasRecordRead<D, S> =
-  | { ok: true; doc: D; access: unknown; sections: S[] }
-  | { ok: false; message: string; doc?: D; refused?: boolean };
-
-/**
- * GET /docs/:id and /sections, together. A failure is the sentence to show,
- * never an empty document: a missing row, a row whose sections did not read,
- * or a store that could not be reached each say which.
- */
-export async function readCanvasDocumentRecord<D extends { title: string; readScope?: AuthoringReadProjection }, S>(docId: string, programId: string | null, current: () => boolean): Promise<CanvasRecordRead<D, S> | null> {
-  try {
-    const [d, s] = await Promise.all([
-      apiRequest('GET', authoringCurrentReadPath(docId, programId)),
-      apiRequest('GET', authoringCurrentReadPath(docId, programId, true)),
-    ]);
-    if (!current()) return null;
-    const dj = (await d.json().catch(() => null)) as { document?: D; access?: unknown } | null;
-    const sj = (await s.json().catch(() => null)) as { sections?: S[]; readScope?: AuthoringReadProjection } | null;
-    if (!current()) return null;
-    if (!d.ok || !dj?.document) {
-      return {
-        ok: false,
-        refused: authoringReadRefused(d.status, dj),
-        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
-      };
-    }
-    if (!s.ok || !sj) {
-      /* The document row is real; its sections did not read. Say that,
-         rather than rendering a document with no sections. */
-      return { ok: false, doc: dj.document, refused: authoringReadRefused(s.status, sj),
-        message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
-    }
-    return { ok: true, doc: { ...dj.document,
-      ...(sj.readScope === 'sections' ? { readScope: 'sections' as const } : {}) },
-      access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
-  } catch (e) {
-    return { ok: false, refused: e instanceof ApiRequestError && authoringReadRefused(e.status, e.payload),
-      message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
-  }
 }

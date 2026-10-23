@@ -29,7 +29,8 @@ const exec = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => exec.query(s, p) } }));
 
-import { createDraftCandidate, consumeDraftCandidate } from '../draft-candidate-store';
+import { createDraftCandidate, consumeDraftCandidate, type DraftGenerator } from '../draft-candidate-store';
+import type { Queryable } from '../span-lineage.service';
 
 const ORG_A = 711;
 const ORG_B = 822;
@@ -208,4 +209,111 @@ describe('draft-candidate store — the turn and the request a draft came from (
     const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
     expect(claimed?.generator).toMatchObject({ requestId: 'req-rt6-1', turnRecordId: '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41' });
   });
+});
+
+describe('draft-candidate store — recorded termination metadata', () => {
+  // The real PGlite JSONB read is the ordinary object path. The wrapper changes
+  // only the database driver's generator representation after the real query,
+  // exercising the store's supported JSON-string read path as well.
+  const stringGeneratorExec: Queryable = {
+    query: async <R = unknown>(sql: string, params?: unknown[]) => {
+      const result = await exec.query<Record<string, unknown>>(sql, params);
+      return {
+        ...result,
+        rows: result.rows.map(row => ({
+          ...row,
+          ...(row.generator !== undefined && row.generator !== null
+            ? { generator: JSON.stringify(row.generator) } : {}),
+        })) as R[],
+      };
+    },
+  };
+  const readModes = [
+    { name: 'object JSONB', reader: exec },
+    { name: 'JSON-string driver', reader: stringGeneratorExec },
+  ];
+  const recordedTerminations: Array<{
+    name: string;
+    metadata: { finishReason?: string | null; truncated?: boolean };
+  }> = [
+    { name: 'raw whitespace-surrounded cutoff and false flag', metadata: { finishReason: ' \tlength\n ', truncated: false } },
+    { name: 'raw ordinary reason and true flag', metadata: { finishReason: 'stop', truncated: true } },
+    { name: 'ordinary reason and false flag', metadata: { finishReason: 'end_turn', truncated: false } },
+    { name: 'unknown reason and false flag', metadata: { finishReason: 'future_provider_reason', truncated: false } },
+    { name: 'explicit null reason and false flag', metadata: { finishReason: null, truncated: false } },
+    { name: 'absent reason and true flag', metadata: { truncated: true } },
+    { name: 'cutoff reason without flag', metadata: { finishReason: 'max_tokens' } },
+    { name: 'explicit null reason without flag', metadata: { finishReason: null } },
+  ];
+
+  function historicalGenerator(): DraftGenerator {
+    return {
+      model: 'recorded-model', provider: 'recorded-provider',
+      promptSha256: 'a'.repeat(64), promptVersion: 'test-prompt-v1',
+      generatedAt: '2026-10-18T10:00:00.000Z', requestId: 'req-store-termination',
+      turnRecordId: '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41',
+      vaultSources: {
+        programId: '33333333-3333-4333-8333-333333333333', retrievedBy: 7,
+        documents: [{ documentId: '44444444-4444-4444-8444-444444444444', contentHash: 'b'.repeat(64), version: '1.0' }],
+      },
+      assemblySources: {
+        version: 1, programId: '33333333-3333-4333-8333-333333333333', fingerprint: 'c'.repeat(64),
+        entries: [{
+          source: { kind: 'data-room', sourceId: 42 }, title: 'endpoint.pdf',
+          contentHash: 'd'.repeat(64), extractedTextSha256: 'e'.repeat(64), version: '2',
+          originalFileAvailable: true, disposition: null,
+          span: { start: 5, end: 20, totalChars: 40, sha256: 'f'.repeat(64) },
+        }],
+        limitations: ['Only the selected excerpt was shown.'],
+      },
+      savedSectionBase: {
+        version: 1, sectionId: SECTION, docId: '55555555-5555-4555-8555-555555555555',
+        code: '2.7.3', title: 'Clinical efficacy', contentSha256: '0'.repeat(64),
+        updatedAt: '2026-10-18T09:00:00.000Z',
+      },
+    };
+  }
+
+  for (const { name: readMode, reader } of readModes) {
+    for (const { name, metadata } of recordedTerminations) {
+      it(`retains ${name} through ${readMode} without changing source/base/turn receipts`, async () => {
+        // This erased assertion lets the unchanged baseline compile: the two
+        // optional production fields do not exist until the implementation lands.
+        const generator = { ...historicalGenerator(), ...metadata } as DraftGenerator;
+        const sources = [{ evidenceSourceId: 42, content: 'The primary endpoint was met.', title: 'endpoint.pdf' }];
+        const assertions = [{ quote: 'The primary endpoint was met.', sourceId: 42 }];
+        const { id } = await createDraftCandidate(
+          ORG_A, SECTION, 'A parked draft.', sources, 'user-termination', exec, generator, assertions,
+        );
+        const parked = await exec.query<{ generator: unknown }>(
+          'SELECT generator FROM authoring_ai_draft_candidates WHERE id = $1', [id],
+        );
+        expect(parked.rows[0].generator).toEqual(generator);
+
+        // Direct store consumption retains facts, including contradictory ones;
+        // rejecting a known cutoff is the actual HTTP accept policy's job.
+        const claimed = await consumeDraftCandidate(ORG_A, SECTION, id, reader);
+        expect(claimed).not.toBeNull();
+        expect(claimed).toMatchObject({
+          id, sectionId: SECTION, content: 'A parked draft.', createdBy: 'user-termination',
+          sources, assertions,
+        });
+        expect(claimed?.generator).toEqual(generator);
+        expect(await consumeDraftCandidate(ORG_A, SECTION, id, reader)).toBeNull();
+      });
+    }
+
+    it(`keeps the exact historical generator keys and no-generator null through ${readMode}`, async () => {
+      const generator = historicalGenerator();
+      const historical = await createDraftCandidate(ORG_A, SECTION, 'legacy', [], 'user-1', exec, generator);
+      const historicalClaim = await consumeDraftCandidate(ORG_A, SECTION, historical.id, reader);
+      expect(historicalClaim?.generator).toEqual(generator);
+      expect(Object.keys(historicalClaim?.generator ?? {}).sort()).toEqual(Object.keys(generator).sort());
+      expect(historicalClaim?.generator).not.toHaveProperty('finishReason');
+      expect(historicalClaim?.generator).not.toHaveProperty('truncated');
+
+      const withoutGenerator = await createDraftCandidate(ORG_A, SECTION, 'legacy-null', [], null, exec);
+      expect((await consumeDraftCandidate(ORG_A, SECTION, withoutGenerator.id, reader))?.generator).toBeNull();
+    });
+  }
 });

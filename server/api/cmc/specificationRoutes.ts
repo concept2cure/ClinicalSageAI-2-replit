@@ -13,6 +13,9 @@ import { clientIpOf } from '../../utils/client-ip';
 import { verifiedReauthFactors } from './cmc-signer';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
+/* The specification row, its history row and the record of WHO recorded it, on
+   one pinned connection and one transaction (§11.10(e)). */
+import { createOnConnection } from '../../services/cmc/register-audit';
 import type { PoolClient } from 'pg';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
@@ -159,40 +162,61 @@ router.post('/', async (req, res) => {
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
-    // The audit row names the person who created the record; it used to name
-    // 'system' for every create. The route sits behind the global /api auth
-    // gate (register-platform-routes.ts), so a session user is always present
-    // in production; NULL would mean "no actor resolved", never an invented one.
+    // The person who created the record; it used to name 'system' for every
+    // create. The route sits behind the global /api auth gate
+    // (register-platform-routes.ts), so a session user is always present in
+    // production. A create that resolves nobody is now refused rather than
+    // recorded with a NULL operator: §11.10(e) asks for the operator on every
+    // entry that creates a record (services/cmc/register-audit.ts).
     const actorId = resolveActorUserId(req);
 
-    const result = await pool.query(
-      `INSERT INTO quality_specifications (
-        project_id, tenant_id, material_type, material_name,
-        test_parameters, acceptance_criteria, test_methods,
-        justification, regulatory_basis, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *`,
-      [
-        data.projectId || null,
-        tenantId,
-        data.materialType,
-        data.materialName,
-        JSON.stringify(data.testParameters || null),
-        JSON.stringify(data.acceptanceCriteria || null),
-        JSON.stringify(data.testMethods || null),
-        data.justification || null,
-        JSON.stringify(data.regulatoryBasis || null),
-        data.approvalStatus,
-      ]
-    );
-
-    const spec = result.rows[0];
-
-    // Log audit trail
-    await pool.query(
-      `INSERT INTO specification_audit_log (specification_id, action, changed_by, new_values)
-       VALUES ($1, 'created', $2, $3)`,
-      [spec.id, actorId ? String(actorId) : null, JSON.stringify(spec)]
+    /* The specification, its own history row and the §11.10(e) chained record
+       of who recorded it, on ONE pinned connection and one transaction.
+       Until this change the two writes were separate `pool.query` calls on
+       whatever connection the pool handed back, so a failure between them left
+       a specification with no history row — and the chain, which is the trail
+       an inspector reads across every register, carried no row for a
+       specification create at all. `specification_audit_log` stays: it is this
+       register's own version history, which the specification screen reads,
+       and it answers a different question (what changed) from the chain's (who
+       entered what, tamper-evidently). */
+    const spec = await createOnConnection(
+      pool,
+      {
+        organizationId: Number(tenantId),
+        actor: { userId: actorId },
+        register: 'specification',
+        table: 'quality_specifications',
+      },
+      async (client) => {
+        const result = await client.query(
+          `INSERT INTO quality_specifications (
+            project_id, tenant_id, material_type, material_name,
+            test_parameters, acceptance_criteria, test_methods,
+            justification, regulatory_basis, approval_status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING *`,
+          [
+            data.projectId || null,
+            tenantId,
+            data.materialType,
+            data.materialName,
+            JSON.stringify(data.testParameters || null),
+            JSON.stringify(data.acceptanceCriteria || null),
+            JSON.stringify(data.testMethods || null),
+            data.justification || null,
+            JSON.stringify(data.regulatoryBasis || null),
+            data.approvalStatus,
+          ]
+        );
+        const row = result.rows[0] as { id: number | string };
+        await client.query(
+          `INSERT INTO specification_audit_log (specification_id, action, changed_by, new_values)
+           VALUES ($1, 'created', $2, $3)`,
+          [row.id, actorId ? String(actorId) : null, JSON.stringify(row)]
+        );
+        return row;
+      },
     );
 
     console.log(`[CMC Specs] Created specification ${spec.id} for ${data.materialName}`);

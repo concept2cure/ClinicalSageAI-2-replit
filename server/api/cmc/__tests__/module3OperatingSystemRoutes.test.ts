@@ -25,6 +25,19 @@ vi.mock('../../../db', () => ({
 // The section-approve endpoint re-authenticates the signer (§11) before any
 // write, then records a hash-chained governed action; mock both so the gate +
 // audit are exercised without bcrypt/MFA or a real ledger.
+/* Four-eyes on a section approval — the signer may not be one of the people who
+   ENTERED the register records the section cites — is a control with its own
+   suite, against a real Postgres and the real audit chain
+   (services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts),
+   and its own route cases (module3SectionApproveFourEyes.test.ts). Here it is a
+   pass-through, because these cases drive the SQL and audit sequence and would
+   otherwise all refuse on a fixture that cites no recorded source. */
+vi.mock('../../../services/governance/separation-of-duties', () => ({
+  assertSignerIsNotAuthor: async () => ({ checked: true, reason: 'stubbed in this suite' }),
+  cmcModule3SectionTarget: (projectId: string, sectionKey: string) =>
+    `cmc-module3-section:${projectId}:${sectionKey}`,
+  separationOfDutiesRefusal: () => null,
+}));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: (...a: unknown[]) => mockVerifyReauth(...a),
   recordGovernedAction: (...a: unknown[]) => mockRecordGoverned(...a),

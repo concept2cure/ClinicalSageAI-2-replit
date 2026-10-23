@@ -1,0 +1,10 @@
+{
+  "originalPath": "/workspace/scratch/project-files-source-strict-lint.txt",
+  "archivedAt": "2026-10-20T19:34:15.410112+00:00",
+  "rawBytes": 0,
+  "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rawUtf8": "",
+  "capturedWrapperExitCode": null,
+  "qualification": "Original retained artifact has no captured shell/wrapper exit status. Test summaries and any JSON-embedded per-file lint exitCode values are retained as originally recorded; no wrapper status is inferred. Original UTF-8 bytes are preserved without normalization.",
+  "retainedSummaryLines": []
+}

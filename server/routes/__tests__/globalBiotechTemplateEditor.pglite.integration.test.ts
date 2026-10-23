@@ -2,8 +2,8 @@
  * proof does not qualify agency completeness, deployment RLS or transmission. */
 import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { GLOBAL_REGISTRY } from '../../../shared/regulatory/global-document-registry';
-import { DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getRegistryDocumentTemplate, type DocumentTemplateStructure } from '../../services/market-specs/document-template-library';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
+import { DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getRegistryDocumentTemplate, type DocumentTemplateStructure, type TemplateSection } from '../../services/market-specs/document-template-library';
 import * as builtinTemplates from '../../services/authoring/builtin-authoring-templates';
 import { buildDocumentPreparation } from '../../services/market-specs/document-preparation';
 import { critiqueSavedDocument } from '../../services/ana/saved-document-critique';
@@ -35,8 +35,8 @@ templateEditorFixture([
 ]);
 
 const regions = ['US', 'CA', 'EU', 'JP', 'GLOBAL'];
-const filings = GLOBAL_REGISTRY.filter(entry => entry.active && entry.segment === 'pharma_biotech' && regions.includes(entry.region));
-const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.some(family => family === 'ectd' || family === 'ctis'));
+const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)) && regions.includes(entry.region));
+const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 interface ListedTemplate extends IndAuthoringTemplate {
   category: string;
   filingContext: { registryId: string | null; region: string; agency: string };
@@ -91,6 +91,12 @@ async function verifySavedReview(documentId: string, savedCount: number, recorde
   }
 }
 
+/** Every node of an outline, front matter first, depth first: the picker's document holds them all (builtin-templates-carry-whole-outline.test.ts). */
+const outlineRows = (outline: DocumentTemplateStructure): TemplateSection[] => {
+  const walk = (list: TemplateSection[]): TemplateSection[] => list.flatMap(s => [s, ...walk(s.subsections ?? [])]);
+  return walk([...(outline.frontMatter ?? []), ...outline.sections]);
+};
+
 async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStructure | undefined) {
   const created = await create(template, { title: 'Renamed regional working document' });
   expect(created.status, `${template.entryId}: ${JSON.stringify(created.body)}`).toBe(201);
@@ -107,7 +113,7 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   expect(saved.length).toBeGreaterThan(0);
   expect(created.body.sections_seeded).toBe(saved.length);
   if (outline) expect(saved.map(section => [section.code, section.title]))
-    .toEqual(outline.sections.map(section => [section.number, section.heading]));
+    .toEqual(outlineRows(outline).map(section => [section.number, section.heading]));
   expect(saved.every(section => section.content === '' && section.doc_id === doc.id && section.tenant_id === ORG)).toBe(true);
   const audits = (await db.pglite.query<{ section_id: string; metadata: { templateSource: unknown; templateGuidance: { guidance_text: string } } }>(
     "SELECT section_id,metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'", [doc.id, ORG])).rows;
@@ -117,7 +123,7 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
     expect(audit.metadata.templateSource).toEqual(doc.provenance.templateSource);
     expect(audit.metadata.templateGuidance.guidance_text).toBeTypeOf('string');
     if (outline) expect(audit.metadata.templateGuidance.guidance_text)
-      .toContain(outline.sections.find(row => row.number === section.code)!.purpose);
+      .toContain(outlineRows(outline).find(row => row.number === section.code)!.purpose);
     const guidance = await author(request(app).get(`/api/authoring/guidance/${section.id}`));
     expect(guidance.status, JSON.stringify(guidance.body)).toBe(200);
     expect(guidance.body.template_guidance).toContainEqual(expect.objectContaining(audit.metadata.templateGuidance));
@@ -130,7 +136,7 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   return saved.length;
 }
 
-describe('every supported active biotech filing and component reaches the one editor', () => {
+describe('every supported active medicinal, device and diagnostics filing and component reaches the one editor', () => {
   it('lists exact registry and component identities with explicit regional scope, without writes', async () => {
     const before = await counts();
     const rows = await listed();
@@ -143,7 +149,7 @@ describe('every supported active biotech filing and component reaches the one ed
     expect(await counts()).toEqual(before);
   });
 
-  it('creates and reopens all registry filings and existing biotech components with exact saved evidence', async () => {
+  it('creates and reopens all registry filings and existing document components with exact saved evidence', async () => {
     const before = await counts();
     const rows = await listed();
     let sectionCount = 0;

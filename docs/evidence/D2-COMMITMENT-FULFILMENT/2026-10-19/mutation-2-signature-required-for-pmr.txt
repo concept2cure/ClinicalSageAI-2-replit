@@ -1,0 +1,154 @@
+# Mutation 2 — a PMR is fulfilled as a governed write with a reason, no signature (fulfilmentRule)
+#
+# Replaced in server/services/ha-interactions/ha-logic.ts:
+#   -   if (commitmentType === 'meeting_commitment' || commitmentType === 'other') return { ...UNSIGNED_RULE };# with:
+#   +   if (commitmentType === 'meeting_commitment' || commitmentType === 'other' || commitmentType === 'pmr') return { ...UNSIGNED_RULE }; // MUTATION 2: a PMR is fulfilled unsigned#
+# Test run with the mutation in place: both — server/services/ha-interactions/__tests__/fulfilment-logic.test.ts|tests/db/commitment-fulfilment-evidence.dbtest.ts tests/db/commitment-fulfilment-database.dbtest.ts 
+# Restored afterwards: sha256 before 77bedc61428cf3acc8c371dff81342e619e7bf2a3d948939cc8351b09e743ca5, after 77bedc61428cf3acc8c371dff81342e619e7bf2a3d948939cc8351b09e743ca5 (identical)
+
+## The mutation (git diff of the working tree while it was in place)
+diff --git a/server/services/ha-interactions/ha-logic.ts b/server/services/ha-interactions/ha-logic.ts
+index 850c0d3d..4c935495 100644
+--- a/server/services/ha-interactions/ha-logic.ts
++++ b/server/services/ha-interactions/ha-logic.ts
+@@ -8,6 +8,7 @@
+  * @module server/services/ha-interactions/ha-logic
+  */
+ 
++import { createHash } from 'node:crypto';
+ import type {
+   CommitmentStatus,
+   HaInteractionStatus,
+@@ -75,6 +76,141 @@ export function summarizeCommitmentPortfolio(commitments: CommitmentView[], toda
+   return s;
+ }
+ 
++// ─── Fulfilment: what met a commitment (P-40, 2026-10-19) ───────────────────
++
++/**
++ * The commitment types whose fulfilment is a Part 11 signed act. Recording a
++ * postmarketing requirement or commitment, or a REMS, as fulfilled takes it off
++ * the overdue register and out of the annual status report (21 CFR
++ * 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1): an attestation, signed,
++ * that names what met it. The database holds the same list
++ * (migrations/20261019_commitment_fulfilment_evidence.sql,
++ * regulatory_commitments_signed_fulfilment_guard), pinned equal by
++ * tests/db/commitment-fulfilment-database.dbtest.ts.
++ */
++export const SIGNED_FULFILMENT_TYPES = ['pmr', 'pmc', 'rems'] as const;
++
++export interface FulfilmentRule {
++  /** Recorded only by an electronic signature (the one ceremony). */
++  signatureRequired: boolean;
++  /** Names the sequence the agency received, the Vault version, or both. */
++  evidenceRequired: boolean;
++  /** Names its date: the signer is shown the date the signature binds. */
++  dateRequired: boolean;
++}
++
++const SIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: true, evidenceRequired: true, dateRequired: true });
++const UNSIGNED_RULE: FulfilmentRule = Object.freeze({ signatureRequired: false, evidenceRequired: false, dateRequired: false });
++
++/**
++ * What fulfilling a commitment of this type takes. A meeting commitment or
++ * other is a governed write with a reason, and what met it may be named. Any
++ * other value, which the column's CHECK does not admit today, is held to the
++ * signed rule: a new type is never fulfilled more loosely by default.
++ */
++export function fulfilmentRule(commitmentType: string): FulfilmentRule {
++  if (commitmentType === 'meeting_commitment' || commitmentType === 'other' || commitmentType === 'pmr') return { ...UNSIGNED_RULE }; // MUTATION 2: a PMR is fulfilled unsigned
++  return { ...SIGNED_RULE };
++}
++
++/** The type as a person names it in a sentence: "A PMR", "A REMS". */
++function typeWords(commitmentType: string): string {
++  const t = commitmentType.toUpperCase();
++  return ['PMR', 'PMC', 'REMS'].includes(t) ? `A ${t}` : 'This commitment';
++}
++
++/** Why this fulfilment names too little to be recorded, or null. */
+
+## The run
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date 9ms
+   → pmr: expected { signatureRequired: false, …(2) } to deeply equal { signatureRequired: true, …(2) }
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations 0ms
+ × server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence 1ms
+   → .toMatch() expects to receive a string, but got object
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date
+AssertionError: pmr: expected { signatureRequired: false, …(2) } to deeply equal { signatureRequired: true, …(2) }
+- Expected
++ Received
+-   "dateRequired": true,
+-   "evidenceRequired": true,
+-   "signatureRequired": true,
++   "dateRequired": false,
++   "evidenceRequired": false,
++   "signatureRequired": false,
+ FAIL  server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence
+TypeError: .toMatch() expects to receive a string, but got object
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 6ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer 227ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT 32ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT 25ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it 33ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a signature by someone else, or over other evidence, does not count (M5) 59ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > names only a version of this organisation, at its own sha256 47ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > names only a sequence the agency received 20ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards 22ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR 45ms
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays 297ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 0ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 59ms
+   → expected { signatureRequired: false, …(3) } to match object { signatureRequired: true, …(3) }
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 39ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 29ms
+   → expected 'SIGNATURE_NOT_TAKEN' to be 'EVIDENCE_REQUIRED' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 20ms
+   → expected 'SIGNATURE_NOT_TAKEN' to be 'FULFILMENT_DATE_REQUIRED' // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 54ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while recording or reading a commitment fulfilment. The problem has been logged."}: expected 500 to be 400 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 30ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 409 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 31ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 409 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 25ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 409 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 31ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 27ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 26ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 22ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 25ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 404 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 28ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 409 // Object.is equality
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 23ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 17ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 201 // Object.is equality
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 21ms
+   → expected { rule: { …(3) }, …(6) } to match object { state: 'signed', …(4) }
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 21ms
+   → {"error":{"code":"SIGNATURE_NOT_TAKEN","message":"A PMR is fulfilled with a reason, not a signature. Nothing was recorded."}}: expected 400 to be 409 // Object.is equality
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 30ms
+
+## Reading
+With the code's rule saying a PMR is unsigned, the rule test fails ("a PMR, PMC or REMS needs a signature, what met it, and its date"), and every signed PMR case in tests/db/commitment-fulfilment-evidence.dbtest.ts fails, because the route now answers SIGNATURE_NOT_TAKEN to the signed request. The point of this mutation is the other file: every case of tests/db/commitment-fulfilment-database.dbtest.ts still passes, including "a fulfilled PMR with evidence and no signature fails at COMMIT" and "the database signs exactly the types the code signs". The database refuses an unsigned PMR independently of the code's rule; a code regression of this kind cannot record one. (The type pin passes because it states the database's behaviour against SIGNED_FULFILMENT_TYPES, which this mutation does not touch; fulfilmentRule is the line changed. Mutation 3 is its converse: the code's rule intact, the database's removed.) Control: "M2 unit" 15 passed, "M2 db" 40 passed.

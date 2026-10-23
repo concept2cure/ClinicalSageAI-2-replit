@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { checkFigureArithmetic } from '../dossierReconciliation';
+import { checkFigureArithmetic } from '../figure-arithmetic';
 import { checkTerminologyConsistency } from '../terminology-consistency';
 
 const STALE = 'Serious adverse events were reported in 4.6% (15/305) of Drug X subjects.';

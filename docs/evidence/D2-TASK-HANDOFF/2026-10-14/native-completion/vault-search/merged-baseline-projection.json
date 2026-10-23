@@ -1,0 +1,64 @@
+{
+  "source": "Root serial merged-32-before-census.json and underlying JSON/verbose native result at merged23502318.",
+  "fileCount": 8,
+  "caseCount": 45,
+  "scope": "Only the eight owned Vault fixtures, not the complete prior32 result.",
+  "files": [
+    {
+      "file": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "counts": {
+        "skipped": 5
+      },
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-chunking-off.dbtest.ts",
+      "counts": {
+        "skipped": 4
+      },
+      "firstFailure": "expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-document-relationships.dbtest.ts",
+      "counts": {
+        "skipped": 9
+      },
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-fixity.dbtest.ts",
+      "counts": {
+        "skipped": 4
+      },
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-library-search.dbtest.ts",
+      "counts": {
+        "skipped": 4
+      },
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "counts": {
+        "skipped": 6
+      },
+      "firstFailure": "expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-passage-search.dbtest.ts",
+      "counts": {
+        "skipped": 10
+      },
+      "firstFailure": "expected 403 to be 201 // Object.is equality"
+    },
+    {
+      "file": "tests/db/vault-reupload.dbtest.ts",
+      "counts": {
+        "failed": 3
+      },
+      "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality\n    at /workspace/concept2cure/tests/db/vault-reupload.dbtest.ts:152:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:"
+    }
+  ]
+}

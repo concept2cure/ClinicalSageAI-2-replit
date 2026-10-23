@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:single-native-canvas"
+  ],
+  "at": "2026-10-20T22:44:05.447776+00:00",
+  "elapsedSeconds": 0.403,
+  "exitCode": 0,
+  "sourceFreeze": "source-freeze-final.json",
+  "stdout": "[single-native-canvas] ok \u2014 @napi-rs/canvas 0.1.80: one copy\n",
+  "stderr": ""
+}

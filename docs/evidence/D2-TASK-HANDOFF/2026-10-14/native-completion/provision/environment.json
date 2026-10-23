@@ -1,0 +1,44 @@
+{
+  "kind": "isolated local synthetic QA; not deployed acceptance",
+  "baselineCommit": "23502318f439237cd2cc9a2246cba263f3b18f33",
+  "containerName": "c2c-handoff-native-20261014",
+  "database": "concept2cure-ri_dbtest",
+  "hostBinding": "127.0.0.1:55432",
+  "image": "pgvector/pgvector:pg15",
+  "imageId": "sha256:4b4956e2ab1f0aec9779dfca20366a9963a3f24c34269c3a3f24c34269c3a115dd838387f0734",
+  "pulledDigest": "sha256:47af0b65960b14f1c6945aa4ccae37836c632e9a6fe0eea9160936e616e5b2e9",
+  "node": "22.23.3",
+  "installFreshExitCode": 0,
+  "deployMigrateExitCode": 0,
+  "runtimeRole": "app_service",
+  "runtimePosture": "NOSUPERUSER/NOBYPASSRLS; actual scoped LazyRequestDbClient verifies RLS-on in canonical fixtures. Raw new pools do not establish request scope.",
+  "credentials": "Locally generated synthetic values kept outside Git; none retained here.",
+  "psql": "Host wrapper streams scripts into actual psql in the owned Docker container; no simulated migration output.",
+  "retention": "Fresh invocation namespaces; container and prior synthetic audit/source records retained.",
+  "files": [
+    {
+      "path": "scripts/db/install-fresh.mjs",
+      "sha256": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d"
+    },
+    {
+      "path": "scripts/db/deploy-migrate.mjs",
+      "sha256": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "sha256": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "sha256": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    },
+    {
+      "path": "tests/db/catalog-native-fixture.ts",
+      "sha256": "0711edcd607f5f99433cf124a5d12b4210500fb9b386c8ac123eeb97b7bcf507"
+    },
+    {
+      "path": "tests/db/vault-current-access-fixture.ts",
+      "sha256": "203fa05d37c735303ef6a55ad0ac4c8a654b0ade3e5ae3d42c68cb2e32e6eed0"
+    }
+  ]
+}

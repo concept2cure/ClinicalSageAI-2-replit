@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "hooksPath": ".husky",
+  "head": "3b880f96d4a79adbf14f68ce654023fc3256a0b4",
+  "note": "Normal Git hooks; inherited network environment, no bypasses"
+}

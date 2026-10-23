@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "head": "1b0141aea2c47f1bbed5be95b024c9cfd54d8484",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "hooksPath": ".husky",
+  "note": "Normal hooks, no bypass. Original refused compiler gate retained under initial-implementation-push.*"
+}

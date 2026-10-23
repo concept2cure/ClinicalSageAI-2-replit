@@ -236,3 +236,16 @@ describe('renderReport', () => {
     expect(a.generatedAt).toBe(FIXED_AT);
   });
 });
+
+
+it('retains scalar columns populated after null first cells without stringifying nested objects', () => {
+  const report = renderReport(baseInput({ summary: { computedScope: 'organization', domain: { rows: [
+    { title: 'Undated first', dueDate: null, submission: null, unknown: null, nested: { hidden: true } },
+    { title: 'Recorded later', dueDate: '2026-10-17', submission: 77, unknown: null, nested: { hidden: true }, laterOnly: 'Retained later field' },
+  ] } } }));
+  const table = report.sections.find(section => section.id === 'register')?.blocks.find(block => block.kind === 'table');
+  expect(table?.kind).toBe('table');
+  if (table?.kind !== 'table') throw new Error('Actual register table missing');
+  expect(table.columns).toEqual(['Title', 'Due date', 'Submission', 'Unknown', 'Later only']);
+  expect(table.rows).toEqual([['Undated first', null, null, null, null], ['Recorded later', '2026-10-17', 77, null, 'Retained later field']]);
+});

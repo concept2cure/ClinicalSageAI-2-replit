@@ -139,6 +139,7 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
       expect((screen.getByRole('button', { name: label }) as HTMLButtonElement).disabled).toBe(true);
   });
   it('keeps partial section editing/navigation while refusing optimistic whole-document hints', async () => {
+    authService.setToken('synthetic-current-partial', AUTHOR, 'synthetic-current-partial-refresh');
     apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => {
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { ...row,
         readScope: 'sections', sourceMetadataState: 'available',

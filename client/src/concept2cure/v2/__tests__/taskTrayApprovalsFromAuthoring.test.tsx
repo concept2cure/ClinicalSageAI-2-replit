@@ -17,12 +17,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const actor = vi.hoisted(() => ({ id: '42', organizationId: '7', role: 'admin' }));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: actor }),
+  authService: { getUser: () => actor },
+}));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 
 import { TaskTray } from '../TaskTray';
+import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 
 const res = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload });
 const MY_WORK = { success: true, data: { items: [], total: 0, overdue: 0, dueSoon: 0, blocked: 0, approvalsPending: 0 } };
@@ -64,8 +70,11 @@ async function openTray(onNav = vi.fn()) {
 
 const approvalsGroup = () => (screen.queryByText('Approvals — you sign')?.closest('.tt-group') ?? null) as HTMLElement | null;
 
-afterEach(() => cleanup());
-beforeEach(() => apiRequest.mockReset());
+afterEach(() => { cleanup(); clearAuthToken(); });
+beforeEach(() => {
+  apiRequest.mockReset();
+  setAuthToken(`test.${btoa(JSON.stringify({ userId: 42, organizationId: 7 }))}.synthetic`);
+});
 
 describe('TaskTray — approvals come from the authoring approval chain', () => {
   it('lists the documents at my sign-off from the review board, and nothing from the unified store', async () => {

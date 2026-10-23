@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-10-20T19:47:19.552029+00:00",
+  "ownedServerPid": 4732,
+  "serverPidPresent": false,
+  "loopbackPort": 5192,
+  "portConnectResult": 111,
+  "productionPinsChecked": 43,
+  "productionDrift": [],
+  "fixturePinsChecked": 7,
+  "fixtureDrift": [],
+  "serverStopSignal": "SIGTERM",
+  "serverExecCompletionExitCode": 143,
+  "qualification": "The owned fixture server was deliberately signaled after a successful browser replay; its exec completion is signal exit143. Port/PID closure and matching source/fixture pins are the cleanup assertions."
+}

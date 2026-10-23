@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-20T23:49:44.519664+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "-t",
+    "unmapped chosen device"
+  ],
+  "elapsedSeconds": 3.424,
+  "exitCode": 1,
+  "rawOutput": "chosen-operation-red-output.txt.gz",
+  "outputSha256": "ef64bd0a471f1c2c765bde5462b6fad12404efab54f7b50a46bf0a0cdd676196",
+  "sources": {
+    "server/services/authoring/authoring-assembly-source.ts": "64fd91f6574308a4b19150534989c0fbb136dc2914d18068334a3c73125b13bc",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts": "c3f949dadcd08c707313d0d6c35ea5c1a475b145bd9ce388b2c727a189707441"
+  },
+  "sourceDrift": [],
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 52 skipped (53)"
+  ]
+}

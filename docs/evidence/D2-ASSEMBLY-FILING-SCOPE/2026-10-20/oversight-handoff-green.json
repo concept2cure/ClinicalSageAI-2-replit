@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-20T23:39:39.350420+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx"
+  ],
+  "elapsedSeconds": 19.849,
+  "exitCode": 0,
+  "sources": {
+    "client/src/concept2cure/v2/editor/authoringOversight.ts": "6ec2ab4d14b67f49c9d727e44ebc3483a3735d6908ead45480aae74a15ee345e",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx": "99a7524006e5a321af4b25c88ac8a7163c4011ba5215a12e6eb746033a712d9c"
+  },
+  "sourceDrift": [],
+  "rawOutput": "oversight-handoff-green-output.txt.gz",
+  "outputSha256": "f745670f3a84a0f08a43effc6d5875f1515dafd55529e82c8a83c62444e66001",
+  "summary": [
+    "Test Files  2 passed (2)",
+    "Tests  28 passed (28)"
+  ]
+}

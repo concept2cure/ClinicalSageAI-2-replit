@@ -6,7 +6,7 @@
  *
  *   - Continue boot (overall === 'healthy' or 'degraded')
  *   - Exit the process with code 1 (overall === 'failing' AND
- *     production AND not opted out via SECURITY_SELF_TEST_NONBLOCKING)
+ *     production)
  *
  * Production must NOT serve traffic with broken security posture —
  * a missing JWT secret, unreachable clamd, or broken audit chain
@@ -18,11 +18,12 @@
  * clamd or have a stale audit table; we don't want every dev boot
  * to die.
  *
- * Opt-out: SECURITY_SELF_TEST_NONBLOCKING=true keeps the test
- * running (so the log line still appears) but skips the
- * process.exit. Use only when an operator has explicitly accepted
- * a temporarily-degraded posture (e.g. clamd outage during a
- * planned maintenance window).
+ * No production opt-out. SECURITY_SELF_TEST_NONBLOCKING=true used to
+ * skip the process.exit; one environment line then let production boot
+ * with every critical failure at once (no virus scanner included).
+ * startup/env.ts now refuses it at boot in production (MR-08), and this
+ * gate no longer reads it there. Outside production it changes nothing:
+ * the self-test never blocks a non-production boot.
  */
 
 import type { Pool } from 'pg';
@@ -30,8 +31,6 @@ import { runSecuritySelfTest } from '../services/securityHealth';
 import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('security-self-test');
-
-const NONBLOCKING_ENV = 'SECURITY_SELF_TEST_NONBLOCKING';
 
 export async function runBootSecuritySelfTest(pool: Pool): Promise<void> {
   const report = await runSecuritySelfTest(pool);
@@ -41,14 +40,6 @@ export async function runBootSecuritySelfTest(pool: Pool): Promise<void> {
   if (process.env.NODE_ENV !== 'production') {
     log.warn(
       'Security self-test FAILED in non-production — would have blocked boot in prod',
-    );
-    return;
-  }
-
-  if (process.env[NONBLOCKING_ENV] === 'true') {
-    log.error(
-      `Security self-test FAILED but ${NONBLOCKING_ENV} is set — continuing boot anyway`,
-      { report },
     );
     return;
   }
@@ -64,8 +55,7 @@ export async function runBootSecuritySelfTest(pool: Pool): Promise<void> {
    
   console.error(
     `[security-self-test] FAILED. Critical checks:\n` +
-      failures.map(f => `  - ${f.name}: ${f.reason ?? 'no reason'}`).join('\n') +
-      `\nSet ${NONBLOCKING_ENV}=true to override (NOT recommended).`,
+      failures.map(f => `  - ${f.name}: ${f.reason ?? 'no reason'}`).join('\n'),
   );
   process.exit(1);
 }

@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-20T23:03:32.740739+00:00",
+  "elapsedSeconds": 104.068,
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--silent=true",
+    "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts",
+    "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts",
+    "server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts"
+  ],
+  "exitCode": 1,
+  "sources": {
+    "server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts": "c1504c9a56efcfe10dec7ab1fc0aa2e99b435abd6258c492456b1d70df7f84bb",
+    "server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts": "c4ce58c44558b79681e02928edf27d280e22c73d14a09cc7ce47b26c49213921",
+    "server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts": "e5d85ae8c2906732e8f781eae17881691e9d0c1ae871a316b7ce56b7ce59af92"
+  },
+  "sourceDrift": [],
+  "rawOutput": "additional-signing-fixtures-red-output.txt.gz",
+  "outputSha256": "406fe369a4e3c911ff3b2c00bede0f00c2d112483640397f8dfd30ad950e0fcf",
+  "summary": [
+    "Test Files  3 failed (3)",
+    "Tests  31 failed | 17 passed (48)"
+  ]
+}

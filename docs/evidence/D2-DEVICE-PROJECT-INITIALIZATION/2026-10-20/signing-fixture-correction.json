@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-20T23:01:10.670728+00:00",
+  "changedSourcePins": [
+    "server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts"
+  ],
+  "productionSourceChanged": false,
+  "canonicalMigration": "migrations/20261012_submission_leaf_stf_study_tagging.sql",
+  "migrationOnApplier": true,
+  "before": "source-freeze-merged.json",
+  "after": "source-freeze-landing.json",
+  "pins": 150,
+  "redReceipt": "merged-integration-before-signing-fixture.json",
+  "redFailures": 3,
+  "redPasses": 247,
+  "correction": "Apply existing migration in exact real-schema signing fixture; retain all original dispatch/freeze/stale-binding assertions",
+  "buildStaticScope": "Prior merged build and16static checks retain identical product sources; rerun18suites, affected fixture lint, warning ratchet and compiler on final fixture."
+}

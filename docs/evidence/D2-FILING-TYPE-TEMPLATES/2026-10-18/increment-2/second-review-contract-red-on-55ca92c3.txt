@@ -1,0 +1,17 @@
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > every class has a pack spec, and every spec names a class
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > each live pack is the outline its class derives, node for node, with its provenance
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > every parent_key resolves and every key is unique inside each class pack
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > the CSR is ICH E3 to its full depth, not the 8-of-16 stub
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the packs carry what their filings need > a supplement carries its own parts, not the NDA dossier
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the packs carry what their filings need > a CBE-0 needs its change description and environmental claim as much as a CBE-30 does
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > every superseded prior version is superseded by exactly the version that replaced it
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > scaffolding a class writes its own outline; an application still gets its dossier
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the class packs supersede, scaffold and replay > the next deploy replays the set over a supplement document without error or change
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the review corrections supersede 20261018 on a deployed database > v1.0 is live, a document is bound to it; two deploys later the corrections are live and the document keeps its outline
+ × tests/schema-contract/c2c-filing-class-packs.contract.test.ts > a superseded version says why, and keeps no withdrawn claim > the v1.0 IND safety report and NDA annual report packs no longer claim what the review withdrew
+   → expected 'medium' to be 'low' // Object.is equality
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > without the migration, a supplement has no outline to scaffold
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > a pack row whose tree is not the file's stops the deploy
+ ✓ tests/schema-contract/c2c-filing-class-packs.contract.test.ts > the contract is falsifiable > a v1.1 row with the right node count and one flag flipped stops the corrections file
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 13 passed (14)

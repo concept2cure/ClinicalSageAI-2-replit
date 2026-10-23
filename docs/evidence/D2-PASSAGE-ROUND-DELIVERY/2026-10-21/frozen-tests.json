@@ -1,0 +1,39 @@
+{
+  "frozenAt": "2026-10-21T00:24:04.237698+00:00",
+  "unchangedBaselineInputs": 26,
+  "tests": [
+    {
+      "file": "server/services/ana/__tests__/passage-round-budget.test.ts",
+      "sha256": "c5240153c5ad361072fa187ccbe429fafa2ef6725d201a9a640b8398b0bb35c1",
+      "baselineExpectedFailures": 13,
+      "baselinePassingControls": 11
+    },
+    {
+      "file": "server/routes/ana-ri/__tests__/stream-passage-round-delivery.test.ts",
+      "sha256": "c8c65be7514e3e843585ef21b5177d0e94d3eddd1295ed18a3372287f6be6582",
+      "baselineExpectedFailures": 3,
+      "baselinePassingControls": 3
+    },
+    {
+      "file": "tests/services/tool-outcome-passage-withheld.test.ts",
+      "sha256": "5083e50ba788ff7f7dded872c6be2152cc13d1ed5cd165e0740bd18d3074429e",
+      "baselineExpectedFailures": 8,
+      "baselinePassingControls": 39
+    },
+    {
+      "file": "server/services/ana/__tests__/passage-round-executor.test.ts",
+      "sha256": "311a2b62d1009eead544ad66d8f12ba0e463ba35f597a1af8c6d867d64104e25",
+      "baselineExpectedFailures": 9,
+      "baselinePassingControls": 5
+    },
+    {
+      "file": "server/services/ana/__tests__/sub-agent-passage-staging.test.ts",
+      "sha256": "a677a4f47dadb4e5d4d3fb7be8ad1d46a3efbcafd2c1ba4a7053e30e06bdc73a",
+      "baselineExpectedFailures": 22,
+      "baselinePassingControls": 5
+    }
+  ],
+  "total": 118,
+  "expectedFailures": 55,
+  "passingControls": 63
+}

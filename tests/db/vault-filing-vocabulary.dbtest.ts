@@ -14,9 +14,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vocab ';
-const CODE = 'DBTEST-VOCAB';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vocab ${RUN} `;
+const CODE = `DBTEST-VOCAB-${RUN}`;
 const PDF = (tag: string) => Buffer.from(`%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n% ${tag}\n%%EOF\n`, 'utf8');
 
 let owner: Pool;
@@ -70,49 +73,30 @@ async function storedVersionIds(): Promise<Set<string>> {
   return new Set((await getStorageProvider().list(orgId, programId)).map((o) => o.vaultVersionId));
 }
 
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE action LIKE 'vault.document.%' AND tenant_id = $1`, [orgId]);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query(
-    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
-    [`${PROBE}%`],
-  );
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
-
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 2 });
+  await assertVaultFixtureDatabase(owner);
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, 'dbtest-vocab-tenant')
+    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}tenant`],
+    [`${PROBE}tenant`, `dbtest-vocab-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vocab@example.test', $1, 'not-a-real-hash')
+    `INSERT INTO users (email, name, password_hash) VALUES ($2, $1, 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE}actor`],
+    [`${PROBE}actor`, `dbtest-vocab-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, 'DBTEST-VOCAB', $2, 'IND', 'drug', 'FDA', 'Vocabin 5mg') RETURNING id`,
-    [`${PROBE}program`, orgId],
+     VALUES ($1, $3, $2, 'IND', 'drug', 'FDA', 'Vocabin 5mg') RETURNING id`,
+    [`${PROBE}program`, orgId, CODE],
   );
   programId = String(prog.rows[0].id);
+  await seedVaultFixtureParent(owner, { orgId, orgUuid, programId }, { userId, namespace: CODE });
+  await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
   const doc = await owner.query(
     `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
        content_hash, s3_bucket, s3_key, file_name, placement_status)
@@ -124,8 +108,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
   await owner.end().catch(() => {});
+  await closeVaultFixtureRuntime();
 });
 
 describe('the placement service holds a filing to the vocabulary (POST /:id/file, AnA)', () => {

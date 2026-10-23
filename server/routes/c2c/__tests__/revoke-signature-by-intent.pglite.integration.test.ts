@@ -140,6 +140,7 @@ beforeEach(async () => {
   await pg.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   await pg.exec(PEOPLE_DDL);
   await pg.exec(ECTD_DDL);
+  await pg.exec(read('migrations/20261012_submission_leaf_stf_study_tagging.sql'));
   await pg.exec(read('migrations/20260813d_esignature_governed_unification.sql'));
   await pg.exec(read('db/migrations/20260730_esign_audit_db_level_immutability.sql'));
   await q(`INSERT INTO users (id, email, name, title) VALUES ($1, 'dana@acme.test', 'Dana Reyes', 'Head of Regulatory')`, [SIGNER]);

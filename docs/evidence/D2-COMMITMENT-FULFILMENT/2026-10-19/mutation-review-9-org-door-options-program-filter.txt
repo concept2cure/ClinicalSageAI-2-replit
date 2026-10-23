@@ -1,0 +1,32 @@
+# Review mutation 9 — the organisation's door offers only sequences of programs the person can open (finding 6); the filter is made a tautology, so the statement keeps its parameters
+#
+# File mutated: server/services/ha-interactions/commitment-fulfilment.ts
+# Test selection (db): tests/db/commitment-fulfilment-evidence.dbtest.ts (-t "offers a member only the sequences")
+# Restored afterwards: sha256 before 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5, after 8041be22c862418b1f0586da3068054e90c4b7cdeb524bba2804355fc9ae39c5 (identical)
+
+## What was replaced (diff of the file while the mutation was in place)
+--- a/server/services/ha-interactions/commitment-fulfilment.ts
++++ b/server/services/ha-interactions/commitment-fulfilment.ts (mutated)
+@@ -326,7 +326,7 @@
+              FROM ectd_sequences s
+              JOIN submissions sub ON sub.id = s.submission_id AND sub.organization_id = s.organization_id AND sub.deleted_at IS NULL
+             WHERE s.organization_id = $1 AND s.deleted_at IS NULL AND s.dispatch_status = ANY($2::text[])
+-              AND (sub.program_id IS NULL OR sub.program_id = ANY($3::uuid[]))
++              AND (sub.program_id IS NULL OR sub.program_id = ANY($3::uuid[]) OR true)
+             ORDER BY s.id DESC
+             LIMIT 201`,
+           [p.orgId, filed, access.programIds],
+
+## Control: the same selection on the unmutated tree
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 93ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 30 skipped (31)
+
+## With the mutation in place
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 46ms
+   → expected [ 2648, 2644, 2643 ] to not include 2648
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too
+AssertionError: expected [ 2648, 2644, 2643 ] to not include 2648
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)

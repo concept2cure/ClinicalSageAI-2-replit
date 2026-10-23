@@ -3,6 +3,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -46,6 +48,9 @@ async function showType() {
 }
 
 beforeEach(() => {
+  clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`,
+    { id: '7', organizationId: '12', roles: ['admin'], permissions: ['governed:write'] }, 'fixture-refresh', 3600);
   priorProject = window.C2C_PROJECT;
   publishShellProject({ id: PROGRAM, title: 'IND project' });
   apiRequest.mockReset();
@@ -53,6 +58,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null); clearAuthToken(); localStorage.clear();
   window.C2C_PROJECT = priorProject;
   sessionStorage.removeItem('c2c.shell-project');
 });

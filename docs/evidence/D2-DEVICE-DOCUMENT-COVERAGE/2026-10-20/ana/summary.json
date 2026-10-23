@@ -1,0 +1,67 @@
+{
+  "recordedAt": "2026-10-20T20:17:34.859298+00:00",
+  "completionHead": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "node": "v22.23.3",
+  "red": {
+    "cases": 23,
+    "failed": 23,
+    "exitCode": 1,
+    "receipt": "red.json",
+    "exactTestSource": "red-test.ts.txt",
+    "qualification": "Pre-fix device-entry rejection and absent device-specific drafting context; no import or fixture setup failure."
+  },
+  "green": {
+    "passed": 213,
+    "suites": 5,
+    "newDeviceCases": 43,
+    "exitCode": 0,
+    "sourceAndDependencyPins": 14,
+    "receipt": "current-tests.json",
+    "pinsStableDuringFocusedRun": true,
+    "allDependencyPinsStillCurrent": false,
+    "ownedProductionPinsStillCurrent": false,
+    "supersedingRootReceipt": "../integration.json",
+    "qualification": "The focused run was stable at execution. Later root work adds JP_TODOKEDE, completes device-only QMS scope, and updates preparation/drafting sources; the compatibility correction also extends preparation. This receipt qualifies its recorded bytes only. The final root combined replay/lint/compiler supersedes final source qualification.",
+    "laterCompatibilityReceipt": "compatibility-scope/current-tests.json",
+    "finalOwnedSourceQualification": "Historical focused qualification only; later root preparation/helper/drafting changes are qualified by the final combined replay, compiler and lint checks."
+  },
+  "lint": {
+    "strictFiles": 6,
+    "strictErrors": 0,
+    "strictWarnings": 0,
+    "draftingServiceErrors": 0,
+    "draftingServiceWarnings": 6,
+    "baselineServiceErrors": 0,
+    "baselineServiceWarnings": 6,
+    "baselineReadViaStdin": true,
+    "receipt": "lint.json",
+    "qualification": "Historical lint receipt at its recorded source versions. Later preparation/helper/drafting changes require and receive root final source qualification."
+  },
+  "historicalCandidates": [
+    {
+      "receipt": "candidate.json",
+      "passed": 188,
+      "failed": 6,
+      "reason": "Four new assertions used the wrong existing UUID response shape; two old assertions intentionally expected the previous device rejection."
+    },
+    {
+      "receipt": "candidate-before-bridge-freeze.json",
+      "passed": 211,
+      "failed": 2,
+      "pinsStable": false,
+      "reason": "Legacy IVDR aliases were corrected in the shared bridge during this run; two alias cases still read the earlier module."
+    },
+    {
+      "receipt": "candidate-lint.json",
+      "reason": "Six pre-existing drafting-service warnings and two new complexity warnings. The two new warnings were resolved by extracting small helpers."
+    }
+  ],
+  "notQualified": [
+    "Live model/provider consumption",
+    "Human acceptance",
+    "Scientific or regulatory adequacy",
+    "Official agency artifact validity",
+    "Agency transmission"
+  ],
+  "updatedAt": "2026-10-20T21:02:12.219655+00:00"
+}

@@ -33,6 +33,7 @@ beforeAll(async () => {
   await pg.exec(`CREATE TABLE project_memory_entries (
     id serial PRIMARY KEY, project_id integer NOT NULL, organization_id integer NOT NULL,
     category text NOT NULL, title text NOT NULL, content text NOT NULL,
+    source_document_type text,
     confidence_score real DEFAULT 0.8, importance_level text DEFAULT 'medium',
     status text DEFAULT 'active', created_at timestamp NOT NULL DEFAULT now()
   )`);
@@ -56,16 +57,34 @@ beforeEach(async () => {
 type MemoryRow = {
   title: string; category: string; content?: string; projectId?: number; organizationId?: number;
   confidence?: number; importance?: string | null; status?: string | null; createdAt?: string;
+  sourceDocumentType?: string | null;
 };
 async function seed(row: MemoryRow) {
-  const { title, category, content = `${row.title} body`, projectId = 42, organizationId = 7, confidence = 0.91, importance = 'medium', status = 'active', createdAt = '2026-10-01T00:00:00Z' } = row;
+  const { title, category, content = `${row.title} body`, projectId = 42, organizationId = 7, confidence = 0.91, importance = 'medium', status = 'active', createdAt = '2026-10-01T00:00:00Z', sourceDocumentType = null } = row;
   await pg.query(`INSERT INTO project_memory_entries
-    (project_id, organization_id, category, title, content, confidence_score, importance_level, status, created_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-  [projectId, organizationId, category, title, content, confidence, importance, status, createdAt]);
+    (project_id, organization_id, category, title, content, confidence_score, importance_level, status, created_at, source_document_type)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+  [projectId, organizationId, category, title, content, confidence, importance, status, createdAt, sourceDocumentType]);
 }
 
 describe('public commands recall canonical columns without changing decision math', () => {
+  it.each(ROUTES)('$key excludes reserved state before limits and decision math, preserving ordinary NULL/PDF sources', async route => {
+    for (let index = 0; index < route.limit + 1; index++) {
+      await seed({ title: `Private bundle source ${index}`, category: route.categories[0],
+        sourceDocumentType: 'report_os_state', importance: 'critical', content: 'Gap uncertain sensitivity threshold companion diagnostic' });
+    }
+    await seed({ title: 'Ordinary legacy knowledge', category: route.categories[0] });
+    await seed({ title: 'Ordinary PDF knowledge', category: route.categories[1], sourceDocumentType: 'application/pdf' });
+    const result = await route.run(CTX, {});
+    expect(result.success).toBe(true);
+    expect(h.results[0].rows.map(row => row.title)).toEqual(['Ordinary legacy knowledge', 'Ordinary PDF knowledge']);
+    expect((result.data as { memoryEntryCount: number }).memoryEntryCount).toBe(2);
+    expect(JSON.stringify(result)).not.toContain('Private bundle source');
+    if (route.key === 'cms') expect((result.data as { riskSignals: unknown[] }).riskSignals).toEqual([]);
+    else expect((result.data as { presentComponents: string[] }).presentComponents).not.toContain('Companion diagnostic alignment');
+    expect(h.errors).toEqual([]);
+  });
+
   it('preserves the exact CMS coverage, keyword risks, and recommendation result', async () => {
     const rows = [
       { category: 'cms_strategy', title: 'CMS overview', content: 'Gap remains in payer narrative.', importance: 'critical' },

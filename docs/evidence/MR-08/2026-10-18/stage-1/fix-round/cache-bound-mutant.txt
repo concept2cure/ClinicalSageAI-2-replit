@@ -1,0 +1,53 @@
+# Defect 3: does the cache test hold the 30 s bound? Mutant: PING_CACHE_MS = 600_000 (10 minutes) in server/utils/virusScan.ts. 2026-10-18T19:54:00Z
+# (a) the first implementer's test (follows the constant) — PASSES against the 10-minute mutant, so it never held the bound:
+$ npx vitest run server/utils/__tests__/virusScan-oldcache.tmp.test.ts
+ ✓ server/utils/__tests__/virusScan-oldcache.tmp.test.ts > old > pingClamdCached reuses a result for at most 30 s 14ms
+      Tests  1 passed (1)
+exit=0
+
+# (b) this round's tests (literals 29_999 then 1, PING_CACHE_MS === 30_000, and the /readyz-level faked-clock test) — FAIL against the mutant:
+$ npx vitest run server/utils/__tests__/virusScan.test.ts server/startup/__tests__/readyz-virus-scan.test.ts
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 2029ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 7ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed 3ms
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > reuses one zPING for 30 s: ok after clamd goes away inside the window, down after it 6ms
+   → expected 600000 to be 30000 // Object.is equality
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — bypass when not configured > returns scanned=false, clean=true when CLAMAV_HOST is unset 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — clean response > parses "stream: OK" as scanned + clean 11ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses signature name out of "stream: X FOUND" 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses multi-word signatures correctly 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > marks a Heuristics.Limits.Exceeded result incomplete, and not clean 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > does not mark a real signature incomplete 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason on unparseable response 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason when host is unreachable 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is true when clamd answers PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, within its timeout, when clamd accepts and never answers 302ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false on any answer but PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when nothing listens, and when CLAMAV_HOST is unset 1ms
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s 6ms
+   → expected 600000 to be 30000 // Object.is equality
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached treats a clock stepped back as expired 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached shares one in-flight ping: 50 concurrent callers open 1 connection 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "abc" 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "70000" 0ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "3310.5" 0ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "-1" 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 23 passed (25)
+exit=1
+
+# Restored PING_CACHE_MS = 30_000 and removed the temporary file:
+272:export const PING_CACHE_MS = 30_000;
+
+# (c) Second mutant: the exported PING_CACHE_MS left at 30_000, the comparison changed to 'age < 600_000' (10 minutes). The constant pin passes; the literal-time behaviour fails:
+$ npx vitest run server/utils/__tests__/virusScan.test.ts server/startup/__tests__/readyz-virus-scan.test.ts
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > reuses one zPING for 30 s: ok after clamd goes away inside the window, down after it 19ms
+   → expected 200 to be 503 // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s 7ms
+   → expected 1 to be 2 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 23 passed (25)
+exit=1
+# restored: 'age < PING_CACHE_MS'

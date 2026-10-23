@@ -1,0 +1,26 @@
+{
+  "baseline": "8c6bd712ecbf0e8e6a62cd581d1b1f7186b98aaf",
+  "exitCode": 1,
+  "tests": {
+    "failed": 6,
+    "passed": 1,
+    "total": 7
+  },
+  "testSha256": "2f6379774a16e026738da65df3129b34bba5c0f70f0209bfba279d649f88842c",
+  "unchangedSinceFreeze": true,
+  "baselineInputsUnchangedAfterRun": true,
+  "redSha256": "bafe53ef4fd815fca797fc7f2fd97843f599aa9f5a3300ab15c0d7a5c41ae63c",
+  "commandFile": "red-command.txt",
+  "meaningfulFailures": [
+    "20 ordinary bodies total 29960 instead of <=24000; no truthful withheld bodies",
+    "large original body is capped a second time after canonical allocation, changing accepted bytes",
+    "irreducible passage count reaches second model call and staging and attempts settlement",
+    "late guard growth reaches model/staging despite exact 24000 pre-guard fixture; earlier actual fixture receipt persists",
+    "late settlement withdrawal growth reaches model/staging; earlier fixture receipt remains persisted",
+    "redirected checkpoint bypass reaches second model call/staging without dispatch"
+  ],
+  "passingControl": "Fitting real read_project_document handler preserves exact body and existing legacy receipt.",
+  "fixtureQualification": "Only late-growth tests substitute canonical allocator output. Native dispatch/read guards/settlement/framing run; in-memory Vault and synthetic actor/source admission are not live DB/provider qualification. Corrected authorized existing search_literature handler privately defers tiny results; no invented tool or authorization bypass.",
+  "earlierAttempt": "earlier-attempt-note.txt",
+  "noFurtherTestEdits": true
+}

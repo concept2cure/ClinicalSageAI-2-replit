@@ -29,11 +29,16 @@ vi.mock('@/lib/queryClient', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', async original => ({
-  ...(await original<typeof import('@/services/portal/authService')>()),
-  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
-  // The editor keys its device draft by the signed-in account (SEC-A-5).
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual,
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+    // The editor keys its device draft by the signed-in account (SEC-A-5).
+    authService: { getUser: () => null,
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService) },
+  };
+});
 
 /* jsdom implements no layout; ProseMirror's scroll-into-view asks for client
    rects and crashes the worker when a node type lacks the method. */
@@ -57,6 +62,8 @@ import { publishShellProject } from '../shellProject';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { surfaceLeaveRefusal } from '../navParams';
+import { clearEditorTarget } from '../editorTarget';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -147,19 +154,19 @@ const props = () => ({
   segment: 'biotech',
 });
 
-function mockApi(over?: (method: string, url: string, body?: unknown) => Response | null) {
+function mockApi(over?: (method: string, url: string, body?: unknown) => Response | null, sections = SECTIONS) {
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     const custom = over?.(method, url, body);
     if (custom) return custom;
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(sections);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
       return ok({ success: true, revisions: [], sources: [], citations: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
       return ok({ success: true, comments: [] });
     if (method === 'PATCH' && url.startsWith('/api/authoring/sections/')) {
       const id = url.split('/').pop();
-      const row = SECTIONS.sections.find(s => s.id === id)!;
+      const row = sections.sections.find(s => s.id === id)!;
       return ok({
         success: true,
         revision_created: true,
@@ -188,6 +195,7 @@ async function renderDirty() {
 
 beforeEach(() => {
   apiRequest.mockReset();
+  clearEditorTarget();
   mockApi();
   try {
     localStorage.clear();
@@ -201,12 +209,22 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  clearEditorTarget();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   delete window.C2C_PROJECT;
 });
 
 describe('the tab cannot be closed over unsaved work', () => {
+  it('refuses the task drawer exit without saving or unmounting the dirty canvas', async () => {
+    await renderDirty();
+    expect(surfaceLeaveRefusal()).toMatch(/unsaved edits.*3\.2\.S\.1/i);
+    expect(contentPatches()).toHaveLength(0);
+    expect(canvasText()).toBe('Half-written sentence that');
+    cleanup();
+    expect(surfaceLeaveRefusal()).toBeNull();
+  });
+
   it('holds embedded Back to Quality for the existing unsaved-work decision', async () => {
     const onBack = vi.fn();
     render(<DocumentWorkbench onNav={vi.fn()} docs={DOCS.documents} docsState="ready" status="all"
@@ -217,9 +235,42 @@ describe('the tab cannot be closed over unsaved work', () => {
     fireEvent.click(screen.getByTestId('workbench-back'));
     expect(onBack).not.toHaveBeenCalled();
     expect(await screen.findByRole('alertdialog', { name: /Unsaved/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+    expect(onBack).not.toHaveBeenCalled();
+    expect(canvasText()).toBe('An unfinished controlled procedure.');
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    await screen.findByRole('alertdialog', { name: /Unsaved/i });
     fireEvent.click(screen.getByRole('button', { name: /Leave without saving/i }));
     expect(onBack).toHaveBeenCalledOnce();
     expect(contentPatches()).toHaveLength(0);
+  });
+
+  it('keeps embedded Back in place until an ordinary header save finishes', async () => {
+    const onBack = vi.fn();
+    render(<DocumentWorkbench onNav={vi.fn()} docs={DOCS.documents} docsState="ready" status="all"
+      reloadDocs={async () => {}} programId={null} pinnedDocId="D1" embedded={{ onBack, backLabel: 'Back to Quality' }} />);
+    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
+    act(() => { canvasEditor().chain().focus().insertContent('Pending revision. ').run(); });
+    fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Reviewing the controlled procedure.' } });
+    const save = heldResponse();
+    const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
+      method === 'PATCH' && url.endsWith('/S1') ? save.promise : baseline(method, url, body));
+    await waitFor(() => expect(headerSave().disabled).toBe(false));
+    fireEvent.click(headerSave());
+    await waitFor(() => expect(headerSave().textContent).toContain('Saving'));
+
+    fireEvent.click(screen.getByTestId('workbench-back'));
+
+    expect(await screen.findByText(/A save is in progress/)).toBeTruthy();
+    expect(onBack).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    const content = canvasEditor().getHTML();
+    await act(async () => { save.resolve(ok({ section: { ...SECTIONS.sections[0], content } })); await save.promise; });
+    await waitFor(() => expect(headerSave().textContent).toContain('Saved'));
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(contentPatches()).toHaveLength(1);
   });
 
   it.each([
@@ -395,41 +446,20 @@ describe('the guard names decisions already recorded, not just unsaved text', ()
     sections: [
       ...SECTIONS.sections,
       {
+        ...SECTIONS.sections[1],
         id: 'S3',
-        doc_id: 'D1',
         code: '3.2.S.3',
         title: 'Elucidation of Structure',
         content:
           'The impurity is below the qualification threshold. ' +
           '<ins data-author-id="ana" data-author-name="AnA (AI draft)" data-at="2026-07-20T10:05:00.000Z">Confirmed by MS/NMR.</ins>',
         order_index: 2,
-        comment_count: 0,
-        revision_count: 1,
-        citation_count: 0,
-        updated_at: '2026-07-20T10:00:00Z',
       },
     ],
   };
 
   function mockApiWithSuggestion() {
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SUGGESTION_SECTIONS);
-      if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
-        return ok({ success: true, revisions: [], sources: [], citations: [] });
-      if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
-        return ok({ success: true, comments: [] });
-      if (method === 'PATCH' && url.startsWith('/api/authoring/sections/')) {
-        const id = url.split('/').pop();
-        const row = SUGGESTION_SECTIONS.sections.find(s => s.id === id)!;
-        return ok({
-          success: true,
-          revision_created: true,
-          section: { ...row, content: String((body as { content?: string })?.content ?? row.content) },
-        });
-      }
-      return ok({ success: true });
-    });
+    mockApi(undefined, SUGGESTION_SECTIONS);
   }
 
   /** Accept the one suggestion in the open section via the same command

@@ -1,0 +1,17 @@
+
+/workspace/concept2cure/server/services/ectd/assemble-from-core.ts
+  237:8  warning  Async function 'assembleSequence' has too many lines (132). Maximum allowed is 100        max-lines-per-function
+  584:8  warning  Async function 'assembleSubmissionEctd' has too many lines (114). Maximum allowed is 100  max-lines-per-function
+
+/workspace/concept2cure/server/services/submission-gateways/pre-transmit-check.ts
+  232:8  warning  Function 'evaluatePreTransmit' has too many lines (148). Maximum allowed is 100  max-lines-per-function
+  232:8  warning  Function 'evaluatePreTransmit' has a complexity of 32. Maximum allowed is 15     complexity
+
+/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts
+  540:1  warning  Function 'buildFdaBackbone' has a complexity of 18. Maximum allowed is 15                complexity
+  907:1  warning  File has too many lines (907). Maximum allowed is 500                                    max-lines
+  971:8  warning  Async function 'packageEctdSubmission' has too many lines (352). Maximum allowed is 100  max-lines-per-function
+  971:8  warning  Async function 'packageEctdSubmission' has a complexity of 56. Maximum allowed is 15     complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+

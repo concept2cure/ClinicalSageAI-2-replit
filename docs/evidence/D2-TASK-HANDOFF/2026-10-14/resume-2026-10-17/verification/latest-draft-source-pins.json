@@ -1,0 +1,109 @@
+{
+  "head": "ca551f629cf6a7044a456fb7f2d300f603c7439e",
+  "files": [
+    {
+      "path": "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+      "sha256": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182"
+    },
+    {
+      "path": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "sha256": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae"
+    },
+    {
+      "path": "server/routes/ana-intelligence-batch-input.ts",
+      "sha256": "a7c78450d3bb8250595091745a93f7886dc41f841629f39ce370ff14851172f0"
+    },
+    {
+      "path": "server/routes/ana-intelligence.ts",
+      "sha256": "21c9a1f4beccbd23e1648283e0122a0055961ea681157de142bd9d1604164119"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts",
+      "sha256": "698c48a7079a3df75bc0a9f6d4451f3ae98e3a50ecb7e5a19bfc71051ab9e3c7"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "sha256": "6559f7a1628faac5a3bbc58fa25a33d9c15c4b99fce251ccb1dec48203a9ea89"
+    },
+    {
+      "path": "server/services/ai-gateway/gateway-error-map.ts",
+      "sha256": "c0ca52e155ea99cd17a3c59f1ae513c9f93467ab65e2c045168ecf9bb13d52e0"
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6"
+    },
+    {
+      "path": "server/services/ai-gateway/types.ts",
+      "sha256": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129"
+    },
+    {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "sha256": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b"
+    },
+    {
+      "path": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+      "sha256": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785"
+    },
+    {
+      "path": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "sha256": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "sha256": "12b41007bbd9c44a7274d6d77b0a946251e22e21fc428aaf3e07d009574e41a6"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+      "sha256": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+      "sha256": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "sha256": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
+      "sha256": "3cdfc7f99b93727674251da647c85dda38d0b2dabda18deafeae8e08b2b5d476"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-identity.test.ts",
+      "sha256": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+      "sha256": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "sha256": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2"
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts",
+      "sha256": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c"
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "sha256": "017fd18724a9fbcc77a36d061eb44b31634a641fd33e9921f4fa489cef582120"
+    },
+    {
+      "path": "server/services/authoring/__tests__/import-source-references.test.ts",
+      "sha256": "fd94084cf0a32be9066cdc8e0ae3fdc56ae7d31108a0d63c2d1028baba33414f"
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "sha256": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b"
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "sha256": "fd6777c13fa09de38b2a4afa33663c8e038adb04a37bf91c190d46dfb5f9028f"
+    },
+    {
+      "path": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "sha256": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+    }
+  ]
+}

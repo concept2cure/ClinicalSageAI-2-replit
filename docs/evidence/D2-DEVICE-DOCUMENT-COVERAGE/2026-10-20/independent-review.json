@@ -1,0 +1,35 @@
+{
+  "recordedAt": "2026-10-20T20:56:26.544442+00:00",
+  "method": "Independent read-only static review of pending production diff and canonical callers; no runtime or legal adequacy conclusion.",
+  "findings": [
+    {
+      "id": "component-filing-context",
+      "severity": "blocking",
+      "reproduction": "Prepare gspr_checklist withEU_IVDR or k510_summary withUS_PMA; same-market device-only check admits conflicting outline.",
+      "owner": "document-preparation existing contract",
+      "status": "fixed and covered by final 1,244-test replay",
+      "regressionEvidence": "ana/compatibility-scope/current-tests.json",
+      "finalQualification": "checks.json"
+    },
+    {
+      "id": "class-specific-filing-context",
+      "severity": "blocking",
+      "reproduction": "Create eu_mdr_class_iii with euMdrClassI, or eu_ivdr_class_a with euIvdrClassD; regulation-only validation admits contradictory facts.",
+      "owner": "existing project classification UI/server contract",
+      "status": "fixed and covered by final 1,244-test replay",
+      "regressionEvidence": "initialization/class-compatibility-green.json",
+      "finalQualification": "checks.json"
+    }
+  ],
+  "otherReview": "No additional recipient routing, security authorization, duplicate editor or UI-pattern issue found. Manual restrictions and exact UUID source identity retained.",
+  "limits": [
+    "No live provider or browser qualification in this review",
+    "Not a current agency template/legal completeness review"
+  ],
+  "qmsFollowup": {
+    "audit": "qms-existing-audit.json",
+    "changes": "Reach seven exact manual QMS records with eight record-specific blueprint repairs; the generic QMS source stays intact. Internal quality preparation guidance identifies source records and excludes an agency filing route.",
+    "regressionEvidence": "qms-red.json",
+    "qualification": "Covered by final regression/compiler/build/gates; see checks.json"
+  }
+}

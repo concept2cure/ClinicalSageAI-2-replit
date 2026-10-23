@@ -25,6 +25,7 @@ import {
   BUNDLE_NEEDS_PROJECT_NOTE,
   BUNDLE_PDF_IS_A_MANIFEST,
   BUNDLE_REPORTS_PDF_NOTE,
+  bundleRegisterCaveat,
   createBundle,
   whenText,
   type BundlePdfContent,
@@ -123,6 +124,9 @@ export function BundlesPanel({
   const [attempt, setAttempt] = useState(0);
   const bundles = useLiveData<unknown>('/api/report-os/bundles', ['/api/report-os/bundles', attempt], isRowList);
   const rows = useMemo(() => rowsOf<BundleRow>(bundles.data), [bundles.data]);
+  /* A bounded register read that does not say it was bounded is a silent cap
+     on a governed register. Null — and so no note — whenever it was not. */
+  const registerCaveat = useMemo(() => bundleRegisterCaveat(bundles.meta), [bundles.meta]);
 
   const [name, setName] = useState('');
   const [note, setNote] = useState<string | null>(null);
@@ -154,6 +158,12 @@ export function BundlesPanel({
       <div className="ro-dash-note" role="note" data-testid="rl-bundle-manifest-note">
         {I.info} {BUNDLE_PDF_IS_A_MANIFEST} {BUNDLE_REPORTS_PDF_NOTE} {BUNDLE_NEEDS_PROJECT_NOTE}
       </div>
+
+      {registerCaveat && (
+        <div className="ro-dash-note" role="status" data-testid="rl-bundle-register-caveat">
+          {I.info} {registerCaveat}
+        </div>
+      )}
 
       <PanelAlert note={note} />
 

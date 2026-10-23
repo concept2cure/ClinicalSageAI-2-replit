@@ -1,0 +1,136 @@
+[
+  {
+    "file": "tests/db/ana-vault-search-no-key.dbtest.ts",
+    "counts": {
+      "skipped": 5
+    },
+    "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/cmc-source-evidence.dbtest.ts",
+    "counts": {
+      "skipped": 12
+    },
+    "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/data-room-catalog-facts.dbtest.ts",
+    "counts": {
+      "failed": 5,
+      "passed": 1
+    },
+    "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality\n    at /workspace/concept2c"
+  },
+  {
+    "file": "tests/db/data-room-processing.dbtest.ts",
+    "counts": {
+      "failed": 5,
+      "passed": 2
+    },
+    "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality\n    at /workspace/concept2c"
+  },
+  {
+    "file": "tests/db/org-retention-period.dbtest.ts",
+    "counts": {
+      "passed": 9,
+      "failed": 4
+    },
+    "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality\n    at admit (/workspace/concept2c"
+  },
+  {
+    "file": "tests/db/vault-chunking-off.dbtest.ts",
+    "counts": {
+      "skipped": 4
+    },
+    "firstFailure": "expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-data-room-file.dbtest.ts",
+    "counts": {
+      "failed": 5,
+      "passed": 1
+    },
+    "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality\n    at /workspace/concept2cure/tes"
+  },
+  {
+    "file": "tests/db/vault-document-relationships.dbtest.ts",
+    "counts": {
+      "skipped": 9
+    },
+    "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-filing-vocabulary.dbtest.ts",
+    "counts": {
+      "passed": 5,
+      "failed": 1
+    },
+    "firstFailure": "AssertionError: {\"ok\":false,\"status\":403,\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected false to be true // Object.is equality\n    at /workspace"
+  },
+  {
+    "file": "tests/db/vault-fixity.dbtest.ts",
+    "counts": {
+      "skipped": 4
+    },
+    "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-library-search.dbtest.ts",
+    "counts": {
+      "skipped": 4
+    },
+    "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-lifecycle.dbtest.ts",
+    "counts": {
+      "failed": 6
+    },
+    "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality\n    at ing"
+  },
+  {
+    "file": "tests/db/vault-passage-search-keyless.dbtest.ts",
+    "counts": {
+      "skipped": 6
+    },
+    "firstFailure": "expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-passage-search.dbtest.ts",
+    "counts": {
+      "skipped": 10
+    },
+    "firstFailure": "expected 403 to be 201 // Object.is equality"
+  },
+  {
+    "file": "tests/db/vault-placement-batch.dbtest.ts",
+    "counts": {
+      "failed": 4,
+      "passed": 1
+    },
+    "firstFailure": "AssertionError: expected 403 to be 422 // Object.is equality\n    at /workspace/concept2cure/tests/db/vault-placement-batch.dbtest.ts:127:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    a"
+  },
+  {
+    "file": "tests/db/vault-placement.dbtest.ts",
+    "counts": {
+      "failed": 14,
+      "passed": 4
+    },
+    "firstFailure": "AssertionError: expected false to be true // Object.is equality\n    at /workspace/concept2cure/tests/db/vault-placement.dbtest.ts:293:20\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at f"
+  },
+  {
+    "file": "tests/db/vault-reupload.dbtest.ts",
+    "counts": {
+      "failed": 3
+    },
+    "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality\n    at /workspace/concept2cure/tests/db/vault-reupload.dbtest.ts:152:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:"
+  },
+  {
+    "file": "tests/db/workflow-import-governance.dbtest.ts",
+    "counts": {
+      "passed": 9,
+      "failed": 10
+    },
+    "firstFailure": "AssertionError: {\"success\":false,\"error\":{\"code\":\"REVIEW_INPUT_INVALID\",\"message\":\"A verdict and the exact saved review context are required.\"}}: expected 400 to be 200 // Object.is equality\n    at approveAssignedReview "
+  }
+]

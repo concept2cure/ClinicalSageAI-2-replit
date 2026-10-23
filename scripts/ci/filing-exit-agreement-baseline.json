@@ -1,0 +1,13 @@
+{
+  "$note": "Per-file COUNT of doors \u2014 seals over an authoring document, and device/IVD packages built from the filing \u2014 that do not call filingAgreesWithEditing in their own file. Written 2026-10-18 from this gate's own first run, under P-29.2 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md). SHRINK ONLY. Every entry says whether it is a DEFECT recorded so it cannot grow, or a PROOF this scanner cannot see across a function boundary. An entry here is a decision on the record, not a snooze.",
+  "files": {
+    "server/routes/510k-estar-routes.ts": {
+      "count": 3,
+      "reason": "DEFECT, and the one P-29.3 names. POST /build, /official and /assemble build the eSTAR deliverable from c2c_document_sections (resolveDeviceContentScope / loadDeviceContentLeaves) with NO seal check and NO digest of either store \u2014 verified by grep returning zero for both in this file. A device package therefore ships from the un-sealed store with no attestation over its content. NOT fixed by adding the agreement check alone, and the ordering is part of the decision: the seeded fda_510k_se template's codes collide with the shipped fda-estar-510k-v1.1 outline's keys under different labels, so an agreement gate here would today certify a MIS-FILED package (after a mis-keyed write the two stores agree). The vocabulary fix lands first; then this entry drops to 0."
+    },
+    "server/services/pathway-engines/device-assembly/assemble-device-submission.ts": {
+      "count": 2,
+      "reason": "DEFECT, found by this gate on its first run and not enumerated by P-29 or by any dimension of the review behind it \u2014 which is the argument for writing the gate rather than the list. loadProgramDeviceAssemblyInput reads the filing through the same device loaders, and assembleDeviceSubmission computes the readiness verdict and `artifactKind` ('official-estar' | 'content-package-draft' | 'none') from it. So a diverged or mis-keyed section inflates the verdict a client reads as 'what can honestly be produced'. Same ordering as 510k-estar-routes: the vocabulary fix first."
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "sourceCommit": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+  "incomingCanonical": "14d8c9efe8df9b545e72ebfba446473040cb9b0e",
+  "previousCanonical": "0793ee48ecee5dee014b266b2def014c38ea978e",
+  "incomingPaths": [
+    "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+    "server/services/ana/AnaDocumentDraftingService.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+    "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+    "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+    "server/services/ana/draft-project-sources.ts"
+  ],
+  "incomingPins": [
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts",
+      "incomingBlob": "9e0fa348918d8945f5275348869596b484f6ec40",
+      "mergedBlob": "9e0fa348918d8945f5275348869596b484f6ec40",
+      "sha256": "9fc869adfdd795c5bb51175a5fedeecc081d02aa9cc00964bbe4de3a3e01b14e"
+    },
+    {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "incomingBlob": "d996b67f48b6719ea2a5b09b9fde3db948ed65f7",
+      "mergedBlob": "d996b67f48b6719ea2a5b09b9fde3db948ed65f7",
+      "sha256": "d9469ce62904f7704003901f2f465ed639fedde6f7512310c8bab2461704bfe0"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "incomingBlob": "48194f51842fbcf382cce006b0da2c57328470a5",
+      "mergedBlob": "48194f51842fbcf382cce006b0da2c57328470a5",
+      "sha256": "5b19e8975186e99092a6a863daa2a5ec8e47d81f784203ca0ad7492d34a31e88"
+    },
+    {
+      "path": "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts",
+      "incomingBlob": "f6d413b52843eeb296d93604af6ccc96f5138675",
+      "mergedBlob": "f6d413b52843eeb296d93604af6ccc96f5138675",
+      "sha256": "d705d6ea6142a144c97ef100a2d8e6b16562be708a3a6f0c4e49d4e9aebee5e0"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts",
+      "incomingBlob": "83ad47113a3df42701ecfdcd2d88bf2859bd982a",
+      "mergedBlob": "83ad47113a3df42701ecfdcd2d88bf2859bd982a",
+      "sha256": "fdaff67d6433e9d3dcef84a512a3aa3284b55f90ed10540aea3fb7572fee3f49"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts",
+      "incomingBlob": "8542d9830d0fe8bcb3a63a9eaabb6c54d4ddba86",
+      "mergedBlob": "8542d9830d0fe8bcb3a63a9eaabb6c54d4ddba86",
+      "sha256": "939e4a342aef50792673f6417b9737bcc0389e01faa8bf6e81c79b0eaa32f5c9"
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "incomingBlob": "e64d0d8a07f0b59acdb3f9d726b369c972a4b630",
+      "mergedBlob": "e64d0d8a07f0b59acdb3f9d726b369c972a4b630",
+      "sha256": "36294c40d87b1b4adb417371efb5527e303f9f7211ad6bdd36044d5ae4c0f77e"
+    }
+  ],
+  "node": "v22.23.3",
+  "configuration": "vitest.config.ts default, native database disabled",
+  "result": {
+    "files": 4,
+    "cases": 53,
+    "passed": 53,
+    "failed": 0,
+    "pending": 0,
+    "exitCode": 0,
+    "casesPerFile": {
+      "server/services/ai-gateway/__tests__/gateway-source-operation-cancellation.test.ts": 4,
+      "server/services/ana/__tests__/batch-draft-source-cancellation-tool.test.ts": 13,
+      "server/services/ana/__tests__/draft-source-cancellation-checkpoint.test.ts": 8,
+      "server/services/ana/__tests__/draft-source-operation-cancellation.test.ts": 28
+    },
+    "durationSeconds": 18.26743939400012
+  },
+  "sourceBinding": {
+    "beforeHead": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+    "afterHead": "3450b68b595255a6545bc7fc8863d30e5e5e9bfc",
+    "pinnedFiles": 8141,
+    "unchanged": true,
+    "changedPinnedPaths": [],
+    "allSevenIncomingBlobsMatchMergedSource": true,
+    "pinScope": "all tracked server/shared/tests TS/JS/JSON/SQL plus package/compiler/default Vitest config"
+  },
+  "review": "Existing cancellation is threaded into the real selected-source loader and per-call source authority checkpoints; the tool recognizes typed cancellation only with its trusted aborted signal. Genuine source refusals keep their failure classification. Actor/project pins, private WeakMap authority, exact source bodies/hash/span identity and no-signal behavior are retained. The incoming seven code/test files were preserved byte-for-byte.",
+  "scope": "Minimum four newly frozen cancellation suites: actual loader, tool, drafting service and gateway/semaphore; 53 cases. Upstream276/18 broad proof remains separate. No UI replay, source edits, live provider, live/native SQL, deployment or human acceptance is claimed. Database/catalog/provider I/O uses canonical default test mocks.",
+  "archives": [
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.files.txt.gz",
+      "originalBytes": 307,
+      "originalSha256": "4635e97ebd838ad59eec486a685a1d6262937287b756b4d8e7d78d53f9a9c563",
+      "gzipSha256": "d0d05eb3e3be84f77b1fc7ae6c9353791c5fd8cb81241b5025de6b2091bc478b"
+    },
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.command.json.gz",
+      "originalBytes": 917,
+      "originalSha256": "9295da07886d7394efbf6b7d2b81dcc2d64978fa9908730226776cf8bd73127c",
+      "gzipSha256": "47be17ebe1db52bb07df1ef9860eb32ebf9c48f041e51496e392f7d16dfb3118"
+    },
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.log.gz",
+      "originalBytes": 15427,
+      "originalSha256": "30b3515306e66ffeb89ac3a508e03430999bdbcf743d9538722d3675881954bf",
+      "gzipSha256": "431099086bf4898b9d3912283db83bdc755ac8029ee8428294324230f4f2ab62"
+    },
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.json.gz",
+      "originalBytes": 22651,
+      "originalSha256": "98c3377e4964a88ed049c2c5037e06e6b024b8e7ca6337745f97a0064ccb8ed1",
+      "gzipSha256": "61dde2f4b1253bdf9fb4554bc57fea2344da6bc5ea6a1d7bb1fb3343266e5459"
+    },
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.pins.json.gz",
+      "originalBytes": 2149406,
+      "originalSha256": "ec1b2033623c2e69e5be5a1f5b08a241df0ab093ffb29f077afcbdd10745aca4",
+      "gzipSha256": "0b8e5dc28718a6dbd84d4835b60217cf0c29ce5f1d5509ee9b3fae8027b96fc3"
+    },
+    {
+      "path": "task-handoff-oct20-server-cancellation-final.before-pins.json.gz",
+      "originalBytes": 1056703,
+      "originalSha256": "ea748483bafbf6cadb440fda79c8d1247a3c4599f573970503b2835fd8aa1d45",
+      "gzipSha256": "40215a29ad0da8074bf8b8007970585708fd0c02033de6fd18614aabc1d89295"
+    }
+  ]
+}

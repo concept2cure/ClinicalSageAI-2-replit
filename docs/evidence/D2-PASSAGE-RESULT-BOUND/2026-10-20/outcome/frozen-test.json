@@ -1,0 +1,10 @@
+{
+  "file": "tests/services/tool-outcome-passage-omission.test.ts",
+  "sha256": "44480dd94dc578e0b5fafd46b6827accc11c145d90de10f84c1fc25003a609cf",
+  "baselineExpectedFailures": 8,
+  "baselinePassingControls": 38,
+  "baselineTotal": 46,
+  "beforeAfterInputHashesStable": 8,
+  "lintExitCode": 0,
+  "scope": "Existing shortfallOf and buildShortfallNote only; no retrieval/provider/database/compiler/Git mutations"
+}

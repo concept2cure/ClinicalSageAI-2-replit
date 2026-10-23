@@ -1,0 +1,59 @@
+P-29.2 — THE TWO SIGNING SEALS: RED BEFORE GREEN
+================================================
+
+The gate stashed, the test file left in place:
+
+$ env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+    tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts \
+    -t "the signing seals refuse"
+
+ × POST /e-sign as APPROVER refuses, and seals and signs nothing
+   -> a document whose filed copy differs was sealed and signed:
+      expected 200 to be 409
+ × POST /sign refuses, and seals and signs nothing
+   -> a document whose filed copy differs was sealed and signed:
+      expected 200 to be 409
+ ✓ an agreeing document still e-signs as APPROVER        (control, passes either way)
+ × is cleared by re-saving the section the refusal names
+   -> expected 200 to be 409
+
+$ ... -t "the refusal names a section the author can open"
+
+ × names the contributing section, not only the node it is filed at
+   -> expected [ { key: '2.5', filed: 'different' } ]
+      to deeply equal [ { key: '2.5', ...(2) } ]
+ ✓ says it once when the section IS the node             (copy pin, passes either way)
+
+200, not 409: the approval path SEALED AND SIGNED a document whose filed copy
+was not its text. That is the defect this round exists for, and it was live
+while the freeze — the less-used seal — was already gated.
+
+AFTER: 54 passed (54) on the whole contract file.
+
+
+TWO FALSE STARTS, AND WHAT EACH ONE HID
+---------------------------------------
+
+1. A SYNTAX ERROR OF MY OWN. The harness comment I added inside the PREREQ
+   template literal contained backticks, which end a template literal. The
+   suite reported "no tests" rather than a failure, which reads like a filter
+   typo. Fixed, and the comment now says why there are no backticks in it.
+
+2. THE POSITIVE CONTROLS 500ed, TWICE, FOR TWO HARNESS GAPS — NEITHER MINE.
+   Attributed by running the same case with the gate stashed: /e-sign answered
+   500 WITHOUT the gate too.
+
+   (a) `column "organizations"."uuid" does not exist` — the APPROVER path
+       resolves the signer's org role through a join that selects it. The
+       harness's PREREQ table had no such column. Added.
+   (b) `new row for relation "c2c_ana_actions" violates check constraint
+       "c2c_ana_actions_command_check"` on command 'approve'.
+       `migrations/20260527_mutation_primitives.sql` ships a NARROW CHECK of 12
+       commands with no 'approve'; `db/migrations/20260730_c2c_ana_actions_command_vocab.sql`
+       DROPs it and installs the drift-proof bounds constraint. The harness ran
+       the first and not the second. Added.
+
+   Worth keeping: (b) looked exactly like a live blocker — every APPROVER
+   e-signature failing a CHECK constraint — and was not, because the durable
+   applier runs both files. The way to tell was to read both migrations rather
+   than to trust the error.

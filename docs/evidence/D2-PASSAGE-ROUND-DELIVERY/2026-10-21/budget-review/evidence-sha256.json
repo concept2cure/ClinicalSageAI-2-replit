@@ -1,0 +1,14 @@
+{
+  "algorithm": "sha256",
+  "scope": "Review owner evidence excluding this manifest itself.",
+  "files": {
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/README.md": "e61a79f2f37dbb50097cd80f69c82622fdcaff034739567cdbb9c9a73c9fd274",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/frozen-test.json": "f3c6341a75477d64fa489bf9b05e7a0992bf88f6ceb4dd45d7448458e9760118",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-command.json": "75eaa98f26988411b89ff260c612853089b692dd84712c2d455ead78efbf57a4",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-raw.txt": "1e819235e1b05e399fba466054d142a2cbf407df276667d89ef9095d6e1035bc",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/lint-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-command.json": "0b5ae4e808dada36887afaded6e850e4a7a461a90f2b1a3d8bcbabe7088d629e",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-raw.txt": "b08bb9a772e837085873ba80b6a8a89f419b3440e34391ac3eaa06a50e991e88",
+    "docs/evidence/D2-PASSAGE-ROUND-DELIVERY/2026-10-21/budget-review/red-result.json": "fb996569a2d89cbea64559dc4ec071ff7b8da7e31a850a6e6a7f3d9faf3207f7"
+  }
+}
