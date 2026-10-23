@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:filing-exit-agreement"
+  ],
+  "startedAt": "2026-10-23T18:43:06Z",
+  "elapsedSeconds": 0.416,
+  "exitCode": 0,
+  "output": "ci-filing-exit-agreement.log.gz",
+  "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

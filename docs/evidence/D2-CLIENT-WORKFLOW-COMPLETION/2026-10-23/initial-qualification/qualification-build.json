@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "startedAt": "2026-10-23T18:43:13Z",
+  "elapsedSeconds": 13.098,
+  "exitCode": 0,
+  "output": "qualification-build.log.gz",
+  "outputSha256": "139361090867f980a355d4e9330835f2f5a8770095e5f19a779266bc297b2676",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

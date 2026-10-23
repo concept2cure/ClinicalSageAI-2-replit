@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "scripts/ci/check-eslint-warning-ratchet.mjs",
+    "--since",
+    "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+    "--gate"
+  ],
+  "startedAt": "2026-10-23T18:48:07Z",
+  "elapsedSeconds": 2.189,
+  "exitCode": 0,
+  "output": "qualification-warning-ratchet.log.gz",
+  "outputSha256": "a38c7c30a03fa35aa7695a6cc8ee4465e8ef896487d6f76c8b16d02d255d97bd",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

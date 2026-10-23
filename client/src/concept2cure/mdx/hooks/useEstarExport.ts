@@ -20,11 +20,18 @@
  * with the same auth headers as useFetchJson (Bearer + x-organization-id).
  */
 
-import { useCallback, useState } from 'react';
-import { serverMessage } from '@/lib/queryClient';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { errorCodeOf, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
 import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { downloadBase64 } from '../../v2/download';
+import { mutationUnconfirmed } from '../../v2/mutationOutcome';
+import {
+  attachmentRefusals, confirmedAttachmentReceipts, copyAttachmentSelections,
+  type OfficialEstarAttachment, type EstarAttachmentReceipt, type EstarAttachmentRefusal,
+} from './estarAttachmentReceipt';
+export type { OfficialEstarAttachment, EstarAttachmentReceipt, EstarAttachmentRefusal } from './estarAttachmentReceipt';
 
 interface DownloadRef {
   encoding: 'base64';
@@ -99,6 +106,11 @@ export interface EstarExportOutcome {
   official: boolean;
   /** A produced PreSTAR prefill is not a completed request. */
   applicantCompletionRequired?: boolean;
+  /** Only a one-to-one server receipt confirms the selected UUIDs and bytes. */
+  attachments?: EstarAttachmentReceipt[];
+  attachmentRefusals?: EstarAttachmentRefusal[];
+  /** The server may have produced/retained bytes, but delivery was not proved. */
+  unconfirmed?: boolean;
   error: string | null;
 }
 
@@ -133,6 +145,8 @@ export interface OfficialEstarOptions {
   /** Values typed for this export only; empty/whitespace entries are dropped
    *  before sending (see cleanRequestData). */
   data?: Record<string, string>;
+  /** Exact Vault version and FDA slot choices; expectedSha256 never leaves the browser. */
+  attachments?: OfficialEstarAttachment[];
 }
 
 /**
@@ -268,6 +282,7 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
     return `${verb}${fieldReportClause(outcome.fieldReport)}${erasure}${formatting}${registry}${completion}`;
   }
   if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
+  if (outcome.unconfirmed) return `Export unconfirmed — ${outcome.error ?? 'the result could not be confirmed'}`;
   return `Export failed — ${
     outcome.blockers.length ? outcome.blockers.join(' · ') : outcome.error ?? 'unknown error'
   }`;
@@ -369,7 +384,49 @@ export interface UseEstarExportResult {
   reset: () => void;
 }
 
-async function postExport(url: string, body: unknown, official: boolean): Promise<EstarExportOutcome> {
+function failedExport(official: boolean, error: string, unconfirmed = false): EstarExportOutcome {
+  return {
+    ok: false, delivered: false, governed: false, filename: null, formattingErrors: null, formattingWarnings: null,
+    formattingVerdict: null, blockers: [], blockedByEntitlement: false, requiredTier: null, fieldReport: null,
+    erasedFields: null, official, error, ...(unconfirmed ? { unconfirmed: true } : {}),
+  };
+}
+
+function inlinePdfData(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0 || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) return false;
+  // Check the signature without decoding another whole copy of a large export.
+  // The existing download primitive remains the single full decoder/deliverer.
+  try { return atob(value.slice(0, 12)).startsWith('%PDF-'); } catch { return false; }
+}
+
+function isOfficialDownload(value: unknown): value is DownloadRef {
+  if (!value || typeof value !== 'object') return false;
+  const ref = value as Partial<DownloadRef>;
+  return ref.encoding === 'base64' && ref.mime_type === 'application/pdf' &&
+    typeof ref.filename === 'string' && ref.filename.trim().length > 0 && inlinePdfData(ref.data);
+}
+
+function refusedExport(json: Record<string, unknown> | null, official: boolean, status: number, hasAttachments: boolean): EstarExportOutcome {
+  const code = errorCodeOf(json);
+  const unconfirmed = hasAttachments && mutationUnconfirmed(status, code);
+  const sentence = serverMessage(json);
+  const recovery = 'The export result was not confirmed. No file was downloaded. Review the program’s Vault and retained exports before trying again.';
+  const error = unconfirmed
+    ? code === 'OUTCOME_UNKNOWN' && sentence ? sentence : [sentence, recovery].filter(Boolean).join(' ')
+    : sentence ?? `the server gave no reason (HTTP ${status})`;
+  // Only the exact entitlement refusal names a plan limitation; a role403 does not.
+  const blockedByEntitlement = status === 403 && json?.error === 'NOT_ENTITLED';
+  return {
+    ...failedExport(official, error, unconfirmed),
+    blockers: Array.isArray(json?.blockers) ? json.blockers as string[] : [],
+    blockedByEntitlement,
+    requiredTier: blockedByEntitlement && typeof json?.requiredTier === 'string' ? json.requiredTier : null,
+    attachmentRefusals: attachmentRefusals(json?.attachmentReport),
+  };
+}
+
+async function postExport(url: string, body: unknown, official: boolean, current: () => boolean,
+  expected: readonly OfficialEstarAttachment[]): Promise<EstarExportOutcome> {
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -379,37 +436,14 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
     });
     const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
 
-    if (!res.ok) {
-      const blockers = Array.isArray(json?.blockers) ? (json?.blockers as string[]) : [];
-      // Same precedence this already had — the server's sentence wins over the
-      // `error` slot — but through the one shared reader, which also refuses an
-      // enum-shaped `error` token and infrastructure text. The bare
-      // `HTTP <status>` fallback is gone: on its own it was not a sentence.
-      const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
-      // Only the entitlement gate's exact 403 shape marks a Locked outcome —
-      // a role/permission 403 must NOT read as a plan limitation. This reads
-      // the raw `error` slot on purpose: it is a machine code driving a branch,
-      // never copy, which is why it is untouched by the change above.
-      const blockedByEntitlement = res.status === 403 && json?.error === 'NOT_ENTITLED';
-      return {
-        ok: false,
-        delivered: false,
-        governed: false,
-        filename: null,
-        formattingErrors: null,
-        formattingWarnings: null,
-        formattingVerdict: null,
-        blockers,
-        blockedByEntitlement,
-        requiredTier:
-          blockedByEntitlement && typeof json?.requiredTier === 'string' ? json.requiredTier : null,
-        fieldReport: null,
-        erasedFields: null,
-        official,
-        error: message,
-      };
-    }
+    if (!res.ok) return refusedExport(json, official, res.status, expected.length > 0);
 
+    if (!current()) return failedExport(official, 'The export context changed before delivery. Check the original program’s retained exports.', true);
+    const attachments = expected.length ? confirmedAttachmentReceipts(json?.attachmentReport, expected) : undefined;
+    if (expected.length && (!attachments || json?.officialEstarPdf !== true || !isOfficialDownload(json?.downloadable_output_ref))) {
+      return { ...failedExport(official, 'The attachment result was not confirmed. No file was downloaded; check the program’s retained exports before trying again.', true),
+        attachmentRefusals: attachmentRefusals(json?.attachmentReport) };
+    }
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
     const delivered = ref?.data ? triggerDownload(ref) : false;
 
@@ -440,44 +474,50 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
       official,
       error: null,
       applicantCompletionRequired: json?.applicantCompletionRequired === true,
+      ...(attachments ? { attachments, attachmentRefusals: [] } : {}),
     };
   } catch {
     // A throw here is the fetch itself failing (offline, DNS, abort). Its
     // native message is "Failed to fetch" / "Load failed", so the hook's own
     // wording is the only thing worth showing.
-    return {
-      ok: false,
-      delivered: false,
-      governed: false,
-      filename: null,
-      formattingErrors: null,
-      formattingWarnings: null,
-      formattingVerdict: null,
-      blockers: [],
-      blockedByEntitlement: false,
-      requiredTier: null,
-      fieldReport: null,
-      erasedFields: null,
-      official,
-      error: 'Export request failed',
-    };
+    return expected.length
+      ? failedExport(official, 'The attachment export result was not confirmed. Check the program’s retained exports before trying again.', true)
+      : failedExport(official, 'Export request failed');
   }
 }
 
-export function useEstarExport(): UseEstarExportResult {
+export function useEstarExport(isContextCurrent?: () => boolean): UseEstarExportResult {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<EstarExportOutcome | null>(IDLE);
+  const generation = useRef(0);
+  const active = useRef<number | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; generation.current += 1; active.current = null; };
+  }, []);
 
-  const run = useCallback(async (url: string, body: unknown, official: boolean) => {
+  const run = useCallback(async (url: string, body: unknown, official: boolean, expected: readonly OfficialEstarAttachment[] = []) => {
+    if (active.current !== null) return failedExport(official, 'An export is already in progress.');
+    const request = ++generation.current;
+    const owner = JSON.stringify(buildAuthHeaders());
+    const session = authService.captureSessionReadGuard();
+    const account = authService.getUser();
+    const current = () => mounted.current && generation.current === request && session.sameRevision() &&
+      authService.getUser() === account && owner === JSON.stringify(buildAuthHeaders()) && isContextCurrent?.() !== false;
+    active.current = request;
     setBusy(true);
     try {
-      const result = await postExport(url, body, official);
-      setOutcome(result);
+      const result = await postExport(url, body, official, current, expected);
+      if (current()) setOutcome(result);
       return result;
     } finally {
-      setBusy(false);
+      if (active.current === request) {
+        active.current = null;
+        if (mounted.current) setBusy(false);
+      }
     }
-  }, []);
+  }, [isContextCurrent]);
 
   const exportDraftPackage = useCallback(
     (program: ProgramRef) =>
@@ -493,8 +533,14 @@ export function useEstarExport(): UseEstarExportResult {
   );
 
   const exportOfficialEstar = useCallback(
-    (program: ProgramRef, variant: OfficialEstarVariant = 'device', opts: OfficialEstarOptions = {}) =>
-      run('/api/510k/estar/official', {
+    (program: ProgramRef, variant: OfficialEstarVariant = 'device', opts: OfficialEstarOptions = {}) => {
+      const selected = copyAttachmentSelections(opts.attachments ?? []);
+      if (!selected) {
+        const failure = failedExport(true, 'Choose distinct Vault versions with a recorded SHA-256 and an FDA attachment destination.');
+        if (mounted.current && active.current === null && isContextCurrent?.() !== false) setOutcome(failure);
+        return Promise.resolve(failure);
+      }
+      return run('/api/510k/estar/official', {
         meta: {
           id: program.code || program.id,
           ident: program.id,
@@ -506,11 +552,18 @@ export function useEstarExport(): UseEstarExportResult {
            Without useProgramData the route fills `data` verbatim, as before. */
         useProgramData: opts.useProgramData === true,
         data: cleanRequestData(opts.data),
-      }, true),
-    [run],
+        ...(selected.length ? { attachments: selected.map(({ slot, source }) => ({ slot, source })) } : {}),
+      }, true, selected);
+    },
+    [run, isContextCurrent],
   );
 
-  const reset = useCallback(() => setOutcome(IDLE), []);
+  const reset = useCallback(() => {
+    generation.current += 1;
+    active.current = null;
+    setBusy(false);
+    setOutcome(IDLE);
+  }, []);
 
   return { busy, outcome, exportDraftPackage, exportOfficialEstar, reset };
 }

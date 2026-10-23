@@ -3,12 +3,16 @@
    .company-search-results, .company-search-hit) when the picker moved, so the
    company legal library and a commitment's fulfilment draw one picker. */
 .vpick { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 16px; }
+/* Keep the reused picker operable on touch, including MDX's small buttons. */
+.vpick button { min-height: 44px; min-width: 44px; }
 .vpick-bar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .vpick-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; min-width: 180px; flex: 1; }
 .vpick-field > span { color: var(--text-300); }
-.vpick-field input { width: 100%; box-sizing: border-box; border: 1px solid var(--border-control, var(--border)); background: var(--bg-000, var(--bg-050)); color: var(--text-100); border-radius: 6px; padding: 8px 9px; font: inherit; font-size: 13px; }
+.vpick-field input { width: 100%; min-height: 44px; box-sizing: border-box; border: 1px solid var(--border-control, var(--border)); background: var(--bg-000, var(--bg-050)); color: var(--text-100); border-radius: 6px; padding: 8px 9px; font: inherit; font-size: 13px; }
 .vpick-field input:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 1px; }
 .vpick-results { max-height: 260px; overflow: auto; margin-top: 10px; }
 .vpick-hit { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.vpick-hit > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.vpick-hit > button { flex-shrink: 0; }
 .vpick-hit small { display: block; color: var(--text-400); margin-top: 4px; }
 .vpick-pages { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 10px; }

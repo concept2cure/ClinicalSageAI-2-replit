@@ -34,6 +34,8 @@ import React from 'react';
 import { I } from '../icons';
 import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
+import { mutationUnconfirmed } from '../mutationOutcome';
+export { mutationUnconfirmed } from '../mutationOutcome';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
@@ -211,11 +213,6 @@ async function confirmedResult<T>(res: Response): Promise<MutateResult<T>> {
   return { data, status: res.status, unconfirmed: data == null, headers: res.headers };
 }
 
-/** Only a definite refusal can justify saying that a write did not occur. */
-export function mutationUnconfirmed(status?: number, code?: string): boolean {
-  if (code === 'OUTCOME_UNKNOWN') return true;
-  return typeof status !== 'number' || ![400, 401, 403, 404, 409, 422, 429].includes(status);
-}
 function mutationCode(body: unknown): string | undefined {
   const value = body as { code?: unknown; error?: { code?: unknown } } | null;
   const code = value?.code ?? value?.error?.code;

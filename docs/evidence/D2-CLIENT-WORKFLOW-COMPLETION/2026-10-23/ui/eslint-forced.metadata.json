@@ -1,0 +1,15 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx"
+  ],
+  "errors": 0,
+  "warnings": 5
+}

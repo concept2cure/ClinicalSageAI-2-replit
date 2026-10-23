@@ -1,0 +1,62 @@
+{
+  "startedAt": "2026-10-23T18:41:11.641476+00:00",
+  "sourceHead": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx"
+  ],
+  "sourceSha256": {
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "649b9ffa0f7be26cee6938d3d732c2042967b494b7ec129a5388b9626f065f85",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx": "551a1ad30b1eb26353e5796644c20a1900f27c95dd7bc5e919c7234dda4a090c",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx": "6423a6dbb1d05d99d98065dc40e428fe274f521ea57c8fcc2ed18a54025c62a6",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx": "bb7fa9f719e50c39abf52839a124e3cfd206a3afd6a55b579b593c308392ae0b"
+  },
+  "errors": 0,
+  "warnings": 7,
+  "perFile": [
+    {
+      "filePath": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx",
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "filePath": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+      "errorCount": 0,
+      "warningCount": 2
+    },
+    {
+      "filePath": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "filePath": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "errorCount": 0,
+      "warningCount": 5
+    }
+  ],
+  "existingRenderBaseline": {
+    "sourceSha256": "756a402ce3d00160c50fd3cb3a04640a670ebba9eea7d0c346348164365f26ea",
+    "command": [
+      "/workspace/.tooling/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--no-ignore",
+      "--stdin",
+      "--stdin-filename",
+      "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "--format",
+      "json"
+    ],
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 5
+  }
+}
