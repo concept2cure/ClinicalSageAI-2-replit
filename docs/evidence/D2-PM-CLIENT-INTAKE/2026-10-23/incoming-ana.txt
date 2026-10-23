@@ -1,0 +1,449 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:11.390Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:12.110Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:55:12.110Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:12.110Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] AI Gateway call failed: PRIVATE_LATE_PROVIDER_DIAGNOSTIC
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model 579ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification 11ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author 7ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed 6ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call 35ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call 7ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call 6ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model 6ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation 9ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an invalid message opens neither an executor nor a turn record 5ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:55:14.485Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:55:15.191Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:55:15.192Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:55:15.192Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:55:33.322Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:55:33.418Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Intelligence] Agent error: synthetic late gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:55:33.478Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic late gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 190ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 42ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 41ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:55:33.905Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:55:33.949Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:55:34.004Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 451ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 52ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:55:34.069Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+[Claude Intelligence] Agent error: synthetic first gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:55:34.133Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic first gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 55ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested 59ms
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:55:34.188Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:55:34.215Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:55:34.240Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call 63ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 37ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested 28ms
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:55:34.295Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws
+{
+  "timestamp": "2026-10-23T17:55:34.317Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns
+{
+  "timestamp": "2026-10-23T17:55:34.338Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+{
+  "timestamp": "2026-10-23T17:55:34.394Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call 55ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 21ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws 16ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns 31ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool 44ms
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:36.435Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:55:36.438Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:36.438Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:55:36.537Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > copies only primitive metadata immediately, without retaining or mutating the response 15ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > keeps first-round zero, later rounds and repeated-model calls with their distinct request IDs in callback order 1ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":"","model":"","requestId":""} 1ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {"provider":42,"model":false,"requestId":{"not":"a request id"}} 9ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > retains an unknown returned author for unusable metadata {} 0ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves nonempty strings exactly, including whitespace under the existing helper rule 2ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native collector retains detached served-call metadata > preserves the existing raw tool collector without a model observer 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > files every served call in order while the canonical author list deduplicates repeated models 79ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":"anthropic","model":null} when the final model is known 20ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":"claude-opus-5-5"} when the final model is known 12ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an earlier unknown author {"provider":null,"model":null} when the final model is known 17ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late failed turn without inventing a call from its error 17ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > retains earlier returned calls on a late stopped turn without inventing a call from its error 8ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the omitted observation-list legacy fallback and exact warning 12ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > preserves the empty observation-list legacy fallback and exact warning 9ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > names no served model when the first call fails without returning a response 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > states the remaining tool-round and later-input gaps when served calls are recorded 23ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-calls.test.ts > the native writer reaches existing per-call author qualification > keeps an unbound turn unrecorded despite observed models 0ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  17:55:06
+   Duration  36.16s (transform 13.57s, setup 157ms, import 21.79s, tests 13.17s, environment 0ms)
