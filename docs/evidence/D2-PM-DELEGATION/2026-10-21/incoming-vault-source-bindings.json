@@ -1,0 +1,17 @@
+{
+  "incomingHead": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
+  "integrationHead": "10f8f82455d31ace2d219136849be95c6c9b85ad",
+  "capturedAt": "2026-10-23T15:24:34.888153+00:00",
+  "files": {
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "f455bf4d010a80d0e3f5526ae25a8199e08e0289f0155c1b4dd974cec93a5595",
+    "server/services/ectd/assemble-from-core.ts": "e29501ca970b9971b9b296f5d5a67c3880c94c496a4602444cd8ff0dd79c4c7c",
+    "server/services/ectd/core-to-packager.ts": "08b6468ea7a9f090b336591a9e852e24cd4e4f6c1a4fe776edbbb80825b95f13",
+    "server/services/ectd/leaf-source-resolver.ts": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9",
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e"
+  }
+}
