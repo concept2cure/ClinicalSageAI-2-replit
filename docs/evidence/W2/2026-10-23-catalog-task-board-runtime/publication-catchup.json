@@ -1,0 +1,27 @@
+{
+  "firstPush": {
+    "commit": "1d4c12d02",
+    "allNormalGatesPassed": true,
+    "typeErrors": 0,
+    "exitCode": 1,
+    "reason": "remote advanced; non-fast-forward rejected"
+  },
+  "incomingCanonical": "9f8cae7f0",
+  "mergedCommit": "246fc58d3ebbec75676c197bd66e44f0209253a2",
+  "criticalSourceAndSharedDependenciesUnchanged": true,
+  "tests": {
+    "suites": 15,
+    "passed": 170,
+    "failed": 0
+  },
+  "build": {
+    "exitCode": 0,
+    "products": [
+      "client",
+      "server",
+      "audit-chain verifier"
+    ]
+  },
+  "review": "No incompatibility: incoming optional apiCall owner guard preserves existing calls; company owner guards use active bearer/account state independently of stored organization.",
+  "publish": "Normal push hook rechecks the final tree, including the complete compiler. No bypass."
+}

@@ -1,10 +1,11 @@
 {
-  "qualifiedCommit": "66110e1a74cf0d477af208f692fc5b276529e8d8",
+  "qualifiedCommit": "66110e1a7",
+  "finalIntegrationCommit": "246fc58d3ebbec75676c197bd66e44f0209253a2",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 8764,
-      "sha256": "1f0b357a2b07eca0efb6d6026c2105d1901c7903449675942d030b89f548e304"
+      "bytes": 10027,
+      "sha256": "d8b17f486ff719e4c9abcd7d459241a634a044226bc5614af0afaa84201659e0"
     },
     {
       "path": "auth/green.txt",
@@ -87,9 +88,24 @@
       "sha256": "fd00331b53210adea32239c589b20f73ef00b920e9e7fd2c33813959aa25ca94"
     },
     {
+      "path": "catchup-build.log.gz",
+      "bytes": 4676,
+      "sha256": "8f8ebc12bb95af493616944a2f4095b88cede364422313627f2c16cb80cf41e5"
+    },
+    {
+      "path": "catchup-tests.log.gz",
+      "bytes": 7208,
+      "sha256": "f0fd9fb3f8783223add925a5992754d22faac9caada3edc665d91a783f9fc31d"
+    },
+    {
       "path": "checks.json",
       "bytes": 911,
       "sha256": "7691cb7b2b68feaa63e77be3ec73eba24c395c665de9dd243b94d61ac197df8c"
+    },
+    {
+      "path": "first-push.log.gz",
+      "bytes": 4585,
+      "sha256": "e752e4e6cc63c89a029750b80f2c9729fa6c32421f14bdd21a8211bcab915985"
     },
     {
       "path": "http.json",
@@ -100,6 +116,11 @@
       "path": "native-board.json",
       "bytes": 1266,
       "sha256": "a8cdef4727b7f83e3727b53735167b9fd7a5c314edf0878d6fe9a03066bded70"
+    },
+    {
+      "path": "publication-catchup.json",
+      "bytes": 824,
+      "sha256": "55605041eb2ffc224b502576d9fa7619b21537e1ab6af3a603b88ee6342cd5af"
     },
     {
       "path": "qualified-inputs.json",

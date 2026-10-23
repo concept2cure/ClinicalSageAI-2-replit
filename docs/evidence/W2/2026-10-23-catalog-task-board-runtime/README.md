@@ -44,3 +44,9 @@ The first development browser attempt failed because the custom test port 5198 w
 The affected deployed URL/logs were not supplied. GitHub has no deployment record naming it. These results establish and fix reproducible failure mechanisms, not the live incident's cause or deployment status. D1 hosted apply/verification, human testing acceptance and regulated-use qualification remain open. No dependency, schema, migration, entitlement fallback, task write, approval or signoff behavior changed.
 
 Normal canonical push gates enforce publication; no PR, force, bypass or baseline change is used. The final Git commit and remote verification are reported in the session handoff.
+
+## Canonical publication catch-up
+
+The normal push of `1d4c12d02` passed every gate, including a repeated full-program **0-error** compiler check, then was rejected because another session advanced the branch (`first-push.log.gz`). No force or bypass was used. Canonical `9f8cae7f0` was merged at `246fc58d3`, preserving company-settings session continuity and its source-host recovery tests. The catalog/board implementations and their shared transport/read dependencies remain byte-identical to the browser/native-qualified source.
+
+On this final integration, `catchup-tests.log.gz` records **170 passed / 15 suites**, including the prior 141-check cohort plus real transport normalization and company session boundary/continuity checks. `catchup-build.log.gz` records successful client/server/audit-verifier builds. Independent review found no shared-boundary incompatibility: unguarded `apiCall` callers retain their normalized result, and company owner guards agree with active-bearer headers. `publication-catchup.json` records scope and results. The normal final push hook repeats compiler and publication gates on the resulting tree. The session handoff states the accepted remote commit; no affected hosted deployment or incident resolution is claimed.
