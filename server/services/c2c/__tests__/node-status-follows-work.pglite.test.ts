@@ -22,51 +22,16 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import express, { type NextFunction, type Request, type Response } from 'express';
+import express from 'express';
 import request from 'supertest';
-import { SignJWT } from 'jose';
-import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import type { JourneyDb } from '../../../../tests/golden-journeys/harness';
+import {
+  AUTHOR, FILING_JWT_SECRET, PASSWORD, PROJECT, T, makeFiling as makeFilingIn, signToken as sign, startFilingApp, type FilingApp,
+} from './_filing-write-harness';
 
-const JWT_SECRET = 'node-status-follows-work';
-process.env.JWT_SECRET = JWT_SECRET;
-process.env.JWT_SECRET_DEV = JWT_SECRET;
+process.env.JWT_SECRET = FILING_JWT_SECRET;
+process.env.JWT_SECRET_DEV = FILING_JWT_SECRET;
 process.env.AUDIT_HMAC_KEY = 'node-status-test-audit-hmac-key-not-a-real-secret';
-
-const AUTHOR = {
-  id: '42',
-  organizationId: 1,
-  email: 'approver@filing.example',
-  name: 'Avery Approver',
-};
-const PROJECT = '9a111111-2222-3333-4444-666666666666';
-
-const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
-  CREATE TABLE organization_users (
-    organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
-    role TEXT NOT NULL DEFAULT 'member'
-  );
-  CREATE TABLE regulatory_programs (
-    id uuid PRIMARY KEY,
-    organization_id INTEGER NOT NULL,
-    program_type text,
-    primary_agency text,
-    deleted_at timestamptz
-  );
-  CREATE TABLE audit_logs (
-    id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
-    table_name text, record_id text, actor_id text, target text,
-    target_type text, target_id text, reason text, payload_hash text,
-    ana_action_id text, sha256_chain text,
-    occurred_at timestamptz DEFAULT now(), hmac_seal text,
-    old_values json, new_values json, ip_address text, user_agent text
-  );
-  INSERT INTO organizations (id, name) VALUES (1, 'f1-org');
-  INSERT INTO users (id, name, email) VALUES (42, '${AUTHOR.name}', '${AUTHOR.email}');
-  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 42, 'member');
-  INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
-`;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../../db', () => ({
@@ -94,117 +59,26 @@ vi.mock('../../part11/reverify-signer-deps', () => ({
     warn: () => {},
   }),
 }));
-const PASSWORD = 'signer-password';
-
-const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
+let filing: FilingApp;
 let token = '';
 let approverToken = '';
 let reviewerToken = '';
 const as = (r: request.Test, t = token) => r.set('Authorization', `Bearer ${t}`);
-
-async function q<R = any>(sql: string, params?: unknown[]): Promise<R[]> {
-  const r = await (h.pool as any).query(sql, params);
-  return r.rows as R[];
-}
-
-async function sign(claims: Record<string, unknown>) {
-  return new SignJWT({
-    userId: AUTHOR.id, email: AUTHOR.email, name: AUTHOR.name,
-    organizationId: AUTHOR.organizationId, tenant_id: AUTHOR.organizationId, ...claims,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt().setExpirationTime('1h')
-    .sign(new TextEncoder().encode(JWT_SECRET));
-}
+const q = <R = any>(sql: string, params?: unknown[]) => filing.q<R>(sql, params);
 
 beforeAll(async () => {
-  jdb = await createJourneyDb({
-    prereqSql: PREREQ,
-    migrations: [
-      'db/migrations/20260725_authoring_document_loop_tables.sql',
-      'migrations/20260727_authoring_document_program_scope.sql',
-      'db/migrations/20260730_authoring_comments_router_columns.sql',
-      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-      'db/migrations/20260725_authoring_audit_trail.sql',
-      'db/migrations/20260725_authoring_signatures_and_workflow.sql',
-      'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-      'db/migrations/20260730_authoring_runtime_ddl.sql',
-      'db/migrations/20260803_document_span_lineage.sql',
-      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
-      'migrations/20260908_span_lineage_machine_draft.sql',
-      'migrations/20260728_authoring_comments_threading.sql',
-      'migrations/20260527_mutation_primitives.sql',
-      // recordGovernedAction's 'approve' verb: the open command vocabulary the
-      // deployed set carries (scripts/db/migration-set.mjs).
-      'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
-      'migrations/20260528_phase9_document_schema.sql',
-      'migrations/20260728_c2c_document_sections_timestamps.sql',
-      'migrations/20260728_c2c_section_version_author_kind.sql',
-      'migrations/20260728_authoring_document_governed_binding.sql',
-    ],
-  });
-  h.db = jdb.db;
-  h.pool = jdb.pool;
-
+  filing = await startFilingApp((built) => { h.db = built.db; h.pool = built.pool; });
+  ({ jdb, app } = filing);
   token = await sign({});
   approverToken = await sign({ roles: ['APPROVER'] });
   reviewerToken = await sign({ roles: ['REVIEWER'] });
-
-  const { default: authoringRouter } = await import('../../../routes/authoring.router');
-  const { default: documentsRouter } = await import('../../../routes/c2c/documents');
-  app = express();
-  app.use(express.json({ limit: '5mb' }));
-  app.use('/api/authoring', authoringRouter);
-  // The documents router reads the principal the app's auth middleware sets.
-  app.use('/api/c2c/documents', (req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: Number(AUTHOR.id), organizationId: AUTHOR.organizationId };
-    next();
-  }, documentsRouter);
 }, T);
 
 afterAll(async () => { await jdb?.close(); });
 
-let filingSeq = 0;
-/**
- * One governed filing (its sections all 'todo', as the scaffold writes them)
- * and one authored document bound to it, with a section per key. Each case
- * gets its own, so no case depends on another's order.
- */
-async function makeFiling(keys: string[]) {
-  const doc = `doc_f1_${++filingSeq}`;
-  const pack = await q<{ version: string }>(
-    `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
-  );
-  await q(
-    `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
-     VALUES ($1, 1, $2, 'ind', 'fda', $3, 'IND', 'draft', 0)`,
-    [doc, PROJECT, pack[0].version],
-  );
-  for (const [i, key] of keys.entries()) {
-    await q(
-      `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, status)
-       VALUES ($1, $2, $2, $3, 'todo')`,
-      [doc, key, i + 1],
-    );
-  }
-  const created = await as(request(app).post('/api/authoring/docs')).send({
-    title: `IND working copy ${filingSeq}`, module: 'M2', client_program_id: PROJECT,
-  });
-  expect(created.status, JSON.stringify(created.body)).toBe(201);
-  const authoringDocId: string = created.body.document.id;
-  await q(`UPDATE authoring_documents SET c2c_document_id = $1 WHERE id = $2`, [doc, authoringDocId]);
-  const sectionIds: Record<string, string> = {};
-  for (const key of keys) {
-    const s = await as(request(app).post('/api/authoring/sections')).send({
-      doc_id: authoringDocId, code: key, title: key, content: '', order_index: 1,
-    });
-    expect(s.status, JSON.stringify(s.body)).toBe(201);
-    sectionIds[key] = s.body.section.id;
-  }
-  return { doc, authoringDocId, sectionIds };
-}
+const makeFiling = (keys: string[]) => makeFilingIn(filing, (r) => as(r), keys);
 
 const save = (sectionId: string, content: string) =>
   as(request(app).patch(`/api/authoring/sections/${sectionId}`)).send({
@@ -320,7 +194,7 @@ describe('2. the approval signature approves the sections it covers', () => {
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': 'approved', '2.7': 'todo' });
-    // c2c_recompute_document_readiness: approved/locked over all sections.
+    // c2c_document_counted_readiness: approved/locked over the counted sections.
     expect(await readiness(f.doc)).toBe(67);
     expect(res.body.filingApproval).toEqual({ approved: ['2.5', '2.6'], notApproved: ['2.7'], documentId: f.doc });
 

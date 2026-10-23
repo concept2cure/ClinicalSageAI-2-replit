@@ -32,6 +32,7 @@ import {
   type AgencyCommunicationEventRecord,
   type AuthorityProfileRecord,
   type CommunicationVisibilityTier,
+  type LinkedSubmission,
   type PublishOpsServiceRecord,
   type SubmissionCenterItemRecord,
 } from '../../../shared/types/communication-center';
@@ -614,13 +615,25 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
     const projectId = await resolveCommunicationProject(req);
+    // The submission a letter names is read back only as a live submission of
+    // the project's program (resolveLinkedSubmission's rule); any other stored
+    // value is returned as itself with no submission (gap 6.5, 2026-10-22).
     const result = await pool.query(
-      `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
-              linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
-              urgency, response_required, extracted_issues, human_review_status, closure_status, audit_metadata
-         FROM concept2cure_agency_communications
-        WHERE organization_id = $1 AND project_id = $2
-        ORDER BY created_at DESC`,
+      `SELECT c.event_id, c.source_type, c.communication_type, c.source_channel, c.linked_submission_id,
+              c.linked_package_id, c.linked_section_codes, c.linked_artifact_ids, c.received_date, c.due_date,
+              c.urgency, c.response_required, c.extracted_issues, c.human_review_status, c.closure_status, c.audit_metadata,
+              sub.id AS sub_id, sub.title AS sub_title, sub.application_type AS sub_application_type,
+              sub.primary_region AS sub_primary_region
+         FROM concept2cure_agency_communications c
+         LEFT JOIN projects p
+           ON p.id = c.project_id AND p.organization_id = c.organization_id
+         LEFT JOIN submissions sub
+           ON sub.organization_id = c.organization_id
+          AND sub.program_id = p.regulatory_program_id
+          AND sub.id::text = c.linked_submission_id
+          AND sub.deleted_at IS NULL
+        WHERE c.organization_id = $1 AND c.project_id = $2
+        ORDER BY c.created_at DESC`,
       [organizationId, projectId]
     );
     const records: AgencyCommunicationEventRecord[] = result.rows.map((row: any) => ({
@@ -631,6 +644,9 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
       communicationType: row.communication_type,
       sourceChannel: row.source_channel,
       linkedSubmissionId: row.linked_submission_id ?? undefined,
+      linkedSubmission: row.sub_id == null ? null : linkedSubmissionOf({
+        id: row.sub_id, title: row.sub_title, application_type: row.sub_application_type, primary_region: row.sub_primary_region,
+      }),
       linkedPackageId: row.linked_package_id ?? undefined,
       linkedSectionCodes: row.linked_section_codes || [],
       linkedArtifactIds: row.linked_artifact_ids || [],
@@ -706,6 +722,61 @@ export async function refuseForeignLetterSources(
     : null;
 }
 
+/**
+ * The submission a communication concerns (gap 6.5 of
+ * docs/design/VEEVA_GAP_2026-10-22.md, 2026-10-22). linked_submission_id was
+ * stored as the client sent it and no screen sent it, so it could name a
+ * submission of another program, of another organisation, or nothing. It is
+ * checked as the letter source is above: a live submission of this
+ * organisation, in the program the project anchors
+ * (projects.regulatory_program_id = submissions.program_id). A project with no
+ * program has no submission to name. Returns the submission as the inbox shows
+ * it, or the refusal.
+ */
+function linkedSubmissionOf(r: { id: unknown; title: unknown; application_type: unknown; primary_region: unknown }): LinkedSubmission {
+  const text = (v: unknown) => (v == null ? null : String(v));
+  return { id: Number(r.id), title: text(r.title), applicationType: text(r.application_type), primaryRegion: text(r.primary_region) };
+}
+export async function resolveLinkedSubmission(
+  organizationId: number,
+  projectId: number,
+  ref: string
+): Promise<{ ok: true; submission: LinkedSubmission } | { ok: false; message: string }> {
+  const id = /^\d+$/.test(ref) ? Number(ref) : NaN;
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2147483647) {
+    return { ok: false, message: `Linked submission ${ref} is not a submission id. Nothing was logged.` };
+  }
+  const result = await pool.query(
+    `SELECT sub.id, sub.title, sub.application_type, sub.primary_region
+       FROM submissions sub
+       JOIN projects p
+         ON p.regulatory_program_id = sub.program_id
+        AND p.organization_id = sub.organization_id
+      WHERE sub.organization_id = $1
+        AND p.id = $2
+        AND sub.id = $3
+        AND sub.deleted_at IS NULL`,
+    [organizationId, projectId, id]
+  );
+  const row = result.rows[0];
+  return row
+    ? { ok: true, submission: linkedSubmissionOf(row) }
+    : { ok: false, message: `Linked submission ${ref} is not one of this project's submissions. Nothing was logged.` };
+}
+
+/** A communication's links, checked: its data-room letter, then its submission. The refusal, or the submission it names. */
+async function checkCommunicationLinks(
+  organizationId: number,
+  projectId: number,
+  input: { linkedArtifactIds: string[]; linkedSubmissionId?: string }
+): Promise<{ refusal: string } | { submission: LinkedSubmission | null; submissionId?: string }> {
+  const foreignLetter = await refuseForeignLetterSources(organizationId, projectId, input.linkedArtifactIds);
+  if (foreignLetter) return { refusal: foreignLetter };
+  if (input.linkedSubmissionId === undefined) return { submission: null };
+  const linked = await resolveLinkedSubmission(organizationId, projectId, input.linkedSubmissionId);
+  return linked.ok ? { submission: linked.submission, submissionId: String(linked.submission.id) } : { refusal: linked.message };
+}
+
 router.post('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
   const schema = z.object({
     sourceType: z.enum([
@@ -721,7 +792,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     ]),
     communicationType: z.string().min(2),
     sourceChannel: z.string().min(2),
-    linkedSubmissionId: z.string().optional(),
+    // An empty choice is no submission; anything else must name one (resolveLinkedSubmission).
+    linkedSubmissionId: z.string().trim().max(32).optional().transform((v) => v || undefined),
     linkedPackageId: z.string().optional(),
     linkedSectionCodes: z.array(z.string()).default([]),
     linkedArtifactIds: z.array(z.string()).default([]),
@@ -747,8 +819,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     if (input.responseRequired && (input.closureStatus === 'closed' || input.humanReviewStatus === 'actioned')) {
       return sendError(res, 400, 'A letter that requires a response cannot be logged as closed. Log it open; it closes once every response is signed.', undefined, 'RESPONSE_REQUIRED_NOT_CLOSED');
     }
-    const foreignLetter = await refuseForeignLetterSources(organizationId, projectId, input.linkedArtifactIds);
-    if (foreignLetter) return sendError(res, 400, foreignLetter);
+    const links = await checkCommunicationLinks(organizationId, projectId, input);
+    if ('refusal' in links) return sendError(res, 400, links.refusal);
     const now = new Date().toISOString();
     const event: AgencyCommunicationEventRecord = {
       id: `ace_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
@@ -757,7 +829,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
       sourceType: input.sourceType,
       communicationType: input.communicationType,
       sourceChannel: input.sourceChannel,
-      linkedSubmissionId: input.linkedSubmissionId,
+      linkedSubmissionId: links.submissionId,
+      linkedSubmission: links.submission,
       linkedPackageId: input.linkedPackageId,
       linkedSectionCodes: input.linkedSectionCodes,
       linkedArtifactIds: input.linkedArtifactIds,

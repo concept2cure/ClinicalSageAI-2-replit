@@ -481,8 +481,9 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
               <div className="txw-row-l">
                 Client type
                 <small>
-                  Sets the default rail focus and AnA framing. Governed — saved to your
-                  organization's industry profile.
+                  Sets the default rail focus and AnA framing, and the skills AnA prefers
+                  when a question does not name the product (Admin and access → Skills).
+                  Governed — saved to your organization's industry profile.
                 </small>
               </div>
               <div className="txw-row-r">
@@ -1616,9 +1617,23 @@ function moduleIsOpen(m: LiveModuleEntry, launchScopeEnforced: boolean): boolean
   return moduleVerdict(m, null, launchScopeEnforced) === null;
 }
 
+/** A usage figure from GET /license. `limit` is null when the organization row
+    records no limit — reported as null since 2026-10-15, never a default. */
+type LicenceUsage = { current: number; limit: number | null };
+type LiveAppLicense = Omit<AppLicense, 'usage'> & { usage: { projects: LicenceUsage; users: LicenceUsage } };
+
+function liveUsage(u: { currentCount?: unknown; maxAllowed?: unknown } | undefined): LicenceUsage | null {
+  if (!u || typeof u.currentCount !== 'number') return null;
+  const limit = u.maxAllowed === null ? null : typeof u.maxAllowed === 'number' ? u.maxAllowed : undefined;
+  if (limit === undefined) return null;
+  return { current: u.currentCount, limit };
+}
+
 /** Map GET /license into the fixture display shape, or null on shape mismatch.
-    `renewsAt` stays empty — the backend holds no renewal date to report. */
-function mapLiveLicense(payload: unknown): AppLicense | null {
+    `renewsAt` stays empty — the backend holds no renewal date to report.
+    2026-10-15: a null `maxAllowed` was a shape mismatch, so one unrecorded
+    limit discarded the whole licence band; it is now shown as not recorded. */
+function mapLiveLicense(payload: unknown): LiveAppLicense | null {
   if (!payload || typeof payload !== 'object') return null;
   const p = payload as {
     tier?: unknown;
@@ -1628,20 +1643,44 @@ function mapLiveLicense(payload: unknown): AppLicense | null {
       users?: { currentCount?: unknown; maxAllowed?: unknown };
     };
   };
-  const pj = p.usage?.projects;
-  const us = p.usage?.users;
-  if (typeof p.tier !== 'string') return null;
-  if (typeof pj?.currentCount !== 'number' || typeof pj?.maxAllowed !== 'number') return null;
-  if (typeof us?.currentCount !== 'number' || typeof us?.maxAllowed !== 'number') return null;
+  const projects = liveUsage(p.usage?.projects);
+  const users = liveUsage(p.usage?.users);
+  if (typeof p.tier !== 'string' || !projects || !users) return null;
   return {
     tier: p.tier,
     industryMode: typeof p.industryMode === 'string' ? p.industryMode : '',
     renewsAt: '',
-    usage: {
-      projects: { current: pj.currentCount, limit: pj.maxAllowed },
-      users: { current: us.currentCount, limit: us.maxAllowed },
-    },
+    usage: { projects, users },
   };
+}
+
+/** One usage figure in the licence band; no bar against a limit nobody recorded. */
+function LicenceQuota({ label, usage }: { label: string; usage: LicenceUsage }) {
+  const { current, limit } = usage;
+  return (
+    <div className="lic-quota">
+      <div className="lic-q-l">{label}</div>
+      {limit === null ? null : (
+        <div className="lic-q-bar">
+          <div
+            className="lic-q-fill"
+            data-warn={(limit && current / limit > 0.85) || undefined}
+            style={{
+              width: (limit ? Math.min(100, (current / limit) * 100) : 0) + '%',
+            }}
+          />
+        </div>
+      )}
+      <div className="lic-q-n mono">
+        {current} / {limit ?? 'not recorded'}
+      </div>
+    </div>
+  );
+}
+
+/** "14 of 25 projects", or "14 projects (no recorded limit)" — never "of null". */
+function usagePhrase(u: LicenceUsage, noun: string): string {
+  return u.limit === null ? `${u.current} ${noun} (no recorded limit)` : `${u.current} of ${u.limit} ${noun}`;
 }
 
 export function Apps({ onAsk, onNav }: SurfaceViewProps) {
@@ -1686,8 +1725,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   const tierLabel = lic?.tier || '';
-  const pj = lic?.usage?.projects || { current: 0, limit: 0 };
-  const us = lic?.usage?.users || { current: 0, limit: 0 };
+  const pj: LicenceUsage = lic?.usage?.projects || { current: 0, limit: 0 };
+  const us: LicenceUsage = lic?.usage?.users || { current: 0, limit: 0 };
 
   const setOn = (groupIdx: number, appId: string, on: boolean) =>
     setCat((prev) => {
@@ -1810,7 +1849,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         `this organisation` +
         (lic
           ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
-            `${pj.current} of ${pj.limit} projects and ${us.current} of ${us.limit} users used`
+            `${usagePhrase(pj, 'projects')} and ${usagePhrase(us, 'users')} used`
           : '. The licence could not be read, so no plan or usage figures are on screen') +
         (admin ? '. Admin controls are switched on, so the enable/disable toggles are live.' : ''),
       facts: {
@@ -1913,36 +1952,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
         </div>
-        <div className="lic-quota">
-          <div className="lic-q-l">Projects</div>
-          <div className="lic-q-bar">
-            <div
-              className="lic-q-fill"
-              data-warn={(pj.limit && pj.current / pj.limit > 0.85) || undefined}
-              style={{
-                width: (pj.limit ? Math.min(100, (pj.current / pj.limit) * 100) : 0) + '%',
-              }}
-            />
-          </div>
-          <div className="lic-q-n mono">
-            {pj.current} / {pj.limit}
-          </div>
-        </div>
-        <div className="lic-quota">
-          <div className="lic-q-l">Seats</div>
-          <div className="lic-q-bar">
-            <div
-              className="lic-q-fill"
-              data-warn={(us.limit && us.current / us.limit > 0.85) || undefined}
-              style={{
-                width: (us.limit ? Math.min(100, (us.current / us.limit) * 100) : 0) + '%',
-              }}
-            />
-          </div>
-          <div className="lic-q-n mono">
-            {us.current} / {us.limit}
-          </div>
-        </div>
+        <LicenceQuota label="Projects" usage={pj} />
+        <LicenceQuota label="Seats" usage={us} />
         <div className="lic-band-spacer"></div>
         {lic.renewsAt && <div className="lic-renew">Renews {lic.renewsAt}</div>}
         {/* Was <a href="/settings/subscription">. That path matches no route,

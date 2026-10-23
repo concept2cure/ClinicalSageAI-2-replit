@@ -1,0 +1,9 @@
+# m-notice-when-watched: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t watched turn sends none
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watched turn sends none 68ms
+   → expected [ { organizationId: 7, …(9) } ] to deeply equal []
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watched turn sends none
+AssertionError: expected [ { organizationId: 7, …(9) } ] to deeply equal []

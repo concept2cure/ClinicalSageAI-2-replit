@@ -1,5 +1,7 @@
 # Innovation Platform Implementation Guide
 
+> **Status (2026-10-15, d7c044897): most of what this guide describes was deleted.** `server/routes/innovation-routes.ts` (never mounted) and seven of the eight services, with `server/services/innovation/index.ts`, were removed. What remains is `server/services/innovation/submission-readiness-twin-service.ts`, reached by AnA's `get_submission_readiness_twin`, and its helper `rlsBypassSession.ts`; its tests are in `tests/integration/innovation-platform.test.ts`. No `/api/innovation` route exists, and `client/src/components/innovation/` is not in the repository. The rest of this guide is the removed design, kept as history.
+
 ## Overview
 
 This document provides comprehensive documentation for the 8 innovative platform features implemented in the TrialSage platform. Each feature is production-grade, designed with regulatory compliance in mind, and built to scale for enterprise use.
@@ -28,7 +30,7 @@ This document provides comprehensive documentation for the 8 innovative platform
 │                              ▼                                      │
 │  API Layer (Express.js)                                             │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ server/routes/innovation-routes.ts                           │   │
+│  │ server/routes/innovation-routes.ts (deleted 2026-10-15)      │   │
 │  │ - 60+ REST endpoints                                         │   │
 │  │ - Authentication middleware                                   │   │
 │  │ - Rate limiting                                               │   │
@@ -560,6 +562,6 @@ npm test -- tests/innovation-platform.test.ts -t "Performance Benchmarks"
 
 For implementation questions, refer to:
 - Service implementations in `server/services/innovation/`
-- API routes in `server/routes/innovation-routes.ts`
-- Component source in `client/src/components/innovation/`
-- Test examples in `tests/innovation-platform.test.ts`
+- API routes: none; `server/routes/innovation-routes.ts` was deleted 2026-10-15 (d7c044897)
+- Component source: none; `client/src/components/innovation/` is not in the repository
+- Test examples in `tests/integration/innovation-platform.test.ts`

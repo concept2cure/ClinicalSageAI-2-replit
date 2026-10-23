@@ -118,10 +118,10 @@ export interface AdverseEvent {
   /** De-identified patient identifier */
   patientId: string;
   eventDescription: string;
-  /** Date the adverse event first manifested */
-  onsetDate: Date;
-  /** Date the event was reported to the sponsor */
-  reportDate: Date;
+  /** Date the adverse event first manifested; null when the case records none. */
+  onsetDate: Date | null;
+  /** Date the event was reported to the sponsor; null when the case records none. */
+  reportDate: Date | null;
   /** ICH E2A seriousness criterion that qualifies this event */
   seriousnessCriteria: SeriousnessCriteria;
   /** WHO-UMC causality assessment */
@@ -136,8 +136,11 @@ export interface AdverseEvent {
   regulatoryReportingDeadlineReason?: string;
   /** Whether the event has been filed with the relevant authority */
   reportedToAuthorities: boolean;
-  /** Whether the event meets criteria for expedited (clock-start) reporting */
-  expeditedReportRequired: boolean;
+  /**
+   * Whether the event meets criteria for expedited (clock-start) reporting;
+   * null when the recorded event type does not decide it (see requiresExpeditedReport).
+   */
+  expeditedReportRequired: boolean | null;
   // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
   /** MedDRA reaction Preferred Term + code (and System Organ Class). */
   reactionPt?: string | null;
@@ -302,78 +305,93 @@ export interface AdverseEventFilters {
  * - NMPA Adverse Drug Reaction Reporting Measures Art. 29
  * - Health Canada Food and Drug Regulations C.01.017
  *
- * @param eventType - AE, SAE, SUSAR, or AESI
- * @param seriousnessCriteria - Seriousness qualifier
+ * Only a SUSAR — recorded serious AND unexpected — starts the expedited clock;
+ * a non-serious AE keeps its 90-day aggregate window. Anything else yields no
+ * deadline, with the reason. 2026-10-15: every type but 'AE' (an SAE, an AESI,
+ * a missing or unknown type) got the expedited clock, and a missing report
+ * date defaulted to today.
+ *
+ * @param eventType - AE, SAE, SUSAR, or AESI as recorded
+ * @param seriousnessCriteria - Seriousness qualifier as recorded
  * @param region - Target regulatory region
- * @param reportDate - Date the event was first reported (clock-start)
- * @returns The deadline Date by which the report must be submitted
+ * @param reportDate - Date the event was first reported (clock-start); never defaulted
+ * @returns The deadline, or null with the reason it cannot be computed
  */
 export function calculateReportingDeadline(
-  eventType: EventType,
-  seriousnessCriteria: SeriousnessCriteria,
+  eventType: EventType | null | undefined,
+  seriousnessCriteria: SeriousnessCriteria | null | undefined,
   region: RegulatoryRegion,
-  reportDate: Date = new Date(),
-): Date {
+  reportDate: Date | null | undefined,
+): ReportingDeadline {
+  const days = reportingWindowDays(eventType, seriousnessCriteria, region);
+  if (typeof days !== 'number') return { deadline: null, reason: days.reason };
+  if (!(reportDate instanceof Date) || Number.isNaN(reportDate.getTime())) {
+    return { deadline: null, reason: 'report date (sponsor awareness, the clock start) not recorded' };
+  }
   const deadline = new Date(reportDate);
-  const isFatalOrLifeThreatening =
-    seriousnessCriteria === 'death' || seriousnessCriteria === 'life_threatening';
+  deadline.setDate(deadline.getDate() + days);
+  return { deadline, reason: null };
+}
 
-  // Non-serious AEs do not trigger expedited reporting
-  if (eventType === 'AE') {
-    // Default 90-day aggregate window for non-serious AEs
-    deadline.setDate(deadline.getDate() + 90);
-    return deadline;
+/** A reporting deadline, or why the case's record does not give one. */
+export interface ReportingDeadline {
+  /** The date the report is due; null when what is recorded does not determine one. */
+  deadline: Date | null;
+  /** Why deadline is null; null when a deadline was computed. */
+  reason: string | null;
+}
+
+const RECORDED_EVENT_TYPES: readonly string[] = ['AE', 'SAE', 'SUSAR', 'AESI'];
+const RECORDED_SERIOUSNESS: readonly string[] = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
+
+/** The calendar days from the report date the recorded type and criterion give, or why they give none. */
+function reportingWindowDays(
+  eventType: EventType | null | undefined,
+  seriousnessCriteria: SeriousnessCriteria | null | undefined,
+  region: RegulatoryRegion,
+): number | { reason: string } {
+  if (!eventType || !RECORDED_EVENT_TYPES.includes(eventType)) {
+    return { reason: `event type not recorded${eventType ? ` ("${eventType}" is not AE, SAE, SUSAR or AESI)` : ''}` };
   }
+  // Non-serious AEs do not trigger expedited reporting: default 90-day aggregate window.
+  if (eventType === 'AE') return 90;
+  if (eventType !== 'SUSAR') {
+    return {
+      reason: `an ${eventType} is not recorded as ${eventType === 'AESI' ? 'serious and ' : ''}unexpected; only a serious and ` +
+        'unexpected event (SUSAR) starts the expedited clock — classify the case (21 CFR 312.32(c))',
+    };
+  }
+  if (!seriousnessCriteria || !RECORDED_SERIOUSNESS.includes(seriousnessCriteria)) {
+    return { reason: 'seriousness criterion not recorded, so the 7- or 15-day window cannot be chosen' };
+  }
+  return expeditedWindowDays(region, seriousnessCriteria === 'death' || seriousnessCriteria === 'life_threatening');
+}
 
+/** The expedited window by region: 7 calendar days for fatal / life-threatening, 15 otherwise. */
+function expeditedWindowDays(region: RegulatoryRegion, isFatalOrLifeThreatening: boolean): number | { reason: string } {
   switch (region) {
-    case 'FDA':
-      // 21 CFR 312.32(c)(2): 7 days for fatal/life-threatening, 15 days for other SAEs
-      deadline.setDate(deadline.getDate() + (isFatalOrLifeThreatening ? 7 : 15));
-      break;
-
-    case 'EMA':
-      // EudraVigilance: 7 days for fatal/life-threatening, 15 days for other SAEs
-      deadline.setDate(deadline.getDate() + (isFatalOrLifeThreatening ? 7 : 15));
-      break;
-
-    case 'PMDA':
-      // PMDA: 7 days for fatal, 15 days standard; first report within 72 hours
-      // The returned deadline is the *final* report deadline. The 72-hour
-      // first-notification obligation is handled at the workflow layer.
-      deadline.setDate(deadline.getDate() + (isFatalOrLifeThreatening ? 7 : 15));
-      break;
-
-    case 'NMPA':
-      // NMPA: 7 days for fatal, 15 days standard
-      deadline.setDate(deadline.getDate() + (isFatalOrLifeThreatening ? 7 : 15));
-      break;
-
-    case 'Health_Canada':
-      // Health Canada C.01.017: 7 days for fatal, 15 days standard
-      deadline.setDate(deadline.getDate() + (isFatalOrLifeThreatening ? 7 : 15));
-      break;
-
+    case 'FDA': // 21 CFR 312.32(c)(2): 7 days for fatal/life-threatening, 15 days for other SAEs
+    case 'EMA': // EudraVigilance: 7 days for fatal/life-threatening, 15 days for other SAEs
+    case 'PMDA': // The *final* report deadline; the 72-hour first notification is handled at the workflow layer.
+    case 'NMPA': // 7 days for fatal, 15 days standard
+    case 'Health_Canada': // C.01.017: 7 days for fatal, 15 days standard
+      return isFatalOrLifeThreatening ? 7 : 15;
     default:
-      // Conservative fallback — 15 calendar days
-      deadline.setDate(deadline.getDate() + 15);
-      break;
+      // A region outside the table has no window here (it was a 15-day "conservative fallback").
+      return { reason: `regulatory region "${String(region)}" has no expedited window on record` };
   }
-
-  return deadline;
 }
 
 /**
- * Determine whether an adverse event requires expedited (clock-start) reporting.
- *
- * Per ICH E2A and regional guidance, expedited reports are required for:
- * - All SAEs, SUSARs, and AESIs
- * - Non-serious AEs do NOT trigger expedited reporting
- *
- * @param eventType - The classification of the event
- * @returns true if expedited reporting is required
+ * Whether the recorded event type requires an expedited (clock-start) report:
+ * true for a SUSAR, false for a non-serious AE, null — undetermined — for any
+ * other type or none. 2026-10-15: every SAE and AESI read true (an AESI need
+ * not be serious; an SAE is expedited only when also unexpected) and a missing
+ * type read false.
  */
-function requiresExpeditedReport(eventType: EventType): boolean {
-  return eventType === 'SAE' || eventType === 'SUSAR' || eventType === 'AESI';
+export function requiresExpeditedReport(eventType: EventType | null | undefined): boolean | null {
+  if (eventType === 'SUSAR') return true;
+  return eventType === 'AE' ? false : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -399,17 +417,18 @@ export async function reportAdverseEvent(
 
   // Map country to primary regulatory region for deadline calculation
   const region = mapCountryToRegion(event.countryOfOccurrence);
-  const regulatoryReportingDeadline = calculateReportingDeadline(
-    event.eventType,
-    event.seriousnessCriteria,
-    region,
-    event.reportDate,
-  );
+  const { deadline: regulatoryReportingDeadline, reason: deadlineReason } = region
+    ? calculateReportingDeadline(event.eventType, event.seriousnessCriteria, region, event.reportDate)
+    : {
+        deadline: null,
+        reason: `regulatory region undetermined: country of occurrence ${event.countryOfOccurrence ? `"${event.countryOfOccurrence}" ` : ''}maps to no region on record`,
+      };
 
   const adverseEvent: AdverseEvent = {
     ...event,
     id,
     regulatoryReportingDeadline,
+    ...(deadlineReason === null ? {} : { regulatoryReportingDeadlineReason: deadlineReason }),
     expeditedReportRequired,
     createdAt,
   };
@@ -950,8 +969,11 @@ export async function getRMPsForProject(projectId: string): Promise<RiskManageme
  * Uses ISO 3166-1 alpha-2 codes. Falls back to FDA for unmapped countries
  * as the most conservative baseline.
  */
-function mapCountryToRegion(countryCode: string): RegulatoryRegion {
-  const upperCode = countryCode.toUpperCase();
+/** The regulatory region of a country of occurrence, or null when none is on
+ *  record. 2026-10-15: an unknown country defaulted to 'FDA' ("most
+ *  conservative"), giving the case a clock nobody determined applied. */
+export function mapCountryToRegion(countryCode: string | null | undefined): RegulatoryRegion | null {
+  const upperCode = String(countryCode ?? '').trim().toUpperCase();
 
   // United States & territories
   if (['US', 'PR', 'GU', 'VI', 'AS'].includes(upperCode)) {
@@ -983,8 +1005,7 @@ function mapCountryToRegion(countryCode: string): RegulatoryRegion {
     return 'Health_Canada';
   }
 
-  // Default to FDA timelines (most conservative)
-  return 'FDA';
+  return null;
 }
 
 /** Generate a UUID v4 */
@@ -1022,6 +1043,15 @@ function recordedDeadline(
   return { regulatoryReportingDeadline: new Date(value) };
 }
 
+/**
+ * A date column as recorded: a NULL stays null. 2026-10-15: the onset was read
+ * `new Date(row.onset_date)`, so a NULL became 1970-01-01 — the SAE line listing
+ * dropped the case as out of period and E2B E.i.4 printed the epoch.
+ */
+function recordedDate(value: string | Date | null | undefined): Date | null {
+  return value == null ? null : new Date(value);
+}
+
 /** Map a database row to an AdverseEvent object */
 function mapRowToAdverseEvent(row: any): AdverseEvent {
   return {
@@ -1031,8 +1061,9 @@ function mapRowToAdverseEvent(row: any): AdverseEvent {
     eventType: row.event_type,
     patientId: row.patient_id,
     eventDescription: row.event_description,
-    onsetDate: new Date(row.onset_date),
-    reportDate: new Date(row.report_date),
+    onsetDate: recordedDate(row.onset_date),
+    // 2026-10-15: new Date(NULL) read an unrecorded report date as 1970-01-01.
+    reportDate: recordedDate(row.report_date),
     seriousnessCriteria: row.seriousness_criteria,
     causality: row.causality,
     outcome: row.outcome,
@@ -1125,10 +1156,18 @@ function mapRowToRMP(row: any): RiskManagementPlan {
 export interface ReportingClock {
   deadline: string | null;
   daysRemaining: number | null;
-  /** True when the expedited window is in its urgent tail (e.g. day 6+ of 15) and not yet breached. */
-  day6Flag: boolean;
-  breached: boolean;
-  status: 'none' | 'on_track' | 'due_soon' | 'day6' | 'breached';
+  /** True when the expedited window is in its urgent tail (e.g. day 6+ of 15) and not yet breached; null when undetermined. */
+  day6Flag: boolean | null;
+  /** Whether the deadline has passed; null when no valid deadline is recorded — undetermined, not "not breached". */
+  breached: boolean | null;
+  status: 'undetermined' | 'on_track' | 'due_soon' | 'day6' | 'breached';
+  /** Why the clock is undetermined; absent when a deadline is recorded. */
+  reason?: string;
+}
+
+/** The clock of a case with no valid recorded deadline. 2026-10-15: it read breached:false, status 'none'. */
+function undeterminedClock(reason: string): ReportingClock {
+  return { deadline: null, daysRemaining: null, day6Flag: null, breached: null, status: 'undetermined', reason };
 }
 
 /**
@@ -1142,11 +1181,11 @@ export function computeReportingClock(
   windowDays = 15,
 ): ReportingClock {
   if (!deadline) {
-    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+    return undeterminedClock('No reporting deadline is recorded for this case, so whether it is breached is undetermined.');
   }
   const due = deadline instanceof Date ? deadline : new Date(deadline);
   if (Number.isNaN(due.getTime())) {
-    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+    return undeterminedClock('The recorded reporting deadline is not a valid date, so whether it is breached is undetermined.');
   }
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysRemaining = Math.ceil((due.getTime() - now.getTime()) / msPerDay);

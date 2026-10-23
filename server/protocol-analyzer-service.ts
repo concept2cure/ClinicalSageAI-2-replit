@@ -1,5 +1,5 @@
 import { db } from './db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { protocols } from '../shared/schema';
 import { classifyTherapeuticArea } from '../shared/utils/therapeutic-area-classifier';
 import { getPool } from './db/runtime';
@@ -433,126 +433,132 @@ export class ProtocolAnalyzerService {
    * service is available, and falls back to a deterministic attribute-based
    * score otherwise. Both are real measures — neither is fabricated — and each
    * result is tagged with the `similarityMethod` used.
+   *
+   * Only the caller's organization's protocols are compared, and a failed read
+   * throws. 2026-10-15: the read named no organization, so every tenant's
+   * protocols with the same indication were listed, and a failed read was
+   * returned as [] — "no similar protocols". `organizationId` is trailing and
+   * optional only so the one caller compiles until it passes it; without one,
+   * this refuses.
    */
-  async findSimilarProtocols(protocolData: ProtocolData, limit: number = 5): Promise<any[]> {
-    try {
-      // The search key is the indication, which is optional now — the analyser
-      // no longer defaults it. With no indication stated there is no key to
-      // match on, so there is nothing to compare against. Returning [] here is
-      // correct rather than fail-open, because the ONE caller
-      // (analytics-routes.ts) distinguishes all three cases in the text it
-      // renders: not stated, stated-but-unmatched, and matched.
-      if (!protocolData.indication) return [];
-
-      // Find similar reports by indication and phase
-      const similar = await db
-        .select()
-        .from(protocols)
-        .where(eq(protocols.indication, protocolData.indication))
-        .limit(limit);
-
-      // Attempt semantic embeddings; degrade gracefully to attribute scoring.
-      let embeddingService: ReturnType<typeof getEmbeddingService> | null = null;
-      let inputVector: number[] | null = null;
-      let inputModel = '';
-      try {
-        embeddingService = getEmbeddingService(getPool());
-        const inputText = this.buildProtocolText({
-          indication: protocolData.indication,
-          phase: protocolData.phase,
-          summary: protocolData.summary,
-          design: protocolData.design,
-          primary_endpoint: protocolData.primary_endpoint,
-        });
-        if (inputText) {
-          const result = await embeddingService.embed(inputText);
-          inputVector = result.embedding;
-          inputModel = result.model;
-        }
-      } catch {
-        embeddingService = null;
-        inputVector = null;
-      }
-
-      return await Promise.all(
-        similar.map(async protocol => {
-          // The protocols table stores sponsor / sample size / duration inside
-          // the JSON `metadata` column rather than as dedicated columns.
-          const meta = (protocol.metadata ?? {}) as {
-            sponsor?: string;
-            sampleSize?: number;
-            sample_size?: number;
-            durationWeeks?: number;
-            duration?: number;
-            outcome?: string;
-            embedding?: number[];
-            embeddingModel?: string;
-          };
-          const sampleSize = meta.sampleSize ?? meta.sample_size;
-          const durationWeeks = meta.durationWeeks ?? meta.duration;
-
-          let similarity: number | null = this.computeSimilarity(protocolData, {
-            phase: protocol.phase,
-            indication: protocol.indication,
-            sampleSize,
-            durationWeeks,
-          });
-          let similarityMethod: 'semantic' | 'attribute' = 'attribute';
-
-          if (embeddingService && inputVector) {
-            try {
-              // Reuse the protocol's persisted embedding when present (same
-              // model); otherwise embed once and persist it to avoid recomputing
-              // on every request.
-              let candidateVector: number[] | null = null;
-              if (
-                Array.isArray(meta.embedding) &&
-                meta.embedding.length === inputVector.length &&
-                meta.embeddingModel === inputModel
-              ) {
-                candidateVector = meta.embedding;
-              } else {
-                const candidateText = this.buildProtocolText({
-                  title: protocol.title,
-                  indication: protocol.indication,
-                  phase: protocol.phase,
-                });
-                if (candidateText) {
-                  const result = await embeddingService.embed(candidateText);
-                  candidateVector = result.embedding;
-                  await db
-                    .update(protocols)
-                    .set({ metadata: { ...meta, embedding: result.embedding, embeddingModel: result.model } })
-                    .where(eq(protocols.id, protocol.id));
-                }
-              }
-              if (candidateVector) {
-                similarity = Math.round(this.cosine(inputVector, candidateVector) * 100);
-                similarityMethod = 'semantic';
-              }
-            } catch {
-              // keep the attribute-based score
-            }
-          }
-
-          return {
-            id: protocol.id,
-            title: protocol.title,
-            sponsor: meta.sponsor ?? null,
-            phase: protocol.phase,
-            indication: protocol.indication,
-            similarity,
-            similarityMethod,
-            sampleSize: sampleSize ?? null,
-            duration: durationWeeks ?? null,
-            outcome: this.deriveOutcome(protocol.status, meta.outcome),
-          };
-        })
-      );
-    } catch (error) {
-      console.error('Error finding similar protocols:', error);
-      return [];
+  async findSimilarProtocols(protocolData: ProtocolData, limit: number = 5, organizationId?: number): Promise<any[]> {
+    if (!Number.isSafeInteger(organizationId) || (organizationId as number) <= 0) {
+      throw new Error('findSimilarProtocols requires the caller\'s organization');
     }
+    const orgId = organizationId as number;
+    // The search key is the indication, which is optional now — the analyser
+    // no longer defaults it. With no indication stated there is no key to
+    // match on, so there is nothing to compare against. Returning [] here is
+    // correct rather than fail-open, because the ONE caller
+    // (analytics-routes.ts) distinguishes all three cases in the text it
+    // renders: not stated, stated-but-unmatched, and matched.
+    if (!protocolData.indication) return [];
+
+    // Find similar reports by indication and phase
+    const similar = await db
+      .select()
+      .from(protocols)
+      .where(and(eq(protocols.organizationId, orgId), eq(protocols.indication, protocolData.indication)))
+      .limit(limit);
+
+    // Attempt semantic embeddings; degrade gracefully to attribute scoring.
+    let embeddingService: ReturnType<typeof getEmbeddingService> | null = null;
+    let inputVector: number[] | null = null;
+    let inputModel = '';
+    try {
+      embeddingService = getEmbeddingService(getPool());
+      const inputText = this.buildProtocolText({
+        indication: protocolData.indication,
+        phase: protocolData.phase,
+        summary: protocolData.summary,
+        design: protocolData.design,
+        primary_endpoint: protocolData.primary_endpoint,
+      });
+      if (inputText) {
+        const result = await embeddingService.embed(inputText);
+        inputVector = result.embedding;
+        inputModel = result.model;
+      }
+    } catch {
+      embeddingService = null;
+      inputVector = null;
+    }
+
+    return await Promise.all(
+      similar.map(async protocol => {
+        // The protocols table stores sponsor / sample size / duration inside
+        // the JSON `metadata` column rather than as dedicated columns.
+        const meta = (protocol.metadata ?? {}) as {
+          sponsor?: string;
+          sampleSize?: number;
+          sample_size?: number;
+          durationWeeks?: number;
+          duration?: number;
+          outcome?: string;
+          embedding?: number[];
+          embeddingModel?: string;
+        };
+        const sampleSize = meta.sampleSize ?? meta.sample_size;
+        const durationWeeks = meta.durationWeeks ?? meta.duration;
+
+        let similarity: number | null = this.computeSimilarity(protocolData, {
+          phase: protocol.phase,
+          indication: protocol.indication,
+          sampleSize,
+          durationWeeks,
+        });
+        let similarityMethod: 'semantic' | 'attribute' = 'attribute';
+
+        if (embeddingService && inputVector) {
+          try {
+            // Reuse the protocol's persisted embedding when present (same
+            // model); otherwise embed once and persist it to avoid recomputing
+            // on every request.
+            let candidateVector: number[] | null = null;
+            if (
+              Array.isArray(meta.embedding) &&
+              meta.embedding.length === inputVector.length &&
+              meta.embeddingModel === inputModel
+            ) {
+              candidateVector = meta.embedding;
+            } else {
+              const candidateText = this.buildProtocolText({
+                title: protocol.title,
+                indication: protocol.indication,
+                phase: protocol.phase,
+              });
+              if (candidateText) {
+                const result = await embeddingService.embed(candidateText);
+                candidateVector = result.embedding;
+                await db
+                  .update(protocols)
+                  .set({ metadata: { ...meta, embedding: result.embedding, embeddingModel: result.model } })
+                  .where(and(eq(protocols.id, protocol.id), eq(protocols.organizationId, orgId)));
+              }
+            }
+            if (candidateVector) {
+              similarity = Math.round(this.cosine(inputVector, candidateVector) * 100);
+              similarityMethod = 'semantic';
+            }
+          } catch {
+            // keep the attribute-based score
+          }
+        }
+
+        return {
+          id: protocol.id,
+          title: protocol.title,
+          sponsor: meta.sponsor ?? null,
+          phase: protocol.phase,
+          indication: protocol.indication,
+          similarity,
+          similarityMethod,
+          sampleSize: sampleSize ?? null,
+          duration: durationWeeks ?? null,
+          outcome: this.deriveOutcome(protocol.status, meta.outcome),
+        };
+      })
+    );
   }
 }
 

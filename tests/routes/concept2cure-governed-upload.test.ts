@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockResolveGovernedContext, mockDbSelectLimit, mockDbInsert, mockDbUpdate } = vi.hoisted(
+const { mockResolveGovernedContext, mockDbSelectLimit, mockDbInsert, mockDbUpdate, mockPoolQuery } = vi.hoisted(
   () => ({
+    mockPoolQuery: vi.fn(),
     mockResolveGovernedContext: vi.fn(),
     mockDbSelectLimit: vi.fn(),
     mockDbInsert: vi.fn(),
@@ -27,7 +28,7 @@ vi.mock('../../server/db', () => ({
     update: mockDbUpdate,
   },
   pool: {
-    query: vi.fn(),
+    query: mockPoolQuery,
   },
 }));
 
@@ -70,6 +71,9 @@ function getRouteHandler(path: string, method: 'post' | 'put' | 'get' = 'post') 
 describe('Concept2Cure knowledge upload governance', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    /* The upload reads the organization's industry profile when the body states
+       no clientTrack (2026-10-22). No profile row is recorded here. */
+    mockPoolQuery.mockResolvedValue({ rows: [] });
     mockDbSelectLimit.mockResolvedValue([
       {
         id: 1,
@@ -103,9 +107,11 @@ describe('Concept2Cure knowledge upload governance', () => {
       },
     });
 
+    /* The track is stated, so the contract is evaluated once, under it. */
     const req = createMockRequest({
       body: {
         projectId: 'proj_1',
+        clientTrack: 'biotech',
       },
     }) as any;
     req.userId = 42;
@@ -133,6 +139,8 @@ describe('Concept2Cure knowledge upload governance', () => {
         }),
       })
     );
+    expect(mockResolveGovernedContext).toHaveBeenCalledTimes(1);
+    expect(mockResolveGovernedContext).toHaveBeenCalledWith(expect.objectContaining({ clientTrack: 'biotech' }));
     expect(mockDbInsert).not.toHaveBeenCalled();
     expect(mockDbUpdate).not.toHaveBeenCalled();
   });

@@ -18,6 +18,16 @@ variable "instance_class" {
   default = "db.t3.medium"
 }
 
+variable "storage_type" {
+  type        = string
+  description = "EBS volume type. gp3: the same price per GB as the provider's gp2 default, with a 3,000 IOPS baseline instead of IOPS that scale with size and burst."
+  default     = "gp3"
+  validation {
+    condition     = contains(["gp3", "io1", "io2"], var.storage_type)
+    error_message = "storage_type must be gp3, io1 or io2; gp2's IOPS burst and then drop to 3 per GB."
+  }
+}
+
 variable "allocated_storage" {
   type    = number
   default = 50

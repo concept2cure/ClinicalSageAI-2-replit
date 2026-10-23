@@ -1,13 +1,39 @@
+/**
+ * Chat upload governance: an upload writes no governed artifact.
+ *
+ * Until 2026-10-17 a project upload ALSO wrote a concept2cure_artifacts
+ * 'source_document' copy of the file, and that copy was gated by the governed
+ * document contract: an invalid contract answered 400 GOVERNED_CONTRACT_INVALID.
+ * Document store consolidation step 3 (19087b9f0,
+ * docs/design/DOCUMENT_STORE_CONSOLIDATION.md) removed the copy, and the gate
+ * with it: the one record of an uploaded file is its Data Room source, and the
+ * governed act is a person filing it into the Vault (VR-11a), not the upload.
+ *
+ * So what this pins now is stricter than "no artifact when the contract is
+ * invalid": no artifact is written at all, the governed contract is never
+ * consulted (so no contract outcome can create or block one), and the file is
+ * recorded as its project's Data Room source. Source identity itself is
+ * chat-upload-source-identity.test.ts's subject; it is stubbed here, as in
+ * chat-upload-to-memory.test.ts, because this suite's pool is a query stub.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockResolveGovernedContext, mockPoolQuery } = vi.hoisted(() => ({
+const { mockResolveGovernedContext, mockPoolQuery, mockCreateSource } = vi.hoisted(() => ({
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
+  mockCreateSource: vi.fn(async () => ({ id: 4242 })),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
   resolveGovernedContext: mockResolveGovernedContext,
+}));
+
+vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
+  createSource: mockCreateSource,
+  findSourceByChecksum: vi.fn(async () => null),
+  findSupersededCandidate: vi.fn(async () => null),
+  createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),
 }));
 
 vi.mock('../../server/db.js', () => {
@@ -132,7 +158,7 @@ describe('chat upload governance', () => {
     });
   });
 
-  it('returns GOVERNED_CONTRACT_INVALID when governed context fails', async () => {
+  it('writes no governed artifact and never consults the contract, even when it would be invalid', async () => {
     mockResolveGovernedContext.mockReturnValue({
       contract: {},
       validation: { valid: false, errors: ['missing clientTrack'], warnings: [] },
@@ -157,11 +183,27 @@ describe('chat upload governance', () => {
     const handler = getPostHandler('/upload');
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    // No refusal of any kind: the upload is not the governed act.
+    expect(res.status).not.toHaveBeenCalled();
+    expect(mockResolveGovernedContext).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        code: 'GOVERNED_CONTRACT_INVALID',
-      })
+        status: 'ready',
+        sourceId: 4242,
+        dataRoom: expect.objectContaining({ recorded: true }),
+      }),
+    );
+    expect(res.json).not.toHaveBeenCalledWith(expect.objectContaining({ code: 'GOVERNED_CONTRACT_INVALID' }));
+    // The one record is the project's Data Room source, captured but not filed.
+    expect(mockCreateSource).toHaveBeenCalledTimes(1);
+    expect(mockCreateSource).toHaveBeenCalledWith(
+      5,
+      expect.objectContaining({
+        sourceType: 'client_document',
+        visibilityClass: 'project_private',
+        clientWorkspaceId: 12,
+        title: 'source.txt',
+      }),
     );
     const artifactInsertCall = mockPoolQuery.mock.calls.find(([sql]) =>
       String(sql).includes('INSERT INTO concept2cure_artifacts')

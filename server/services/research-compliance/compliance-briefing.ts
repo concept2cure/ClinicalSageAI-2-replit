@@ -58,7 +58,12 @@ const EXTRACTORS: { reportTypeId: string; extract: (s: Record<string, unknown> |
   },
   {
     reportTypeId: 'iacuc.protocol_register',
-    extract: (s) => [{ domain: 'IACUC', signal: 'protocols expiring or expired (≤90d)', count: n(s, 'expiringOrExpired'), severity: 'critical', basis: 'PHS Policy IV.C.5 — 3-year de novo review' }],
+    // 2026-10-15: approvals with no expiry and no approval date on record were
+    // counted by the register as not determined and dropped here.
+    extract: (s) => [
+      { domain: 'IACUC', signal: 'protocols expiring or expired (≤90d)', count: n(s, 'expiringOrExpired'), severity: 'critical', basis: 'PHS Policy IV.C.5 — 3-year de novo review' },
+      { domain: 'IACUC', signal: 'approved protocols with expiry not determined (no expiration or approval date recorded)', count: n(s, 'approvedExpiryNotDetermined'), severity: 'warning', basis: 'PHS Policy IV.C.5 — 3-year de novo review' },
+    ],
   },
   {
     reportTypeId: 'lifecycle.obligation_calendar',

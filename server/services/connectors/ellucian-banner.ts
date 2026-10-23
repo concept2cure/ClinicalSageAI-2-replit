@@ -102,7 +102,7 @@ export class EllucianBannerConnector implements DataConnector {
         sourceConnector: this.id,
         title: `${resource.slice(0, -1)}: ${name}`,
         summary: `Banner (Ethos) ${resource} record · id ${r.id}`,
-        relevanceScore: 1 - i * 0.02,
+        sourceRank: i + 1,
         metadata: { resource, banner: r },
         url: undefined,
       };

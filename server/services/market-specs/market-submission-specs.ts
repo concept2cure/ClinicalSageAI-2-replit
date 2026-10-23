@@ -204,7 +204,12 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
       maxFileNameLength: 64,
       maxPathLength: 230,
       maxFileSizeMb: null,
-      maxSubmissionSizeMb: 4096,
+      // FDA's ESG limit is 10 GB (FDA Form 5640 v2.0; ectd-regional-rules
+      // FDA_GATEWAY_LIMIT_BYTES), read as 10^10 bytes; this field is MiB, so
+      // exactly 10^10 / 2^20. 2026-10-08 (W5/D7, sweep VP-6 follow-up): it was
+      // 4096, a second FDA limit that disagreed with the gateway's; 9536
+      // (rounded down) left a window the gateway accepted and this refused.
+      maxSubmissionSizeMb: (10 * 1000 ** 3) / 1024 ** 2,
       checksumAlgorithm: 'MD5',
       folderConvention: 'CTD m1–m5 tree; Module 1 under m1/us/.',
     },

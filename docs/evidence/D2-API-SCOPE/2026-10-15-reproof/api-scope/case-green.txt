@@ -1,0 +1,270 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/authority-map 4ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/body-aware-gaps 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/compare-versions 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-consequence 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-context 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/contradiction-scan 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/correction-draft 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/cross-section-consistency 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/decision 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/dossier-preflight 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/execute-contradiction-resolution 4ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/explain-contradiction-resolution 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/harmonize-sections 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/mark-submission-ready 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/plan-contradiction-resolution 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/project-resolution-status 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promote-to-review 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/promotion-blockers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resolution-changelog 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/resume-last-section 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-context 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-evidence 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-expectations 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/section-preflight 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/authoring-actions/seed-overlay-rules 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/computation-runs 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/biostat-bridge/filing-placements 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/actions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/health 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/send-message 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/stream 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/chat/thread 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/sessions 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/coauthor/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/artifacts/export-pptx 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/projects/all 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/concept2cure/reviews/pending 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/artifacts 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/conversation-os/conversations 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/benchmark 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/extract 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/corpus/ingest 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/controlled-vocab 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/qualification 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/templates 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/ectd/v4 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/internal-audits 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/management-reviews 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/nonconforming 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/readiness 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/qms/suppliers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/mdx/vault 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/dependencies 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/initialize 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/milestones 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/notifications 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/summary 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/project-sections/timeline 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/realtime-collab/health 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/dashboard 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/regulatory/tasks/sync 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/approval-bottlenecks 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/blockers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/command-center 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/digests 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/due-soon 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/hotspots 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/policies 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/sections 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/unified-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/submission-ops/workload 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/task-management/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/tasks/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/progression 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/proofs 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/status 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the 79 sub-namespaces the re-proof upheld are not served at launch > /api/workflow/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/authority-map 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/body-aware-gaps 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/compare-versions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/contradiction-consequence 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/contradiction-context 4ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/contradiction-scan 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/correction-draft 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/cross-section-consistency 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/decision 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/dossier-preflight 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/execute-contradiction-resolution 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/explain-contradiction-resolution 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/harmonize-sections 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/mark-submission-ready 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/plan-contradiction-resolution 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/project-resolution-status 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/promote-to-review 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/promotion-blockers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/resolution-changelog 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/resume-last-section 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/section-context 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/section-evidence 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/section-expectations 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/section-preflight 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/authoring-actions/seed-overlay-rules 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/biostat-bridge/computation-runs 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/biostat-bridge/filing-placements 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/chat/actions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/chat/health 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/chat/send-message 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/chat/stream 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/chat/thread 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/coauthor/sessions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/coauthor/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/concept2cure/artifacts/export-pptx 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/concept2cure/projects/all 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/concept2cure/reviews/pending 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/conversation-os/artifacts 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/conversation-os/conversations 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/corpus/benchmark 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/corpus/extract 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/corpus/ingest 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/ectd/controlled-vocab 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/ectd/qualification 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/ectd/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/ectd/v4 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/qms/internal-audits 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/qms/management-reviews 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/qms/nonconforming 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/qms/readiness 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/qms/suppliers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/vault 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/dependencies 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/initialize 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/milestones 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/notifications 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/summary 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/project-sections/timeline 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/realtime-collab/health 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/regulatory/tasks/dashboard 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/regulatory/tasks/sync 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/approval-bottlenecks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/blockers 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/command-center 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/digests 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/due-soon 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/hotspots 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/policies 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/sections 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/unified-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/workload 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/task-management/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/tasks/automation 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/workflow/progression 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/workflow/proofs 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/workflow/status 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/workflow/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/decision-context 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/decisions 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/authoring-actions/module-preflight 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/biostat-bridge/designs 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/chat/threads 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/chat/upload 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/coauthor/documents 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/artifacts/export-docx 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/artifacts/export-pdf 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/projects 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/concept2cure/reviews/my-queue 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/export 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/validate 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/changes 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/documents 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/training 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/realtime-collab/locks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/realtime-collab/rooms 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/all 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/by-module 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/regulatory/tasks/unified 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/submission-ops/artifact-section-map 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/submission-ops/packages 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/assignees 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/board 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/filings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/messages 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/my-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/task-management/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/messages 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/my-work 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/tasks 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/tasks/templates 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/mdx/qms/suppliers carries a reason, and is one of the upheld findings 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/mdx/qms/internal-audits carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/mdx/qms/nonconforming carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/mdx/qms/management-reviews carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/mdx/qms/readiness carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/regulatory/tasks/dashboard carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/regulatory/tasks/sync carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/concept2cure/projects/all carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/concept2cure/artifacts/export-pptx carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/chat/actions carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/chat/health carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/chat/send-message carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/chat/stream carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > /api/chat/thread carries a reason, and is one of the upheld findings 0ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > every key the verdict matches is lower case, because it matches a lower-cased path 1ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > LAUNCH_EXCLUDED_API stays honest > excludes no path a launch screen calls 1ms
+stderr | server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot
+{
+  "timestamp": "2026-10-22T08:08:00.885Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED=report in production: API paths no surface claims are served and recorded, not refused",
+  "context": {}
+}
+
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the workflow runner AnA Command used, now that AnA Command is locked 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > judges a path as Express routes it, whatever its letter case 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 6ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 6ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 13ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 6ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 6ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 3ms
+
+ Test Files  2 passed (2)
+      Tests  253 passed (253)
+   Start at  08:07:59
+   Duration  1.94s (transform 416ms, setup 132ms, import 1.07s, tests 211ms, environment 0ms)
+

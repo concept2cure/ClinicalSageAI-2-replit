@@ -62,12 +62,14 @@ export async function verifyChecksumManifest(
   extensions: string[] = ['.dtd', '.xsd', '.xsl'],
 ): Promise<ChecksumVerifyResult> {
   let manifestText = '';
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- dir is a vendored DTD/schema directory and manifestName a constant ('checksums.txt' at every caller)
   try { manifestText = await fs.readFile(path.join(dir, manifestName), 'utf8'); } catch { /* Unrecorded files remain unverified. */ }
   let names: string[] = [];
   try { names = (await fs.readdir(dir)).filter(name => extensions.some(ext => name.toLowerCase().endsWith(ext))); } catch { /* Pre-vendoring directory may be absent. */ }
   const files: Array<{ fileName: string; content: Buffer }> = [];
   const unreadable: string[] = [];
   for (const fileName of names) {
+    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- fileName comes from readdir(dir), so it names an entry of dir itself
     try { files.push({ fileName, content: await fs.readFile(path.join(dir, fileName)) }); }
     catch { unreadable.push(fileName); }
   }

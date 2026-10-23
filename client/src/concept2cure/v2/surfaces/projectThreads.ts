@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { hasKeys, liveGetOrNull, useLiveData, type DataState } from '../dataConnect';
+import { readListedRuns, type ListedRun } from '../../components/ana/anaTurnTimeline';
 
 /** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
 export interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
@@ -79,4 +80,48 @@ export function useProjectThreads(pid: string | null): ProjectThreads {
   }, [pid, loadingOlder, readSoFar]);
 
   return { state, shown, hasOlder, loadingOlder, olderError, showOlder };
+}
+
+/** How often the Working marker is read again while its page is on screen (the follower's own pace, §4.1). */
+export const WORKING_REFRESH_MS = 15_000;
+
+/**
+ * The conversations AnA is working in for this person, by thread (AnA detach
+ * DT3, §5.1): read from GET /api/ana-ri/runs?mine=live through the one
+ * listing reader (anaTurnTimeline.ts readListedRuns), so the "Working" marker
+ * and the RUN_LIMIT refusal's links say the same thing. `enabled` false reads
+ * nothing. A read that fails marks nothing and says so (`failed`) — it is
+ * never shown as "nothing working".
+ *
+ * Read again every WORKING_REFRESH_MS while the page is on screen, and at once
+ * when it comes back on screen (DT3 review: read once at mount, a turn that
+ * had ended still read "Working · stops by …" for as long as the page stayed
+ * open). A hidden page does not read.
+ */
+export function useWorkingThreads(enabled = true): { byThread: Map<string, ListedRun>; failed: boolean } {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!enabled || typeof document === 'undefined') return undefined;
+    const visible = () => document.visibilityState !== 'hidden';
+    const onVisibility = () => {
+      if (visible()) setTick((t) => t + 1);
+    };
+    const timer = setInterval(() => {
+      if (visible()) setTick((t) => t + 1);
+    }, WORKING_REFRESH_MS);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [enabled]);
+  const state = useLiveData<{ runs: unknown[] }>(
+    enabled ? '/api/ana-ri/runs?mine=live' : null,
+    ['ana-working', enabled, tick],
+    hasKeys<{ runs: unknown[] }>('runs'),
+  );
+  const runs = state.data ? readListedRuns(state.data) ?? [] : [];
+  const byThread = new Map<string, ListedRun>();
+  for (const r of runs) if (r.threadId && !byThread.has(r.threadId)) byThread.set(r.threadId, r);
+  return { byThread, failed: Boolean(state.error) };
 }

@@ -804,6 +804,16 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260331_regulatory_correspondence_os.sql',
   'db/migrations/20260401_submission_center_items.sql',
   'db/migrations/20260508_artifact_citations.sql',
+  // cross_artifact_consistency_alerts (2026-10-15): read and written by the
+  // mounted /api/ana/consistency/* routes, the readiness aggregate and the
+  // authoring plan, and created by no deploy. A database provisioned before
+  // shared/schema.ts declared the table has none (42P01); one pushed after has
+  // it without the unique partial index the scanner's ON CONFLICT names, so
+  // every alert insert fails (42P10). public + organization_id INTEGER NOT NULL,
+  // CREATE … IF NOT EXISTS only, drops nothing; no dependency. Its sibling
+  // 20260508_guidance_alerts.sql is NOT listed: it also creates the unkeyed
+  // global guidance_reference_index (CLAUDE.md RULE 1, last corollary).
+  'db/migrations/20260508_consistency_alerts.sql',
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
 
@@ -2568,6 +2578,16 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── The auth schema and the two seeded organisations (MR-03 Stage 3) ─────
+  // What the API ran on the OWNER connection at every boot, until 2026-10-22:
+  // server/db/bootstrap/auth-schema.ts (organizations/users columns, the
+  // membership and module tables) and seedOrganizations ('default',
+  // 'concept2cure'). The API now boots as app_service and only verifies
+  // (OPS-16), so the deploy does it. Additive and guarded throughout; the seed
+  // asserts both rows. Placed immediately before the workspace sweep below so
+  // the seeded organisations get their default workspace in the same deploy.
+  'migrations/20261022_auth_schema_and_seeded_organizations.sql',
+
   // ── Every organisation gets its own client workspace ─────────────────────
   // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
   // creators now write the workspace inside their own transaction
@@ -2964,6 +2984,9 @@ export const C2C_MIGRATION_FILES = [
   // an empty database: clean both passes, 3 of 3 tables with organization_id
   // NOT NULL. Evidence docs/evidence/D7-IND-MASTER-DATA-ON-DEPLOY-PATH/.
   'migrations/20260609_ind_master_data.sql',
+  // MR-10 CAT2-02: bind programs to that existing registry, preserving one
+  // DUNS/contact authority. Replay-safe nullable link + same-tenant FK only.
+  'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
 
   // ── Shared state across API tasks: continuity baseline and presence roster
   //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────
@@ -3365,18 +3388,22 @@ export const C2C_MIGRATION_FILES = [
   // installed earlier. Conditional on the function existing; creates nothing.
   'migrations/20261015g_innovation_readiness_score_refuses.sql',
 
-  // ibc_registrations.nih_guidelines_section and involves_human_gene_transfer
-  // become nullable (2026-10-15): an unanswered NIH Guidelines category or
-  // gene-transfer question was stored as "not applicable" / "no", so the
-  // convened-IBC review read as not required. The creator,
+  // ibc_registrations.nih_guidelines_section, involves_human_gene_transfer,
+  // biosafety_level and involves_recombinant_dna, and ibc_reviews.convened_quorum,
+  // lose their defaults and become nullable (2026-10-15): an unanswered NIH
+  // Guidelines category, gene-transfer, containment-level or recombinant-DNA
+  // question, or an undescribed quorum, was stored as an answer ("not
+  // applicable" / "no" / 'BSL-1' / no convened quorum), so the convened-IBC
+  // review read as not required. The creator,
   // migrations/20260610_ibc_biosafety.sql, is amended in place but runs on
   // install-fresh only; this relaxes the columns where an earlier install
-  // created them. Conditional on the table and the live shape; creates nothing.
+  // created them. Conditional on the tables and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
-  // Four cortex engine functions stored fixed priors and random jitter as
-  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
-  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // Seven cortex engine functions stored fixed priors and random jitter as
+  // model output, "no signals" for an extraction nothing ran, an invented
+  // prediction error, a 0.5 similarity or fixed risk bands (2026-10-15).
+  // Their creators, db/migrations/074_, 076_ and 078_gcc_*, are amended in place but
   // run on install-fresh only; this replaces the functions on databases
   // installed earlier. Conditional on each function existing; creates nothing.
   'migrations/20261015i_cortex_engine_functions_refuse.sql',
@@ -3453,6 +3480,42 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261018_company_document_export_receipts.sql',
   'migrations/20261018_company_legal_registry.sql',
   'migrations/20261018_company_document_designs.sql',
+  // client_memory_entries / project_memory_entries.confidence_score defaulted
+  // to 0.8, so a memory entry whose writer stated no confidence claimed 80%
+  // (2026-10-15). The creator, shared/schema.ts, dropped the default, but it is
+  // pushed by install-fresh only; this drops it on databases provisioned
+  // earlier. Conditional on each table and the live default; keeps stored
+  // scores; nothing in the set re-creates the default; creates nothing.
+  'migrations/20261015l_memory_confidence_no_default.sql',
+
+  // evidence_claims.confidence was NOT NULL DEFAULT 0.50, so an unscored claim
+  // (and the governed fact established from it) read back at 0.5; and
+  // fact_drift.severity defaulted to 'medium', so an unrated drift read as a
+  // medium one (2026-10-15). The creators — shared/schema.ts (pushed by
+  // install-fresh), db/migrations/20260319_evidence_fabric.sql and
+  // migrations/20260603_living_record_spine.sql — are amended in place but none
+  // runs on a deploy; this relaxes the columns on databases installed earlier.
+  // Conditional on each table and the live shape; keeps stored values; creates
+  // nothing, drops nothing.
+  'migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql',
+
+  // P-44 (2026-10-22): a non-home market's submission records its own agency's
+  // application number; packages read it instead of the project's. Additive.
+  'migrations/20261022b_submissions_market_application_number.sql',
+  // AnA skills (2026-10-22, lane ANA-SKILLS; docs/design/ANA_SKILLS_2026-10-22.md):
+  // account_skill_bundles in its drizzle shape for a database install-fresh did
+  // not push, the skill facet columns on it, and organization_skill_settings
+  // (an administrator's on/off for each platform-library skill, with the
+  // reason). After users and organizations (base schema). Both tables are
+  // public with organization_id INTEGER NOT NULL, so the sweeps below police
+  // them. Additive and IF NOT EXISTS throughout; drops nothing.
+  'migrations/20261022_ana_skills.sql',
+  // AnA skills in a project (2026-10-22, lane ANA-SKILLS): project_skill_settings
+  // (a project's 'always' or 'off' for one skill, with the reason) and
+  // account_skill_bundles.project_id (a skill written for one project). After
+  // 20261022_ana_skills.sql, which creates account_skill_bundles. Public with
+  // organization_id INTEGER NOT NULL; additive and IF NOT EXISTS; drops nothing.
+  'migrations/20261022c_ana_project_skills.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

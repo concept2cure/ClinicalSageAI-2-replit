@@ -1,0 +1,11 @@
+# Mutation: server/routes/ana-skills.ts
+# - "  const reason = requireGovernedReason(parsed.data.reason);\n  if (!reason.ok) return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error } });\n  try {\n    const result = await setLibrarySkillEnabled"
+# + "  const reason = { ok: true as const, reason: String(parsed.data.reason ?? '') };\n  try {\n    const result = await setLibrarySkillEnabled"
+# Tests: server/routes/__tests__/ana-skills-routes.test.ts
+# exit 1
+
+ × server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > refuses an administrator who states no reason 31ms
+   → expected 200 to be 400 // Object.is equality
+      Tests  1 failed | 14 passed (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 400 // Object.is equality

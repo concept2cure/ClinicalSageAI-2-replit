@@ -28,14 +28,16 @@ jobs:
 
     services:
       postgres:
-        # pgvector image: base Postgres 16 plus the `vector` extension the
-        # embeddings tables need. pgcrypto / uuid-ossp ship with Postgres.
+        # pgvector image: base Postgres 15 — production's major
+        # (rds_engine_version; ci:terraform-backend refuses any other, MR-03
+        # DATA-13) — plus the `vector` extension the embeddings tables need.
+        # pgcrypto / uuid-ossp ship with Postgres.
         #
         # POSTGRES_HOST_AUTH_METHOD=trust: this is an ephemeral, localhost-only
         # service container that lives for the duration of one CI job, so it
         # uses trust auth rather than a password. That also means there's no
         # credential literal in this file to leak (no real secret exists).
-        image: pgvector/pgvector:pg16
+        image: pgvector/pgvector:pg15
         env:
           POSTGRES_USER: postgres
           POSTGRES_HOST_AUTH_METHOD: trust

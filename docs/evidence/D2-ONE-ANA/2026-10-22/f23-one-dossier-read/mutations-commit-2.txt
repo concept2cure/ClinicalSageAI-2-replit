@@ -1,0 +1,10 @@
+Mutations against dossier-read.pglite + projectHomeReadiness + projects-dossier (each alone, file restored after; RED = the suites failed):
+RED  review counted as complete (the 75% weighting's error): 1
+RED  home figure pooled with added markets: 1
+RED  a market counts its own common sections too: 1
+RED  modules split by the text before the first dot: 1
+RED  nothing to count reads as a measured 0: 1
+RED  an unprovisioned store throws instead of saying why: 1
+RED  the card says not measured while reading: 1
+RED  a malformed 200 accepted as a dossier: 1
+RED  another organization's documents read: 1

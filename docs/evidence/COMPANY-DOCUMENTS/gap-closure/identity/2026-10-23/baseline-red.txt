@@ -1,0 +1,182 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > normalizes whitespace/case, but retains meaningful legal-name and address differences 5ms
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > reports the separate brand/applicant identities without changing either recorded source 11ms
+   → expected { …(9) } to match object { Object (applicantName, applicationNumber, ...) }
+(6 matching properties omitted from actual)
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > retains a reasoned role difference bound to exact company and filing hashes 11ms
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates the old role review after the actual applicant changes 12ms
+   → expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > requires separate review for identically styled default and named presentations 22ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > refuses a review prepared against an earlier company revision 7ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not let a reason replace missing application identity 9ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > rolls the review back if its chained audit cannot be written 9ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > refuses a changed submission admission before the review commits 8ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not query applicant or review records before target admission succeeds 1ms
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > uses the added market number rather than the home project number 4ms
+   → expected { …(9) } to match object { Object (applicantName, applicationNumber, ...) }
+(5 matching properties omitted from actual)
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > cannot acknowledge a missing added-market number using the home number 6ms
+   → expected { sequenceId: 12, …(10) } to match object { status: 'unresolved', …(1) }
+(18 matching properties omitted from actual)
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates reviewed facts when the bound sponsor changes even with the same name 12ms
+   → expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates reviewed facts when the bound regulatory contact changes 8ms
+   → expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not label a tenant as the FDA applicant when sponsor binding is null 2ms
+   → expected 'Tenant account' to be null
+ × server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not label a tenant as the FDA applicant when sponsor binding is 44444444-4444-4444-8444-444444444444 3ms
+   → expected 'Tenant account' to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > reports the separate brand/applicant identities without changing either recorded source
+AssertionError: expected { …(9) } to match object { Object (applicantName, applicationNumber, ...) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "agency": "FDA",
+-   "applicantName": "Applicant Ltd",
++   "applicantName": "Tenant account",
+    "applicationNumber": "IND 123",
+  }
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:75:32
+     73|     const result = await readCompanyFilingIdentity(req, h.sequenceId);
+     74|     expect(result.data.status).toBe('needs_review');
+     75|     expect(result.data.filing).toMatchObject({ applicantName: 'Applica…
+       |                                ^
+     76|     expect(result.data.differences).toHaveLength(2);
+     77|     expect(h.queries.every(sql => sql.startsWith('SELECT'))).toBe(true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates the old role review after the actual applicant changes
+AssertionError: expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+
+Expected: "needs_review"
+Received: "reviewed_difference"
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:90:78
+     88|     await reviewCompanyFilingIdentity(req, await reviewInput());
+     89|     await db.exec("UPDATE ind_sponsors SET name='New legal applicant'"…
+     90|     expect((await readCompanyFilingIdentity(req, h.sequenceId)).data.s…
+       |                                                                              ^
+     91|   });
+     92|   it('requires separate review for identically styled default and name…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > uses the added market number rather than the home project number
+AssertionError: expected { …(9) } to match object { Object (applicantName, applicationNumber, ...) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applicantName": "Applicant Ltd",
+-   "applicationNumber": "EU-654321",
++   "applicantName": "Tenant account",
++   "applicationNumber": "IND 123",
+    "country": "EU",
+    "sponsorAddress": "Filing Street",
+  }
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:142:25
+    140|     await db.exec("UPDATE submissions SET primary_region='ema',applica…
+    141|     const { data } = await readCompanyFilingIdentity(req, h.sequenceId…
+    142|     expect(data.filing).toMatchObject({ applicantName: 'Applicant Ltd'…
+       |                         ^
+    143|   });
+    144|   it('cannot acknowledge a missing added-market number using the home …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > cannot acknowledge a missing added-market number using the home number
+AssertionError: expected { sequenceId: 12, …(10) } to match object { status: 'unresolved', …(1) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "status": "unresolved",
+-   "unresolvedFields": [
+-     "application number",
+-   ],
++   "status": "needs_review",
++   "unresolvedFields": [],
+  }
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:149:71
+    147|     await db.exec("UPDATE submissions SET primary_region='ema'");
+    148|     const input = await reviewInput();
+    149|     expect((await readCompanyFilingIdentity(req, h.sequenceId)).data).…
+       |                                                                       ^
+    150|     await expect(reviewCompanyFilingIdentity(req, input)).rejects.toMa…
+    151|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates reviewed facts when the bound sponsor changes even with the same name
+AssertionError: expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+
+Expected: "needs_review"
+Received: "reviewed_difference"
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:157:25
+    155|     await db.query('UPDATE regulatory_programs SET applicant_sponsor_i…
+    156|     const { data } = await readCompanyFilingIdentity(req, h.sequenceId…
+    157|     expect(data.status).toBe('needs_review');
+       |                         ^
+    158|     expect(data.filingHash).not.toBe(input.filingHash);
+    159|     await expect(reviewCompanyFilingIdentity(req, input)).rejects.toMa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates reviewed facts when the bound regulatory contact changes
+AssertionError: expected 'reviewed_difference' to be 'needs_review' // Object.is equality
+
+Expected: "needs_review"
+Received: "reviewed_difference"
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:165:78
+    163|     await reviewCompanyFilingIdentity(req, input);
+    164|     await db.exec("UPDATE ind_sponsors SET contact_name='New Regulator…
+    165|     expect((await readCompanyFilingIdentity(req, h.sequenceId)).data.s…
+       |                                                                              ^
+    166|   });
+    167|   it.each([null, '44444444-4444-4444-8444-444444444444'])('does not la…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not label a tenant as the FDA applicant when sponsor binding is null
+ FAIL  server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not label a tenant as the FDA applicant when sponsor binding is 44444444-4444-4444-8444-444444444444
+AssertionError: expected 'Tenant account' to be null
+
+- Expected:
+null
+
++ Received:
+"Tenant account"
+
+ ❯ server/services/company-documents/__tests__/identity.pglite.test.ts:170:39
+    168|     await db.query('UPDATE regulatory_programs SET applicant_sponsor_i…
+    169|     const { data } = await readCompanyFilingIdentity(req, h.sequenceId…
+    170|     expect(data.filing.applicantName).toBeNull();
+       |                                       ^
+    171|     expect(data.status).toBe('unresolved');
+    172|     await expect(reviewCompanyFilingIdentity(req, await reviewInput())…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 8 passed (16)
+   Start at  15:04:14
+   Duration  3.26s (transform 490ms, setup 144ms, import 504ms, tests 2.22s, environment 0ms)

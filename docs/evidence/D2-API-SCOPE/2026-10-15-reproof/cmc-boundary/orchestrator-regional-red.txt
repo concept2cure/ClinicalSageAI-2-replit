@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over FDA 4 GB gateway limit
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required)
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a NDA target, and says why on the step
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step
+ × server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one 341ms
+   → expected 'Regional Information — United States …' to be 'Regional Information — United States …' // Object.is equality
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes
+ ↓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one
+AssertionError: expected 'Regional Information — United States …' to be 'Regional Information — United States …' // Object.is equality
+
+Expected: "Regional Information — United States (FDA IND)"
+Received: "Regional Information — United States (FDA)"
+
+ ❯ server/__tests__/services/submission-orchestrator.test.ts:647:84
+    645|        every US package, an IND's included (2026-10-22). */
+    646|     const regional = outputs.module3Sections.find(s => s.sectionKey ==…
+    647|     expect((regional?.structuredPayload as { title?: string } | undefi…
+       |                                                                                    ^
+    648|       'Regional Information — United States (FDA IND)',
+    649|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 39 skipped (40)
+   Start at  06:35:24
+   Duration  5.22s (transform 2.70s, setup 78ms, import 4.52s, tests 345ms, environment 0ms)
+

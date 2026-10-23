@@ -139,11 +139,15 @@ describe('atomicCreateProject — the ceiling is organizations.max_projects', ()
     expect(ran(/^COMMIT$/).length).toBe(1);
   });
 
-  it('a NULL ceiling means the schema default (10), not unlimited and not 20', async () => {
-    state.answer = answerWith({ organization: { max_projects: null }, projects: 10 });
+  // 2026-10-15: this pinned NULL as the schema default (10). An unrecorded
+  // ceiling is not a number to enforce; the create is refused, as not recorded.
+  it('a NULL ceiling refuses the create as not recorded — not unlimited, not a default', async () => {
+    state.answer = answerWith({ organization: { max_projects: null }, projects: 3 });
     const { atomicCreateProject } = await import('../../server/services/atomicQuotaService.js');
-    const result = await atomicCreateProject(7, { name: 'Eleventh', clientWorkspaceId: 1 });
-    expect(result).toMatchObject({ error: 'QUOTA_EXCEEDED', details: { maximum: 10 } });
+    const result = await atomicCreateProject(7, { name: 'Fourth', clientWorkspaceId: 1 });
+    expect(result).toMatchObject({ success: false, error: 'QUOTA_NOT_RECORDED', details: { current: 3, maximum: null } });
+    expect(ran(/^INSERT INTO projects/).length).toBe(0);
+    expect(ran(/^ROLLBACK$/).length).toBe(1);
   });
 
   it('an unknown organization is ORGANIZATION_NOT_FOUND, never NO_LICENSE', async () => {

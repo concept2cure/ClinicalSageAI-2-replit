@@ -25,8 +25,12 @@ const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity
   // 2026-10-08 (P-27): the application number and applicant come from the
   // record (package-identity.ts), not the call; this suite models a project
   // that records both. Their refusal is pinned in -recorded-identity.test.ts.
+  // 2026-10-22 (ccd509c06): a US package also names the bound ind_sponsors
+  // applicant, its D-U-N-S and a regulatory contact; the project records them.
   readRecordedPackageIdentity: vi.fn(async () => ({
-    programId: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', applicationNumber: '123456', applicantName: 'S',
+    programId: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', applicationNumber: '123456',
+    applicantSponsorId: '3f0b8e2a-6c4d-4e1f-8a7b-9c0d1e2f3a4b', applicantName: 'S', applicantId: '123456789',
+    contact: { name: 'Regulatory Contact', phone: '+1-555-0100', email: 'regulatory@example.com' },
   })),
 }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));

@@ -163,6 +163,25 @@ function sidOf(claims: SessionClaimLike): string | null {
   return typeof claims.sid === 'string' && claims.sid ? claims.sid : null;
 }
 
+/**
+ * The session id of a token an authenticator has ALREADY verified for this
+ * request, read from its payload without verifying it again; null for no
+ * token, a token that is not a JWT, or one with no sid. For labelling work
+ * with the session that started it (an AnA run's started_session_id, so a
+ * sign-out stops only that session's runs) — never for deciding who someone is.
+ */
+export function sessionIdOfToken(token: string | null | undefined): string | null {
+  if (!token) return null;
+  const payload = token.split('.')[1];
+  if (!payload) return null;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as unknown;
+    return claims && typeof claims === 'object' ? sidOf(claims as SessionClaimLike) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The registry key of an account's connector sessions: a pool of their own (openConnectorSession). */
 function connectorPoolOf(userId: string | number): string {
   return `connector:${userId}`;

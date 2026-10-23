@@ -1,0 +1,491 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:05:53.426387+00:00",
+  "headAtEvidence": "c04ed02be9ee821fb5af9a90be7072f28518d310",
+  "upstreamIntegrated": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "mergePendingAtEvidence": true,
+  "sourceQualification": "Working-tree source hashes below; final release evidence owns the committed source and full repository gates.",
+  "latestUniqueCases": {
+    "files": 33,
+    "passed": 367,
+    "failed": 0,
+    "pending": 0
+  },
+  "aggregation": "Latest result per exact file, with overlapping reruns counted once. The first 32-suite run did not pass; its 11 malformed-PDF fixture failures were corrected and rerun.",
+  "runs": [
+    {
+      "id": "oct23-packaging-tests",
+      "passed": 347,
+      "failed": 11,
+      "pending": 0,
+      "files": 32,
+      "jsonSha256": "5f170e60d471879872ae8923fdcd28a650cc3d026234e4587714fb90ed666b3e"
+    },
+    {
+      "id": "oct23-packaging-fixture-correction",
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "files": 3,
+      "jsonSha256": "ef17b81f5095d4ab3977564e5ba17b40b677066c6b756d307eaa9ef751162408"
+    }
+  ],
+  "fixtureOnlyCorrections": [
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-admin-forms.test.ts",
+      "change": "Replace nonexistent-Catalog/Page-tree PDF stub with existing goldenPdf qualification helper."
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/support/fda-backbone.ts",
+      "change": "Replace header-only PDF stub with the same existing qualification helper; both helper consumers rerun."
+    }
+  ],
+  "resolvedConflicts": [
+    {
+      "file": "server/services/ectd/assemble-from-core.ts",
+      "resolution": "Retain saved company legal requirement import/call plus upstream FDA applicant contact/snapshot contracts."
+    },
+    {
+      "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "resolution": "Retain canonical audit DDL and upstream inferred source-reader type; do not import nonexistent runtime .d.ts module."
+    }
+  ],
+  "reviewedPreservation": [
+    "Tenant/current Vault approval and legal lineage admission remain independent of original-byte preservation.",
+    "Exact sourceIntegrity is retained from Vault materialization through core leaf adapter and the actual final ZIP hash verifier.",
+    "Legal/structurally signed PDFs bypass conversion; mandatory original PDF/A validation still refuses unverified input.",
+    "Current package DTD execution/supportive-byte integrity gates remain mandatory when configured.",
+    "Saved applicable company legal requirements still refuse assembly before materialization.",
+    "Upstream bound applicant and added-market application identity snapshots, strict prior manifests/lifecycle folds, sourced-only size checks and declared-form single placement remain intact."
+  ],
+  "lint": {
+    "modifiedFixtureFiles": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "resolvedFiles": {
+      "errors": 0,
+      "warnings": 2,
+      "qualification": "Both max-lines-per-function warnings are on existing large assembly functions; repository push warning ratchet is owned by controller."
+    }
+  },
+  "boundaries": [
+    "No production parser or gate was weakened; only two invalid fixtures changed beyond merge conflict resolution.",
+    "Tests use synthetic source fixtures and local PGlite/mock adapters as documented by their native suites; no agency endpoint was called.",
+    "Actual xmllint DTD execution is exercised by regional-packager-dtd-validation.test.ts.",
+    "Source-transform red proofs from October 18 remain historical evidence, not new mutation runs.",
+    "Company identity-review and correspondence market-identity corrections are owned and qualified separately.",
+    "This does not establish full repository typecheck, build, remote CI, production deployment or legal sufficiency."
+  ],
+  "files": [
+    {
+      "file": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 1,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/fda-sequence-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 13,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 28,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/prior-sequence-loader.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 27,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/sequence-manifest-unreadable-is-an-error-naming-the-sequence.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/sequence-manifest.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 21,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-admin-forms.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 2,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-applicant-info.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-module1-headings.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 38,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 23,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "file": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0
+    }
+  ],
+  "sourcePins": [
+    {
+      "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "sha256": "3915651ccb90cb9f5b1df1dd0d5790bf724a12b3eed3fd218bba57310a041aa1"
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
+      "sha256": "f92cc4c82094aa4b67f6afdb5955cae871fea403d17fbffe0c24ee2f0d1de33e"
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
+      "sha256": "8e14966dff197cf481c652cacb49eb80403d016e4112c44dad2aa718ed38b553"
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
+      "sha256": "1087b7763cc62b3619afab9c05356b3f997055d9ef42d7e5dc2bb12773e8fd69"
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "sha256": "b669077d8263ed05c289d533406c97d683d3fff0913e43ef5424aee83e74a7ae"
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "sha256": "f6911985a80d24fcea37a7e954cadf1481476d973e82ad6ac076a002db329a46"
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "sha256": "5f284a97e8ba4bedd7858a34438ed6eca6e883246a6692606022dce096d21009"
+    },
+    {
+      "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "sha256": "fe33b190ef93a90537129c88d8249e38d9cef46ed03f991a18bb7817b21406b5"
+    },
+    {
+      "path": "server/services/ectd/__tests__/fda-sequence-identity.test.ts",
+      "sha256": "b1a1345c93f359f5ed460f8dc03755719848918971e93986aa7180a7c3cf97dc"
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "sha256": "481db638944907e4613691ca2e0c3e24a1fc9051fd71284e53cfe92978cf950f"
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "sha256": "000e6859d0363d8c9a22250cf2b95509b33c6c7e278b0fdeaa254c57e4835a90"
+    },
+    {
+      "path": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "53e8f3f57acaa189e15d7df3ebfbd55513d8e056a06d7e0730d1cfc0a8de7e65"
+    },
+    {
+      "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
+    },
+    {
+      "path": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
+      "sha256": "18b67c7e64f3ea7bfe970f782dd4570c6b876706c1585113cbbc427e1829b5e0"
+    },
+    {
+      "path": "server/services/ectd/__tests__/prior-sequence-loader.test.ts",
+      "sha256": "7e1fdde209a0cefb1be8268ee17532cbf8a8d88539b3bcf51421c161beb6846e"
+    },
+    {
+      "path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+      "sha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb"
+    },
+    {
+      "path": "server/services/ectd/__tests__/sequence-manifest-unreadable-is-an-error-naming-the-sequence.test.ts",
+      "sha256": "c7e548767e62433795b7af0008651d465096f2b98f45fce3a0a462d821e22f1f"
+    },
+    {
+      "path": "server/services/ectd/__tests__/sequence-manifest.test.ts",
+      "sha256": "e3385a23072179b769cf8907e645b10067243d6a7ab6c22c33bcda89ac1fe14f"
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "sha256": "6abab20838eeb02567f4831626d6f3d4361380c163bf7795f5085a3353e63bbf"
+    },
+    {
+      "path": "server/services/ectd/assemble-from-core.ts",
+      "sha256": "1d4bc6444c4db355005ce09da250b207294abb70eceaec30feea289730a32276"
+    },
+    {
+      "path": "server/services/ectd/core-to-packager.ts",
+      "sha256": "764ad389349309fb28db04e8be45a1b0351f22701af31052b80c18572db8afb1"
+    },
+    {
+      "path": "server/services/ectd/leaf-source-resolver.ts",
+      "sha256": "26f2ab3da2e7a7e17e2f8e3df954a0849b0c11a04cffcb13a3f84382683993fc"
+    },
+    {
+      "path": "server/services/ectd/original-pdf-preservation.ts",
+      "sha256": "56ab56335f0753f4c05fa5f3e5ab3dfceeb8a33f920e9be44c70e837759755ca"
+    },
+    {
+      "path": "server/services/ectd/package-from-core.ts",
+      "sha256": "dcde0fb5d0e6a649a5bfb101deecebb8763abfa4882ee9698b23a188d3593f2f"
+    },
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "f4e3b6d0b4bafaa9660909876f9486eb49bca0bca1556c749321f28d6657bcad"
+    },
+    {
+      "path": "server/services/ectd/sequence-manifest.ts",
+      "sha256": "6f76052d480a99e0f0ee52afb5571d92da351a80db27d807f09640aafec24734"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-admin-forms.test.ts",
+      "sha256": "8f3734c221288cabb1888c2bc2d4fe4ea787220fff6c9a375e3e4455ab4599b5"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-applicant-info.test.ts",
+      "sha256": "19ce084822c04fa6ead2c64c04f5f67c56c68f2b3ba0d617ebbdc2b76c55a2d6"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-module1-headings.test.ts",
+      "sha256": "e2bc0545e1ac7e7bd6767625abd901606d57285ca15e6cfecec2866bb5010aae"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts",
+      "sha256": "2c016a14de92cb49a2abca58d541fd4bfa490c3b672d461306447943b845a08f"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "sha256": "456824383e699e316a400c6ba2cbf77202d42de5cde6ee12be2d0dac997cad93"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts",
+      "sha256": "299c2b8dcb23f4313afb3a771cdc30450c93f6bb46a44bc404654f6681293f22"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts",
+      "sha256": "67ad04045928154932db465652e48fa70592004cf4f407aaf84d9c86001357e1"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts",
+      "sha256": "0a7c2bfd1a099b55f4eeb6760b99e4bbf47c06c84a88727008069147dd89e144"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
+      "sha256": "0bfac52b44c6df59c9089fc620d5f40aa9817847dc50561def5225fe21b812b6"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/support/fda-backbone.ts",
+      "sha256": "7f73600ec50dd8220e4a351761772112aae982fae2c96e4943f4d38b3a3d793a"
+    },
+    {
+      "path": "server/services/submission-gateways/pre-transmit-check.ts",
+      "sha256": "b9d79e6ad8176ba115997092aa503b162325d2f83ea527a4412fadca4cda4dd5"
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "sha256": "aecaa9dec672caddf5b7d066b5370d6b147a94edc8cbd11b512e2a77c10b1e49"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
+      "sha256": "83aac49cc07062cc5208f1be3568e4805a7946733abab64630b6cc64ca9d1247"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "sha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts",
+      "sha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "sha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "sha256": "598a622923f8fb8d295411424a5cd9cee545681303c1c27815839b7d61798c8e"
+    },
+    {
+      "path": "server/services/submission-service/submission-service.ts",
+      "sha256": "c28f18ad87e3fcb0a9824c162a64be2ab0e5916b188880403ea862961a3ec2ff"
+    }
+  ]
+}

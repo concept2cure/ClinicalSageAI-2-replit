@@ -115,7 +115,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           "Let's begin with the study identity. What is the working title, therapeutic area, target indication, and study phase for this trial?",
         guidance:
-          'Per ICH E6(R3) Appendix B, the protocol should include a descriptive title. ICH E8(R1) Section 4 recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
+          'Per ICH E6(R3) Appendix B, the protocol should include a descriptive title. The ICH M11 structured protocol template recommends the title convey the intervention, condition, phase, and design. A well-structured title accelerates regulatory review and improves ClinicalTrials.gov discoverability.',
         fields: [
           {
             id: 'study_title',
@@ -200,7 +200,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Who is the sponsor of this study, and what is the current regulatory filing status?',
         guidance:
-          'ICH E6(R3) Appendix B (protocol) requires clear identification of the sponsor. 21 CFR 312.23 details IND application contents. For EMA submissions, the EudraCT number is required per Regulation (EU) No 536/2014 (Clinical Trials Regulation).',
+          'ICH E6(R3) Appendix B (protocol) requires clear identification of the sponsor. 21 CFR 312.23 details IND application contents. For EU clinical trial applications, the EU trial number (EU CT number) is assigned in the Clinical Trials Information System (CTIS) when the application is submitted to the Member States concerned under Regulation (EU) No 536/2014 (Clinical Trials Regulation).',
         fields: [
           {
             id: 'sponsor_name',
@@ -228,7 +228,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder: 'e.g., IND 123456',
             required: false,
             helpText:
-              'FDA Investigational New Drug application number, if assigned. Required per 21 CFR 312.23 before shipping investigational product in the US.',
+              'FDA Investigational New Drug application number, if assigned. An IND must be in effect (21 CFR 312.20 and 312.40) before investigational product is shipped in the US.',
           },
           {
             id: 'eudract_number',
@@ -331,8 +331,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Historical Control Limitations',
             message:
-              'Historical controls introduce selection bias and confounding. FDA generally requires concurrent controls for confirmatory trials per ICH E10 Section 2.1.4. Ensure adequate justification is documented.',
-            reference: 'ICH E10 Section 2.1.4 — Choice of Control Group',
+              'Historical controls introduce selection bias and confounding. FDA generally expects concurrent controls for confirmatory trials; ICH E10 Section 2.5 (External Control, Including Historical) describes the limitations of historical controls. Ensure adequate justification is documented.',
+            reference: 'ICH E10 Section 2.5 — External Control (Including Historical)',
           },
           {
             id: 'single_arm_regulatory_risk',
@@ -411,7 +411,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'FDA Adaptive Design Guidance (2019) Section IV.C recommends simulation studies to evaluate operating characteristics under various scenarios.',
+              'The FDA guidance Adaptive Designs for Clinical Trials of Drugs and Biologics (2019) recommends simulation studies to evaluate operating characteristics under various scenarios.',
           },
         ],
         issueChecks: [
@@ -527,7 +527,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'How many treatment arms will the study have, and what is the planned treatment duration and dosing regimen?',
         guidance:
-          'The number of arms and treatment duration affect sample size calculations, study logistics, and regulatory review. ICH E9 Section 3.3 requires each arm to be adequately powered if formal pairwise comparisons are planned. Consider dose-response per ICH E4 for dose selection rationale.',
+          'The number of arms and treatment duration affect sample size calculations, study logistics, and regulatory review. ICH E9 Section 3.5 (Sample Size) expects the sample size to be justified for the planned primary comparisons, including any formal pairwise comparisons between arms. Consider dose-response per ICH E4 for dose selection rationale.',
         fields: [
           {
             id: 'number_of_arms',
@@ -572,7 +572,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder: 'e.g., 30 days safety follow-up, 12 months survival follow-up',
             required: true,
             helpText:
-              'ICH E1 recommends long-term safety follow-up based on indication and duration of treatment.',
+              'ICH E1 sets the minimum number of patients and duration of exposure for drugs used long-term in non-life-threatening conditions. It does not set post-treatment follow-up duration, so justify the follow-up period from the indication, the pharmacology of the drug and its safety profile.',
           },
         ],
         issueChecks: [
@@ -582,8 +582,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Multiple Arms — Multiplicity Concern',
             message:
-              'Studies with more than 3 treatment arms require careful multiplicity adjustment to control the family-wise type I error rate. Per ICH E9 Section 2.2.5, pre-specify pairwise comparisons and the adjustment method in the SAP.',
-            reference: 'ICH E9 Section 2.2.5 — Multiplicity',
+              'Studies with more than 3 treatment arms require careful multiplicity adjustment to control the family-wise type I error rate. Per ICH E9 Section 5.6 (Adjustment of Significance and Confidence Levels), pre-specify pairwise comparisons and the adjustment method in the SAP.',
+            reference: 'ICH E9 Section 5.6 — Adjustment of Significance and Confidence Levels',
           },
         ],
         defaultNext: 'population_criteria',
@@ -643,7 +643,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'multi_select',
             required: false,
             helpText:
-              'Per 21 CFR 50 Subparts B-D, additional protections are required for certain populations.',
+              'Per 21 CFR 50 Subpart D, additional safeguards are required for children; protections for pregnant women, fetuses, neonates and prisoners are set out in 45 CFR 46 Subparts B and C (HHS-conducted or -supported research).',
             options: [
               { value: 'none', label: 'None' },
               { value: 'pediatric', label: 'Pediatric (< 18 years)' },
@@ -664,7 +664,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               value: 'pediatric',
             },
             helpText:
-              'Per PREA (Pediatric Research Equity Act) and 21 CFR 314.55, sponsors must submit a PSP unless a waiver or deferral is granted.',
+              'Per PREA (Pediatric Research Equity Act), FD&C Act section 505B(e), sponsors must submit an initial PSP (iPSP) within 60 days of the End-of-Phase 2 meeting; any requested waiver or deferral is proposed within the iPSP.',
             options: [
               { value: 'not_required', label: 'Not Required' },
               { value: 'submitted', label: 'PSP Submitted to FDA' },
@@ -755,7 +755,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Large Trial — Enhanced Infrastructure Required',
             message:
-              'Trials exceeding 5,000 subjects require robust safety monitoring infrastructure, centralized statistical monitoring, and potentially a larger DSMB per FDA Guidance on Clinical Trial DSMBs (2006).',
+              'Trials exceeding 5,000 subjects warrant robust safety monitoring infrastructure and an independent Data Monitoring Committee; FDA Guidance on Establishment and Operation of Clinical Trial Data Monitoring Committees (2006) identifies large, multicenter trials with mortality or major morbidity endpoints as those where a DMC is generally advisable, and centralized statistical monitoring may be considered under a risk-based monitoring approach (ICH E6(R3)).',
             reference:
               'FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
           },
@@ -994,7 +994,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: false,
             helpText:
-              'Per 21 CFR 809.30, a companion diagnostic may be required if the drug is safe and effective only in patients identified by the diagnostic.',
+              'Per FDA guidance In Vitro Companion Diagnostic Devices (2014), a companion diagnostic may be required if the drug is safe and effective only in patients identified by the diagnostic; the device is subject to premarket review (typically PMA under 21 CFR Part 814).',
           },
         ],
         issueChecks: [
@@ -1010,7 +1010,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             message:
               'Per FDA Guidance on In Vitro Companion Diagnostic Devices (2014), the therapeutic product and its companion diagnostic should be co-developed. The companion diagnostic must receive FDA approval or clearance contemporaneously with the therapeutic product.',
             reference:
-              'FDA Guidance: In Vitro Companion Diagnostic Devices (2014); 21 CFR 809.30',
+              'FDA Guidance: In Vitro Companion Diagnostic Devices (2014); 21 CFR Part 814 (PMA)',
           },
         ],
         defaultNext: 'stats_approach',
@@ -1149,7 +1149,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Define the estimand framework per ICH E9(R1) for the primary endpoint.',
         guidance:
-          'ICH E9(R1) Addendum requires sponsors to precisely define the estimand with four attributes: (1) treatment condition, (2) population, (3) variable, (4) population-level summary measure, and to specify how each intercurrent event is handled. FDA and EMA expect this framework to be prospectively defined in the protocol and SAP.',
+          'ICH E9(R1) Addendum requires sponsors to precisely define the estimand with five attributes: (1) treatment condition of interest, (2) population, (3) variable (endpoint), (4) handling of each intercurrent event, and (5) population-level summary measure. FDA and EMA expect this framework to be prospectively defined in the protocol and SAP.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1199,7 +1199,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder:
               'For each intercurrent event (e.g., treatment discontinuation, rescue medication, death), specify the strategy: treatment policy, composite, hypothetical, or principal stratum.',
             helpText:
-              'ICH E9(R1) defines four strategies: Treatment Policy (include data regardless), Composite (incorporate event into variable), Hypothetical (estimate effect in absence of event), Principal Stratum (effect in subpopulation that would not experience event).',
+              'ICH E9(R1) defines five strategies: Treatment Policy (include data regardless), Composite (incorporate event into variable), Hypothetical (estimate effect in absence of event), While on Treatment (use response prior to the event), Principal Stratum (effect in subpopulation that would not experience event).',
           },
           {
             id: 'sensitivity_analyses_planned',
@@ -1250,6 +1250,15 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             ],
           },
           {
+            // 2026-10-22 (D2): read by protocol_no_safety_monitoring.
+            id: 'safety_monitoring_plan',
+            label: 'Safety Monitoring Plan Defined (AE/SAE Definitions, Ongoing Safety Review, Signal Detection)',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'ICH E6(R3) expects the protocol to describe how safety is assessed and reported, and 21 CFR 312.32 requires the sponsor to review safety information promptly and submit IND safety reports. The plan names who reviews accumulating safety data, how often, and how signals are escalated.',
+          },
+          {
             id: 'dose_escalation_scheme',
             label: 'Dose Escalation Scheme',
             type: 'select',
@@ -1260,7 +1269,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               value: ['phase_1', 'phase_1b_2a'],
             },
             helpText:
-              'For Phase 1 dose-escalation studies, specify the design per FDA Guidance on Oncology Dose Optimization (2023).',
+              'For Phase 1 dose-escalation studies, specify the design per FDA Guidance for Industry: Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (final, August 2024).',
             options: [
               { value: '3_plus_3', label: '3+3 Design' },
               { value: 'crm', label: 'Continual Reassessment Method (CRM)' },
@@ -1308,7 +1317,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: false,
             helpText:
-              'Per 21 CFR 314.42 and FDAAA (2007), FDA may require a Risk Evaluation and Mitigation Strategy if necessary to ensure benefits outweigh risks.',
+              'Per section 505-1 of the FD&C Act (21 U.S.C. 355-1), added by FDAAA (2007), FDA may require a Risk Evaluation and Mitigation Strategy if necessary to ensure benefits outweigh risks.',
             options: [
               { value: 'not_required', label: 'Not Required' },
               { value: 'medication_guide', label: 'Medication Guide Only' },
@@ -1578,7 +1587,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe planned or completed regulatory agency interactions and submission timeline.',
         guidance:
-          'FDA offers Pre-IND (Type B), End-of-Phase 2 (Type B), and Pre-NDA/BLA (Type B) meetings per FDA Guidance on Formal Meetings Between CDER and Sponsors (2017). Type A meetings (30-day response) are for stalled programs. Type C meetings (75-day response) address specific issues. EMA Scientific Advice (Article 57 of Regulation 726/2004) provides non-binding guidance on development plans. Consider joint FDA-EMA parallel scientific advice for global programs.',
+          'FDA offers Pre-IND (Type B), End-of-Phase 2 (Type B), and Pre-NDA/BLA (Type B) meetings per FDA draft guidance on Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (revised September 2023, PDUFA VII). Type A meetings (30-day response) are for stalled programs. Type C meetings (75-day response) address specific issues. EMA Scientific Advice (Article 57 of Regulation 726/2004) provides non-binding guidance on development plans. Consider joint FDA-EMA parallel scientific advice for global programs.',
         fields: [
           {
             id: 'fda_meeting_type',
@@ -1620,7 +1629,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: false,
             helpText:
-              'PREA requires an initial Pediatric Study Plan (iPSP) per 21 CFR 314.55. EMA requires a Paediatric Investigation Plan (PIP) per Regulation (EC) No 1901/2006.',
+              'PREA (FD&C Act section 505B(e), as amended by FDASIA 2012) requires an initial Pediatric Study Plan (iPSP), submitted within 60 days of the End-of-Phase 2 meeting or as otherwise agreed with FDA. EMA requires a Paediatric Investigation Plan (PIP) per Regulation (EC) No 1901/2006.',
             options: [
               { value: 'not_applicable', label: 'Not Applicable' },
               { value: 'ipsp_planned', label: 'iPSP Planned' },
@@ -1758,7 +1767,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               value: 'pediatric',
             },
             helpText:
-              'Per 21 CFR 50.55, assent is typically required for children aged 7 and older who are capable of providing it.',
+              'Per 21 CFR 50.55, the IRB determines whether children are capable of providing assent, taking into account their ages, maturity, and psychological state; the regulation sets no fixed age threshold.',
           },
           {
             id: 'assent_age_range',
@@ -2127,7 +2136,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the clinical labeling requirements and blinding strategy for investigational product.',
         guidance:
-          '21 CFR 312.6 specifies labeling requirements for investigational drugs including: name/code, batch number, storage conditions, route of administration, "Caution: New Drug — Limited by Federal Law to Investigational Use," and expiration date. For blinded studies, labels must not reveal treatment assignment. EU Annex 13 (now replaced by Commission Delegated Regulation (EU) 2017/1569) provides additional labeling requirements for IMP used in EU countries.',
+          '21 CFR 312.6 requires the immediate package of an investigational drug to bear the statement "Caution: New Drug — Limited by Federal (or United States) law to investigational use," and prohibits labeling that is false or misleading or that represents the drug as safe or effective for the purposes under investigation. Other label content (e.g., product name/code, batch number, storage conditions, route of administration, and any retest or expiry information) follows cGMP and sponsor practice rather than 312.6; 21 CFR 211.137 exempts investigational drugs from its expiration-dating requirement when they meet appropriate stability standards. For blinded studies, labels must not reveal treatment assignment. In the EU, IMP labelling requirements are set out in Chapter X and Annex VI of Regulation (EU) No 536/2014 (the Clinical Trials Regulation), which together with Commission Delegated Regulation (EU) 2017/1569 and the EC GMP guidelines for IMPs replaced EU GMP Annex 13.',
         fields: [
           {
             id: 'labeling_type',
@@ -2192,7 +2201,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the trial diversity plan, demographic enrollment targets, and community engagement strategy.',
         guidance:
-          'FDA Guidance on Diversity Plans to Improve Enrollment of Participants from Underrepresented Populations (2024) requires sponsors of Phase 3 and pivotal trials to submit a Diversity Action Plan. FDORA Section 3601 codified this requirement. The plan must include enrollment goals by race, ethnicity, sex, and age; a rationale for the targets; and strategies to achieve them. FDA may grant exemptions when a Diversity Action Plan is not feasible.',
+          'FDORA Section 3601 (FD&C Act 505(z)), and for devices FD&C Act 520(g)(9), requires sponsors of Phase 3 and other pivotal studies to submit a Diversity Action Plan. The requirement applies to studies whose enrollment begins 180 days or more after FDA publishes final Diversity Action Plan guidance; FDA issued that guidance in draft in June 2024 (Diversity Action Plans to Improve Enrollment of Participants from Underrepresented Populations in Clinical Studies). The plan must include enrollment goals by race, ethnicity, sex, and age; a rationale for the targets; and strategies to achieve them. FDA may grant exemptions when a Diversity Action Plan is not feasible.',
         fields: [
           {
             id: 'diversity_plan_required',
@@ -2200,7 +2209,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per FDORA Section 3601 and FDA Guidance (2024), Diversity Action Plans are required for Phase 3 and other pivotal studies unless an exemption is granted.',
+              'Per FDORA Section 3601 (FD&C Act 505(z)), Diversity Action Plans will be required for Phase 3 and other pivotal studies whose enrollment begins 180 days or more after FDA publishes final Diversity Action Plan guidance (issued in draft, June 2024). Until then a plan is voluntary but recommended.',
           },
           {
             id: 'race_ethnicity_targets',
@@ -2276,9 +2285,9 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'No Diversity Action Plan — Regulatory Expectation',
             message:
-              'FDORA Section 3601 and FDA Guidance on Diversity Action Plans (2024) require Phase 3 and pivotal trials to submit a Diversity Action Plan. Sponsors must provide justification if a plan is not submitted.',
+              'FDORA Section 3601 (FD&C Act 505(z) and 520(g)(9)) requires Diversity Action Plans for Phase 3 and other pivotal studies whose enrollment begins 180 days or more after FDA publishes final Diversity Action Plan guidance (issued in draft, June 2024). Until that requirement applies, a plan is voluntary but recommended; once it applies, a sponsor that does not submit one must obtain a waiver from FDA.',
             reference:
-              'FDORA Section 3601; FDA Guidance: Diversity Plans to Improve Enrollment (2024)',
+              'FDORA Section 3601; FDA Draft Guidance: Diversity Action Plans to Improve Enrollment of Participants from Underrepresented Populations in Clinical Studies (June 2024)',
           },
         ],
         defaultNext: 'decentralized_elements',
@@ -2290,7 +2299,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Will this study incorporate decentralized clinical trial (DCT) elements?',
         guidance:
-          'FDA Draft Guidance on Decentralized Clinical Trials for Drugs, Biological Products, and Devices (2024) provides a framework for incorporating remote elements such as telemedicine visits, direct-to-patient drug shipment, home health visits, and digital health technologies. DCT elements can improve enrollment diversity and reduce patient burden.',
+          'FDA Guidance for Industry: Conducting Clinical Trials With Decentralized Elements (September 2024; finalizing the May 2023 draft on decentralized clinical trials) provides a framework for incorporating remote elements such as telemedicine visits, direct-to-patient drug shipment, home health visits, and digital health technologies. DCT elements can improve enrollment diversity and reduce patient burden.',
         fields: [
           {
             id: 'dct_elements_planned',
@@ -2316,7 +2325,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder:
               'e.g., Continuous glucose monitor (Dexcom G7), actigraphy (ActiGraph), smart pill bottle (Proteus)',
             helpText:
-              'Per FDA Guidance on Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (2024), DHTs must be fit for purpose with established verification and validation.',
+              'Per FDA Guidance on Digital Health Technologies for Remote Data Acquisition in Clinical Investigations (final, December 2023), DHTs must be fit for purpose with established verification and validation.',
           },
           {
             id: 'hybrid_visit_schedule',
@@ -2340,7 +2349,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Define the pharmacovigilance reporting plan, including SUSAR reporting timelines and DSUR requirements.',
         guidance:
-          '21 CFR 312.32 governs IND safety reporting: unexpected fatal/life-threatening SUSARs require 7-day initial reports, all other SUSARs require 15-day reports. ICH E2F provides the standard for the Development Safety Update Report (DSUR), which is an annual summary of safety data submitted to regulatory authorities. ICH E2A defines the criteria for expedited reporting of individual case safety reports (ICSRs). EMA requires SUSARs to be reported to EudraVigilance per Regulation (EC) No 726/2004.',
+          '21 CFR 312.32 governs IND safety reporting: unexpected fatal/life-threatening SUSARs require 7-day initial reports, all other SUSARs require 15-day reports. ICH E2F provides the standard for the Development Safety Update Report (DSUR), which is an annual summary of safety data submitted to regulatory authorities. ICH E2A defines the criteria for expedited reporting of individual case safety reports (ICSRs). In the EU, sponsors must report SUSARs electronically to the EudraVigilance database per Regulation (EU) No 536/2014, Article 42.',
         fields: [
           {
             id: 'susar_7day_process',
@@ -2348,7 +2357,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: true,
             helpText:
-              'Per 21 CFR 312.32(c)(2), unexpected fatal or life-threatening suspected adverse reactions require initial reporting within 7 calendar days, with follow-up within 8 additional days.',
+              'Per 21 CFR 312.32(c)(2), unexpected fatal or life-threatening suspected adverse reactions must be reported to FDA as soon as possible, and no later than 7 calendar days after the sponsor first receives the information. Relevant follow-up information is submitted as a follow-up IND safety report under 21 CFR 312.32(d)(2), as soon as possible and no later than 15 calendar days after the sponsor receives it.',
             options: [
               { value: 'in_house', label: 'In-House PV Team' },
               { value: 'outsourced_cro', label: 'Outsourced to CRO' },
@@ -2361,7 +2370,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: true,
             helpText:
-              'Per 21 CFR 312.32(c)(1), all other SUSARs require reporting within 15 calendar days of initial receipt.',
+              'Per 21 CFR 312.32(c)(1), all other SUSARs require reporting as soon as possible, but no later than 15 calendar days after the sponsor determines that the information qualifies for reporting.',
             options: [
               { value: 'in_house', label: 'In-House PV Team' },
               { value: 'outsourced_cro', label: 'Outsourced to CRO' },
@@ -2386,7 +2395,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'ICH E2F requires sponsors to submit a Development Safety Update Report (DSUR) annually to all regulatory authorities where an IND/CTA is active. The DSUR is due within 60 days of the Development International Birth Date (DIBD).',
+              'ICH E2F defines the Development Safety Update Report (DSUR), an annual safety report for products under clinical investigation. The DSUR is due within 60 days of its data lock point, which is the annual anniversary of the Development International Birth Date (DIBD). In the US, a DSUR may be submitted in place of the 21 CFR 312.33 IND annual report.',
           },
           {
             id: 'dsur_dibd',
@@ -2427,7 +2436,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             severity: 'critical',
             title: 'DSUR Not Planned — Regulatory Requirement',
             message:
-              'ICH E2F requires annual DSUR submission for all active INDs/CTAs. Failure to submit the DSUR may result in regulatory action including clinical holds. The first DSUR is due within 60 days of the DIBD anniversary.',
+              'An annual safety report is required for all active INDs/CTAs: for INDs, 21 CFR 312.33 requires an annual report (FDA accepts an ICH E2F DSUR in its place), and in the EU, Regulation (EU) No 536/2014 (Art. 43) requires an annual safety report, submitted as the DSUR. Failure to submit the DSUR may result in regulatory action including clinical holds. The first DSUR is due within 60 days of the DIBD anniversary.',
             reference:
               'ICH E2F — Development Safety Update Report; 21 CFR 312.33 — Annual Reports',
           },
@@ -2485,7 +2494,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'select',
             required: false,
             helpText:
-              'EMA requires an EU Risk Management Plan per Directive 2001/83/EC Article 104a. FDA may require REMS per 21 CFR 314.42.',
+              'The EU requires a Risk Management Plan with the marketing authorisation application under Directive 2001/83/EC Article 8(3)(iaa) and Article 104(3)(c) (Regulation (EC) No 726/2004 for centrally authorised products; see GVP Module V). FDA may require a REMS under FD&C Act section 505-1.',
             options: [
               { value: 'not_applicable', label: 'Not Applicable at This Stage' },
               { value: 'rmp_draft', label: 'EU RMP Draft in Progress' },
@@ -2500,7 +2509,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per ICH E2A and FDA Guidance on Safety Reporting (2015), pregnancies in study subjects or partners must be reported and followed to outcome.',
+              'Per ICH E2A and FDA guidance on IND safety reporting (21 CFR 312.32), pregnancies in study subjects or partners must be reported and followed to outcome.',
           },
         ],
         defaultNext: null,

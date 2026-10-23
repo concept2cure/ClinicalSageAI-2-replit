@@ -74,6 +74,11 @@ export const regulatoryPrograms = pgTable(
      *  agency assigns one — never fabricated. Distinct from `code`, the sponsor's
      *  own program code. migrations/20260907_regulatory_programs_application_number.sql */
     applicationNumber: text('application_number'),
+    /** Explicit applicant of record in the existing IND sponsor registry.
+     *  Same-tenant composite FK is enforced by
+     *  migrations/20261021_regulatory_programs_applicant_sponsor.sql.
+     *  DUNS/contact remain on ind_sponsors; NULL means not yet bound. */
+    applicantSponsorId: uuid('applicant_sponsor_id'),
     /** The sponsor's address as Form FDA 1571 / 356h carry it. NULL until
      *  stated. migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql */
     sponsorAddress: text('sponsor_address'),

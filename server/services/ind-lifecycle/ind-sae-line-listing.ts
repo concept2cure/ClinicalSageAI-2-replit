@@ -13,10 +13,11 @@
  *      expectedness (unexpected / expected / not assessed), plus a
  *      per-MedDRA-PT breakdown over the coded cases.
  *
- * Selection: an event is included when it is serious (eventType SAE / SUSAR /
- * AESI) AND its onset falls within [periodStart, periodEnd] — or its onset is
- * unknown, in which case it is listed with onset unknown and counted, never
- * dropped. An event whose type is missing or unrecognised has undetermined
+ * Selection: an event is included when it is serious (eventType SAE / SUSAR, or
+ * an AESI with a recorded seriousness criterion) AND its onset falls within
+ * [periodStart, periodEnd] — or its onset is unknown or not recorded, in which
+ * case it is listed so and counted, never dropped. An event whose type is
+ * missing or unrecognised, or an AESI with no criterion, has undetermined
  * seriousness: it is listed, marked 'undetermined', and counted apart — never
  * dropped, never counted serious. Pure / deterministic — no DB.
  *
@@ -47,17 +48,22 @@ export interface SaeLineListingRow {
   countryOfOccurrence: string;
   /** ISO date; null when the onset is unknown or not a valid date (the case is still listed). */
   onsetDate: string | null;
+  /** Why onsetDate is null: stated as unknown, or not recorded (absent or not a date); null when dated. */
+  onsetGap: 'unknown' | 'not recorded' | null;
   /** MedDRA Preferred Term as coded; null when the case is not MedDRA-coded. */
   reactionPt: string | null;
   /** The reported (verbatim) event term — the intake's free-text description. */
   verbatimTerm: string;
   reactionSoc: string;
   /**
-   * 'serious' from the recorded event type. 'undetermined' when the event type
-   * is missing or not AE / SAE / SUSAR / AESI: listed for review, not counted
-   * in the tabulation's serious totals (seriousnessUndetermined).
+   * 'serious' from the recorded event type — an AESI's from its recorded
+   * seriousness criterion. 'undetermined' when the event type is missing or not
+   * AE / SAE / SUSAR / AESI, or an AESI records no criterion: listed for review,
+   * not counted in the tabulation's serious totals (seriousnessUndetermined).
    */
   seriousness: 'serious' | 'undetermined';
+  /** What was not recorded when seriousness is undetermined; null when serious. */
+  seriousnessGap: string | null;
   seriousnessCriteria: string;
   causality: string;
   suspected: boolean;
@@ -65,8 +71,8 @@ export interface SaeLineListingRow {
   expectedness: ExpectednessDetermination;
   outcome: string;
   suspectProduct: string;
-  /** True when this case met expedited (7-/15-day) IND safety reporting. */
-  expedited: boolean;
+  /** True when this case met expedited (7-/15-day) IND safety reporting; null when its record does not decide it. */
+  expedited: boolean | null;
 }
 
 /** Cumulative counts over the included serious cases (seriousness 'serious' only). */
@@ -124,6 +130,36 @@ function codedPt(pt: string | null | undefined): string | null {
   return typeof pt === 'string' && pt.trim() !== '' ? pt.trim() : null;
 }
 
+/** What a case of undetermined seriousness does not record. */
+const SERIOUSNESS_GAP = {
+  eventType: 'event type (AE, SAE, SUSAR or AESI)',
+  aesiCriterion: 'seriousness criterion (ICH E2A) of an AESI',
+} as const;
+
+/** The gap behind an undetermined seriousness (2026-10-15: every AESI was listed serious). */
+function seriousnessGap(e: AdverseEvent): string | null {
+  if (isSerious(e) === true) return null;
+  return e.eventType === 'AESI' ? SERIOUSNESS_GAP.aesiCriterion : SERIOUSNESS_GAP.eventType;
+}
+
+/**
+ * Why a listed case has no onset date: stated as unknown, or not recorded.
+ * 2026-10-15: both printed "unknown", and a NULL onset from the database — read
+ * as 1970-01-01 — dropped the case as out of period.
+ */
+function onsetGap(e: AdverseEvent & { onsetDateUnknown?: boolean }, onset: Date | null): SaeLineListingRow['onsetGap'] {
+  if (onset) return null;
+  const raw: unknown = e.onsetDate;
+  const statedUnknown = e.onsetDateUnknown === true || (typeof raw === 'string' && raw.trim().toLowerCase() === 'unknown');
+  return statedUnknown ? 'unknown' : 'not recorded';
+}
+
+/** The distinct gaps of the undetermined cases; the event type when there are none. */
+function undeterminedGaps(listed: SaeLineListingRow[]): string {
+  const gaps = [...new Set(listed.map((r) => r.seriousnessGap).filter((g): g is string => g !== null))];
+  return gaps.length > 0 ? gaps.join('; ') : SERIOUSNESS_GAP.eventType;
+}
+
 /**
  * Build the serious-AE line listing + summary tabulation for a reporting period.
  * Pure / deterministic; rows are ordered by onset date (unknown onsets last)
@@ -153,17 +189,19 @@ export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListin
         patientId: e.patientId,
         countryOfOccurrence: e.countryOfOccurrence,
         onsetDate: onset ? isoDate(onset) : null,
+        onsetGap: onsetGap(e, onset),
         reactionPt: codedPt(e.reactionPt),
         verbatimTerm: e.eventDescription ?? '',
         reactionSoc: e.reactionSoc ?? '',
         seriousness: isSerious(e) === true ? ('serious' as const) : ('undetermined' as const),
+        seriousnessGap: seriousnessGap(e),
         seriousnessCriteria: e.seriousnessCriteria,
         causality: e.causality,
         suspected: isSuspected(e.causality),
         expectedness: expectednessDetermination(e.expectedness),
         outcome: e.outcome,
         suspectProduct: e.suspectProduct ?? '',
-        expedited: e.expeditedReportRequired,
+        expedited: e.expeditedReportRequired ?? null,
       };
     })
     .sort((a, b) => {
@@ -227,7 +265,7 @@ function tabulate(listed: SaeLineListingRow[]): SaeSummaryTabulation {
     onsetUnknownCount,
     expeditedCount,
     fatalCount,
-    seriousnessUndetermined: { count: listed.length - rows.length, missing: 'event type (AE, SAE, SUSAR or AESI)' },
+    seriousnessUndetermined: { count: listed.length - rows.length, missing: undeterminedGaps(listed) },
   };
 }
 
@@ -268,7 +306,7 @@ export function saeLineListingToCsv(listing: SaeLineListing): string {
         csvField(r.adverseEventId),
         csvField(r.patientId),
         csvField(r.countryOfOccurrence),
-        csvField(r.onsetDate ?? 'unknown'),
+        csvField(r.onsetDate ?? r.onsetGap),
         csvField(r.reactionPt),
         csvField(r.verbatimTerm),
         csvField(r.reactionSoc),
@@ -278,8 +316,8 @@ export function saeLineListingToCsv(listing: SaeLineListing): string {
         csvField(r.expectedness),
         csvField(r.outcome),
         csvField(r.suspectProduct),
-        csvField(r.expedited),
-        csvField(r.seriousness === 'serious' ? 'serious' : 'undetermined: event type not recorded'),
+        csvField(r.expedited ?? 'undetermined'),
+        csvField(r.seriousness === 'serious' ? 'serious' : `undetermined: ${r.seriousnessGap === SERIOUSNESS_GAP.aesiCriterion ? 'AESI seriousness criterion' : 'event type'} not recorded`),
       ].join(','),
     );
   }

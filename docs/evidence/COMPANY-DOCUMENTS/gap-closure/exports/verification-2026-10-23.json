@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:04:47.149455+00:00",
+  "branch": "concept2cure-v2",
+  "sourceHead": "c04ed02be9ee821fb5af9a90be7072f28518d310",
+  "pendingMergeParent": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "upstreamReviewed": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "scope": "Merged company document report/export/retention preservation. No source edits or new dependencies in this qualification.",
+  "whatAlreadyExists": [
+    {
+      "path": "server/routes/report-os.ts",
+      "responsibility": "Canonical entitlement/admission, retained report bodies/seals, recorded report PDF and legal-companion ZIP delivery.",
+      "previousLimit": "Company-completion work extends the existing routes with exact registered originals and explicit published presentation selection; current merge retains upstream unread-plan refusal wording."
+    },
+    {
+      "path": "server/services/tenant-export/company-document-envelope.ts",
+      "responsibility": "One static tenant-bound exact company subsection/table/template envelope for both existing tenant exporters.",
+      "previousLimit": "Existing exporters and source-data return are reused; adjacent credentials and unrelated settings are excluded."
+    },
+    {
+      "path": "server/services/tenant/tenant-offboarding.ts",
+      "responsibility": "Canonical receipt/hold/content-retention admission, locked exact current company-return binding, atomic disposal/audit transaction.",
+      "previousLimit": "Company completion extends existing eligible purge; current merge also retains upstream live-run stop ordering and AnA skill working-table disposal."
+    }
+  ],
+  "preservationChecks": [
+    {
+      "control": "Report historical source scope before body reads",
+      "result": "Present-key boolean survives SQL projection. Explicit null/scalar/object/invalid values refuse before loading full run/seal/retained body; an absent legacy key stays distinct. Current canonical actor and current project allowlist are consulted on the same client."
+    },
+    {
+      "control": "Report original and presentation integrity",
+      "result": "Exact registered legal versions are admitted and rechecked after rendering; final ZIP members match original digests. Explicit presentation selection requires a currently published applicable company design, carries a snapshot, and has no implicit fallback."
+    },
+    {
+      "control": "Entitlement and delivery outcome",
+      "result": "Current canonical bundleExportRefusal rejects unread entitlement before delivery; upstream planRefusal wording and attestation exact-byte EXPORT_GENERATED hash/refusal behavior are retained."
+    },
+    {
+      "control": "Complete customer data return",
+      "result": "Both exporters use the existing repeatable-read organization snapshot and exact company envelope, including referenced template rows and canonical company registry/history/governance data. Descriptor/hash binds the durable receipt."
+    },
+    {
+      "control": "Eligible offboarding",
+      "result": "Current envelope is read under organization lock and compared with locked durable receipt before deletion. Legal holds, regulated-content retention and immutable-source receipt gates remain. Disposal/status/audit commit atomically; unrelated template rows survive."
+    },
+    {
+      "control": "Upstream live runs and working skills",
+      "result": "AnA runs stop after deletion request and before purge writes. organization_skill_settings and project_skill_settings remain on canonical purge list."
+    }
+  ],
+  "deletionHistorySearch": {
+    "command": "git log --all --diff-filter=D --oneline -- '*report*legal*' '*company*export*' '*tenant*export*' '*tenant*offboard*'",
+    "matchingDeletedImplementationFound": false
+  },
+  "validation": {
+    "runner": "Vitest v4.1.7, Node22 activation; maxWorkers=1",
+    "command": "vitest run [28 exact files below] --maxWorkers=1 --reporter=verbose --reporter=json",
+    "passed": 427,
+    "failed": 0,
+    "pending": 0,
+    "files": 28,
+    "exitStatus": 0,
+    "privateJsonSha256": "5a87f2349920ecd5fba748963243eaf0b0d03d9ecf52e2df4814efe246be9098",
+    "privateLogSha256": "f1f7d0a278f4c3b55c502c436bf66e045f771b1ff59825f21498a9ddd74c33b9",
+    "fileResults": [
+      {
+        "file": "server/__tests__/routes/tenant-export.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "62e38b0e47ca99fde74e2c806a8299aecab768413f50ce47e942a8802c5b7c54"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+        "passed": 21,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "5a6f9e9454907b0fda377725555c5a18b9bddeb6e271a07b8d27a56f31522751"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+        "passed": 17,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "c8196c396137c740f3533b221f4c26e7fbd7ee530cc9ac34688eb7dfe52d85e7"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-delivery-recording.test.ts",
+        "passed": 27,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+        "passed": 25,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+        "passed": 50,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "a314d85d231829d1406451fbb5e42ac0b36a8dc6f1f2f9ac90c5d52bd073fd06"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+        "passed": 25,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "14514924164062f82161d2a092813b3881246e7dcb2337bffd2686d57dc45be2"
+      },
+      {
+        "file": "server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "0199944dd2290716a6ae0d809c40da8a51d445fcfbae80cf788432f1fcb11b3a"
+      },
+      {
+        "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "a8628c3ecf2b8eec740b9d3728efb41ecb0221293098c2de2f68af908b3ec7cc"
+      },
+      {
+        "file": "server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "565d5fec8fef7a2345d36f39fcfe25b851a3a0a8e86d915a7d793f530f36210b"
+      },
+      {
+        "file": "server/services/report-os/__tests__/lineage-trace-unread-signatures-are-unavailable.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "6c48f6385cf01f3f73c56f673a6a3f13ba502a1f31ca285efc45f18120d9839c"
+      },
+      {
+        "file": "server/services/report-os/__tests__/report-package-legal.test.ts",
+        "passed": 19,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "eed5c18a278878cc74869efb9ebcbc8b31b7c6690bb17df1896ebb887683ade6"
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "6ec934675661be5706239d56625c57c78b37aed35f737316fc30318bb01eaa99"
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "4444f73e2d6254114cae881a4fa72dc018c09c6311ef0c5afc6243c479652bbe"
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "ed51a253b9efd73628b32f6fc97427295a7967b3fee17a6c7000e3668ed639af"
+      },
+      {
+        "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+        "passed": 15,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "ac39e29b819d816090ce92a12b602ec797320032036acd1c02163e380de19c6f"
+      },
+      {
+        "file": "server/services/report-os/sealing/__tests__/run-seal.test.ts",
+        "passed": 45,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "75f7ce44b5105a2d74a826bf5c753cbe89115fb41009eaa35e09cbf63757a241"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/company-document-export.pglite.test.ts",
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "6730e71db55e2c7b48132810dd16fae5f41aa8bbb507979bb93f80f2da38d634"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts",
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "2ecf661c325c1f5ab969b3d21fca6584d05a9e73942f248e4e1a0491863a8f7f"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "c2d8875588fe5ca490ed0fc4d49b0c2ffa2504b1a0f95d65e2fb151b071af3d7"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts",
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "75507d6e2a584ae3349eb0b344ce203c091936c973724c0a8f927401f2ae1be3"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "7a94a22f6a4d243d08d8d7b9083344f85a46a6d6374d58495f6b918ebde0ecb6"
+      },
+      {
+        "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "651b17652790d5ff8e599d8dd31ac20e658876a975421636873145b16e7a7651"
+      },
+      {
+        "file": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+        "passed": 26,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "046293f21a2522ec14d9869030093061840ae3d71a51bd5087329c974ff9c618"
+      },
+      {
+        "file": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "98ea2715d73d0b402ff4d17d019f49fe8461e397d5898b1ac69ed67289522fe1"
+      },
+      {
+        "file": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
+        "passed": 21,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "4ae7da9adbec7228712c2882c32939367b5ee4ba27ee9bd1c9fb9a6ce0769c27"
+      },
+      {
+        "file": "server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts",
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "e41820cdd9d857fef06da07cedcbf1a53c379057eff5944a7a445de02f717039"
+      },
+      {
+        "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+        "passed": 26,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "a0ce67087be3a19c2301299c66ff5a71904a4dbbccb2a4a8b3ec755eb3c0b300"
+      }
+    ]
+  },
+  "sourcePins": [
+    {
+      "path": "server/routes/report-os.ts",
+      "sha256": "d0c0d239860a39561d86ee9a7ada27f717ac0a9658bb6d58f10a9f2b722b41af"
+    },
+    {
+      "path": "server/routes/tenant-export.ts",
+      "sha256": "030e6fb05635528510d76565aad07300f4617a4ce4232cbcadc09b5c0831a5ca"
+    },
+    {
+      "path": "server/services/export/governedExportConsequence.ts",
+      "sha256": "cffbbccda065c79c5d684fe990400706bcdabe78e924b325782a39b979efbb18"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "sha256": "43e9b239863d6b62635764e49b13385fd618d0d7814020c5c99c728ff3c8c256"
+    },
+    {
+      "path": "server/services/report-os/pdf/company-branding.ts",
+      "sha256": "b99280474c881c90ac4f634efdeba18ed2246f7cfc5e9f25c2fe8493741cfc3a"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "sha256": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364"
+    },
+    {
+      "path": "server/services/report-os/report-package-legal.ts",
+      "sha256": "6cc156c395b89577c4c52cf2a007dfe2c11c5f02d9a0892868fdbdce6d2da5c5"
+    },
+    {
+      "path": "server/services/report-os/sealing/run-seal.ts",
+      "sha256": "85904be05c84422e781588607a2f4f246deec7071119f025dd955f50aed99c85"
+    },
+    {
+      "path": "server/services/tenant-export/company-design-disposal.ts",
+      "sha256": "72c838fd835fcbb18d6489e4a358ae0daac0b1c6220d4b6cd99df3c8ce53cefe"
+    },
+    {
+      "path": "server/services/tenant-export/company-document-envelope.ts",
+      "sha256": "d9569165d2932f75c8a174fac9211af9210909867dfe2fd667a2bdefd2c85365"
+    },
+    {
+      "path": "server/services/tenant-export/company-export-snapshot.ts",
+      "sha256": "1f5e41b70e928b0a27450c1b8abfbe961deae3bb0a990e128ac6340fa1a3c563"
+    },
+    {
+      "path": "server/services/tenant-export/tenant-export.service.ts",
+      "sha256": "e52a7f4028572093a04f51b46fe40b7ed237efd36efc12a1412a0c98b3ad8b04"
+    },
+    {
+      "path": "server/services/tenant-export/tenant-full-export.service.ts",
+      "sha256": "43d3b5110215d9e22e358694d00bc2ca340519300a5703e65fcec6beca0262dd"
+    },
+    {
+      "path": "server/services/tenant/tenant-offboarding.ts",
+      "sha256": "1ec72187e14a8e0d88966f4207be0c49b942ce7eea9cc8f5a517bad2ae0e011a"
+    },
+    {
+      "path": "server/services/tenant/tenant-purge-audit.ts",
+      "sha256": "912fb0b57a1f767571d60f7c0248b0937c445e3d31b8e0a38365bc7e452e2df9"
+    },
+    {
+      "path": "server/services/tenant/tenant-source-read-receipt-purge.ts",
+      "sha256": "5f8926a51e39110330ec06db48e0a155d299a2e3ef57b111b19df7ee0565a8a0"
+    }
+  ],
+  "boundaries": [
+    "Actual database-catalog/migration replay and browser checks are qualified separately by the controller.",
+    "Unit/HTTP/PGlite and actual generated PDF/ZIP regression fixtures qualify local merged behavior; no production rollout, remote CI or agency acceptance is asserted.",
+    "No full TypeScript/build/lint gates were duplicated by this worker; the controller owns those release checks."
+  ]
+}

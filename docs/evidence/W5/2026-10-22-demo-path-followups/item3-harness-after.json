@@ -1,0 +1,48 @@
+{
+ "css": "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/styles/journey-v2.css",
+ "button": {
+  "x": 319.92138671875,
+  "y": 57,
+  "width": 236,
+  "height": 41
+ },
+ "results": [
+  {
+   "label": "centre",
+   "pointerY": 77.5,
+   "distinctTops": 1,
+   "tops": [
+    57
+   ],
+   "hoverStates": [
+    true
+   ],
+   "settled": true
+  },
+  {
+   "label": "bottom row",
+   "pointerY": 97.5,
+   "distinctTops": 1,
+   "tops": [
+    57
+   ],
+   "hoverStates": [
+    true
+   ],
+   "settled": true
+  },
+  {
+   "label": "just below",
+   "pointerY": 98.5,
+   "distinctTops": 1,
+   "tops": [
+    57
+   ],
+   "hoverStates": [
+    false
+   ],
+   "settled": true
+  }
+ ],
+ "click": "clicked (1 click event)"
+}

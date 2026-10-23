@@ -1,0 +1,46 @@
+# RED: the review-driven cases against the first commit b2cbab76d (its implementation; this change's tests) (2026-10-22T15:58:00Z)
+## Real PostgreSQL 16, RLS_ENFORCE=on, app_service
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 174ms
+   → expected { Object (id, organization_id, ...) } to match object { next_review_due: '2027-10-22', …(1) }
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 6ms
+   → expected { kind: 'qms-periodic-review', …(8) } to match object { kind: 'qms-periodic-review', …(5) }
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a version whose approval signature no longer stands 38ms
+   → {"data":{"kind":"qms-periodic-review","documentId":185,"docNumber":"qms-review-578bc29e-WDN","version":"1.0","approvedAt":"2026-10-22T15:58:08.857Z","contentDigest":"25b08b713d8bbd0c94e9113b05c51148b424abf1c9263bd8ffac543ca5d9b43d","outcome":"current","nextReviewDate":"2027-05-10","previousNextReviewDate":"2026-12-01"},"actionId":"act_cad1af40ac574e20947ba8d4948e93a4","auditId":"cfbde50d-4c87-497c-b14a-a7a3c4d3be47","sha256Chain":"82919ce1ce2915814f6731b3b9ef9e55b3f4c2c87b0fca7f9b9bfd164aec299d","signatureId":403,"signedAt":"2026-10-22T15:58:09.436Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+ × tests/db/qms-periodic-review-signed.dbtest.ts > a later review of the same version > records the due date the earlier review set, beside the date the approval signed, and supersedes it 27ms
+   → expected { kind: 'qms-periodic-review', …(8) } to match object { …(3) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 passed (12)
+
+## Client
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed, in UTC 255ms
+   → expected 'SOP-016Training records2026-10-27v1.0…' to contain 'v1.0 reviewed 2026-01-05 10:00 UTC by…'
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says what is wrong with the date, on the field, and keeps the dialog open 128ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "remains current" with meaning review, posts the decision, and names what was attested once signed 105ms
+   → expected undefined to deeply equal [ { label: 'Version', …(1) }, …(2) ]
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date, saying the document keeps the date its approval set 91ms
+   → expected 'Record periodic reviewSOP-015 Supplie…' to contain 'The document keeps the review date it…'
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a refused password signed nothing, said once, and nothing is refreshed as if it had 5103ms
+   → expected 'The password was not accepted. Nothin…' to be 'The password was not accepted. Nothin…' // Object.is equality
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a review the server refuses as the document now stands reads the register again 130ms
+   → expected "vi.fn()" to be called at least once
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a dropped connection is not "nothing was signed": it says to check before signing again 5101ms
+   → expected 'Failed to fetch' to be 'The server did not confirm the review…' // Object.is equality
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the register row shows and takes a review beyond the panel > names the last review on the Next review cell and offers Record review there 38ms
+   → Unable to find an element by: [data-testid="qms-register-last-review"]
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > focus returns where the review started > to the Record review control on Cancel, and to the panel heading once a review from the panel is recorded 5087ms
+   → expected <body><div>…(5)</div></body> to be <button class="qms-chip" …(2)>…(1)</button> // Object.is equality
+ × client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx > EsignModal returns focus when its host unmounts it > once signed, Done has focus and carries the summary, the attested rows are shown, and Done returns focus 5155ms
+   → expected <button></button> to be <button …(2)></button> // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  10 failed | 1 passed (11)
+
+## EsignModal against b2cbab76d, after the Escape case was made to wait for focus to enter the dialog (it had passed because Escape came before the dialog's 60 ms focus) (2026-10-22T15:59:04Z)
+ × client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx > EsignModal returns focus when its host unmounts it > on Escape, focus goes back to the control that opened it 287ms
+   → expected <body><div>…(1)</div></body> to be <button></button> // Object.is equality
+ × client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx > EsignModal returns focus when its host unmounts it > once signed, Done has focus and carries the summary, the attested rows are shown, and Done returns focus 5157ms
+   → expected <button></button> to be <button …(2)></button> // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)

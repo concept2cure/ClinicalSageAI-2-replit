@@ -38,6 +38,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PDFDocument as ParsedPdfDocument, PDFHexString } from 'pdf-lib';
+import { withConversionSlot } from './conversion-slots';
 
 export interface PdfConvertResult {
   /** Exact generated PDF bytes, with structurally normalized Info metadata. */
@@ -125,7 +126,9 @@ async function runLibreOffice(docx: Buffer, timeout: number): Promise<Buffer> {
   try {
     await fs.writeFile(inputPath, docx);
 
-    await new Promise<void>((resolve, reject) => {
+    // One of the process's conversion slots (OPS-13): the soffice child runs
+    // only while it holds one. Its own `timeout` starts once it is running.
+    await withConversionSlot('libreoffice', () => new Promise<void>((resolve, reject) => {
       const args = [
         '--headless',
         `-env:UserInstallation=${pathToFileURL(path.join(workDir, 'office-profile')).href}`,
@@ -159,7 +162,7 @@ async function runLibreOffice(docx: Buffer, timeout: number): Promise<Buffer> {
         const tail = Buffer.concat(stderr).toString('utf8').slice(-500);
         reject(new Error(`LibreOffice exited with code ${code}. stderr tail: ${tail}`));
       });
-    });
+    }));
 
     return await fs.readFile(outputPath);
   } finally {

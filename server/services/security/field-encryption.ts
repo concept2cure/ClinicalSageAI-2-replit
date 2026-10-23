@@ -4,8 +4,8 @@
  * A REUSABLE, general-purpose helper for encrypting individual database
  * field values (diagnosis codes, patient demographics, biomarkers, SSN/DOB/MRN,
  * etc.) at rest. This does NOT replace the existing purpose-specific crypto in
- * `server/services/mfaService.ts` (TOTP secrets) or
- * `server/services/integrations/credentialVault.ts` (integration secrets) —
+ * `server/services/mfaService.ts` (TOTP secrets; `credentialVault.ts`, for
+ * integration secrets, had no importer and was deleted 2026-10-15) —
  * it reuses the SAME established scheme (AES-256-GCM, random 12-byte IV,
  * appended auth tag) so there is one crypto approach across the platform.
  *
@@ -62,9 +62,10 @@ const AUTH_TAG_LENGTH = 16;
 // ---------------------------------------------------------------------------
 // Key management
 //
-// Mirrors the production fail-closed discipline in
-// `server/services/integrations/credentialVault.ts::getEncryptionKey()`:
-// production MUST supply a real key and we refuse to fall back to a hardcoded
+// Mirrors the production fail-closed discipline of
+// `server/services/integrations/credentialVault.ts::getEncryptionKey()`
+// (deleted 2026-10-15, d7c044897; mfaService.ts, by contrast, falls back to a
+// JWT_SECRET-derived key unless MFA_REQUIRE_DEDICATED_KEY=true): production MUST supply a real key and we refuse to fall back to a hardcoded
 // literal so encrypted PII/PHI cannot be trivially decrypted by anyone with
 // code access. A derived dev key is allowed ONLY outside production and is
 // logged loudly on first use.
@@ -83,14 +84,14 @@ let devFallbackWarned = false;
 
 /**
  * Derive the 32-byte AES-256 key. SHA-256 of the configured secret — the same
- * KDF used by credentialVault and mfaService, so key material is handled
+ * KDF mfaService uses (and the deleted credentialVault used), so key material is handled
  * identically across the platform (no bespoke stretching to get wrong).
  */
 function getEncryptionKey(): Buffer {
   const fromEnv = process.env[KEY_ENV_VAR];
 
   // Production must supply a real key. Refuse the hardcoded fallback — see
-  // credentialVault.ts for the pattern this mirrors.
+  // the Key management note above for the pattern this mirrors.
   if (!fromEnv && process.env.NODE_ENV === 'production') {
     throw new Error(
       `Field-level PII/PHI encryption requires ${KEY_ENV_VAR} in production. ` +

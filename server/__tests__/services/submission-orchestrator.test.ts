@@ -375,7 +375,25 @@ describe('ectd-regional-rules', () => {
     expect(findings.some(f => f.ruleId === 'FDA-ESG-001' || f.message.includes('not a 4-digit'))).toBe(true);
   });
 
-  it('flags package size over FDA 4 GB gateway limit', () => {
+  // 2026-10-08 (sweep VP-6): the limit was 4 GiB, citing an FDA document that
+  // does not exist; FDA's Form 5640 v2.0 takes sequences up to 10 GB through the
+  // ESG. This case pinned 5 GiB as over the limit — it is inside it.
+  it('flags package size over the FDA 10 GB gateway limit', () => {
+    const ctx: RegionalContext = {
+      region: 'US',
+      applicationNumber: 'IND123456',
+      sequenceNumber: '0000',
+      submissionType: 'IND',
+      totalSizeBytes: 11 * 1024 * 1024 * 1024,
+    };
+    const leaves: RegionalLeafRef[] = [
+      { sectionCode: 'm1.us', filePath: 'm1/us/us-regional.xml', mimeType: 'text/xml', fileSize: 1000 },
+    ];
+    const findings = validateRegionalPackage(ctx, leaves);
+    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(true);
+  });
+
+  it('does not flag a 5 GiB FDA package (inside the 10 GB ESG range)', () => {
     const ctx: RegionalContext = {
       region: 'US',
       applicationNumber: 'IND123456',
@@ -386,8 +404,7 @@ describe('ectd-regional-rules', () => {
     const leaves: RegionalLeafRef[] = [
       { sectionCode: 'm1.us', filePath: 'm1/us/us-regional.xml', mimeType: 'text/xml', fileSize: 1000 },
     ];
-    const findings = validateRegionalPackage(ctx, leaves);
-    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(true);
+    expect(validateRegionalPackage(ctx, leaves).some(f => f.ruleId === 'FDA-ESG-003')).toBe(false);
   });
 
   it('accepts valid EU application number format', () => {
@@ -621,6 +638,32 @@ describe('submission-package-orchestrator', () => {
     expect(run.steps.find(s => s.key === 'csr.tabulate')?.status).toBe('skipped');
     expect(outputs.m23).toBeUndefined();
     expect(outputs.m27).toBeUndefined();
+  });
+
+  /* The composition boundary (decision P-28: small-molecule Module 3 for a
+     US IND), asked of the package's target. An NDA or MAA run composed the
+     IND Module 3 into a marketing application and signed it (2026-10-22). */
+  it.each([
+    ['NDA', 'US', 'NDA123456'],
+    ['MAA', 'EU', 'EMEA/H/C/12345'],
+  ] as const)('composes no Module 3 for a %s target, and says why on the step', async (submissionType, region, applicationNumber) => {
+    const { run, outputs } = await runOrchestrator({ ...baseInputs, submissionType, region, applicationNumber });
+    const m3 = run.steps.find(s => s.key === 'm3.compose')!;
+    expect(m3.status).toBe('skipped');
+    expect(m3.outputRef).toMatch(new RegExp(`This submission files ${submissionType}, and Module 3 is composed and placed here only for a US IND`));
+    expect(outputs.module3Sections ?? []).toEqual([]);
+  });
+
+  it('composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one', async () => {
+    const { run, outputs } = await runOrchestrator(baseInputs);
+    expect(run.steps.find(s => s.key === 'm3.compose')?.status).toBe('complete');
+    /* 21 CFR 312.23(a)(7)'s regional items. The marketing application's
+       3.2.R ('Regional Information — United States (FDA)') was composed into
+       every US package, an IND's included (2026-10-22). */
+    const regional = outputs.module3Sections.find(s => s.sectionKey === '3.2.R.1.US');
+    expect((regional?.structuredPayload as { title?: string } | undefined)?.title).toBe(
+      'Regional Information — United States (FDA IND)',
+    );
   });
 
   it('marks downstream steps stale when an upstream step changes', () => {

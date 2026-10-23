@@ -1,0 +1,9 @@
+# r-marker-waiting-read-as-working: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx  -t Waiting for you
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3) 8ms
+   → expected 'Working' to be 'Waiting for you' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3)
+AssertionError: expected 'Working' to be 'Waiting for you' // Object.is equality

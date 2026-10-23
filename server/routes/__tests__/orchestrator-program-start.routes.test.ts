@@ -7,7 +7,8 @@ vi.mock('../../services/submission-package-orchestrator.js', () => ({ runOrchest
 vi.mock('../../services/submission-orchestrator-continuation.js', () => ({ continueOrchestratorRun: vi.fn(), requireOrchestratorProgramAccess: m.access, OrchestratorContinuationRefusal: class extends Error {} }));
 vi.mock('../../services/c2c/program-project-anchor.js', () => ({ readProgramAnchorRow: m.anchor }));
 vi.mock('../../services/cmc/submission-spine.js', () => ({ resolveSubmissionSpine: m.spine, resolveSequenceSpine: m.sequence }));
-vi.mock('../../services/ectd/package-identity.js', () => ({ readRecordedPackageIdentity: m.identity, packageIdentityRefusal: m.identityRefusal }));
+// The run reads its sequence's market's identity by submission since P-44; the same stand-in.
+vi.mock('../../services/ectd/package-identity.js', () => ({ readRecordedPackageIdentity: m.identity, readSubmissionPackageIdentity: m.identity, packageIdentityRefusal: m.identityRefusal }));
 vi.mock('../../services/cmc/load-approved-cmc-sources-for-project.js', () => ({ loadApprovedCmcSourcesForProject: m.cmc }));
 vi.mock('../../services/csr/load-csr-inputs-for-project.js', () => ({ loadCsrInputsForProject: m.csr }));
 vi.mock('../../services/auditService.js', () => ({ default: { logAction: vi.fn() } }));

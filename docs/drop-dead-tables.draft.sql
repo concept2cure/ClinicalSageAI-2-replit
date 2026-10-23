@@ -8,7 +8,7 @@
 -- ── WHY IT WAS DISARMED ──────────────────────────────────────────────────────
 -- The inventory this list came from is static-reference analysis, and it has
 -- false negatives in both directions. Re-measured against the live 710-table
--- schema, EIGHT tables named below exist AND are referenced by shipped code:
+-- schema, SEVEN tables named below exist AND are referenced by shipped code:
 --
 --   client_access           server/routes/client-portal.ts:106 — `FROM client_access ca`.
 --                           This is the predicate that scopes an EXTERNAL CLIENT
@@ -22,8 +22,9 @@
 --   charter_audit_events    server/routes/charters.ts:23 — the per-entity audit
 --                           table the charter domain writes in-transaction.
 --   readiness_rules         client/src/concept2cure/v2/surfaces/Orchestration.tsx:644
---   doe_studies             server/services/ana/intelligence-questions/war-game/
---                           auditors/cmc-auditor.ts
+--   (doe_studies was listed here until 2026-10-22: its one reader, the war-game
+--   cmc-auditor, stopped reading it in cf07e244c. It is now a lead to review
+--   like every other entry, not a table proven safe to drop.)
 --
 -- The list is also unordered with respect to foreign keys while deliberately
 -- avoiding CASCADE, so it cannot execute end-to-end regardless: e.g.

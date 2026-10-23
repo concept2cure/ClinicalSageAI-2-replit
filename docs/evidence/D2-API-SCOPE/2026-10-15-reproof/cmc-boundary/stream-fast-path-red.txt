@@ -1,0 +1,8 @@
+# trunk's stream.ts: the fast path renders a boundary refusal as nothing
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > says a composition-boundary refusal in its own words 54ms
+   → expected undefined to be 'The drug substance is stated as a mon…' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > says a composition-boundary refusal in its own words
+AssertionError: expected undefined to be 'The drug substance is stated as a mon…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)

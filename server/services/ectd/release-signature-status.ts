@@ -372,7 +372,10 @@ async function resolveOrchestratorReleaseSignature(params: {
         const coverage = await signedManifestCoversSequence({
           signedLeaves: result.descriptor.leaves ?? [],
           sequenceId,
+          submissionId,
           organizationId,
+          region: region ?? signedRegion,
+          recordedPackageIdentity: result.descriptor.recordedPackageIdentity,
         });
         if ('unknown' in coverage) {
           // Fail closed and say which half is unknown. An unreadable sequence

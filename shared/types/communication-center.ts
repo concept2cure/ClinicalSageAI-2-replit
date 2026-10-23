@@ -59,6 +59,14 @@ export interface AuthorityProfileRecord {
   updatedAt: string;
 }
 
+/** A Submission Center submission an agency communication concerns. */
+export interface LinkedSubmission {
+  id: number;
+  title: string | null;
+  applicationType: string | null;
+  primaryRegion: string | null;
+}
+
 export interface AgencyCommunicationEventRecord {
   id: string;
   organizationId: number;
@@ -76,6 +84,12 @@ export interface AgencyCommunicationEventRecord {
   communicationType: string;
   sourceChannel: string;
   linkedSubmissionId?: string;
+  /**
+   * The submission linkedSubmissionId names, as the inbox shows it: a live
+   * submission of the project's program. Null when the stored value names none
+   * (an older unchecked value, or a submission since removed).
+   */
+  linkedSubmission?: LinkedSubmission | null;
   linkedPackageId?: string;
   linkedSectionCodes: string[];
   linkedArtifactIds: string[];

@@ -30,16 +30,12 @@ const flush = () => new Promise<void>(resolve => setTimeout(resolve, 0));
  * control write or its ceiling.
  */
 function world(expiry: 'resume' | 'end', start: RunStatus | null = 'paused') {
-  const s = { t: 0, status: start as RunStatus | null, frames: [] as Array<Record<string, unknown>>, gone: false };
+  const s = { t: 0, status: start as RunStatus | null, frames: [] as Array<Record<string, unknown>> };
   const waiters = new Set<() => void>();
   const common = {
     readStatus: vi.fn(async () => s.status),
     wake: vi.fn((_ms: number) => new Promise<void>(resolve => waiters.add(resolve))),
     emit: (frame: Record<string, unknown>) => s.frames.push(frame),
-    clientGone: () => s.gone,
-    stopForDisconnect: vi.fn(async () => {
-      s.status = 'cancelled';
-    }),
     now: () => s.t,
     maxPauseMs: MAX,
   };
@@ -127,13 +123,17 @@ describe("expiry 'resume' — today's pause, moved unchanged", () => {
     expect(w.s.frames).toEqual([{ type: 'paused', round: 2 }]);
   });
 
-  it('paused then ended some other way: the turn carries on, with no resumed frame (as the stream did)', async () => {
+  // AnA detach DT3 (§2.4): a run that ENDED while held — reaped, shut down,
+  // its session ended, or finished — is not "carry on". It used to read every
+  // status but 'cancelled' as running, so a reaped run's turn ran its next
+  // round for nobody.
+  it.each([['finished'], ['failed']] as const)('paused then ended as %s: the hold reports ended, with no resumed frame', async ended => {
     const w = world('resume');
     const out = track(w.hold.hold(2));
     await flush();
-    w.s.status = 'finished';
+    w.s.status = ended;
     await w.tick(10);
-    expect(out.value).toBe('running');
+    expect(out.value).toBe('ended');
     expect(w.s.frames).toEqual([{ type: 'paused', round: 2 }]);
   });
 
@@ -163,14 +163,6 @@ describe("expiry 'resume' — today's pause, moved unchanged", () => {
     await w.tick(RUN_HOLD_WAKE_CEILING_MS);
     expect(out.value).toBe('running');
     expect(w.resumeAbandoned).toHaveBeenCalledTimes(1);
-  });
-
-  it('a dropped client stops the run and reports disconnected', async () => {
-    const w = world('resume');
-    w.s.gone = true;
-    expect(await w.hold.hold(2)).toBe('disconnected');
-    expect(w.deps.stopForDisconnect).toHaveBeenCalledTimes(1);
-    expect(w.s.frames).toEqual([{ type: 'paused', round: 2 }]);
   });
 
   it('two separate pauses each get their own clock', async () => {
@@ -355,7 +347,7 @@ describe('a waiter that leaves while the run is still paused', () => {
   // The stream's old loop took a fresh `pauseStart` on every checkpoint call,
   // so nothing it measured outlived the call. A hold shared by several waiters
   // keeps one clock while ANYONE is waiting; when the last one leaves by any
-  // path — its own signal, a dropped client, an error — the clock must stop
+  // path — its own signal, the run ending, an error — the clock must stop
   // with it, or held time grows with nobody holding and the next hold starts
   // already at its deadline.
 
@@ -376,17 +368,19 @@ describe('a waiter that leaves while the run is still paused', () => {
     expect(w.resumeAbandoned).not.toHaveBeenCalled();
   });
 
-  it('a dropped client closes the pause: held time stops at the disconnect', async () => {
+  // The dropped-client cases left with `clientGone` (AnA detach DT3): the
+  // hold never saw a drop. A run stopped for one reaches it as the cancel.
+  it('the run stopped while held closes the pause: held time stops there', async () => {
     const w = world('resume');
     const out = track(w.hold.hold(2));
     await w.tick(5_000);
     await w.tick(5_000);
-    w.s.gone = true;
+    w.s.status = 'cancelled';
     await w.tick(5_000);
-    expect(out.value).toBe('disconnected');
+    expect(out.value).toBe('cancelled');
     const held = w.hold.heldMs();
     await w.tick(60_000);
-    expect(w.hold.heldMs(), 'held time grew after the client went').toBe(held);
+    expect(w.hold.heldMs(), 'held time grew after the run stopped').toBe(held);
   });
 
   it('one waiter leaving by its signal does NOT close the pause the others are still waiting on', async () => {

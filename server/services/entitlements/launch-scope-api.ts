@@ -26,7 +26,8 @@
  *   - `infrastructure` — a non-screen caller: `LAUNCH_INFRASTRUCTURE_API`, or a
  *                      path the auth boundary serves unauthenticated
  *                      (`PUBLIC_API_ALLOWLIST`, middleware/public-api-allowlist.ts);
- *   - `out-of-scope` — every surface claiming it is outside the launch scope;
+ *   - `out-of-scope` — every surface claiming it is outside the launch scope,
+ *                      or it is on the exclusion list below (`LAUNCH_EXCLUDED_API`);
  *   - `unmapped`     — nothing claims it.
  * `out-of-scope` is refused. `unmapped` is refused too in production
  * (LAUNCH_SCOPE_API_UNATTRIBUTED, unset = enforce there; the gate decides — see
@@ -59,6 +60,7 @@ export type LaunchScopeApiVerdict = 'never-gated' | 'infrastructure' | 'launch' 
  */
 export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/ana-ri': 'AnA: the stream, governed actions, agent activity and live-drive state, from every host',
+  '/api/ana-skills': "AnA's skills: the methods she follows on every host, read and (by administrators, with a reason) changed from Admin and access → Skills; bound to no module so the methods AnA uses are never refused by one",
   '/api/v1/auth': 'the session the shell reads on load',
   '/api/tenants': 'tenant context (TenantContext.tsx) on load',
   '/api/clients': 'the client workspace list tenant context reads on load',
@@ -83,6 +85,37 @@ export const LAUNCH_INFRASTRUCTURE_API: Readonly<Record<string, string>> = {
   '/api/_ops': 'operator tooling, authenticated separately',
 };
 
+/**
+ * Sub-namespaces under a launch claim that the launch does not serve. Each is
+ * a route nothing in the product calls (DEAD) or a hidden app's route under a
+ * launch prefix (HIDDEN APP), and each sits under a prefix whose ROOT a launch
+ * screen calls — or whose root is served and was not judged — so the claim
+ * itself cannot be narrowed: a claim on the root covers every child. Refused
+ * in production as `out-of-scope`, ahead of the claimers.
+ *
+ * Found by the launch-boundary re-proof (2026-10-15, three skeptics per
+ * finding; docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/). Where the
+ * root was not called, the claim was narrowed in the registry instead. Each
+ * carries its reason so the list cannot grow by convenience, and
+ * `ci:launch-scope-api` fails if a launch screen ever calls one.
+ */
+export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
+  '/api/mdx/qms/suppliers': "HIDDEN APP: the full device QMS's supplier management (21 CFR 820); the launch QMS app is controlled documents only",
+  '/api/mdx/qms/internal-audits': "HIDDEN APP: the full device QMS's internal audits",
+  '/api/mdx/qms/nonconforming': "HIDDEN APP: the full device QMS's nonconforming product control",
+  '/api/mdx/qms/management-reviews': "HIDDEN APP: the full device QMS's management reviews",
+  '/api/mdx/qms/readiness': "DEAD: the deleted MDX device shell's quality-readiness panel (consumer removed in 4aa204390)",
+  '/api/regulatory/tasks/dashboard': 'DEAD: a legacy cross-module progress dashboard; nothing calls it, and it is not Submission Readiness',
+  '/api/regulatory/tasks/sync': "DEAD: a legacy cross-module task importer, its device branch reading the device app's tables",
+  '/api/concept2cure/projects/all': "DEAD: the deleted legacy Home dashboard's counter (consumer removed in 2895218b8)",
+  '/api/concept2cure/artifacts/export-pptx': 'DEAD: a deterministic PPTX export of supplied content that no client has ever called (its model path refused since f8af76fb1)',
+  '/api/chat/actions': "DEAD: an 'Action Cards' runner that returns canned text and writes artifact rows claiming queued work; no client has ever called it",
+  '/api/chat/health': 'DEAD: a provider-key health probe that counts chat_threads with no organisation filter; nothing calls it',
+  '/api/chat/send-message': 'DEAD: a non-streaming AnA turn no client has ever called; AnA answers through /api/ana-ri',
+  '/api/chat/stream': 'DEAD: an alias of POST /api/ana-ri/stream kept for callers that do not exist',
+  '/api/chat/thread': 'DEAD: one transcript read/rename/delete no client calls (the handler says so); threads are /api/chat/threads',
+};
+
 function onPrefix(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
@@ -93,11 +126,18 @@ export function launchScopeApiVerdict(
   neverGated: readonly string[],
   launchSurfaceIds: ReadonlySet<string> = LAUNCH_SURFACE_IDS,
 ): LaunchScopeApiVerdict {
-  const path = pathname.split('?')[0];
+  /* Lower-cased, because Express routes ignore letter case: a route mounted at
+     /api/chat serves /api/Chat/… and /API/chat/… too. Every key the verdict
+     matches (the registry's prefixes, NEVER_GATED and the lists here) is lower
+     case, and launch-reproof-narrowing.test.ts holds them to it. Matching the
+     case the caller sent let a changed case skip the exclusion list and any
+     longer claim under a launch root (2026-10-22). */
+  const path = pathname.split('?')[0].toLowerCase();
   if (neverGated.some((n) => onPrefix(path, n))) return 'never-gated';
   if (Object.keys(LAUNCH_INFRASTRUCTURE_API).some((p) => onPrefix(path, p))) return 'infrastructure';
   if (isPublicApiPath(path)) return 'infrastructure';
   if (Object.keys(LAUNCH_PLATFORM_API).some((p) => onPrefix(path, p))) return 'launch';
+  if (Object.keys(LAUNCH_EXCLUDED_API).some((p) => onPrefix(path, p))) return 'out-of-scope';
   const surfaces = modulesForPath(path, prefixMap);
   if (!surfaces || surfaces.size === 0) return 'unmapped';
   for (const id of surfaces) if (launchSurfaceIds.has(id)) return 'launch';

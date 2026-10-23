@@ -21,6 +21,7 @@ import {
   deleteConversation,
   getThreadMessages,
   programIdForThread,
+  readThreadSkills,
   resolveAccessibleThread,
   resolveThreadStore,
   ThreadAccessError,
@@ -196,7 +197,11 @@ export async function listThreadMessages(req: Request, res: Response) {
 
     const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
     const messages = store === 'chat' ? await getThreadMessages(threadId) : await getAiThreadMessages(threadId);
-    res.json({ messages: messages.slice(-limit) });
+    // The skills the conversation's person picked (§10 of ANA_SKILLS): a
+    // preference, so a failed read omits the field rather than failing the
+    // transcript, and an omitted field never reads as "none picked".
+    const skills = store === 'chat' ? await readThreadSkills(threadId, Number(orgId)).catch(() => undefined) : undefined;
+    res.json({ messages: messages.slice(-limit), ...(skills ? { skills } : {}) });
   } catch (error: any) {
     // Same rule as listThreads: an unreadable transcript is NOT an empty
     // transcript. Returning `{ messages: [] }` on a failed read let the UI

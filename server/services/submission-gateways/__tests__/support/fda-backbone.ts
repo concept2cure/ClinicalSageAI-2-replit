@@ -13,6 +13,7 @@ import { DOMParser, type Document, type Element } from '@xmldom/xmldom';
 import { packageEctdSubmission, type EctdLeaf } from '../../regional-packager';
 import type { FdaApplicantContact } from '../../ectd-packager/types';
 import type { SubmissionBundle } from '../../types';
+import { goldenPdf } from '../../../ectd/qualification/golden-fixtures';
 
 export interface FdaPackOptions {
   /** Module 1 leaves, in the order the package lists them. Default: one 1.2 cover letter. */
@@ -39,7 +40,7 @@ export async function packFda(opts: FdaPackOptions = {}): Promise<FdaPack> {
   try {
     const leaves: EctdLeaf[] = [];
     for (const spec of specs) {
-      const bytes = Buffer.from(`%PDF-1.7\n% ${spec.fileName}\n`);
+      const bytes = goldenPdf(spec.fileName);
       const sourcePath = path.join(work, spec.fileName);
       await fs.writeFile(sourcePath, bytes);
       leaves.push({ operation: 'new', ctdSection: spec.ctdSection, fileName: spec.fileName, md5: md5(bytes), title: spec.fileName, sourcePath });

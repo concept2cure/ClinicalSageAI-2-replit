@@ -354,16 +354,25 @@ export function recordGovernedDecisionSync(
 // Querying — DB-first, no in-memory fallback
 // ═══════════════════════════════════════════════════════════════════════
 
-function mapRow(row: Record<string, unknown>): GovernedDecisionRecord {
-  const rawNotes = row.notes ?? '';
-  const notes: Record<string, unknown> = typeof rawNotes === 'string'
-    ? (() => { try { return JSON.parse(rawNotes) as Record<string, unknown>; } catch { return {}; } })()
-    : (rawNotes && typeof rawNotes === 'object' ? rawNotes as Record<string, unknown> : {});
+/**
+ * A stored JSON column as an object: absent (null) is {}; anything else must
+ * be an object or parse to one. 2026-10-15: unparseable JSON became {}, so a
+ * row's gate outcomes and counts fell to their defaults; it is now an error.
+ */
+function jsonColumn(value: unknown, column: string, rowId: unknown): Record<string, unknown> {
+  if (value === null || value === undefined) return {};
+  let parsed: unknown = value;
+  try { if (typeof value === 'string') parsed = JSON.parse(value); } catch { parsed = undefined; }
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+  throw new Error(`Governed decision ${String(rowId)}: ${column} is not a readable JSON object.`);
+}
 
-  const rawCtx = row.decision_context ?? row.decisionContext ?? '';
-  const ctx: Record<string, unknown> = typeof rawCtx === 'string'
-    ? (() => { try { return JSON.parse(rawCtx) as Record<string, unknown>; } catch { return {}; } })()
-    : (rawCtx && typeof rawCtx === 'object' ? rawCtx as Record<string, unknown> : {});
+function mapRow(row: Record<string, unknown>): GovernedDecisionRecord {
+  const notes = jsonColumn(row.notes, 'notes', row.id);
+  const ctx = jsonColumn(row.decision_context ?? row.decisionContext, 'decision_context', row.id);
+  // 2026-10-15: a missing created_at was stamped with the current time.
+  const createdAt = row.created_at ?? row.createdAt;
+  if (createdAt == null || createdAt === '') throw new Error(`Governed decision ${String(row.id)}: created_at is not recorded.`);
 
   return {
     decisionId: String(ctx.governedDecisionId ?? row.id ?? ''),
@@ -383,7 +392,7 @@ function mapRow(row: Record<string, unknown>): GovernedDecisionRecord {
     publishGateOutcome: String(notes.publishGateOutcome ?? 'insufficient_context'),
     // Null when the row names no one; this read 'system' until 2026-10-15.
     actorId: (row.decided_by ?? row.decidedBy) != null ? String(row.decided_by ?? row.decidedBy) : null,
-    timestamp: String(row.created_at ?? row.createdAt ?? new Date().toISOString()),
+    timestamp: createdAt instanceof Date ? createdAt.toISOString() : String(createdAt),
     fabricVersion: String(notes.fabricVersion ?? GOVERNED_DECISION_REPOSITORY_VERSION),
   };
 }

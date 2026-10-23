@@ -7,8 +7,10 @@ import { describe, it, expect } from 'vitest';
 import {
   getRulesForRegion,
   REGIONAL_RULES,
-  getGatewaySizeLimit,
+  getGatewaySizeLimitOnFile,
   validateRegionalPackage,
+  FILENAME_PATTERN,
+  FOLDER_NAME_PATTERN,
 } from '../ectd-regional-rules';
 import { REGION_IDENTITY, isCanonicalRegion } from '../../../../shared/regulatory/region-identity';
 
@@ -27,36 +29,35 @@ describe('the gateway rules speak the canonical region vocabulary', () => {
     }
   });
 
-  it('partitions the canonical regions into published limits and the conservative default', () => {
-    // NOT "every region returns a positive number" — getGatewaySizeLimit has a
-    // `default:` arm returning the conservative 1 GB, so that assertion passes for
-    // any string on earth and proves nothing. The honest pin is the PARTITION: six
-    // regions have an agency-specific limit, six fall through to the documented
-    // default pending published specs. If a published spec lands for one of the
-    // six, this test must be edited — which is the point.
+  it('partitions the canonical regions into limits on file and none on file', () => {
+    // The honest pin is the PARTITION. Until 2026-10-15 this pinned
+    // getGatewaySizeLimit's: CA "sharing" FDA's 4 GB, and 1 GB for CN and KR plus
+    // a 1 GB default for the other six, none of them a limit any agency publishes.
+    // That accessor is deleted; getGatewaySizeLimitOnFile answers null where no
+    // limit is on file. If a published limit is filed for a region, this test must
+    // be edited — which is the point.
     const GB = 1024 * 1024 * 1024;
-    const published: Record<string, number> = {
-      US: 4 * GB,
-      CA: 4 * GB, // shares the FDA gateway limit
+    const onFile: Record<string, number> = {
+      // FDA Form 5640 v2.0: the ESG takes sequences up to 10 GB, read as decimal
+      // (10^10 bytes) — the reading that never sends FDA a package it may count
+      // as over 10 GB (2026-10-08, sweep VP-6; it was 4 GiB, citing no FDA text).
+      US: 10 * 1000 ** 3,
       EU: 600 * 1024 * 1024,
       JP: GB,
-      CN: GB,
-      KR: GB,
     };
-    const awaitingSpec = ['UK', 'AU', 'CH', 'BR', 'IN', 'SG'];
+    const noneOnFile = ['CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'];
 
     // The two groups together are exactly the canonical twelve — so a region
     // added to REGION_IDENTITY lands in neither and fails here.
-    expect([...Object.keys(published), ...awaitingSpec].sort()).toEqual(
+    expect([...Object.keys(onFile), ...noneOnFile].sort()).toEqual(
       Object.keys(REGION_IDENTITY).sort()
     );
 
-    for (const [region, bytes] of Object.entries(published)) {
-      expect(getGatewaySizeLimit(region as never), `${region} limit`).toBe(bytes);
+    for (const [region, bytes] of Object.entries(onFile)) {
+      expect(getGatewaySizeLimitOnFile(region as never)?.bytes, `${region} limit`).toBe(bytes);
     }
-    for (const region of awaitingSpec) {
-      // Stated as the default it is, not as a limit anyone published.
-      expect(getGatewaySizeLimit(region as never), `${region} falls back`).toBe(GB);
+    for (const region of noneOnFile) {
+      expect(getGatewaySizeLimitOnFile(region as never), `${region} has no limit on file`).toBeNull();
     }
   });
 
@@ -112,8 +113,10 @@ describe('regional eCTD rule catalog — NMPA (China)', () => {
     expect(lang!.description).toMatch(/Simplified Chinese/i);
   });
 
-  it('exposes a (conservative, flagged) gateway size limit for CN', () => {
-    expect(getGatewaySizeLimit('CN')).toBeGreaterThan(0);
+  // Was "exposes a (conservative, flagged) gateway size limit for CN": a 1 GB
+  // figure NMPA does not publish (removed 2026-10-15).
+  it('holds no gateway size limit for CN, since NMPA publishes none', () => {
+    expect(getGatewaySizeLimitOnFile('CN')).toBeNull();
   });
 });
 
@@ -201,8 +204,10 @@ describe('regional eCTD rule catalog — MFDS (Korea)', () => {
     expect(lang!.description).toMatch(/Korean/i);
   });
 
-  it('exposes a (conservative, flagged) gateway size limit for KR', () => {
-    expect(getGatewaySizeLimit('KR')).toBeGreaterThan(0);
+  // Was "exposes a (conservative, flagged) gateway size limit for KR": a 1 GB
+  // figure MFDS does not publish (removed 2026-10-15).
+  it('holds no gateway size limit for KR, since MFDS publishes none', () => {
+    expect(getGatewaySizeLimitOnFile('KR')).toBeNull();
   });
 });
 
@@ -303,10 +308,16 @@ describe('regional eCTD rule catalog — cross-region invariants', () => {
     }
   });
 
-  it('every supported region has at least one rule and a positive gateway limit', () => {
+  // Until 2026-10-15 this also required "a positive gateway limit" for every
+  // region, which only held because getGatewaySizeLimit invented one for nine of
+  // them. A limit is now held only where it is on file, and it cites a rule of the
+  // region's own pack.
+  it('every supported region has at least one rule, and any gateway limit on file cites one of them', () => {
     for (const region of ALL_REGIONS) {
-      expect(getRulesForRegion(region).length).toBeGreaterThan(0);
-      expect(getGatewaySizeLimit(region)).toBeGreaterThan(0);
+      const rules = getRulesForRegion(region);
+      expect(rules.length).toBeGreaterThan(0);
+      const limit = getGatewaySizeLimitOnFile(region);
+      if (limit) expect(rules.map((r) => r.citation), `${region} limit source`).toContain(limit.source);
     }
   });
 
@@ -426,7 +437,10 @@ describe('Health Canada (CA) package validator', () => {
         },
       ]
     );
-    expect(findings.filter(f => f.region === 'CA')).toHaveLength(0);
+    // 2026-10-15: HC-REP-002 (bilingual labelling) is catalogued and not
+    // evaluated; it is now named as not assessed rather than implied clean.
+    expect(findings.filter(f => f.region === 'CA' && f.ruleId !== 'REGION_RULES_NOT_ASSESSED')).toHaveLength(0);
+    expect(findings.find(f => f.ruleId === 'REGION_RULES_NOT_ASSESSED')?.message).toContain('HC-REP-002');
   });
 
   it('rejects a valid HC prefix followed by trailing garbage (end-anchored)', () => {
@@ -496,5 +510,83 @@ describe('gateway size limit is reported unverified, never silently skipped', ()
       usLeaves
     );
     expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(false);
+  });
+
+  // 2026-10-08 (sweep VP-6): a 4–10 GB FDA sequence was refused and told to
+  // "split into multiple sequences", while the pre-transmit gate sent the same
+  // package to physical media — two remedies, neither FDA's for that size.
+  it('takes a 5 GiB FDA sequence (inside the 10 GB ESG range) without a size finding', () => {
+    const findings = validateRegionalPackage(
+      { region: 'US', applicationNumber: 'IND123456', sequenceNumber: '0000', submissionType: 'original', totalSizeBytes: 5 * 1024 ** 3 },
+      usLeaves
+    );
+    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(false);
+  });
+
+  it('above 10 GB gives FDA’s one remedy (physical media), from the constant, citing Form 5640', () => {
+    const findings = validateRegionalPackage(
+      { region: 'US', applicationNumber: 'IND123456', sequenceNumber: '0000', submissionType: 'original', totalSizeBytes: 10 * 1000 ** 3 + 1 },
+      usLeaves
+    );
+    const size = findings.find(f => f.ruleId === 'FDA-ESG-003');
+    expect(size?.severity).toBe('error');
+    expect(size?.message).toMatch(/10 GB/);
+    expect(size?.message).not.toMatch(/4 GB/);
+    expect(size?.fix).toMatch(/physical media/i);
+    expect(size?.fix).not.toMatch(/split/i);
+    const rule = REGIONAL_RULES.find(r => r.id === 'FDA-ESG-003')!;
+    expect(rule.description).toMatch(/10 GB/);
+    expect(rule.citation).toMatch(/Form 5640/);
+    expect(rule.citation).not.toMatch(/ESG Technical Conformance Guide/);
+  });
+});
+
+/**
+ * The eCTD naming rule (ICH eCTD v3.2.2 Appendix 2): a file name is lowercase
+ * a-z, 0-9 and '-', with ONE '.' before an extension, at most 64 characters
+ * including it; a folder name is the same character set with no '.'.
+ * 2026-10-08 (sweep VP-7): FILENAME_PATTERN accepted several dots and no
+ * extension, and nothing tested folder names at all.
+ */
+describe('eCTD file and folder name patterns', () => {
+  it('a file name has exactly one dot and an extension, and fits 64 characters', () => {
+    for (const ok of ['cover-letter.pdf', 'a.pdf', 'index-md5.txt', 'ich-ectd-3-2.dtd', `${'a'.repeat(60)}.pdf`]) {
+      expect(FILENAME_PATTERN.test(ok), ok).toBe(true);
+    }
+    for (const bad of ['a.b.c.pdf', 'noextension', '-lead.pdf', 'x.pdf.', `${'a'.repeat(61)}.pdf`, 'Upper.pdf', 'under_score.pdf', '.pdf']) {
+      expect(FILENAME_PATTERN.test(bad), bad).toBe(false);
+    }
+  });
+
+  it('a folder name is lowercase a-z, 0-9 and hyphen, no dot, at most 64 characters', () => {
+    for (const ok of ['m1', 'us', '1-2', '3-2-p-1', '32-body-data', 'a'.repeat(64)]) {
+      expect(FOLDER_NAME_PATTERN.test(ok), ok).toBe(true);
+    }
+    for (const bad of ['3-2-P-1', 'BAD_FOLDER', 'with space', '3.2.p', '-x', 'a'.repeat(65), '']) {
+      expect(FOLDER_NAME_PATTERN.test(bad), bad).toBe(false);
+    }
+  });
+
+  // The regional findings and rule descriptions still described the old rule
+  // ("hyphens, periods"), so 'a.b.c.pdf' was refused with a message it already
+  // met and the operator was not told what was wrong (review of VP-7).
+  // CN and KR rule descriptions name no character set (they defer to the
+  // regional specification), so only their findings are held to the wording.
+  it.each([
+    ['EU', 'EMA-CESP-005', true],
+    ['CN', 'NMPA-CDE-005', false],
+    ['KR', 'MFDS-KR-004', false],
+    ['UK', 'UK-REG-002', true],
+  ] as const)('%s names the one-dot rule when it refuses a file name (%s)', (region, ruleId, describesCharset) => {
+    const findings = validateRegionalPackage(
+      { region, applicationNumber: 'X', sequenceNumber: '0000', submissionType: 'original' },
+      [{ sectionCode: 'm2.5', filePath: 'm2/25-clin-over/a.b.c.pdf', mimeType: 'application/pdf', fileSize: 1 }]
+    );
+    const f = findings.find(x => x.ruleId === ruleId);
+    expect(f?.message).toContain("then one '.' and the extension");
+    expect(f?.message).not.toMatch(/periods/);
+    const rule = REGIONAL_RULES.find(r => r.id === ruleId)!;
+    expect(rule.description).not.toMatch(/periods/);
+    if (describesCharset) expect(rule.description).toContain("then one '.' and the extension");
   });
 });

@@ -113,6 +113,43 @@ describe('GET /api/tenant-export/attestation', () => {
     expect(res.body.detail).toContain('AUDIT_ATTESTATION_KEY');
   });
 
+  /* D5: the report is a document handed to an auditor, so its delivery is
+     recorded with the SHA-256 of the exact bytes, and refused without it. */
+  const REPORT = { organization: { slug: 'acme' }, attestation: 'INTACT', totalEntries: 5, brokenLinks: 0 };
+  const rawBody = (res: any, cb: any) => {
+    const chunks: Buffer[] = [];
+    res.on('data', (c: Buffer) => chunks.push(c));
+    res.on('end', () => cb(null, Buffer.concat(chunks)));
+  };
+
+  it('records EXPORT_GENERATED with the SHA-256 of the report it delivers', async () => {
+    const { createHash } = await import('node:crypto');
+    attestationSvc.generateAttestation.mockResolvedValue(REPORT);
+    const res = await request(app).get('/api/tenant-export/attestation').buffer(true).parse(rawBody);
+    expect(res.status).toBe(200);
+    const digest = createHash('sha256').update(res.body as Buffer).digest('hex');
+    const row = audit.logAction.mock.calls.map(([e]: any[]) => e).find((e: any) => e.action === 'EXPORT_GENERATED');
+    expect(row, 'no EXPORT_GENERATED row').toBeTruthy();
+    expect(row.organizationId).toBe(7);
+    expect(row.userId).toBe(1);
+    expect(JSON.stringify(row)).toContain(digest);
+    expect(res.headers['x-export-sha256']).toBe(digest);
+    // The bytes the screen saves: the same serialization of the same report.
+    expect((res.body as Buffer).toString('utf8')).toBe(JSON.stringify(REPORT, null, 2));
+  });
+
+  it('delivers nothing when the export record does not persist, and says so', async () => {
+    attestationSvc.generateAttestation.mockResolvedValue(REPORT);
+    audit.logAction.mockImplementation(async (e: any) =>
+      e.action === 'EXPORT_GENERATED' ? { persisted: false } : { persisted: true, chained: true, tamperProof: true },
+    );
+    const res = await request(app).get('/api/tenant-export/attestation');
+    expect(res.status).toBe(503);
+    expect(res.headers['content-disposition']).toBeUndefined();
+    expect(res.body.detail).toMatch(/record could not be written/);
+    audit.logAction.mockImplementation(async () => ({ persisted: true, chained: true, tamperProof: true }));
+  });
+
   it('emits tenant.attestation.generate audit on success', async () => {
     attestationSvc.generateAttestation.mockResolvedValue({
       organization: { slug: 'acme' },

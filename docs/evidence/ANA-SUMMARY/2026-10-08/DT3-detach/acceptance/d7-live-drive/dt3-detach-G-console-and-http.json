@@ -1,0 +1,22 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://127.0.0.1:5099/concept2cure/conversation-thread/ana-ri_1792688889938_x96j4pvku"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1792688889938_x96j4pvku/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/ab86981f-8ba1-45b8-9a5b-17e392a16167/summary",
+    "error": "net::ERR_ABORTED"
+  }
+]

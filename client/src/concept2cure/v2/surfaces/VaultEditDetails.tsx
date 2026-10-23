@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import {
   VAULT_CLASSIFICATIONS,
+  VAULT_CLASSIFICATION_LABELS,
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultIngestTypeLabel,
 } from '@shared/constants/domain/vault-taxonomy';
@@ -33,12 +34,7 @@ interface Props {
   onSaved: () => void;
 }
 
-const CLASSIFICATION_LABEL: Record<string, string> = {
-  CONFIDENTIAL: 'Confidential',
-  INTERNAL: 'Internal',
-  CONTROLLED: 'Controlled',
-  PUBLIC: 'Public',
-};
+const CLASSIFICATION_LABEL: Record<string, string> = VAULT_CLASSIFICATION_LABELS;
 const classificationLabel = (c: string | null) => (c ? CLASSIFICATION_LABEL[c] ?? c : '—');
 
 type Note = { tone: 'ok' | 'error'; text: string } | null;

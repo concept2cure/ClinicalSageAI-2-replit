@@ -1,101 +1,62 @@
 /**
- * Seed data for orgs and the GA demo admin user.
+ * The GA demo admin user, outside production only.
  *
- * Extracted from the original `ensureAuthTables()` in server/db.ts. This
- * module handles seed data only — the schema migrations live in
- * `auth-schema.ts`.
+ * The two seeded organisations ('default', 'concept2cure') were seeded here at
+ * every boot, on the owner connection, until 2026-10-22. They are now
+ * migrations/20261022_auth_schema_and_seeded_organizations.sql, which
+ * deploy-migrate applies (MR-03 Stage 3, OPS-16); the API no longer holds the
+ * owner credential that seed needed. What remains is a development
+ * convenience: the demo admin on the 'concept2cure' organisation, which
+ * production never seeds.
  *
- * Runs inside the same client transaction as the schema migrations; the
- * caller (`ensureAuthTables`) owns BEGIN / COMMIT / ROLLBACK. All inserts
- * use ON CONFLICT so re-running is a safe no-op.
+ * The caller (`seedDemoAdminOutsideProduction`, ./index.ts) owns BEGIN /
+ * COMMIT / ROLLBACK. The inserts use ON CONFLICT, so re-running is a no-op.
  */
 
 import type { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
-import {
-  ensureOrganizationDefaultWorkspace,
-  poolClientWorkspaceStore,
-} from '../../services/c2c/organization-default-workspace';
 
 const logger = createScopedLogger('database');
 
-// Production deployments that don't want a demo user leave SEED_DEMO_USER off.
-// When the seed is enabled, an operator-supplied DEMO_USER_PASSWORD is hashed at
+// Production never seeds the demo user (demoUserSeedDisabled below). Outside
+// production, when the seed is enabled, an operator-supplied DEMO_USER_PASSWORD is hashed at
 // startup. Without one, a fresh account receives a non-recoverable random
 // credential: development token-based helpers still work, but the repository
 // no longer publishes a password that can authenticate as an administrator.
-const DEMO_EMAIL = (process.env.DEMO_USER_EMAIL ?? 'jonmichaelpsmith@gmail.com')
-  .trim()
-  .toLowerCase();
-const DEMO_NAME = 'JM Smith';
-const DEMO_PASSWORD_ROUNDS = 12;
-
-export async function seedOrganizations(client: PoolClient): Promise<void> {
-  // Guarantee at least one org exists.
-  await client.query(`
-    INSERT INTO organizations (name, slug)
-    VALUES ('Default', 'default')
-    ON CONFLICT DO NOTHING
-  `);
-
-  // Ensure the Concept2Cure Therapeutics org exists with the expected shape.
-  await client.query(`
-    INSERT INTO organizations (name, slug, industry_mode, tier, status, max_users, max_projects, max_storage)
-    VALUES ('Concept2Cure Therapeutics', 'concept2cure', 'biotech', 'enterprise', 'active', 25, 50, 100)
-    ON CONFLICT (slug) DO UPDATE SET
-      industry_mode = COALESCE(NULLIF(organizations.industry_mode, ''), 'biotech'),
-      tier = 'enterprise'
-  `);
-
-  // Each seeded organisation gets its own client workspace — the NOT NULL
-  // parent `projects.client_workspace_id` needs before any program can anchor
-  // to the PM spine. These two orgs are created HERE, at boot, after the
-  // migration set has already run, so the migration's repair sweep cannot
-  // reach them on this deploy; without this call they would carry no workspace
-  // until the next one, and every program created in between would be
-  // unanchored. See services/c2c/organization-default-workspace.ts.
-  //
-  // `userId` is null on purpose: the platform wrote these rows, not a person.
-  const store = poolClientWorkspaceStore(client);
-  const seeded = await client.query<{ id: number | string; name: string; slug: string }>(
-    `SELECT id, name, slug FROM organizations WHERE slug IN ('default', 'concept2cure')`,
-  );
-  for (const org of seeded.rows) {
-    await ensureOrganizationDefaultWorkspace(store, {
-      orgId: Number(org.id),
-      orgName: org.name,
-      orgSlug: org.slug,
-      userId: null,
-    });
-  }
+//
+// The account is the one DEMO_USER_EMAIL names, read when the seed runs
+// (2026-10-15): it defaulted to a real person's personal address, named
+// "JM Smith" and titled "Chief Science Officer". No identity is built in.
+function demoUserEmail(): string | null {
+  return (process.env.DEMO_USER_EMAIL ?? '').trim().toLowerCase() || null;
 }
+const DEMO_PASSWORD_ROUNDS = 12;
 
 /**
  * Whether to seed the GA demo admin. This is a privileged convenience
  * identity, so it must never appear on a real production deployment by
  * accident.
  *
- * Production is FAIL-CLOSED: the seed runs only when SEED_DEMO_USER is
- * explicitly truthy (true/1/yes/on). Unset or blank disables it — so a
- * hand-configured production deployment cannot create the privileged demo
- * identity by omission.
+ * Production never seeds it, whatever SEED_DEMO_USER says (MR-03 Stage 3):
+ * a privileged identity created by a boot flag has no place on a deployment
+ * that serves customers, and the production boot no longer has the owner
+ * connection the seed ran on. SEED_DEMO_USER=true there is named in the log
+ * and ignored.
  *
  * Non-production keeps the convenience default: seed unless explicitly
  * disabled (false/0/no/off), so local dev and demo environments are unchanged.
  */
 function demoUserSeedDisabled(): boolean {
   const raw = (process.env.SEED_DEMO_USER ?? '').trim().toLowerCase();
-  const explicitlyOff = raw === 'false' || raw === '0' || raw === 'no' || raw === 'off';
-  if (explicitlyOff) return true;
-
   if (process.env.NODE_ENV === 'production') {
-    const explicitlyOn = raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
-    return !explicitlyOn; // prod: disabled unless explicitly opted in
+    if (raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on') {
+      logger.warn('demo admin: SEED_DEMO_USER is set in production and ignored; production never seeds the demo admin');
+    }
+    return true;
   }
-
-  return false; // non-prod: seed unless explicitly disabled
+  return raw === 'false' || raw === '0' || raw === 'no' || raw === 'off';
 }
 
 /**
@@ -112,17 +73,17 @@ function demoUserSeedDisabled(): boolean {
  * row, so operators must rotate credentials in any environment initialized by
  * an earlier release.
  */
-async function resolveDemoPasswordHash(): Promise<string> {
+async function resolveDemoPasswordHash(demoEmail: string): Promise<string> {
   const override = (process.env.DEMO_USER_PASSWORD ?? '').trim();
   if (override) {
     logger.info(
-      `ensureAuthTables: demo admin password sourced from DEMO_USER_PASSWORD (${DEMO_EMAIL})`
+      `demo admin: demo admin password sourced from DEMO_USER_PASSWORD (${demoEmail})`
     );
     return bcrypt.hash(override, DEMO_PASSWORD_ROUNDS);
   }
 
   logger.warn(
-    `ensureAuthTables: DEMO_USER_PASSWORD is unset; a fresh ${DEMO_EMAIL} account ` +
+    `demo admin: DEMO_USER_PASSWORD is unset; a fresh ${demoEmail} account ` +
       `will receive a random, non-recoverable password. Set DEMO_USER_PASSWORD ` +
       `to enable deliberate password login, or SEED_DEMO_USER=false to skip the account.`
   );
@@ -137,7 +98,16 @@ async function resolveDemoPasswordHash(): Promise<string> {
  */
 export async function seedGaDemoUser(client: PoolClient): Promise<void> {
   if (demoUserSeedDisabled()) {
-    logger.info('ensureAuthTables: demo admin seed disabled (SEED_DEMO_USER=false)');
+    logger.info('demo admin: demo admin seed disabled (SEED_DEMO_USER=false)');
+    return;
+  }
+
+  const demoEmail = demoUserEmail();
+  if (!demoEmail) {
+    logger.warn(
+      'demo admin: demo admin not seeded: DEMO_USER_EMAIL is unset and no identity is built in. ' +
+        'Set DEMO_USER_EMAIL to the account to seed, or SEED_DEMO_USER=false to skip it.'
+    );
     return;
   }
 
@@ -150,22 +120,24 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     return;
   }
 
-  const demoPasswordHash = await resolveDemoPasswordHash();
+  const demoPasswordHash = await resolveDemoPasswordHash(demoEmail);
 
+  // Named by the address the operator gave, with no title or department
+  // (2026-10-15: "JM Smith", "Chief Science Officer", "Executive Leadership").
   await client.query(
     `
-    INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id, password_changed_at)
-    VALUES ($1, $2, $3, 'Chief Science Officer', 'Executive Leadership', 'active', $4, NOW())
+    INSERT INTO users (email, name, password_hash, status, default_organization_id, password_changed_at)
+    VALUES ($1, $2, $3, 'active', $4, NOW())
     ON CONFLICT (email) DO UPDATE SET
       password_hash = CASE WHEN users.password_hash IS NULL OR users.password_hash = '' THEN $3 ELSE users.password_hash END,
       default_organization_id = COALESCE(users.default_organization_id, $4),
       status = 'active'
     `,
-    [DEMO_EMAIL, DEMO_NAME, demoPasswordHash, c2cOrgId]
+    [demoEmail, demoEmail, demoPasswordHash, c2cOrgId]
   );
 
   const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [
-    DEMO_EMAIL,
+    demoEmail,
   ]);
   if (demoUser.rows[0]) {
     await client.query(
@@ -178,5 +150,5 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     );
   }
 
-  logger.info(`ensureAuthTables: GA demo user verified (${DEMO_EMAIL})`);
+  logger.info(`demo admin: GA demo user verified (${demoEmail})`);
 }

@@ -120,3 +120,58 @@ describe('validateEctdLeafs', () => {
     expect(res.errorCount).toBe(0);
   });
 });
+
+describe('validateEctdLeafs — the region’s eCTD file rules', () => {
+  // 2026-10-08 (sweep VP-3): only the %PDF- magic was read, so PDF 1.0, 1.3 and
+  // 2.0 leaves passed; FDA, EMA, PMDA and Health Canada accept PDF 1.4–1.7.
+  it('errors LEAF-PDF-VERSION for an eCTD leaf outside the region’s accepted PDF range', () => {
+    const at = (v: string) => Buffer.from(`%PDF-${v}\nbody`, 'utf8');
+    const leafs = [
+      { path: 'm1/us/cover.pdf', mediaType: 'application/pdf', content: at('1.4') },
+      { path: 'm2/old.pdf', mediaType: 'application/pdf', content: at('1.3') },
+      { path: 'm2/new.pdf', mediaType: 'application/pdf', content: at('2.0') },
+      { path: 'm2/none.pdf', mediaType: 'application/pdf', content: Buffer.from('%PDF-x body') },
+      { path: 'm3/ok.pdf', mediaType: 'application/pdf', content: at('1.7') },
+    ];
+    const res = validateEctdLeafs(leafs, { region: 'FDA', enforceFileNames: true });
+    const version = res.findings.filter((f) => f.ruleId === 'LEAF-PDF-VERSION');
+    expect(version.map((f) => f.filePath)).toEqual(['m2/old.pdf', 'm2/new.pdf', 'm2/none.pdf']);
+    expect(version.every((f) => f.severity === 'error')).toBe(true);
+    expect(version[0].message).toMatch(/1\.3/);
+    expect(version[0].message).toMatch(/1\.4–1\.7/);
+    expect(res.errorCount).toBe(3);
+    // The range is the region's: the same leaves under EMA's spec read the same.
+    expect(validateEctdLeafs(leafs, { region: 'EMA', enforceFileNames: true }).errorCount).toBe(3);
+    // A device bundle is not judged against the eCTD range.
+    expect(validateEctdLeafs(leafs, { region: 'FDA' }).findings.some((f) => f.ruleId === 'LEAF-PDF-VERSION')).toBe(false);
+  });
+
+  // 2026-10-08 (sweep VP-7): only the base name was tested, more loosely than
+  // ICH's rule — several dots, no extension, any folder name, any path length.
+  it('errors LEAF-FILENAME for a multi-dot or extensionless name and for a folder that breaks the rule; LEAF-PATH-LENGTH over the region cap', () => {
+    const folders = (n: number) => Array.from({ length: n }, () => 'a'.repeat(60)).join('/'); // each a legal folder name
+    const long = `m3/${folders(4)}/x.pdf`; // 252 characters
+    expect(long.length).toBeGreaterThan(230);
+    const leafs = [
+      { path: 'm1/us/cover.pdf', mediaType: 'application/pdf', content: pdf() },
+      { path: 'm2/a.b.c.pdf', mediaType: 'application/pdf', content: pdf() },
+      { path: 'm2/noextension', mediaType: 'application/pdf', content: pdf() },
+      { path: 'm3/3-2-P-1/desc.pdf', mediaType: 'application/pdf', content: pdf() },
+      { path: 'BAD_FOLDER Name/ok.pdf', mediaType: 'application/pdf', content: pdf() },
+      { path: long, mediaType: 'application/pdf', content: pdf() },
+    ];
+    const res = validateEctdLeafs(leafs, { region: 'FDA', enforceFileNames: true });
+    const names = res.findings.filter((f) => f.ruleId === 'LEAF-FILENAME');
+    expect(names.map((f) => f.filePath)).toEqual(['m2/a.b.c.pdf', 'm2/noextension', 'm3/3-2-P-1/desc.pdf', 'BAD_FOLDER Name/ok.pdf']);
+    expect(names[2].message).toMatch(/Folder '3-2-P-1'/);
+    const length = res.findings.filter((f) => f.ruleId === 'LEAF-PATH-LENGTH');
+    expect(length.map((f) => f.filePath)).toEqual([long]);
+    expect(length[0].message).toMatch(/230/);
+    expect(res.errorCount).toBe(5);
+    // EU's cap is 180: a 191-character path is over it there and inside FDA's 230.
+    const mid = { path: `m3/${folders(3)}/x.pdf`, mediaType: 'application/pdf', content: pdf() };
+    expect(validateEctdLeafs([mid], { region: 'FDA', enforceFileNames: true }).errorCount).toBe(0);
+    const eu = validateEctdLeafs([mid], { region: 'EMA', enforceFileNames: true });
+    expect(eu.findings.filter((f) => f.severity === 'error').map((f) => f.ruleId)).toEqual(['LEAF-PATH-LENGTH']);
+  });
+});

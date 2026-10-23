@@ -1,0 +1,45 @@
+# F23 (3/9) green
+## The four changed test files
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program with a recorded blocker shows that blocker, not the no-cause line 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 312ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > a measured 0 draws its empty bar; no sections and an unavailable figure draw none 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > an unavailable figure says so, and why, never "not measured" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the list view draws the same bars 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the portfolio mean says how many programs it covers when some are not measured 26ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > is the share of the home filing’s sections approved or locked, with its state 31ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > a market added to the project does not move the home figure (at head the two were pooled: 25) 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > asks only about the projects on this page, in the caller’s organization 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > never reads the stored progress_percent 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > an unprovisioned section store: the list still answers, each figure unavailable with the reason 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects: each card reads its home filing’s figure > any other failure: the list still answers, each figure unavailable, never 0 and never "no sections" 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > reads the home figure, its state and when it was measured 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > agrees with the list for the same program 8ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > no governed sections: no figure, no time, and the state says why 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > a failed read: the page still loads, the figure is unavailable with the reason, never the stored 0 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id: the same figure the card reads > scopes the read to this program and the caller’s organization 2ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program 24ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null 6ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 24ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context 20ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract 8ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page 5ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs 5ms
+ Test Files  4 passed (4)
+      Tests  32 passed (32)
+
+## Every c2c route test and the dossier service test (72 files)
+ Test Files  4 failed | 68 passed (72)
+      Tests  17 failed | 669 passed (686)
+The 17 failures are in four files red at head before this work, unrelated to it: ai-editing-readiness-is-not-completeness, ai-editing-retrieval-status (ai-editing router), export-pptx-renders-the-submitted-content, exports-record-the-review-assertion (exports router). None imports projects.ts or dossier-read.ts.
+
+## Every client test that renders Projects, Project home or the dossier (46 files)
+ Test Files  46 passed (46)
+      Tests  435 passed (435)

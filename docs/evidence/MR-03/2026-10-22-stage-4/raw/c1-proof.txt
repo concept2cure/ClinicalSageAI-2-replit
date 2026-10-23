@@ -1,0 +1,21 @@
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (17385 bytes of shell)
+[terraform-preflight-proof] ok — terraform test: 78 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — rendered API task definition written to /tmp/tf-td-…/api-td.json
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] ok — the preflight published the revision it checked (arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1)
+[terraform-preflight-proof] ok — the migrate-preflight step accepted the rendered database task and published the revision it checked
+[terraform-preflight-proof] ok — refused: an API task definition carrying DATABASE_URL (exit 1, names DATABASE_URL)
+[terraform-preflight-proof] ok — refused: an API task definition carrying APP_SERVICE_DB_PASSWORD (exit 1, names APP_SERVICE_DB_PASSWORD)
+[terraform-preflight-proof] ok — refused: an API task definition carrying DATABASE_URL_PROD as a plain value (exit 1, names DATABASE_URL_PROD)
+[terraform-preflight-proof] ok — refused: a database task without DATABASE_URL (exit 1, names DATABASE_URL)
+[terraform-preflight-proof] ok — refused: a database task whose environment differs (DB_AUDIT_REQUIRED=none) (exit 1, names DB_AUDIT_REQUIRED)
+[terraform-preflight-proof] ok — refused: a database task reading APP_DATABASE_URL from another secret (exit 1, names APP_DATABASE_URL)
+[terraform-preflight-proof] ok — refused: a database task on the API's execution role (exit 1, names execution role)
+[terraform-preflight-proof] ok — refused: a database task with a second container (exit 1, names one container)
+[terraform-preflight-proof] ok — the revisions the preflight checked are the ones that run: the migration from the database task's, deploy-api from the API's (ARNs pinned end to end)
+[terraform-preflight-proof] ok — provision-database.yml accepts the rendered database task definition and passes the owner URL from the same secret
+[terraform-preflight-proof] ok — every AWS call the deploy and provision workflows make is granted to the role its job can assume (54 job×action pairs)
+[terraform-preflight-proof] ok — the preflight runs before the migration (job "migrate")
+[terraform-preflight-proof] ok — health check runs and discriminates: live but not ready (/healthz 200, /readyz 503) → exit 0, /healthz 503 → exit 1, nothing listening → exit 1
+[terraform-preflight-proof] every check holds.

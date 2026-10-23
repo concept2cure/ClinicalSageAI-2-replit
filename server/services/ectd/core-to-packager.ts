@@ -22,7 +22,7 @@
  * @module server/services/ectd/core-to-packager
  */
 
-import type { EctdLeaf, PackagerInput } from '../submission-gateways/regional-packager';
+import type { EctdLeaf, PackagerInput, FdaApplicantContact } from '../submission-gateways/regional-packager';
 import type { Region } from '../submission-gateways/types';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
 import type { LeafSourceIntegrity } from './original-pdf-contract';
@@ -284,6 +284,7 @@ export interface BuildPackagerInputArgs {
   applicationId: string;
   sponsorId: string;
   sponsorName: string;
+  contacts?: FdaApplicantContact[];
   outputDir: string;
   emitUnzipped?: boolean;
 }
@@ -354,6 +355,7 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
       ? {
           fda: {
             applicationType: args.submission.applicationType,
+            ...(args.contacts ? { contacts: args.contacts } : {}),
             submissionType: fdaType.submissionType,
             submissionSubType: fdaType.submissionSubType,
           },

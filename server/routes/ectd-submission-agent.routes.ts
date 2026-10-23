@@ -31,12 +31,15 @@ function getOrgId(req: Request): number {
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
+// 2026-10-15: applicationType, sequenceNumber (any string) and document content
+// were optional here. The service refuses a request without them, so it came
+// back as a 500 naming nothing; the caller now gets a 400 naming the field.
 const prepareSchema = z.object({
   projectId: z.number().optional(),
   submissionType: z.enum(['initial', 'amendment', 'supplement', 'annual_report']),
-  applicationType: z.enum(['IND', 'NDA', 'BLA', 'ANDA', 'MAA', 'CTD']).optional(),
+  applicationType: z.enum(['IND', 'NDA', 'BLA', 'ANDA', 'MAA', 'CTD']),
   applicationNumber: z.string().optional(),
-  sequenceNumber: z.string().optional(),
+  sequenceNumber: z.string().regex(/^\d{4}$/, 'sequenceNumber must be a four-digit eCTD sequence, e.g. "0000"'),
   agency: z.string().min(1),
   center: z.string().optional(),
   applicantName: z.string().optional(),
@@ -52,7 +55,7 @@ const addDocumentSchema = z.object({
   documentPath: z.string().min(1),
   fileName: z.string().min(1),
   fileSizeBytes: z.number().optional(),
-  content: z.string().optional(),
+  content: z.string().min(1),
   lifecycleOperation: z.enum(['new', 'replace', 'append', 'delete']).optional(),
   replacedDocumentId: z.number().optional(),
   documentType: z.enum(['pdf', 'xml', 'xpt', 'svg']).optional(),

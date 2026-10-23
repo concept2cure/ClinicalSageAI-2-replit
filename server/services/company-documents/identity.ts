@@ -8,9 +8,12 @@ import { context, loadCompanyDocumentProfile } from './profile';
 import { companyProfileHash } from './provenance';
 import { CompanyDocumentsError, parseCompanyInput } from './validation';
 import { readPublishedCompanyVariant } from './designs';
+import { readSubmissionPackageIdentity, recordedPackageIdentitySnapshot, type RecordedPackageIdentity } from '../ectd/package-identity';
 
 const normalized = (value: string) => value.normalize('NFKC').trim().replaceAll(/\s+/g, ' ').toLocaleLowerCase('en');
 const recordedText = (value: unknown): string | null => typeof value === 'string' ? value : null;
+const applicantOfRecord = (identity: RecordedPackageIdentity, country: string | null) =>
+  country === 'US' && !identity.applicantSponsorId ? null : identity.applicantName;
 export function compareCompanyFilingIdentity(company: { companyName: string; address: string }, filing: { applicantName: string | null; sponsorAddress: string | null }) {
   const differences: Array<{ field: 'name' | 'address'; companyValue: string; filingValue: string | null; missing: boolean }> = [];
   for (const [field, companyValue, filingValue] of [
@@ -25,24 +28,26 @@ export function compareCompanyFilingIdentity(company: { companyName: string; add
 export async function readCompanyFilingIdentity(req: Request, sequenceId: number, variantId?: string) {
   const ctx = await context(req);
   const target = await readSubmissionSequenceForRequest(ctx.q, ctx, sequenceId);
-  const { rows } = await ctx.q.query(`SELECT o.name AS applicant_name,p.sponsor_address,p.application_number
-    FROM organizations o JOIN regulatory_programs p ON p.organization_id=o.id
-    WHERE o.id=$1 AND p.id=$2 AND p.deleted_at IS NULL`, [ctx.organizationId, target.programId]);
-  if (rows.length !== 1) throw new CompanyDocumentsError(409, 'FILING_IDENTITY_UNAVAILABLE', 'The recorded filing identity could not be verified.');
   const country = canonicalRegionOf(target.sequenceRegion);
+  const identity = await readSubmissionPackageIdentity(ctx.q, ctx.organizationId, target.submissionId, { region: target.sequenceRegion });
+  const { rows } = await ctx.q.query(`SELECT sponsor_address FROM regulatory_programs
+    WHERE organization_id=$1 AND id=$2 AND deleted_at IS NULL`, [ctx.organizationId, target.programId]);
+  if (rows.length !== 1 || identity.programId !== target.programId) throw new CompanyDocumentsError(409, 'FILING_IDENTITY_UNAVAILABLE', 'The recorded filing identity could not be verified.');
   const profile = variantId ? await readPublishedCompanyVariant(ctx.q, ctx.organizationId, variantId,
     { userId: ctx.userId, programId: target.programId, market: country })
     : await loadCompanyDocumentProfile(ctx.organizationId, ctx.q, false);
-  const filing = { applicantName: recordedText(rows[0].applicant_name),
+  // FDA packages require an explicit applicant binding. A legacy organization
+  // name may be readable, but cannot be presented as that FDA applicant.
+  const filing = { applicantName: applicantOfRecord(identity, country),
     sponsorAddress: recordedText(rows[0].sponsor_address),
-    applicationNumber: recordedText(rows[0].application_number),
+    applicationNumber: identity.applicationNumber,
     programId: target.programId, submissionId: target.submissionId, sequenceId: target.sequenceId,
     applicationType: target.applicationType, country, agency: country ? toAgency(country) : null };
   const profileHash = companyProfileHash(profile);
   // Bind the review to the selected presentation, even when two variants have
   // identical visual content and revision numbers. The profile hash describes
   // content; the filing-context hash also records which presentation was chosen.
-  const filingHash = createHash('sha256').update(JSON.stringify({ filing,
+  const filingHash = createHash('sha256').update(JSON.stringify({ filing, packageIdentity: recordedPackageIdentitySnapshot(identity),
     presentationVariantId: profile.variantId ?? null })).digest('hex');
   const differences = compareCompanyFilingIdentity(profile, filing);
   const reviews = await ctx.q.query(`SELECT company_role,reason,reviewed_by,reviewed_at FROM company_document_identity_reviews

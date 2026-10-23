@@ -19,7 +19,7 @@ function bootWith(env: Record<string, string | undefined>) {
   for (const k of Object.keys(process.env)) delete process.env[k];
   Object.assign(process.env, ORIGINAL, {
     NODE_ENV: 'production',
-    DATABASE_URL: 'postgresql://x:y@localhost:5432/z',
+    APP_DATABASE_URL: 'postgresql://app_service:y@localhost:5432/z',
     JWT_SECRET: 'test-jwt-secret-for-unit-tests-min-32-chars-long',
     ...env,
   });

@@ -1,0 +1,7 @@
+# The new run against HEAD's terraform/modules/vpc-secure/main.tf (map_public_ip_on_launch = true); mocked provider, terraform 1.11.4
+  run "s3_traffic_from_the_private_subnets_stays_inside_aws"... pass
+  run "kms_calls_from_the_private_subnets_reach_the_endpoint"... pass
+  run "no_subnet_hands_out_a_public_address"... fail
+  on tests/public_subnets.tftest.hcl line 23, in run "no_subnet_hands_out_a_public_address":
+A subnet assigns public IPs on launch; the ALB and the NAT gateway need none.
+Failure! 2 passed, 1 failed.

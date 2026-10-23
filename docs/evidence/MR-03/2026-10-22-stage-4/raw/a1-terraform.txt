@@ -1,0 +1,44 @@
+# Slice A: terraform validate + test after (all roots, the stack, every module with tests)
+terraform/bootstrap                  Success! The configuration is valid. 
+terraform/environments/production    Success! The configuration is valid. 
+terraform/environments/staging       Success! The configuration is valid. 
+terraform/stack                      Success! 74 passed, 0 failed. 
+terraform/modules/alb                Success! 4 passed, 0 failed. 
+terraform/modules/cloudfront         Success! 11 passed, 0 failed. 
+terraform/modules/compliance-evidence Success! 5 passed, 0 failed. 
+terraform/modules/github-deploy-roles Success! 6 passed, 0 failed. 
+terraform/modules/vpc-secure         Success! 3 passed, 0 failed. 
+
+## HEAD's main.tf with the new runs
+  run "the_spa_is_served_from_the_bucket_alone"... pass
+  run "a_bad_publish_can_be_reverted"... fail
+Error: Reference to undeclared resource
+  on tests/alb_origin.tftest.hcl line 197, in run "a_bad_publish_can_be_reverted":
+declared in the root module.
+Error: Reference to undeclared resource
+  on tests/alb_origin.tftest.hcl line 197, in run "a_bad_publish_can_be_reverted":
+declared in the root module.
+
+## mutant 1: the ALB behaviours also claim /assets/* (a second SPA path)
+  run "the_spa_is_served_from_the_bucket_alone"... fail
+Error: Test assertion failed
+  on tests/alb_origin.tftest.hcl line 179, in run "the_spa_is_served_from_the_bucket_alone":
+An ALB behaviour claims a path the server does not answer as an API; the SPA
+  run "a_bad_publish_can_be_reverted"... pass
+Failure! 10 passed, 1 failed.
+
+## mutant 2: previous versions kept 7 days
+  run "the_spa_is_served_from_the_bucket_alone"... pass
+  run "a_bad_publish_can_be_reverted"... fail
+Error: Test assertion failed
+  on tests/alb_origin.tftest.hcl line 202, in run "a_bad_publish_can_be_reverted":
+Previous versions must be kept for at least 30 days, and expire after that.
+Failure! 10 passed, 1 failed.
+
+## mutant 3: versioning suspended
+  run "the_spa_is_served_from_the_bucket_alone"... pass
+  run "a_bad_publish_can_be_reverted"... fail
+Error: Test assertion failed
+  on tests/alb_origin.tftest.hcl line 197, in run "a_bad_publish_can_be_reverted":
+The frontend bucket must version, so an overwritten index.html can be
+Failure! 10 passed, 1 failed.

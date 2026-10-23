@@ -73,7 +73,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Let\'s begin with the Advisory Committee meeting context. What type of meeting is this, and what is the regulatory purpose?',
         guidance:
-          'Per 21 CFR Part 14 and the Federal Advisory Committee Act (FACA, 5 USC Appendix 2), FDA Advisory Committee meetings are public proceedings where external experts provide recommendations to the Agency. The sponsor\'s briefing document is typically submitted 30-55 days before the meeting per PDUFA commitments and FDA\'s "Guidance for Industry: Advisory Committee Meetings — Preparation and Public Availability of Information Given to Advisory Committee Members" (2008). The briefing document is made public at least two business days before the meeting.',
+          'Per 21 CFR Part 14 and the Federal Advisory Committee Act (FACA, 5 USC 1001–1014, formerly codified at 5 USC App. 2), FDA Advisory Committee meetings are public proceedings where external experts provide recommendations to the Agency. The sponsor\'s briefing document is typically submitted 30-55 days before the meeting per PDUFA commitments and FDA\'s "Guidance for Industry: Advisory Committee Meetings — Preparation and Public Availability of Information Given to Advisory Committee Members" (2008). The briefing document is made public at least two business days before the meeting.',
         fields: [
           {
             id: 'meeting_type',
@@ -127,7 +127,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             id: 'fda_review_division',
             label: 'FDA Review Division',
             type: 'text',
-            placeholder: 'e.g., Division of Oncology Products 1, CDER',
+            placeholder: 'e.g., Division of Oncology 1, Office of Oncologic Diseases, CDER',
             helpText: 'Identify the review division to align your briefing document with their expectations and prior precedents.',
           },
         ],
@@ -152,10 +152,11 @@ export function createBriefingBookFlow(): FlowDefinition {
               { value: 'aadpac', label: 'AADPAC — Anesthetic and Analgesic Drug Products AC' },
               { value: 'crdac', label: 'CRDAC — Cardiovascular and Renal Drugs AC' },
               { value: 'emdac', label: 'EMDAC — Endocrinologic and Metabolic Drugs AC' },
-              { value: 'pcns', label: 'PCNS — Psychopharmacologic Drugs AC' },
+              { value: 'pcns', label: 'PCNS — Peripheral and Central Nervous System Drugs AC' },
+              { value: 'pdac', label: 'PDAC — Psychopharmacologic Drugs AC' },
               { value: 'amdac', label: 'AMDAC — Antimicrobial Drugs AC' },
               { value: 'gastrointestinal', label: 'GIDAC — Gastrointestinal Drugs AC' },
-              { value: 'dermatologic', label: 'DDMAC — Dermatologic and Ophthalmic Drugs AC' },
+              { value: 'dermatologic', label: 'DODAC — Dermatologic and Ophthalmic Drugs AC' },
               { value: 'pulmonary_allergy', label: 'PADAC — Pulmonary-Allergy Drugs AC' },
               { value: 'vaccines_related', label: 'VRBPAC — Vaccines and Related Biological Products AC' },
               { value: 'blood_products', label: 'Blood Products Advisory Committee' },
@@ -195,7 +196,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             id: 'fda_briefing_document_expected',
             label: 'Has FDA Indicated They Will Publish Their Own Briefing Document?',
             type: 'yes_no',
-            helpText: 'FDA typically publishes its own briefing document 1-2 business days before the meeting. Anticipating FDA\'s framing helps prepare the sponsor\'s presentation strategy.',
+            helpText: 'FDA typically publishes its own briefing document no later than 2 business days before the meeting. Anticipating FDA\'s framing helps prepare the sponsor\'s presentation strategy.',
           },
           {
             id: 'patient_representative_expected',
@@ -486,7 +487,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Provide an overview of the clinical development program. How many studies, what phases, and what is the total patient exposure?',
         guidance:
-          'The clinical program overview should give the Advisory Committee a roadmap of all clinical studies that support the application. Present the studies in a tabular format: study number, phase, design, population, N enrolled, key endpoints. Highlight the pivotal study(ies). Total patient exposure data (patient-years) is critical for the safety database assessment per ICH E1. For NDA/BLA submissions, FDA expects at least 1,500 patients exposed and 300-600 patients for 6 months per ICH E1.',
+          'The clinical program overview should give the Advisory Committee a roadmap of all clinical studies that support the application. Present the studies in a tabular format: study number, phase, design, population, N enrolled, key endpoints. Highlight the pivotal study(ies). Total patient exposure data (patient-years) is critical for the safety database assessment per ICH E1. For drugs intended for long-term treatment (chronic or repeated intermittent use beyond 6 months) of non-life-threatening conditions, ICH E1 expects about 1,500 patients exposed in total, 300-600 patients exposed for 6 months, and at least 100 patients exposed for 1 year; these figures are not a general NDA/BLA requirement and do not apply to life-threatening indications such as many oncology programs.',
         fields: [
           {
             id: 'total_studies_in_program',
@@ -508,7 +509,7 @@ export function createBriefingBookFlow(): FlowDefinition {
             type: 'number',
             required: true,
             validation: { min: 1 },
-            helpText: 'Per ICH E1, FDA expects at least 1,500 patients exposed for chronic-use drugs, with at least 300-600 exposed for 6 months and 100 for 12 months.',
+            helpText: 'Per ICH E1, for drugs intended for long-term treatment (beyond 6 months) of non-life-threatening conditions, the safety database is generally about 1,500 patients exposed in total, 300-600 exposed for 6 months and at least 100 exposed for 1 year; these figures do not apply to life-threatening indications.',
           },
           {
             id: 'total_patient_years',
@@ -603,7 +604,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Present the integrated safety summary. Advisory Committee members will focus heavily on the safety profile.',
         guidance:
-          'The safety section is often the most scrutinized part of the briefing document. Present an integrated safety summary across all studies per ICH E2C(R2). Include: overall AE rates (all grades and Grade ≥3), serious adverse events (SAEs), discontinuations due to AEs, dose modifications, and deaths. Present treatment-emergent adverse events (TEAEs) in tabular format for the pivotal study (drug vs. control). Highlight adverse events of special interest (AESIs) with incidence, time to onset, management, and resolution. Address any deaths on study drug.',
+          'The safety section is often the most scrutinized part of the briefing document. Present an integrated safety summary across all studies per ICH M4E(R2) (CTD Module 2.7.4, Summary of Clinical Safety) and, for an NDA, the Integrated Summary of Safety required by 21 CFR 314.50(d)(5)(vi). Include: overall AE rates (all grades and Grade ≥3), serious adverse events (SAEs), discontinuations due to AEs, dose modifications, and deaths. Present treatment-emergent adverse events (TEAEs) in tabular format for the pivotal study (drug vs. control). Highlight adverse events of special interest (AESIs) with incidence, time to onset, management, and resolution. Address any deaths on study drug.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -725,7 +726,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Present the benefit-risk assessment. This is the most critical section of the briefing document — the Advisory Committee\'s vote hinges on this analysis.',
         guidance:
-          'FDA uses the Benefit-Risk Framework described in the PDUFA VI commitment letter and the "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (Draft Revision, 2023). The framework evaluates five dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk, and (5) Risk Management. Present a structured benefit-risk summary table. For each dimension, provide a concise evidence-based assessment. The benefit-risk conclusion should directly support the regulatory action being sought.',
+          'FDA uses the Benefit-Risk Framework described in the PDUFA VI commitment letter and its implementation plan, "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018), and in FDA\'s final guidance on benefit-risk assessment for new drug and biological products (October 2023). The framework evaluates four dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, and (4) Risk and Risk Management, followed by an overall benefit-risk conclusion. Present a structured benefit-risk summary table. For each dimension, provide a concise evidence-based assessment. The benefit-risk conclusion should directly support the regulatory action being sought.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -757,7 +758,14 @@ export function createBriefingBookFlow(): FlowDefinition {
             label: 'Has a Structured Benefit-Risk Summary Table Been Prepared (per FDA PDUFA VI Framework)?',
             type: 'yes_no',
             required: true,
-            helpText: 'FDA\'s Benefit-Risk Framework (PDUFA VI) recommends a structured summary table with five dimensions: Analysis of Condition, Current Treatment Options, Benefit, Risk, and Risk Management.',
+            helpText: 'FDA\'s Benefit-Risk Framework (PDUFA VI) recommends a structured summary table with four dimensions: Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management.',
+          },
+          {
+            id: 'benefit_risk_framework_narrative',
+            label: 'Does the Benefit-Risk Narrative Weigh Each of the Four Framework Dimensions, With Its Evidence and Uncertainties?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Separate from the summary table: FDA\'s guidance on benefit-risk assessment for new drug and biological products describes an assessment that discusses the evidence and uncertainties for each dimension (condition, current treatment options, benefit, risk and risk management) and explains how they were weighed to reach the conclusion. The guidance is non-binding, but it is the framework FDA reviewers apply.',
           },
           {
             id: 'uncertainty_factors',
@@ -928,6 +936,13 @@ export function createBriefingBookFlow(): FlowDefinition {
             placeholder: 'e.g., 1. Please discuss the adequacy of the safety database for the proposed indication.\n2. Please discuss the appropriateness of PFS as the primary endpoint in this setting.\n3. Please discuss any additional post-marketing studies that should be required.',
           },
           {
+            id: 'fda_questions_addressed',
+            label: 'Does the Briefing Document Directly Address Each Question FDA Has Identified for Committee Discussion?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Advisory committee meetings are held under 21 CFR Part 14, and FDA frames the questions the Committee discusses and votes on. The sponsor\'s briefing document is what the Committee deliberates from, so map every FDA question to the section and analyses that answer it. This is expected good practice; Part 14 does not itself prescribe the document\'s content.',
+          },
+          {
             id: 'voting_question_alignment',
             label: 'Are Voting Questions Aligned with Proposed Label Claims?',
             type: 'yes_no',
@@ -961,7 +976,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'What is the presentation strategy for the Advisory Committee meeting? The oral presentation must complement the briefing document.',
         guidance:
-          'The sponsor typically has 60-90 minutes for their presentation at the Advisory Committee meeting. The presentation should be structured, rehearsed, and focused on the key messages from the briefing document. Per FDA guidance, presenters should include the lead clinician, lead statistician, and lead safety scientist. Consider including a KOL or patient advocate. Backup slides for anticipated questions are essential. The open public hearing allows patients and advocacy groups to speak — coordinate supportive testimony if appropriate.',
+          'The sponsor typically has 60-90 minutes for their presentation at the Advisory Committee meeting. The presentation should be structured, rehearsed, and focused on the key messages from the briefing document. Industry practice is often to have the lead clinician, lead statistician, and lead safety scientist present; FDA guidance does not prescribe who the sponsor\'s presenters must be. Consider including a KOL or patient advocate. Backup slides for anticipated questions are essential. The open public hearing allows patients and advocacy groups to speak — coordinate supportive testimony if appropriate.',
         fields: [
           {
             id: 'presentation_duration',
@@ -1043,6 +1058,13 @@ export function createBriefingBookFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText: 'Verify that all efficacy numbers, safety data, and patient counts are consistent throughout the document. Inconsistencies undermine credibility.',
+          },
+          {
+            id: 'executive_summary_included',
+            label: 'Does the Briefing Document Open With an Executive Summary?',
+            type: 'yes_no',
+            required: false,
+            helpText: 'Advisory committee meetings are held under 21 CFR Part 14, and members review several long briefing documents before the meeting. An executive summary of the product, the key efficacy and safety results, the benefit-risk assessment and the questions for the Committee is standard practice; FDA guidance does not prescribe the document\'s structure.',
           },
           {
             id: 'fda_pre_meeting_feedback_addressed',

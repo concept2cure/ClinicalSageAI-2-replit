@@ -19,7 +19,7 @@ export const literatureAppraisalNodes: QuestionNode[] = [
     question:
       'Describe the literature search strategy and results.',
     guidance:
-      'MEDDEV 2.7/1 Rev 4 Section 8 requires a systematic literature review. The search strategy must be documented, reproducible, and comprehensive. Include the databases searched, search terms (using PICO framework: Population, Intervention, Comparison, Outcome), date range, and the screening/appraisal methodology. Multiple databases should be searched to ensure comprehensive coverage — MEDDEV 2.7/1 Rev 4 explicitly recommends searching at minimum PubMed/MEDLINE and Embase. The literature search protocol should be finalized before conducting the search. A PRISMA flow diagram is strongly recommended to document the screening process. ISO 14155:2020 Annex A provides guidance on literature search methodology for clinical investigations.',
+      'MEDDEV 2.7/1 Rev 4 Section 8 requires a systematic literature review. The search strategy must be documented, reproducible, and comprehensive. Include the databases searched, search terms (using PICO framework: Population, Intervention, Comparison, Outcome), date range, and the screening/appraisal methodology. Multiple databases should be searched to ensure comprehensive coverage — MEDDEV 2.7/1 Rev 4 explicitly recommends searching at minimum PubMed/MEDLINE and Embase. The literature search protocol should be finalized before conducting the search. A PRISMA flow diagram is strongly recommended to document the screening process. MEDDEV 2.7/1 Rev 4 Appendix A5 sets out the key elements of the literature search and literature review protocol.',
     fields: [
       {
         id: 'literature_search_protocol',

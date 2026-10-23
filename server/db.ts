@@ -30,4 +30,3 @@ export {
   runMigrations,
 } from './db/runtime';
 
-export { ensureAuthTables } from './db/bootstrap';

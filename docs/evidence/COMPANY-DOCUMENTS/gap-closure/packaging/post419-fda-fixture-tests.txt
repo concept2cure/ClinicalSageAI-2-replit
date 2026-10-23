@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > Module 1 headings are written in section order, whatever order the package lists them in > listed [ '1.2', '1.1', '1.3.3' ] → written [ '1.1', '1.2', '1.3.3' ] 270ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > Module 1 headings are written in section order, whatever order the package lists them in > listed [ '1.14.4.1', '1.12.1', '1.2', …(2) ] → written [ '1.1', '1.2', '1.3.3', …(2) ] 378ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > Module 1 headings are written in section order, whatever order the package lists them in > a sub-section still files under its published heading, and that heading takes its own place in the order 222ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > a heading below the top level, written directly under <m1-regional>, is not conformant — and its parent is named 146ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > a Module 1 forms leaf with no declared form type is not conformant — and the file is named 144ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > no applicant contact is not conformant: <applicant-info> has no <applicant-contacts> 76ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > a declared form that also ships as a 1.1 leaf is written once, under <submission-information><form>, with one ID 140ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > a declared form filed under another heading is written once as well, and leaves that heading 160ms
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > regionConformant is decided by the structure built, not by the region > the closest this code can build is still not conformant, and the only gap named is the unvendored telephone-number-type 145ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <applicant-info> carries the applicant the caller recorded > with no contacts: <id> is the sponsor id, <company-name> the sponsor name — and no <applicant-contacts> is invented 118ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <applicant-info> carries the applicant the caller recorded > writes an UNASSIGNED marker the caller passed verbatim, and invents nothing in its place 86ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <applicant-info> carries the applicant the caller recorded > escapes the company name (a raw "&" or "<" would make the backbone unparseable) 84ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <applicant-info> carries the applicant the caller recorded > a contact: name, then <telephones>/<telephone>, then <emails>/<email> — in that order, inside <applicant-contacts> 89ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <applicant-info> carries the applicant the caller recorded > a contact with an email and no telephone gets no empty <telephones> wrapper 78ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > what <applicant-info> could not say is said on the bundle > no contact: the regional-backbone status names the missing <applicant-contacts> 85ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > what <applicant-info> could not say is said on the bundle > a contact role outside the vocabulary is written as fdaact1, and the status says it was defaulted 88ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > what <applicant-info> could not say is said on the bundle > a contact with no email: the status names the missing <emails> 82ms
+ ✓ server/services/submission-gateways/__tests__/fda-applicant-info.test.ts > us-regional <application> > declares application-containing-files="true": this sequence ships the files its backbone references 84ms
+ ✓ server/services/submission-gateways/__tests__/fda-admin-forms.test.ts > packageLeafBytes declares a leaf’s admin form to the packager > a 1.1 leaf with formType 1571 is written once, as <form form-type="fdaft1"> under <submission-information> 191ms
+ ✓ server/services/submission-gateways/__tests__/fda-admin-forms.test.ts > packageLeafBytes declares a leaf’s admin form to the packager > with no formType nothing changes: the 1.1 leaf stays under <m1-1-forms> and no <form> is written 149ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  15:04:28
+   Duration  4.77s (transform 640ms, setup 103ms, import 1.33s, tests 2.83s, environment 0ms)
+
+JSON report written to /workspace/.cloud-setup/gap-closure/oct23-packaging-fixture-correction.json

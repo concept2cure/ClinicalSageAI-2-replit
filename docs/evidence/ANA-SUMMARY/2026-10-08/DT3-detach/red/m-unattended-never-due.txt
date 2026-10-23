@@ -1,0 +1,13 @@
+# m-unattended-never-due: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/unattended-clock.test.ts server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t unwatched for 15 minutes|15 minutes with nobody watching
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 15 minutes with nobody watching: the next model call is the closing answer, and the run ends unattended_limit 65ms
+   → the second call still offered tools: expected undefined to be 'none' // Object.is equality
+ × server/services/ana/__tests__/unattended-clock.test.ts > UnattendedClock > unwatched for 15 minutes: the directive says unattended_limit, and not a moment before 9ms
+   → expected null to be 'unattended_limit' // Object.is equality
+ Test Files  2 failed | 1 skipped (3)
+      Tests  2 failed | 56 skipped (58)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > DT3 test 10: the unattended limit > 15 minutes with nobody watching: the next model call is the closing answer, and the run ends unattended_limit
+AssertionError: the second call still offered tools: expected undefined to be 'none' // Object.is equality
+ FAIL  server/services/ana/__tests__/unattended-clock.test.ts > UnattendedClock > unwatched for 15 minutes: the directive says unattended_limit, and not a moment before
+AssertionError: expected null to be 'unattended_limit' // Object.is equality

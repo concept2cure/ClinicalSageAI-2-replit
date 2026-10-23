@@ -33,7 +33,8 @@ import {
   ExportStatus,
   ExportJob,
   CreateExportJobRequest,
-  CreateAdverseEventRequest
+  CreateAdverseEventRequest,
+  casePartyProblems
 } from '../services/grdhe/types';
 import {
   generateFDA3500AXML,
@@ -41,7 +42,10 @@ import {
   validateForFDA,
   validateForE2BR3,
   SUPPORTED_FORMATS,
-  SupportedFormat
+  SupportedFormat,
+  RECORDED_AS,
+  EXPORT_JOBS_UNAVAILABLE,
+  exportFormatCatalog
 } from '../services/grdhe/exportGenerators';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -135,6 +139,24 @@ const assertTenantMatchesAuth = (req: Request, res: Response, tenantId: string):
   return true;
 };
 
+/**
+ * The signed-in tenant a by-id read or write is held to, or null after
+ * answering 403. 2026-10-22: the by-id routes passed only the id, and the
+ * service matched the UUID alone, so only row security kept another tenant's
+ * job or case out.
+ */
+const requireAuthTenant = (req: Request, res: Response): string | null => {
+  const authed = (req as any).user?.organizationUuid ?? (req as any).tenantContext?.organizationUuid;
+  if (!authed) {
+    res.status(403).json({
+      success: false,
+      error: { code: 'TENANT_REQUIRED', message: 'This request identifies no tenant, so no GRDHE record is read for it' },
+    });
+    return null;
+  }
+  return String(authed);
+};
+
 const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
   const tenantId = String(req.params.tenantId ?? '');
   if (!assertTenantMatchesAuth(req, res, tenantId)) return;
@@ -195,6 +217,21 @@ const isIsoDate = (value: unknown): boolean =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&
   new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+
+/**
+ * Answers 400 and returns false when the case's sender or receiver could not be
+ * exported as recorded (casePartyProblems, the rules the exports apply).
+ * 2026-10-15: intake took neither block; both were dropped without a word.
+ */
+const partiesExportable = (request: CreateAdverseEventRequest, res: Response): boolean => {
+  const problems = [...casePartyProblems('sender', request.sender), ...casePartyProblems('receiver', request.receiver)];
+  if (problems.length === 0) return true;
+  res.status(400).json({
+    success: false,
+    error: { code: 'INVALID_SENDER_OR_RECEIVER', message: problems.map(p => p.message).join('; ') },
+  });
+  return false;
+};
 
 /** The SQLSTATE of a database error, under drizzle's "Failed query" wrapper. */
 const sqlstate = (err: unknown): unknown =>
@@ -547,9 +584,10 @@ router.get('/rules/format/:targetFormat/:sourceEntityType', asyncHandler(async (
  * List supported export formats
  */
 router.get('/exports/formats', asyncHandler(async (req: Request, res: Response) => {
+  // Each format says whether a job can be recorded for it (exportFormatCatalog).
   res.json({
     success: true,
-    data: SUPPORTED_FORMATS
+    data: exportFormatCatalog()
   });
 }));
 
@@ -558,7 +596,8 @@ router.get('/exports/formats', asyncHandler(async (req: Request, res: Response) 
  * Create a new export job
  */
 router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
-  const request: CreateExportJobRequest = req.body;
+  // targetFormat in the body is a generator key, not a regulatory_format value.
+  const request: Omit<CreateExportJobRequest, 'targetFormat'> & { targetFormat: SupportedFormat } = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
   // 2026-10-15: the body's tenantId reached the service unchecked.
@@ -598,8 +637,22 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
+  // 2026-10-15: the format key went to the database as the job's
+  // regulatory_format, which has no value for it, and failed at the cast (500).
+  const format = request.targetFormat as SupportedFormat;
+  const recordedAs = RECORDED_AS[format];
+  if (!recordedAs) {
+    return res.status(422).json({
+      success: false,
+      error: {
+        code: 'EXPORT_FORMAT_NOT_RECORDABLE',
+        message: `Export format ${format} (${SUPPORTED_FORMATS[format].name}) has no matching regulatory_format value, so export_jobs cannot record a job for it. No job was created.`,
+      },
+    });
+  }
+
   try {
-    const job = await grdheService.createExportJob(request, actor);
+    const job = await grdheService.createExportJob({ ...request, targetFormat: recordedAs }, actor);
 
     res.status(201).json({
       success: true,
@@ -625,9 +678,11 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
  */
 router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) => {
   const jobId = String(req.params.jobId);
-  
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
+
   try {
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
 
     res.json({
       success: true,
@@ -671,10 +726,12 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
   const jobId = String(req.params.jobId);
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
 
   try {
     // Get job details
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
 
     const refusal = executionRefusal(job);
     if (refusal) {
@@ -682,7 +739,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
     }
 
     // Update status to processing
-    await grdheService.updateExportJobStatus(jobId, 'transforming', {
+    await grdheService.updateExportJobStatus(tenantId, jobId, 'transforming', {
       progressPercent: 10,
       currentStep: 'Loading source data'
     }, actor);
@@ -694,21 +751,23 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       
       for (const entityId of job.sourceEntityIds) {
         // Update progress
-        await grdheService.updateExportJobStatus(jobId, 'transforming', {
+        await grdheService.updateExportJobStatus(tenantId, jobId, 'transforming', {
           progressPercent: 30,
           currentStep: `Processing entity ${entityId}`
         }, actor);
         
         // Get adverse event
-        const event = await grdheService.getCanonicalAdverseEventById(entityId);
+        const event = await grdheService.getCanonicalAdverseEventById(tenantId, entityId);
         
-        // Generate XML based on format. job.targetFormat is typed as the
-        // broad RegulatoryFormat union, but adverse-event export jobs store
-        // the narrower SupportedFormat keys (the generators are keyed by
-        // those), so compare against that vocabulary.
+        // Generate XML based on format: the generator whose format the job
+        // records (RECORDED_AS, read backwards); none is refused below.
+        // 2026-10-22: else the stored value was taken as a key, but a job
+        // records a regulatory_format value, which is never one.
         let exportResult;
+        const generatorFormat =
+          (Object.keys(RECORDED_AS) as SupportedFormat[]).find(key => RECORDED_AS[key] === job.targetFormat);
 
-        switch (job.targetFormat as SupportedFormat) {
+        switch (generatorFormat) {
           case 'FDA_AE_3500A':
             exportResult = generateFDA3500AXML(event, job, job.terminologyVersions);
             break;
@@ -726,7 +785,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         }
         
         if (!exportResult.success) {
-          await grdheService.updateExportJobStatus(jobId, 'failed', {
+          await grdheService.updateExportJobStatus(tenantId, jobId, 'failed', {
             errorMessage: 'Validation failed',
             errorDetails: { errors: exportResult.errors }
           }, actor);
@@ -748,14 +807,14 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       // nowhere, so the job records no output path (2026-10-15: it recorded
       // `/exports/<tenant>/<file>`, a file nothing wrote).
       if (results.length > 0 && results[0].content) {
-        await grdheService.completeExportJob(jobId, {
+        await grdheService.completeExportJob(tenantId, jobId, {
           fileName: results[0].fileName || `export_${jobId}.xml`,
           content: results[0].content,
           mimeType: results[0].contentType
         }, actor);
 
         // Get updated job
-        const completedJob = await grdheService.getExportJob(jobId);
+        const completedJob = await grdheService.getExportJob(tenantId, jobId);
         
         res.json({
           success: true,
@@ -775,9 +834,13 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       });
     }
   } catch (error: any) {
+    // Not this tenant's job (or no such job): nothing was read or changed.
+    if (error instanceof ExportJobNotFoundError) {
+      return notFound(res, 'JOB_NOT_FOUND', 'Export job not found');
+    }
     // Update job status to failed
     try {
-      await grdheService.updateExportJobStatus(jobId, 'failed', {
+      await grdheService.updateExportJobStatus(tenantId, jobId, 'failed', {
         errorMessage: error.message,
         errorDetails: { stack: error.stack }
       }, actor);
@@ -798,13 +861,15 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
   const { reason } = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
 
   try {
-    await grdheService.updateExportJobStatus(jobId, 'cancelled', {
+    await grdheService.updateExportJobStatus(tenantId, jobId, 'cancelled', {
       errorMessage: reason || 'Cancelled by user'
     }, actor);
     
-    const job = await grdheService.getExportJob(jobId);
+    const job = await grdheService.getExportJob(tenantId, jobId);
     
     res.json({
       success: true,
@@ -869,6 +934,7 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
       }
     });
   }
+  if (!partiesExportable(request, res)) return;
 
   try {
     const event = await grdheService.createCanonicalAdverseEvent(request, actor);
@@ -895,9 +961,11 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
  */
 router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Response) => {
   const eventId = String(req.params.eventId);
-  
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
+
   try {
-    const event = await grdheService.getCanonicalAdverseEventById(eventId);
+    const event = await grdheService.getCanonicalAdverseEventById(tenantId, eventId);
 
     res.json({
       success: true,
@@ -968,6 +1036,8 @@ router.get('/adverse-events/tenant/:tenantId', validateTenantId, asyncHandler(as
 router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Request, res: Response) => {
   const eventId = String(req.params.eventId);
   const { targetFormat } = req.body;
+  const tenantId = requireAuthTenant(req, res);
+  if (!tenantId) return;
   
   if (!targetFormat) {
     return res.status(400).json({
@@ -980,7 +1050,7 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
   }
   
   try {
-    const event = await grdheService.getCanonicalAdverseEventById(eventId);
+    const event = await grdheService.getCanonicalAdverseEventById(tenantId, eventId);
     
     let validation;
     switch (targetFormat) {
@@ -1181,13 +1251,16 @@ router.get('/health', asyncHandler(async (req: Request, res: Response) => {
         dataResidency: true,
         terminologyManagement: true,
         mappingRules: true,
-        exportJobs: true,
+        // 2026-10-15: this said true while POST /exports could not create a
+        // job for any format (see RECORDED_AS).
+        exportJobs: EXPORT_JOBS_UNAVAILABLE === null,
         adverseEvents: true,
         // 2026-10-15: this said true while both signature routes answer 410
         // (retired 2026-09-10); signatures are made through /api/esignature/sign.
         electronicSignatures: false,
         auditTrail: true
       },
+      unavailableReasons: EXPORT_JOBS_UNAVAILABLE === null ? {} : { exportJobs: EXPORT_JOBS_UNAVAILABLE },
       supportedFormats: Object.keys(SUPPORTED_FORMATS)
     }
   });

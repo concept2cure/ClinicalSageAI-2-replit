@@ -1,0 +1,9 @@
+# m-detach-settles-first: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-disconnect.test.ts  -t detaches a durable run
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > detaches a durable run: it runs on, reaches endRun, ends finished, and its record says the page closed 1103ms
+   → expected [] to deeply equal [ { status: 'finished', …(1) } ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > detaches a durable run: it runs on, reaches endRun, ends finished, and its record says the page closed
+AssertionError: expected [] to deeply equal [ { status: 'finished', …(1) } ]

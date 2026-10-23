@@ -7,13 +7,18 @@ import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
 import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultVersions } from './VaultVersions';
-import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
+import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
+import { FileDropZone, type FileDropZoneControls } from '../FileDropZone';
+import { VaultUploadStaging, fieldsOf, stageFiles, type StagedFile, type Staging } from './VaultUploadStaging';
 import {
+  VAULT_CLASSIFICATIONS,
+  VAULT_CLASSIFICATION_LABELS,
+  VAULT_DOC_KINDS,
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultDocKindLabel,
   vaultIngestTypeLabel,
@@ -32,7 +37,8 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults, isVaultSearchShape, type VaultSearchHit, type VaultSearchShape } from './VaultLibraryResults';
+import { VaultLibraryResults, facetCounts, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
+import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
 import { VaultAnnotations } from './VaultAnnotations';
@@ -45,7 +51,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
+import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -591,38 +597,111 @@ function UploadsLane({
 /* GET /api/c2c/project-vault/:id/search — the find view's contract is VaultSearchShape
    (VaultLibraryResults.tsx), the one guard every reader of that route uses. */
 
-/** A search hit rendered in the same row component the tree uses. */
-function searchHitToDoc(h: VaultSearchHit): VaultDoc {
-  return {
-    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
-       uploadLeaf), so a hit and its tree leaf are one selection. Keyed by the
-       bare uuid, no hit ever matched, and every click fell back to the first
-       hit. */
-    id: `up-${h.id}`,
-    num: h.ctdSection || '',
-    title: h.title,
-    // The same reader-facing name the tree shows (the server maps tree rows
-    // through vaultIngestTypeLabel). A hit mapped here separately rendered the
-    // raw token, so one document read "Module 3 · quality" in the tree and
-    // "MODULE_3" in a search.
-    type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
-    status: h.placementStatus || 'unfiled',
-    pct: null,
-    owner: '',
-    ver: h.version ? `v${h.version}` : '',
-    updated: '',
-    // Only listed when the search asked for earlier versions (VR-09).
-    earlierVersion: h.current === false,
-    /* The server's ts_headline excerpt, with its <b> markers stripped: this is
-       rendered as text, and a highlight that arrives as literal markup would
-       read as corruption. */
-    preview: (h.snippet || '').replace(/<\/?b>/g, ''),
-    src: 'upload',
-    docId: h.id,
-    originalFileAvailable: h.originalFileAvailable,
-    disposition: h.disposition,
-    sizeLabel: h.size || undefined,
+/** The empty line under a verified read, worded for what was asked. */
+function noMatchText(searching: boolean, hasText: boolean, filtering: boolean): string {
+  if (!searching) return ' in this folder';
+  if (!hasText) return ' match these filters';
+  return filtering ? ' match your search and filters' : ' match your search';
+}
+
+type FilterOption = { value: string; label: string; covers?: readonly string[] };
+
+/**
+ * One filter: "Any", or a single value of the dimension. With counts from a
+ * verified read, each value says how many documents choosing it selects, under
+ * the other filters and the text (the server counts without this dimension's own
+ * filter). Without them, no number is shown: an absent count is not zero.
+ */
+function FindFilterSelect({ label, value, options, onChange, counts }: {
+  label: string; value: string; options: readonly FilterOption[]; onChange: (value: string) => void;
+  counts?: Map<string, number> | null;
+}) {
+  const countOf = (o: FilterOption) => (o.covers ?? [o.value]).reduce((n, v) => n + (counts?.get(v) ?? 0), 0);
+  return (
+    <label className="vd-filter">
+      <span className="vd-filter-l">{label}</span>
+      <select className="c2c-input" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Any</option>
+        {options.map((o) => <option key={o.value} value={o.value}>{counts ? `${o.label} (${countOf(o)})` : o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+const TYPE_OPTIONS: FilterOption[] = VAULT_INGEST_DOCUMENT_TYPES.map((t) => ({ value: t, label: vaultIngestTypeLabel(t) }));
+const FILING_OPTIONS: FilterOption[] = (['unfiled', 'suggested', 'confirmed'] as const).map((s) => ({ value: s, label: vaultStatus(s).label }));
+const CLASSIFICATION_OPTIONS: FilterOption[] = VAULT_CLASSIFICATIONS.map((c) => ({ value: c, label: VAULT_CLASSIFICATION_LABELS[c] }));
+const KIND_OPTIONS: FilterOption[] = VAULT_DOC_KINDS.map((k) => ({ value: k.value, label: k.one }));
+const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label, covers: c.stages }));
+
+/**
+ * The find view's metadata filters (VR-18): type, filing status,
+ * classification, evidence kind, review stage and CTD section, each sent to the
+ * same server search as the text. A CTD section is applied on Enter or when the
+ * field is left, and only once it reads as a section code; until then the row
+ * says it is not applied, rather than filtering by something else.
+ */
+function VaultFindFilterRow({ value, onChange, onClear, facets }: {
+  value: VaultFindFilters; onChange: (next: VaultFindFilters) => void; onClear: () => void;
+  /** The verified read's facet counts, or null when there are none to show. */
+  facets?: unknown;
+}) {
+  const counts = (key: keyof VaultFindFilters) => (facets ? facetCounts(facets, key) : null);
+  const [ctd, setCtd] = useState(value.ctdSection?.[0] ?? '');
+  const [ctdRefused, setCtdRefused] = useState<string | null>(null);
+  const set = (key: keyof VaultFindFilters, values: readonly string[] | null) => {
+    const next = { ...value };
+    if (values && values.length) next[key] = [...values];
+    else delete next[key];
+    onChange(next);
   };
+  const one = (key: keyof VaultFindFilters) => value[key]?.[0] ?? '';
+  const stageValue = VAULT_STAGE_CHOICES.find((c) => c.stages[0] === value.lifecycleStage?.[0])?.value ?? '';
+  const commitCtd = () => {
+    const text = ctd.trim();
+    const code = normalizeCtdCode(text);
+    setCtdRefused(text && !code ? text : null);
+    if (code) setCtd(code);
+    if ((value.ctdSection?.[0] ?? null) !== code) set('ctdSection', code ? [code] : null);
+  };
+  const active = Object.keys(value).length > 0;
+  return (
+    <div className="vd-filters" role="group" aria-label="Filter documents">
+      <FindFilterSelect label="Type" value={one('documentType')} options={TYPE_OPTIONS} counts={counts('documentType')} onChange={(v) => set('documentType', v ? [v] : null)} />
+      <FindFilterSelect label="Filing" value={one('placementStatus')} options={FILING_OPTIONS} counts={counts('placementStatus')} onChange={(v) => set('placementStatus', v ? [v] : null)} />
+      <FindFilterSelect label="Classification" value={one('classification')} options={CLASSIFICATION_OPTIONS} counts={counts('classification')} onChange={(v) => set('classification', v ? [v] : null)} />
+      <FindFilterSelect label="Evidence kind" value={one('evidenceKind')} options={KIND_OPTIONS} counts={counts('evidenceKind')} onChange={(v) => set('evidenceKind', v ? [v] : null)} />
+      <FindFilterSelect
+        label="Review"
+        value={stageValue}
+        options={STAGE_OPTIONS}
+        counts={counts('lifecycleStage')}
+        onChange={(v) => set('lifecycleStage', VAULT_STAGE_CHOICES.find((c) => c.value === v)?.stages ?? null)}
+      />
+      <label className="vd-filter">
+        <span className="vd-filter-l">CTD section</span>
+        <input
+          className="c2c-input"
+          value={ctd}
+          placeholder="e.g. 3.2.P"
+          aria-describedby={ctdRefused ? 'vd-filter-ctd-note' : undefined}
+          onChange={(e) => setCtd(e.target.value)}
+          onBlur={commitCtd}
+          onKeyDown={(e) => { if (e.key === 'Enter') commitCtd(); }}
+        />
+      </label>
+      {active && (
+        <button type="button" className="vd-crumb" onClick={onClear}>
+          Clear filters
+        </button>
+      )}
+      {ctdRefused && (
+        <span id="vd-filter-ctd-note" className="vd-filter-note" role="status">
+          &ldquo;{ctdRefused}&rdquo; is not a CTD section code (for example 3.2.P or 2.7.3), so it is not applied.
+        </span>
+      )}
+    </div>
+  );
 }
 
 /* ── Vault (DMS) surface ──
@@ -668,6 +747,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   // The placeholder shows only before there is data to show. A re-read after a change keeps the
   // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
+  /* The payload on screen when an upload settles: the document it recorded is
+     in the re-read that follows, not in this one (see `pendingTarget`). */
+  const latestVault = React.useRef(vault);
+  latestVault.current = vault;
   /* The data room's "File into Vault" (VR-11): held here so its answer
      survives the re-read that follows a filing. */
   const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
@@ -693,7 +776,6 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      + ClamAV verified, tenant-scoped storage, one vault.documents row per file.
      Nothing is faked here — the row appears in the tree because the server
      wrote it, and a refusal is reported as a refusal. */
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   /* Moved to ../useVaultUpload and shared with the MDX Document vault, which
      had no upload control at all (its button opened a chat prompt). Copying
      these forty lines into that surface would have produced a second copy of a
@@ -714,17 +796,34 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      (VR-09), rather than left at a dead end. The document is the tree's leaf
      with that code, which is its current version. */
   const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
-  const uploadFiles = async (files: FileList | null) => {
-    const outcome = await upload(files, { documentType: docType });
+  /* Files chosen or dropped wait here, one row each, until the person sends
+     them (VaultUploadStaging.tsx, gap 7.1): each row's title, type, version,
+     classification and filing go with its own file. */
+  const [staging, setStaging] = useState<Staging | null>(null);
+  /* The header's drop zone, so Coverage's "upload here" opens the same picker. */
+  const uploadControls = React.useRef<FileDropZoneControls | null>(null);
+  /* Closing the upload list returns focus to the button that opened it (a11y review, 2026-10-22). */
+  const addFilesButton = React.useRef<HTMLButtonElement | null>(null);
+  const patchStaged = (key: string, patch: Partial<StagedFile>) =>
+    setStaging((st) => st && { ...st, rows: st.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) });
+  const uploadStaged = async () => {
+    if (!staging) return;
+    const pending = staging.rows.filter((r) => !r.status || r.status.state === 'refused');
+    const outcome = await upload(pending.map((r) => r.file), {
+      documentType: docType,
+      fields: pending.map(fieldsOf),
+      onFileStatus: (index, status) => patchStaged(pending[index].key, { status }),
+    });
     setCheckInOffers(
       outcome.conflicts.flatMap(({ name, file }) => {
         const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
         return doc ? [{ file, doc }] : [];
       }),
     );
+    // Open what was recorded (the batch's first document), as "Open in Vault" opens a filed one.
+    openRecorded(outcome.recorded[0]);
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
   /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
   const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
@@ -739,8 +838,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     // The offer stays until the version is recorded: a dropped connection must not lose the file.
     if (outcome.succeeded.includes(file.name)) {
       setCheckInOffers((offers) => offers.filter((o) => o.file !== file));
+      // The row on screen is the version this one replaced: open the document at the new one.
+      openRecorded(outcome.recorded[0]);
       setVaultEpoch((n) => n + 1);
     }
+  };
+  /** Open `documentId` once the re-read that follows an upload holds it. */
+  const openRecorded = (documentId: string | undefined) => {
+    if (documentId) setPendingTarget({ kind: 'uploaded', documentId, after: latestVault.current });
   };
 
   /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
@@ -879,6 +984,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
   }, [cabinet]);
+  /* An upload may name only a folder of this program's own view: the cabinet's
+     "filed under another view" group is listed for review, and ingest refuses it. */
+  const uploadFolders = useMemo(() => cabinetFolders.filter((f) => f.id !== 'other-view'), [cabinetFolders]);
   const [moveTarget, setMoveTarget] = useState('');
   /* The uploaded documents a person may file at a missing section (VR-15). */
   const coverageDocuments = useMemo<CoverageDocument[]>(() => {
@@ -897,6 +1005,13 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState('');
+  /* The find view's metadata filters (VR-18), sent to the same search as the
+     text. Bumping filterReset remounts the filter row, so its CTD draft clears
+     with them. */
+  const [findFilters, setFindFilters] = useState<VaultFindFilters>({});
+  const [filterReset, setFilterReset] = useState(0);
+  /** Leave the find view for the tree: the text and the filters go together. */
+  const leaveFind = () => { setQ(''); setFindFilters({}); setFilterReset((n) => n + 1); };
   const [selId, setSel] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((e) => ({ ...e, [id]: e[id] === false ? true : false }));
@@ -904,7 +1019,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      cabinet un-collapsed down to it) and select the row — the same state the
      tree's own controls drive, so the list, breadcrumb and detail pane agree. */
   const openUpload = (folderId: string, docId: string | null) => {
-    setQ('');
+    leaveFind();
     setActiveFolder(folderId);
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
@@ -912,25 +1027,35 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* "Open in Vault" after File to Vault names the document it filed
      (vaultTarget.ts): open on that row, where "Place into filing…" is,
      instead of the first node. A document this tree does not hold, or one
-     filed under another project, is said, not silently ignored. */
-  const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
-  const [missingTarget, setMissingTarget] = useState<string | null>(null);
+     filed under another project, is said, not silently ignored.
+     An upload opens the document the server recorded the same way, once the
+     re-read it asked for has landed: `after` is the payload on screen when it
+     settled, which cannot hold that document, so it is not looked for there. */
+  const [pendingTarget, setPendingTarget] = useState<
+    TakenVaultTarget | { kind: 'uploaded'; documentId: string; after: VaultDisplayShape | null } | null
+  >(() => takeVaultTarget(projectId));
+  const [missingTarget, setMissingTarget] = useState<{ documentId: string; act: 'filed' | 'uploaded' } | null>(null);
   const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
   React.useEffect(() => {
     if (!pendingTarget || !vault) return;
-    if (pendingTarget.kind === 'here') {
+    if (pendingTarget.kind === 'uploaded' && pendingTarget.after === vault) return;
+    if (pendingTarget.kind !== 'other-project') {
       const at = locateVaultDocument(tree, pendingTarget.documentId);
       if (at) {
         setQ('');
+        setFindFilters({});
+        setFilterReset((n) => n + 1);
         setActiveFolder(at.folderId);
         setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
         setSel(at.rowId);
-      } else setMissingTarget(pendingTarget.documentId);
+      } else {
+        setMissingTarget({ documentId: pendingTarget.documentId, act: pendingTarget.kind === 'uploaded' ? 'uploaded' : 'filed' });
+      }
     }
     setPendingTarget(null);
   }, [pendingTarget, vault, tree]);
   // Derived, so a re-read that now holds the document retires the note.
-  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget) === null;
+  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget.documentId) === null;
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -1011,7 +1136,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         };
       }
       const target = contains[0];
-      setQ('');
+      leaveFind();
       setActiveFolder(target.folder.id);
       setExpanded((e) => {
         const next = { ...e };
@@ -1032,7 +1157,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   // surface shows something without seeding local state from the async tree.
   const folder = findFolder(tree, activeFolder) || tree[0] || null;
   const folderDocs = folder ? flattenDocs(folder.children) : [];
-  const searching = q.trim().length > 0;
+  const filterParams = vaultFilterParams(findFilters);
+  const filtering = filterParams !== '';
+  /* Finding is the text, the filters, or both. Filters alone browse what they
+     select (the server's 'browse' mode); an empty box with no filter is the
+     tree, never "everything". */
+  const searching = q.trim().length > 0 || filtering;
 
   /* SEARCH RUNS ON THE SERVER.
      This was `allDocs.filter(d => (title + preview + num + type).includes(q))` —
@@ -1049,11 +1179,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* Library search: accessible projects' Vaults. While it is on,
      the project search does not run; VaultLibraryResults reads the library. */
   const [allProjects, setAllProjects] = useState(false);
-  const libraryMode = Boolean(trimmedQ) && allProjects;
+  const libraryMode = searching && allProjects;
   const searchPath =
-    projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    projectId && searching && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
       '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
-      (includeEarlier ? '&includeSuperseded=true' : '') : null;
+      (includeEarlier ? '&includeSuperseded=true' : '') + filterParams + '&facets=true' : null;
+  /** What is narrowing the list, in words, for AnA: "filtered to N by …" and "the search for …". */
+  const findLabel = trimmedQ ? `the search "${trimmedQ}"${filtering ? ' and the filters' : ''}` : 'the filters';
+  const findSubject = trimmedQ ? `"${trimmedQ}"${filtering ? ' with the filters' : ''}` : 'the filters';
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
   const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
   const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
@@ -1109,20 +1242,20 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     }
     if (libraryMode) {
       return {
-        summary: `An accessible-project search for "${trimmedQ}" is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
-        facts: { searchQuery: trimmedQ, requestedSearchScope: 'accessible-projects' },
+        summary: `An accessible-project search for ${findSubject} is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, requestedSearchScope: 'accessible-projects' },
       };
     }
     if (searching && searchState.loading) {
       return {
-        summary: `The vault search is still loading for "${trimmedQ}"; no match count or selection is verified.`,
-        facts: { searchQuery: trimmedQ, searchState: 'loading' },
+        summary: `The vault search is still loading for ${findSubject}; no match count or selection is verified.`,
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'loading' },
       };
     }
     if (searchUnavailable) {
       return {
-        summary: `The vault search for "${trimmedQ}" could not be verified; this is a failed read, not a result of zero matches.`,
-        facts: { searchQuery: trimmedQ, searchState: 'unavailable' },
+        summary: `The vault search for ${findSubject} could not be verified; this is a failed read, not a result of zero matches.`,
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'unavailable' },
         availableActions: ['Retry the vault search'],
       };
     }
@@ -1132,7 +1265,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         `Document vault: ${vault?.documentCount ?? 0} document(s)` +
         (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
-        (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
+        (searching ? `, filtered to ${shown} by ${findLabel}` : '') +
         (sel ? `, "${sel.title}" selected` : ''),
       facts: {
         // The server's count of documents. allDocs is the tree's leaves: each
@@ -1159,7 +1292,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             : null,
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
-        searchQuery: searching ? q.trim() : null,
+        searchQuery: trimmedQ || null,
+        filters: filtering ? findFilters : null,
         openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
         selected: sel
           ? {
@@ -1176,13 +1310,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Open a document to see its detail, version and status',
-        'Search the vault by title, number, type or preview text',
+        'Search the vault by title, file name and document text',
+        'Filter the vault by type, filing status, classification, evidence kind, review stage or CTD section',
         'Browse a folder in the document tree',
-        'Upload a file into the vault (multipart ingest, virus-scanned, auto-classified to a suggested dossier folder)',
+        'Upload files into the vault, each with its own type, classification and folder (virus-scanned; a file given no folder is classified to a suggested one)',
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -1302,12 +1437,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             the picker onto a line of its own with the buttons below it. */}
         <select
           className="c2c-input"
-          aria-label="Document type for uploaded files"
+          aria-label="Document type for files added next"
           value={docType}
           onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
           disabled={uploading}
           data-testid="vault-upload-type"
-          title="Document type for uploaded files"
+          title="Document type for files added next; each file's own row can change it"
           style={{ width: 'auto', maxWidth: 260 }}
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
@@ -1316,36 +1451,44 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             </option>
           ))}
         </select>
-        {/* The picker itself. Accepts exactly what POST /api/vault/ingest
-            accepts, so the OS dialog does not offer files the server will
-            refuse. */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
+        {/* The one drop zone (FileDropZone.tsx, shared with the Data Room):
+            files or a folder, chosen or dropped here. The pickers accept
+            exactly what POST /api/vault/ingest accepts; what was gathered goes
+            to the staging rows below, which list anything not uploaded. */}
+        <FileDropZone
+          className="vd-upload-zone"
           accept={VAULT_UPLOAD_ACCEPT}
-          style={{ display: 'none' }}
-          onChange={(e) => void uploadFiles(e.target.files)}
-          /* Labelled even though it is visually hidden and driven by the button
-             beside it: WCAG 3.3.2 applies to the control, not to whether it is
-             painted, and assistive technology can still reach a file input that
-             a script focuses. */
-          aria-label="Choose documents to upload to the Vault"
-          data-testid="vault-upload-input"
-        />
-        <button
-          className="sp-primary"
-          disabled={uploading || !projectId}
-          onClick={() => fileInputRef.current?.click()}
-          title={
-            projectId
-              ? 'Choose files to file into this project’s Vault'
-              : 'Open a project first — a Vault document is filed against a program.'
-          }
-          data-testid="vault-upload-button"
+          directory
+          activation="controls"
+          disabled={!projectId}
+          label="Add documents to the Vault"
+          testId="vault-upload-zone"
+          controlsRef={uploadControls}
+          onFiles={(picked) => setStaging((st) => stageFiles(picked, docType, st ?? undefined))}
         >
-          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
-        </button>
+          {({ chooseFiles, chooseFolder }) => (
+            <>
+              <button
+                ref={addFilesButton}
+                className="sp-primary"
+                disabled={!projectId}
+                onClick={chooseFiles}
+                title={
+                  projectId
+                    ? 'Choose files to file into this project’s Vault'
+                    : 'Open a project first — a Vault document is filed against a program.'
+                }
+                data-testid="vault-upload-button"
+              >
+                {I.upload} Add files
+              </button>
+              <button className="sp-ask" disabled={!projectId} onClick={chooseFolder} data-testid="vault-upload-folder-button">
+                {I.folder} Add a folder
+              </button>
+              <span className="vd-upload-zone-t">or drop files or a folder here</span>
+            </>
+          )}
+        </FileDropZone>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
         <button
@@ -1363,6 +1506,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         ) : null}
       </div>
 
+      {staging && canWrite ? (
+        <VaultUploadStaging
+          staging={staging}
+          folders={uploadFolders}
+          uploading={uploading}
+          onChange={patchStaged}
+          onRemove={(key) => setStaging((st) => st && { ...st, rows: st.rows.filter((r) => r.key !== key) })}
+          onUpload={() => void uploadStaged()}
+          onDone={() => { setStaging(null); setTimeout(() => addFilesButton.current?.focus(), 0); }}
+        />
+      ) : null}
       {(uploadNote || downloadNote) && (
         <div
           className="scaf-note"
@@ -1376,9 +1530,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
-      {targetMissing && (
+      {targetMissing && missingTarget && (
         <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
-          The document you just filed is not in this list. Search for it by title.
+          The document you just {missingTarget.act} is not in this list. Search for it by title.
         </div>
       )}
       {otherProjectTarget && (
@@ -1495,7 +1649,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <VaultCoverage
             coverage={vault?.coverage}
             documents={coverageDocuments}
-            onUpload={() => fileInputRef.current?.click()}
+            onUpload={() => uploadControls.current?.chooseFiles()}
             onFileHere={(docId, target) =>
               void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
             }
@@ -1532,7 +1686,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 hint={
                   vault?.pendingStore
                     ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
+                    : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>
@@ -1546,7 +1700,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               activeFolder={activeFolder}
               onPick={(id) => {
                 setActiveFolder(id);
-                setQ('');
+                leaveFind();
               }}
               expanded={expanded}
               toggle={toggle}
@@ -1559,7 +1713,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 className="vd-crumb"
                 onClick={() => {
                   setActiveFolder(tree[0] ? tree[0].id : null);
-                  setQ('');
+                  leaveFind();
                 }}
               >
                 {I.folder} {(vault && vault.program) || 'Vault'}
@@ -1577,7 +1731,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 <>
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
-                    Search &quot;{q}&quot;
+                    {trimmedQ ? <>Search &quot;{q}&quot;{filtering ? ', filtered' : ''}</> : 'Filtered'}
                     {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
                       ? ` — ${results.length} of ${searchState.data.total}`
                       : ''}
@@ -1616,6 +1770,13 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 Accessible projects
               </label>
             </div>
+            <VaultFindFilterRow
+              key={filterReset}
+              value={findFilters}
+              onChange={setFindFilters}
+              onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
+              facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+            />
             {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
                  "no documents match your search", which is a different and
@@ -1634,6 +1795,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             {libraryMode ? (
               <VaultLibraryResults
                 query={trimmedQ}
+                filterParams={filterParams}
                 includeEarlier={includeEarlier}
                 currentProjectId={projectId ?? null}
                 onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
@@ -1687,7 +1849,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               {results.length === 0 && (!searching || verifiedSearch) && (
                 <div className="vd-empty">
                   No documents
-                  {searching ? ' match your search' : ' in this folder'}.
+                  {noMatchText(searching, Boolean(trimmedQ), filtering)}.
                 </div>
               )}
             </div>

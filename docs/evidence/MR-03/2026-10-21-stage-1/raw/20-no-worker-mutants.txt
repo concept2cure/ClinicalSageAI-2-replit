@@ -1,0 +1,49 @@
+# Slice C mutants. Each re-introduces part of the worker into a copy of the fixed tree; the stack suite must fail.
+# ecr-worker-repo: repository_names back to ["api","worker"]. worker-service-unlisted: an aws_ecs_service "worker" appended to
+# modules/ecs-fargate/main.tf, service_names untouched. worker-service-listed: the same, and named in service_names.
+## mutant: ecr-worker-repo
+ .../{slicec-after => mut-ecr-worker-repo}/terraform/stack/main.tf       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+  run "one_service_and_one_repository_no_worker"... fail
+Failure! 66 passed, 1 failed.
+The stack must create the api repository and no other: ["api","worker"]
+tests/boot_contract.tftest.hcl... fail
+
+## mutant: worker-service-unlisted
+ .../terraform/modules/ecs-fargate/main.tf                   | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+  run "one_service_and_one_repository_no_worker"... fail
+Failure! 66 passed, 1 failed.
+terraform/modules/ecs-fargate declares an ECS service that its service_names
+tests/boot_contract.tftest.hcl... fail
+
+## mutant: worker-service-listed
+ .../terraform/modules/ecs-fargate/main.tf                   | 13 +++++++++++++
+ .../terraform/modules/ecs-fargate/outputs.tf                |  2 +-
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+  run "one_service_and_one_repository_no_worker"... fail
+Failure! 66 passed, 1 failed.
+The stack must create the API service and no other:
+tests/boot_contract.tftest.hcl... fail
+
+
+# ---------------------------------------------------------------------------
+# The first run of the same three mutants, kept for the gap it showed. It ran on
+# a scratch copy made BEFORE the third assertion (service_names held to the
+# module's source) existed. The unlisted worker service passed: the run only
+# compared a hand-written output, which the mutant did not touch. The source
+# check was added because of this; the run above is with it.
+## mutant: ecr-worker-repo
+  run "one_service_and_one_repository_no_worker"... fail
+Failure! 66 passed, 1 failed.
+The stack must create the api repository and no other: ["api","worker"]
+tests/boot_contract.tftest.hcl... fail
+
+## mutant: worker-service-unlisted
+Success! 67 passed, 0 failed.
+
+## mutant: worker-service-listed
+  run "one_service_and_one_repository_no_worker"... fail
+Failure! 66 passed, 1 failed.
+The stack must create the API service and no other:
+tests/boot_contract.tftest.hcl... fail

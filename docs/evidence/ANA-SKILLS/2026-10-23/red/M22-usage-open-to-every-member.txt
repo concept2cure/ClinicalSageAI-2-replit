@@ -1,0 +1,103 @@
+Mutation: server/routes/ana-skills.ts
+- router.get('/usage', writeGuard, async
++ router.get('/usage', async
+Test: server/routes/__tests__/ana-skills-routes.test.ts
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/ana-skills-routes.test.ts
+{
+  "timestamp": "2026-10-23T00:17:42.454Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T00:17:42.454Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > refuses a member 18ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > refuses an administrator who states no reason 23ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > refuses a skill the library does not hold 3ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > writes the caller’s organization, with the reason, and its audit row, in one transaction 4ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > records nothing when the skill already has that value 5ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > rolls the change back when its audit row is refused 3ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > refuses a member who tries to create one 2ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > refuses a tool AnA does not have at launch, naming the field 5ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > accepts an active skill with no trigger phrase: it loads when someone picks it or deploys it 6ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > writes an organization skill for the whole organization, whatever project the body names 4ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > refuses an extension that does not say whether it adds or replaces 4ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > creates one in the caller’s organization, with its audit row and ledger event on the same transaction 2ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > refuses to change a locked skill and writes nothing 3ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > an organization’s own skills > records the skill before and after a change 3ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > reading and testing > lets a member read the library as the organization set it 4ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > reading and testing > explains which skills a question would load, recording nothing 38ms
+ × server/routes/__tests__/ana-skills-routes.test.ts > how often AnA used each skill > is for administrators: it describes the organization’s activity 7ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > how often AnA used each skill > counts the caller’s own turn records, bounded, and says what it read 4ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > how often AnA used each skill > says when the window held more records than one read counts 2ms
+ ✓ server/routes/__tests__/ana-skills-routes.test.ts > how often AnA used each skill > refuses a window that is not a whole number of days 3ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  00:17:40
+   Duration  5.91s (transform 3.94s, setup 51ms, import 5.55s, tests 149ms, environment 0ms)
+
+stderr | server/routes/__tests__/ana-skills-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-skills-routes.test.ts
+{
+  "timestamp": "2026-10-23T00:17:41.611Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-skills-routes.test.ts
+{
+  "timestamp": "2026-10-23T00:17:42.454Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-skills-routes.test.ts > turning a library skill on or off > rolls the change back when its audit row is refused
+{
+  "timestamp": "2026-10-23T00:17:46.020Z",
+  "level": "error",
+  "message": "[ana-skills] The skill was not changed.",
+  "context": {
+    "err": "audit chain refused the row"
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ana-skills-routes.test.ts > how often AnA used each skill > is for administrators: it describes the organization’s activity
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ana-skills-routes.test.ts:283:24
+    281|     const client = fakeClient();
+    282|     const res = await request(appAs(MEMBER, client)).get('/api/ana-ski…
+    283|     expect(res.status).toBe(403);
+       |                        ^
+    284|     expect(client.seen).toEqual([]);
+    285|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

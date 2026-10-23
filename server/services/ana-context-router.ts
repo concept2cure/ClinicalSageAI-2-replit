@@ -12,7 +12,6 @@
  * Also injects:
  *   - AnA Capability Context (~15 lines) — what AnA can do for this project
  *   - AnA Wisdom Context (~15 lines) — what AnA has learned
- *   - Scoped Rules (~50 lines) — matching rules for current action context
  *
  * Total base prompt addition: ~200 lines (not 2000+).
  *
@@ -29,7 +28,6 @@ import {
   anaProjectCapabilities,
 } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import type { ActionContext } from './ana-scoped-rule-loader';
 import { pickWritable } from '../utils/authedOrgId';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -38,7 +36,6 @@ export interface ContextRouterParams {
   organizationId: number;
   projectId?: number;
   userId?: number;
-  actionContext?: ActionContext;
 }
 
 export interface MergedContextResult {
@@ -51,7 +48,6 @@ export interface MergedContextResult {
     user: string | null;
     capabilities: string | null;
     wisdom: string | null;
-    scopedRules: string | null;
   };
   /** Total line count */
   totalLines: number;
@@ -224,7 +220,9 @@ export async function buildWisdomRouterContext(
       .select()
       .from(anaPlatformWisdom)
       .where(and(...wisdomConditions))
-      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      // By the evidence recorded. 2026-10-15: by confidence_score, which held a
+      // stamped 0.5 + 0.05·organizations and is now null (nothing measures it).
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(20);
 
     // Filter by context
@@ -295,7 +293,11 @@ export async function buildWisdomRouterContext(
  *   + User.md (personal) ← overrides
  *   + Capabilities (~15 lines)
  *   + Wisdom (~15 lines)
- *   + Scoped Rules (~50 lines, loaded on-demand)
+ *
+ * Scoped rules left this merge on 2026-10-22: their loader was never called
+ * with the context it needed and its table was never seeded, so the layer was
+ * always empty. The method they described is AnA skills, selected per turn on
+ * the conversation path (server/services/ana/skills/).
  *
  * Override semantics:
  *   - User says "be concise" → overrides company default of "be detailed"
@@ -305,7 +307,7 @@ export async function buildWisdomRouterContext(
 export async function buildMergedContext(
   params: ContextRouterParams
 ): Promise<MergedContextResult> {
-  const { organizationId, projectId, userId, actionContext } = params;
+  const { organizationId, projectId, userId } = params;
 
   // Load all layers in parallel
   const [
@@ -317,18 +319,6 @@ export async function buildMergedContext(
     buildCapabilityRouterContext(projectId).catch(() => null),
     buildWisdomRouterContext(organizationId, projectId).catch(() => null),
   ]);
-
-  // Load scoped rules if action context is available
-  let scopedRulesContext: string | null = null;
-  if (actionContext) {
-    try {
-      // Dynamic import to avoid circular deps
-      const { buildScopedRuleContext } = await import('./ana-scoped-rule-loader');
-      scopedRulesContext = await buildScopedRuleContext(actionContext);
-    } catch {
-      // Scoped rules are optional — degrade gracefully
-    }
-  }
 
   // NOTE: Global.md (clientIntelligence) and Local.md (projectIntelligence)
   // are already injected by ana-context-builder.ts at lines 931-941.
@@ -351,11 +341,6 @@ export async function buildMergedContext(
     blocks.push(wisdomContext);
   }
 
-  // Scoped Rules (path-matched)
-  if (scopedRulesContext) {
-    blocks.push(scopedRulesContext);
-  }
-
   const contextBlock = blocks.join('\n\n');
   const totalLines = contextBlock.split('\n').length;
 
@@ -367,7 +352,6 @@ export async function buildMergedContext(
       user: userContext,
       capabilities: capabilityContext,
       wisdom: wisdomContext,
-      scopedRules: scopedRulesContext,
     },
     totalLines,
   };

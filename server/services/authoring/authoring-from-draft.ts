@@ -37,7 +37,7 @@ import {
   resolveBinding,
   type Binding,
   type CreateContext,
-  type Refusal,
+  type AuthoringRefusal,
   type SectionSeed,
   type DocumentRowSpec,
 } from './authoring-documents';
@@ -312,7 +312,7 @@ async function governedWriteOf(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CreateDocumentFromDraftOutcome =
-  | Refusal
+  | AuthoringRefusal
   | {
       kind: 'created';
       document: Record<string, unknown>;
@@ -335,7 +335,7 @@ const CHANGE_REASON: Record<ProvenanceSource, string> = {
 /** Each section that cites sources: its references and the content as it is stored. */
 type SelectedDraftSources = Array<{ sectionCode: string; refs: DraftSourceReference[]; storedContent: string }>;
 class DraftSourceVerificationError extends Error {}
-const SOURCE_VERIFICATION_REFUSAL: Refusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
+const SOURCE_VERIFICATION_REFUSAL: AuthoringRefusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
 
 async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, programId: string, selected: SelectedDraftSources, provenance: DocumentProvenance): Promise<void> {
   if (!selected.length) return;

@@ -28,6 +28,7 @@ import { renderedLeafFiles } from '../../../shared/schema/submissions';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { readLocalUploadBuffer } from '../anthropic-files';
+import { isConversionCapacityError } from '../conversion-slots';
 import { sectionPlainText } from '../c2c/section-content';
 import {
   externalDocumentTableReason,
@@ -92,7 +93,11 @@ import { isWaivableShadowReviewFailure } from '../../../shared/constants/shadow-
 import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
-import { packageIdentityRefusal, readRecordedPackageIdentity } from '../ectd/package-identity';
+import {
+  packageIdentityRefusal, readSubmissionPackageIdentity, lockRecordedPackageIdentity,
+  recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity,
+  type RecordedPackageIdentitySnapshot,
+} from '../ectd/package-identity';
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
@@ -195,6 +200,21 @@ const SEQUENCE_TRANSITIONS: Record<SequenceStatus, SequenceStatus[]> = {
 export function canTransitionSequence(from: string, to: string): boolean {
   const allowed = SEQUENCE_TRANSITIONS[from as SequenceStatus];
   return Array.isArray(allowed) && allowed.includes(to as SequenceStatus);
+}
+
+/** Eligibility for the existing dispatch action, including an unsent FDA renewal.
+ * This is status advice only; signature, package and release gates run at the act. */
+export function sequenceDispatchAuthorizationEligibility(seq: {
+  status: string; region: string; dispatchStatus?: string | null;
+}): { reauthorizing: boolean; eligible: boolean; refusal: string | null } {
+  const reauthorizing = seq.status === 'dispatched' && canonicalRegionOf(seq.region) === 'US';
+  if (reauthorizing) {
+    const eligible = seq.dispatchStatus === null || seq.dispatchStatus === 'pending' || seq.dispatchStatus === 'rejected';
+    return { reauthorizing, eligible, refusal: eligible ? null :
+      resendRefusal(seq.dispatchStatus) ?? 'The dispatch status is not confirmed as unsent; refresh it before renewing its authorization.' };
+  }
+  const eligible = canTransitionSequence(seq.status, 'dispatched');
+  return { reauthorizing, eligible, refusal: eligible ? null : `Cannot transition sequence from ${seq.status} to dispatched.` };
 }
 
 /** A frozen or dispatched sequence is immutable — its leaves cannot change. Pure. */
@@ -823,7 +843,7 @@ async function validateForValidatedStatus(
   if (before !== after) {
     throw new SubmissionError(
       'INVALID_STATE',
-      `Sequence ${seq.sequenceNumber}'s leaves changed while it was being validated, so it was not marked Validated. Validate it again.`,
+      `Sequence ${seq.sequenceNumber}'s leaves or recorded application/applicant facts changed while it was being validated, so it was not marked Validated. Validate it again.`,
     );
   }
   return { errors: 0, warnings: a.readiness.warnings, notYetApproved: a.readiness.releaseBlockers, leafCount: a.leafCount };
@@ -905,18 +925,8 @@ type SignaturePayloadRefusal = (payload: Record<string, unknown> | null) => stri
  *   - the sequence's leaf manifest still hashes to the digest bound at signing
  *     (11.70). The digest was persisted and never consulted, so a leaf edited
  *     after signing was frozen under a signature applied to different bytes.
- */
-async function governedSignatureRefusal(
-  signatureActionId: string,
-  target: string,
-  ctx: { organizationId: number; userId: number },
-  step: SequenceSignatureIntent,
-): Promise<string | null> {
-  return (await governedSignatureVerdict(signatureActionId, target, ctx, step)).refusal;
-}
-
-/**
- * governedSignatureRefusal, plus the leaf-manifest digest the signature binds
+ *
+ * The signature verdict also returns the content digest the signature binds
  * when it does authorize the step. 2026-09-23 (W5/D7, round-2 skeptic): the
  * governed freeze/dispatch re-derives that digest under the sequence row lock
  * and refuses when it moved, so the verdict is bound to what is frozen, not
@@ -930,7 +940,7 @@ async function governedSignatureVerdict(
   payloadRefusal?: SignaturePayloadRefusal,
 ): Promise<
   | { refusal: string; boundDigest: null }
-  | { refusal: null; boundDigest: string; signatureId: number | null; meaning: unknown }
+  | { refusal: null; boundDigest: string; signatureId: number | null; meaning: unknown; recordedPackageIdentity?: RecordedPackageIdentitySnapshot }
 > {
   const refuse = (refusal: string) => ({ refusal, boundDigest: null }) as const;
   const action = await db.execute(sql`
@@ -1042,7 +1052,7 @@ async function governedSignatureVerdict(
     ctx.organizationId,
   );
   if (current.digest !== sig.bound_payload_digest) {
-    return refuse('the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content');
+    return refuse('the sequence changed after it was signed (leaves or recorded application/applicant facts differ); re-sign the current content');
   }
   const signatureId = Number(sig.id);
   return {
@@ -1050,6 +1060,7 @@ async function governedSignatureVerdict(
     boundDigest: sig.bound_payload_digest,
     signatureId: Number.isFinite(signatureId) && signatureId > 0 ? signatureId : null,
     meaning: payload?.meaning,
+    ...(current.recordedPackageIdentity ? { recordedPackageIdentity: current.recordedPackageIdentity } : {}),
   };
 }
 
@@ -1493,21 +1504,39 @@ async function assertSequencePackageable(
   ctx: { organizationId: number; userId: number },
   step: GovernedSequenceStep,
 ): Promise<string | null> {
-  const assembledAgainst = await sequenceLeafManifestDigest(asQueryable(pool), id, ctx.organizationId);
+  const sequence = await getSequence(id, ctx);
+  const binding = await deriveGovernedTargetBinding(asQueryable(pool), `ectd-sequence:${id}`, ctx.organizationId);
+  const assembledAgainst = binding.digest;
+  const fda = canonicalRegionOf(sequence.region) === 'US';
+  const captured = binding.recordedPackageIdentity;
   const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
   let assembled: Awaited<ReturnType<typeof assembleSequence>>;
   try {
-    // A dry run (package-identity.ts): the blockers do not depend on the
-    // agency identifiers, so it names none and carries the one dry-run
-    // placeholder. It produces no package — the bundle is discarded below on
-    // every path, and nothing of it is stored or sent (P-27, 2026-10-08).
+    // FDA readiness judges the recorded identity the signature binds. The
+    // temporary package is still discarded on every path. Other regions keep
+    // the existing explicit dry run until their applicant-id authority is set.
+    if (fda && !captured) throw new Error('The FDA signature binding has no recorded application/applicant identity.');
+    if (captured) {
+      const missing = packageIdentityRefusal(captured.identity, 'Nothing can be frozen or dispatched.', { fda });
+      if (missing) throw missing;
+    }
     assembled = await assembleSequence({
       sequenceId: id,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      dryRun: true,
+      ...(fda && captured ? {
+        applicationId: captured.identity.applicationNumber as string,
+        sponsorId: captured.identity.applicantId as string,
+        sponsorName: captured.identity.applicantName as string,
+        contacts: fdaContactsForPackageIdentity(captured.identity),
+        recordedPackageIdentity: captured,
+      } : { dryRun: true as const }),
     });
   } catch (err) {
+    // A busy converter (OPS-13) is not a sequence that fails to assemble, and
+    // there is nothing in the leaves to fix: it passes through to the route's
+    // fail(), which answers 503 with Retry-After.
+    if (isConversionCapacityError(err)) throw err;
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +
@@ -1656,8 +1685,9 @@ export async function precheckGovernedStep(
   }
   if (step === SHADOW_FINDING_DISPOSITION_INTENT) return precheckShadowFindingDisposition(seq, ctx, opts);
   const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
-  if (!canTransitionSequence(seq.status, toStatus)) {
-    return { step, cleared: false, refusal: `Cannot transition sequence from ${seq.status} to ${toStatus}.` };
+  const dispatchAuthorization = step === 'dispatch' ? sequenceDispatchAuthorizationEligibility(seq) : null;
+  if (dispatchAuthorization ? !dispatchAuthorization.eligible : !canTransitionSequence(seq.status, toStatus)) {
+    return { step, cleared: false, refusal: dispatchAuthorization?.refusal ?? `Cannot transition sequence from ${seq.status} to ${toStatus}.` };
   }
   try {
     await governedContentGates(seq, ctx, step, (a) => (step === 'freeze' ? a.freezeGate : a.dispatchGateOnSigning));
@@ -1722,6 +1752,19 @@ async function shadowReviewRefusalUnderLock(
   return presence.cleared ? null : `${since}, the Shadow Review waiver it relied on no longer stands. ${presence.blockers.join(' ')}`;
 }
 
+/** Repeat the existing renewal status rule after taking the sequence lock. */
+function assertDispatchRenewalStillEligible(
+  row: { status?: string; region?: string; dispatch_status?: string | null } | undefined,
+  expectedDispatchStatus: string | null | undefined,
+): void {
+  const current = sequenceDispatchAuthorizationEligibility({ status: row?.status ?? '',
+    region: row?.region ?? '', dispatchStatus: row?.dispatch_status });
+  if (!current.eligible || !current.reauthorizing || row?.dispatch_status !== expectedDispatchStatus) {
+    throw new SubmissionError('INVALID_STATE',
+      current.refusal ?? 'The dispatch status changed while renewal was being checked. Nothing was recorded; refresh and sign again if it remains unsent.');
+  }
+}
+
 async function applyGovernedSequenceTransition(
   id: number,
   toStatus: 'frozen' | 'dispatched',
@@ -1729,9 +1772,11 @@ async function applyGovernedSequenceTransition(
   signatureActionId: string
 ): Promise<EctdSequence> {
   const seq = await getSequence(id, ctx);
-  if (!canTransitionSequence(seq.status, toStatus)) {
-    throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
+  const dispatchAuthorization = toStatus === 'dispatched' ? sequenceDispatchAuthorizationEligibility(seq) : null;
+  if (dispatchAuthorization ? !dispatchAuthorization.eligible : !canTransitionSequence(seq.status, toStatus)) {
+    throw new SubmissionError('INVALID_STATE', dispatchAuthorization?.refusal ?? `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
+  const reauthorizing = dispatchAuthorization?.reauthorizing === true;
 
   // Gate 1 — Part 11 e-signature must govern THIS sequence, for THIS step,
   // signed by THIS actor, unspent, and bound to the current leaf manifest.
@@ -1782,16 +1827,25 @@ async function applyGovernedSequenceTransition(
           seq.submissionId,
           ctx.organizationId,
         ]);
-        await client.query(
-          `SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+        const locked = await client.query(
+          `SELECT id, status, dispatch_status, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
           [id, ctx.organizationId],
         );
+        if (reauthorizing) {
+          assertDispatchRenewalStillEligible(locked.rows[0], seq.dispatchStatus);
+          // Renewal keeps the status unchanged, so its status CAS alone cannot
+          // prevent another request from spending the same signature first.
+          if (await signatureSpentBy(signatureActionId, target, ctx.organizationId, client)) {
+            throw new SubmissionError('GOVERNED_REQUIRED', 'This dispatch signature was already used or voided while renewal was being checked. Sign a fresh authorization.');
+          }
+        }
         const q = asQueryable(client);
+        await lockRecordedPackageIdentity(q, ctx.organizationId, verdict.recordedPackageIdentity?.identity.programId ?? null);
         const now = await sequenceLeafManifestDigest(q, id, ctx.organizationId);
         if (now === null || now !== assembledAgainst || now !== verdict.boundDigest) {
           throw new SubmissionError(
             'INVALID_STATE',
-            `Sequence ${id}'s leaves changed while this ${step} was being checked (the leaf manifest no longer matches ` +
+            `Sequence ${id}'s leaves or recorded application/applicant facts changed while this ${step} was being checked (the content binding no longer matches ` +
               'the one the package gate assembled and the signature binds). Nothing was changed; re-check the leaves and sign again.',
           );
         }
@@ -1802,7 +1856,7 @@ async function applyGovernedSequenceTransition(
       },
       /* COMPARE-AND-SET on the status this transition was authorized against.
          `seq.status` was read at the top of this function, and everything since —
-         three queries in governedSignatureRefusal, deriveGovernedTargetBinding,
+         the checks in governedSignatureVerdict, deriveGovernedTargetBinding,
          and the whole dispatch readiness assessment including an external
          validator call — is a window in which another author can move the same
          sequence. Without the predicate both callers' UPDATEs applied, each
@@ -1811,8 +1865,10 @@ async function applyGovernedSequenceTransition(
          them actually observed. */
       text: toStatus === 'frozen'
         ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`
-        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`,
-      params: [toStatus, id, ctx.organizationId, seq.status],
+        : reauthorizing
+          ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4 AND dispatch_status IS NOT DISTINCT FROM $5::text AND (dispatch_status IS NULL OR dispatch_status IN ('pending', 'rejected'))`
+          : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`,
+      params: [toStatus, id, ctx.organizationId, seq.status, ...(reauthorizing ? [seq.dispatchStatus] : [])],
       noRowsRefusal:
         `Sequence ${id} is no longer in state '${seq.status}' — it changed while this ${step} was being authorized. ` +
         `Re-check the sequence and sign again if the transition still applies.`,
@@ -1826,6 +1882,8 @@ async function applyGovernedSequenceTransition(
         from: seq.status,
         to: toStatus,
         signatureActionId,
+        ...(reauthorizing ? { reauthorized: true, previousDispatchStatus: seq.dispatchStatus } : {}),
+        ...(verdict.recordedPackageIdentity ? { recordedPackageIdentity: verdict.recordedPackageIdentity } : {}),
         validationErrors: assessment.validationErrors,
         unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
         // P-34: the waiver this step went forward on, when no review had completed.
@@ -1850,7 +1908,8 @@ export function freezeSequence(
   );
 }
 
-/** Mark a frozen sequence dispatched. Governed: requires e-signature + a clear gate.
+/** Authorize dispatch, or renew an unsent FDA dispatch after identity changes.
+ *  Governed: a fresh e-signature and every current gate, with an atomic audit.
  *  This records intent; actual transmission stays behind transmit_submission.
  *  A refused dispatch voids the signature it was given (P-23). */
 export function dispatchSequence(
@@ -1930,12 +1989,14 @@ async function recheckUnderSequenceLock(
     [p.sequenceId, p.organizationId],
   );
   const q = asQueryable(client);
+  const captured = await deriveGovernedTargetBinding(q, `ectd-sequence:${p.sequenceId}`, p.organizationId);
+  await lockRecordedPackageIdentity(q, p.organizationId, captured.recordedPackageIdentity?.identity.programId ?? null);
   await p.recheck(q);
   if ((await sequenceLeafManifestDigest(q, p.sequenceId, p.organizationId)) !== p.boundDigest) {
     throw new SubmissionError(
       'INVALID_STATE',
-      `Sequence ${p.sequenceId}'s leaves changed while this ${p.act} was being recorded, so the signature no longer binds them. ` +
-        'Nothing was recorded; sign again over the current leaves.',
+      `Sequence ${p.sequenceId}'s leaves or recorded application/applicant facts changed while this ${p.act} was being recorded, so the signature no longer binds them. ` +
+        'Nothing was recorded; sign again over the current content.',
     );
   }
 }
@@ -2242,8 +2303,8 @@ export interface TransmitSequenceParams {
    */
   applicationId?: string;
   sponsorId?: string;
-  /* No sponsorName: the applicant is the organisation's recorded name
-     (package-identity.ts), never a value the caller supplies. QA 2026-10-08 (j6). */
+  /* No sponsorName: the applicant is recorded, never supplied by a caller.
+     FDA applicantId and contact also come only from the bound sponsor record. */
 }
 
 export interface TransmitSequenceResult {
@@ -2308,7 +2369,10 @@ export interface TransmitSequenceResult {
  * sent them a second time. The claim commits on its own and therefore survives
  * that rollback.
  */
-async function claimTransmitSlot(sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string): Promise<boolean> {
+async function claimTransmitSlot(
+  sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string,
+  expected: { boundDigest: string; programId: string | null; fda: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot },
+): Promise<{ claimed: boolean; recordedPackageIdentity?: RecordedPackageIdentitySnapshot }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -2318,6 +2382,20 @@ async function claimTransmitSlot(sequenceId: number, organizationId: number, sig
     // Read the canonical ledger in a fresh statement after acquiring it.
     if (await signatureSpentBy(signatureActionId, `ectd-sequence:${sequenceId}`, organizationId, client)) {
       throw new SubmissionError('GOVERNED_REQUIRED', 'The transmit signature was already used or voided. Sign a new transmit attempt. Nothing was transmitted.');
+    }
+    const q = asQueryable(client);
+    await lockRecordedPackageIdentity(q, organizationId, expected.programId);
+    const binding = await deriveGovernedTargetBinding(q, `ectd-sequence:${sequenceId}`, organizationId);
+    const captured = binding.recordedPackageIdentity;
+    if (binding.digest !== expected.boundDigest || (expected.fda &&
+      (!captured || captured.identity.programId !== expected.programId ||
+       !sameRecordedPackageIdentitySnapshot(captured, expected.recordedPackageIdentity)))) {
+      throw new SubmissionError('GOVERNED_REQUIRED',
+        'The sequence leaves or recorded application/applicant facts changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
+    }
+    if (expected.fda && captured) {
+      const missing = packageIdentityRefusal(captured.identity, 'Nothing was sent.', { fda: true });
+      if (missing) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missing.message);
     }
     const res = await client.query(
       `UPDATE ectd_sequences
@@ -2329,7 +2407,8 @@ async function claimTransmitSlot(sequenceId: number, organizationId: number, sig
       [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
     );
     await client.query('COMMIT');
-    return (res.rowCount ?? res.rows?.length ?? 0) > 0;
+    return { claimed: (res.rowCount ?? res.rows?.length ?? 0) > 0,
+      ...(captured ? { recordedPackageIdentity: recordedPackageIdentitySnapshot(captured.identity) } : {}) };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -2368,7 +2447,7 @@ export interface SequenceTransmitReadiness {
   };
   /** The program's recorded agency application number, when one is usable. */
   recordedApplicationNumber: string | null;
-  /** The organisation's recorded name, which the package names as the applicant. */
+  /** The recorded applicant name, using the explicitly bound sponsor when present. */
   recordedApplicant: string | null;
   /** The transmit-time dispatch gate (`gate`, every gate composed). */
   gate: { cleared: boolean; blockers: string[] };
@@ -2466,9 +2545,9 @@ export async function sequenceTransmitReadiness(
 
   // The applicant and the application the package would name, from the record
   // (package-identity.ts); with either missing transmit refuses, and says so here.
-  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submission.id, { region: seq.region });
   const recordedApplicationNumber = identity.applicationNumber;
-  const identityRefusal = packageIdentityRefusal(identity, 'Nothing can be sent until it is recorded.')?.message ?? null;
+  const identityRefusal = packageIdentityRefusal(identity, 'Nothing can be sent until it is recorded.', { fda: canonicalRegionOf(seq.region) === 'US' })?.message ?? null;
   const typedNumberRefusal = identityRefusal ?? typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
 
   const gatewayRefusal = (): string | null => {
@@ -2573,20 +2652,20 @@ async function transmitDispatchedSequence(
   const submission = await getSubmission(seq.submissionId, ctx);
   // The package names its applicant and its application from the record, or it
   // is not sent (package-identity.ts, QA 2026-10-08 j6).
-  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
-  const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.');
+  const identity = await readSubmissionPackageIdentity(pool, ctx.organizationId, submission.id, { region: seq.region });
+  const fda = canonicalRegionOf(seq.region) === 'US';
+  const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.', { fda });
   if (missingIdentity) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missingIdentity.message);
   const numberRefusal = transmitApplicationNumberRefusal(applicationId, identity.applicationNumber);
   if (numberRefusal) throw numberRefusal;
-  const applicantName = identity.applicantName as string;
 
   // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
-  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, 'transmit');
-  if (refusal !== null) {
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, 'transmit');
+  if (verdict.refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit', then pass its actionId. Refused: ${refusal}.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit', then pass its actionId. Refused: ${verdict.refusal}.`
     );
   }
 
@@ -2608,7 +2687,6 @@ async function transmitDispatchedSequence(
 
   const { getGateway, preTransmitFindings } = await import('../submission-gateways/index');
   // gwRegion and gwName are always valid Region/GatewayName values returned by transmitRouteFor
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gw = getGateway(route.gwRegion as any, route.gwName as any);
 
   // Honest: only transmit when the org has credentials for this gateway+env.
@@ -2642,7 +2720,9 @@ async function transmitDispatchedSequence(
      point a concurrent caller is refused by the compare-and-set rather than by a
      status it read minutes ago. */
   const attemptId = randomUUID();
-  if (!(await claimTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId))) {
+  const claim = await claimTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId,
+    { boundDigest: verdict.boundDigest, programId: submission.programId ?? null, fda, recordedPackageIdentity: verdict.recordedPackageIdentity });
+  if (!claim.claimed) {
     const fresh = await getSequence(sequenceId, ctx);
     throw new SubmissionError(
       'INVALID_STATE',
@@ -2657,20 +2737,20 @@ async function transmitDispatchedSequence(
   const { assembleSequence } = await import('../ectd/assemble-from-core');
   let assembled;
   try {
+    const capturedIdentity = claim.recordedPackageIdentity?.identity ?? identity;
+    // Only the snapshot captured under the claim locks can supply FDA bytes.
+    // An optional non-FDA applicant id retains its existing charset contract;
+    // a missing one stays empty rather than being invented from a DUNS.
+    const nonFdaApplicantId = params.sponsorId === undefined ? '' : usableIdentifier('applicantId', params.sponsorId);
+    if (!fda && nonFdaApplicantId === null) throw new SubmissionError('VALIDATION', 'The applicant id is not a usable regional identifier. Nothing was sent.');
     assembled = await assembleSequence({
-    sequenceId,
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    // Never fabricate an agency identifier (regulatory-identifiers.ts): these
-    // become <application-number>/<procedure-number>, <id>/<company-id> and
-    // <name>/<company-name> in the regional backbone, and the application id is
-    // also a package filename component. An unassigned value SAYS it is
-    // unassigned, in the wording the transmit path already uses.
-    applicationId,
-      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
-      // (package-identity.ts header); its name is the organisation's.
-      sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: applicantName,
+      sequenceId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      applicationId: capturedIdentity.applicationNumber as string,
+      sponsorId: fda ? capturedIdentity.applicantId as string : nonFdaApplicantId as string,
+      sponsorName: capturedIdentity.applicantName as string,
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(capturedIdentity), recordedPackageIdentity: claim.recordedPackageIdentity } : {}),
     });
   } catch (err) {
     await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
@@ -2734,6 +2814,23 @@ async function transmitDispatchedSequence(
     );
   }
 
+  // Last pre-wire checkpoint. The identity echo proves which captured facts
+  // fed these immutable bytes; a later record read must not stand in for it.
+  // A subsequent edit cannot alter this attempt's already assembled snapshot.
+  try {
+    const current = await deriveGovernedTargetBinding(asQueryable(pool), target, ctx.organizationId);
+    if (current.digest !== verdict.boundDigest || (fda &&
+      (!sameRecordedPackageIdentitySnapshot(assembled.recordedPackageIdentity, claim.recordedPackageIdentity) ||
+       !sameRecordedPackageIdentitySnapshot(current.recordedPackageIdentity, claim.recordedPackageIdentity)))) {
+      throw new SubmissionError('GOVERNED_REQUIRED',
+        'The assembled package does not match the approved leaves and recorded application/applicant facts at the transmit checkpoint. Nothing was sent; review the record and sign again.');
+    }
+  } catch (err) {
+    await assembled.cleanup();
+    await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
+    throw err;
+  }
+
   let result;
   try {
     attempt.reachedGateway = true;
@@ -2748,7 +2845,8 @@ async function transmitDispatchedSequence(
       bundle: assembled.bundle,
       environment,
       submissionType: seq.type ?? undefined,
-      metadata: { applicationId, sequence: seq.sequenceNumber, environment },
+      metadata: { applicationId, sequence: seq.sequenceNumber, environment,
+        ...(fda ? { recordedPackageIdentity: claim.recordedPackageIdentity } : {}) },
       // This internal field is not accepted by the public governed HTTP route.
       dispatchBinding: { attemptId, organizationId: ctx.organizationId, sequenceId, signatureActionId, bundleSha256: assembled.bundle.sha256 },
       // Gate 1 above already verified this signature governs THIS sequence and
@@ -2803,6 +2901,8 @@ async function transmitDispatchedSequence(
         gateway: route.gwName,
         transmittalId: result.transmittalId,
         transmissionId: result.transmissionId ?? null,
+        packageSha256: assembled.bundle.sha256,
+        ...(fda ? { recordedPackageIdentity: claim.recordedPackageIdentity } : {}),
         status: result.status,
         environment,
         signatureActionId,

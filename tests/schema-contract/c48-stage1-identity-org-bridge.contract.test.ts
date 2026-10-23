@@ -43,10 +43,11 @@ const T = 180_000;
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 const SEED = 'a1000000-0000-0000-0000-000000000001'; // a disjoint identity seed uuid
 
-// The identity.organizations NOT NULL contract, reproduced verbatim from
-// db/migrations/051_gcc_multi_tenant_identity.sql: legal_name and business_model
-// are NOT NULL with NO default (the backfill must supply both); everything else the
-// migration writes has a default.
+// The identity.organizations NOT NULL shape of installs made before 2026-10-15,
+// when db/migrations/051_gcc_multi_tenant_identity.sql still declared legal_name and
+// business_model NOT NULL with NO default (the backfill must supply both). 051 now
+// leaves business_model nullable (unrecorded); the bridge must still satisfy the
+// older, stricter shape those databases keep. Everything else has a default.
 const seedSchema = `
   CREATE SCHEMA identity;
   CREATE TYPE identity.org_business_model AS ENUM

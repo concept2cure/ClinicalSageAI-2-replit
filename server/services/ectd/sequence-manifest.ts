@@ -115,15 +115,6 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
   return out;
 }
 
-/**
- * Convert a stored manifest back into the lifecycle operator's PriorLeaf shape.
- * The precise `ctdSection` + `fileName` form the cross-sequence identity, and
- * `href` carries the published path used to build the modified-file pointer.
- *
- * Tolerates a manifest stored as an unknown JSON value (the DB column is json):
- * a non-array, or entries missing required fields, yield an empty/filtered list
- * rather than throwing.
- */
 /** The optional fields a stored entry contributes to a PriorLeaf, each copied
  *  only when it has the right type — a stored manifest is untrusted JSON. */
 function optionalPriorFields(e: Partial<SequenceLeafManifestEntry>): Partial<PriorLeaf> {
@@ -139,20 +130,38 @@ function optionalPriorFields(e: Partial<SequenceLeafManifestEntry>): Partial<Pri
     ...(str(e.operation) ? { operation: e.operation } : {}),
     // What a later act's modified-file names; the operator validates both.
     ...(str(e.leafId) && str(e.backbone) ? { leafId: e.leafId, backbone: e.backbone } : {}),
+    // What this leaf's own act named, so the fold can take a replaced leaf off
+    // file whatever its name (P-42, 2026-10-22).
+    ...(str(e.modifiedFile) && e.modifiedFile ? { modifiedFile: e.modifiedFile } : {}),
   };
 }
 
-export function manifestToPriorLeaves(manifest: unknown): PriorLeaf[] {
-  if (!Array.isArray(manifest)) return [];
-  const out: PriorLeaf[] = [];
-  for (const raw of manifest) {
-    if (!raw || typeof raw !== 'object') continue;
-    const e = raw as Partial<SequenceLeafManifestEntry>;
-    if (typeof e.ctdSection !== 'string' || typeof e.md5 !== 'string') continue;
-    const fileName = typeof e.fileName === 'string' ? e.fileName : e.href ? baseName(e.href) : '';
-    if (!fileName) continue;
-    out.push({ ctdSection: e.ctdSection, fileName, md5: e.md5, ...optionalPriorFields(e) });
+/**
+ * Convert a stored manifest back into the lifecycle operator's PriorLeaf shape.
+ * The precise `ctdSection` + `fileName` form the cross-sequence identity, and
+ * `href` carries the published path used to build the modified-file pointer.
+ *
+ * A manifest it cannot read is an error naming the sequence (`sequence`, its
+ * number). 2026-10-15: a non-list read as [] and a malformed entry was
+ * skipped, so leaves the agency holds were re-filed with lifecycle 'new' — a
+ * filing path failing open.
+ */
+export function manifestToPriorLeaves(manifest: unknown, sequence?: string): PriorLeaf[] {
+  const where = sequence ? `sequence ${sequence}` : 'a prior sequence';
+  if (!Array.isArray(manifest)) {
+    throw new Error(`The stored leaf manifest of ${where} is not a list of leaves; its prior state cannot be read.`);
   }
+  const out: PriorLeaf[] = [];
+  manifest.forEach((raw: unknown, i: number) => {
+    const e = (raw && typeof raw === 'object' ? raw : {}) as Partial<SequenceLeafManifestEntry>;
+    const fileName = typeof e.fileName === 'string' ? e.fileName : typeof e.href === 'string' ? baseName(e.href) : '';
+    if (typeof e.ctdSection !== 'string' || typeof e.md5 !== 'string' || !fileName) {
+      throw new Error(
+        `The stored leaf manifest of ${where} has an unreadable entry ${i} (it needs ctdSection, md5 and a file name or href); its prior state cannot be read.`,
+      );
+    }
+    out.push({ ctdSection: e.ctdSection, fileName, md5: e.md5, ...optionalPriorFields(e) });
+  });
   return out;
 }
 

@@ -260,7 +260,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Death Case — Comprehensive Narrative Required',
             message:
-              'Per ICH E3 Section 12.3.2, all death cases require detailed individual narratives in the CSR regardless of the investigator\'s causality assessment. The narrative must include cause of death, contributing factors, autopsy findings (if available), and an independent sponsor assessment of causality.',
+              'Per ICH E3 Section 12.3.2, all death cases require detailed individual narratives in the CSR regardless of the investigator\'s causality assessment. The narrative should describe the clinical course leading to death and its timing relative to study drug administration, relevant laboratory findings, post-mortem (autopsy) findings (if available), the investigator\'s opinion on causality, and, where appropriate, the sponsor\'s opinion on causality.',
             reference: 'ICH E3 Section 12.3.2, ICH E2B(R3)',
           },
         ],
@@ -344,7 +344,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Document the patient\'s demographic information, relevant medical history, baseline laboratory values, and other pertinent clinical context.',
         guidance:
-          'Per ICH E3 Section 12.3.1, the patient context is essential for causality assessment. Document conditions relevant to the event, pre-existing conditions, surgical history, and known allergies. Baseline laboratory values should be included when relevant to the adverse event under evaluation.',
+          'Per ICH E3 Section 12.3.2, the patient context is essential for causality assessment. Document conditions relevant to the event, pre-existing conditions, surgical history, and known allergies. Baseline laboratory values should be included when relevant to the adverse event under evaluation.',
         fields: [
           {
             id: 'age',
@@ -421,7 +421,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Incomplete Medical History',
             message:
               'A complete relevant medical history is essential for causality assessment. ICH E2B(R3) requires documentation of relevant past and concurrent medical conditions.',
-            reference: 'ICH E2B(R3) Section B.1.7',
+            reference: 'ICH E2B(R3) Section D.7',
           },
         ],
       },
@@ -693,7 +693,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Time-to-Onset Not Documented',
             message:
               'The temporal relationship between drug administration and event onset is critical for causality assessment. This must be documented.',
-            reference: 'ICH E2B(R3) Section B.2.i.4',
+            reference: 'ICH E2B(R3) G.k.9.i.3.1 (time interval between beginning of drug administration and start of reaction/event); E.i.4 (date of start of reaction/event)',
           },
         ],
       },
@@ -837,7 +837,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'No Dechallenge Information',
             message:
               'Dechallenge information (response to drug withdrawal) is valuable for causality assessment. If the drug was stopped, document the clinical response.',
-            reference: 'FDA CIOMS Form Guidance',
+            reference: 'CIOMS I Form (CIOMS); ICH E2B(R3)',
           },
           {
             id: 'no_rechallenge_info',
@@ -850,7 +850,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'No Rechallenge Information',
             message:
               'Rechallenge data, when available, provides strong evidence for or against causality. Document the rationale if rechallenge was not performed.',
-            reference: 'ICH E2B(R3) Section B.4',
+            reference: 'ICH E2B(R3) Section G.k.9.i.4',
           },
         ],
       },
@@ -934,7 +934,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Missing Causality Assessment',
             message:
               'A causality assessment is required for all serious adverse events. Regulatory authorities require the sponsor to provide an assessment of the causal relationship between the study drug and the event.',
-            reference: 'ICH E2A Section III.B',
+            reference: 'ICH E2A Sections II.A.1 and III.A.1',
           },
         ],
       },
@@ -1071,7 +1071,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Complete the finalization steps for the safety narrative, including medical review, quality checks, regulatory deadlines, and any outstanding follow-up items.',
         guidance:
-          'Per ICH E6(R3) Annex 1 §3.13 and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. FDA expects narratives to be included in IND annual reports (21 CFR 312.33), CSR appendices (ICH E3), and NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
+          'Per ICH E6(R3) Annex 1 §3.13 and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. IND annual reports (21 CFR 312.33) carry aggregate adverse-experience summaries, a list of deaths and a list of discontinuations rather than individual case narratives; individual narratives belong in the CSR (ICH E3 Section 12.3.2) and the NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
         fields: [
           {
             id: 'medical_review_completed',
@@ -1095,6 +1095,30 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             label: 'Quality Check Completed',
             type: 'yes_no',
             required: true,
+          },
+          {
+            // 2026-10-22 (D2): read by sn_investigator_signature_missing.
+            id: 'investigator_signed',
+            label: 'Investigator Has Signed or Attested to the SAE Report',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'Under ICH E6(R3) the investigator is responsible for the accuracy and completeness of the data the site reports to the sponsor, and 21 CFR Part 312 requires the investigator to report serious adverse events to the sponsor. A signature or electronic attestation shows that review.',
+          },
+          {
+            // 2026-10-22 (D2): read by sn_regulatory_notification_gaps.
+            id: 'regulatory_notifications_complete',
+            label: 'Regulatory Authority and IRB/EC Notifications',
+            type: 'select',
+            required: false,
+            helpText:
+              'A serious, unexpected suspected adverse reaction is reported on an expedited basis to the regulatory authorities (ICH E2A; for a US IND, 21 CFR 312.32 IND safety reports to FDA and all participating investigators), and the IRBs/ECs are informed as their requirements state. Choose Not applicable when the case does not require expedited notification.',
+            options: [
+              { value: 'complete', label: 'Complete: all applicable authorities and IRBs/ECs notified' },
+              { value: 'in_progress', label: 'In progress: within the reporting timeline' },
+              { value: 'not_started', label: 'Not started' },
+              { value: 'not_applicable', label: 'Not applicable: no expedited notification required' },
+            ],
           },
           {
             id: 'regulatory_submission_deadline',

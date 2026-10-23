@@ -288,6 +288,38 @@ function streamServing(extra: Array<[RegExp, Handler]> = []) {
   return { calls, push: (o: unknown) => ctl.enqueue(ev(o)), close: () => ctl.close() };
 }
 
+/* DT3 review (2.8): after a reload, a failed or malformed read of the
+   conversation's runs was silent, and a malformed one became "no runs" — the
+   question stood alone, as if AnA had never answered. */
+describe('the live-runs read on a reload could not be made (DT3 review)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    vi.setSystemTime(NOW);
+  });
+
+  it.each([
+    ['a 500', () => json(500, { error: 'down' })],
+    ['a malformed 200', () => json(200, { nothing: 'here' })],
+  ])('%s: the thread says it could not check, never that nothing runs; checking again rejoins', async (_name, failing) => {
+    let reads = 0;
+    serve([
+      [/\/api\/chat\/threads\/th1\/messages/, () => json(200, HISTORY)],
+      [/\/turn-records\?thread_id=/, () => json(200, { data: { records: [] } })],
+      [/\/runs\?thread_id=th1/, () => (++reads === 1 ? failing() : json(200, listed()))],
+      [/\/runs\/run_live\/events/, () => json(200, poll())],
+    ]);
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => { await result.current.loadThread('th1'); });
+    await advance(10);
+    expect(result.current.liveRunsUnchecked).toBe(true);
+    expect(result.current.messages.map((m) => m.role)).toEqual(['user']);
+    await act(async () => { result.current.recheckLiveRuns?.(); });
+    await advance(10);
+    expect(result.current.liveRunsUnchecked).toBe(false);
+    expect(result.current.messages.map((m) => m.id)).toEqual(['m-501', 'f-run_live']);
+  });
+});
+
 describe('the originating page (real clock)', () => {
   it('2. overlapping SSE frames and polled rows render once', async () => {
     const s = streamServing([
@@ -383,22 +415,31 @@ describe('the originating page (real clock)', () => {
     expect(turn.stopUnconfirmed).toBeUndefined();
   });
 
-  it('a turn that asked to drive keeps today’s Stop: a failed cancel still aborts', async () => {
+  // D-7, decided 2026-10-22: a turn that asked to drive detaches like any
+  // other, so its stream's abort no longer stops it. A failed cancel is not
+  // Stopped; the drive halts at once and the cancel is retried.
+  it('a turn that asked to drive is stopped like any other: a failed cancel is not Stopped, and the drive halts', async () => {
     const s = streamServing([[/\/control$/, () => json(503, {})]]);
-    const { result } = renderHook(() => useAnaChat({ liveDrive: true }));
+    const driveEvents: string[] = [];
+    const { result } = renderHook(() => useAnaChat({ liveDrive: true, onDriveEvent: (e) => driveEvents.push(e.type) }));
     await act(async () => {
       void result.current.send('show me the vault');
       await drain();
     });
     await act(async () => {
       s.push({ type: 'run_started', runId: 'run_d' });
+      s.push({ type: 'drive_state', requested: true, enabled: true, mode: 'assist' });
       await drain();
     });
     await act(async () => {
       await result.current.stop();
       await drain();
     });
-    expect(assistant(result.current.messages).stopped).toBe(true);
+    const turn = assistant(result.current.messages);
+    expect(turn.stopped).toBeUndefined();
+    expect(turn.stopUnconfirmed).toBe(true);
+    expect(driveEvents).toContain('drive_stopped');
+    expect(result.current.isStreaming).toBe(true);
   });
 
   it("'leave' never cancels and never says Stopped", async () => {

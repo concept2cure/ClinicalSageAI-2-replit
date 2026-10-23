@@ -273,11 +273,11 @@ export interface StudyDesignTabProps {
 }
 
 type DesignDrawer = 'bind' | 'unbind' | 'create';
-function designTabActions(bound: boolean, canWrite: boolean, programId: string | undefined, open: (drawer: DesignDrawer) => void): PaneAction[] {
-  if (bound) return [{ label: 'Unbind study design', icon: 'close', onAct: () => open('unbind'), variant: 'outline', disabled: !canWrite }];
+function designTabActions(bound: boolean, canWrite: boolean, programId: string | undefined, openDrawer: (drawer: DesignDrawer) => void): PaneAction[] {
+  if (bound) return [{ label: 'Unbind study design', icon: 'close', onAct: () => openDrawer('unbind'), variant: 'outline', disabled: !canWrite }];
   return [
-    { label: 'Bind a study design', icon: 'link', onAct: () => open('bind'), variant: 'primary', disabled: !canWrite },
-    { label: 'Create a study design', icon: 'plus', onAct: () => open('create'), variant: 'outline', disabled: !canWrite || !programId },
+    { label: 'Bind a study design', icon: 'link', onAct: () => openDrawer('bind'), variant: 'primary', disabled: !canWrite },
+    { label: 'Create a study design', icon: 'plus', onAct: () => openDrawer('create'), variant: 'outline', disabled: !canWrite || !programId },
   ];
 }
 

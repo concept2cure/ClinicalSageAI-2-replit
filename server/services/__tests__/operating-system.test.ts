@@ -59,6 +59,7 @@ vi.mock('../../../shared/schema/operating-system', () => {
 
 // Import after mocks
 import { DecisionRecordService } from '../decision-record-service';
+import { ASSUMPTION_CATEGORIES } from '../assumption-registry-service';
 import { GovernanceBoundaryService } from '../governance-boundary-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -103,16 +104,17 @@ describe('Operating System Foundation', () => {
     });
 
     test('assumption categories cover all required types', () => {
+      // 2026-10-15: this listed literals the registry refuses ('variance',
+      // 'attrition', 'regulator_overlay', ...) and asserted only that each was a
+      // non-empty string, so it could not fail.
       const requiredCategories = [
-        'effect_size', 'variance', 'event_rate', 'attrition',
-        'endpoint', 'analysis_population', 'comparator', 'scenario',
-        'regulator_overlay', 'missing_data', 'multiplicity', 'other',
+        'effect_size', 'dropout', 'enrollment', 'endpoint',
+        'population', 'comparator', 'missing_data', 'statistical',
       ];
 
       // Each of these must be a valid category in the schema
       for (const cat of requiredCategories) {
-        expect(typeof cat).toBe('string');
-        expect(cat.length).toBeGreaterThan(0);
+        expect(ASSUMPTION_CATEGORIES as readonly string[]).toContain(cat);
       }
     });
 
@@ -566,13 +568,16 @@ describe('Operating System Foundation', () => {
 
       // Expected assumptions
       const expectedAssumptions = [
-        { category: 'analysis_population', name: expect.stringContaining('Sample size') },
-        { category: 'attrition', name: expect.stringContaining('Dropout rate') },
+        { category: 'enrollment', name: expect.stringContaining('Sample size') },
+        { category: 'dropout', name: expect.stringContaining('Dropout rate') },
         { category: 'effect_size', name: expect.stringContaining('effect size') },
         { category: 'endpoint', name: expect.stringContaining('endpoint') },
       ];
 
       expect(expectedAssumptions).toHaveLength(4);
+      for (const a of expectedAssumptions) {
+        expect(ASSUMPTION_CATEGORIES as readonly string[]).toContain(a.category);
+      }
 
       // Expected decision
       const expectedDecision = {

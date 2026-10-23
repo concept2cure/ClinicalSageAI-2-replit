@@ -38,6 +38,7 @@ const PROGRAM_SAME_ORG_KEYS = new URL('../../migrations/20260926b_program_same_o
 /* The integer project key (PF-03), applied after it for the same reason. */
 const INTEGER_PROJECT_SAME_ORG_KEYS = new URL('../../migrations/20261001_integer_project_same_org_keys.sql', import.meta.url);
 const ONE_ANCHOR_PER_PROGRAM = new URL('../../migrations/20261001b_projects_one_anchor_per_program.sql', import.meta.url);
+const PROGRAM_APPLICANT_SPONSOR = new URL('../../migrations/20261021_regulatory_programs_applicant_sponsor.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS ind_sponsors (
@@ -568,15 +569,16 @@ CREATE TABLE IF NOT EXISTS regulatory_programs (
      it — the real column has no default, and nothing may read NULL from it. */
   product_type           TEXT NOT NULL DEFAULT 'drug',
   primary_agency         TEXT NOT NULL DEFAULT 'FDA',
+  lead_user_id           INTEGER,
   product_name           TEXT NOT NULL,
   application_number     TEXT,
   sponsor_address        TEXT,
   ind_type               TEXT,
   indication             TEXT,
   target_submission_date TIMESTAMPTZ,
-  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
-  deleted_at             TIMESTAMPTZ
+  created_at             TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMP NOT NULL DEFAULT now(),
+  deleted_at             TIMESTAMP
 );
 `;
 
@@ -770,6 +772,9 @@ export async function createIndPgliteDb(
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
+  // Apply the real nullable applicant binding + same-tenant FK, not a fixture
+  // copy. ind_sponsors already exists through IND_PGLITE_DDL above.
+  await pglite.exec(readFileSync(PROGRAM_APPLICANT_SPONSOR, 'utf8'));
   if (opts.governedSigning) await applyGovernedSigning(pglite);
   if (opts.shadowReview) await pglite.exec(SHADOW_REVIEW_PGLITE_DDL);
   // After every DDL block: canonical_documents is created by LEAF_SOURCE_PGLITE_DDL,

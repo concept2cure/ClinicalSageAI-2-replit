@@ -1,5 +1,32 @@
 # Filing correspondence and exact legal-version handoffs
 
+## What already exists
+
+The October 23 integration extends these existing authorities. It does not add a
+second identity reader or change the address authority used by the filing forms.
+
+| Canonical piece | Responsibility and prior limit |
+| --- | --- |
+| `server/services/ectd/package-identity.ts:readSubmissionPackageIdentity` | Reads the explicitly bound same-tenant applicant and the application number for the sequence's market. The prior company comparison queried the tenant name and home project number; correspondence called the project-only reader. Those company paths now consume this submission reader. |
+| `server/services/ind-forms/form-context-assembler.ts:programToFormMetadata` | Keeps `regulatory_programs.sponsor_address` as the form's address authority, even with a bound sponsor. Company reconciliation preserves that recorded program address instead of switching to the registry's mailing address. |
+| `server/services/company-documents/identity.ts` | Compares company presentation with filing facts and retains reasoned role differences. Its existing review hash now also binds the canonical applicant snapshot, so a same-name sponsor rebind or regulatory-contact change invalidates the previous review. |
+| `server/services/company-documents/correspondence.ts` | Admits the sequence, creates server-owned provenance and rechecks before rendering/Authoring creation. The existing private reservation now retains the canonical applicant snapshot as well as the displayed origin. Historical public provenance remains compatible. |
+
+The deletion-history search `git log --all --diff-filter=D -- '*company-documents*identity*' '*company-documents*correspondence*' '*package-identity*'` found no removed competing implementation. The existing readers, reconciliation and reservation are extended in place.
+
+## Current filing identity
+
+Additional-market letters use the number recorded for that submission and
+sequence region. A missing additional-market number or an unrelated third-market
+sequence stays missing; the home number is never substituted. The existing FDA
+explicit-applicant requirement also applies to the displayed company comparison
+and letter: an unbound legacy tenant name is not presented as an FDA applicant.
+Missing facts remain visible on working drafts, and cannot be acknowledged away
+by a company-identity role review. This does not claim that a draft is ready to
+dispatch or replace the package's contact, identifier or transmission checks.
+
+## Correspondence and handoff workflow
+
 Company correspondence now starts in Submission Center from an admitted sequence.
 Both the Word download and Authoring draft accept that sequence ID, derive its
 program, submission, application, market and recipient agency on the server, and

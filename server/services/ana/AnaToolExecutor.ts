@@ -245,7 +245,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
-import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
+import { CREATABLE_NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -864,6 +864,9 @@ registerToolHandler('project_knowledge_search', async (input, rawCtx) => {
         },
         query,
         confidence: confidenceFromScore(d.finalScore),
+        // 2026-10-15: only the bucket was passed, so persisted provenance
+        // recorded retrievalScore null for every scored passage.
+        retrievalScore: typeof d.finalScore === 'number' ? d.finalScore : null,
       });
     });
     return JSON.stringify({
@@ -5670,6 +5673,10 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
         'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
+    // 2026-10-22: a program outside the organization read as a failed load.
+    if (err instanceof Error && err.name === 'CtdProgramNotFoundError') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `Loading nonclinical program failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -9236,7 +9243,8 @@ function confinePackagerPaths(
 async function recordedPackageIdentityOrRefusal(
   programIdInput: unknown,
   organizationId: number,
-): Promise<{ ok: true; applicationNumber: string; applicantName: string } | { ok: false; refusal: string }> {
+  region: string,
+): Promise<{ ok: true; identity: import('../ectd/package-identity').RecordedPackageIdentity } | { ok: false; refusal: string }> {
   const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
   if (!programId) {
     return {
@@ -9250,19 +9258,36 @@ async function recordedPackageIdentityOrRefusal(
       }),
     };
   }
-  const [{ readRecordedPackageIdentity, packageIdentityRefusal }, { getPool }] = await Promise.all([
+  const [{ readRecordedPackageIdentity, packageIdentityRefusal, isHomeMarket }, { getPool }] = await Promise.all([
     import('../ectd/package-identity.js'),
     import('../../db.js'),
   ]);
   const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
-  const missing = packageIdentityRefusal(identity, 'Nothing was built.');
+  // The project's number is its home market's (decision P-44). Another market's
+  // package carries the number its own agency assigned, recorded on that
+  // market's submission, which this tool does not read: it is refused here.
+  if (!isHomeMarket(region, identity.homeAgency)) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({
+        error:
+          `package_ectd_for_region packages a project's home market only (${String(identity.homeAgency)}), from the ` +
+          `project's record. ${region.toUpperCase()} is another market: its package carries the application number its own ` +
+          "agency assigned, recorded on that market's submission, never the project's (P-44). Build it from Submission " +
+          'Center, on that submission. Nothing was built.',
+        code: 'NOT_HOME_MARKET',
+        retry: false,
+      }),
+    };
+  }
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.', { fda: region === 'fda' });
   if (missing) {
     return {
       ok: false,
       refusal: JSON.stringify({ error: missing.message, code: missing.code, missing: missing.missing, retry: false }),
     };
   }
-  return { ok: true, applicationNumber: identity.applicationNumber as string, applicantName: identity.applicantName as string };
+  return { ok: true, identity };
 }
 
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
@@ -9294,9 +9319,12 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
-    const identity = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId);
-    if (!identity.ok) return identity.refusal;
-    const { applicationNumber, applicantName } = identity;
+    const recorded = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId, region);
+    if (!recorded.ok) return recorded.refusal;
+    const identity = recorded.identity;
+    const applicationNumber = identity.applicationNumber as string;
+    const applicantName = identity.applicantName as string;
+    const { fdaContactsForPackageIdentity } = await import('../ectd/package-identity.js');
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
       region: region as any,
@@ -9308,11 +9336,9 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
          packager used to default to `fdaat1` — NDA — for every package this
          tool built. It now refuses, so the tool asks for it. */
       ...(typeof input.application_type === 'string' && input.application_type.trim()
-        ? { fda: { applicationType: input.application_type.trim() } }
+        ? { fda: { applicationType: input.application_type.trim(), ...(region === 'fda' ? { contacts: fdaContactsForPackageIdentity(identity) } : {}) } }
         : {}),
-      // The applicant's <id> (D-U-N-S) has no recorded home yet; it says so,
-      // as the compile's does (package-identity.ts header, P-27 known gap).
-      sponsorId:     `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorId:     region === 'fda' ? identity.applicantId as string : '',
       sponsorName:   applicantName,
       productName:   String(input.product_name),
       // A delete's source_path is passed through as given, never dropped: the
@@ -10521,16 +10547,25 @@ registerToolHandler('validate_udi', async (input) => {
 });
 
 registerToolHandler('get_electrical_standards', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: each fact was
+  // read `=== true`, so one left out answered "IEC 60601 does not apply" or dropped its
+  // collateral. Unstated stays unstated (the engine names it); a fact that is not true
+  // or false is refused, naming it.
+  const FACTS = ['electricallyPowered', 'hasAlarms', 'closedLoopControl', 'homeUse', 'emsUse', 'hasParticularStandard'] as const;
+  const unreadable = FACTS.filter((k) => input[k] !== undefined && input[k] !== null && typeof input[k] !== 'boolean');
+  if (unreadable.length > 0) {
+    return JSON.stringify({ error: `${unreadable.join(', ')} must be true or false; leave out a fact that is not known.` });
+  }
+  const fact = (k: (typeof FACTS)[number]): boolean | undefined => (typeof input[k] === 'boolean' ? (input[k] as boolean) : undefined);
   try {
     const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
     return JSON.stringify({ ok: true, ...applicableElectricalStandards({
-      electricallyPowered: input.electricallyPowered === true,
-      hasAlarms: input.hasAlarms === true,
-      closedLoopControl: input.closedLoopControl === true,
-      homeUse: input.homeUse === true,
-      emsUse: input.emsUse === true,
-      hasParticularStandard: input.hasParticularStandard === true,
+      electricallyPowered: fact('electricallyPowered'),
+      hasAlarms: fact('hasAlarms'),
+      closedLoopControl: fact('closedLoopControl'),
+      homeUse: fact('homeUse'),
+      emsUse: fact('emsUse'),
+      hasParticularStandard: fact('hasParticularStandard'),
     }) });
   } catch (err) {
     return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10538,11 +10573,21 @@ registerToolHandler('get_electrical_standards', async (input) => {
 });
 
 registerToolHandler('get_sterilization_requirements', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: `sterile` was
+  // read `=== true`, so one left out answered "not supplied sterile — does not apply",
+  // and an unknown method read as unspecified. Unstated stays unstated; a value that
+  // cannot be read is refused, naming it.
   try {
-    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    const { sterilizationRequirements, STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const methods: string[] = [...STERILIZATION_METHODS.map((m) => m.id), 'unknown'];
+    const unreadable: string[] = [];
+    if (input.sterile !== undefined && input.sterile !== null && typeof input.sterile !== 'boolean') unreadable.push('sterile must be true or false');
+    if (input.method !== undefined && input.method !== null && !methods.includes(String(input.method))) {
+      unreadable.push(`method '${String(input.method)}' is not one of: ${methods.join(', ')}`);
+    }
+    if (unreadable.length > 0) return JSON.stringify({ error: `${unreadable.join('; ')}.` });
     return JSON.stringify({ ok: true, ...sterilizationRequirements({
-      sterile: input.sterile === true,
+      sterile: typeof input.sterile === 'boolean' ? input.sterile : undefined,
       method: typeof input.method === 'string' ? (input.method as never) : undefined,
     }) });
   } catch (err) {
@@ -10656,7 +10701,9 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
+  // A platform-only category ('ana_turn') is the platform's to write, never a
+  // model's (DT3 review, DP-84).
+  const allowedCat = new Set<string>(CREATABLE_NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }
@@ -10915,12 +10962,12 @@ function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 
 
 type IacucReviewStatusShape =
   | { undetermined: true; reason: string }
-  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null; annualReviewUndeterminedReason?: string | null };
 
 function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
   if (rs.undetermined) return ` Review status: ${rs.reason}`;
   const annual = rs.annualReviewDue === null
-    ? '; whether annual review is due is not determined: no approval date is recorded'
+    ? '; whether annual review is due is not determined: ' + (rs.annualReviewUndeterminedReason ?? 'no approval date is recorded')
     : rs.annualReviewDue ? '; annual review due' : '';
   return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
 }
@@ -13779,16 +13826,22 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
 registerToolHandler('review_inspection_readiness', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_inspection_readiness requires tenant context.' });
   const inspectionId = typeof input.inspection_id === 'number' ? input.inspection_id : undefined;
-  const { listReadinessAreas } = await import('../inspection/inspection-service.js');
-  const { scoreReadiness } = await import('../inspection/inspection-logic.js');
+  // GET /api/inspections/readiness/score's own read. 2026-10-22: this scored
+  // listReadinessAreas() with no inspection type, holding every inspection to
+  // all 8 domains, and did not say which domains nobody recorded.
+  const { getReadinessScore } = await import('../inspection/inspection-service.js');
   try {
-    const areas = await listReadinessAreas(ctx.organizationId, inspectionId);
-    const score = scoreReadiness(areas);
+    const score = await getReadinessScore(ctx.organizationId, inspectionId);
     return JSON.stringify({
       ok: true, score: score.score, verdict: score.verdict, blockers: score.blockers,
-      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}.`,
+      requiredDomains: score.requiredDomains, notRecorded: score.notRecorded,
+      message: `Readiness ${score.score}% — ${score.verdict.replace(/_/g, ' ')}${score.blockers.length ? `; ${score.blockers.length} blocker(s)` : ''}` +
+        `${score.notRecorded.length ? `; not recorded: ${score.notRecorded.join(', ')}` : ''}.`,
     });
   } catch (err) {
+    if (err instanceof Error && (err as Error & { code?: string }).code === 'NOT_FOUND') {
+      return JSON.stringify({ status: 'not_found', message: err.message });
+    }
     return JSON.stringify({ error: `review_inspection_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
@@ -14592,6 +14645,7 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
     const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
       title, docType, docNumber,
       programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
+      ...(input.next_review_date ? { nextReviewDate: input.next_review_date } : {}),
     });
     return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
   } catch (err) {
@@ -15181,9 +15235,12 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
   const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
   if (!source.ok) return source.refusal;
   const sourcePath = source.path;
+  let createdJobId: number | null = null;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
+    // Loaded before the job row exists, so a failure after it can still mark the job.
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
       ? input.program_id : null;
 
@@ -15202,6 +15259,7 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       ],
     );
     const jobId = jobInsert.rows[0].id;
+    createdJobId = jobId;
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
@@ -15210,7 +15268,6 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
        derived status from mappingConfidence >= 0.5, so a filename suggestion was
        stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
        set the job's skipped_count. */
-    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
       await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
@@ -15259,8 +15316,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
         'Review then call approve_import.',
     });
   } catch (err) {
+    /* 2026-10-15: a failure after the job row existed left it at 'detecting', which
+       reads as an import still running; it is marked 'failed' through the REST route's write. */
+    const jobMarkedFailed = createdJobId !== null
+      && await (await import('../../routes/mdx-imports.js')).markImportJobFailed(createdJobId, err);
     return JSON.stringify({
       error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+      ...(createdJobId !== null ? { jobId: createdJobId, jobMarkedFailed } : {}),
     });
   }
 });
@@ -15284,8 +15346,11 @@ registerToolHandler('override_import_mapping', async (input, ctx) => {
     const col = COL[k]; if (!col || v === undefined) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
   if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  // A placement confirmed through AnA is a decision, not a measurement: no confidence.
+  // 2026-10-15: stored mapping_confidence = 1.00 on every override, 'skipped' too, and
+  // checked for no fields after adding these, so an empty override re-labelled the row 'ana'.
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, ctx.organizationId);
   try {
     const { getPool } = await import('../../db.js');
@@ -17647,11 +17712,20 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
     });
   }
   try {
-    const [{ db }, { stabilityStudies }, { and, eq }, { estimateRecordedShelfLife }] = await Promise.all([
+    const [
+      { db },
+      { stabilityStudies },
+      { and, eq },
+      { estimateRecordedShelfLife },
+      { studiesCompositionRefusal },
+      { anaToolCompositionRefusal },
+    ] = await Promise.all([
       import('../../db.js'),
       import('../../../shared/schema.js'),
       import('drizzle-orm'),
       import('../cmc/recorded-stability.js'),
+      import('../cmc/study-composition-scope.js'),
+      import('../cmc/composition-scope.js'),
     ]);
     const [study] = await db
       .select({
@@ -17662,6 +17736,7 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
@@ -17670,6 +17745,14 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
         status: 'not_found',
         message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
       });
+    }
+    /* The composition boundary (decision P-28), asked of the program the study
+       is filed under, as the stability route asks it: a Q1E-extrapolated shelf
+       life for a monoclonal antibody's study was answered here (2026-10-15
+       launch-boundary re-proof). */
+    const refusal = await studiesCompositionRefusal(orgId, [study]);
+    if (refusal) {
+      return anaToolCompositionRefusal(refusal, 'Do not fall back to estimate_shelf_life with numbers read off the study.');
     }
     const outcome = await estimateRecordedShelfLife(study);
     if (!outcome.ok) {
@@ -17862,13 +17945,21 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
     });
   }
   try {
-    const [{ db }, { stabilityStudies }, { and, eq, inArray }, { assessRecordedPoolability }] =
-      await Promise.all([
-        import('../../db.js'),
-        import('../../../shared/schema.js'),
-        import('drizzle-orm'),
-        import('../cmc/recorded-stability.js'),
-      ]);
+    const [
+      { db },
+      { stabilityStudies },
+      { and, eq, inArray },
+      { assessRecordedPoolability },
+      { studiesCompositionRefusal },
+      { anaToolCompositionRefusal },
+    ] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+      import('../cmc/study-composition-scope.js'),
+      import('../cmc/composition-scope.js'),
+    ]);
     const studies = await db
       .select({
         id: stabilityStudies.id,
@@ -17878,6 +17969,7 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
       .where(and(inArray(stabilityStudies.id, ids), eq(stabilityStudies.organizationId, orgId)));
@@ -17890,6 +17982,12 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
       });
     }
 
+    /* The composition boundary, asked of every program the studies are filed
+       under, as the poolability route asks it. */
+    const refusal = await studiesCompositionRefusal(orgId, studies);
+    if (refusal) {
+      return anaToolCompositionRefusal(refusal, 'Do not fall back to assess_batch_poolability with numbers read off the studies.');
+    }
     const outcome = await assessRecordedPoolability(studies);
     if (!outcome.ok) {
       return JSON.stringify({
@@ -20401,6 +20499,27 @@ function intelligenceProjectId(input: Record<string, unknown>, ctx?: ToolContext
   return supplied || null;
 }
 
+/**
+ * An interview whose answers reach no record is not offered where the launch
+ * boundary is enforced (decision P-28): the refusal, or null. Asked when a flow
+ * starts and again of the state each answer advances, which a caller with no
+ * session supplies itself. The list is the commit path's own
+ * (services/cmc/interview-commit.ts flowCommitsToRecord), not a second one here.
+ */
+async function interviewNotInRelease(label: string, category: string): Promise<string | null> {
+  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
+  if (!launchScopeEnforced() || flowCommitsToRecord(category as Parameters<typeof flowCommitsToRecord>[0])) return null;
+  return JSON.stringify({
+    error:
+      `The "${label}" interview is not available in this release: its answers reach no record, so ` +
+      `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
+      `writes the drug substance, drug product, method, specification and stability registers. For a ` +
+      `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
+    flow: category,
+    commits: false,
+  });
+}
+
 function intelligenceSessionId(input: Record<string, unknown>): string | null {
   const id = typeof input.session_id === 'string' ? input.session_id.trim() : '';
   return id || null;
@@ -20429,19 +20548,22 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
 
      Off the boundary — a development server — every flow stays available: the
      engine and its question sets are what a person builds against. */
-  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
-  const { launchScopeEnforced } = await import('../entitlements/launch-scope.js');
-  if (launchScopeEnforced() && !flowCommitsToRecord(category)) {
-    return JSON.stringify({
-      error:
-        `The "${documentType}" interview is not available in this release: its answers reach no record, so ` +
-        `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
-        `writes the drug substance, drug product, method, specification and stability registers. For a ` +
-        `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
-      flow: category,
-      commits: false,
-    });
-  }
+  const notInRelease = await interviewNotInRelease(documentType, category);
+  if (notInRelease) return notInRelease;
+
+  /* The composition boundary (decision P-28) of the program the interview
+     would bind to. The CMC interview judges its answers by small-molecule
+     rules, so on a biologic program it would be refused at its first answer;
+     it is not started (services/cmc/interview-composition-scope.ts). */
+  const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+  const outOfScope = await interviewCompositionRefusalResult({
+    organizationId: ctx?.organizationId,
+    projectId: intelligenceProjectId(input, ctx),
+    flowState: { flowCategory: category },
+    nodeId: '',
+    answers: {},
+  });
+  if (outOfScope) return outOfScope;
 
   const engineCtx = intelligenceEngineContext(ctx);
 
@@ -20511,6 +20633,7 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
      flow_state is the fallback for a flow started without a session. */
   let flowState = input.flow_state as any;
   let sessions: typeof import('../cmc/interview-sessions.js') | null = null;
+  let projectId = intelligenceProjectId(input, ctx);
   if (sessionId) {
     try {
       sessions = await import('../cmc/interview-sessions.js');
@@ -20524,12 +20647,31 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
         });
       }
       flowState = session.state;
+      projectId = session.projectId;
     } catch (err: any) {
       return JSON.stringify({ error: err?.message || 'Failed to load the interview session', session_id: sessionId });
     }
   } else if (!flowState) {
     return JSON.stringify({ error: 'session_id (or, for a flow started without a session, flow_state) is required' });
   }
+
+  /* Asked again here because a caller with no session supplies the state, and
+     with it the flow, itself: start's refusal did not bind it. */
+  const flowCategory = String(flowState.flowCategory ?? '');
+  const notInRelease = await interviewNotInRelease(flowCategory, flowCategory);
+  if (notInRelease) return notInRelease;
+
+  /* The composition boundary (decision P-28), before the answer is judged: the
+     molecule type stated, and the program the session is bound to. The CMC
+     interview judged a monoclonal antibody's answers by ICH Q3A(R2) and M7 and
+     summarised it as ready for document generation (2026-10-15 launch-boundary
+     re-proof; services/cmc/interview-composition-scope.ts). */
+  const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+  const outOfScope = await interviewCompositionRefusalResult(
+    { organizationId: ctx?.organizationId, projectId, flowState, nodeId, answers },
+    { session_id: sessionId },
+  );
+  if (outOfScope) return outOfScope;
 
   try {
     const result = advanceFlow(flowState, nodeId, answers, engineCtx);
@@ -20603,6 +20745,15 @@ registerToolHandler('resume_intelligence_flow', async (input, ctx) => {
     if (session.status === 'abandoned') {
       return JSON.stringify({ error: `Interview session ${sessionId} was abandoned.`, session_id: sessionId, session_status: session.status });
     }
+    /* A session that states a molecule type outside the boundary, or is bound
+       to a program outside it, is not re-presented: its summary is the
+       small-molecule judgement the boundary refuses. */
+    const { interviewCompositionRefusalResult } = await import('../cmc/interview-composition-scope.js');
+    const outOfScope = await interviewCompositionRefusalResult(
+      { organizationId: ctx?.organizationId, projectId: session.projectId, flowState: session.state, nodeId: '', answers: {} },
+      { session_id: sessionId, session_status: session.status },
+    );
+    if (outOfScope) return outOfScope;
     const result = resumeFlow(session.state, intelligenceEngineContext(ctx));
     if (result.completeEvent) {
       return JSON.stringify({
@@ -20968,6 +21119,21 @@ registerToolHandler('list_governed_documents', async (input, ctx) => {
   }
 });
 
+/**
+ * What a governed document's outline holds, in the readiness figure's own
+ * terms: every row, the rows the figure counts, how many of those are approved
+ * or locked, and the headings left out. Stated, so the model narrates it and
+ * does not divide.
+ */
+function outlineDenominator(rows: Array<{ counted: boolean; status: string }>, readiness: unknown, complete: ReadonlySet<string>): string {
+  const counted = rows.filter((r) => r.counted);
+  const done = counted.filter((r) => complete.has(r.status)).length;
+  const figure = typeof readiness === 'number' ? `readiness ${readiness}%` : 'readiness (not computed)';
+  const left = rows.length - counted.length;
+  const headings = left === 0 ? '' : ` ${left} ${left === 1 ? 'heading' : 'headings'} not yet worked ${left === 1 ? 'is' : 'are'} not counted.`;
+  return `Outline with ${rows.length} sections; ${figure} counts ${counted.length} of them (${done} approved or locked).${headings}`;
+}
+
 registerToolHandler('read_governed_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_governed_document requires tenant context.' });
   const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
@@ -20984,17 +21150,23 @@ registerToolHandler('read_governed_document', async (input, ctx) => {
     const sectionKey = typeof input.section_key === 'string' ? input.section_key.trim() : '';
     if (!sectionKey) {
       const outline = await getPool().query(
-        `SELECT section_key, parent_key, label, status, mandatory, version, path_order
+        `SELECT document_id, section_key, parent_key, label, status, mandatory, version, path_order
            FROM c2c_document_sections
           WHERE document_id = $1
           ORDER BY path_order`,
         [documentId],
       );
+      // Each row says whether the readiness figure counts it (F23 hand-on,
+      // 2026-10-22): the figure leaves out a heading that holds other sections
+      // and has not been worked, so "N sections" beside it named the wrong
+      // denominator. The rule is the trigger's own (markCountedSections).
+      const { markCountedSections, C2C_SECTION_COMPLETE_STATUSES } = await import('../c2c/section-content.js');
+      const rows = markCountedSections(outline.rows);
       return JSON.stringify({
         ok: true,
         document: doc.rows[0],
-        outline: outline.rows,
-        message: `Outline with ${outline.rows.length} sections. Call again with section_key to read a section's content.`,
+        outline: rows,
+        message: `${outlineDenominator(rows, doc.rows[0].readiness, C2C_SECTION_COMPLETE_STATUSES)} Call again with section_key to read a section's content.`,
       });
     }
 
@@ -21492,10 +21664,12 @@ registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan (tierResolved false) said "requires the
+      // <requiredTier> plan" and named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the portfolio rollup was not loaded.' }
+        : { tier: gate.tier, message: `Portfolio rollup requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { fetchPortfolioSummary } = await import('../report-os/portfolio/fetch.js');
     const summary = await fetchPortfolioSummary(orgId, programGroupId);
@@ -21532,10 +21706,11 @@ registerToolHandler('generate_report', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the report was not generated.' }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) {
@@ -21570,10 +21745,11 @@ registerToolHandler('explain_report_blockers', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: "Your plan could not be read, so the report's blockers were not computed." }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });

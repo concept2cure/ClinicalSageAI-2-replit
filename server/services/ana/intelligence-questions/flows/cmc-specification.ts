@@ -255,7 +255,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the key physicochemical properties of the drug substance.',
         guidance:
-          'Per ICH Q6A (Section 3) and Q6B (Section 3), characterize relevant physicochemical properties including physical form, solubility, polymorphism (for small molecules), and higher-order structure (for biologics). These properties directly impact formulation strategy and bioavailability.',
+          'Per ICH Q6A (Section 3) and Q6B (Section 2.1, Characterisation), characterize relevant physicochemical properties including physical form, solubility, polymorphism (for small molecules), and higher-order structure (for biologics). These properties directly impact formulation strategy and bioavailability.',
         fields: [
           {
             id: 'physical_form',
@@ -506,7 +506,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Risk Assessment Not Performed',
             message:
               'A formal quality risk assessment is expected by regulators to justify the identification of CPPs and CQAs. Consider performing at least an FMEA or risk ranking and filtering exercise before submission.',
-            reference: 'ICH Q9 Quality Risk Management, ICH Q8(R2) Section 2.6',
+            reference: 'ICH Q9 Quality Risk Management, ICH Q8(R2) Part II (Annex) Section 2.3 (Risk Assessment)',
           },
         ],
         defaultNext: 'starting_materials',
@@ -527,7 +527,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             placeholder:
               'List each starting material with its chemical name, supplier, and quality standard (e.g., USP, Ph. Eur., in-house).',
             helpText:
-              'Per ICH Q11, starting materials should be commercially available substances with well-defined specifications. Include chemical name, CAS number, and quality standard for each.',
+              'Per ICH Q11, starting materials should be substances with defined chemical properties and structure, controlled by appropriate specifications, and incorporated as significant structural fragments of the drug substance; commercial availability is not itself a requirement. Include chemical name, CAS number, and quality standard for each.',
             required: true,
             validation: { minLength: 10, maxLength: 5000 },
           },
@@ -578,7 +578,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Single-Source Supply Chain Risk',
             message:
               'A single-source starting material creates supply chain vulnerability. Consider qualifying a second supplier or documenting a robust contingency plan. Regulators may issue an information request on supply chain continuity.',
-            reference: 'ICH Q11, FDA Guidance on Drug Shortages (2023)',
+            reference: 'ICH Q11; FDA draft guidance, Risk Management Plans to Mitigate the Potential for Drug Shortages',
           },
         ],
         defaultNext: 'structural_characterization',
@@ -592,7 +592,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the structural characterization studies performed on the drug substance.',
         guidance:
-          'Per ICH Q6A (Section 3.1) for small molecules and Q6B (Section 3) for biologics, provide evidence confirming the molecular structure. For small molecules this includes spectroscopic data (NMR, MS, IR, UV); for biologics it includes primary, secondary, tertiary, and quaternary structure characterization.',
+          'Per ICH M4Q (CTD Section 3.2.S.3.1, Elucidation of Structure and other Characteristics), and for biologics ICH Q6B (Section 2.1, Characterisation), provide evidence confirming the molecular structure. For small molecules this includes spectroscopic data (NMR, MS, IR, UV); for biologics it includes primary, secondary, tertiary, and quaternary structure characterization.',
         fields: [
           /* Recorded under this title in cmc_characterization_studies by the
              interview commit (interview-commit.ts); asked, never defaulted. */
@@ -677,7 +677,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             placeholder:
               'List known impurities with structure (if identified), origin (starting material, intermediate, degradant), and observed levels.',
             helpText:
-              'Per ICH Q3A(R2): Reporting threshold ≥ 0.05% (dose ≤ 2g/day) or ≥ 0.03% (dose > 2g/day). Identification threshold ≥ 0.10% or ≥ 0.05%. Qualification threshold ≥ 0.15% or ≥ 0.05%. Provide structure or structural class for all identified impurities.',
+              'Per ICH Q3A(R2): Reporting threshold ≥ 0.05% (dose ≤ 2g/day) or ≥ 0.03% (dose > 2g/day). Identification threshold: 0.10% or 1.0 mg/day total daily intake, whichever is lower (dose ≤ 2g/day), or 0.05% (dose > 2g/day). Qualification threshold: 0.15% or 1.0 mg/day total daily intake, whichever is lower (dose ≤ 2g/day), or 0.05% (dose > 2g/day). Provide structure or structural class for all identified impurities.',
             required: true,
             validation: { minLength: 20, maxLength: 5000 },
           },
@@ -697,7 +697,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'List solvents used in synthesis and purification with Class (1/2/3) and observed levels.',
             helpText:
-              'Per ICH Q3C(R8), classify all solvents used in the process and report residual levels against PDEs. Class 1 solvents should be avoided; Class 2 solvents should be limited.',
+              'Per ICH Q3C(R9), classify all solvents used in the process and report residual levels against PDEs. Class 1 solvents should be avoided; Class 2 solvents should be limited.',
             required: true,
             validation: { minLength: 10, maxLength: 3000 },
           },
@@ -728,7 +728,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Unqualified Impurities Detected',
             message:
               'Impurities above the ICH Q3A(R2) qualification threshold must be qualified through toxicological studies, literature justification, or clinical qualification before regulatory submission. This is a common Complete Response Letter (CRL) issue.',
-            reference: 'ICH Q3A(R2) Impurities in New Drug Substances, Section 5',
+            reference: 'ICH Q3A(R2) Impurities in New Drug Substances, Section 7 (Qualification of Impurities) and Attachment 3',
           },
         ],
         defaultNext: 'genotoxic_impurities',
@@ -763,11 +763,11 @@ export function createCmcSpecificationFlow(): FlowDefinition {
           },
           {
             id: 'confirmed_mutagens',
-            label: 'Confirmed mutagenic impurities (Class 1, 2, or 3)',
+            label: 'Mutagenic impurities requiring control (confirmed Class 1 or 2, or alerting Class 3)',
             type: 'textarea',
             placeholder: 'List confirmed mutagenic impurities with ICH M7 class, control strategy, and acceptance limit.',
             helpText:
-              'Provide details for each confirmed or suspected mutagenic impurity including ICH M7 classification (Class 1–5), control strategy (Option 1–5 per ICH M7), and the justified acceptance limit.',
+              'Provide details for each confirmed or suspected mutagenic impurity including ICH M7 classification (Class 1–5), control strategy (Option 1–4 per ICH M7 Section 8.1: Option 1, test in the drug substance specification; Option 2, test in a raw material, starting material or intermediate specification, or as an in-process control, at or below the acceptable limit; Option 3, test upstream with a higher limit supported by fate and purge understanding; Option 4, control through process understanding and purge without testing), and the justified acceptance limit.',
             required: false,
             visibleWhen: { field: 'mutagenic_impurity_assessment', operator: 'eq', value: true },
             validation: { maxLength: 5000 },
@@ -779,14 +779,30 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             required: true,
             visibleWhen: { field: 'mutagenic_impurity_assessment', operator: 'eq', value: true },
             options: [
-              { value: 'option_1', label: 'Option 1 — Avoid (eliminate from process)' },
-              { value: 'option_2', label: 'Option 2 — Control at intermediate step' },
-              { value: 'option_3', label: 'Option 3 — Control in drug substance spec' },
-              { value: 'option_4', label: 'Option 4 — Demonstrate purge (spike & purge studies)' },
-              { value: 'option_5', label: 'Option 5 — Wider limit (LTL, clinical trial)' },
+              { value: 'option_1', label: 'Option 1 — Test in drug substance specification' },
+              { value: 'option_2', label: 'Option 2 — Test in starting material/intermediate specification or as in-process control, at or below the acceptable limit' },
+              { value: 'option_3', label: 'Option 3 — Test upstream with a higher limit, supported by fate and purge understanding' },
+              { value: 'option_4', label: 'Option 4 — Control through process understanding and purge, without testing' },
+              { value: 'option_5', label: 'Less-than-lifetime (LTL) acceptable intake per ICH M7 Section 7.3 (an acceptable-limit basis, not an M7 control option)' },
               { value: 'multiple', label: 'Multiple strategies (per impurity)' },
             ],
-            helpText: 'Primary control strategy for mutagenic impurities per ICH M7(R2) Table 1.',
+            helpText: 'Primary control strategy for mutagenic impurities per ICH M7(R2) Section 8.1 (control options 1–4).',
+          },
+          /* 2026-10-22 (D2): asked so the war-game rule
+             cmc_nitrosamine_risk_not_evaluated is assessed. */
+          {
+            id: 'nitrosamine_risk_evaluation',
+            label: 'Has a nitrosamine (N-nitrosamine / NDSRI) risk evaluation been performed for the drug substance and drug product?',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'completed', label: 'Completed (with confirmatory testing and controls where a risk was found)' },
+              { value: 'in_progress', label: 'In progress' },
+              { value: 'not_started', label: 'Not started' },
+              { value: 'not_applicable', label: 'Not applicable (justified, e.g. no plausible nitrosamine source)' },
+            ],
+            helpText:
+              "FDA's guidance on control of nitrosamine impurities in human drugs expects manufacturers to assess the risk of N-nitrosamine formation or contamination, test where a risk is found, and control it. Nitrosamines are a 'cohort of concern' under ICH M7.",
           },
         ],
         issueChecks: [
@@ -1091,6 +1107,16 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             required: true,
             validation: { minLength: 5, maxLength: 2000 },
           },
+          /* 2026-10-22 (D2): asked so the war-game rule cmc_no_gmp_compliance
+             is assessed. */
+          {
+            id: 'manufacturing_facility_gmp',
+            label: 'Do all drug substance and drug product manufacturing and testing sites operate under CGMP?',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              "Drug products are manufactured under the CGMP regulations in 21 CFR Parts 210 and 211 (with Parts 600–680 for biologics), and drug substances under ICH Q7. Phase 1 investigational material may instead follow FDA's guidance on CGMP for Phase 1 investigational drugs.",
+          },
           {
             id: 'equipment_type',
             label: 'Key Manufacturing Equipment',
@@ -1125,7 +1151,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         question:
           'Describe the process validation strategy for the drug product.',
         guidance:
-          'Per FDA Process Validation Guidance (2011, updated 2021) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Commercial processes must be validated before NDA/BLA approval.',
+          'Per FDA Process Validation Guidance (January 2011, Revision 1) and ICH Q8/Q10, process validation follows three stages: Stage 1 (Process Design), Stage 2 (Process Qualification — PPQ), and Stage 3 (Continued Process Verification). Under that guidance, PPQ must be completed successfully before the product is commercially distributed; for BLAs, process validation data are generally expected in the application.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1150,7 +1176,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'text',
             placeholder: 'e.g., 3 planned, 2 completed',
             helpText:
-              'Per FDA guidance, a minimum of 3 consecutive PPQ batches at commercial scale is typically expected, though more may be needed based on process complexity and variability.',
+              'FDA\'s Process Validation guidance (2011) sets no minimum number of PPQ batches. The number must be justified by process understanding and variability, and more may be needed for complex or highly variable processes. Three commercial-scale batches is common industry practice, not an FDA requirement.',
             required: true,
           },
           {
@@ -1169,7 +1195,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'FDA expects PPQ to be complete before NDA/BLA approval. If PPQ will not be complete, a robust justification and commitment are required.',
+              'PPQ must be completed successfully before commercial distribution; for BLAs, FDA generally expects process validation data in the application. If PPQ will not be complete at submission, a robust justification and commitment are required.',
           },
         ],
         issueChecks: [
@@ -1179,8 +1205,8 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Process Validation Incomplete at Submission',
             message:
-              'FDA expects process performance qualification (PPQ) to be complete before NDA/BLA approval. If PPQ data will not be available, discuss with FDA pre-approval. Include a detailed validation plan with timeline and commitment to complete PPQ prior to commercial distribution.',
-            reference: 'FDA Guidance for Industry: Process Validation — General Principles and Practices (2011, Rev. 2021)',
+              'Process performance qualification (PPQ) must be completed successfully before commercial distribution, and for BLAs FDA generally expects process validation data in the application. If PPQ data will not be available at submission, discuss with FDA pre-approval. Include a detailed validation plan with timeline and commitment to complete PPQ prior to commercial distribution.',
+            reference: 'FDA Guidance for Industry: Process Validation — General Principles and Practices (January 2011, Rev. 1)',
           },
           {
             id: 'cmc_validation_not_started',
@@ -1189,7 +1215,7 @@ export function createCmcSpecificationFlow(): FlowDefinition {
             title: 'Process Validation Not Initiated',
             message:
               'Process validation has not yet been initiated. For NDA/BLA submissions, begin Stage 1 process design activities early in development and plan Stage 2 PPQ well before the target submission date. Late initiation of validation is a common cause of submission delays.',
-            reference: 'FDA Guidance for Industry: Process Validation (2011, Rev. 2021), ICH Q10',
+            reference: 'FDA Guidance for Industry: Process Validation (January 2011, Rev. 1), ICH Q10',
           },
         ],
         defaultNext: 'in_process_controls',
@@ -1347,6 +1373,22 @@ export function createCmcSpecificationFlow(): FlowDefinition {
               'Per ICH Q6A, universal tests include description, identification, assay, and impurities/degradation products. Dosage-form specific tests (e.g., dissolution, uniformity, sterility) as applicable.',
             required: true,
             validation: { minLength: 30, maxLength: 5000 },
+          },
+          /* 2026-10-22 (D2): asked so the war-game rule
+             cmc_no_microbiological_controls is assessed. */
+          {
+            id: 'microbiological_controls',
+            label: 'Are microbiological controls (microbial limits, or sterility and endotoxin for sterile products) established in the specifications?',
+            type: 'select',
+            required: false,
+            options: [
+              { value: 'established', label: 'Established' },
+              { value: 'in_development', label: 'In development' },
+              { value: 'not_established', label: 'Not established' },
+              { value: 'not_applicable', label: 'Not applicable (omission justified for a non-sterile product)' },
+            ],
+            helpText:
+              'ICH Q6A expects microbial limits for non-sterile products unless their omission is justified, and sterility and bacterial endotoxin testing for sterile products. 21 CFR Part 211 requires written procedures to prevent microbiological contamination.',
           },
           {
             id: 'specification_justification',

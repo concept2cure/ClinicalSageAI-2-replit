@@ -25,6 +25,11 @@ export function openNotificationRecord(target: NotificationRecordTarget, navigat
   if (target.surface === 'document-authoring') {
     setEditorTarget({docType:null,docId:target.params.documentId,code:target.params.sectionCode,programId:target.programId});
   } else clearEditorTarget();
+  // A conversation (a detached AnA turn's notice) opens through the shell's
+  // one conversation hand-off, as a resumed conversation does (ProjectHome).
+  if (target.surface === 'conversation-thread') {
+    (window as unknown as { C2C_CONVO?: { id: string } }).C2C_CONVO = { id: target.params.threadId };
+  }
   stashNavParamsForTarget(target.surface,params);
   navigate(target.surface+(search.size ? `?${search.toString()}` : ''));
 }

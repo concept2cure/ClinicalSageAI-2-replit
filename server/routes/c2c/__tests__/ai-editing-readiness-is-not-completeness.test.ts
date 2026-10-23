@@ -30,9 +30,20 @@ vi.mock('../../../middleware/tenantContext', () => ({
 vi.mock('../shared', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   concept2cureRateLimiter: (_q: unknown, _s: unknown, n: () => void) => n(),
-  logAuditEntry: vi.fn(async () => undefined),
+  // logAuditEntry's AuditEntryOutcome: the row committed and is attributed.
+  logAuditEntry: vi.fn(async () => ({ written: true, attributed: true })),
   getUserId: () => 42,
   getOrganizationId: () => 7,
+}));
+// Project admission reads persisted membership and the project row through
+// Drizzle, which this harness stubs out. Admission is answered for the one
+// project these requests name (11, org 7); the refusals themselves — revoked
+// membership, private and foreign projects — are exercised against real tables
+// in server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts.
+const { admit } = vi.hoisted(() => ({ admit: vi.fn() }));
+vi.mock('../project-access', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  requireProjectAdmission: (...a: unknown[]) => admit(...a),
 }));
 vi.mock('../../../services/enhancedEmbeddingService', () => ({
   getEmbeddingService: () => ({ searchHybrid: (...a: unknown[]) => searchHybrid(...a) }),
@@ -89,6 +100,10 @@ const ASSESSED = {
 };
 
 beforeEach(() => {
+  admit.mockReset().mockImplementation(async (_req: unknown, projectId: string) => {
+    if (projectId !== '11') throw new Error(`unexpected admission for project ${projectId}`);
+    return { id: 11, organizationId: 7, status: 'active' };
+  });
   searchHybrid.mockReset().mockResolvedValue([]);
   gatewayRoute.mockReset().mockResolvedValue({
     content: 'Edited text.',
@@ -126,6 +141,7 @@ describe.each([
   it('says readiness was not assessed when only document completeness was measured', async () => {
     readiness.mockResolvedValue(COMPLETENESS_ONLY);
     await call();
+    expect(admit).toHaveBeenCalledWith(expect.anything(), '11', false);
     expect(gatewayRoute).toHaveBeenCalled();
     expect(prompt()).toContain('Submission readiness: not assessed (only document completeness was measured)');
     expect(prompt()).not.toMatch(/Submission readiness: 75%/);

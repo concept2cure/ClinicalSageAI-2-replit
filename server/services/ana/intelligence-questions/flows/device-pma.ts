@@ -322,7 +322,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             required: true,
             options: [
               { value: 'class_iii', label: 'Class III', description: 'PMA required' },
-              { value: 'class_ii_pma', label: 'Class II (transitional — PMA required)', description: 'Reclassified device requiring PMA' },
+              { value: 'class_ii_pma', label: 'Transitional device (deemed Class III — PMA required)', description: 'Transitional device placed in Class III by FD&C Act section 520(l); PMA required unless reclassified (a device reclassified into Class II no longer needs a PMA)' },
             ],
           },
           {
@@ -348,7 +348,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             id: 'advisory_panel_anticipated',
             label: 'Advisory Panel Meeting Anticipated?',
             type: 'yes_no',
-            helpText: 'FDA may convene an advisory panel for novel or high-risk Class III devices per 21 CFR 814.44(e)',
+            helpText: 'FDA may refer a PMA to an advisory panel on its own initiative (typically for novel, first-of-a-kind Class III devices), and will do so at the applicant\'s request unless the application substantially duplicates information a panel has already reviewed, per 21 CFR 814.44(a)',
           },
           {
             id: 'pre_submission_meeting',
@@ -438,11 +438,11 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the design controls applied during device development.',
         guidance:
-          'Design controls per 21 CFR 820.30 are mandatory for Class III devices and are a critical component of the PMA review. FDA will evaluate whether the design control process produced adequate evidence that the device meets its design inputs. The design history file (DHF) should document the complete design and development lifecycle including design planning, input, output, review, verification, validation, and transfer. ISO 13485:2016 Section 7.3 aligns with these requirements internationally.',
+          'Design and development controls under the Quality Management System Regulation (21 CFR Part 820, which incorporates ISO 13485:2016 clause 7.3 by reference, effective February 2, 2026; formerly 21 CFR 820.30) are mandatory for Class III devices and are a critical component of the PMA review. FDA will evaluate whether the design control process produced adequate evidence that the device meets its design inputs. The design and development file (formerly the design history file, DHF) should document the complete design and development lifecycle including design planning, input, output, review, verification, validation, and transfer.',
         fields: [
           {
             id: 'design_control_procedures',
-            label: 'Design Control Procedures Established (21 CFR 820.30)',
+            label: 'Design Control Procedures Established (ISO 13485:2016 clause 7.3, via 21 CFR 820.10)',
             type: 'yes_no',
             required: true,
           },
@@ -458,42 +458,42 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Design Outputs Documented',
             type: 'yes_no',
             required: true,
-            helpText: 'Device specifications, drawings, software requirements, manufacturing procedures per 21 CFR 820.30(d)',
+            helpText: 'Device specifications, drawings, software requirements, manufacturing procedures per ISO 13485:2016 clause 7.3.4 (via 21 CFR 820.10)',
           },
           {
             id: 'design_verification_completed',
             label: 'Design Verification Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Confirmation that design outputs meet design inputs through testing, analysis, or inspection per 21 CFR 820.30(f)',
+            helpText: 'Confirmation that design outputs meet design inputs through testing, analysis, or inspection per ISO 13485:2016 clause 7.3.6 (via 21 CFR 820.10)',
           },
           {
             id: 'design_validation_completed',
             label: 'Design Validation Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Confirmation that the device meets user needs and intended uses under actual or simulated use conditions per 21 CFR 820.30(g)',
+            helpText: 'Confirmation that the device meets user needs and intended uses under actual or simulated use conditions per ISO 13485:2016 clause 7.3.7 (via 21 CFR 820.10)',
           },
           {
             id: 'design_transfer_completed',
             label: 'Design Transfer to Manufacturing Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Verification that the design was correctly translated into production specifications per 21 CFR 820.30(h)',
+            helpText: 'Verification that the design was correctly translated into production specifications per ISO 13485:2016 clause 7.3.8 (via 21 CFR 820.10)',
           },
           {
             id: 'design_changes_documented',
             label: 'Design Changes Documented and Controlled',
             type: 'yes_no',
             required: true,
-            helpText: 'All design changes evaluated, approved, and documented per 21 CFR 820.30(i)',
+            helpText: 'All design changes evaluated, approved, and documented per ISO 13485:2016 clause 7.3.9 (via 21 CFR 820.10)',
           },
           {
             id: 'design_history_file',
             label: 'Design History File (DHF) Complete',
             type: 'yes_no',
             required: true,
-            helpText: 'Complete DHF compiled per 21 CFR 820.30(j) documenting the full design and development lifecycle',
+            helpText: 'Complete design and development file (ISO 13485:2016 clause 7.3.10, via 21 CFR 820.10; formerly the DHF) documenting the full design and development lifecycle',
           },
         ],
         issueChecks: [
@@ -503,8 +503,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Missing Design Controls',
             message:
-              'Design controls per 21 CFR 820.30 are mandatory for Class III devices. A PMA submission without documented design controls will be found deficient during FDA review and may result in Refuse to File.',
-            reference: '21 CFR 820.30',
+              'Design and development controls under 21 CFR Part 820 (QMSR, incorporating ISO 13485:2016), clause 7.3, are mandatory for Class III devices. A PMA submission without documented design controls will be found deficient during FDA review and may result in Refuse to File.',
+            reference: '21 CFR Part 820 (QMSR, incorporating ISO 13485:2016); ISO 13485:2016 clause 7.3',
           },
           {
             id: 'no_design_validation_check',
@@ -512,8 +512,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Design Validation Not Completed',
             message:
-              'Design validation under actual or simulated use conditions is required per 21 CFR 820.30(g). For PMA devices, design validation typically includes clinical studies. Submitting without completed design validation is a significant deficiency.',
-            reference: '21 CFR 820.30(g)',
+              'Design validation under actual or simulated use conditions is required per ISO 13485:2016 clause 7.3.7, as incorporated by 21 CFR 820.10 (QMSR). For PMA devices, design validation typically includes clinical studies. Submitting without completed design validation is a significant deficiency.',
+            reference: '21 CFR 820.10 (QMSR); ISO 13485:2016 clause 7.3.7',
           },
         ],
         defaultNext: 'manufacturing_process',
@@ -525,7 +525,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the manufacturing process and any special process validations.',
         guidance:
-          'Per 21 CFR 814.20(b)(4), the PMA must include a complete description of the methods, facilities, and controls used for the manufacture, processing, packing, storage, and installation of the device. Manufacturing must comply with the Quality System Regulation (QSR) per 21 CFR 820. Special processes such as sterilization, welding, molding, and coating that cannot be fully verified by subsequent inspection and test must be validated per 21 CFR 820.75. FDA may conduct a pre-approval inspection of the manufacturing facility.',
+          'Per 21 CFR 814.20(b)(4), the PMA must include a complete description of the methods, facilities, and controls used for the manufacture, processing, packing, storage, and installation of the device. Manufacturing must comply with the Quality Management System Regulation (QMSR) at 21 CFR Part 820, which incorporates ISO 13485:2016 by reference. Special processes such as sterilization, welding, molding, and coating, whose output cannot be or is not verified by subsequent monitoring or measurement, must be validated per ISO 13485:2016 clause 7.5.6, as required by 21 CFR 820.10. FDA may conduct a pre-approval inspection of the manufacturing facility.',
         fields: [
           {
             id: 'manufacturing_description',
@@ -562,7 +562,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'All Special Process Validations Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 820.75, processes whose results cannot be fully verified by inspection must be validated',
+            helpText: 'Per ISO 13485:2016 clause 7.5.6 (via 21 CFR 820.10, QMSR), processes whose output cannot be or is not verified by subsequent monitoring or measurement must be validated',
           },
           {
             id: 'sterilization_validated',
@@ -590,7 +590,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             id: 'contract_manufacturers',
             label: 'Contract Manufacturers Used',
             type: 'yes_no',
-            helpText: 'Contract manufacturers must be qualified and subject to supplier controls per 21 CFR 820.50',
+            helpText: 'Contract manufacturers must be qualified and subject to supplier (purchasing) controls per ISO 13485:2016 clause 7.4, as incorporated by 21 CFR 820.10 (QMSR)',
           },
         ],
         issueChecks: [
@@ -600,8 +600,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Sterilization Not Validated',
             message:
-              'Sterile devices must have completed sterilization validation per the applicable ISO standard (ISO 11135, ISO 11137, ISO 17665) before PMA submission. Unvalidated sterilization is a critical deficiency per 21 CFR 820.75.',
-            reference: '21 CFR 820.75; ISO 11135; ISO 11137',
+              'Sterile devices must have completed sterilization validation per the applicable ISO standard (ISO 11135, ISO 11137, ISO 17665) before PMA submission. Unvalidated sterilization is a critical deficiency under ISO 13485:2016 clause 7.5.7, as incorporated by 21 CFR 820.10 (QMSR).',
+            reference: '21 CFR 820.10 (QMSR); ISO 13485:2016 clause 7.5.7; ISO 11135; ISO 11137',
           },
           {
             id: 'process_validation_incomplete_check',
@@ -609,8 +609,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Incomplete Process Validations',
             message:
-              'All special processes must be validated per 21 CFR 820.75 before PMA submission. Incomplete process validations may result in findings during FDA pre-approval inspection.',
-            reference: '21 CFR 820.75',
+              'All special processes must be validated per ISO 13485:2016 clause 7.5.6 (via 21 CFR 820.10, QMSR) before PMA submission. Incomplete process validations may result in findings during FDA pre-approval inspection.',
+            reference: '21 CFR 820.10 (QMSR); ISO 13485:2016 clause 7.5.6',
           },
         ],
         defaultNext: 'quality_system',
@@ -622,14 +622,14 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the Quality Management System (QMS) in place for this device.',
         guidance:
-          'The PMA applicant must demonstrate compliance with the Quality System Regulation (21 CFR 820) and ideally ISO 13485:2016. FDA will typically conduct a pre-approval inspection to verify QMS compliance before granting PMA approval. The QMS should cover document controls, CAPA, supplier management, production and process controls, inspection and testing, and management review. Having an ISO 13485 certification from a recognized body provides additional confidence but does not replace 21 CFR 820 compliance.',
+          'The PMA applicant must demonstrate compliance with the Quality Management System Regulation (QMSR, 21 CFR 820), which incorporates ISO 13485:2016 by reference together with additional FDA-specific requirements. FDA will typically conduct a pre-approval inspection to verify QMS compliance before granting PMA approval. The QMS should cover document controls, CAPA, supplier management, production and process controls, inspection and testing, and management review. An ISO 13485 certificate from a recognized body can support readiness, but it does not substitute for FDA\'s own determination of 21 CFR 820 compliance through inspection.',
         fields: [
           {
             id: 'qsr_compliance',
-            label: '21 CFR 820 (QSR/cGMP) Compliance Established',
+            label: '21 CFR 820 (QMSR) Compliance Established',
             type: 'yes_no',
             required: true,
-            helpText: 'Quality System Regulation compliance is mandatory for PMA applicants',
+            helpText: 'Quality Management System Regulation (21 CFR 820, incorporating ISO 13485:2016) compliance is mandatory for PMA applicants',
           },
           {
             id: 'iso_13485_certified',
@@ -645,20 +645,20 @@ export function createDevicePmaFlow(): FlowDefinition {
           },
           {
             id: 'capa_system',
-            label: 'CAPA System Established (21 CFR 820.90)',
+            label: 'CAPA System Established (ISO 13485:2016 clauses 8.5.2/8.5.3 via 21 CFR 820.10; formerly 21 CFR 820.100)',
             type: 'yes_no',
             required: true,
             helpText: 'Corrective and Preventive Action system for identifying and resolving quality issues',
           },
           {
             id: 'document_control',
-            label: 'Document Control System in Place (21 CFR 820.40)',
+            label: 'Document Control System in Place (ISO 13485:2016 clause 4.2.4, via 21 CFR 820.10)',
             type: 'yes_no',
             required: true,
           },
           {
             id: 'supplier_controls',
-            label: 'Supplier Controls Established (21 CFR 820.50)',
+            label: 'Supplier Controls Established (ISO 13485:2016 clause 7.4, via 21 CFR 820.10)',
             type: 'yes_no',
             required: true,
             helpText: 'Procedures for evaluating and monitoring suppliers, contractors, and consultants',
@@ -680,7 +680,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'preparing', label: 'Preparing for Inspection' },
               { value: 'not_ready', label: 'Not Yet Ready' },
             ],
-            helpText: 'FDA conducts a pre-approval inspection for most PMA applications per 21 CFR 814.20(b)(4)',
+            helpText: 'FDA conducts a pre-approval inspection for most PMA applications; approval may be denied if the manufacturing methods, facilities or controls do not conform to 21 CFR Part 820 (21 CFR 814.45(a)(3))',
           },
         ],
         issueChecks: [
@@ -688,9 +688,9 @@ export function createDevicePmaFlow(): FlowDefinition {
             id: 'no_qsr_compliance_check',
             condition: { field: 'qsr_compliance', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'QSR Non-Compliance',
+            title: 'QMSR Non-Compliance',
             message:
-              'Compliance with the Quality System Regulation (21 CFR 820) is mandatory for PMA applicants. FDA will not approve a PMA if the pre-approval inspection reveals significant QSR non-compliance.',
+              'Compliance with the Quality Management System Regulation (21 CFR 820) is mandatory for PMA applicants. FDA will not approve a PMA if the pre-approval inspection reveals significant QMSR non-compliance.',
             reference: '21 CFR 820; 21 CFR 814.20(b)(4)',
           },
         ],
@@ -705,7 +705,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the biocompatibility evaluation performed for this device.',
         guidance:
-          'Biocompatibility evaluation per ISO 10993-1 is required for all PMA devices that contact the patient per 21 CFR 814.20(b)(3)(v). The evaluation must consider the nature and duration of patient contact, the materials used, and applicable ISO 10993 test standards. FDA\'s 2020 guidance on ISO 10993-1 emphasizes a risk-based approach starting with chemical characterization (ISO 10993-18) before biological testing. For implantable devices, chronic toxicity, implantation, and degradation studies are typically required. The biological evaluation plan and report should follow the structure in ISO 10993-1 Annex A.',
+          'Biocompatibility evaluation per ISO 10993-1 is required for all PMA devices that contact the patient per 21 CFR 814.20(b)(3)(v). The evaluation must consider the nature and duration of patient contact, the materials used, and applicable ISO 10993 test standards. FDA\'s guidance on ISO 10993-1 (Use of International Standard ISO 10993-1, revised September 2023) emphasizes a risk-based approach starting with chemical characterization (ISO 10993-18) before biological testing. For implantable devices, chronic toxicity, implantation, and degradation studies are typically required. The biological evaluation plan and report should address the endpoints identified in ISO 10993-1 Annex A (Table A.1), with the evaluation conducted within a risk management process as described in ISO 10993-1 Annex B.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -750,7 +750,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             options: [
               { value: 'cytotoxicity', label: 'Cytotoxicity (ISO 10993-5)' },
               { value: 'sensitization', label: 'Sensitization (ISO 10993-10)' },
-              { value: 'irritation', label: 'Irritation (ISO 10993-10)' },
+              { value: 'irritation', label: 'Irritation (ISO 10993-23)' },
               { value: 'systemic_toxicity', label: 'Systemic Toxicity — Acute (ISO 10993-11)' },
               { value: 'subchronic_toxicity', label: 'Systemic Toxicity — Subchronic (ISO 10993-11)' },
               { value: 'chronic_toxicity', label: 'Systemic Toxicity — Chronic (ISO 10993-11)' },
@@ -768,7 +768,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Chemical Characterization Completed (ISO 10993-18)',
             type: 'yes_no',
             required: true,
-            helpText: 'FDA recommends chemical characterization as the first step before biological testing per 2020 guidance',
+            helpText: 'FDA recommends chemical characterization as the first step before biological testing per its ISO 10993-1 guidance (revised September 2023)',
           },
           {
             id: 'implant_specific_testing',
@@ -859,7 +859,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'iso_14708', label: 'ISO 14708 — Active Implantable Medical Devices' },
               { value: 'astm_f2077', label: 'ASTM F2077 — Intervertebral Body Fusion Devices' },
               { value: 'astm_f1717', label: 'ASTM F1717 — Spinal Implant Constructs' },
-              { value: 'astm_f2346', label: 'ASTM F2346 — Vascular Stents' },
+              { value: 'astm_f2346', label: 'ASTM F2346 — Spinal Artificial Discs' },
               { value: 'iso_5840', label: 'ISO 5840 — Cardiovascular Implants — Heart Valves' },
               { value: 'iso_14243', label: 'ISO 14243 — Wear of Total Knee Joint Prostheses' },
               { value: 'iso_7206', label: 'ISO 7206 — Femoral Stems' },
@@ -970,7 +970,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the clinical study or studies conducted in support of this PMA.',
         guidance:
-          'Clinical data demonstrating reasonable assurance of safety and effectiveness is the cornerstone of the PMA application per 21 CFR 814.20(b)(3)(v)(A). Most PMA applications require at least one pivotal clinical study conducted under an Investigational Device Exemption (IDE) per 21 CFR 812. The clinical study must have adequate enrollment, appropriate endpoints, sufficient follow-up duration, and demonstrate statistically significant results. FDA may require a randomized controlled trial, or may accept a single-arm study with an objective performance criterion (OPC) for certain device types. Pre-submission meetings with FDA to agree on study design are strongly recommended for PMA clinical studies.',
+          'Clinical data demonstrating reasonable assurance of safety and effectiveness is the cornerstone of the PMA application per 21 CFR 814.20(b)(6)(ii) (results of clinical investigations), summarized under 21 CFR 814.20(b)(3)(v)(B). Most PMA applications require at least one pivotal clinical study conducted under an Investigational Device Exemption (IDE) per 21 CFR 812. The clinical study must have adequate enrollment, appropriate endpoints, sufficient follow-up duration, and demonstrate statistically significant results. FDA may require a randomized controlled trial, or may accept a single-arm study with an objective performance criterion (OPC) for certain device types. Pre-submission meetings with FDA to agree on study design are strongly recommended for PMA clinical studies.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1211,7 +1211,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the software documentation and lifecycle processes for this device.',
         guidance:
-          'For PMA devices containing software, FDA requires comprehensive software documentation per IEC 62304 (Medical Device Software Lifecycle) and FDA\'s 2023 guidance on Content of Premarket Submissions for Device Software Functions. The software safety classification (Class A, B, or C) per IEC 62304 determines the required level of documentation. All software development must follow a documented software development lifecycle (SDLC) with requirements management, architecture documentation, detailed design, implementation, verification, and validation. Software of Unknown Provenance (SOUP) / off-the-shelf (OTS) components must be risk-assessed.',
+          'For PMA devices containing software, FDA requires comprehensive software documentation per IEC 62304 (Medical Device Software Lifecycle) and FDA\'s 2023 guidance on Content of Premarket Submissions for Device Software Functions. That guidance sets the submission\'s software documentation by a Documentation Level (Basic or Enhanced) based on the device\'s risk; the IEC 62304 software safety classification (Class A, B, or C) separately determines the rigor of the software lifecycle processes under that standard. All software development must follow a documented software development lifecycle (SDLC) with requirements management, architecture documentation, detailed design, implementation, verification, and validation. Software of Unknown Provenance (SOUP) / off-the-shelf (OTS) components must be risk-assessed.',
         fields: [
           {
             id: 'iec_62304_class',
@@ -1279,8 +1279,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Software Validation Gaps',
             message:
-              'Software validation is required for all PMA devices containing software per IEC 62304 and 21 CFR 820.30(g). A PMA submission with incomplete software validation will be found deficient. Software validation must confirm the finished device software meets user needs and intended uses.',
-            reference: 'IEC 62304:2006+AMD1:2015; 21 CFR 820.30(g)',
+              'Software validation is required for all PMA devices containing software per IEC 62304 and the design validation requirements of ISO 13485:2016 clause 7.3.7, incorporated by reference in 21 CFR 820.10. A PMA submission with incomplete software validation will be found deficient. Software validation must confirm the finished device software meets user needs and intended uses.',
+            reference: 'IEC 62304:2006+AMD1:2015; 21 CFR 820.10 (QMSR); ISO 13485:2016 clause 7.3.7',
           },
           {
             id: 'no_traceability_check',
@@ -1301,7 +1301,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the cybersecurity assessment and controls for this device.',
         guidance:
-          'FDA\'s 2023 guidance "Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions" requires comprehensive cybersecurity documentation for all devices with software that connect to networks, exchange data, or can be updated. This includes a Software Bill of Materials (SBOM), threat modeling (using STRIDE, MITRE ATT&CK, or equivalent), vulnerability management, penetration testing, and a total product lifecycle cybersecurity plan. Under Section 524B of the FD&C Act (enacted via PATCH Act), cybersecurity documentation is now a statutory requirement for premarket submissions.',
+          'FDA\'s premarket cybersecurity guidance (Cybersecurity in Medical Devices, final guidance revised June 2025, superseding the September 2023 version) recommends comprehensive cybersecurity documentation for devices with software that connect to networks, exchange data, or can be updated. This includes a Software Bill of Materials (SBOM), threat modeling (using STRIDE, MITRE ATT&CK, or equivalent), vulnerability management, penetration testing, and a total product lifecycle cybersecurity plan. Under Section 524B of the FD&C Act (added by section 3305 of the Food and Drug Omnibus Reform Act of 2022, enacted in the Consolidated Appropriations Act, 2023), cybersecurity documentation is now a statutory requirement for premarket submissions for "cyber devices" — devices that include software, can connect to the internet, and could be vulnerable to cybersecurity threats.',
         fields: [
           {
             id: 'network_connected',
@@ -1321,7 +1321,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Software Bill of Materials (SBOM) Prepared',
             type: 'yes_no',
             required: true,
-            helpText: 'Required per FDA 2023 Cybersecurity Guidance and Section 524B of the FD&C Act',
+            helpText: 'Required for cyber devices by Section 524B of the FD&C Act; see FDA\'s Cybersecurity in Medical Devices guidance (June 2025)',
           },
           {
             id: 'threat_model_completed',
@@ -1375,8 +1375,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Connected Device Without Cybersecurity Assessment',
             message:
-              'FDA\'s 2023 Cybersecurity Guidance and Section 524B of the FD&C Act require a comprehensive cybersecurity risk assessment for all connected devices. PMA submissions without adequate cybersecurity documentation will be refused.',
-            reference: 'FDA Guidance: Cybersecurity in Medical Devices (2023); FD&C Act Section 524B',
+              'Section 524B of the FD&C Act (for cyber devices) and FDA\'s Cybersecurity in Medical Devices guidance (June 2025) call for a comprehensive cybersecurity risk assessment for connected devices. PMA submissions without adequate cybersecurity documentation will be refused.',
+            reference: 'FDA Guidance: Cybersecurity in Medical Devices (June 2025); FD&C Act Section 524B',
           },
           {
             id: 'no_sbom_check',
@@ -1384,8 +1384,8 @@ export function createDevicePmaFlow(): FlowDefinition {
             severity: 'warning',
             title: 'No Software Bill of Materials (SBOM)',
             message:
-              'A Software Bill of Materials (SBOM) is required per Section 524B of the FD&C Act and FDA\'s 2023 Cybersecurity Guidance. The SBOM must list all software components including commercial, open-source, and off-the-shelf (OTS) software.',
-            reference: 'FDA Guidance: Cybersecurity in Medical Devices (2023)',
+              'A Software Bill of Materials (SBOM) is required for cyber devices per Section 524B of the FD&C Act, as described in FDA\'s Cybersecurity in Medical Devices guidance (June 2025). The SBOM must list all software components including commercial, open-source, and off-the-shelf (OTS) software.',
+            reference: 'FDA Guidance: Cybersecurity in Medical Devices (June 2025)',
           },
         ],
         defaultNext: 'labeling_review',
@@ -1464,7 +1464,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'not_evaluated', label: 'Not Evaluated' },
               { value: 'not_applicable', label: 'Not Applicable' },
             ],
-            helpText: 'MRI labeling per ASTM F2503 is required for implantable devices',
+            helpText: 'FDA guidance recommends MR safety testing and labeling (MR Safe, MR Conditional or MR Unsafe, using the terms in the FDA-recognized standard ASTM F2503) for implantable devices that may enter the MR environment',
           },
         ],
         issueChecks: [
@@ -1583,7 +1583,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the post-market surveillance and reporting plans for this device.',
         guidance:
-          'Post-market surveillance is a regulatory requirement for all PMA devices per 21 CFR 814.82. PMA holders must submit periodic reports (annual reports) per 21 CFR 814.84 summarizing safety and effectiveness data. Medical Device Reporting (MDR) per 21 CFR 803 is mandatory for deaths, serious injuries, and malfunctions. FDA may also impose post-approval studies (PAS) as a condition of PMA approval per 21 CFR 814.82(a)(2). A comprehensive post-market surveillance plan should include complaint handling, MDR, trending analysis, and procedures for PMA supplements for device modifications.',
+          'Under 21 CFR 814.82, FDA may impose post-approval requirements (e.g., restrictions on sale, distribution or use, or continuing evaluation and periodic reporting) as conditions of PMA approval; postmarket surveillance under section 522 of the FD&C Act (21 CFR 822) applies only when FDA issues an order for the device. PMA holders must submit periodic reports (annual reports) per 21 CFR 814.84 summarizing safety and effectiveness data. Medical Device Reporting (MDR) per 21 CFR 803 is mandatory for deaths, serious injuries, and malfunctions. FDA may also impose post-approval studies (PAS) as a condition of PMA approval per 21 CFR 814.82(a)(2). A comprehensive post-market surveillance plan should include complaint handling, MDR, trending analysis, and procedures for PMA supplements for device modifications.',
         fields: [
           {
             id: 'post_market_plan_developed',
@@ -1596,7 +1596,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Complaint Handling System Established',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 820.198 — procedures for receiving, reviewing, and evaluating complaints',
+            helpText: 'Per ISO 13485:2016 clause 8.2.2, as incorporated by 21 CFR 820.10 (QMSR), with complaint record requirements in 21 CFR 820.35 — procedures for receiving, reviewing, and evaluating complaints',
           },
           {
             id: 'mdr_procedure',
@@ -1747,7 +1747,7 @@ export function createDevicePmaFlow(): FlowDefinition {
         question:
           'Describe the post-approval manufacturing and change management plans.',
         guidance:
-          'After PMA approval, any change to the device that could affect safety or effectiveness requires a PMA supplement per 21 CFR 814.39. Changes are categorized as Panel-Track supplements (significant changes), 180-day supplements (design, manufacturing, or labeling changes), Real-Time supplements (minor changes), or 30-day notices (editorial/minor changes). The PMA holder must maintain the manufacturing quality system and be prepared for routine FDA inspections. Manufacturing site changes, supplier changes, and design modifications all require appropriate PMA supplement filings.',
+          'After PMA approval, any change to the device that could affect safety or effectiveness requires a PMA supplement per 21 CFR 814.39. Changes are categorized as Panel-Track supplements (significant changes), 180-day supplements (design, manufacturing, or labeling changes), Real-Time supplements (minor changes), Special PMA supplements – Changes Being Effected (labeling or manufacturing changes that enhance safety, 21 CFR 814.39(d)), or 30-day notices (modifications to manufacturing procedures or methods of manufacture, 21 CFR 814.39(f)). Changes that do not affect safety or effectiveness, such as editorial changes, are reported in the periodic (annual) report rather than in a supplement (21 CFR 814.39(b)). The PMA holder must maintain the manufacturing quality system and be prepared for routine FDA inspections. Manufacturing site changes, supplier changes, and design modifications all require appropriate PMA supplement filings.',
         fields: [
           {
             id: 'pma_supplement_procedures',
@@ -1761,7 +1761,7 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Change Control System in Place',
             type: 'yes_no',
             required: true,
-            helpText: 'Formal change control process per 21 CFR 820.30(i) for evaluating and documenting all device changes',
+            helpText: 'Formal change control process per ISO 13485:2016 clause 7.3.9, incorporated by reference through 21 CFR 820.10, for evaluating and documenting all device changes',
           },
           {
             id: 'supplier_change_management',
@@ -1786,7 +1786,7 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'preparing', label: 'Preparing for Routine Inspections' },
               { value: 'not_ready', label: 'Not Yet Ready' },
             ],
-            helpText: 'FDA conducts biennial inspections of PMA device manufacturers',
+            helpText: 'FDA inspects PMA device manufacturers on a risk-based schedule under FD&C Act section 510(h); there is no fixed biennial frequency',
           },
           {
             id: 'field_service_plan',

@@ -15,6 +15,7 @@ import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
 import { AdminPlatformGrants } from './AdminPlatformGrants';
+import { AdminSkills } from './AdminSkills';
 import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
 import '../styles/admin-access.css';
 
@@ -23,7 +24,8 @@ import '../styles/admin-access.css';
  *
  * A ui-v2-native port of Claude Design's canonical admin kit
  * (ui_kits/mdx/surfaces/Admin.jsx): Members · Roles + scopes · SSO +
- * provisioning · API keys · Settings, a KPI row, and an always-visible 21 CFR
+ * provisioning · API keys · Skills (AnA's skills, AdminSkills.tsx) · Settings,
+ * a KPI row, and an always-visible 21 CFR
  * Part 11 admin-audit band. Reached from the bottom-left account menu
  * ("Admin"), gated to org admins.
  *
@@ -88,6 +90,7 @@ const TABS = [
   { id: 'roles', label: 'Roles + scopes', icon: 'lock' },
   { id: 'sso', label: 'SSO + provisioning', icon: 'shieldCheck' },
   { id: 'apikeys', label: 'API keys', icon: 'key' },
+  { id: 'skills', label: 'Skills', icon: 'bookOpen' },
   { id: 'settings', label: 'Settings', icon: 'sliders' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -336,7 +339,8 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
         'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
         'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
         'Invite members, change membership roles, revoke API keys, or propose program access and organization settings changes',
-        'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
+        'Switch between the Members, Roles + scopes, SSO + provisioning, API keys, Skills and Settings tabs, or filter members by state (all / active / invited / disabled)',
+        'On Skills, read the platform skill library and this organization’s own skills, and test which skills a question would load. Turning a skill on or off, and creating or changing one, are the administrator’s acts with a stated reason',
       ],
     };
   }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
@@ -394,7 +398,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
           <div className="page-eyebrow">System</div>
           <h1 className="page-title">Admin and access</h1>
           <div className="page-sub">
-            Members · roles · program-level access grants · SSO · API keys · admin audit.
+            Members · roles · program-level access grants · SSO · API keys · AnA skills · admin audit.
             Every action below emits a 21 CFR Part 11 audit entry.
           </div>
         </div>
@@ -652,6 +656,11 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
               )}
             </section>
           )}
+
+          {/* AnA's skills for this organization: its own reads and doors
+              (/api/ana-skills), so it renders whether or not the admin
+              payload's other facets could be read. */}
+          {tab === 'skills' && <AdminSkills onAsk={onAsk} />}
 
           {tab === 'settings' && (
             <section className="section">

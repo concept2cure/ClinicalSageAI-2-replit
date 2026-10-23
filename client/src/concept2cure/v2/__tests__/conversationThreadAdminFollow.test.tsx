@@ -5,12 +5,18 @@
  *
  * The admin may watch (D-1(b)) and, by design, Stop. Pause, resume, steer and
  * approvals are the asker's alone (§2.5). The server accepts an admin's cancel
- * only from slice DT3, so until then Stop is not offered: a button refused on
- * press is worse than none. The composer says why it does not steer.
+ * since slice DT3 (run-control.ts applyControl, callerIsAdmin), so Stop is
+ * offered and nothing else is. The composer says why it does not steer.
+ *
+ * DT3 review (DP-82 and the admin-cancel gap): the admin's Stop is not one
+ * click. It opens the canonical reason-for-change dialog
+ * (GovernedConfirmDialog), which names whose turn it is and what stopping it
+ * does; the reason goes with the cancel, and a refusal (no reason, or the
+ * audit row refused, so nothing changed) is said in the dialog.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 import type { AnaChatMessage, UseAnaChatReturn } from '../../components/ana/useAnaChat';
 
@@ -51,6 +57,8 @@ function chat(scope: 'all' | 'cancel'): UseAnaChatReturn {
     isStreaming: true,
     send: vi.fn(async () => undefined),
     stop: vi.fn(),
+    adminStop: vi.fn(async () => ({ ok: true as const })),
+    followAskerName: scope === 'cancel' ? 'Sam Rivera' : null,
     runStatus: 'running',
     pause: vi.fn(async () => true),
     resume: vi.fn(async () => true),
@@ -81,14 +89,45 @@ afterEach(() => {
 });
 
 describe('9. an admin following a colleague’s turn', () => {
-  it('has no Stop (until DT3 accepts it), no Pause, and a composer that says only the asker can steer', async () => {
-    await mount(chat('cancel'));
-    expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull();
+  it('has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer', async () => {
+    const c = chat('cancel');
+    await mount(c);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     expect(box.disabled).toBe(true);
     expect(box.placeholder).toBe('Only the person who asked can steer AnA.');
     expect(screen.getByRole('note').textContent).toBe('Only the person who asked can steer AnA.');
+  });
+
+  it("Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel", async () => {
+    const c = chat('cancel');
+    await mount(c);
+    await act(async () => { screen.getByRole('button', { name: 'Stop' }).click(); });
+    expect(c.stop).not.toHaveBeenCalled();
+    expect(c.adminStop).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain("Stop Sam Rivera's turn");
+    expect(dialog.textContent).toContain('cannot be continued');
+    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'The draft is going to the wrong agency.' } });
+    fireEvent.change(dialog.querySelector('input')!, { target: { value: 'stop' } });
+    await act(async () => { screen.getByRole('button', { name: /Confirm and log/ }).click(); });
+    expect(c.adminStop).toHaveBeenCalledWith('The draft is going to the wrong agency.');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('a refused stop is said in the dialog, which stays open: nothing changed', async () => {
+    const c = chat('cancel');
+    const sentence = 'The turn was not stopped: the record of your stop could not be written. Nothing was changed. Try again.';
+    c.adminStop = vi.fn(async () => ({ ok: false as const, message: sentence }));
+    await mount(c);
+    await act(async () => { screen.getByRole('button', { name: 'Stop' }).click(); });
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'The draft is going to the wrong agency.' } });
+    fireEvent.change(dialog.querySelector('input')!, { target: { value: 'stop' } });
+    await act(async () => { screen.getByRole('button', { name: /Confirm and log/ }).click(); });
+    expect(screen.getByRole('alert').textContent).toBe(sentence);
+    expect(screen.getByRole('dialog')).toBeTruthy();
   });
 
   it('the asker following their own turn keeps every control, and the composer steers', async () => {
@@ -97,5 +136,26 @@ describe('9. an admin following a colleague’s turn', () => {
     expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy();
     const box = screen.getByRole('textbox', { name: 'Steer this run' }) as HTMLTextAreaElement;
     expect(box.disabled).toBe(false);
+  });
+
+  it("the asker's Stop is their own: no dialog, straight to stop", async () => {
+    const c = chat('all');
+    await mount(c);
+    await act(async () => { screen.getByRole('button', { name: 'Stop' }).click(); });
+    expect(c.stop).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+/* DT3 review (2.8): a reloaded conversation whose runs could not be read says
+   so on the thread, with a way to check again — never "nothing running". */
+describe('a conversation whose live runs could not be read', () => {
+  it('says so, and Check again reads them again', async () => {
+    const c = { ...chat('all'), isStreaming: false, runStatus: null, liveRunsUnchecked: true, recheckLiveRuns: vi.fn() } as UseAnaChatReturn;
+    await mount(c);
+    const note = screen.getByTestId('ct-live-runs-unchecked');
+    expect(note.textContent).toContain("Couldn't check whether AnA is still working here.");
+    await act(async () => { screen.getByRole('button', { name: 'Check again' }).click(); });
+    expect(c.recheckLiveRuns).toHaveBeenCalledTimes(1);
   });
 });

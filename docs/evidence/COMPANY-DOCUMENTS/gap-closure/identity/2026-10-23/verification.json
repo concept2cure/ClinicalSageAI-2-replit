@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:07:40.502095+00:00",
+  "scope": "Current merged working-tree company identity/correspondence source, not a production deployment or agency acceptance.",
+  "head": "c04ed02be9ee821fb5af9a90be7072f28518d310",
+  "mergeHead": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "tests": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0,
+    "files": 2,
+    "nativePgliteIdentityCases": 16,
+    "correspondenceCases": 13,
+    "existingCasesRetained": 16,
+    "addedCases": 13,
+    "privateJsonSha256": "1ae3ddfd0e9ab712901a959d22f460c94271f2edabc8818d41cb6dde9a79adda"
+  },
+  "beforeCorrection": {
+    "nativeCasesFailed": 8,
+    "nativeCasesPassed": 8,
+    "log": "baseline-red.txt",
+    "meaning": "Actual pre-correction source uses tenant-name/home-number authority and fails the updated bound-applicant and added-market regressions."
+  },
+  "afterCorrection": {
+    "log": "tests-green.txt",
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "linterLog": "eslint.txt"
+  },
+  "verifiedBehaviors": [
+    "Applicant name comes from canonical same-tenant bound sponsor, independently of tenant and company brand names.",
+    "Additional-market application number comes from the submission for the actual sequence region.",
+    "Missing or unrelated-market numbers remain absent; reviewed role differences cannot replace them.",
+    "An unbound or unavailable FDA sponsor is not replaced with the tenant name.",
+    "A same-name sponsor rebind or changed regulatory contact invalidates role-review hashes and pending correspondence reservation.",
+    "Canonical form address authority remains the admitted regulatory_programs.sponsor_address.",
+    "Current admission, audit rollback, presentation revision/variant checks, and canonical Authoring creation remain covered."
+  ],
+  "source": [
+    {
+      "path": "server/services/company-documents/identity.ts",
+      "sha256": "1edf1a558d934e86271b2cf98f63ed62609810a9032453854410ae15e2775616"
+    },
+    {
+      "path": "server/services/company-documents/correspondence.ts",
+      "sha256": "2ec42a889591d1145d2e7777dd35c33f8749dfc777444f5e5f6bd654afac0a93"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/identity.pglite.test.ts",
+      "sha256": "788240e4b0067c5e9733e8716949fde3b1969d5835a93de32200dcf0b1518f90"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence.test.ts",
+      "sha256": "0c201d86735541522b8635b8f899534e8969706b13413d0b951cb1cf60ae3a1e"
+    }
+  ],
+  "boundaries": [
+    "No new dependency, identity reader, migration or public provenance field.",
+    "The correspondence SQL transport is mocked while the canonical reader/region-selection logic is real; identity tests execute the actual reader SQL against PGlite.",
+    "Working correspondence may explicitly display missing identity facts; existing package/transmission checks still decide readiness.",
+    "No production runtime, remote CI, agency transmission or universal legal sufficiency claim."
+  ]
+}

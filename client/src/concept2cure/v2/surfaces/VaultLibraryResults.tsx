@@ -15,6 +15,7 @@ import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import { I } from '../icons';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
 import type { VaultDoc } from '../fixtures/vault-data';
+import { vaultIngestTypeLabel } from '@shared/constants/domain/vault-taxonomy';
 import '../styles/vault-picker.css';
 
 export interface LibraryHit {
@@ -30,7 +31,13 @@ export interface LibraryHit {
   contentHash?: string | null;
 }
 
-export interface LibraryShape { scope: 'verified-accessible-programs'; query: string; total: number; limit: number; results: LibraryHit[] }
+export interface LibraryShape {
+  scope: 'verified-accessible-programs'; query: string; total: number; limit: number; results: LibraryHit[];
+  /** 'browse' when filters were asked with no text (VR-18). */
+  mode?: 'search' | 'browse';
+  /** Set by the reader, not the server: whether the find view's filters were sent. */
+  filtered?: boolean;
+}
 
 const nullableText = (v: unknown): v is string | null => v === null || typeof v === 'string';
 function isLibraryHit(v: unknown): v is LibraryHit {
@@ -49,27 +56,54 @@ export const isLibraryShape: ShapeGuard<LibraryShape> = (v): v is LibraryShape =
 
 export const LIBRARY_PAGE = 50;
 
+/**
+ * The find view's metadata filters (VR-18), keyed by the search routes' own
+ * parameter names. Each is a list; the server ORs the values of one and ANDs
+ * the dimensions. Values are checked there, and a refused one is an error.
+ */
+export interface VaultFindFilters {
+  documentType?: string[];
+  placementStatus?: string[];
+  classification?: string[];
+  evidenceKind?: string[];
+  lifecycleStage?: string[];
+  ctdSection?: string[];
+}
+
+/** The filters as query-string parameters ('&k=v…'), '' when none is set. */
+export function vaultFilterParams(f: VaultFindFilters): string {
+  return (Object.keys(f) as Array<keyof VaultFindFilters>).sort()
+    .flatMap((k) => (f[k] ?? []).map((v) => `&${k}=${encodeURIComponent(v)}`))
+    .join('');
+}
+
 /** How many matched, and how many are shown. */
 export function libraryHeadline(d: LibraryShape): string {
   const n = d.total === 1 ? '1 document' : `${d.total} documents`;
-  const shown = d.total > d.results.length ? ` Showing the ${d.results.length} best matches.` : '';
-  return `${n} in projects you can access match “${d.query}”.${shown}`;
+  const browse = !d.query;
+  const shown = d.total > d.results.length
+    ? (browse ? ` Showing the newest ${d.results.length}.` : ` Showing the ${d.results.length} best matches.`) : '';
+  const what = browse ? 'match the filters' : d.filtered ? `match “${d.query}” and the filters` : `match “${d.query}”`;
+  return `${n} in projects you can access ${what}.${shown}`;
 }
 
 export function VaultLibraryResults({
-  query, includeEarlier, currentProjectId, onDownload, downloadingId,
+  query, includeEarlier, currentProjectId, onDownload, downloadingId, filterParams = '',
 }: {
   query: string;
   includeEarlier: boolean;
   currentProjectId: string | null;
   onDownload: (documentId: string, title: string, programId: string) => void;
   downloadingId: string;
+  /** The find view's filters (vaultFilterParams); the library takes all but a folder. */
+  filterParams?: string;
 }) {
   const q = query.trim();
-  const path = q
-    ? `/api/c2c/project-vault/search?q=${encodeURIComponent(q)}&limit=${LIBRARY_PAGE}${includeEarlier ? '&includeSuperseded=true' : ''}`
+  const path = q || filterParams
+    ? `/api/c2c/project-vault/search?q=${encodeURIComponent(q)}&limit=${LIBRARY_PAGE}${includeEarlier ? '&includeSuperseded=true' : ''}${filterParams}`
     : null;
-  const st = useLiveData<LibraryShape>(path, [path], isLibraryShape);
+  const raw = useLiveData<LibraryShape>(path, [path], isLibraryShape);
+  const st = { ...raw, data: raw.data ? { ...raw.data, filtered: filterParams !== '' } : raw.data };
   if (!path) return null;
   if (st.loading) return <div className="vd-lib" data-testid="vault-library-results"><div className="scaf-note" role="status">Searching projects you can access…</div></div>;
   if (st.error || !st.data) {
@@ -135,9 +169,71 @@ export interface VaultSearchHit {
   current?: boolean;
   /** The version's recorded sha256. */
   contentHash?: string | null;
+  /** Metadata the search returns beside the title (VR-18). */
+  evidenceKind?: string | null;
+  classification?: string | null;
+  /** The version's lifecycle stage; null when none is recorded. */
+  lifecycleStage?: string | null;
+  updatedAt?: string | null;
 }
+
+/**
+ * A search hit as the row the tree renders. The one mapping, shared by the
+ * Vault find view and the editor's files rail: two copies is how the rail came
+ * to key a hit by its bare uuid while the tree keys the same document
+ * `up-<uuid>`, so a file found by search never met its tree row and could not be
+ * cited.
+ */
+export function searchHitToDoc(h: VaultSearchHit): VaultDoc {
+  return {
+    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
+       uploadLeaf), so a hit and its tree leaf are one selection. */
+    id: `up-${h.id}`,
+    num: h.ctdSection || '',
+    title: h.title,
+    // The same reader-facing name the tree shows (the server maps tree rows
+    // through vaultIngestTypeLabel), not the raw token.
+    type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
+    status: h.placementStatus || 'unfiled',
+    pct: null,
+    owner: '',
+    ver: h.version ? `v${h.version}` : '',
+    updated: '',
+    // Only listed when the search asked for earlier versions (VR-09).
+    earlierVersion: h.current === false,
+    /* The server's ts_headline excerpt, with its <b> markers stripped: this is
+       rendered as text, and a highlight that arrives as literal markup would
+       read as corruption. */
+    preview: (h.snippet || '').replace(/<\/?b>/g, ''),
+    src: 'upload',
+    docId: h.id,
+    originalFileAvailable: h.originalFileAvailable,
+    disposition: h.disposition,
+    sizeLabel: h.size || undefined,
+    ...(h.lifecycleStage !== undefined ? { lifecycleStage: h.lifecycleStage } : {}),
+  };
+}
+/** One dimension's counts as the search returns them: each value and how many it selects. */
+export type VaultFacetBucket = { value: string | null; count: number };
+export type VaultFacets = Partial<Record<keyof VaultFindFilters | 'folderId', VaultFacetBucket[]>>;
+
+/** A dimension's counts, or null when the read did not carry well-formed ones (never zeros). */
+export function facetCounts(facets: unknown, key: string): Map<string, number> | null {
+  const list = facets && typeof facets === 'object' ? (facets as Record<string, unknown>)[key] : undefined;
+  if (!Array.isArray(list)) return null;
+  const counts = new Map<string, number>();
+  for (const b of list) {
+    if (!b || typeof b !== 'object' || !Number.isSafeInteger((b as VaultFacetBucket).count) || (b as VaultFacetBucket).count < 0) return null;
+    const v = (b as VaultFacetBucket).value;
+    if (typeof v === 'string') counts.set(v, (b as VaultFacetBucket).count);
+  }
+  return counts;
+}
+
 export interface VaultSearchShape {
   query: string;
+  /** Counts per filter value, when asked for (facets=true) on the first page. */
+  facets?: VaultFacets;
   includeSuperseded?: boolean;
   total: number;
   limit: number;

@@ -51,7 +51,8 @@ function authoringQuery(s: string, params: unknown[]) {
   if (/FROM authoring_documents/i.test(s)) return { rows: [{ id: '00000000-0000-4000-8000-000000000011', title: 'Control', client_program_id: '00000000-0000-4000-8000-000000000012' }] };
   if (/FROM authoring_sections/i.test(s)) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Control document numbers.', order_index: 1 }] };
   if (/INSERT INTO authoring_documents/i.test(s)) return { rows: [{ id: params[0] }] };
-  if (/INSERT INTO authoring_sections/i.test(s)) return { rows: [{ id: 'section', code: params[1], content: params[3] }] };
+  // The writer checks it got back the row it saved (ad372567d): echo the insert, (id, doc_id, code, title, content, ...).
+  if (/INSERT INTO authoring_sections/i.test(s)) return { rows: [{ id: params[0], doc_id: params[1], code: params[2], title: params[3], content: params[4] }] };
   return null;
 }
 

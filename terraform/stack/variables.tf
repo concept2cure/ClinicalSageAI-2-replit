@@ -35,6 +35,13 @@ variable "azs" {
 
 variable "rds_instance_class" {
   type = string
+  # A burstable db.t* instance throttles to its baseline when its CPU credits
+  # run out, under exactly the PDF/A, OCR and compile load a filing day brings
+  # (MR-03 DATA-13). Staging may size down; production may not.
+  validation {
+    condition     = var.environment != "production" || !startswith(var.rds_instance_class, "db.t")
+    error_message = "Production's database must not be a burstable db.t* class; use a general-purpose class such as db.m6g.large."
+  }
 }
 
 variable "rds_allocated_storage" {
@@ -95,8 +102,13 @@ variable "api_desired_count" {
   type = number
 }
 
-variable "worker_desired_count" {
-  type = number
+variable "api_max_count" {
+  description = "Autoscaling ceiling for the API service. Production holds it at 2 until MR-14 closes OPS-07."
+  type        = number
+  validation {
+    condition     = var.api_max_count >= var.api_desired_count
+    error_message = "api_max_count must be at least api_desired_count, the autoscaling floor."
+  }
 }
 
 variable "alb_deletion_protection" {
@@ -410,8 +422,39 @@ variable "github_repository" {
 
 variable "github_build_subjects" {
   type        = list(string)
-  description = "OIDC subjects (after repo:<repo>:) for the build role: jobs outside the GitHub environment. deploy-aws.yml runs on v* tags and on workflow_dispatch from the branch."
-  default     = ["ref:refs/tags/v*", "ref:refs/heads/concept2cure-v2"]
+  description = <<-EOT
+    OIDC subjects (after repo:<repo>:) for the build role: build-push, which
+    runs outside the GitHub environment. Null (the default) is the
+    environment's own: staging builds, on rc-* tags and on dispatch from the
+    branch; production never builds (it promotes the image staging verified,
+    MR-03 Stage 4), so it has no build role.
+  EOT
+  default     = null
+}
+
+# Promotion across accounts (MR-03 Stage 4; the account IDs are F-4's). Staging
+# names the production account, which may then read its image repository;
+# production names the staging account, whose repository its deploy role may
+# then read. Empty: no promotion path, and a production deploy is refused at
+# its promote step.
+variable "production_account_id" {
+  type        = string
+  description = "Staging only: the production account, which may read staging's images to promote them."
+  default     = ""
+  validation {
+    condition     = can(regex("^([0-9]{12})?$", var.production_account_id))
+    error_message = "An AWS account ID is 12 digits, or empty."
+  }
+}
+
+variable "staging_account_id" {
+  type        = string
+  description = "Production only: the staging account, whose verified images production promotes."
+  default     = ""
+  validation {
+    condition     = can(regex("^([0-9]{12})?$", var.staging_account_id))
+    error_message = "An AWS account ID is 12 digits, or empty."
+  }
 }
 
 variable "create_github_oidc_provider" {

@@ -227,8 +227,8 @@ export type FinalizedStatusStore =
  * `C2C_SECTION_COMPLETE_STATUSES`, which this read reused until 2026-10-18.
  *
  * That set is `{'approved','locked'}` and is right where it belongs: it is the
- * TypeScript mirror of `c2c_recompute_document_readiness()` and is pinned to
- * the migration by a contract test. But readiness is a PROGRESS metric, and
+ * TypeScript mirror of `c2c_document_counted_readiness()` (the trigger's count)
+ * and is pinned to the migration by a contract test. But readiness is a PROGRESS metric, and
  * transmittability is an attestation. The two questions have different answers
  * for one word.
  *

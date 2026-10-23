@@ -1,0 +1,11 @@
+ ✓ client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > finds the hover rules it holds, so an empty scan is not a pass 35ms
+ × client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > a hover rule for a dialog button changes paint only, never the box 37ms
+   → expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+- Expected
++ Received
+- []
++ [
++   "v2/styles/journey-v2.css: .c2c-v2 .de-btn.primary:hover { transform }",
++ ]
+      Tests  1 failed | 1 passed (2)

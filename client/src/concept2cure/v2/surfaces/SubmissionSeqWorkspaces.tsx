@@ -42,12 +42,15 @@ import { PlacementReasonField, placementReasonOk, matchingLeafReceipt, placement
 import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { downloadBlob } from '../download';
+import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
 import { useSubmissionReadSession, useSubmissionScopedRows, type SubmissionReadSession } from './submissionScopedRead';
+import { useBuilderSectionArrival } from './builderSectionArrival';
+import type { BuilderSection } from './submissionNavTarget';
 import {
   FailedRunNote,
   ShadowPresenceNote,
@@ -160,7 +163,7 @@ function messageFromBody(p: unknown, status: number): string {
 }
 
 export async function mutateVerbatim<T>(
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   path: string,
   body?: unknown,
 ): Promise<MutateResult<T>> {
@@ -774,8 +777,12 @@ function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDoc
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone, isCurrent }: {
+function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
   seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
+  /** Open at this section: the Builder was sent here by a readiness finding (F18). */
+  placeAt?: { code: string | null } | null;
+  /** The person closed the form without placing. */
+  onCancel?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const list = useCoauthorDocList(open);
@@ -802,6 +809,12 @@ function AddLeafForm({ seq, onDone, isCurrent }: {
     if ((normalizeCtdCode(value) ?? value.trim()) !== (normalizeCtdCode(section) ?? section.trim())) clearStudy();
     setSection(value);
   };
+  React.useEffect(() => {
+    if (!placeAt) return;
+    setOpen(true);
+    setSection(placeAt.code ?? '');
+    setStudy({ studyId: '', stfFileTag: '' });
+  }, [placeAt]);
   const place = async () => {
     if (!isCurrent() || !live.current || pending.current || disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid) return;
     pending.current = true;
@@ -837,7 +850,7 @@ function AddLeafForm({ seq, onDone, isCurrent }: {
           {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
         </button>
         {unconfirmed && <button type="button" className="sc-trans-b" onClick={() => onDone({ tone: 'warn', text: 'Checking the current sequence leaves and audit history. Review them before another placement; this read does not confirm the earlier write or its audit.' }, { changed: false, sequenceChanged: false, reconcile: true })}>Check sequence leaves</button>}
-        <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={disabled}>Cancel</button>
+        <button type="button" className="sc-trans-b" onClick={() => { setOpen(false); onCancel?.(); }} disabled={disabled}>Cancel</button>
       </div>}
   </div>;
 }
@@ -967,6 +980,10 @@ interface BuilderWorkspaceProps {
   session?: SubmissionReadSession;
   scopeContext?: string;
   isScopeCurrent?: () => boolean;
+  /** The section a readiness finding's act names (F18), applied once. */
+  section?: BuilderSection | null;
+  /** The Builder used `section`: its owner stops passing it. */
+  onSectionApplied?: () => void;
 }
 
 /** Actor/selection generations remount owned state even on A → B → A. */
@@ -981,6 +998,24 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps) {
   return <BuilderWorkspaceForScope key={`${context}:${generation}`} {...props} session={session} scopeContext={context} isScopeCurrent={isScopeCurrent} />;
 }
 
+/** The Builder's leaf table columns; Actions only while leaves can change. */
+function LeafTableHead({ locked }: { locked: boolean }) {
+  return (
+    <thead>
+      <tr>
+        <th>Section</th>
+        <th>Title</th>
+        <th>Operation</th>
+        <th>Granularity</th>
+        <th>Study id</th>
+        <th>STF file-tag</th>
+        <th>Source document</th>
+        {!locked && <th>Actions</th>}
+      </tr>
+    </thead>
+  );
+}
+
 function builderLeafReadPath(sequenceId: number, submission?: SubLike) {
   const selection = new URLSearchParams();
   if (submission) selection.set('submissionId', String(submission.id));
@@ -988,7 +1023,7 @@ function builderLeafReadPath(sequenceId: number, submission?: SubLike) {
   return `/api/submissions/sequences/${sequenceId}/leaves${selection.size ? `?${selection}` : ''}`;
 }
 
-function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, session, scopeContext, isScopeCurrent }: BuilderWorkspaceProps & {
+function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, session, scopeContext, isScopeCurrent, section, onSectionApplied }: BuilderWorkspaceProps & {
   session: SubmissionReadSession; scopeContext: string; isScopeCurrent: () => boolean;
 }) {
   const [bump, setBump] = React.useState(0);
@@ -999,8 +1034,11 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
   const leaves = useSubmissionScopedRows<LeafRow>(leavesPath, scopeContext, bump, session, isRowsWith<LeafRow>('id', 'sectionCode'));
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
+  const arrival = useBuilderSectionArrival({ section, leaves, seq, locked, onApplied: onSectionApplied });
   const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
     if (!isScopeCurrent() || !leaves.isCurrent()) return;
+    // A write the arrival led to, or any other, retires it (F18 review).
+    if (effect.changed || effect.reconcile) arrival.done();
     // A sequence refresh unmounts this pane; keep its confirmed state-change
     // verdict in the existing parent notice, rather than losing it with the pane.
     if ((effect.sequenceChanged || effect.reconcile) && onSequenceChanged) onSequenceChanged(n);
@@ -1016,6 +1054,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
       </div>
       <div className="pj-card-b">
         <VerdictNote notice={notice} />
+        {arrival.lineAt === 'top' && arrival.line}
         {leaves.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading the sequence&#39;s leaves…
@@ -1035,22 +1074,14 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           />
         ) : (
           <table className="ub-inv">
-            <thead>
-              <tr>
-                <th>Section</th>
-                <th>Title</th>
-                <th>Operation</th>
-                <th>Granularity</th>
-                <th>Study id</th>
-                <th>STF file-tag</th>
-                <th>Source document</th>
-                {!locked && <th>Actions</th>}
-              </tr>
-            </thead>
+            <LeafTableHead locked={locked} />
             <tbody>
               {leaves.rows.map((l) => (
-                <tr key={l.id}>
-                  <td className="sc-mono">{l.sectionCode}</td>
+                <tr key={l.id} data-section-target={arrival.marks(l.sectionCode) ? 'true' : undefined}>
+                  <td className="sc-mono">
+                    {l.sectionCode}
+                    {arrival.marks(l.sectionCode) && <span className="sp-row-s"> · {arrival.markLabel}</span>}
+                  </td>
                   <td>
                     <b>{l.title}</b>
                   </td>
@@ -1075,6 +1106,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
             </tbody>
           </table>
         )}
+        {arrival.lineAt === 'form' && arrival.line}
         {locked ? (
           <div className="scaf-note sc-mt">
             Sequence {seq.sequenceNumber} is {SC_SEQ_STATUS[seq.status]?.l.toLowerCase() ?? seq.status} —
@@ -1082,7 +1114,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} />
+            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}
@@ -1142,6 +1174,8 @@ interface ReadinessAssessment extends WaiverReadiness {
    *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
    *  and this client never re-derives it. */
   dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** Existing dispatch action may reauthorize an unsent FDA release; server-owned eligibility. */
+  dispatchAuthorization?: { reauthorizing: boolean; eligible: boolean; refusal: string | null };
   /** Whether THIS user may sign the freeze and dispatch, from the lookup the
    *  sign step enforces (separation of duties: the sequence's creator cannot).
    *  Informational — the server still decides at signing. */
@@ -1736,12 +1770,14 @@ function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'):
  */
 function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   const [pkg, setPkg] = React.useState<{ phase: 'idle' | 'running' | 'done' | 'error'; text?: string }>({ phase: 'idle' });
+  // 2026-10-15: sent no review, so production refused every download (403).
+  const review = useExportReview(`${sub.id}:${seq.id}`);
   const final = seq.status === 'dispatched' || seq.status === 'frozen';
   const download = async () => {
     if (pkg.phase === 'running') return;
     setPkg({ phase: 'running' });
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${sub.id}`, { sequenceNumber: seq.sequenceNumber });
+      const res = await apiRequest('POST', `/api/ectd/export/${sub.id}`, { sequenceNumber: seq.sequenceNumber, governance: review.governance });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as unknown;
         setPkg({ phase: 'error', text: serverMessage(body) ?? `The package was not returned (HTTP ${res.status}).` });
@@ -1760,6 +1796,7 @@ function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   const label = final ? 'Download the eCTD package (zip)' : 'Download an inspection copy of the package (zip)';
   return (
     <>
+      <ExportReviewConfirmation review={review} subject={`sequence ${seq.sequenceNumber}'s package`} disabled={pkg.phase === 'running'} />
       <div className="cm-pushbar sc-mb">
         <button type="button" className="sc-trans-b" disabled={pkg.phase === 'running'} onClick={download}>
           {I.layers} {pkg.phase === 'running' ? 'Assembling the package…' : label}
@@ -2009,6 +2046,8 @@ export function DispatchWorkspace({
   // The gate blocks, and its only blocker is the release signature that the
   // dispatch e-signature itself records. See the header state that reads this.
   const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
+  const reauthorizing = seq.status === 'dispatched' && a?.dispatchAuthorization?.reauthorizing === true;
+  const renewalOpen = reauthorizing && a?.dispatchAuthorization?.eligible === true && awaitingOwnSignature;
   // Separation of duties, told in advance. The sign step refuses the sequence's
   // creator, and used to say so only after a password and code were typed. The
   // buttons are not offered to someone the server will refuse; 'unverified'
@@ -2101,10 +2140,15 @@ export function DispatchWorkspace({
             </div>
             {awaitingOwnSignature && (
               <div className="scaf-note sc-mb">
-                This submission type requires a 21 CFR Part 11 release signature, and none is on record
-                for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
-                recorded as that release signature, and the server checks the full gate again with it
-                on record before anything moves.
+                {reauthorizing ? <>
+                  The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
+                  to the current applicant, application and sequence content before any transmission.
+                </> : <>
+                  This submission type requires a 21 CFR Part 11 release signature, and none is on record
+                  for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
+                  recorded as that release signature, and the server checks the full gate again with it
+                  on record before anything moves.
+                </>}
               </div>
             )}
             {!a.gate.cleared && !awaitingOwnSignature && (
@@ -2154,6 +2198,16 @@ export function DispatchWorkspace({
                 when you sign.
               </div>
             )}
+            {reauthorizing && cannotSign && (
+              <div className="sc-verdict tone-warn" role="status">
+                {signerState === 'author'
+                  ? 'You created this sequence, so you cannot re-sign its release. A different colleague with signing rights must apply the current release.'
+                  : 'No creator is recorded for this sequence, so independence cannot be verified and its release cannot be re-signed.'}
+              </div>
+            )}
+            {reauthorizing && a.dispatchAuthorization?.eligible === false && a.dispatchAuthorization.refusal && (
+              <div className="sc-verdict tone-warn" role="status">{redactInternals(a.dispatchAuthorization.refusal, 'The current dispatch cannot be reauthorized.')}</div>
+            )}
             <div className="sc-disp-actions">
               {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
                   verdict and for IND / NDA / BLA / MAA it requires a §11.70
@@ -2190,14 +2244,16 @@ export function DispatchWorkspace({
                   here. When the signature is what this click supplies, the label
                   says so: the signer is applying the release, not only moving a
                   status (§11.50 — the meaning of the act must be clear). */}
-              {dispatchOpen && !cannotSign && seq.status === 'frozen' && (
+              {dispatchOpen && !cannotSign && (seq.status === 'frozen' || renewalOpen) && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
                   onClick={() => onGoverned(seq, 'dispatch')}
                 >
                   {I.rocket}{' '}
-                  {awaitingOwnSignature
+                  {reauthorizing
+                    ? 'Re-sign release for current recorded facts (Part 11 e-signature)'
+                    : awaitingOwnSignature
                     ? 'Sign the release and dispatch (Part 11 e-signature)'
                     : 'Dispatch sequence (Part 11 e-signature)'}
                 </button>

@@ -13,7 +13,20 @@ const ARTIFACT_BUILDERS = new Map([
 const REPORT_VAULT_BINARY_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility'],
 ]);
+// The Vault's one metadata predicate (VR-18, 2026-10-22): fixed fragments with a
+// literal alias, shared by the search and the tree so a filtered total and the
+// tree's counts cannot disagree. No value reaches them; filter values are bound.
+const VAULT_FILTER_FROM_ROUTES = new Map([
+  ['vaultLifecycleStageSql', '../../services/vault/vault-document-filter.js'],
+  ['vaultUnfiledSql', '../../services/vault/vault-document-filter.js'],
+  ['vaultSuggestedSql', '../../services/vault/vault-document-filter.js'],
+]);
+const VAULT_FILTER_FROM_VAULT = new Map([
+  ['vaultLifecycleStageSql', './vault-document-filter.js'],
+]);
 const CALLERS = new Map([
+  ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
+  ['server/services/vault/vault-search.ts', { alias: 'd', builders: VAULT_FILTER_FROM_VAULT }],
   ['server/services/csr/vault-source-input.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/csr/source-receipt-eligibility.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   // A commitment's fulfilment evidence (P-41, 2026-10-19): the Vault version's

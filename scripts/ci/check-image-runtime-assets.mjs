@@ -212,7 +212,6 @@ export const RUNTIME_PATHS = {
   'data/cer_reports': { kind: 'not-shipped', reason: 'Per-tenant CER report output, written by cer-routes before it is read.' },
   'data/cache': { kind: 'not-shipped', reason: 'cache_manager.js cache, created on write.' },
   'data/exports': { kind: 'not-shipped', reason: 'pdf-task-routes export output, created on write.' },
-  'data/sap': { kind: 'not-shipped', reason: 'sap-generator-service output; mkdir -p at module load.' },
   'data/guidelines': {
     kind: 'not-shipped',
     reason: 'indCopilot.js optional fallback text; not in the repository, and a miss returns its generic message.',

@@ -78,7 +78,7 @@ export function createRiskManagementFlow(): FlowDefinition {
         question:
           'Let’s begin by identifying the product under risk management. What is the product name, its description, intended use, and the intended patient population?',
         guidance:
-          'ISO 14971:2019 Section 4.1 requires top management to ensure that adequate resources are provided for the risk management process. The intended use and reasonably foreseeable misuse must be clearly documented as the foundation for hazard identification.',
+          'ISO 14971:2019 Section 4.2 requires top management to ensure that adequate resources are provided and competent personnel are assigned for the risk management process. The intended use and reasonably foreseeable misuse must be clearly documented as the foundation for hazard identification.',
         fields: [
           {
             id: 'product_name',
@@ -172,6 +172,17 @@ export function createRiskManagementFlow(): FlowDefinition {
             visibleWhen: { field: 'prior_risk_file_exists', operator: 'eq', value: true },
           },
           {
+            // 2026-10-22 (D2): read by rm_no_risk_management_plan and
+            // rm_rm_file_incomplete. Whether the plan is complete is asked
+            // separately, at the risk management review.
+            id: 'risk_management_plan_exists',
+            label: 'Is there a documented risk management plan for this product?',
+            type: 'yes_no',
+            required: false,
+            helpText:
+              'ISO 14971:2019 requires a documented risk management plan (Clause 4.4) covering scope, responsibilities, risk acceptability criteria, verification activities and production and post-production information. It is part of the risk management file.',
+          },
+          {
             id: 'product_category',
             label: 'Product Category',
             type: 'select',
@@ -221,13 +232,14 @@ export function createRiskManagementFlow(): FlowDefinition {
           },
           {
             id: 'samd_classification',
-            label: 'SaMD Classification (IMDRF)',
+            label: 'Software Safety Class (IEC 62304)',
+            helpText: 'IEC 62304 software safety class (A/B/C). This is not the IMDRF SaMD risk categorization, which uses Categories I-IV.',
             type: 'select',
             visibleWhen: { field: 'product_category', operator: 'eq', value: 'samd' },
             options: [
-              { value: 'class_a', label: 'Class A' },
-              { value: 'class_b', label: 'Class B' },
-              { value: 'class_c', label: 'Class C' },
+              { value: 'class_a', label: 'Class A (IEC 62304)' },
+              { value: 'class_b', label: 'Class B (IEC 62304)' },
+              { value: 'class_c', label: 'Class C (IEC 62304)' },
             ],
           },
           {
@@ -777,7 +789,7 @@ export function createRiskManagementFlow(): FlowDefinition {
         question:
           'How were risk control measures verified for implementation and effectiveness?',
         guidance:
-          'ISO 14971:2019 Section 7.3 requires verification that each risk control measure has been implemented in the final design and is effective in reducing risk. Verification should include testing, inspection, analysis, or review of design history. A traceability matrix linking hazards to controls to verification evidence is best practice.',
+          'ISO 14971:2019 Section 7.2 requires verification that each risk control measure has been implemented in the final design and is effective in reducing risk. Verification should include testing, inspection, analysis, or review of design history. A traceability matrix linking hazards to controls to verification evidence is best practice.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -826,7 +838,7 @@ export function createRiskManagementFlow(): FlowDefinition {
             title: 'Unverified Risk Controls',
             message:
               'All risk control measures must be verified for implementation and effectiveness before the product is released. Unverified controls represent uncontrolled risks.',
-            reference: 'ISO 14971:2019 Section 7.3',
+            reference: 'ISO 14971:2019 Section 7.2',
           },
           {
             id: 'no_verification_evidence',
@@ -835,7 +847,7 @@ export function createRiskManagementFlow(): FlowDefinition {
             title: 'Verification Evidence Not Documented',
             message:
               'Verification activities must be documented in the risk management file. Ensure test reports and analysis records are maintained.',
-            reference: 'ISO 14971:2019 Section 7.3',
+            reference: 'ISO 14971:2019 Section 7.2; Section 4.5',
           },
         ],
         defaultNext: 'control_implementation',
@@ -1105,8 +1117,8 @@ export function createRiskManagementFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Incomplete Risk Management File',
             message:
-              'The risk management file must be complete before the risk management review. Ensure all required documents (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, risk management report) are included.',
-            reference: 'ISO 14971:2019 Section 3, ISO/TR 24971:2020',
+              'The risk management file must be complete before the risk management review. Ensure all required records (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, overall residual risk evaluation) are included. The results of the review are then documented as the risk management report and added to the risk management file.',
+            reference: 'ISO 14971:2019 Section 4.5, ISO/TR 24971:2020',
           },
         ],
         defaultNext: 'post_production_monitoring',

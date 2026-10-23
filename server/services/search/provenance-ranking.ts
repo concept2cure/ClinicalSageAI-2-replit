@@ -1,12 +1,16 @@
 /**
  * Provenance-ranked search.
  *
- * Deep-research aggregates connector results and ranks them by relevance alone.
- * In a regulated setting, *credibility* should lead: a primary regulatory source
- * or trial registry hit should outrank a preprint even if the preprint scored a
- * touch higher on relevance. This ranks by source AUTHORITY tier first, then by
- * relevance within a tier, and annotates each result with its tier so a UI can
- * badge/group by credibility.
+ * Deep-research aggregates connector results from several sources. In a
+ * regulated setting, *credibility* should lead: a primary regulatory source or
+ * trial registry hit should outrank a preprint wherever each sat in its own
+ * source's response. This ranks by source AUTHORITY tier first, then — within a
+ * tier — by each result's position in its own source's response (`sourceRank`),
+ * and annotates each result with its tier so a UI can badge/group by credibility.
+ *
+ * The second key is an interleave of the sources' own orders, NOT a relevance
+ * order: no connector computes relevance. (2026-10-15: it sorted by a
+ * `relevanceScore` that was the list position on a per-connector slope.)
  *
  * Pure / deterministic — no IO. Tier mapping is grounded in the same authority
  * model as evidence/provenance.ts.
@@ -40,13 +44,14 @@ export function connectorAuthorityTier(sourceConnector: string): AuthorityTier {
 
 export interface ProvenanceRankable {
   sourceConnector: string;
-  relevanceScore: number;
+  /** 1-based position in the source's own response — not a relevance score. */
+  sourceRank: number;
 }
 
 /**
  * Pure: rank results by source authority FIRST (primary → secondary →
- * preliminary), then by relevance within a tier (stable, deterministic).
- * Each result is annotated with its `provenanceTier`.
+ * preliminary), then by position in their own source's response within a tier
+ * (stable, deterministic). Each result is annotated with its `provenanceTier`.
  */
 export function rankResultsByProvenance<T extends ProvenanceRankable>(
   results: T[]
@@ -56,6 +61,6 @@ export function rankResultsByProvenance<T extends ProvenanceRankable>(
     .sort((a, b) => {
       const tier = TIER_RANK[a.provenanceTier] - TIER_RANK[b.provenanceTier];
       if (tier !== 0) return tier;
-      return (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0);
+      return a.sourceRank - b.sourceRank;
     });
 }

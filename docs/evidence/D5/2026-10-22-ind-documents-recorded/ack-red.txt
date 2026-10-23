@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > records EXPORT_GENERATED with the SHA-256 of the bytes it delivers, and keeps the provenance headers 25ms
+   → no EXPORT_GENERATED row: expected undefined to be truthy
+ × server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > delivers nothing when the record does not persist, and says so 7ms
+   → expected 200 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > records EXPORT_GENERATED with the SHA-256 of the bytes it delivers, and keeps the provenance headers
+AssertionError: no EXPORT_GENERATED row: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts:69:44
+     67|     expect(Buffer.compare(res.body as Buffer, RECORD)).toBe(0);
+     68|     const row = h.logAction.mock.calls.map(([e]) => e).find((e: any) =…
+     69|     expect(row, 'no EXPORT_GENERATED row').toBeTruthy();
+       |                                            ^
+     70|     expect(row.organizationId).toBe(3);
+     71|     expect(row.userId).toBe(12);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts > GET /api/mdx/gateways/transmittals/:id/ack > delivers nothing when the record does not persist, and says so
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/mdx-transmittal-ack-recorded.test.ts:82:24
+     80|     h.logAction.mockResolvedValue({ persisted: false });
+     81|     const res = await request(app()).get('/api/mdx/gateways/transmitta…
+     82|     expect(res.status).toBe(503);
+       |                        ^
+     83|     expect(res.headers['content-disposition']).toBeUndefined();
+     84|     expect(res.body.detail).toMatch(/record could not be written/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  05:15:12
+   Duration  4.84s (transform 2.48s, setup 85ms, import 4.44s, tests 36ms, environment 0ms)
+

@@ -394,8 +394,12 @@ class AnaPlatformController {
       .from(projects)
       .where(eq(projects.organizationId, orgId));
 
-    const maxProjects = access.org!.maxProjects || 10;
-    if ((existingProjects[0]?.count ?? 0) >= maxProjects) {
+    // 2026-10-15: was `maxProjects || 10`, so an unrecorded limit (and a
+    // recorded 0) became 10. As atomicQuotaService does, an unrecorded limit
+    // refuses the create.
+    const maxProjects: number | null | undefined = access.org!.maxProjects;
+    if (maxProjects == null) return { success: false, action: 'create_project', error: 'The project limit is not recorded for this organization, so nothing was created.' };
+    if (Number(existingProjects[0]?.count ?? 0) >= maxProjects) {
       return {
         success: false,
         action: 'create_project',

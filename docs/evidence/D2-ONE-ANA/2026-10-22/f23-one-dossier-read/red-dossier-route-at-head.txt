@@ -1,0 +1,11 @@
+ × server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > reads the project’s sections in the caller’s organization and answers the dossier 28ms
+ ✓ server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > a project the caller cannot read is 404 and no section is read 6ms
+ × server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > an unprovisioned store is every figure unavailable, with the reason, and no 0 4ms
+ × server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > any other failure is a 500, never an empty dossier 4ms
+ × server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /workstreams, which it replaces, is gone 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > reads the project’s sections in the caller’s organization and answers the dossier
+ FAIL  server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > an unprovisioned store is every figure unavailable, with the reason, and no 0
+ FAIL  server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > any other failure is a 500, never an empty dossier
+ FAIL  server/routes/c2c/__tests__/projects-dossier.test.ts > GET /api/c2c/projects/:id/dossier > /workstreams, which it replaces, is gone
+      Tests  4 failed | 1 passed (5)

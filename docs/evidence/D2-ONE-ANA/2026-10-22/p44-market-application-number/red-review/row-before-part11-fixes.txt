@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says an added market's packages are refused until its number is recorded, and records it with a reason 227ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > says what recording does before it is done, and who recorded the number, when and why 6ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > an unchanged number is said to be no change, and nothing is re-read 53ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > shows the server's refusal in its words, inside the form, which keeps what was typed 5032ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > draws nothing for the home market, whose number is the project's 25ms
+ × client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > offers no change to someone who may not change the project, and says who can 5ms
+ ✓ client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx > a market's own application number on its row (P-44) > a read that failed says so 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 2 passed (7)

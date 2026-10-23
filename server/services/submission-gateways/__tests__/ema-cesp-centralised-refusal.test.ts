@@ -3,8 +3,8 @@
  *
  * 2026-10-05 (D2 record, step g-cesp-centralised-refusal; finding 42).
  * EMA has made the eSubmission Gateway / Web Client mandatory for every
- * centralised-procedure eCTD submission since 2014-03-01 (regulator text,
- * ema.europa.eu; basis in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * centralised-procedure eCTD submission since 2014-03-01 (recall: a search
+ * extract of an ema.europa.eu page, not a fetched copy; basis in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
  * 2026-10-05-record/g-cesp-centralised-refusal-facts.md). The channel function
  * (`submissionChannelFor`, server/services/regulatory/registry/
  * submittabilityCoverage.ts) already says so for the planner and the

@@ -403,4 +403,21 @@ export default [
       complexity: 'off',
     },
   },
+  {
+    // The AnA skill library (lane ANA-SKILLS, docs/design/ANA_SKILLS_2026-10-22.md). Each module
+    // under library/ is content: a list of skill records whose length is the length of what the
+    // skill teaches, not of code. Splitting a discipline's skills across files to fit 500 lines
+    // scatters one reviewable unit. validate.ts is a flat checklist of independent refusals, one
+    // branch per way a skill can be wrong; its branch count is the number of checks.
+    //
+    // What these rules stand in for is held by library.test.ts (every skill validated, every tool
+    // launch-visible, every citation resolvable, every refusal shown failing) and golden.test.ts
+    // (each module's questions select its skill against the whole library). Only size and branch
+    // count are off; every defect-catching rule stays on.
+    files: ['server/services/ana/skills/library/*.ts'],
+    rules: {
+      'max-lines': 'off',
+      complexity: 'off',
+    },
+  },
 ];

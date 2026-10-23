@@ -1,12 +1,21 @@
 /**
- * Bootstrap orchestrator for the auth + module-catalog schema.
+ * What the boot still does for the auth tables: outside production, the GA
+ * demo admin. Nothing else.
  *
- * Previously inlined as `ensureAuthTables()` in server/db.ts. The transaction
- * boundary is preserved exactly: schema migrations, organization seeds, GA
- * demo user seed, and module catalog schema all run inside a single
- * BEGIN/COMMIT. A failure anywhere rolls the whole thing back.
+ * This was `ensureAuthTables()`: every boot ran the auth-schema DDL, seeded two
+ * organisations and the demo admin, and created the module catalog tables, in
+ * one transaction on the OWNER connection (DATABASE_URL). Since 2026-10-22
+ * (MR-03 Stage 3, OPS-16) the DDL and the organisation seeds are
+ * migrations/20261022_auth_schema_and_seeded_organizations.sql, which
+ * deploy-migrate applies; the boot checks the result through
+ * `missingAuthSchema` (./auth-schema.ts, called from
+ * server/startup/services.ts) and needs no owner credential.
  *
- * Called from startup via `server/startup/services.ts`. Safe to re-run.
+ * The demo admin stays here because it is a development convenience, not
+ * schema: an operator's DEMO_USER_EMAIL, never seeded in production
+ * (seedGaDemoUser refuses there). Outside production it still runs on the owner
+ * connection when one is configured, as before, because the runtime role may
+ * not upsert users and memberships unscoped.
  */
 
 import { Pool } from 'pg';
@@ -14,20 +23,13 @@ import { getPool } from '../runtime';
 import { getDatabaseUrl } from '../getDatabaseUrl';
 import { getSslConfig } from '../ssl';
 import { createScopedLogger } from '../../utils/logger';
-import { applyAuthSchemaMigrations, applyModuleCatalogSchema } from './auth-schema';
-import { seedOrganizations, seedGaDemoUser } from './seed-default-org';
+import { seedGaDemoUser } from './seed-default-org';
 
 const logger = createScopedLogger('database');
 
-export async function ensureAuthTables(): Promise<void> {
-  // This bootstrap runs DDL (ALTER/CREATE) and system seeds — OWNER work. When
-  // APP_DATABASE_URL splits the request-serving pool onto the non-superuser
-  // app_service role, getPool() cannot run it: app_service has no CREATE/ALTER,
-  // and the instrumented runtime pool fail-closes unscoped writes under
-  // RLS_ENFORCE=on. So when the roles are split, run this on a standalone OWNER
-  // connection (DATABASE_URL) — the same role migrations use, and exactly what
-  // ensureCoreTables already does. When the roles are NOT split, getPool() IS
-  // the owner, so behavior is unchanged.
+export async function seedDemoAdminOutsideProduction(): Promise<void> {
+  if (process.env.NODE_ENV === 'production') return;
+
   const appDbUrl = process.env.APP_DATABASE_URL;
   const runtimeSplit = !!(appDbUrl && appDbUrl.trim() !== '');
   const ownerUrl = getDatabaseUrl();
@@ -41,12 +43,11 @@ export async function ensureAuthTables(): Promise<void> {
       max: 1,
     });
     pool = ownerPool;
-    logger.info('ensureAuthTables: using owner connection (runtime role is split via APP_DATABASE_URL)');
   } else {
     try {
       pool = getPool();
     } catch {
-      logger.warn('ensureAuthTables: no DB pool — skipping');
+      logger.warn('demo admin: no DB pool — skipping');
       return;
     }
   }
@@ -54,17 +55,11 @@ export async function ensureAuthTables(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    await applyAuthSchemaMigrations(client);
-    await seedOrganizations(client);
     await seedGaDemoUser(client);
-    await applyModuleCatalogSchema(client);
-
     await client.query('COMMIT');
-    logger.info('ensureAuthTables: auth schema verified / updated');
   } catch (err: any) {
     await client.query('ROLLBACK');
-    logger.error('ensureAuthTables failed', { error: err.message });
+    logger.error('demo admin seed failed', { error: err.message });
     throw err;
   } finally {
     client.release();

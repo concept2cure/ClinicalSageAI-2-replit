@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3 7ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together 7ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables 2ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over FDA 4 GB gateway limit 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required) 0ms
+stderr | server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step
+[Orchestrator] run failed: ValidationError: The application id and the sequence number name the package file, so each must be a single name with no path in it.
+    at packageEctdSubmission (/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts:1405:11)
+    at assembleRealPackage (/home/user/ClinicalSageAI-2-replit/server/services/ectd/orchestrator-real-package.ts:191:20)
+    at assembleForValidation (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:649:16)
+    at /home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1947:42
+    at runStep (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1444:22)
+    at Module.runOrchestrator (/home/user/ClinicalSageAI-2-replit/server/services/submission-package-orchestrator.ts:1946:5)
+    at /home/user/ClinicalSageAI-2-replit/server/__tests__/services/submission-orchestrator.test.ts:633:30
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [
+    {
+      ruleId: 'PACKAGE-NAME-NOT-PLAIN',
+      severity: 'error',
+      filePath: 'EMEA/H/C/12345-0000'
+    }
+  ],
+  errorClass: 'validation'
+}
+
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records 293ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing 28ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a NDA target, and says why on the step 22ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step 30ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one 134ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection 124ms
+
+ Test Files  1 passed (1)
+      Tests  40 passed (40)
+   Start at  06:35:18
+   Duration  5.66s (transform 2.79s, setup 81ms, import 4.63s, tests 675ms, environment 0ms)
+

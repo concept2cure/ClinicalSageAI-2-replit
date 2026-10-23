@@ -1,0 +1,73 @@
+[
+  {
+    "question": "How do I make sure every statement in our draft product labeling traces back to the clinical data?",
+    "expect": "labeling"
+  },
+  {
+    "question": "FDA sent us a safety labeling change notification. What does the labeling supplement involve?",
+    "expect": "labeling"
+  },
+  {
+    "question": "Which of the carton and container labels should carry the storage statement?",
+    "expect": "labeling",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Can you check whether the Highlights of Prescribing Information match what the FPI sections say?",
+    "expect": "labeling.us-prescribing-information"
+  },
+  {
+    "question": "Does this hepatotoxicity signal meet the criteria for a boxed warning?",
+    "expect": "labeling.us-prescribing-information"
+  },
+  {
+    "question": "Generate the SPL XML for our label once the text is final.",
+    "expect": "labeling.us-prescribing-information",
+    "context": { "segments": ["pharma"], "submissionType": "US_NDA" }
+  },
+  {
+    "question": "How should section 8.1 read when all we have is rat and rabbit embryo-fetal toxicity data?",
+    "expect": "labeling.pregnancy-and-lactation"
+  },
+  {
+    "question": "What goes in the PLLR lactation subsection if there are no human breast milk data?",
+    "expect": "labeling.pregnancy-and-lactation",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "Draft section 4.8 of the SmPC from our pooled safety data.",
+    "expect": "labeling.eu-smpc"
+  },
+  {
+    "question": "Does the package leaflet need user testing before we file the MAA?",
+    "expect": "labeling.eu-smpc",
+    "context": { "segments": ["pharma"], "submissionType": "EU_MAA" }
+  },
+  {
+    "question": "What headings does the Drug Facts panel need for an acetaminophen tablet?",
+    "expect": "labeling.otc"
+  },
+  {
+    "question": "Do we need a label comprehension study for our Rx-to-OTC switch?",
+    "expect": "labeling.otc",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "Which ISO 15223 symbols do we need on a sterile single-use catheter label, and what has to be in the IFU?",
+    "expect": "labeling.device-labeling"
+  },
+  {
+    "question": "What does an IVD package insert have to contain for the US?",
+    "expect": "labeling.device-labeling",
+    "context": { "segments": ["ivd"] }
+  },
+  {
+    "question": "Can you review this detail aid for fair balance before it goes to MLR review?",
+    "expect": "labeling.promotional-review"
+  },
+  {
+    "question": "Is the superiority claim in our journal ad supportable from the head-to-head data?",
+    "expect": "labeling.promotional-review",
+    "context": { "segments": ["biotech"] }
+  }
+]

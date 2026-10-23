@@ -83,6 +83,12 @@ function requireActor(actor: string): string {
   return actor;
 }
 
+/** The tenant a by-id read or write is held to; none given is a programming error, never "any tenant". */
+function requireTenant(tenantId: string): string {
+  if (typeof tenantId !== 'string' || tenantId.trim() === '') throw new Error('A GRDHE by-id read or write names the tenant it is held to, and none was given');
+  return tenantId;
+}
+
 /** The transaction a write shares with its audit row. */
 type GrdheTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -1029,16 +1035,19 @@ export class GRDHEService {
     `);
 
     const jobId = (result.rows[0] as any).job_id;
-    return this.getExportJob(jobId);
+    return this.getExportJob(request.tenantId, jobId);
   }
 
   /**
-   * Get export job by ID
+   * Get export job by ID, within one tenant. 2026-10-22: this and the by-id
+   * writes and reads below matched the UUID alone, so only row security kept
+   * another tenant's job or case out; on a connection it does not bind they
+   * were read, executed and cancelled by id. Another tenant's id is not found.
    */
-  async getExportJob(jobId: string): Promise<ExportJob> {
+  async getExportJob(tenantId: string, jobId: string): Promise<ExportJob> {
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.export_jobs
-      WHERE id = ${jobId}::uuid AND NOT is_deleted
+      WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid AND NOT is_deleted
     `);
 
     if (result.rows.length === 0) {
@@ -1084,6 +1093,7 @@ export class GRDHEService {
    * Update export job status
    */
   async updateExportJobStatus(
+    tenantId: string,
     jobId: string,
     status: ExportStatus,
     options: {
@@ -1096,42 +1106,48 @@ export class GRDHEService {
   ): Promise<void> {
     const by = requireActor(actor);
 
-    const updated = await db.execute(sql`
-      UPDATE regulatory_harmonization.export_jobs
-      SET 
-        status = ${status}::regulatory_harmonization.export_status,
-        progress_percent = COALESCE(${options.progressPercent ?? null}, progress_percent),
-        current_step = COALESCE(${options.currentStep || null}, current_step),
-        error_message = ${options.errorMessage || null},
-        error_details = ${options.errorDetails ? JSON.stringify(options.errorDetails) : null}::jsonb,
-        started_at = CASE WHEN ${status} = 'validating' AND started_at IS NULL THEN NOW() ELSE started_at END,
-        completed_at = CASE WHEN ${status} IN ('completed', 'failed', 'cancelled') THEN NOW() ELSE NULL END,
-        updated_at = NOW()
-      WHERE id = ${jobId}::uuid
-      RETURNING id
-    `);
-    // Row security filters the UPDATE to the caller's tenant, so another
-    // tenant's job matched nothing. But the audit insert below ran regardless,
-    // and the audit log's foreign key does not consult row security, so it
-    // filed an entry against that job (ledger L203).
-    if (updated.rows.length === 0) throw new ExportJobNotFoundError(jobId);
+    // 2026-10-15: the UPDATE committed on its own and the audit insert ran
+    // after it, so a failed audit insert left the status changed and
+    // unaudited. They commit together (as writeAuditRow's writes do).
+    await db.transaction(async tx => {
+      const updated = await tx.execute(sql`
+        UPDATE regulatory_harmonization.export_jobs
+        SET
+          status = ${status}::regulatory_harmonization.export_status,
+          progress_percent = COALESCE(${options.progressPercent ?? null}, progress_percent),
+          current_step = COALESCE(${options.currentStep || null}, current_step),
+          error_message = ${options.errorMessage || null},
+          error_details = ${options.errorDetails ? JSON.stringify(options.errorDetails) : null}::jsonb,
+          started_at = CASE WHEN ${status} = 'validating' AND started_at IS NULL THEN NOW() ELSE started_at END,
+          completed_at = CASE WHEN ${status} IN ('completed', 'failed', 'cancelled') THEN NOW() ELSE NULL END,
+          updated_at = NOW()
+        WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid
+        RETURNING id
+      `);
+      // Row security filters the UPDATE to the caller's tenant, so another
+      // tenant's job matched nothing. But the audit insert below ran regardless,
+      // and the audit log's foreign key does not consult row security, so it
+      // filed an entry against that job (ledger L203).
+      if (updated.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
-    // Log the status change
-    await this.logExportJobAudit(
-      jobId,
-      {
-        action: 'status_change',
-        category: 'status_change',
-        message: `Status changed to ${status}`,
-        details: {
-          new_status: status,
-          progress: options.progressPercent,
-          step: options.currentStep,
-          error: options.errorMessage
-        }
-      },
-      by
-    );
+      // Log the status change
+      await this.logExportJobAudit(
+        tx,
+        jobId,
+        {
+          action: 'status_change',
+          category: 'status_change',
+          message: `Status changed to ${status}`,
+          details: {
+            new_status: status,
+            progress: options.progressPercent,
+            step: options.currentStep,
+            error: options.errorMessage
+          }
+        },
+        by
+      );
+    });
   }
 
   /**
@@ -1145,6 +1161,7 @@ export class GRDHEService {
    * the content returned. A signature is made through POST /api/esignature/sign.
    */
   async completeExportJob(
+    tenantId: string,
     jobId: string,
     output: { fileName: string; content: string; mimeType?: string },
     actor: string
@@ -1153,52 +1170,57 @@ export class GRDHEService {
     const outputHash = computeHash(output.content);
     const outputSize = Buffer.byteLength(output.content, 'utf8');
 
-    const completed = await db.execute(sql`
-      UPDATE regulatory_harmonization.export_jobs
-      SET status = 'completed'::regulatory_harmonization.export_status,
-        progress_percent = 100,
-        current_step = ${EXPORT_OUTPUT_NOT_RETAINED},
-        output_file_path = NULL,
-        output_file_name = ${output.fileName},
-        output_file_hash = ${outputHash},
-        output_file_size_bytes = ${outputSize},
-        output_mime_type = ${output.mimeType ?? 'application/xml'},
-        completed_at = NOW(),
-        completed_by = ${by},
-        updated_at = NOW()
-      WHERE id = ${jobId}::uuid
-      RETURNING id
-    `);
-    // As in updateExportJobStatus: no audit row for a job this session did not update.
-    if (completed.rows.length === 0) throw new ExportJobNotFoundError(jobId);
+    // The completion and its audit row commit together (2026-10-15; see updateExportJobStatus).
+    await db.transaction(async tx => {
+      const completed = await tx.execute(sql`
+        UPDATE regulatory_harmonization.export_jobs
+        SET status = 'completed'::regulatory_harmonization.export_status,
+          progress_percent = 100,
+          current_step = ${EXPORT_OUTPUT_NOT_RETAINED},
+          output_file_path = NULL,
+          output_file_name = ${output.fileName},
+          output_file_hash = ${outputHash},
+          output_file_size_bytes = ${outputSize},
+          output_mime_type = ${output.mimeType ?? 'application/xml'},
+          completed_at = NOW(),
+          completed_by = ${by},
+          updated_at = NOW()
+        WHERE id = ${jobId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid
+        RETURNING id
+      `);
+      // As in updateExportJobStatus: no audit row for a job this session did not update.
+      if (completed.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
-    await this.logExportJobAudit(
-      jobId,
-      {
-        action: 'job_completed',
-        category: 'status_change',
-        message: `Export job completed. ${EXPORT_OUTPUT_NOT_RETAINED}.`,
-        details: {
-          output_file_path: null,
-          output_retention: EXPORT_OUTPUT_NOT_RETAINED,
-          output_file_name: output.fileName,
-          output_hash: outputHash,
-          output_size: outputSize
-        }
-      },
-      by
-    );
+      await this.logExportJobAudit(
+        tx,
+        jobId,
+        {
+          action: 'job_completed',
+          category: 'status_change',
+          message: `Export job completed. ${EXPORT_OUTPUT_NOT_RETAINED}.`,
+          details: {
+            output_file_path: null,
+            output_retention: EXPORT_OUTPUT_NOT_RETAINED,
+            output_file_name: output.fileName,
+            output_hash: outputHash,
+            output_size: outputSize
+          }
+        },
+        by
+      );
+    });
   }
 
   /**
-   * Log export job audit entry
+   * Log export job audit entry, in the transaction that makes the change it records.
    */
   private async logExportJobAudit(
+    tx: GrdheTx,
     jobId: string,
     entry: { action: string; category: string; message: string; details?: Record<string, any> },
     actor: string
   ): Promise<void> {
-    await db.execute(sql`
+    await tx.execute(sql`
       INSERT INTO regulatory_harmonization.export_job_audit_log (
         job_id, action, action_category, message, details, user_id
       ) VALUES (
@@ -1286,6 +1308,8 @@ export class GRDHEService {
   async createCanonicalAdverseEvent(request: CreateAdverseEventRequest, actor: string): Promise<CanonicalAdverseEvent> {
     const by = requireActor(actor);
 
+    // sender and receiver as recorded (the route checks them with
+    // casePartyProblems). 2026-10-15: neither was written, so both were lost.
     const insert = sql`
       INSERT INTO regulatory_harmonization.canonical_adverse_events (
         tenant_id, organization_id, case_number, case_type, report_type,
@@ -1295,7 +1319,7 @@ export class GRDHEService {
         seriousness_congenital_anomaly, seriousness_other_medically_important,
         seriousness_other_details,
         patient, reactions, suspect_products, concomitant_products,
-        medical_history, reporter, case_narrative, status, created_by
+        medical_history, reporter, sender, receiver, case_narrative, status, created_by
       ) VALUES (
         ${request.tenantId}::uuid,
         ${request.organizationId || null}::uuid,
@@ -1319,6 +1343,8 @@ export class GRDHEService {
         ${JSON.stringify(request.concomitantProducts || [])}::jsonb,
         ${JSON.stringify(request.medicalHistory || {})}::jsonb,
         ${JSON.stringify(request.reporter)}::jsonb,
+        ${JSON.stringify(request.sender ?? {})}::jsonb,
+        ${JSON.stringify(request.receiver ?? {})}::jsonb,
         ${request.caseNarrative || null},
         ${request.status || 'draft'},
         ${by}
@@ -1377,12 +1403,12 @@ export class GRDHEService {
   }
 
   /**
-   * Get canonical adverse event by ID
+   * Get canonical adverse event by ID, within one tenant (2026-10-22; see getExportJob).
    */
-  async getCanonicalAdverseEventById(eventId: string): Promise<CanonicalAdverseEvent> {
+  async getCanonicalAdverseEventById(tenantId: string, eventId: string): Promise<CanonicalAdverseEvent> {
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.canonical_adverse_events
-      WHERE id = ${eventId}::uuid AND NOT is_deleted
+      WHERE id = ${eventId}::uuid AND tenant_id = ${requireTenant(tenantId)}::uuid AND NOT is_deleted
     `);
 
     if (result.rows.length === 0) {

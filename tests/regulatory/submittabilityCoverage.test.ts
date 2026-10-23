@@ -65,9 +65,28 @@ function isNotifiedBodyFiling(c: { agency?: string; tier: string; channel?: stri
   return c.tier === 'no_gateway' && c.agency === 'Notified_Body' && c.channel === 'Notified Body — channel not modelled';
 }
 
+/* 2026-10-22 (352ca5aae): device filings addressed to a national competent
+   authority (vigilance, FSCA, clinical investigation, DoC) or to a Japanese
+   registered certification body (ninsho) no longer borrow a region default
+   gateway; their recipient's channel is not modelled (no connector: Rule 2).
+   Allowed by agency, and only with exactly that recipient's not-modelled
+   channel, so a NEW entry for either agency that claims or borrows a channel
+   still fails this file. */
+const UNMODELLED_RECIPIENT_CHANNEL: Readonly<Record<string, string>> = {
+  National_Competent_Authority: 'National competent authority — channel not modelled',
+  Registered_Certification_Body: 'Registered certification body — channel not modelled',
+};
+function isUnmodelledRecipientFiling(c: { agency?: string; tier: string; channel?: string }): boolean {
+  if (c.tier !== 'no_gateway' || !c.agency) return false;
+  const expected = UNMODELLED_RECIPIENT_CHANNEL[c.agency];
+  return expected !== undefined && c.channel === expected;
+}
+
 describe('every startable filing type is finishable', () => {
-  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA and Notified Body channels', () => {
-    const gaps = getUnsubmittableFilings().filter(g => !isKnownUnconnectedEmaFiling(g) && !isNotifiedBodyFiling(g));
+  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA, Notified Body, NCA and certification-body channels', () => {
+    const gaps = getUnsubmittableFilings().filter(
+      g => !isKnownUnconnectedEmaFiling(g) && !isNotifiedBodyFiling(g) && !isUnmodelledRecipientFiling(g)
+    );
     expect(
       gaps,
       `these filing types can be chosen at project initiation but cannot reach a gateway:\n` +
@@ -75,6 +94,17 @@ describe('every startable filing type is finishable', () => {
         `\n  Fix by adding the region to shared/regulatory/region-identity.ts and` +
         `\n  registering its gateway in server/services/submission-gateways/index.ts.`
     ).toEqual([]);
+  });
+
+  it('admits an NCA or certification-body filing only with exactly its own not-modelled channel', () => {
+    const nca = 'National competent authority — channel not modelled';
+    expect(isUnmodelledRecipientFiling({ agency: 'National_Competent_Authority', tier: 'no_gateway', channel: nca })).toBe(true);
+    // A borrowed region gateway, another recipient's channel, or another tier is still a gap.
+    expect(isUnmodelledRecipientFiling({ agency: 'National_Competent_Authority', tier: 'no_gateway', channel: 'CESP' })).toBe(false);
+    expect(isUnmodelledRecipientFiling({ agency: 'National_Competent_Authority', tier: 'no_gateway', channel: 'EMA — channel not modelled' })).toBe(false);
+    expect(isUnmodelledRecipientFiling({ agency: 'Registered_Certification_Body', tier: 'no_gateway', channel: nca })).toBe(false);
+    expect(isUnmodelledRecipientFiling({ agency: 'EMA', tier: 'no_gateway', channel: nca })).toBe(false);
+    expect(isUnmodelledRecipientFiling({ agency: 'National_Competent_Authority', tier: 'no_identity', channel: nca })).toBe(false);
   });
 
   it('every region carrying filings resolves to a registered gateway pair', () => {

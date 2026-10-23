@@ -1,0 +1,50 @@
+# Slice B mutants: each edits one line in the working tree, runs the test that must catch it, and restores the file (mutb.py).
+## mutant: ENABLE_TEST_ROUTES dropped from PROD_FORBIDDEN_FLAGS (server/startup/env.ts) -> exit 1
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > refuses it in every production boot, naming it 
+  Tests  1 failed | 16 passed (17)
+  FAIL  server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > refuses it in every production boot, naming
+
+## mutant: test routes mounted again when the flag says so (server/startup/env.ts) -> exit 1
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > never mounts the test routes in production, wha
+  Tests  1 failed | 16 passed (17)
+  FAIL  server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > ENABLE_TEST_ROUTES > never mounts the test routes in production,
+
+## mutant: ECS never detected (server/startup/env.ts) -> exit 1
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AUDIT_SEAL_ACCEPT_U
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AI_GOVERNANCE_ACCEP
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses STORAGE_ACCEPT_LOCA
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses CONCEPT2CURE_SIGNER
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AI_GATEWAY_ACCEPT_D
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses SOME_FUTURE_ACCEPT_
+
+## mutant: only an exact "true" counts as an acceptance (server/startup/env.ts) -> exit 1
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to 
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to 
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to 
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set to 
+  Tests  4 failed | 13 passed (17)
+  FAIL  server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses an override set
+
+## mutant: AUDIT_REQUIRE_ENFORCE=false accepted on ECS (server/startup/env.ts) -> exit 1
+  × server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AUDIT_REQUIRE_ENFOR
+  Tests  1 failed | 16 passed (17)
+  FAIL  server/startup/__tests__/env-production-overrides-posture.test.ts > production boot posture: test routes and operator overrides > on the hosted deployment (an ECS task) > refuses AUDIT_REQUIRE_E
+
+## mutant: enforcement opt-in again (server/startup/audit-enforcement.ts) -> exit 1
+  × server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE is unset 8ms
+  × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE is unset (the production default
+  × server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when the sweep is disabled and AUDIT_REQUIRE_ENFORCE is unset (the production defau
+  Tests  3 failed | 21 passed (24)
+  FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed in production when the audit trail is off and AUDIT_REQUIRE_ENFORCE is unset
+  FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE is unset (the production def
+
+## mutant: guard: route flags not checked on compose (scripts/ci/check-compose-boot-contract.mjs) -> exit 1
+  FAIL ENABLE_TEST_ROUTES set on the app (MR-03 OPS-28)
+  FAIL ENABLE_TEST_ROUTES left for the operator to set
+  FAIL a demo route flag on the app
+  [ci:compose-boot-contract] self-test: 3 case(s) failed
+
+## mutant: guard: Helm env.extra not merged (scripts/ci/check-compose-boot-contract.mjs) -> exit 1
+  FAIL helm: ENABLE_TEST_ROUTES in a production chart's env.extra
+  [ci:compose-boot-contract] self-test: 1 case(s) failed
+

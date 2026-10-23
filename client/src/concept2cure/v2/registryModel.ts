@@ -119,6 +119,14 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *  - "Quick access": "My Tasks" is My work below; "Recent Documents" opened
  *    the editor, which opens from any document in Vault and from a project.
  *  - Quality had no entry (it sat in NAV_HIDDEN); it is a place.
+ *
+ * What came back, 2026-10-22: CMC / Module 3, directly before Quality, by the
+ * founder's decision ("add QS to the left rail next to CMC, Vault, Tasking").
+ * It joined the launch catalog on 2026-10-12 (decision P-28) and was reached
+ * only from Project home and ⌘K until then. Its launch-scope entry still lists
+ * no module, so the professional band decides who may open it: outside that
+ * band the entry shows locked, with the server's reason, and stays
+ * activatable. RBM stays off the rail; it is outside the launch catalog.
  *  - "Client categories" is the account menu's "Client type".
  *
  * Where this list still differs from §5, and why:
@@ -146,6 +154,7 @@ export const RAIL_CORE = [
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
   { id: 'tasks', label: 'My work', icon: 'checkSquare', applies: { actionId: 'tasking.filter', params: { mine: 'true' } } },

@@ -1,0 +1,5 @@
+ FAIL  server/services/c2c/__tests__/dossier-read.pglite.test.ts [ server/services/c2c/__tests__/dossier-read.pglite.test.ts ]
+Error: Cannot find module '../dossier-read' imported from /home/user/ClinicalSageAI-2-replit/server/services/c2c/__tests__/dossier-read.pglite.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ Test Files  1 failed (1)
+      Tests  no tests

@@ -65,7 +65,8 @@ interface PvSignalRow {
   prr: number;
   /** GAP: no signal owner/assignee exists in adverse_events or safety_signals. */
   owner: string | null;
-  /** Days since the most recent contributing case (MAX report_date): data recency, not governance age. */
+  /** Days since the most recent contributing case (MAX report_date): data recency, not
+   *  governance age. 'not recorded' when no contributing case records a report date. */
   age: string | null;
   status: string;
 }
@@ -87,6 +88,13 @@ interface PvAggregateReportRow {
 
 function fmtDate(d: Date): string {
   return d instanceof Date && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : '';
+}
+
+/** A recorded report date, or null for one not recorded (or unreadable). */
+function recordedReportDate(value: Date | string | null | undefined): Date | null {
+  if (value == null) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function formatAge(now: Date, last: Date): string {
@@ -133,7 +141,7 @@ function formatDue(submittedTo: string[], dueDate: Date): string {
 function deriveSignals(events: AdverseEvent[]): PvSignalRow[] {
   const perProduct = new Map<string, number>(); // a + b : usable cases for the product
   const perTerm = new Map<string, number>(); //    a + c : usable cases for the term
-  const perPair = new Map<string, { product: string; event: string; a: number; last: Date }>();
+  const perPair = new Map<string, { product: string; event: string; a: number; last: Date | null }>();
   let total = 0; // N : all usable cases (both fields present)
 
   for (const event of events) {
@@ -144,11 +152,13 @@ function deriveSignals(events: AdverseEvent[]): PvSignalRow[] {
     perProduct.set(product, (perProduct.get(product) ?? 0) + 1);
     perTerm.set(term, (perTerm.get(term) ?? 0) + 1);
     const key = `${product} ${term}`;
-    const reportDate = event.reportDate instanceof Date ? event.reportDate : new Date(event.reportDate);
+    // 2026-10-15: a NULL report date was read as 1970-01-01 and aged the signal
+    // from the epoch. An unrecorded date contributes no recency.
+    const reportDate = recordedReportDate(event.reportDate);
     const current = perPair.get(key);
     if (current) {
       current.a += 1;
-      if (reportDate.getTime() > current.last.getTime()) current.last = reportDate;
+      if (reportDate && (!current.last || reportDate.getTime() > current.last.getTime())) current.last = reportDate;
     } else {
       perPair.set(key, { product, event: term, a: 1, last: reportDate });
     }
@@ -157,7 +167,7 @@ function deriveSignals(events: AdverseEvent[]): PvSignalRow[] {
   if (total === 0) return [];
 
   const inputs: SignalScreenInput[] = [];
-  const meta = new Map<string, { a: number; last: Date }>();
+  const meta = new Map<string, { a: number; last: Date | null }>();
 
   for (const pair of Array.from(perPair.values())) {
     if (pair.a < MIN_CASES) continue;
@@ -180,7 +190,7 @@ function deriveSignals(events: AdverseEvent[]): PvSignalRow[] {
       count: m ? m.a : 0,
       prr: roundPrr(row.result.prr),
       owner: null,
-      age: m ? formatAge(now, m.last) : null,
+      age: m ? (m.last ? formatAge(now, m.last) : 'not recorded') : null,
       status: row.result.signalDetected ? 'evaluating' : 'monitoring',
     };
   });

@@ -7,6 +7,8 @@
  * queries reference one anyway:
  *
  *   server/routes/c2c/projects.ts:334       MAX(ds.updated_at)        → /workstreams
+ *     (since F23, 2026-10-22: the dossier read, server/services/c2c/dossier-read.ts,
+ *     s.updated_at → GET /:id/dossier; /workstreams is deleted)
  *   server/routes/c2c/projects.ts:371,377   ds.updated_at, ORDER BY   → /drafts
  *   server/routes/c2c/project-vault.ts:365  ds.updated_at             → project vault
  *   server/routes/c2c/documents.ts:441      SET updated_at = now()    → PATCH section save
@@ -36,6 +38,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { DOSSIER_SECTIONS_SQL } from '../../server/services/c2c/dossier-read';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,11 +72,9 @@ const PRE_FIX_SCHEMA = `
   );
 `;
 
-/** The real query text from each shipped route. */
-const WORKSTREAMS = `
-  SELECT d.doc_type, COUNT(*) AS total, MAX(ds.updated_at) AS last_updated
-    FROM c2c_documents d JOIN c2c_document_sections ds ON ds.document_id = d.id
-   WHERE d.org_id = $1 GROUP BY d.doc_type`;
+/** The real query text from each shipped route. The dossier read is imported,
+ *  so this plans exactly what GET /:id/dossier runs. */
+const DOSSIER = DOSSIER_SECTIONS_SQL;
 const DRAFTS = `
   SELECT ds.section_key, ds.updated_at, ds.version
     FROM c2c_document_sections ds JOIN c2c_documents d ON d.id = ds.document_id
@@ -87,7 +88,7 @@ const PATCH_UPDATE = `
    WHERE document_id = $1 AND section_key = $2`;
 
 const ALL_FOUR: ReadonlyArray<[label: string, sql: string, args: unknown[]]> = [
-  ['/workstreams (projects.ts:334)', WORKSTREAMS, [1]],
+  ['/dossier (dossier-read.ts)', DOSSIER, [['11111111-1111-4111-8111-111111111111'], 1]],
   ['/drafts (projects.ts:371,377)', DRAFTS, [1]],
   ['project vault (project-vault.ts:365)', VAULT, ['doc_x']],
   ['PATCH section save (documents.ts:441)', PATCH_UPDATE, ['doc_x', 'm2.5']],
@@ -115,7 +116,7 @@ describe('the defect was real (pre-fix state)', () => {
       pg.query(`SELECT section_key FROM c2c_document_sections`),
     ).resolves.toBeDefined();
     // So the failure is the column, not the emptiness.
-    await expect(pg.query(WORKSTREAMS, [1])).rejects.toThrow(/updated_at/);
+    await expect(pg.query(DOSSIER, [['11111111-1111-4111-8111-111111111111'], 1])).rejects.toThrow(/updated_at/);
   }, 60_000);
 });
 

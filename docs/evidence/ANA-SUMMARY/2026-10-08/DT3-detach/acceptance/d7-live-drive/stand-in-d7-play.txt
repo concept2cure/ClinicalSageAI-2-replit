@@ -1,0 +1,20 @@
+# The play added to the scratch copy of docs/evidence/W1/2026-09-28-ana-drive/harness/stand-in-model.mjs for acceptance G
+# (plan() tries it first; findAsk also matches 'd7 '). Run with FAKE_SLOW_TOOL=act_on_screen:15000 FAKE_DELAY_MS=6000 FAKE_PORT=8839.
+
+// ── D-7 (2026-10-22): a Live Drive turn whose page closes ─────────────────────
+// "d7 drive …": a screen move while the page is open (navigate_to), then — the
+// round held by FAKE_SLOW_TOOL=act_on_screen:<ms> so the page has closed — a
+// screen action, which the server must refuse without running it, then a read
+// (list_project_documents), which must run, then the answer, which quotes what
+// came back for the screen action.
+function planD7(t) {
+  if (!/\bd7 drive\b/i.test(t.rawAsk)) return null;
+  const done = name => t.results.filter(r => r.name === name);
+  if (!done('navigate_to').length) return t.tool('navigate_to', { target: 'vault' }, 'Opening the Vault on your screen.');
+  if (!done('act_on_screen').length) return t.tool('act_on_screen', { action: 'vault.search', params: { query: 'stability' } }, 'Searching it on screen.');
+  if (!done('list_project_documents').length) return t.tool('list_project_documents', {}, 'Listing the project documents.');
+  const act = done('act_on_screen').pop();
+  const listed = done('list_project_documents').pop();
+  return { text: `Done. The screen search came back: ${act.json?.error ?? act.json?.status ?? 'no status'}. The documents were listed: ${listed.json?.error ? 'no' : 'yes'}.` };
+}
+

@@ -3,7 +3,8 @@
 **Who this is for.** The founder, showing the launch catalog (Projects, Vault,
 Authoring, Submission Center, Submission Readiness, QMS controlled documents) with one
 realistic program. Everything named here exists in the demo tenant after
-`node scripts/demo/launch-demo/seed.mjs --pack biotech` (ids in
+`DEMO_SEED_EMAIL=<your dev-login address> node scripts/demo/launch-demo/seed.mjs --pack biotech`
+(or `DEMO_SEED_TOKEN=…` for a hosted server; ids in
 `docs/evidence/DEMO/biotech/manifest.json`). Every record is fictional and prefixed
 `[Demo · Biotech]`; say so if asked — and say that the documents were written for the
 demo, not drafted by a model.
@@ -158,6 +159,7 @@ and a change record — and every one of those steps is on the ledger with a has
 things we did not do are the ones a person must do: freeze and dispatch."*
 
 **If something is not where this says.** The seed is idempotent — re-run
-`node scripts/demo/launch-demo/seed.mjs --pack biotech` (with the second signer's
+`DEMO_SEED_EMAIL=<your dev-login address> node scripts/demo/launch-demo/seed.mjs --pack biotech`
+(or `DEMO_SEED_TOKEN=…` for a hosted server; with the second signer's
 `OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD` for the signed steps); it creates nothing that
 already exists and reports what it found.

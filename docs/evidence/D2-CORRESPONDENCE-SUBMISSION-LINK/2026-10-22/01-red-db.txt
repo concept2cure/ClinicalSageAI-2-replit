@@ -1,0 +1,19 @@
+# RED at d4be3c13f: the route as on trunk, the new suite (real PostgreSQL 16, RLS_ENFORCE=on, app_service) (2026-10-22T05:08:57Z)
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > links a submission of the project and reads it back with its title
+   → expected undefined to match object { id: 53, …(3) }
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a submission of another program of the organisation, and writes nothing
+   → {"success":true,"data":{"id":"ace_1792645743025_9833bcee","organizationId":474,"projectId":409,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses another organisation's submission, and writes nothing
+   → {"success":true,"data":{"id":"ace_1792645743059_89d7dd4b","organizationId":474,"projectId":409,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a removed submission, and writes nothing
+   → {"success":true,"data":{"id":"ace_1792645743081_480a35af","organizationId":474,"projectId":409,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a submission that does not exist, and writes nothing
+   → {"success":true,"data":{"id":"ace_1792645743105_3e5c7312","organizationId":474,"projectId":409,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > refuses a reference that is not a submission id
+   → {"success":true,"data":{"id":"ace_1792645743129_a7a1043b","organizationId":474,"projectId":409,"sourceType":"uploaded_official_correspondence","communicationType":"Information request","sourceChannel":"esg","linke
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > logs a letter with no submission as before
+   → expected undefined to be null
+ × tests/db/agency-letter-submission-link.dbtest.ts > logging an agency letter against a submission > returns an older unchecked value, or another program's id, as itself with no submission named
+   → expected { …(16) } to match object { …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed (8)

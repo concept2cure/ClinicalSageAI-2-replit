@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > opens a per-user scope and attaches a request DB client 5ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when a scope is already active (does not clobber) 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when req.dbClient is already set 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > does NOT fabricate a scope for a tenant-less identity 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > rejects a non-integer org id rather than scoping to a garbage tenant 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > routes a SYSTEM-prefixed path to the system scope, not the caller org 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > REPLACES a pre-auth placeholder scope with the caller org once authenticated 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > leaves the pre-auth placeholder untouched when there is no verified tenant yet 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > forces the system scope on a system path even when a per-user scope opened first 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent on a system path already under the system scope 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestSystemScope > opens the cross-tenant system scope and attaches a client 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > matches exact and sub-path, not sibling prefixes 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > every declared prefix is recognized 0ms
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder 15ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it 4ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ × server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client 2ms
+   → Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ ❯ server/middleware/__tests__/establishRequestTenantScope.test.ts:248:39
+    246| describe('a request DB client retained past the response (retainReques…
+    247|   it('survives the response closing, still answers queries, and is rel…
+    248|     const { retainRequestDbClient } = await import('../../db/requestDb…
+       |                                       ^
+    249|     const req = makeReq();
+    250|     const res = makeRes();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ ❯ server/middleware/__tests__/establishRequestTenantScope.test.ts:266:39
+    264|
+    265|   it('a release that comes before the response ends leaves the respons…
+    266|     const { retainRequestDbClient } = await import('../../db/requestDb…
+       |                                       ^
+    267|     const req = makeReq();
+    268|     const res = makeRes();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client
+Error: Cannot find module '/server/db/requestDbLease' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/establishRequestTenantScope.test.ts
+ ❯ server/middleware/__tests__/establishRequestTenantScope.test.ts:279:39
+    277|
+    278|   it('nothing to retain once the response already released it, or on a…
+    279|     const { retainRequestDbClient } = await import('../../db/requestDb…
+       |                                       ^
+    280|     const req = makeReq();
+    281|     const res = makeRes();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  05:02:55
+   Duration  755ms (transform 240ms, setup 150ms, import 142ms, tests 42ms, environment 0ms)
+

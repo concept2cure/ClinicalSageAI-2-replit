@@ -1,0 +1,100 @@
+[
+  {
+    "question": "Now that the QMSR is in force, what changes for our quality management system as a device maker?",
+    "expect": "quality-systems"
+  },
+  {
+    "question": "What does 21 CFR 820 now require for management review?",
+    "expect": "quality-systems"
+  },
+  {
+    "question": "Where are we on the quality manual?",
+    "expect": "quality-systems",
+    "context": { "surfaceId": "quality" }
+  },
+  {
+    "question": "Draft an SOP for CAPA for our class II device.",
+    "expect": "quality-systems.sop-authoring"
+  },
+  {
+    "question": "Review our SOP for complaint handling against what the regulations require.",
+    "expect": "quality-systems.sop-authoring",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do I get this procedure approved and make it effective in the quality register?",
+    "expect": "quality-systems.controlled-documents"
+  },
+  {
+    "question": "Can you acknowledge training on the new revision for my team?",
+    "expect": "quality-systems.controlled-documents",
+    "context": { "surfaceId": "quality" }
+  },
+  {
+    "question": "We had an OOS result on a released batch. How should the OOS investigation run, and do we need a field alert report?",
+    "expect": "quality-systems.capa-and-deviations"
+  },
+  {
+    "question": "Root cause analysis for a recurring deviation: which method should we use, and how do we define the effectiveness check?",
+    "expect": "quality-systems.capa-and-deviations",
+    "context": { "segments": ["biotech"] }
+  },
+  {
+    "question": "We want to move tablet compression to a new site. Is the reporting category CBE-30 or a prior approval supplement?",
+    "expect": "quality-systems.change-control"
+  },
+  {
+    "question": "Raise a change request for the new HPLC column and work out the change impact.",
+    "expect": "quality-systems.change-control",
+    "context": { "surfaceId": "quality" }
+  },
+  {
+    "question": "Our HPLC uses a shared login and nobody reviews the audit trail. What are the ALCOA gaps?",
+    "expect": "quality-systems.data-integrity"
+  },
+  {
+    "question": "What GAMP 5 category is our LIMS, and which Part 11 controls apply?",
+    "expect": "quality-systems.data-integrity",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How should we qualify a new CDMO, and what belongs in the quality agreement?",
+    "expect": "quality-systems.gmp-and-suppliers"
+  },
+  {
+    "question": "Are we ready for a pre-approval inspection next quarter?",
+    "expect": "quality-systems.gmp-and-suppliers"
+  },
+  {
+    "question": "What should our inspection readiness review cover?",
+    "expect": "quality-systems.gmp-and-suppliers",
+    "context": { "documentType": "QMS_GMP_INSPECTION" }
+  },
+  {
+    "question": "A customer complaint says the pen cap cracked. How should complaint intake work, and do we have to investigate?",
+    "expect": "quality-systems.complaint-handling"
+  },
+  {
+    "question": "What should our product quality complaint process cover for a marketed tablet under 211.198?",
+    "expect": "quality-systems.complaint-handling",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How do we set up complaint trending for our infusion pump so trends feed CAPA and the risk file?",
+    "expect": "quality-systems.complaint-handling",
+    "context": { "segments": ["device"] }
+  },
+  {
+    "question": "Help me plan our internal audit programme for the ISO 13485 quality system next year.",
+    "expect": "quality-systems.audits-and-inspections"
+  },
+  {
+    "question": "We received six 483 observations after the FDA inspection. How should we structure the 483 response?",
+    "expect": "quality-systems.audits-and-inspections",
+    "context": { "segments": ["pharma"] }
+  },
+  {
+    "question": "How should we respond to a major MDSAP audit nonconformity and the other audit findings from our notified body audit?",
+    "expect": "quality-systems.audits-and-inspections"
+  }
+]

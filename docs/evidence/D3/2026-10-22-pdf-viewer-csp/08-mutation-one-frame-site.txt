@@ -1,0 +1,7 @@
+# MUTATION: VaultVersionViewer frames the URL itself instead of through PdfFrame (2026-10-22T05:49:41Z)
+ × client/src/concept2cure/v2/editor/__tests__/pdfFrameOneSite.test.ts > the client frames content in one place > only vaultPdfViewer.tsx builds a frame 90ms
+   → expected [ …(2) ] to deeply equal [ Array(1) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+    "concept2cure/v2/editor/vaultPdfViewer.tsx",
++   "concept2cure/v2/surfaces/VaultVersionViewer.tsx",
+      Tests  1 failed (1)

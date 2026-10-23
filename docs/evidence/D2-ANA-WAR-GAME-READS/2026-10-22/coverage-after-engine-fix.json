@@ -1,0 +1,2552 @@
+{
+ "protocol": {
+  "total": 25,
+  "assessed": 11,
+  "notAssessed": [
+   {
+    "ruleId": "protocol_no_secondary_endpoints",
+    "title": "Secondary Endpoints Not Specified",
+    "unaskedFields": [
+     "secondary_endpoints"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_safety_monitoring",
+    "title": "Safety Monitoring Plan Absent",
+    "unaskedFields": [
+     "safety_monitoring"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_dmc_phase3",
+    "title": "No Data Monitoring Committee for Phase 3",
+    "unaskedFields": [
+     "dmc_planned"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_primary_endpoint",
+    "title": "Primary Endpoint Not Defined",
+    "unaskedFields": [
+     "primary_endpoint"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_sample_size",
+    "title": "Sample Size Not Specified",
+    "unaskedFields": [
+     "sample_size"
+    ]
+   },
+   {
+    "ruleId": "protocol_low_statistical_power",
+    "title": "Inadequate Statistical Power",
+    "unaskedFields": [
+     "power"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_statistical_method",
+    "title": "Statistical Method Not Pre-Specified",
+    "unaskedFields": [
+     "statistical_method"
+    ]
+   },
+   {
+    "ruleId": "protocol_sample_size_feasibility",
+    "title": "Enrollment Feasibility Concern",
+    "unaskedFields": [
+     "sample_size"
+    ]
+   },
+   {
+    "ruleId": "protocol_unrealistic_dropout",
+    "title": "Dropout Rate Assumption Unrealistically Low",
+    "unaskedFields": [
+     "dropout_rate"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_visit_schedule",
+    "title": "Visit Schedule Not Defined",
+    "unaskedFields": [
+     "visit_schedule"
+    ]
+   },
+   {
+    "ruleId": "protocol_missing_inclusion_criteria",
+    "title": "Inclusion Criteria Absent",
+    "unaskedFields": [
+     "inclusion_criteria"
+    ]
+   },
+   {
+    "ruleId": "protocol_missing_exclusion_criteria",
+    "title": "Exclusion Criteria Absent",
+    "unaskedFields": [
+     "exclusion_criteria"
+    ]
+   },
+   {
+    "ruleId": "protocol_no_stopping_rules",
+    "title": "No Stopping Rules Defined",
+    "unaskedFields": [
+     "stopping_rules"
+    ]
+   },
+   {
+    "ruleId": "protocol_interim_no_alpha_adjustment",
+    "title": "Interim Analysis without Alpha Adjustment",
+    "unaskedFields": [
+     "alpha",
+     "statistical_method"
+    ]
+   }
+  ]
+ },
+ "ind": {
+  "total": 26,
+  "assessed": 6,
+  "notAssessed": [
+   {
+    "ruleId": "ind_drug_substance",
+    "title": "Drug substance not identified",
+    "unaskedFields": [
+     "drug_substance"
+    ]
+   },
+   {
+    "ruleId": "ind_formulation_route",
+    "title": "Formulation-route mismatch or missing data",
+    "unaskedFields": [
+     "formulation_type"
+    ]
+   },
+   {
+    "ruleId": "ind_nonclinical_complete",
+    "title": "Nonclinical safety package incomplete",
+    "unaskedFields": [
+     "nonclinical_studies_complete"
+    ]
+   },
+   {
+    "ruleId": "ind_tox_species",
+    "title": "Toxicology species selection not justified",
+    "unaskedFields": [
+     "toxicology_species"
+    ]
+   },
+   {
+    "ruleId": "ind_genotoxicity",
+    "title": "Genotoxicity studies not addressed",
+    "unaskedFields": [
+     "genotoxicity_studies"
+    ]
+   },
+   {
+    "ruleId": "ind_carcinogenicity",
+    "title": "Carcinogenicity risk assessment absent",
+    "unaskedFields": [
+     "carcinogenicity_required"
+    ]
+   },
+   {
+    "ruleId": "ind_starting_dose",
+    "title": "Starting dose rationale insufficient",
+    "unaskedFields": [
+     "starting_dose_rationale"
+    ]
+   },
+   {
+    "ruleId": "ind_dose_escalation",
+    "title": "Dose escalation scheme not defined",
+    "unaskedFields": [
+     "phase",
+     "dose_escalation_scheme"
+    ]
+   },
+   {
+    "ruleId": "ind_stability_data",
+    "title": "Stability data not available",
+    "unaskedFields": [
+     "stability_data_available"
+    ]
+   },
+   {
+    "ruleId": "ind_investigator_quals",
+    "title": "Investigator qualifications not documented",
+    "unaskedFields": [
+     "investigator_qualifications"
+    ]
+   },
+   {
+    "ruleId": "ind_irb_approval",
+    "title": "IRB approval status not confirmed",
+    "unaskedFields": [
+     "irb_approval_status"
+    ]
+   },
+   {
+    "ruleId": "ind_informed_consent",
+    "title": "Informed consent draft not provided",
+    "unaskedFields": [
+     "informed_consent_draft"
+    ]
+   },
+   {
+    "ruleId": "ind_pharmacology_summary",
+    "title": "Pharmacology summary incomplete or missing",
+    "unaskedFields": [
+     "pharmacology_summary"
+    ]
+   },
+   {
+    "ruleId": "ind_drug_product_description",
+    "title": "Drug product description inadequate",
+    "unaskedFields": [
+     "drug_product_description"
+    ]
+   },
+   {
+    "ruleId": "ind_previous_human_experience",
+    "title": "Previous human experience not summarized",
+    "unaskedFields": [
+     "previous_human_experience"
+    ]
+   },
+   {
+    "ruleId": "ind_safety_database",
+    "title": "Safety database size not specified",
+    "unaskedFields": [
+     "previous_human_experience"
+    ]
+   },
+   {
+    "ruleId": "ind_phase_specified",
+    "title": "Phase of clinical investigation not specified",
+    "unaskedFields": [
+     "phase"
+    ]
+   },
+   {
+    "ruleId": "ind_indication",
+    "title": "Indication not defined",
+    "unaskedFields": [
+     "indication"
+    ]
+   },
+   {
+    "ruleId": "ind_drug_name",
+    "title": "Drug name not provided",
+    "unaskedFields": [
+     "drug_name"
+    ]
+   },
+   {
+    "ruleId": "ind_ind_number",
+    "title": "IND number not assigned or missing",
+    "unaskedFields": [
+     "ind_number"
+    ]
+   }
+  ]
+ },
+ "csr": {
+  "total": 28,
+  "assessed": 5,
+  "notAssessed": [
+   {
+    "ruleId": "csr_study_identification",
+    "title": "Study identification missing or incomplete",
+    "unaskedFields": [
+     "study_id"
+    ]
+   },
+   {
+    "ruleId": "csr_study_design",
+    "title": "Study design insufficiently described",
+    "unaskedFields": [
+     "study_design"
+    ]
+   },
+   {
+    "ruleId": "csr_primary_objective",
+    "title": "Primary objective not stated",
+    "unaskedFields": [
+     "primary_objective"
+    ]
+   },
+   {
+    "ruleId": "csr_sample_size_discrepancy",
+    "title": "Enrolled sample size deviates from planned",
+    "unaskedFields": [
+     "sample_size_planned",
+     "sample_size_enrolled"
+    ]
+   },
+   {
+    "ruleId": "csr_discontinuation_rate",
+    "title": "Discontinuation rate exceeds acceptable threshold",
+    "unaskedFields": [
+     "discontinuation_rate"
+    ]
+   },
+   {
+    "ruleId": "csr_completion_consistency",
+    "title": "Enrolled/completed/discontinued figures inconsistent",
+    "unaskedFields": [
+     "sample_size_enrolled",
+     "sample_size_completed",
+     "discontinuation_rate"
+    ]
+   },
+   {
+    "ruleId": "csr_primary_endpoint",
+    "title": "Primary endpoint not defined",
+    "unaskedFields": [
+     "primary_endpoint"
+    ]
+   },
+   {
+    "ruleId": "csr_ae_summary",
+    "title": "Adverse events summary missing",
+    "unaskedFields": [
+     "adverse_events_summary"
+    ]
+   },
+   {
+    "ruleId": "csr_sae_deaths",
+    "title": "SAEs and deaths inadequately reported",
+    "unaskedFields": [
+     "serious_adverse_events",
+     "deaths_reported"
+    ]
+   },
+   {
+    "ruleId": "csr_protocol_amendments",
+    "title": "Protocol amendments not described",
+    "unaskedFields": [
+     "protocol_amendments"
+    ]
+   },
+   {
+    "ruleId": "csr_protocol_deviations",
+    "title": "Protocol deviations not catalogued",
+    "unaskedFields": [
+     "protocol_deviations"
+    ]
+   },
+   {
+    "ruleId": "csr_gcp_compliance",
+    "title": "GCP compliance statement absent",
+    "unaskedFields": [
+     "gcp_compliance_statement"
+    ]
+   },
+   {
+    "ruleId": "csr_dmc_independence",
+    "title": "DMC charter or independence not documented",
+    "unaskedFields": [
+     "data_monitoring_committee"
+    ]
+   },
+   {
+    "ruleId": "csr_sap_deviations",
+    "title": "Deviations from the Statistical Analysis Plan not addressed",
+    "unaskedFields": [
+     "statistical_analysis_plan_deviations"
+    ]
+   },
+   {
+    "ruleId": "csr_missing_data",
+    "title": "Missing data handling strategy not described",
+    "unaskedFields": [
+     "missing_data_handling"
+    ]
+   },
+   {
+    "ruleId": "csr_subgroup_prespecification",
+    "title": "Subgroup analyses may lack pre-specification",
+    "unaskedFields": [
+     "subgroup_analyses"
+    ]
+   },
+   {
+    "ruleId": "csr_sensitivity_analyses",
+    "title": "Sensitivity analyses not performed or reported",
+    "unaskedFields": [
+     "sensitivity_analyses"
+    ]
+   },
+   {
+    "ruleId": "csr_efficacy_conclusions",
+    "title": "Efficacy conclusions absent or potentially inconsistent with data",
+    "unaskedFields": [
+     "efficacy_conclusions"
+    ]
+   },
+   {
+    "ruleId": "csr_safety_conclusions",
+    "title": "Safety conclusions missing",
+    "unaskedFields": [
+     "safety_conclusions"
+    ]
+   },
+   {
+    "ruleId": "csr_efficacy_safety_balance",
+    "title": "Potential efficacy-safety imbalance: deaths without benefit-risk discussion",
+    "unaskedFields": [
+     "deaths_reported"
+    ]
+   },
+   {
+    "ruleId": "csr_secondary_results",
+    "title": "Secondary results not summarized despite secondary objectives",
+    "unaskedFields": [
+     "secondary_objectives"
+    ]
+   },
+   {
+    "ruleId": "csr_study_population",
+    "title": "Study population not described",
+    "unaskedFields": [
+     "study_population"
+    ]
+   },
+   {
+    "ruleId": "csr_enrollment_timeline_feasibility",
+    "title": "Enrollment timeline feasibility concerns",
+    "unaskedFields": [
+     "planned_enrollment_duration_months",
+     "actual_enrollment_duration_months"
+    ]
+   }
+  ]
+ },
+ "510k": {
+  "total": 27,
+  "assessed": 8,
+  "notAssessed": [
+   {
+    "ruleId": "device510k_device_name_missing",
+    "title": "Device Trade/Proprietary Name Missing",
+    "unaskedFields": [
+     "device_name"
+    ]
+   },
+   {
+    "ruleId": "device510k_predicate_device_missing",
+    "title": "Predicate Device Not Identified",
+    "unaskedFields": [
+     "predicate_device"
+    ]
+   },
+   {
+    "ruleId": "device510k_predicate_510k_number_missing",
+    "title": "Predicate 510(k) Clearance Number Missing",
+    "unaskedFields": [
+     "predicate_device"
+    ]
+   },
+   {
+    "ruleId": "device510k_intended_use_missing",
+    "title": "Intended Use Statement Missing",
+    "unaskedFields": [
+     "intended_use"
+    ]
+   },
+   {
+    "ruleId": "device510k_indications_for_use_inadequate",
+    "title": "Indications for Use Insufficiently Detailed",
+    "unaskedFields": [
+     "indications_for_use"
+    ]
+   },
+   {
+    "ruleId": "device510k_se_rationale_missing",
+    "title": "Substantial Equivalence Rationale Absent",
+    "unaskedFields": [
+     "substantial_equivalence_rationale"
+    ]
+   },
+   {
+    "ruleId": "device510k_se_rationale_shallow",
+    "title": "Substantial Equivalence Rationale Lacks Sufficient Detail",
+    "unaskedFields": [
+     "substantial_equivalence_rationale"
+    ]
+   },
+   {
+    "ruleId": "device510k_tech_characteristics_missing",
+    "title": "Technological Characteristics Not Described",
+    "unaskedFields": [
+     "technological_characteristics"
+    ]
+   },
+   {
+    "ruleId": "device510k_performance_data_missing",
+    "title": "Performance Testing Data Type Not Specified",
+    "unaskedFields": [
+     "performance_data_type"
+    ]
+   },
+   {
+    "ruleId": "device510k_biocompatibility_missing",
+    "title": "Biocompatibility Testing Not Addressed",
+    "unaskedFields": [
+     "biocompatibility_testing"
+    ]
+   },
+   {
+    "ruleId": "device510k_software_documentation_level_undetermined",
+    "title": "FDA Software Documentation Level Not Determined",
+    "unaskedFields": [
+     "software_failure_probable_serious_harm_before_controls"
+    ]
+   },
+   {
+    "ruleId": "device510k_cybersecurity_not_addressed",
+    "title": "Cybersecurity Considerations Not Addressed",
+    "unaskedFields": [
+     "cybersecurity_applicable"
+    ]
+   },
+   {
+    "ruleId": "device510k_emr_compatibility_missing",
+    "title": "EMR/EHR Interoperability Not Addressed",
+    "unaskedFields": [
+     "emr_compatibility"
+    ]
+   },
+   {
+    "ruleId": "device510k_shelf_life_missing",
+    "title": "Shelf Life / Packaging Validation Not Addressed",
+    "unaskedFields": [
+     "shelf_life"
+    ]
+   },
+   {
+    "ruleId": "device510k_labeling_not_reviewed",
+    "title": "Labeling Not Reviewed for Regulatory Compliance",
+    "unaskedFields": [
+     "labeling_reviewed"
+    ]
+   },
+   {
+    "ruleId": "device510k_materials_not_described",
+    "title": "Materials of Construction Not Described",
+    "unaskedFields": [
+     "materials_of_construction"
+    ]
+   },
+   {
+    "ruleId": "device510k_nonclinical_testing_missing",
+    "title": "Nonclinical Testing Summary Missing",
+    "unaskedFields": [
+     "nonclinical_testing_summary"
+    ]
+   },
+   {
+    "ruleId": "device510k_standards_not_referenced",
+    "title": "No Recognized Consensus Standards Referenced",
+    "unaskedFields": [
+     "standards_referenced"
+    ]
+   },
+   {
+    "ruleId": "device510k_intended_use_labeling_mismatch",
+    "title": "Intended Use Statement Inconsistent with Labeling",
+    "unaskedFields": [
+     "intended_use"
+    ]
+   }
+  ]
+ },
+ "cer": {
+  "total": 25,
+  "assessed": 2,
+  "notAssessed": [
+   {
+    "ruleId": "cer_device_identification",
+    "title": "Device identification & description",
+    "unaskedFields": [
+     "device_name"
+    ]
+   },
+   {
+    "ruleId": "cer_device_classification",
+    "title": "MDR risk class declaration",
+    "unaskedFields": [
+     "device_class_mdr"
+    ]
+   },
+   {
+    "ruleId": "cer_clinical_claims",
+    "title": "Clinical claims substantiation",
+    "unaskedFields": [
+     "clinical_claims"
+    ]
+   },
+   {
+    "ruleId": "cer_equivalence_device",
+    "title": "Equivalent device identification",
+    "unaskedFields": [
+     "equivalent_device",
+     "device_class_mdr"
+    ]
+   },
+   {
+    "ruleId": "cer_equivalence_three_pillars",
+    "title": "Three-pillar equivalence demonstration",
+    "unaskedFields": [
+     "equivalence_demonstration",
+     "equivalent_device"
+    ]
+   },
+   {
+    "ruleId": "cer_lit_databases",
+    "title": "Literature database coverage",
+    "unaskedFields": [
+     "literature_databases"
+    ]
+   },
+   {
+    "ruleId": "cer_article_appraisal",
+    "title": "Literature appraisal and selection transparency",
+    "unaskedFields": [
+     "total_articles_found",
+     "articles_appraised",
+     "articles_included"
+    ]
+   },
+   {
+    "ruleId": "cer_clinical_investigation_data",
+    "title": "Clinical investigation data",
+    "unaskedFields": [
+     "device_class_mdr"
+    ]
+   },
+   {
+    "ruleId": "cer_pms_data_sources",
+    "title": "Post-market surveillance data integration",
+    "unaskedFields": [
+     "post_market_data_sources"
+    ]
+   },
+   {
+    "ruleId": "cer_pmcf_plan",
+    "title": "PMCF plan reference and adequacy",
+    "unaskedFields": [
+     "pmcf_plan_reference"
+    ]
+   },
+   {
+    "ruleId": "cer_vigilance_data",
+    "title": "Vigilance data summary",
+    "unaskedFields": [
+     "vigilance_data_summary"
+    ]
+   },
+   {
+    "ruleId": "cer_risk_analysis_ref",
+    "title": "Risk management file cross-reference",
+    "unaskedFields": [
+     "risk_analysis_reference"
+    ]
+   },
+   {
+    "ruleId": "cer_gspr_mapping",
+    "title": "General Safety and Performance Requirements (GSPR) mapping",
+    "unaskedFields": [
+     "gspr_mapping"
+    ]
+   },
+   {
+    "ruleId": "cer_benefit_risk",
+    "title": "Benefit-risk determination",
+    "unaskedFields": [
+     "benefit_risk_conclusion"
+    ]
+   },
+   {
+    "ruleId": "cer_residual_risks",
+    "title": "Residual risk disclosure",
+    "unaskedFields": [
+     "residual_risks"
+    ]
+   },
+   {
+    "ruleId": "cer_state_of_art",
+    "title": "State-of-the-art comparison",
+    "unaskedFields": [
+     "state_of_art_summary"
+    ]
+   },
+   {
+    "ruleId": "cer_update_frequency",
+    "title": "CER update schedule",
+    "unaskedFields": [
+     "cer_update_frequency"
+    ]
+   },
+   {
+    "ruleId": "cer_evidence_level",
+    "title": "Level of clinical evidence",
+    "unaskedFields": [
+     "clinical_evidence_level"
+    ]
+   },
+   {
+    "ruleId": "cer_unmet_clinical_needs",
+    "title": "Unmet clinical needs and device positioning",
+    "unaskedFields": [
+     "unmet_clinical_needs"
+    ]
+   },
+   {
+    "ruleId": "cer_benefit_risk_vs_residual_risks",
+    "title": "Benefit-risk and residual risk alignment",
+    "unaskedFields": [
+     "benefit_risk_conclusion"
+    ]
+   },
+   {
+    "ruleId": "cer_meddev_structure",
+    "title": "MEDDEV 2.7/1 Rev 4 structural compliance",
+    "unaskedFields": [
+     "device_description",
+     "clinical_claims",
+     "state_of_art_summary",
+     "benefit_risk_conclusion"
+    ]
+   },
+   {
+    "ruleId": "cer_pmcf_cer_linkage",
+    "title": "PMCF-CER feedback loop",
+    "unaskedFields": [
+     "pmcf_plan_reference"
+    ]
+   },
+   {
+    "ruleId": "cer_class_iii_evidence_sufficiency",
+    "title": "Clinical evidence sufficiency for high-risk devices",
+    "unaskedFields": [
+     "device_class_mdr"
+    ]
+   }
+  ]
+ },
+ "sop": {
+  "total": 30,
+  "assessed": 4,
+  "notAssessed": [
+   {
+    "ruleId": "sop_004",
+    "title": "Purpose statement missing or insufficient",
+    "unaskedFields": [
+     "purpose_statement"
+    ]
+   },
+   {
+    "ruleId": "sop_005",
+    "title": "No document owner designated",
+    "unaskedFields": [
+     "document_owner"
+    ]
+   },
+   {
+    "ruleId": "sop_006",
+    "title": "Roles and responsibilities not defined",
+    "unaskedFields": [
+     "roles_responsibilities"
+    ]
+   },
+   {
+    "ruleId": "sop_007",
+    "title": "Procedure steps not documented",
+    "unaskedFields": [
+     "procedure_steps"
+    ]
+   },
+   {
+    "ruleId": "sop_008",
+    "title": "No deviation handling procedure referenced",
+    "unaskedFields": [
+     "deviation_handling"
+    ]
+   },
+   {
+    "ruleId": "sop_009",
+    "title": "No CAPA reference in SOP",
+    "unaskedFields": [
+     "capa_reference"
+    ]
+   },
+   {
+    "ruleId": "sop_010",
+    "title": "Training requirements not specified",
+    "unaskedFields": [
+     "training_requirements"
+    ]
+   },
+   {
+    "ruleId": "sop_011",
+    "title": "No competency assessment defined",
+    "unaskedFields": [
+     "competency_assessment"
+    ]
+   },
+   {
+    "ruleId": "sop_012",
+    "title": "Training method not specified",
+    "unaskedFields": [
+     "training_method",
+     "training_requirements"
+    ]
+   },
+   {
+    "ruleId": "sop_013",
+    "title": "No version history maintained",
+    "unaskedFields": [
+     "version_history"
+    ]
+   },
+   {
+    "ruleId": "sop_014",
+    "title": "No change control process referenced",
+    "unaskedFields": [
+     "change_control_process"
+    ]
+   },
+   {
+    "ruleId": "sop_015",
+    "title": "No approval workflow defined",
+    "unaskedFields": [
+     "approval_workflow"
+    ]
+   },
+   {
+    "ruleId": "sop_016",
+    "title": "No effective date on SOP",
+    "unaskedFields": [
+     "effective_date"
+    ]
+   },
+   {
+    "ruleId": "sop_017",
+    "title": "No periodic review cycle established",
+    "unaskedFields": [
+     "review_cycle"
+    ]
+   },
+   {
+    "ruleId": "sop_018",
+    "title": "No definitions or abbreviations section",
+    "unaskedFields": [
+     "definitions_included"
+    ]
+   },
+   {
+    "ruleId": "sop_020",
+    "title": "No risk assessment referenced",
+    "unaskedFields": [
+     "risk_assessment_reference"
+    ]
+   },
+   {
+    "ruleId": "sop_021",
+    "title": "No distribution list defined",
+    "unaskedFields": [
+     "distribution_list"
+    ]
+   },
+   {
+    "ruleId": "sop_022",
+    "title": "No related documents cross-referenced",
+    "unaskedFields": [
+     "related_documents"
+    ]
+   },
+   {
+    "ruleId": "sop_023",
+    "title": "Process scope undefined or too broad",
+    "unaskedFields": [
+     "process_scope"
+    ]
+   },
+   {
+    "ruleId": "sop_024",
+    "title": "21 CFR Part 11 compliance not addressed",
+    "unaskedFields": [
+     "procedure_steps",
+     "process_scope"
+    ]
+   },
+   {
+    "ruleId": "sop_025",
+    "title": "Responsible department not identified",
+    "unaskedFields": [
+     "department"
+    ]
+   },
+   {
+    "ruleId": "sop_026",
+    "title": "Procedure steps lack specificity",
+    "unaskedFields": [
+     "procedure_steps"
+    ]
+   },
+   {
+    "ruleId": "sop_027",
+    "title": "Review cycle exceeds industry standard",
+    "unaskedFields": [
+     "review_cycle"
+    ]
+   },
+   {
+    "ruleId": "sop_028",
+    "title": "Deviation handling lacks severity classification",
+    "unaskedFields": [
+     "deviation_handling"
+    ]
+   },
+   {
+    "ruleId": "sop_029",
+    "title": "Clinical SOP missing ICH E6(R3) reference",
+    "unaskedFields": [
+     "department",
+     "process_scope"
+    ]
+   },
+   {
+    "ruleId": "sop_030",
+    "title": "Training records not linked to SOP revisions",
+    "unaskedFields": [
+     "training_requirements"
+    ]
+   }
+  ]
+ },
+ "nda": {
+  "total": 32,
+  "assessed": 4,
+  "notAssessed": [
+   {
+    "ruleId": "nda_missing_cover_letter",
+    "title": "Cover Letter Absent",
+    "unaskedFields": [
+     "cover_letter"
+    ]
+   },
+   {
+    "ruleId": "nda_missing_ctd_modules",
+    "title": "CTD Modules Incomplete",
+    "unaskedFields": [
+     "ctd_modules"
+    ]
+   },
+   {
+    "ruleId": "nda_no_iss",
+    "title": "Integrated Summary of Safety (ISS) Missing",
+    "unaskedFields": [
+     "integrated_summary_safety"
+    ]
+   },
+   {
+    "ruleId": "nda_no_ise",
+    "title": "Integrated Summary of Effectiveness (ISE) Missing",
+    "unaskedFields": [
+     "integrated_summary_effectiveness"
+    ]
+   },
+   {
+    "ruleId": "nda_no_proposed_label",
+    "title": "Proposed Labeling Not Submitted",
+    "unaskedFields": [
+     "proposed_labeling"
+    ]
+   },
+   {
+    "ruleId": "nda_dose_cmc_clinical_mismatch",
+    "title": "Dosing Inconsistency between CMC and Clinical Data",
+    "unaskedFields": [
+     "cmc_dosage_strength",
+     "clinical_dose"
+    ]
+   },
+   {
+    "ruleId": "nda_indication_label_clinical_mismatch",
+    "title": "Indication Mismatch between Label and Clinical Data",
+    "unaskedFields": [
+     "label_indication",
+     "studied_indication"
+    ]
+   },
+   {
+    "ruleId": "nda_population_discrepancy",
+    "title": "Population Discrepancy across Submission Components",
+    "unaskedFields": [
+     "nonclinical_population",
+     "clinical_population"
+    ]
+   },
+   {
+    "ruleId": "nda_safety_database_vs_exposure",
+    "title": "Safety Database Size Inconsistent with Claimed Exposure",
+    "unaskedFields": [
+     "safety_database_size",
+     "total_exposure_subjects"
+    ]
+   },
+   {
+    "ruleId": "nda_wrong_application_type",
+    "title": "Application Type Not Justified",
+    "unaskedFields": [
+     "application_type"
+    ]
+   },
+   {
+    "ruleId": "nda_no_rtf_shield",
+    "title": "No Refuse-to-File (RTF) Safeguards",
+    "unaskedFields": [
+     "rtf_assessment"
+    ]
+   },
+   {
+    "ruleId": "nda_rems_not_addressed",
+    "title": "REMS Not Addressed",
+    "unaskedFields": [
+     "rems_proposal",
+     "rems_justification"
+    ]
+   },
+   {
+    "ruleId": "nda_no_pdufa_user_fee",
+    "title": "PDUFA User Fee Not Confirmed",
+    "unaskedFields": [
+     "pdufa_user_fee_paid"
+    ]
+   },
+   {
+    "ruleId": "nda_inadequate_pivotal_design",
+    "title": "Inadequate Pivotal Trial Design",
+    "unaskedFields": [
+     "pivotal_trial_design"
+    ]
+   },
+   {
+    "ruleId": "nda_no_prespecified_primary_analysis",
+    "title": "No Pre-Specified Primary Analysis",
+    "unaskedFields": [
+     "prespecified_sap"
+    ]
+   },
+   {
+    "ruleId": "nda_multiplicity_not_controlled",
+    "title": "Multiplicity Not Controlled",
+    "unaskedFields": [
+     "multiple_primary_endpoints"
+    ]
+   },
+   {
+    "ruleId": "nda_unrealistic_approval_timeline",
+    "title": "Unrealistic Approval Timeline",
+    "unaskedFields": [
+     "projected_approval_months"
+    ]
+   },
+   {
+    "ruleId": "nda_manufacturing_scaleup_gap",
+    "title": "Manufacturing Scale-Up Not Demonstrated",
+    "unaskedFields": [
+     "manufacturing_scaleup"
+    ]
+   },
+   {
+    "ruleId": "nda_no_supply_chain_plan",
+    "title": "Commercial Supply Chain Not Addressed",
+    "unaskedFields": [
+     "supply_chain_plan"
+    ]
+   },
+   {
+    "ruleId": "nda_no_launch_quantity_projection",
+    "title": "Launch Supply Projections Absent",
+    "unaskedFields": [
+     "launch_quantity_projection"
+    ]
+   },
+   {
+    "ruleId": "nda_no_ectd_format",
+    "title": "Submission Not in eCTD Format",
+    "unaskedFields": [
+     "ectd_format"
+    ]
+   },
+   {
+    "ruleId": "nda_no_module2_summaries",
+    "title": "Module 2 Summaries Missing",
+    "unaskedFields": [
+     "module2_summaries"
+    ]
+   },
+   {
+    "ruleId": "nda_no_comprehensive_toc",
+    "title": "Comprehensive Table of Contents Absent",
+    "unaskedFields": [
+     "table_of_contents"
+    ]
+   },
+   {
+    "ruleId": "nda_missing_hyperlinks",
+    "title": "Intra-Document Hyperlinks Missing",
+    "unaskedFields": [
+     "hyperlinks_present",
+     "ectd_format"
+    ]
+   },
+   {
+    "ruleId": "nda_boxed_warning_not_proposed",
+    "title": "Boxed Warning Needed but Not Proposed",
+    "unaskedFields": [
+     "serious_safety_risks"
+    ]
+   },
+   {
+    "ruleId": "nda_no_pediatric_study_plan",
+    "title": "Pediatric Study Plan (PSP) Not Addressed",
+    "unaskedFields": [
+     "pediatric_study_plan",
+     "pediatric_waiver"
+    ]
+   },
+   {
+    "ruleId": "nda_no_pharmacovigilance_plan",
+    "title": "Pharmacovigilance Plan Not Included",
+    "unaskedFields": [
+     "pharmacovigilance_plan"
+    ]
+   },
+   {
+    "ruleId": "nda_ddi_not_addressed",
+    "title": "Drug-Drug Interactions Not Adequately Addressed",
+    "unaskedFields": [
+     "ddi_assessment"
+    ]
+   }
+  ]
+ },
+ "bla": {
+  "total": 33,
+  "assessed": 33,
+  "notAssessed": []
+ },
+ "pma": {
+  "total": 32,
+  "assessed": 3,
+  "notAssessed": [
+   {
+    "ruleId": "pma_no_pivotal_study",
+    "title": "No Pivotal Clinical Study",
+    "unaskedFields": [
+     "pivotal_study_id",
+     "pivotal_study_summary"
+    ]
+   },
+   {
+    "ruleId": "pma_no_bench_testing",
+    "title": "Missing Bench Testing Data",
+    "unaskedFields": [
+     "performance_testing"
+    ]
+   },
+   {
+    "ruleId": "pma_no_biocompatibility",
+    "title": "No Biocompatibility Testing per ISO 10993",
+    "unaskedFields": [
+     "biocompatibility_data"
+    ]
+   },
+   {
+    "ruleId": "pma_no_labeling_draft",
+    "title": "No Labeling Draft Included",
+    "unaskedFields": [
+     "labeling_draft",
+     "instructions_for_use"
+    ]
+   },
+   {
+    "ruleId": "pma_design_input_output_mismatch",
+    "title": "Design Input/Output Mismatch",
+    "unaskedFields": [
+     "design_inputs",
+     "design_outputs"
+    ]
+   },
+   {
+    "ruleId": "pma_ifu_protocol_discrepancy",
+    "title": "IFU vs Clinical Protocol Discrepancy",
+    "unaskedFields": [
+     "instructions_for_use",
+     "clinical_protocol_summary"
+    ]
+   },
+   {
+    "ruleId": "pma_predicate_comparison_gap",
+    "title": "Predicate Device Comparison Incomplete",
+    "unaskedFields": [
+     "predicate_device"
+    ]
+   },
+   {
+    "ruleId": "pma_indications_vs_clinical_evidence",
+    "title": "Indications for Use Exceed Clinical Evidence",
+    "unaskedFields": [
+     "study_population"
+    ]
+   },
+   {
+    "ruleId": "pma_no_presub_meeting",
+    "title": "No Pre-Submission Meeting Record",
+    "unaskedFields": [
+     "presub_meeting_id",
+     "fda_feedback_reference"
+    ]
+   },
+   {
+    "ruleId": "pma_panel_track_wrong",
+    "title": "Advisory Panel Track Assignment Incorrect",
+    "unaskedFields": [
+     "advisory_panel",
+     "device_classification"
+    ]
+   },
+   {
+    "ruleId": "pma_no_advisory_committee_prep",
+    "title": "Advisory Committee Preparation Missing",
+    "unaskedFields": [
+     "advisory_committee_materials",
+     "panel_preparation"
+    ]
+   },
+   {
+    "ruleId": "pma_no_ide_reference",
+    "title": "No IDE Reference for Pivotal Study",
+    "unaskedFields": [
+     "pivotal_study_id"
+    ]
+   },
+   {
+    "ruleId": "pma_no_clinical_site_compliance",
+    "title": "Clinical Site GCP Compliance Not Documented",
+    "unaskedFields": [
+     "pivotal_study_id"
+    ]
+   },
+   {
+    "ruleId": "pma_endpoints_not_validated",
+    "title": "Clinical Endpoints Not Validated",
+    "unaskedFields": [
+     "endpoint_validation"
+    ]
+   },
+   {
+    "ruleId": "pma_sample_size_inadequate",
+    "title": "Sample Size Inadequate for Primary Endpoint",
+    "unaskedFields": [
+     "pivotal_sample_size",
+     "statistical_power"
+    ]
+   },
+   {
+    "ruleId": "pma_no_performance_goal",
+    "title": "No Objective Performance Criteria",
+    "unaskedFields": [
+     "performance_goal",
+     "objective_performance_criteria"
+    ]
+   },
+   {
+    "ruleId": "pma_no_human_factors",
+    "title": "No Human Factors / Usability Validation",
+    "unaskedFields": [
+     "human_factors_study",
+     "usability_validation"
+    ]
+   },
+   {
+    "ruleId": "pma_no_qms_manufacturing",
+    "title": "Manufacturing Not Under QMS (ISO 13485)",
+    "unaskedFields": [
+     "qms_certification",
+     "iso_13485_status"
+    ]
+   },
+   {
+    "ruleId": "pma_sterilization_not_validated",
+    "title": "Sterilization Process Not Validated",
+    "unaskedFields": [
+     "sterile_device"
+    ]
+   },
+   {
+    "ruleId": "pma_supply_chain_not_qualified",
+    "title": "Supply Chain Not Qualified",
+    "unaskedFields": [
+     "supplier_qualification",
+     "supply_chain_controls"
+    ]
+   },
+   {
+    "ruleId": "pma_no_shelf_life",
+    "title": "Shelf Life / Stability Not Established",
+    "unaskedFields": [
+     "shelf_life_data",
+     "stability_testing"
+    ]
+   },
+   {
+    "ruleId": "pma_no_design_history_file",
+    "title": "No Design History File",
+    "unaskedFields": [
+     "dhf_reference"
+    ]
+   },
+   {
+    "ruleId": "pma_vv_incomplete",
+    "title": "Verification & Validation (V&V) Incomplete",
+    "unaskedFields": [
+     "verification_summary",
+     "validation_summary"
+    ]
+   },
+   {
+    "ruleId": "pma_no_traceability_matrix",
+    "title": "No Traceability Matrix",
+    "unaskedFields": [
+     "traceability_matrix"
+    ]
+   },
+   {
+    "ruleId": "pma_no_fmea_fta",
+    "title": "FMEA/FTA Not Performed",
+    "unaskedFields": [
+     "fmea_report",
+     "fta_report",
+     "risk_analysis_method"
+    ]
+   },
+   {
+    "ruleId": "pma_no_cybersecurity_assessment",
+    "title": "No Cybersecurity Assessment for Connected Device",
+    "unaskedFields": [
+     "connectivity"
+    ]
+   },
+   {
+    "ruleId": "pma_no_post_approval_study",
+    "title": "Post-Approval Study Not Planned",
+    "unaskedFields": [
+     "post_approval_study_plan",
+     "post_market_surveillance"
+    ]
+   },
+   {
+    "ruleId": "pma_no_maude_surveillance",
+    "title": "No MAUDE Surveillance Analysis",
+    "unaskedFields": [
+     "maude_analysis",
+     "adverse_event_history"
+    ]
+   },
+   {
+    "ruleId": "pma_no_electrical_safety",
+    "title": "No Electrical Safety Testing (IEC 60601)",
+    "unaskedFields": [
+     "power_source"
+    ]
+   }
+  ]
+ },
+ "cmc": {
+  "total": 32,
+  "assessed": 2,
+  "notAssessed": [
+   {
+    "ruleId": "cmc_missing_impurity_profile",
+    "title": "Impurity Profile Not Provided",
+    "unaskedFields": [
+     "impurity_profile"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_forced_degradation",
+    "title": "Forced Degradation Studies Absent",
+    "unaskedFields": [
+     "forced_degradation_studies"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_container_closure",
+    "title": "Container Closure System Not Described",
+    "unaskedFields": [
+     "container_closure_system"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_reference_standard",
+    "title": "Reference Standard Not Characterized",
+    "unaskedFields": [
+     "reference_standard"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_drug_substance_characterization",
+    "title": "Drug Substance Characterization Incomplete",
+    "unaskedFields": [
+     "drug_substance_characterization"
+    ]
+   },
+   {
+    "ruleId": "cmc_ds_dp_spec_mismatch",
+    "title": "Specification Limits Mismatch Between Drug Substance and Drug Product",
+    "unaskedFields": [
+     "ds_impurity_limits",
+     "dp_impurity_limits"
+    ]
+   },
+   {
+    "ruleId": "cmc_analytical_method_not_harmonized",
+    "title": "Analytical Methods Not Harmonized Across Sites",
+    "unaskedFields": [
+     "analytical_methods_harmonized"
+    ]
+   },
+   {
+    "ruleId": "cmc_batch_analysis_vs_spec",
+    "title": "Batch Analysis Results Inconsistent with Specification",
+    "unaskedFields": [
+     "batch_oos_results"
+    ]
+   },
+   {
+    "ruleId": "cmc_shelf_life_vs_stability_data",
+    "title": "Proposed Shelf Life Not Supported by Stability Data",
+    "unaskedFields": [
+     "proposed_shelf_life_months",
+     "stability_data_duration_months"
+    ]
+   },
+   {
+    "ruleId": "cmc_q3_thresholds_not_met",
+    "title": "ICH Q3 Impurity Thresholds Not Addressed",
+    "unaskedFields": [
+     "q3_thresholds_met"
+    ]
+   },
+   {
+    "ruleId": "cmc_q1a_stability_gaps",
+    "title": "ICH Q1A Stability Protocol Deficiencies",
+    "unaskedFields": [
+     "stability_protocol"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_residual_solvents",
+    "title": "Residual Solvents Not Controlled per ICH Q3C",
+    "unaskedFields": [
+     "residual_solvents_testing"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_gmp_compliance",
+    "title": "GMP Compliance Not Demonstrated",
+    "unaskedFields": [
+     "gmp_certification",
+     "manufacturing_facility_gmp"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_cqa_identification",
+    "title": "Critical Quality Attributes Not Identified via QbD",
+    "unaskedFields": [
+     "critical_quality_attributes"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_qtpp",
+    "title": "Quality Target Product Profile Missing",
+    "unaskedFields": [
+     "qtpp"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_design_space",
+    "title": "Design Space Not Established",
+    "unaskedFields": [
+     "design_space"
+    ]
+   },
+   {
+    "ruleId": "cmc_process_not_validated",
+    "title": "Process Validation Not Demonstrated",
+    "unaskedFields": [
+     "process_validation_data",
+     "process_validation_status"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_method_validation",
+    "title": "Analytical Method Validation Insufficient",
+    "unaskedFields": [
+     "analytical_method_validation"
+    ]
+   },
+   {
+    "ruleId": "cmc_single_source_api",
+    "title": "Single-Source API Supply",
+    "unaskedFields": [
+     "api_sources",
+     "single_source_api"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_backup_manufacturing_site",
+    "title": "No Backup Manufacturing Site",
+    "unaskedFields": [
+     "backup_manufacturing_site"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_tech_transfer_protocol",
+    "title": "No Technology Transfer Protocol",
+    "unaskedFields": [
+     "tech_transfer_protocol"
+    ]
+   },
+   {
+    "ruleId": "cmc_scale_up_not_addressed",
+    "title": "Scale-Up Strategy Not Described",
+    "unaskedFields": [
+     "scale_up_strategy",
+     "scale_up_data"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_master_batch_record",
+    "title": "Master Batch Record Not Provided",
+    "unaskedFields": [
+     "master_batch_record"
+    ]
+   },
+   {
+    "ruleId": "cmc_missing_amv_reports",
+    "title": "Analytical Method Validation Reports Missing",
+    "unaskedFields": [
+     "amv_reports",
+     "analytical_methods"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_stability_protocol_doc",
+    "title": "Stability Protocol Document Not Included",
+    "unaskedFields": [
+     "stability_protocol_document"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_control_strategy_summary",
+    "title": "Control Strategy Not Documented",
+    "unaskedFields": [
+     "control_strategy"
+    ]
+   },
+   {
+    "ruleId": "cmc_genotoxic_impurities_not_assessed",
+    "title": "Genotoxic Impurities Not Assessed per ICH M7",
+    "unaskedFields": [
+     "ich_m7_assessment"
+    ]
+   },
+   {
+    "ruleId": "cmc_elemental_impurities_not_controlled",
+    "title": "Elemental Impurities Not Controlled per ICH Q3D",
+    "unaskedFields": [
+     "elemental_impurities_assessment",
+     "ich_q3d_assessment"
+    ]
+   },
+   {
+    "ruleId": "cmc_nitrosamine_risk_not_evaluated",
+    "title": "Nitrosamine Risk Not Evaluated",
+    "unaskedFields": [
+     "nitrosamine_assessment",
+     "nitrosamine_risk_evaluation"
+    ]
+   },
+   {
+    "ruleId": "cmc_no_microbiological_controls",
+    "title": "Microbiological Controls Inadequate",
+    "unaskedFields": [
+     "microbiological_controls"
+    ]
+   }
+  ]
+ },
+ "risk_management": {
+  "total": 29,
+  "assessed": 3,
+  "notAssessed": [
+   {
+    "ruleId": "rm_no_hazard_identification",
+    "title": "No Hazard Identification Process",
+    "unaskedFields": [
+     "hazard_identification"
+    ]
+   },
+   {
+    "ruleId": "rm_no_risk_estimation_matrix",
+    "title": "Risk Estimation Matrix Missing",
+    "unaskedFields": [
+     "risk_estimation_matrix"
+    ]
+   },
+   {
+    "ruleId": "rm_no_fmea_fta",
+    "title": "No FMEA or FTA Performed",
+    "unaskedFields": [
+     "fmea",
+     "fta",
+     "risk_analysis_techniques"
+    ]
+   },
+   {
+    "ruleId": "rm_severity_rating_inconsistent",
+    "title": "Severity Ratings Inconsistent Across Hazards",
+    "unaskedFields": [
+     "severity_inconsistencies",
+     "severity_rating_issues"
+    ]
+   },
+   {
+    "ruleId": "rm_probability_not_data_supported",
+    "title": "Probability Estimates Not Supported by Data",
+    "unaskedFields": [
+     "probability_data_sources"
+    ]
+   },
+   {
+    "ruleId": "rm_controls_not_traced_to_hazards",
+    "title": "Risk Controls Not Traced to Hazards",
+    "unaskedFields": [
+     "hazard_control_traceability"
+    ]
+   },
+   {
+    "ruleId": "rm_pre_post_mitigation_mismatch",
+    "title": "Pre- and Post-Mitigation Risk Levels Illogical",
+    "unaskedFields": [
+     "severity_reduced_by_controls"
+    ]
+   },
+   {
+    "ruleId": "rm_iso14971_not_referenced",
+    "title": "ISO 14971:2019 Not Referenced",
+    "unaskedFields": [
+     "risk_management_standard"
+    ]
+   },
+   {
+    "ruleId": "rm_no_gspr_mapping",
+    "title": "No MDR Annex I GSPR Mapping",
+    "unaskedFields": [
+     "gspr_mapping"
+    ]
+   },
+   {
+    "ruleId": "rm_no_benefit_risk_analysis",
+    "title": "No Benefit-Risk Analysis per ISO 14971 Clause 8",
+    "unaskedFields": [
+     "benefit_risk_analysis"
+    ]
+   },
+   {
+    "ruleId": "rm_no_quantitative_risk_assessment",
+    "title": "No Quantitative Risk Assessment",
+    "unaskedFields": [
+     "quantitative_risk_data"
+    ]
+   },
+   {
+    "ruleId": "rm_failure_modes_not_systematic",
+    "title": "Failure Modes Not Systematically Identified",
+    "unaskedFields": [
+     "failure_mode_methodology"
+    ]
+   },
+   {
+    "ruleId": "rm_no_root_cause_analysis",
+    "title": "No Root Cause Analysis for High-Severity Hazards",
+    "unaskedFields": [
+     "root_cause_analysis",
+     "high_severity_hazards"
+    ]
+   },
+   {
+    "ruleId": "rm_no_state_of_art_review",
+    "title": "No State of the Art Review",
+    "unaskedFields": [
+     "state_of_art_review"
+    ]
+   },
+   {
+    "ruleId": "rm_controls_not_implementable",
+    "title": "Risk Controls Not Implementable",
+    "unaskedFields": [
+     "impractical_controls"
+    ]
+   },
+   {
+    "ruleId": "rm_no_verification_of_effectiveness",
+    "title": "Risk Control Effectiveness Verification Missing",
+    "unaskedFields": [
+     "risk_control_verification"
+    ]
+   },
+   {
+    "ruleId": "rm_no_residual_risk_review",
+    "title": "No Residual Risk Review",
+    "unaskedFields": [
+     "residual_risk_review"
+    ]
+   },
+   {
+    "ruleId": "rm_no_control_hierarchy",
+    "title": "Risk Control Option Analysis Hierarchy Not Followed",
+    "unaskedFields": [
+     "control_hierarchy_evidence"
+    ]
+   },
+   {
+    "ruleId": "rm_no_risk_management_plan",
+    "title": "Risk Management Plan Missing",
+    "unaskedFields": [
+     "risk_management_plan"
+    ]
+   },
+   {
+    "ruleId": "rm_no_risk_management_report",
+    "title": "Risk Management Report Missing",
+    "unaskedFields": [
+     "risk_management_report"
+    ]
+   },
+   {
+    "ruleId": "rm_traceability_gaps",
+    "title": "Risk Management Traceability Gaps",
+    "unaskedFields": [
+     "traceability_matrix",
+     "hazard_control_traceability"
+    ]
+   },
+   {
+    "ruleId": "rm_rm_file_incomplete",
+    "title": "Risk Management File Incomplete",
+    "unaskedFields": [
+     "risk_management_plan",
+     "hazard_identification",
+     "risk_estimation_matrix",
+     "risk_controls",
+     "residual_risks",
+     "risk_management_report"
+    ]
+   },
+   {
+    "ruleId": "rm_no_post_production_monitoring",
+    "title": "No Post-Production Monitoring Plan",
+    "unaskedFields": [
+     "post_production_monitoring"
+    ]
+   },
+   {
+    "ruleId": "rm_no_use_error_analysis",
+    "title": "No Systematic Use Error Analysis (IEC 62366)",
+    "unaskedFields": [
+     "use_error_analysis",
+     "usability_engineering"
+    ]
+   },
+   {
+    "ruleId": "rm_emerging_risks_not_addressed",
+    "title": "Emerging Risks Not Addressed",
+    "unaskedFields": [
+     "emerging_risks"
+    ]
+   },
+   {
+    "ruleId": "rm_no_known_hazards_from_similar_devices",
+    "title": "Known Hazards from Similar Devices Not Reviewed",
+    "unaskedFields": [
+     "similar_device_hazards",
+     "predicate_adverse_events"
+    ]
+   }
+  ]
+ },
+ "safety_narrative": {
+  "total": 28,
+  "assessed": 4,
+  "notAssessed": [
+   {
+    "ruleId": "sn_no_patient_demographics",
+    "title": "Patient Demographics Missing from Narrative",
+    "unaskedFields": [
+     "patient_demographics"
+    ]
+   },
+   {
+    "ruleId": "sn_no_medical_history",
+    "title": "Medical History Absent",
+    "unaskedFields": [
+     "medical_history"
+    ]
+   },
+   {
+    "ruleId": "sn_no_concomitant_meds",
+    "title": "Concomitant Medications Not Listed",
+    "unaskedFields": [
+     "concomitant_medications"
+    ]
+   },
+   {
+    "ruleId": "sn_dates_mismatch_crf",
+    "title": "Narrative Dates Inconsistent with CRF",
+    "unaskedFields": [
+     "date_discrepancy"
+    ]
+   },
+   {
+    "ruleId": "sn_narrative_contradicts_tabulated",
+    "title": "Narrative Contradicts Tabulated Safety Data",
+    "unaskedFields": [
+     "tabulation_discrepancy"
+    ]
+   },
+   {
+    "ruleId": "sn_meddra_coding_mismatch",
+    "title": "MedDRA Coding Inconsistent with Narrative Description",
+    "unaskedFields": [
+     "meddra_mismatch"
+    ]
+   },
+   {
+    "ruleId": "sn_timeline_gaps",
+    "title": "Chronological Gaps in Event Timeline",
+    "unaskedFields": [
+     "event_timeline"
+    ]
+   },
+   {
+    "ruleId": "sn_susar_reporting_delay",
+    "title": "SUSAR Not Reported within Required Timeframe",
+    "unaskedFields": [
+     "days_to_report"
+    ]
+   },
+   {
+    "ruleId": "sn_cioms_form_incomplete",
+    "title": "CIOMS Form Incomplete",
+    "unaskedFields": [
+     "cioms_complete"
+    ]
+   },
+   {
+    "ruleId": "sn_e2b_fields_missing",
+    "title": "E2B(R3) Required Fields Not Populated",
+    "unaskedFields": [
+     "e2b_completeness"
+    ]
+   },
+   {
+    "ruleId": "sn_no_seriousness_criteria",
+    "title": "Seriousness Criteria Not Documented",
+    "unaskedFields": [
+     "is_serious"
+    ]
+   },
+   {
+    "ruleId": "sn_no_causality_assessment",
+    "title": "No Causality Assessment Provided",
+    "unaskedFields": [
+     "causality_assessment"
+    ]
+   },
+   {
+    "ruleId": "sn_alternative_etiologies_not_explored",
+    "title": "Alternative Etiologies Not Explored",
+    "unaskedFields": [
+     "alternative_etiologies"
+    ]
+   },
+   {
+    "ruleId": "sn_unblinding_not_documented",
+    "title": "Unblinding Procedure Not Documented",
+    "unaskedFields": [
+     "study_blinding",
+     "is_serious"
+    ]
+   },
+   {
+    "ruleId": "sn_expedited_reporting_at_risk",
+    "title": "Expedited Reporting Timeline at Risk",
+    "unaskedFields": [
+     "days_in_processing"
+    ]
+   },
+   {
+    "ruleId": "sn_late_awareness_date",
+    "title": "Delayed Sponsor Awareness of SAE",
+    "unaskedFields": [
+     "days_site_to_sponsor"
+    ]
+   },
+   {
+    "ruleId": "sn_no_source_document_verification",
+    "title": "Source Document Verification Not Performed",
+    "unaskedFields": [
+     "source_verified"
+    ]
+   },
+   {
+    "ruleId": "sn_investigator_signature_missing",
+    "title": "Investigator Signature Missing",
+    "unaskedFields": [
+     "investigator_signed"
+    ]
+   },
+   {
+    "ruleId": "sn_regulatory_notification_gaps",
+    "title": "Regulatory Authority Notification Gaps",
+    "unaskedFields": [
+     "regulatory_notifications_complete"
+    ]
+   },
+   {
+    "ruleId": "sn_no_narrative_version_control",
+    "title": "Narrative Version Control Absent",
+    "unaskedFields": [
+     "narrative_version"
+    ]
+   },
+   {
+    "ruleId": "sn_potential_signal_not_flagged",
+    "title": "Potential Safety Signal Not Flagged",
+    "unaskedFields": [
+     "signal_evaluated"
+    ]
+   },
+   {
+    "ruleId": "sn_aggregate_analysis_not_referenced",
+    "title": "Aggregate Safety Analysis Not Referenced",
+    "unaskedFields": [
+     "is_serious"
+    ]
+   },
+   {
+    "ruleId": "sn_no_pbrer_dsur_crossref",
+    "title": "No PBRER/DSUR Cross-Reference",
+    "unaskedFields": [
+     "pbrer_dsur_referenced"
+    ]
+   },
+   {
+    "ruleId": "sn_no_risk_mitigation_proposed",
+    "title": "No Risk Mitigation Measures Proposed",
+    "unaskedFields": [
+     "event_severity",
+     "is_serious"
+    ]
+   }
+  ]
+ },
+ "labeling": {
+  "total": 32,
+  "assessed": 2,
+  "notAssessed": [
+   {
+    "ruleId": "lbl_no_highlights",
+    "title": "Highlights Section Missing",
+    "unaskedFields": [
+     "highlights_section"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_boxed_warning",
+    "title": "Boxed Warning Missing When Required",
+    "unaskedFields": [
+     "serious_risks"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_contraindications",
+    "title": "Contraindications Section Missing",
+    "unaskedFields": [
+     "contraindications"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_adverse_reactions",
+    "title": "Adverse Reactions Section Missing",
+    "unaskedFields": [
+     "adverse_reactions"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_dosing",
+    "title": "Dosage and Administration Missing",
+    "unaskedFields": [
+     "dosage_administration"
+    ]
+   },
+   {
+    "ruleId": "lbl_trial_data_not_reflected",
+    "title": "Clinical Trial Data Not Reflected in Label",
+    "unaskedFields": [
+     "clinical_trial_data",
+     "clinical_studies_section"
+    ]
+   },
+   {
+    "ruleId": "lbl_off_label_claims",
+    "title": "Off-Label Claims Detected in Labeling",
+    "unaskedFields": [
+     "off_label_claims"
+    ]
+   },
+   {
+    "ruleId": "lbl_dosing_protocol_mismatch",
+    "title": "Dosing in Label vs. Clinical Protocol Mismatch",
+    "unaskedFields": [
+     "labeled_dose",
+     "clinical_trial_dose"
+    ]
+   },
+   {
+    "ruleId": "lbl_indication_scope_mismatch",
+    "title": "Indication Scope Broader Than Trial Population",
+    "unaskedFields": [
+     "indication_broader_than_studied"
+    ]
+   },
+   {
+    "ruleId": "lbl_plr_format_not_followed",
+    "title": "PLR Format Not Followed",
+    "unaskedFields": [
+     "plr_format_compliant"
+    ]
+   },
+   {
+    "ruleId": "lbl_pllr_missing",
+    "title": "PLLR Requirements Not Met",
+    "unaskedFields": [
+     "pregnancy_category_legacy"
+    ]
+   },
+   {
+    "ruleId": "lbl_otc_drug_facts_missing",
+    "title": "OTC Drug Facts Panel Missing",
+    "unaskedFields": [
+     "is_otc"
+    ]
+   },
+   {
+    "ruleId": "lbl_device_labeling_801",
+    "title": "Device Labeling Does Not Comply with 21 CFR 801",
+    "unaskedFields": [
+     "is_device"
+    ]
+   },
+   {
+    "ruleId": "lbl_clinical_pharm_insufficient",
+    "title": "Clinical Pharmacology Data Insufficient",
+    "unaskedFields": [
+     "clinical_pharmacology_section"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_ddi_studies",
+    "title": "Drug-Drug Interaction Studies Not Cited",
+    "unaskedFields": [
+     "drug_interaction_studies"
+    ]
+   },
+   {
+    "ruleId": "lbl_pk_data_gaps",
+    "title": "Pharmacokinetic Data Gaps",
+    "unaskedFields": [
+     "pk_data",
+     "dosage_administration"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_hepatic_renal_data",
+    "title": "No Hepatic or Renal Impairment Data",
+    "unaskedFields": [
+     "hepatic_impairment_data",
+     "renal_impairment_data"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_exposure_response",
+    "title": "Exposure-Response Analysis Missing",
+    "unaskedFields": [
+     "exposure_response_data",
+     "dosage_administration"
+    ]
+   },
+   {
+    "ruleId": "lbl_patient_counseling_not_actionable",
+    "title": "Patient Counseling Information Not Actionable",
+    "unaskedFields": [
+     "patient_counseling_info"
+    ]
+   },
+   {
+    "ruleId": "lbl_self_admin_instructions_unclear",
+    "title": "Self-Administration Instructions Unclear",
+    "unaskedFields": [
+     "self_administered"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_storage_conditions",
+    "title": "Storage and Handling Conditions Missing",
+    "unaskedFields": [
+     "storage_conditions"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_how_supplied",
+    "title": "How Supplied / Storage Section Incomplete",
+    "unaskedFields": [
+     "how_supplied"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_spl_xml",
+    "title": "SPL/XML Format Not Submitted",
+    "unaskedFields": [
+     "spl_xml_submitted"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_ndc",
+    "title": "NDC Not Assigned",
+    "unaskedFields": [
+     "ndc_number"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_establishment_id",
+    "title": "FDA Establishment Identifier Missing",
+    "unaskedFields": [
+     "fei_number"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_revision_date",
+    "title": "Labeling Revision Date Missing",
+    "unaskedFields": [
+     "labeling_revision_date"
+    ]
+   },
+   {
+    "ruleId": "lbl_pregnancy_lactation_outdated",
+    "title": "Pregnancy/Lactation Subsection Uses Pre-PLLR Format",
+    "unaskedFields": [
+     "pregnancy_lactation_section",
+     "pregnancy_category_legacy"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_abuse_potential_cns",
+    "title": "No Abuse Potential Assessment for CNS Drug",
+    "unaskedFields": [
+     "cns_active"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_overdosage_info",
+    "title": "Overdosage Section Missing",
+    "unaskedFields": [
+     "overdosage_section"
+    ]
+   },
+   {
+    "ruleId": "lbl_no_pediatric_data",
+    "title": "Pediatric Use Information Absent",
+    "unaskedFields": [
+     "pediatric_use_section"
+    ]
+   }
+  ]
+ },
+ "briefing_book": {
+  "total": 28,
+  "assessed": 3,
+  "notAssessed": [
+   {
+    "ruleId": "bb_no_benefit_risk_framework",
+    "title": "Benefit-Risk Framework Missing",
+    "unaskedFields": [
+     "benefit_risk_framework"
+    ]
+   },
+   {
+    "ruleId": "bb_missing_efficacy_summary",
+    "title": "Efficacy Summary Not Provided",
+    "unaskedFields": [
+     "efficacy_summary"
+    ]
+   },
+   {
+    "ruleId": "bb_no_120_day_safety_update",
+    "title": "No 120-Day Safety Update",
+    "unaskedFields": [
+     "safety_update_120_day"
+    ]
+   },
+   {
+    "ruleId": "bb_briefing_vs_nda_data_conflict",
+    "title": "Data Conflicts Between Briefing Book and NDA/BLA",
+    "unaskedFields": [
+     "data_conflicts_with_application"
+    ]
+   },
+   {
+    "ruleId": "bb_efficacy_conclusions_vs_stats",
+    "title": "Efficacy Conclusions Inconsistent with Statistical Tables",
+    "unaskedFields": [
+     "efficacy_narrative_stats_mismatch"
+    ]
+   },
+   {
+    "ruleId": "bb_safety_data_discrepancies",
+    "title": "Safety Data Discrepancies Across Sections",
+    "unaskedFields": [
+     "safety_data_discrepancies"
+    ]
+   },
+   {
+    "ruleId": "bb_demographic_table_mismatch",
+    "title": "Demographic Data Inconsistencies",
+    "unaskedFields": [
+     "demographic_table_inconsistencies"
+    ]
+   },
+   {
+    "ruleId": "bb_fda_questions_not_addressed",
+    "title": "FDA Questions Not Addressed",
+    "unaskedFields": [
+     "fda_questions_addressed"
+    ]
+   },
+   {
+    "ruleId": "bb_voting_questions_label_misalignment",
+    "title": "Voting Questions Misaligned with Label Claims",
+    "unaskedFields": [
+     "voting_questions_label_aligned"
+    ]
+   },
+   {
+    "ruleId": "bb_no_structured_benefit_risk",
+    "title": "No Structured Benefit-Risk per FDA B-R Framework",
+    "unaskedFields": [
+     "structured_benefit_risk_table"
+    ]
+   },
+   {
+    "ruleId": "bb_no_rems_discussion",
+    "title": "REMS Discussion Absent",
+    "unaskedFields": [
+     "rems_discussion",
+     "serious_safety_signals"
+    ]
+   },
+   {
+    "ruleId": "bb_inadequate_responder_analyses",
+    "title": "Inadequate Responder Analyses",
+    "unaskedFields": [
+     "responder_analyses"
+    ]
+   },
+   {
+    "ruleId": "bb_sensitivity_analyses_missing",
+    "title": "Sensitivity Analyses Missing",
+    "unaskedFields": [
+     "sensitivity_analyses"
+    ]
+   },
+   {
+    "ruleId": "bb_no_nnt_nnh",
+    "title": "No NNT/NNH Presented",
+    "unaskedFields": [
+     "nnt_nnh_data"
+    ]
+   },
+   {
+    "ruleId": "bb_no_mock_advisory_committee",
+    "title": "No Mock Advisory Committee Conducted",
+    "unaskedFields": [
+     "mock_advisory_committee_conducted"
+    ]
+   },
+   {
+    "ruleId": "bb_no_postmarketing_plan",
+    "title": "Post-Marketing Commitment Plan Missing",
+    "unaskedFields": [
+     "postmarketing_commitment_plan"
+    ]
+   },
+   {
+    "ruleId": "bb_no_patient_perspective",
+    "title": "Patient Perspective Not Included",
+    "unaskedFields": [
+     "patient_perspective_included"
+    ]
+   },
+   {
+    "ruleId": "bb_page_count_excessive",
+    "title": "Page Count Excessive",
+    "unaskedFields": [
+     "page_count"
+    ]
+   },
+   {
+    "ruleId": "bb_no_executive_summary",
+    "title": "No Executive Summary",
+    "unaskedFields": [
+     "executive_summary"
+    ]
+   },
+   {
+    "ruleId": "bb_missing_raw_data_appendices",
+    "title": "Missing Appendices for Raw Data Tables",
+    "unaskedFields": [
+     "raw_data_appendices"
+    ]
+   },
+   {
+    "ruleId": "bb_no_table_of_contents",
+    "title": "Table of Contents Missing or Inadequate",
+    "unaskedFields": [
+     "table_of_contents"
+    ]
+   },
+   {
+    "ruleId": "bb_competitive_landscape_not_addressed",
+    "title": "Competitive Landscape Not Addressed",
+    "unaskedFields": [
+     "competitive_landscape"
+    ]
+   },
+   {
+    "ruleId": "bb_no_risk_management_strategy",
+    "title": "No Risk Management Strategy",
+    "unaskedFields": [
+     "risk_management_strategy"
+    ]
+   },
+   {
+    "ruleId": "bb_safety_signals_not_contextualized",
+    "title": "Known Safety Signals Not Contextualized",
+    "unaskedFields": [
+     "safety_signals"
+    ]
+   },
+   {
+    "ruleId": "bb_no_pediatric_extrapolation",
+    "title": "Pediatric Data or Extrapolation Plan Missing",
+    "unaskedFields": [
+     "pediatric_data",
+     "pediatric_extrapolation_plan"
+    ]
+   }
+  ]
+ },
+ "stability": {
+  "total": 28,
+  "assessed": 4,
+  "notAssessed": [
+   {
+    "ruleId": "stab_fewer_than_3_batches",
+    "title": "Fewer Than Three Batches in Stability Program",
+    "unaskedFields": [
+     "stability_batch_count"
+    ]
+   },
+   {
+    "ruleId": "stab_no_long_term_data",
+    "title": "No Long-Term Stability Data",
+    "unaskedFields": [
+     "long_term_stability_data"
+    ]
+   },
+   {
+    "ruleId": "stab_no_accelerated_data",
+    "title": "No Accelerated Stability Data",
+    "unaskedFields": [
+     "accelerated_stability_data"
+    ]
+   },
+   {
+    "ruleId": "stab_no_photostability",
+    "title": "No Photostability Study per ICH Q1B",
+    "unaskedFields": [
+     "photostability_data"
+    ]
+   },
+   {
+    "ruleId": "stab_no_container_closure_testing",
+    "title": "Container Closure System Not Evaluated in Stability",
+    "unaskedFields": [
+     "container_closure_stability"
+    ]
+   },
+   {
+    "ruleId": "stab_storage_conditions_mismatch",
+    "title": "Storage Conditions Inconsistent with Product Type",
+    "unaskedFields": [
+     "storage_conditions"
+    ]
+   },
+   {
+    "ruleId": "stab_batch_size_not_representative",
+    "title": "Batch Sizes Not Representative of Production Scale",
+    "unaskedFields": [
+     "batch_scale"
+    ]
+   },
+   {
+    "ruleId": "stab_spec_limits_inconsistent",
+    "title": "Stability Specification Limits Inconsistent with Release",
+    "unaskedFields": [
+     "stability_specifications",
+     "release_specifications"
+    ]
+   },
+   {
+    "ruleId": "stab_q1a_testing_not_followed",
+    "title": "ICH Q1A(R2) Testing Protocol Not Followed",
+    "unaskedFields": [
+     "ich_q1a_compliance"
+    ]
+   },
+   {
+    "ruleId": "stab_q1e_extrapolation_violated",
+    "title": "ICH Q1E Extrapolation Rules Violated",
+    "unaskedFields": [
+     "long_term_data_months"
+    ]
+   },
+   {
+    "ruleId": "stab_q1f_climatic_zone_not_considered",
+    "title": "Climatic Zone Not Considered for Target Markets",
+    "unaskedFields": [
+     "target_markets"
+    ]
+   },
+   {
+    "ruleId": "stab_no_forced_degradation",
+    "title": "No Forced Degradation Studies",
+    "unaskedFields": [
+     "forced_degradation_data"
+    ]
+   },
+   {
+    "ruleId": "stab_no_statistical_analysis",
+    "title": "Statistical Analysis per ICH Q1E Not Performed",
+    "unaskedFields": [
+     "statistical_analysis_performed"
+    ]
+   },
+   {
+    "ruleId": "stab_degradation_pathways_unknown",
+    "title": "Degradation Pathways Not Characterized",
+    "unaskedFields": [
+     "degradation_pathways"
+    ]
+   },
+   {
+    "ruleId": "stab_chambers_not_qualified",
+    "title": "Stability Chambers Not Qualified",
+    "unaskedFields": [
+     "chamber_qualification"
+    ]
+   },
+   {
+    "ruleId": "stab_no_hold_time_studies",
+    "title": "Hold-Time Studies Missing",
+    "unaskedFields": [
+     "hold_time_studies"
+    ]
+   },
+   {
+    "ruleId": "stab_no_shipping_validation",
+    "title": "Shipping/Transportation Stability Not Addressed",
+    "unaskedFields": [
+     "shipping_validation"
+    ]
+   },
+   {
+    "ruleId": "stab_no_stability_protocol",
+    "title": "No Stability Protocol",
+    "unaskedFields": [
+     "stability_protocol"
+    ]
+   },
+   {
+    "ruleId": "stab_no_stability_commitment",
+    "title": "Stability Commitment per 21 CFR 314.81 Missing",
+    "unaskedFields": [
+     "stability_commitment"
+    ]
+   },
+   {
+    "ruleId": "stab_no_annual_report_plan",
+    "title": "Annual Stability Report Plan Not Defined",
+    "unaskedFields": [
+     "annual_report_plan"
+    ]
+   },
+   {
+    "ruleId": "stab_no_oos_oot_procedures",
+    "title": "No OOS/OOT Investigation Procedures",
+    "unaskedFields": [
+     "oos_oot_procedures"
+    ]
+   },
+   {
+    "ruleId": "stab_significant_change_not_investigated",
+    "title": "Significant Change at Accelerated Conditions Not Investigated",
+    "unaskedFields": [
+     "significant_change_observed"
+    ]
+   },
+   {
+    "ruleId": "stab_excessive_shelf_life_extrapolation",
+    "title": "Shelf Life Extrapolation Exceeds Available Data by More Than 2x",
+    "unaskedFields": [
+     "long_term_data_months"
+    ]
+   },
+   {
+    "ruleId": "stab_no_post_approval_stability_commitment",
+    "title": "No Post-Approval Stability Commitment",
+    "unaskedFields": [
+     "post_approval_stability_plan"
+    ]
+   }
+  ]
+ }
+}

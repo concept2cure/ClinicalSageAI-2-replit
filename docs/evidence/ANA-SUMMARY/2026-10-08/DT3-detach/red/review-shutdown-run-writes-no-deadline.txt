@@ -1,0 +1,7 @@
+# pre-fix red, 2026-10-22: the shutdown's run writes had no deadline, so a slow database could take the SIGKILL window before the drain (DT3 review INF-41, finding 3.7)
+ ✓ server/startup/__tests__/shutdown-ana-runs.test.ts > graceful shutdown and the AnA runs this process owns > ends them before the HTTP drain, and closes the pool only after the turns recorded themselves 55ms
+ × server/startup/__tests__/shutdown-ana-runs.test.ts > the runs' writes have a deadline > a database that does not answer: the turns are stopped locally and the drain begins within the deadline 4ms
+   → actual value must be number or bigint, received "undefined"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

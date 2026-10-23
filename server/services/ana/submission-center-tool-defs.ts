@@ -27,7 +27,10 @@ import { MDR_FACT_VOCABULARY, IVDR_FACT_VOCABULARY } from '../market-specs/devic
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on, naming that leaf by its sequence\'s backbone and its leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Two ways to supply the prior state: (a) list prior_leaves by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, because a leaf is never named by its file path; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    // 2026-10-15: (b) said the prior sequence's stored manifest was loaded from the
+    // compilation history; the loader reads only filed (sent or acknowledged)
+    // sequences, folds them through the named one, and refuses one not on file.
+    'Compute the eCTD lifecycle operator (new, replace, append, delete) for each leaf of a new sequence by diffing it against the prior state. You get each leaf\'s operation plus a summary count (new, replace, append, delete, unchanged); every replace/append/delete carries an ICH modified-file pointer naming the prior leaf by its sequence\'s backbone and leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Supply the prior state either (a) as prior_leaves listed by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, as a leaf is never named by its file path; or (b) as application_number + prior_sequence_number: the state on file through that sequence is loaded from your organization\'s sequences sent or acknowledged (the prefix is derived for you), and a named sequence not on file fails with PRIOR_SEQUENCE_NOT_FOUND. Nothing is written. Use it when planning a sequence, so the user sees which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -56,11 +59,11 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
       },
       application_number: {
         type: 'string',
-        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the prior sequence\'s published leaf manifest is loaded automatically from that application\'s compilation history — you do not need to list prior leaves by hand. Scoped to your organization.',
+        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the state on file through that sequence is loaded from this application\'s sequences sent or acknowledged — you do not need to list prior leaves by hand. Scoped to your organization.',
       },
       prior_sequence_number: {
         type: 'string',
-        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads that sequence\'s stored leaves and derives the "../<seq>/" modified-file prefix automatically.',
+        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads the state on file through that sequence and derives the "../<seq>/" modified-file prefix; a sequence not on file fails with PRIOR_SEQUENCE_NOT_FOUND.',
       },
       desired_leaves: {
         type: 'array',
@@ -793,6 +796,10 @@ export const BUILD_DEVICE_BLUEPRINT: AnaTool = {
       classification: { type: 'object', description: 'Optional { framework: mdr|ivdr|fda, facts: {...} } to classify the device.' },
       contact: { type: 'object', description: 'Optional { nature, duration } — when present, biocompatibility applies.' },
       software: { type: 'object', description: 'Optional { applicable, canContributeToDeathOrSeriousInjury?, canContributeToNonSeriousInjury?, presentDeliverableIds? }.' },
+      // 2026-10-15: the handler relays these two (blueprintDeviceFacts) but the
+      // model was not told they exist, so a powered or sterile device read "not applicable".
+      electrical: { type: 'object', description: 'Optional { electricallyPowered?, hasAlarms?, closedLoopControl?, homeUse?, emsUse?, hasParticularStandard? } (true/false); when electricallyPowered, IEC 60601 applies.' },
+      sterilization: { type: 'object', description: 'Optional { sterile?, method? } — method ∈ eo|radiation|steam|dry_heat|vh2o2|aseptic|unknown; when sterile, ISO 11135/11137/17665 applies.' },
       present: { type: 'object', description: 'Optional { cerSectionIds?, perSectionIds?, rmfSectionIds? } already authored, for gap assessment.' },
       equivalence_claimed: { type: 'boolean', description: 'CER equivalence claim (mdr_td).' },
     },

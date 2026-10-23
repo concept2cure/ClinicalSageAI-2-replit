@@ -81,7 +81,17 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
     const project = await requireProjectAdmission(req, String(body.projectId), true);
     const result = await generateFigure({ ...body, projectId: project.id,
       organizationId: project.organizationId, userId }, requestConnectable(req));
-    if (!result.success) return res.status(result.storage?.status === 'unconfirmed' ? 503 : 422).json({ success:false, figure: result });
+    // A figure that was not generated is answered as that. A save whose commit
+    // could not be confirmed is 503; a refusal is 422; a gateway failure 502;
+    // an internal failure, or an unstated one, 500 (2026-10-15: every one was
+    // 422). `error` is the engine's own fixed sentence; the detail is in its
+    // log. The unsaved draft is returned for review, never as generated.
+    if (!result.success) {
+      const status = result.storage?.status === 'unconfirmed' ? 503
+        : result.failure === 'refused' ? 422 : result.failure === 'gateway' ? 502 : 500;
+      if (status !== 422) logger.error('Figure generation failed', { failure: result.failure ?? 'unstated', storage: result.storage?.status });
+      return res.status(status).json({ success: false, error: result.error, figure: result });
+    }
     res.json({ success: true, figure: result, meta: result.meta });
   } catch (error: any) {
     if (contentError(error, res)) return;

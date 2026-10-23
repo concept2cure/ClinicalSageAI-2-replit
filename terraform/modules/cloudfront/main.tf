@@ -28,6 +28,36 @@ resource "aws_s3_bucket" "frontend" {
   tags   = var.tags
 }
 
+# A bad publish can be reverted (MR-03 OPS-21). deploy-aws.yml overwrites
+# index.html, the locale files and the rest in place on every release; with
+# versioning each overwritten object keeps its previous version, which can be
+# restored without a rebuild. The vault and evidence buckets already version.
+resource "aws_s3_bucket_versioning" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Previous versions are kept for 90 days, long enough to revert any release in
+# that window, and not forever: every deploy makes a few.
+resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
+  bucket     = aws_s3_bucket.frontend.id
+  depends_on = [aws_s3_bucket_versioning.frontend]
+
+  rule {
+    id     = "previous-releases"
+    status = "Enabled"
+    filter {}
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket                  = aws_s3_bucket.frontend.id
   block_public_acls       = true

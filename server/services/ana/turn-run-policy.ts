@@ -33,10 +33,10 @@
  * and nothing says she stopped.
  *
  * ── Only a person's answer runs a held step ─────────────────────────────────
- * The hold returns 'running' for a run that left 'paused' any way that is not
- * a cancel — resumed, but also reaped as an orphan ('failed'), ended, or gone
- * (run-hold.ts leave, as the stream's loop always did). Under Manual that is
- * not an answer: the held step runs only when the row reads 'running' (or
+ * The hold returns 'running' for a run that left 'paused' live, or whose row
+ * is gone; since AnA detach DT3 a run cancelled while held (a Stop, an
+ * admin's, the session's end) returns 'cancelled', and one that failed or
+ * finished (reaped, shut down) returns 'ended' (run-hold.ts leave). Under Manual 'running' is still not an answer: the held step runs only when the row reads 'running' (or
  * 'paused' again, after Run this step) once the hold is over, which only a
  * person's resume or steer writes. Anything else fails closed. And a hold she
  * could not write stands only on a person's own pause already in place — shown
@@ -58,6 +58,7 @@ import {
   type AnaRunPolicy,
   type PolicyHold,
   type RunStatus,
+  type RunStoppedReason,
   type TurnStoppedReason,
 } from './run-status.js';
 import { MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS } from '@shared/ana/run-policy';
@@ -86,8 +87,11 @@ export interface TurnPolicyRun {
   heartbeat(round: number): void;
   /** Drain the run's queue into the next model turn; returns the steers among it, by text. */
   drainSteers(): Promise<string[]>;
-  /** running → paused for the policy, with no control event (run-control.ts holdForPerson). */
-  holdForPerson(): Promise<boolean>;
+  /**
+   * running → paused for the policy, with no control event, writing the hold
+   * ({ reason: 'manual', next }) for a follower (run-control.ts holdForPerson).
+   */
+  holdForPerson(next: string[]): Promise<boolean>;
   /** The run's status as the ROW has it now (null when the row is gone). */
   status(): Promise<RunStatus | null>;
 }
@@ -103,6 +107,12 @@ export interface TurnPolicyWiring {
   demo(): boolean;
   /** The gate's own verdict: this call would run without a person. */
   isUngoverned(call: ToolCall): boolean;
+  /**
+   * This call will be refused before it runs whatever anyone answers — the
+   * read-only answer the person asked for (2aa766a76). A Manual hold never
+   * offers it as "Run this step", and never holds for it alone (AnA detach DT3).
+   */
+  willRefuse?(call: ToolCall): boolean;
   label(call: ToolCall): string;
   emit(frame: Record<string, unknown>): void;
   /** File a step that never ran in the turn record, with why. */
@@ -130,6 +140,8 @@ export class TurnPolicy {
   /** The page lost its connection before the turn ended (and no Stop had landed). */
   private disconnected = false;
   private wiring: TurnPolicyWiring | null = null;
+  /** A detached turn's unattended limit, once it has come (AnA detach §2.6; set by the stream). */
+  private unattended: () => 'unattended_limit' | 'budget_exhausted' | null = () => null;
   private readonly now: () => number;
 
   constructor(
@@ -174,12 +186,22 @@ export class TurnPolicy {
       approvalTimedOut: this.approvalTimedOut,
       activeMs: wallMs - (hold?.heldMs() ?? 0) - this.approvalWaitMs,
       wallMs,
+      unattended: this.unattended(),
     });
   };
 
   /**
-   * The socket dropped while the run was live, before any Stop: the run is
-   * stopped for it, and the turn's reason becomes `client_disconnected`
+   * Read a detached turn's unattended limit at each round's stop question:
+   * once it has come, the next model call is the closing answer (§2.6).
+   */
+  watchUnattended(directive: () => 'unattended_limit' | 'budget_exhausted' | null): void {
+    this.unattended = directive;
+  }
+
+  /**
+   * The socket dropped while the run was live, before any Stop, on a turn
+   * that does not detach (Live Drive, or no run row; AnA detach §2.1): the run
+   * is stopped for it, and the turn's reason becomes `client_disconnected`
    * rather than the `cancelled` the loop sees (ANA-SUMMARY S4: "Stopped: this
    * page lost its connection." with Continue). A person's Stop lands first —
    * the client awaits its cancel before dropping the socket — and is not
@@ -189,12 +211,17 @@ export class TurnPolicy {
     this.disconnected = true;
   }
 
-  /** Why the turn stopped, from why its loop did. */
-  stoppedReason(loopReason: StoppedReason | TurnStoppedReason): TurnStoppedReason {
+  /**
+   * Why the turn stopped, from why its loop did — and from the run row, when
+   * the row's own stop aborted it (`rowReason`, run-control.ts runStopReasonOf):
+   * that one wins.
+   */
+  stoppedReason(loopReason: StoppedReason | TurnStoppedReason, rowReason?: RunStoppedReason | null): TurnStoppedReason {
     return turnStoppedReason(loopReason, {
       holdExpired: this.wiring?.run?.hold.expired() ?? false,
       holdUnavailable: this.holdUnavailable,
       disconnected: this.disconnected,
+      rowReason,
     });
   }
 
@@ -203,10 +230,12 @@ export class TurnPolicy {
     round: number,
     pending: readonly ToolCall[],
   ): Promise<'continue' | 'abort' | 'replan'> {
+    // The steps that could run: a hold names only those, and is due only for them.
+    const runnable = w.willRefuse ? pending.filter(c => !w.willRefuse!(c)) : pending;
     const due = manualHoldDue({
       policy: this.opts.runPolicy,
       upcomingRound: round,
-      pending,
+      pending: runnable,
       demo: w.demo(),
       isUngoverned: c => w.isUngoverned(c as ToolCall),
     });
@@ -217,7 +246,7 @@ export class TurnPolicy {
     run.heartbeat(round);
     if (run.hold.expired()) return this.expired(w, round, pending, null);
     if (!due) return this.personHold(w, run, round, pending);
-    return this.manualHold({ w, run, round, pending, next: pending.map(c => w.label(c)) });
+    return this.manualHold({ w, run, round, pending, next: runnable.map(c => w.label(c)) });
   }
 
   /**
@@ -234,7 +263,7 @@ export class TurnPolicy {
     const announce: RunHoldAnnounce | undefined = this.opts.runPolicy ? { reason: 'person' } : undefined;
     const held = await run.hold.hold(round, announce, run.cancelSignal);
     if (held === 'expired') return this.expired(w, round, pending, null);
-    if (run.cancelled() || held === 'cancelled') return this.cancelled(w, round);
+    if (run.cancelled() || held === 'cancelled' || held === 'ended') return this.cancelled(w, round);
     // Steers and screen reports: drained atomically, so neither applies twice.
     const steers = await run.drainSteers();
     if (run.cancelled()) return this.cancelled(w, round);
@@ -260,7 +289,7 @@ export class TurnPolicy {
       if (run.cancelled()) return this.cancelled(w, round);
       return this.replan(step, early, 'superseded');
     }
-    const placed = await this.placeHold(run);
+    const placed = await this.placeHold(run, step.next);
     if (placed === 'cancelled') return this.cancelled(w, round);
     if (placed === 'unavailable') return this.failClosed(w, round, step.pending);
     const outcome = await run.hold.hold(round, { reason: 'manual', next: step.next }, run.cancelSignal);
@@ -273,11 +302,11 @@ export class TurnPolicy {
    * a row that is not live. A write that threw, or a row that is gone, ended
    * or failed, is 'unavailable': she stops, and the step does not run.
    */
-  private async placeHold(run: TurnPolicyRun): Promise<'held' | 'cancelled' | 'unavailable'> {
+  private async placeHold(run: TurnPolicyRun, next: string[]): Promise<'held' | 'cancelled' | 'unavailable'> {
     try {
       // Twice at most: a person may pause and resume between the write and the read.
       for (let attempt = 0; attempt < 2; attempt++) {
-        if (await run.holdForPerson()) return 'held';
+        if (await run.holdForPerson(next)) return 'held';
         const status = await run.status();
         if (status === 'paused') return 'held';
         if (status === 'cancelled' || run.cancelled()) return 'cancelled';
@@ -293,9 +322,16 @@ export class TurnPolicy {
   private async settleHold(step: HeldStep, outcome: RunHoldOutcome): Promise<'continue' | 'abort' | 'replan'> {
     const { w, run, round, pending, next } = step;
     if (outcome === 'expired') return this.expired(w, round, pending, next);
-    // Never run a held step for a client that is gone.
-    if (outcome === 'disconnected') return this.endedAtHold(step, 'disconnected');
-    if (run.cancelled() || outcome === 'cancelled') return this.endedAtHold(step, 'stopped');
+    // A page that went while she waited ends the hold only on a turn that
+    // cannot detach: its run was stopped for it (client_disconnected), and the
+    // step is filed as not run because the page was closed. A detached turn's
+    // hold waits on, for the person on any device (AnA detach §2.7).
+    const ended = this.disconnected ? 'disconnected' : 'stopped';
+    // A cancel settles here, with no further read of the row (661a2c93a).
+    if (run.cancelled() || outcome === 'cancelled') return this.endedAtHold(step, ended);
+    // The row failed or finished while she waited and no abort reached this
+    // turn: no answer at all, so she fails closed as before (§2.4).
+    if (outcome === 'ended') return this.failClosed(w, round, pending);
     const steers = await run.drainSteers();
     if (run.cancelled()) return this.endedAtHold(step, 'stopped');
     const status = await run.status().catch(() => undefined);

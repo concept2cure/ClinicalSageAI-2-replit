@@ -14,6 +14,7 @@ import {
   DocumentNotFoundException,
   AttachmentNotFoundException,
   AttachmentRejectedException,
+  DocumentAlreadyRegisteredException,
   isModuleType,
 } from '../services/ModuleIntegrationService';
 import { WorkflowService } from '../services/WorkflowService';
@@ -56,6 +57,27 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function positiveInt(value: unknown): number | null {
+  const n = Number(String(value));
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+/** Why a PATCH /documents/:id body is refused, or null when it may be applied. */
+function documentPatchRefusal(body: Record<'title' | 'documentType' | 'metadata' | 'content', unknown>): string | null {
+  const { title, documentType, metadata, content } = body;
+  if (title === undefined && documentType === undefined && metadata === undefined && content === undefined) {
+    return 'Nothing to update: send title, documentType, metadata or content. Status, authorship and organization are not set through this route.';
+  }
+  if (
+    (title !== undefined && !nonEmptyString(title)) ||
+    (documentType !== undefined && !nonEmptyString(documentType)) ||
+    (metadata !== undefined && !isPlainObject(metadata))
+  ) {
+    return 'title and documentType, when sent, are non-empty strings; metadata is an object';
+  }
+  return null;
+}
+
 /**
  * Register a document in the unified system
  * POST /api/module-integration/register-document
@@ -83,17 +105,29 @@ router.post('/register-document', asyncHandler(async (req, res) => {
       error: 'title, documentType, moduleType (a valid module) and originalId are required; metadata, when sent, is an object',
     });
   }
-  const document = await moduleIntegrationService.registerDocument({
-    title,
-    documentType,
-    moduleType,
-    originalId,
-    content,
-    metadata,
-    createdBy: String(userId),
-    organizationId: Number(getSecureOrgId(req)),
-  });
-  res.status(201).json(document);
+  try {
+    const document = await moduleIntegrationService.registerDocument({
+      title,
+      documentType,
+      moduleType,
+      originalId,
+      content,
+      metadata,
+      createdBy: String(userId),
+      organizationId: Number(getSecureOrgId(req)),
+    });
+    res.status(201).json(document);
+  } catch (error) {
+    // 2026-10-15: a duplicate registration reached the caller as a 500.
+    if (error instanceof DocumentAlreadyRegisteredException) {
+      return res.status(409).json({
+        error: error.message,
+        moduleType: error.moduleType,
+        originalId: error.originalId,
+      });
+    }
+    throw error;
+  }
 }));
 
 /**
@@ -122,6 +156,10 @@ router.get('/document-exists', asyncHandler(async (req, res) => {
  */
 router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
   const { moduleType } = req.params;
+  // 2026-10-15: a value outside the module_type enum reached Postgres and answered 500.
+  if (!isModuleType(moduleType)) {
+    return res.status(400).json({ error: 'moduleType must be a valid module' });
+  }
   const organizationId = getSecureOrgId(req);
   const documents = await moduleIntegrationService.getDocumentsByModule(
     moduleType,
@@ -135,10 +173,15 @@ router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
  * GET /api/module-integration/documents/:id
  */
 router.get('/document/:id', asyncHandler(async (req, res) => {
+  // 2026-10-15: these id routes passed parseInt(id) on, so "abc" reached
+  // Postgres as NaN and answered 500, and "12abc" read document 12.
+  const id = positiveInt(req.params.id);
+  if (id === null) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
+  }
   try {
-    const { id } = req.params;
     const document = await moduleIntegrationService.getDocument(
-      parseInt(String(id), 10),
+      id,
       Number(getSecureOrgId(req))
     );
 
@@ -170,25 +213,18 @@ router.patch('/documents/:id', asyncHandler(async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  const { title, documentType, metadata, content } = req.body ?? {};
-  if (title === undefined && documentType === undefined && metadata === undefined && content === undefined) {
-    return res.status(400).json({
-      error: 'Nothing to update: send title, documentType, metadata or content. Status, authorship and organization are not set through this route.',
-    });
+  const id = positiveInt(req.params.id);
+  if (id === null) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
   }
-  if (
-    (title !== undefined && !nonEmptyString(title)) ||
-    (documentType !== undefined && !nonEmptyString(documentType)) ||
-    (metadata !== undefined && !isPlainObject(metadata))
-  ) {
-    return res.status(400).json({
-      error: 'title and documentType, when sent, are non-empty strings; metadata is an object',
-    });
+  const { title, documentType, metadata, content } = req.body ?? {};
+  const refusal = documentPatchRefusal({ title, documentType, metadata, content });
+  if (refusal) {
+    return res.status(400).json({ error: refusal });
   }
   try {
-    const { id } = req.params;
     const document = await moduleIntegrationService.updateDocument(
-      parseInt(String(id), 10),
+      id,
       { title, documentType, metadata, content, updatedBy: String(userId) },
       Number(getSecureOrgId(req))
     );
@@ -205,7 +241,14 @@ router.patch('/documents/:id', asyncHandler(async (req, res) => {
  * Get workflow templates for a module
  * GET /api/module-integration/templates/:moduleType
  */
-router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandler(async (req, res) => {
+// 2026-10-15: this route has the same shape as GET /templates/:id below and was
+// registered first, so the by-id route was never reached and a value that is
+// not a module type reached Postgres as an enum and answered 500. A value that
+// is not a module type now passes to the by-id route.
+router.get('/templates/:moduleType', (req, _res, next) => {
+  if (isModuleType(req.params.moduleType)) return next();
+  return next('route');
+}, cacheResponse({ ttl: 60_000 }), asyncHandler(async (req, res) => {
   const { moduleType } = req.params;
   const organizationId = getSecureOrgId(req);
   const templates = await workflowService.getWorkflowTemplatesByModule(
@@ -235,12 +278,15 @@ router.post('/templates', asyncHandler(async (req, res) => {
  * GET /api/module-integration/templates/:id
  */
 router.get('/templates/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = positiveInt(req.params.id);
+  if (id === null) {
+    return res.status(400).json({ error: 'id must be a positive integer (a template id) or a valid module type' });
+  }
   // Scoped to the caller's organization: a template owned by another tenant
   // 404s exactly like one that does not exist, so the response cannot be used
   // to probe for foreign template ids.
   const template = await workflowService.getWorkflowTemplate(
-    parseInt(String(id), 10),
+    id,
     getSecureOrgId(req),
   );
 
@@ -374,11 +420,14 @@ router.get('/pending-approvals', asyncHandler(async (req, res) => {
  * GET /api/module-integration/workflow-history/:id
  */
 router.get('/workflow-history/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = positiveInt(req.params.id);
+  if (id === null) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
+  }
   // Scoped to the caller's organization: the history of another tenant's
   // workflow reads as empty, exactly like a workflow that does not exist.
   const history = await workflowService.getWorkflowHistory(
-    parseInt(String(id), 10),
+    id,
     getSecureOrgId(req),
   );
   res.json(history);
@@ -447,11 +496,6 @@ function tenantScopeRunner(req: Request) {
           },
           fn,
         );
-}
-
-function positiveInt(value: unknown): number | null {
-  const n = Number(String(value));
-  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 /**

@@ -1169,7 +1169,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
 
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${txId}/acknowledge`)
-      .send({ ackXml: '<ack><messagenumb>MSG-1001</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+      .send({ ackXml: '<ack><icsrmessagenumb>MSG-1001</icsrmessagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
     expect(ack.status).toBe(200);
     expect(ack.body.status).toBe('acknowledged');
     expect(ack.body.ackCode).toBe('AA');
@@ -1204,7 +1204,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect((await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`)).status).toBe(200);
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
-      .send({ ackXml: '<ack><messagenumb>MSG-1003</messagenumb><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+      .send({ ackXml: '<ack><icsrmessagenumb>MSG-1003</icsrmessagenumb><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
     expect(ack.status).toBe(200);
     expect(ack.body.status).toBe('rejected');
     expect(ack.body.ackCode).toBe('AR');
@@ -1241,7 +1241,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     const prep = await prepareReady('MSG-1004');
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
-      .send({ ackXml: '<ack><messagenumb>MSG-1004</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+      .send({ ackXml: '<ack><icsrmessagenumb>MSG-1004</icsrmessagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
     expect(ack.status).toBe(409);
     expect(ack.body.error.code).toBe('INVALID_STATE');
     expect((await rowOf(prep.id)).status).toBe('prepared');
@@ -1273,7 +1273,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
-      .send({ ackXml: '<ack><messagenumb>MSG-9999</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+      .send({ ackXml: '<ack><icsrmessagenumb>MSG-9999</icsrmessagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
     expect(ack.status).toBe(422);
     expect(ack.body.error.code).toBe('ACK_MISMATCH');
     expect((await rowOf(prep.id)).status).toBe('transmitted');

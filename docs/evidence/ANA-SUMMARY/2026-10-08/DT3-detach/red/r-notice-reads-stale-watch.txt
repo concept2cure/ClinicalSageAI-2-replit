@@ -1,0 +1,9 @@
+# r-notice-reads-stale-watch: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t clock's last read
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watch stamped after the clock's last read, before the end, sends none (DT3 review, product) 72ms
+   → expected [ 'AnA finished your request' ] to deeply equal []
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > the notice (§5.5): a detached turn nobody watches tells its person > a watch stamped after the clock's last read, before the end, sends none (DT3 review, product)
+AssertionError: expected [ 'AnA finished your request' ] to deeply equal []

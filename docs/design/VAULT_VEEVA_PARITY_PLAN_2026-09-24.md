@@ -430,7 +430,7 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
   - A source guard: exactly one definition of the metadata predicate.
   - Client: chips send the parameters and show counts, and a failed facet read renders an error, not 0.
 - **Ownership:** This lane owns all files (vault-document-index.service.ts was last changed by this lane in e4ecfb26).
-- **Founder decision:** FD8: confirm facets are scheduled before D1-D10 are green (Rule 2). The current-version default already ships in VR-09 whatever is decided.
+- **Founder decision:** FD8: confirm facets are scheduled before D1-D10 are green (Rule 2). The current-version default already ships in VR-09 whatever is decided. **Decided 2026-10-22: scheduled** (§5, FD8 amended).
 - **Depends on:** VR-09, VR-13
 
 ### VR-19 — Seal the data room: a hash-verified snapshot nobody can alter  `[M]`
@@ -540,6 +540,12 @@ No session decides these. Each lists the slices it blocks and the plan's recomme
 | | Decision | Consequence |
 |---|---|---|
 | **FD5** | **(c): nothing is grandfathered, and a sealed Authoring export's approval carries to its Vault copy when it is bound to the exported bytes' SHA-256.** | Built 2026-10-01 (`server/services/regulatory/authoring-approval-carryover.ts`, evidence `docs/evidence/D5-VAULT-APPROVAL/2026-10-01-authoring-carryover/`). The binding is made at the filing: the sections rendered digest to the content the Authoring signatures cover, and the Vault version holds the rendered bytes. The Vault version is approved through the one lifecycle gate, its sign-offs naming the Authoring signatures (never copied). FD4's policy applies to what carries: an APPROVED document, an independent REVIEWER signature before the approval, and neither signer the author. Anything short of that files unapproved and says why. |
+
+**FD8 amended by the founder, 2026-10-22** (session `…01GyGhjg`): *"Continue as we need to close the gap between what we have and what Veeva offers here"*, and in the same session *"We need to have all of her Veeva RIM and Veeva Quality … Content Management to manage documents, videos, versioning, lifecycles, annotations, renditions, electronic signatures, water marks, document generation, templates, sharing and more."* The board records the same direction (`docs/work-orders/README.md`, the D2 Veeva gap row).
+
+| | Decision | Consequence |
+|---|---|---|
+| **FD8 (amended)** | **Facets (VR-18) are no longer deferred.** They are scheduled now as D2 work, as Veeva gap 7 slice B (`docs/design/VEEVA_GAP_2026-10-22.md` §7). The seal and the closing archive stay as decided above. | Server filters on the one search landed 2026-10-22 (`server/services/vault/vault-document-filter.ts`; evidence `docs/evidence/D2-VAULT-SEARCH/2026-10-22/`). The find view's controls and facet counts follow. Saved searches and views stay in §6 until the founder decides who owns a view and where it is stored. |
 
 Still open: FD2, FD3, FD6, FD7, FD11, FD13, and the sealing role in FD9. The plan's recommendation is the
 shipped default for each until the founder rules otherwise.
@@ -684,6 +690,6 @@ Added 2026-10-01 with review annotations (critique 15, `…01DiJJAk`). FD4 gover
 - Moving AnA read receipts (vault.document_read_receipts) into the Part 11 chain, passage or semantic search in the Vault UI, and turning on ana.document_catalog or ana.vault_chunking. These are the AnA lane's code and the founder's toggles.
 - Consolidating the second vault read model, server/routes/mdx-vault.ts. The MDX surface is flagged off, so this is zero-duplication cleanup with no launch row; retire it when it is next touched.
 - Veeva Vault sync or migration (server/integrations/veeva-vault/, referenced only by its own test). A new integration outside the catalog.
-- Bulk zip or folder import, and streaming uploads beyond the 50 MB in-memory cap (server/routes/vault-ingest.ts:56,71). Scale work with no launch row.
+- Bulk zip or folder import, and streaming uploads beyond the 50 MB in-memory cap (server/routes/vault-ingest.ts:56,71). Scale work with no launch row. *Amended 2026-10-22:* folder upload is admitted under the founder's direction recorded at FD8 (amended), and shipped as Veeva gap 7.1 (`cb472b8c0a`, `FileDropZone.tsx`). `.zip` import and streaming uploads stay excluded.
 - The classifier's model-written catalog document_kind as a governed classification. Rule 2's model boundary applies: governed type, placement and approval stay deterministic and signed by a person.
 - Annotation drawn on a rendered page (coordinates or a highlight on the PDF image). The Vault has no document viewer, only a preview snippet, and renditions are excluded above; a passage anchored to the version's stored text, checked in SQL, covers the review need. Added 2026-10-01 with review annotations.

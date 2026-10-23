@@ -132,16 +132,26 @@ const PROTOCOL_SECTIONS: SectionDefinition[] = ICH_M11_PROTOCOL_SECTIONS.map((s)
  * (body 1–6 in market-specs 'investigators_brochure'); remapping them needs a
  * guarded data migration, handed on.
  */
+/*
+ * 2026-10-22 (D2): numbered like the canonical IB outline
+ * (server/services/market-specs/document-template-library.ts
+ * 'investigators_brochure'): body 1–6, front matter 0.1–0.3 so it lists first
+ * under ORDER BY section_code. It was 1–9 with the front matter as 1–3, so a
+ * project's "4" was the Summary while every other IB tree's "4" is Nonclinical
+ * Studies. Projects created before keep their codes; section codes are stored
+ * by value in dependencies, history and authoring records.
+ * tests/regulatory/ib-one-outline.test.ts pins it to the library.
+ */
 const IB_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'Title Page', module: 0, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
-  { code: '2', title: 'Confidentiality Statement', module: 0, required: false, contentType: 'narrative' },
-  { code: '3', title: 'Table of Contents', module: 0, required: true, contentType: 'list' },
-  { code: '4', title: 'Summary', module: 0, required: true, contentType: 'narrative' },
-  { code: '5', title: 'Introduction', module: 0, required: true, contentType: 'narrative' },
-  { code: '6', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 0, required: true, contentType: 'mixed' },
-  { code: '7', title: 'Nonclinical Studies (Pharmacology, PK, Toxicology)', module: 0, required: true, contentType: 'mixed' },
-  { code: '8', title: 'Effects in Humans (PK, Safety, Efficacy, Marketing Experience)', module: 0, required: true, contentType: 'mixed' },
-  { code: '9', title: 'Summary of Data and Guidance for the Investigator', module: 0, required: true, contentType: 'narrative' },
+  { code: '0.1', title: 'Title Page', module: 0, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
+  { code: '0.2', title: 'Confidentiality Statement', module: 0, required: true, contentType: 'narrative' },
+  { code: '0.3', title: 'Table of Contents', module: 0, required: true, contentType: 'list' },
+  { code: '1', title: 'Summary', module: 0, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Introduction', module: 0, required: true, contentType: 'narrative' },
+  { code: '3', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 0, required: true, contentType: 'mixed' },
+  { code: '4', title: 'Nonclinical Studies', module: 0, required: true, contentType: 'mixed' },
+  { code: '5', title: 'Effects in Humans', module: 0, required: true, contentType: 'mixed' },
+  { code: '6', title: 'Summary of Data and Guidance for the Investigator', module: 0, required: true, contentType: 'narrative' },
 ];
 
 /** Statistical Analysis Plan — ICH E9 structure. */

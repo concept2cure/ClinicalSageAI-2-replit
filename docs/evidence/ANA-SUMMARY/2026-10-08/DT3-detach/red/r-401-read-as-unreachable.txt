@@ -1,0 +1,9 @@
+# r-401-read-as-unreachable: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t 401
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a 401 on the poll says the sign-in ended, in the server's words, and stops polling 43ms
+   → expected 'Can\'t reach the server. Retrying.' to be 'Signed out after a period of inactivi…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > a 401 on the poll says the sign-in ended, in the server's words, and stops polling
+AssertionError: expected 'Can\'t reach the server. Retrying.' to be 'Signed out after a period of inactivi…' // Object.is equality

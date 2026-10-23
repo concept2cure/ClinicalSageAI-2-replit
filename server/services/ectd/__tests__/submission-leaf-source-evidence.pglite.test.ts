@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll,beforeEach,afterAll,describe,it,expect,vi } from 'vitest';
-import type { SubmissionLeaf } from '../../../../shared/types/database';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0}));
 vi.mock('../../../db',()=>({db:{},pool:{query:()=>{throw new Error('Global DB forbidden');}}}));
@@ -9,6 +8,9 @@ vi.mock('../../auditService',()=>({default:{logAction:vi.fn()},writeChainedAudit
 vi.mock('../../storage',()=>({getStorageProviderFor:()=>({get:async()=>{h.gets++;return {bytes:Buffer.from(h.bytes)};}})}));
 import {readSubmissionLeafSourceEvidence,requireSubmissionLeafSourceEvidenceStillCurrent} from '../submission-leaf-source-evidence';
 import {assembleAuthoredSections} from '../../ana/authoring-canonical-bridge';
+// 2026-10-15: this imported `shared/types/database`, which exists only as a .d.ts, so
+// ci:check-test-imports could not resolve it. The leaf type is the one the subject takes.
+type SubmissionLeaf=Parameters<typeof readSubmissionLeafSourceEvidence>[1]['leaves'][number];
 
 let pg:PGlite;const statements:string[]=[];
 const q={query:async(sql:string,params?:unknown[])=>{statements.push(sql);return pg.query<Record<string,unknown>>(sql,params);}};

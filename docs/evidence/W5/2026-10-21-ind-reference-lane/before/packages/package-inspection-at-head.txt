@@ -1,0 +1,69 @@
+
+== evidence/walk-before-head/packages/000512-0000-fda.zip
+   14 entries
+     m1/  (0 bytes)
+     m1/us/  (0 bytes)
+     m1/us/us-regional.xml  (1804 bytes)
+     m1/us/1-1/  (0 bytes)
+     m1/us/1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf  (2922181 bytes)
+     m3/  (0 bytes)
+     m3/3-2-s-4/  (0 bytes)
+     m3/3-2-s-4/3-2-s-4-coauthor-documents-60.pdf  (14211 bytes)
+     m3/3-2-s-4-2/  (0 bytes)
+     m3/3-2-s-4-2/bx-512-vault-documents-51bc0b59-864d-4e08-95ec-e284cb9cc020.pdf  (11265 bytes)
+     index.xml  (1484 bytes)
+     index-md5.txt  (32 bytes)
+     util/  (0 bytes)
+     util/index-md5.txt  (377 bytes)
+   util/index-md5.txt: 5 verified, 0 mismatched/missing
+   leaf [us-regional.xml] op=new id=leaf-m1-1-form-fda-1571-pdf-rendered-leaf-files-1 href=1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf md5=5ecfbccfdbf811f8535d1d772dc4a442  "Form FDA 1571 (sponsor-completed)"
+      checksum matches shipped bytes: True
+      %PDF magic: yes; /Encrypt in trailer region: True
+   us-regional <application-number application-type="fdaat4">: 000512
+   us-regional <applicant-info>: <id>000000512</id>
+      <company-name>Concept2Cure Therapeutics</company-name>
+      <applicant-contacts>
+        <applicant-contact>
+          <applicant-cont
+   us-regional <sequence-number submission-sub-type="fdasst1">: 0000
+   us-regional <applicant-contact-name applicant-contact-type="fdaact1">: Sarah Chen
+   us-regional <telephone>: +1 (617) 555-0151
+   us-regional <email>: regulatory@concept2cure.example
+   us-regional <company-name>: Concept2Cure Therapeutics
+   us-regional <id>: 000000512
+   us-regional root attributes / DOCTYPE: <!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
+   leaf [index.xml] op=new id=leaf-m1-regional-backbone href=m1/us/us-regional.xml md5=d88462c3161fe7b28a0094474aa3e86b  "Module 1 regional backbone (us-regional.xml)"
+      checksum matches shipped bytes: True
+   leaf [index.xml] op=new id=leaf-3-2-S-4-3-2-s-4-coauthor-documents-60 href=m3/3-2-s-4/3-2-s-4-coauthor-documents-60.pdf md5=d944a70baa414c5fbe4624b79c33ee6b  "Control of Drug Substance (CTD 3.2.S.4)"
+      checksum matches shipped bytes: True
+      %PDF magic: yes; /Encrypt in trailer region: False
+   leaf [index.xml] op=new id=leaf-3-2-S-4-2-bx-512-vault-documents-51bc0b59-864d-4e08-95ec-e284cb9cc020 href=m3/3-2-s-4-2/bx-512-vault-documents-51bc0b59-864d-4e08-95ec-e284cb9cc020.pdf md5=3a594aedfe48a86ce6ba0e4201855f1b  "BX-512-analytical-procedures"
+      checksum matches shipped bytes: True
+      %PDF magic: yes; /Encrypt in trailer region: False
+
+== evidence/walk-before-head/packages/000512-0001-fda-rehearsal.zip
+   7 entries
+     m1/  (0 bytes)
+     m1/us/  (0 bytes)
+     m1/us/us-regional.xml  (1470 bytes)
+     index.xml  (1087 bytes)
+     index-md5.txt  (32 bytes)
+     util/  (0 bytes)
+     util/index-md5.txt  (99 bytes)
+   util/index-md5.txt: 2 verified, 0 mismatched/missing
+   us-regional <application-number application-type="fdaat4">: 000512
+   us-regional <applicant-info>: <id>000000512</id>
+      <company-name>Concept2Cure Therapeutics</company-name>
+      <applicant-contacts>
+        <applicant-contact>
+          <applicant-cont
+   us-regional <sequence-number submission-sub-type="fdasst4">: 0001
+   us-regional <applicant-contact-name applicant-contact-type="fdaact1">: Sarah Chen
+   us-regional <telephone>: +1 (617) 555-0151
+   us-regional <email>: regulatory@concept2cure.example
+   us-regional <company-name>: Concept2Cure Therapeutics
+   us-regional <id>: 000000512
+   us-regional root attributes / DOCTYPE: <!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
+   leaf [index.xml] op=new id=leaf-m1-regional-backbone href=m1/us/us-regional.xml md5=263186f9a6c6aabe2f454e529db11732  "Module 1 regional backbone (us-regional.xml)"
+      checksum matches shipped bytes: True
+   leaf [index.xml] op=delete id=leaf-3-2-S-4-3-2-s-4-coauthor-documents-60 href=None md5=None modified-file=../0000/index.xml#leaf-3-2-S-4-3-2-s-4-coauthor-documents-60  -> resolves to earlier leaf: True  "Control of Drug Substance (CTD 3.2.S.4)"

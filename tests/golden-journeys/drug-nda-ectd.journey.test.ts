@@ -43,6 +43,13 @@
  *      as reviewed.
  *   9. A sequence whose leaves cannot resolve is REFUSED at freeze
  *      (DISPATCH_BLOCKED) even with a valid signature — both gates, not one.
+ *  10. A package names its applicant from the record (ccd509c0): with no agency
+ *      application number, no bound applicant sponsor, no D-U-N-S and no
+ *      regulatory contact, the signed freeze is REFUSED (422 DISPATCH_BLOCKED,
+ *      naming the applicant). The sponsor then records those facts the way a
+ *      user does — POST /api/ind-master-data/sponsors, then PUT
+ *      /api/ind-forms/program-facts binding it and the application number —
+ *      and only then does a fresh signature freeze the sequence.
  *
  * Output: tests/golden-journeys/__reports__/drug-nda-ectd.{manifest.json,report.md}
  */
@@ -177,6 +184,12 @@ const R = new JourneyRecorder(
     // regulatory_programs.application_number (WO-9 Click 1): the column the
     // create handler now writes; replayed here for the same reason 20260524 is.
     'migrations/20260907_regulatory_programs_application_number.sql',
+    'migrations/20261012b_regulatory_programs_eu_device_classes.sql', // eu_mdr_class/eu_ivdr_class, written on create since 352ca5aa
+    // The Form 1571 sponsor registry and the program's binding to it, in deploy order:
+    // dispatch readiness reads the bound applicant (ccd509c0, 2026-10-21).
+    'migrations/20260609_ind_master_data.sql',
+    'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
+    'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
     'db/migrations/20260725_users_signing_lockout_columns.sql',
     // The account standing every authenticator and the signer re-verify read
     // gained users.sessions_ended_at (P0-4b); without it every signature is
@@ -250,6 +263,14 @@ beforeAll(async () => {
       // regulatory_programs.application_number (WO-9 Click 1): the column the
       // create handler now writes; replayed here for the same reason 20260524 is.
       'migrations/20260907_regulatory_programs_application_number.sql',
+      'migrations/20261012b_regulatory_programs_eu_device_classes.sql', // eu_mdr_class/eu_ivdr_class, written on create since 352ca5aa
+      // The Form 1571 sponsor registry and the program's binding to it, in deploy order:
+      // dispatch readiness reads the bound applicant (ccd509c0, 2026-10-21).
+      'migrations/20260609_ind_master_data.sql',
+      'migrations/20261021_regulatory_programs_applicant_sponsor.sql',
+      // regulatory_programs.sponsor_address / ind_type: the program facts the
+      // Module 1 forms panel reads and records with the applicant binding.
+      'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
       'migrations/20260528_phase9_document_schema.sql',
       // Seeds the nda/bla/maa/jnda/denovo rule packs the phase-9 schema does not,
       // then supersedes the 5-node nda/fda placeholder with the real 71-section
@@ -341,6 +362,10 @@ beforeAll(async () => {
   const { default: c2cProjectsRouter } = await import('../../server/routes/c2c/projects');
   const { default: c2cActionsRouter } = await import('../../server/routes/c2c/actions');
   const { default: submissionsRouter } = await import('../../server/routes/submissions');
+  // The applicant registry and the Module 1 program facts: where a sponsor records
+  // who files the application and under which agency number (ccd509c0).
+  const { default: indMasterDataRouter } = await import('../../server/routes/ind-master-data.routes');
+  const { default: indFormsRouter } = await import('../../server/routes/ind-forms.routes');
 
   app = express();
   app.use(express.json({ limit: '5mb' }));
@@ -362,6 +387,8 @@ beforeAll(async () => {
   app.use('/api/c2c/projects', c2cProjectsRouter);
   app.use('/api/c2c/actions', c2cActionsRouter);
   app.use('/api/submissions', submissionsRouter);
+  app.use('/api/ind-master-data', indMasterDataRouter);
+  app.use('/api/ind-forms', indFormsRouter);
 }, T);
 
 afterAll(async () => {
@@ -1059,6 +1086,77 @@ describe('golden journey — drug NDA / eCTD', () => {
       };
     });
 
+    // ── 10. KNOWN-BAD: a package names its applicant from the record ────────
+    await R.expectBlocked('freeze-refuses-a-package-with-no-recorded-applicant', async () => {
+      // Signature, leaves and validation are all in order; the programme records no
+      // agency application number and no bound applicant (ccd509c0). The refusal
+      // voids the signature it was given, so a new one is recorded below.
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId });
+      const message = String(res.body?.error?.message ?? '');
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          refusedWith(res, 422, 'DISPATCH_BLOCKED') &&
+          /applicant/i.test(message) &&
+          /no agency application number/.test(message) &&
+          /no explicitly bound sponsor record/.test(message) &&
+          /D-U-N-S/.test(message) &&
+          /regulatory contact/.test(message) &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
+        status: res.status,
+        code: res.body?.error?.code,
+        message,
+      };
+    });
+
+    await R.step('the-sponsor-records-the-applicant-and-binds-it-with-the-application-number', async () => {
+      const sponsor = await asPrincipal(ORG, USER)(request(app).post('/api/ind-master-data/sponsors')).send({
+        name: 'Examplinib Therapeutics, Inc.',
+        duns: '123456789',
+        contactName: 'Morgan Regulatory',
+        contactPhone: '+1 617 555 0100',
+        contactEmail: 'regulatory@examplinib.example',
+        reason: 'Record the applicant that files the Examplinib NDA.',
+      });
+      expect(sponsor.status, JSON.stringify(sponsor.body)).toBe(201);
+      const sponsorId = String(sponsor.body.id);
+      expect(sponsorId).toBeTruthy();
+
+      // The Module 1 forms panel reads the program facts (and their revision) first.
+      const read = await asPrincipal(ORG, USER)(request(app).get('/api/ind-forms/')).query({ projectIdent: programId });
+      expect(read.status, JSON.stringify(read.body)).toBe(200);
+      expect(read.body.program.applicationNumber).toBeNull();
+      expect(read.body.program.boundSponsor).toBeNull();
+
+      const saved = await asPrincipal(ORG, USER)(request(app).put('/api/ind-forms/program-facts')).send({
+        projectIdent: programId,
+        reason: 'Bind the recorded applicant and the NDA number FDA assigned.',
+        expectedFactsVersion: read.body.program.factsVersion,
+        applicantSponsorId: sponsorId,
+        applicationNumber: '212345',
+      });
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+      expect(saved.body.applicantSponsorId).toBe(sponsorId);
+      expect(saved.body.applicationNumber).toBe('212345');
+      const prog = await jdb.pool.query(
+        `SELECT application_number, applicant_sponsor_id FROM regulatory_programs WHERE id = $1`,
+        [programId],
+      );
+      const p = prog.rows[0] as { application_number: string; applicant_sponsor_id: string };
+      expect(p.application_number).toBe('212345');
+      expect(String(p.applicant_sponsor_id)).toBe(sponsorId);
+      return { sponsorId, applicationNumber: p.application_number, boundSponsor: saved.body.boundSponsor };
+    });
+
+    await R.step('re-sign-after-the-applicant-is-recorded', async () => {
+      const res = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for freeze: re-signed after the applicant was recorded.');
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      signatureActionId = res.body.actionId;
+      return { actionId: signatureActionId };
+    });
+
     // ── The freeze that is actually authorized ─────────────────────────────
     await R.step('the-matching-signature-freezes-the-sequence', async () => {
       const res = await asPrincipal(ORG, SIGNER)(
@@ -1203,6 +1301,6 @@ describe('golden journey — drug NDA / eCTD', () => {
 
     const m = R.manifest();
     expect(m.summary.failed).toBe(0);
-    expect(m.summary.blockedAsExpected).toBeGreaterThanOrEqual(9);
+    expect(m.summary.blockedAsExpected).toBeGreaterThanOrEqual(10);
   }, T);
 });

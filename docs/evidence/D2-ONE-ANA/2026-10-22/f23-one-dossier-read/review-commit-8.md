@@ -1,0 +1,30 @@
+# Review of F23 (8/9) before it was committed
+
+A workflow of read-only reviewers ran five lenses over the uncommitted change: migration replay, PostgreSQL semantics, correctness, Part 11 and honest state, and test strength. Every finding then went to its own skeptic, told to refute it and to default to refuted when unsure. An inventory workflow had run first, with five read-only areas and a completeness critic, and its hazards were taken up before this review began. These were the eCTD header gate, the legacy documents a recount would zero, the PATCH insert dropping parent_key, the generic updated_at stamp, and the cost of the heading probe.
+
+**11 findings: 3 confirmed, 8 refuted.**
+
+## Confirmed, and what was done
+
+1. **The rule looked only at structure, so a heading with unsigned text dropped out.** The figure could read 100% while 3.2.S held drafted text, and the dossier's drafted and review counts hid it. The editor lets a person start a section at a heading code, and `filingSectionKey` files that text into the heading row. **Fixed:** a section is counted unless it is an *empty* heading, one still `todo` that another section names as its parent. A heading someone has written in is counted like any section. The SQL rule (`countedSectionSql`), its TypeScript twin (`markCountedSections`), the migration function, the meaning sentence ("Empty headings that hold other sections are not counted.") and the tests all moved together. Pinned by `document-readiness-counts-leaves.pglite.test.ts` › "an empty heading is not counted; a heading someone has written in is". The mutation "a worked heading drops out (the first draft's rule)" is red.
+2. **The "a section that gains a child" case could not tell the two rules apart.** On the IND pack both round to the same figure. **Fixed:** it is replaced by small documents whose figures differ under each rule: "a todo section that gains a child stops being counted: 1 of 2 becomes 2 of 2, never 2 of 3", and "re-parenting a section recounts the document" (behaviour, not text, for `UPDATE OF parent_key`).
+3. **`GET /api/biopharma/programs` still counts headings and claimed to match the Projects list.** No client calls it. **Corrected:** its comment no longer claims the equality. Converging or retiring it is handed on to L33 in the README.
+
+Also added from findings that were refuted on severity, because they were cheap and closed real gaps:
+- An index for the heading probe, `c2c_doc_sections_parent_idx`. Each deploy's recount runs inside the migration's transaction.
+- A check that the `updated_at` stamp is back on after the backfill, by catalog and by an ordinary edit.
+- A replay with nothing stale, which changes nothing.
+
+## Refuted (verifier's reason, abridged)
+
+- **migration-replay**: Backfill recounts on parent_key but leaves NULL parent_key on rows the old PATCH lazy-insert wrote, so those headings are still counted. *This change does not cause the wrong outcome, and it does not make it worse. In the scenario, every row of the document has parent_key NULL. For such a document, c2c_document_counted_readiness() counts the same rows as the old trigger, which was approved/locked over every row. So*
+- **migration-replay**: GET /api/biopharma/programs completion_percentage still counts headings; it now disagrees with the trigger it says it mirrors. *The arithmetic is right: after this change, GET /api/biopharma/programs still counts headings, so for a single-home IND it reads lower than c2c_documents.readiness and the dossier read. The finding is still refuted, for three reasons. First, server/routes/biopharma/programs.ts is*
+- **postgres-semantics**: Every deploy now runs a full readiness recount while the file holds AccessExclusiveLock on c2c_document_sections. *The facts in the finding are correct, but the failure it describes needs a data volume this product will not have. The table lock it points to is old, not new. What the change actually adds is a short slowdown during each deploy, not a wrong result.
+
+1. The lock is not new. DROP*
+- **part11-honest-state**: Unsigned text filed at a heading is not counted, so readiness reads 100% while the filing still holds unapproved text. *The scenario can happen, but it is not a defect. It is the change's stated definition of the figure, and the author considered this case and recorded it. A heading that holds text is still "a heading that holds other sections". The figure states that such headings are not counted*
+- **part11-honest-state**: The deploy-time recount rewrites readiness on locked and submitted documents and leaves no trace of which rows changed. *The finding asks for more traceability. It does not show a defect. The value the backfill writes is the correct derived figure, the deploy cannot fail on it, and no data is lost. Its main claim is that this is a silent, untraceable write. That is wrong on several points:
+(1) The*
+- **part11-honest-state**: GET /api/biopharma/programs/:id now reports two different completion figures for the same document in one response. *On a deployed database, GET /api/biopharma/programs/:id cannot return a document that has heading rows, so the two figures in the scenario never appear in one response. The route keeps only programs whose program_type is exactly 'IND','NDA','BLA','MAA','JNDA' or 'DE_NOVO' (upper*
+- **tests**: Nothing checks that set_updated_at is enabled again after the backfill; the contract only matches the text. *The finding describes a test gap that would only matter after some future edit. It names no database state or input that leaves set_updated_at disabled with the code as it stands in the working tree. In the DO block at migrations/20260528_phase9_document_schema.sql:238-254, the o*
+- **tests**: The 'keeps the value' half of the replay case is never tested: every replay starts from a stale row. *This is a coverage gap against a mutation nobody has made. It is not a defect in the change. The working-tree code has the early return (migrations/20260528_phase9_document_schema.sql:242-247), and on an already-correct database it returns before any ALTER TABLE. No database stat*

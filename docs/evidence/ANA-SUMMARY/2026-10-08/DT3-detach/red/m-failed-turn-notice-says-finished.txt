@@ -1,0 +1,9 @@
+# m-failed-turn-notice-says-finished: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t strict round-body
+ × server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn that fails mid-loop still ends, and is recorded (7780de83f) > the strict round-body limit refuses the round: the run ends failed, the record is filed failed, and the person is told 61ms
+   → expected [ 'AnA finished your request' ] to deeply equal [ Array(1) ]
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 45 skipped (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach.test.ts > a detached turn that fails mid-loop still ends, and is recorded (7780de83f) > the strict round-body limit refuses the round: the run ends failed, the record is filed failed, and the person is told
+AssertionError: expected [ 'AnA finished your request' ] to deeply equal [ Array(1) ]

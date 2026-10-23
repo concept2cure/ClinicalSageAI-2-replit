@@ -1,0 +1,8 @@
+# The state bucket for production: the name terraform/bootstrap gave it in this
+# account. Copy to backend.hcl (an account id is not a secret; commit it once
+# the account exists) and initialise with it:
+#
+#   terraform -chdir=terraform/bootstrap output -raw state_bucket
+#   cp backend.hcl.example backend.hcl   # then set the bucket below
+#   terraform init -backend-config=backend.hcl
+bucket = "c2c-tfstate-<ACCOUNT_ID>-us-east-1"

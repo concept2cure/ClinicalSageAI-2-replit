@@ -11,6 +11,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createRequire } from 'module';
 import * as path from 'path';
 import * as fs from 'fs';
+import { devLoginEmail } from './dev-identity';
 
 const require = createRequire(import.meta.url);
 const jwt = require('jsonwebtoken');
@@ -25,7 +26,7 @@ function mintToken(): string {
   return jwt.sign(
     {
       userId: '3',
-      email: 'jonmichaelpsmith@gmail.com',
+      email: devLoginEmail(),
       organizationId: '2',
       organizationUuid: null,
       type: 'access',
@@ -38,7 +39,7 @@ function mintToken(): string {
 function buildAuthUser(): object {
   return {
     id: '3',
-    email: 'jonmichaelpsmith@gmail.com',
+    email: devLoginEmail(),
     firstName: 'JM',
     lastName: 'Smith',
     displayName: 'JM Smith',

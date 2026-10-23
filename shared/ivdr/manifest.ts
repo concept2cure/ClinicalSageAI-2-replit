@@ -66,13 +66,15 @@ export interface SnapshotV1 {
   projectId: string;
   packType: PackType;
 
+  /* IVDR record ids are the tables' serial integers, as the worker writes
+     them (readIvdrPackRecordIds). 2026-10-15: typed as UUID strings. */
   ivdrRecordIds: {
-    classificationId?: UUID;
-    pepId?: UUID;
-    perId?: UUID;
-    analyticalValidationIds: UUID[];
-    clinicalEvidenceIds: UUID[];
-    cdxWorkflowId?: UUID;
+    classificationId?: number;
+    pepId?: number;
+    perId?: number;
+    analyticalValidationIds: number[];
+    clinicalEvidenceIds: number[];
+    cdxWorkflowId?: number;
   };
 
   binder: {

@@ -25,6 +25,7 @@ import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import { requestPgClient } from '../../db/requestDb.js';
+import { retainRequestDbClient } from '../../db/requestDbLease.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
@@ -51,6 +52,7 @@ import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  recordThreadSkills,
   ThreadAccessError,
   saveChatMessage as saveMessage,
   programIdForThread,
@@ -106,6 +108,7 @@ import {
   type ToolResultEntry,
   type ModelTurn,
   type FailedToolCall,
+  type LoopCheckpoint,
 } from '../../services/ana/agentic-loop.js';
 import { guardReadResultsForHandoff, readReceiptContext, settleReadReceipts, withdrawSourceReadResult, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
 import { buildSteerMessage } from '../../services/ana/operator-channel.js';
@@ -157,6 +160,13 @@ import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/h
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
+import {
+  NO_TURN_SKILLS,
+  documentTypeIdOf,
+  pickedSkillKeysOf,
+  renderSkillsBlock,
+  resolveTurnSkills,
+} from '../../services/ana/skills/turn-skills.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
@@ -207,10 +217,27 @@ import {
   holdForPerson,
   endHeldRun,
   reapOrphanedRuns,
+  markRunDetached,
+  readLastWatched,
+  readRunEnding,
+  approvalClaimed,
   type RunHandle,
+  type RunStandingEnded,
 } from '../../services/ana/run-control.js';
+import { RunStopped, runStopDetailOf, runStopReasonOf } from '../../services/ana/run-stopped.js';
+import { holdShutdownFor } from '../../services/ana/shutdown-hold.js';
+import { UnattendedClock } from '../../services/ana/unattended-clock.js';
+import { claimDetachSlot, detachRefusedWarning } from '../../services/ana/detach-slots.js';
+import { sendRunNotice, type RunNoticeKind } from '../../services/ana/run-notice.js';
+import { detachWarning, isWatchedNow } from '@shared/ana/run-detach';
+import { sessionEndCauseWarning, stopCause, type SessionEndDetail } from '@shared/ana/stop-lines';
+import { runWithTenantScope } from '../../db/tenantStore.js';
+import { extractBearerToken } from '../../middleware/auth.js';
+import { readsEveryRecord } from './record-access.js';
 import {
   MAX_PAUSE_MS,
+  SCREEN_ACTION_TOOLS,
+  detachable,
   endStoppedReason,
   isHoldable,
   parseRunPolicy,
@@ -222,7 +249,7 @@ import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { TurnPolicy } from '../../services/ana/turn-run-policy.js';
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
 import { heldToolContext, turnToolContext } from '../../services/ana/turn-tool-context.js';
-import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
+import { approvalRequiredEnvelope } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
   serverToolEvidence,
@@ -231,6 +258,7 @@ import {
   serverToolStepIdField,
 } from '../../services/ana/server-tool-steps.js';
 import {
+  SCREEN_GONE,
   announcedStepFields,
   finishedStep,
   resolveStepDocumentTitles,
@@ -362,6 +390,30 @@ export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | nul
  */
 export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
 
+/** Why a step a person approved as its run stopped did not finish in the turn (DT3 review, 4.3). Fixed copy. */
+export const STOPPED_AFTER_APPROVAL_WHY =
+  "the run was stopped after a person approved it; the action's own audit record says whether it completed";
+
+/**
+ * What the model is told for a screen action refused because the page that
+ * started a Live Drive turn closed (D-7, decided 2026-10-22). Fixed copy.
+ */
+export const SCREEN_GONE_RESULT = (tool: string) => ({
+  status: 'not_run',
+  error: 'SCREEN_GONE',
+  tool,
+  message:
+    'The page that started this turn was closed, so the screen can no longer be driven and this step did not run. ' +
+    'Do not call navigate_to, act_on_screen or start_product_demo again in this turn; finish the rest of the work and answer.',
+});
+
+/** The control route's refusal of an administrator's cancel with no reason (DT3 review, DP-82). Fixed copy. */
+export const ADMIN_CANCEL_REASON_REQUIRED =
+  "Say why you are stopping this person's turn. The reason is recorded with the stop.";
+/** …and of one whose chained audit row could not be written: nothing changed. Fixed copy. */
+export const ADMIN_CANCEL_AUDIT_REFUSED =
+  'The turn was not stopped: the record of your stop could not be written. Nothing was changed. Try again.';
+
 /**
  * How a governed call came out of the approval gate. `heldBack` marks a call a
  * person did not authorise — declined it, did not answer, could not be asked,
@@ -369,7 +421,37 @@ export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
  * failed. A held-back call is not a failure for the model to work around
  * (row 74, F1).
  */
-type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
+type SettledApproval = {
+  ok: boolean;
+  result: unknown;
+  why?: string;
+  heldBack?: boolean;
+  /** Held back because the person asked for a read-only answer: nobody declined it (AnA detach DT3). */
+  readOnly?: boolean;
+  /**
+   * The run was stopped after a person approved the step, while the
+   * governed-action route carried it out (claimApproval, DT3 review 4.3):
+   * neither "nobody decided" nor "not authorised"; its own audit record says
+   * whether it completed.
+   */
+  stoppedAfterApproval?: boolean;
+};
+
+/**
+ * What a step settled at the approval gate records. The handler is NOT called
+ * for it: when the action ran, it ran inside the governed-action route, the
+ * single place that stamps humanConfirmed, so what is recorded is that
+ * execution's result — one execution, one signature, one audit row.
+ */
+function settledApprovalOutcome(approval: SettledApproval) {
+  return {
+    resultStr: JSON.stringify(approval.result),
+    toolStatus: approval.ok ? 'success' : approval.stoppedAfterApproval ? 'cancelled' : 'error',
+    toolErrorMessage: approval.ok ? undefined : approval.why,
+    heldBack: approval.heldBack === true,
+    readOnlyRefused: approval.readOnly === true,
+  } as const;
+}
 
 /**
  * Mandatory project admission is bounded before any source context starts.
@@ -532,18 +614,16 @@ export function unavailableContextWarning(
 function streamRunHold(run: {
   runId: string;
   handle: RunHandle;
-  runOrgId: number | null;
-  res: Response;
   emit: (frame: Record<string, unknown>) => void;
   policy: AnaRunPolicy | null;
 }): RunHold {
+  // No "client gone" here (AnA detach DT3): a dropped page is acted on in one
+  // place, disconnectRun, and reaches the hold as the run's cancel when the
+  // turn cannot detach. A detached turn's hold waits for its person.
   const common = {
     readStatus: () => readStatus(getPool(), run.runId),
     wake: (ms: number) => run.handle.wake(ms),
     emit: run.emit,
-    clientGone: () => run.res.writableEnded,
-    stopForDisconnect: () =>
-      stopRunInternally(getPool(), run.runId, 'client_disconnected', run.runOrgId ?? undefined),
   };
   return run.policy === 'manual'
     ? createRunHold({ ...common, expiry: 'end', endHeld: () => endHeldRun(getPool(), run.runId) })
@@ -551,7 +631,35 @@ function streamRunHold(run: {
 }
 
 export function mountStreamRoute(router: Router): void {
-  router.post('/stream', async (req: Request, res: Response) => {
+  router.post('/stream', (req: Request, res: Response) => {
+    /* The turn holds the request's pinned, tenant-scoped DB client until it
+       and its post-processing have ended (db/requestDbLease.ts). Every tool,
+       the round's document titles and context assembly read through it
+       (requestPgClient(req)), and the auth boundary releases it on the
+       response's 'close': a turn that DETACHES goes on past that close, and
+       without the hold its next round had no client (AnA detach DT3). Taken
+       first, before anything can await: a response that closed even earlier
+       has already released it, and requestPgClient then fails closed. */
+    const releaseTurnDb = retainRequestDbClient(req);
+    const trailing: Promise<unknown>[] = [];
+    const work = streamTurn(req, res, after => trailing.push(after))
+      .finally(() => Promise.allSettled(trailing))
+      .finally(() => releaseTurnDb?.());
+    // Each turn holds a graceful shutdown's drain until it has unwound and
+    // recorded itself (shutdown-hold.ts): a detached turn has no socket for the
+    // HTTP drain to wait on (AnA detach §7).
+    return holdShutdownFor(work);
+  });
+  mountControlRoute(router);
+}
+
+/**
+ * One turn. `afterTurn` is handed the work that goes on after the handler
+ * returns (post-processing, which files the record), so the route's holds —
+ * the request's DB client and the shutdown drain — last until it ends too.
+ */
+async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise<unknown>) => void): Promise<unknown> {
+  {
     // Opaque id for this run, emitted to the client as `run_started` so it can
     // pause / steer / cancel via the control endpoint. Declared out here so the
     // finally can always close the run. Empty when no run was opened.
@@ -577,10 +685,27 @@ export function mountStreamRoute(router: Router): void {
     // the person reads; if it was cut off, the turn did not finish.
     let lastFinishReason: string | undefined;
     // The run is closed exactly once, by whichever of the disconnect handler and
-    // the finally block gets there first.
+    // the finally block gets there first. A turn that DETACHES never sets it on
+    // disconnect (AnA detach §2.1): it must reach endRun and end as it ends.
     let runSettled = false;
+    // The reason another writer stopped the row with, when it did so before
+    // its abort reached this turn (settleRunRow); null otherwise.
+    let rowEndedBy: TurnStoppedReason | null = null;
+    // What ended the session, when another writer's session_ended stop named it (settleRunRow).
+    let rowEndedDetail: SessionEndDetail | null = null;
+    // The run carries its conversation: the thread beginRun verified, or the
+    // one minted for a new conversation and stamped on the run (§2.1, §2.8).
+    let runThreadResolved = false;
+    // A detached turn's unattended limit (§2.6); null for a turn that cannot detach.
+    let unattended: UnattendedClock | null = null;
+    // Gives back the detached turn's slot under the ceiling (detach-slots.ts) when it ends.
+    const detachSlot: { release: (() => void) | null } = { release: null };
+    // Send the §5.5 notice when the turn has detached and nobody is watching it.
+    let noticeIfUnwatched: (notice: RunNoticeKind) => Promise<void> = async () => undefined;
     // The turn's policy once the request is read: the error path asks it why a stop ended the turn.
     let turnPolicyOf: TurnPolicy | null = null;
+    // The run policy the request named, for the error path's stop warning (DT3 review, 4.6).
+    let turnRunPolicyOf: AnaRunPolicy | null = null;
     // The tenant the run row was stamped with, for the turn-end read-back.
     let runOrgIdForEvents: number | null = null;
     // The retained record of this turn (services/ana/turn-record.ts): filled
@@ -632,6 +757,40 @@ export function mountStreamRoute(router: Router): void {
         return undefined;
       }
     };
+    /**
+     * End the run's row, once, and say whether another writer had already
+     * stopped it (AnA detach DT3 review, Part 11). endRun's guarded UPDATE is
+     * the one point that decides how the row ended. A stop that writes its row
+     * before its abort reaches this turn — a shutdown (one organisation after
+     * another), an admin, the session's end, the reaper, a stop delivered by
+     * NOTIFY or the 2 s poll — can land as the turn finishes. Called before the
+     * turn says how it ended, so the record, the `done` frame and the saved
+     * answer then carry the row's reason, and never "answered" for a row that
+     * says stopped. Null when this write ended the run (or could not be made,
+     * or the run was already settled); else the row's stop reason.
+     */
+    const settleRunRow = async (
+      status: 'finished' | 'failed',
+      reason: TurnStoppedReason,
+    ): Promise<TurnStoppedReason | null> => {
+      if (!runId || runSettled) return null;
+      runSettled = true;
+      const outcome = await endRun(getPool(), runId, status, reason);
+      if (outcome !== 'already_ended' || runOrgIdForEvents === null) return null;
+      const org = runOrgIdForEvents;
+      const ending = await runWithTenantScope(
+        { tenantId: String(org), role: null, source: 'request', caller: 'ana-stream:row-ending' },
+        () => readRunEnding(getPool(), runId),
+      ).catch((err: any) => {
+        console.error('[AnA RI Stream] the run row could not be read after another writer ended it:', err?.message);
+        return null;
+      });
+      // An approval denial is the turn's own ending, never another writer's stop.
+      if (!ending || ending.stoppedReason === 'approval_denied') return null;
+      rowEndedBy = ending.stoppedReason;
+      rowEndedDetail = ending.detail;
+      return rowEndedBy;
+    };
     // Recorder calls from inside the agentic loop, as plain calls.
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
     const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
@@ -640,8 +799,18 @@ export function mountStreamRoute(router: Router): void {
     // refuses an insert once the record exists, so the record is written only
     // after the mirror is flushed; its rows then leave through the release
     // door, and released_at is written whatever came of the record.
-    const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
-      turnRecorder === undefined
+    let sessionCauseNoted = false;
+    const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> => {
+      // A turn the session's end stopped says which act ended the session,
+      // and who (DT3 review: the record named no cause). Once.
+      if (outcome === 'stopped' && turnRecorder && !sessionCauseNoted) {
+        const cause = sessionEndCauseWarning(runStopDetailOf(runHandle?.cancelSignal) ?? rowEndedDetail);
+        if (cause) {
+          sessionCauseNoted = true;
+          turnRecorder.warn(cause);
+        }
+      }
+      return turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
         : sealAfterMirror(runHandle?.events, () =>
             writeTurnRecordSafely(getPool(), turnRecorder ?? null, outcome, {
@@ -649,6 +818,7 @@ export function mountStreamRoute(router: Router): void {
               userAgent: req.get('user-agent') ?? undefined,
             }),
           );
+    };
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -911,9 +1081,14 @@ export function mountStreamRoute(router: Router): void {
             projectId: typeof project_id === 'string' ? project_id : null,
             surface: 'ana-ri-stream',
             runPolicy: parseRunPolicy(run_policy),
+            // Held by the run's handle alone, so each round re-checks that the
+            // session still stands (§2.9). /api/ana-ri is behind bearer auth.
+            sessionToken: extractBearerToken(req.headers.authorization),
           });
           runId = opened.runId;
           runHandle = opened.handle;
+          // A conversation the client named and beginRun verified (§2.8).
+          runThreadResolved = opened.threadId !== null;
           // A restart leaves rows claiming `running` with nobody executing them;
           // sweep them opportunistically rather than adding a timer.
           void reapOrphanedRuns(getPool()).catch(() => {});
@@ -944,12 +1119,19 @@ export function mountStreamRoute(router: Router): void {
       // record, control from another instance — needs the row. Without this the
       // client aborted its socket while the server generated on unseen, which
       // is the interface claiming something the server did not do.
-      runHandle ??= localOnlyRunHandle();
+      // …and, for a person, the same round-boundary standing check a durable
+      // run has (DT3 review, IAM-35: it ran every tool batch unchecked).
+      runHandle ??= localOnlyRunHandle(
+        runOrgId !== null && runUserId !== null
+          ? { token: extractBearerToken(req.headers.authorization), userId: runUserId, organizationId: runOrgId }
+          : null,
+      );
       /* The run policy (row 74): 'manual', 'auto', or none — today's
          effort-bounded turn, for every door that sends nothing. Manual holds
          only on a run a person can resume; otherwise it fails closed at the
          first hold it would have made (TurnPolicy). */
       const runPolicy = parseRunPolicy(run_policy);
+      turnRunPolicyOf = runPolicy;
       const turnPolicy = (turnPolicyOf = new TurnPolicy({
         runPolicy,
         holdable: isHoldable({ runId, runUserId }),
@@ -958,6 +1140,73 @@ export function mountStreamRoute(router: Router): void {
       // Handed to the gateway and the tool dispatcher so a stop lands on work
       // already in flight, rather than waiting for the next round boundary.
       const runSignal = runHandle?.cancelSignal;
+      /* Does this turn go on when its page closes (AnA detach §2.1)? A durable
+         run with a person. A turn that asked to drive the screen goes on too
+         (D-7, decided 2026-10-22): from the close AnA stops driving, and any
+         further screen action is refused (screenActionRefused, below). A turn
+         with no row and a turn with no person stop on disconnect as before. */
+      const detachEligible = detachable({ runId, runUserId, threadResolved: true });
+      /* …and only once its conversation is resolved (a run with no thread
+         could not be found again, and its notice could name nothing). A page
+         that closes before a new conversation's thread exists is decided once
+         the thread step has run: stamped, it detaches; not, it stops. */
+      let threadSettled = false;
+      let closedBeforeThread = false;
+      const inRunTenant = <T>(caller: string, fn: () => Promise<T>): Promise<T> =>
+        runOrgId === null
+          ? fn()
+          : runWithTenantScope({ tenantId: String(runOrgId), role: null, source: 'request', caller }, fn);
+      // When the page that started the turn closed (ISO UTC), once detached.
+      let detachedAt: Date | null = null;
+      let detachNoted = false;
+      if (detachEligible) {
+        unattended = new UnattendedClock({
+          startedAt: streamPhaseStart,
+          // Read and stopped in the run's own tenant, explicitly: a timer
+          // carries whatever context created it (run-control.ts docstring).
+          readLastWatched: () => inRunTenant('ana-stream:unattended', () => readLastWatched(getPool(), runId)),
+          hardStop: reason => {
+            void stopRunInternally(getPool(), runId, reason, runOrgId ?? undefined);
+          },
+        });
+        turnPolicy.watchUnattended(unattended.directive);
+        noticeIfUnwatched = async (notice: RunNoticeKind) => {
+          if (!unattended?.isDetached() || runOrgId === null || runUserId === null) return;
+          // Watched NOW, from a read taken now: the clock's reading is up to a
+          // poll old, and once the turn has ended the clock is stopped and its
+          // refresh is a no-op — so a person whose page stamped the run during
+          // the closing answer, and watched it finish, was told it finished.
+          // A read that fails falls back to the clock's last reading.
+          const fresh = await inRunTenant('ana-stream:notice-watched', () => readLastWatched(getPool(), runId)).catch(
+            () => null,
+          );
+          const clockRead = unattended.lastWatchedAt();
+          const lastWatched = fresh === null ? clockRead : clockRead === null ? fresh : Math.max(fresh, clockRead);
+          if (isWatchedNow(lastWatched, Date.now())) return;
+          await inRunTenant('ana-stream:notice', () =>
+            sendRunNotice({
+              organizationId: runOrgId,
+              userId: runUserId,
+              threadId: stoppedTurnThreadId,
+              startedAtMs: streamPhaseStart,
+              notice,
+              readThreadTitle: async id => {
+                const { rows } = await getPool().query(
+                  `SELECT title FROM chat_threads WHERE id = $1 AND organization_id = $2`,
+                  [id, runOrgId],
+                );
+                return rows[0]?.title ?? null;
+              },
+            }),
+          );
+        };
+      }
+      /** The record's fact that the page closed and the turn went on, with the limits armed then. */
+      const noteDetached = () => {
+        if (!detachedAt || detachNoted || !turnRecorder || runHandle?.cancelSignal.aborted) return;
+        detachNoted = true;
+        turnRecorder.warn(detachWarning(detachedAt.toISOString(), streamPhaseStart));
+      };
       // A dropped socket is not a human decision, and the audit must not say it
       // was — so this records `client_disconnected`, not `cancelled`.
       //
@@ -966,8 +1215,52 @@ export function mountStreamRoute(router: Router): void {
       // win — meaning a turn that completed could be recorded as a disconnect.
       // Hence two conditions: the response must not have ended (a finished
       // response is not a dropped socket), and the run settles exactly once.
+      /**
+       * Detach (§2.1) when the turn may go on after its page closed; whether it
+       * did. It returns BEFORE runSettled, so the turn reaches endRun and ends
+       * finished or failed as it ends. No noteDisconnected, no abort, and no
+       * control event — a page closing is nobody's decision. The fact goes
+       * into the record, with the limits now armed.
+       */
+      const detachOnClose = (): boolean => {
+        // A stop that has already landed (the person's own Stop, whose client
+        // aborts its stream after the cancel's 200; a shutdown, a session end,
+        // an administrator) is not a detach, though the close arrives while
+        // the stopped turn unwinds: the turn is ending, and its record must
+        // not say it continued. It settles in disconnectRun, where the
+        // internal stop is a guarded no-op on a row that is already terminal.
+        const stopLanded = runHandle?.cancelSignal.aborted === true;
+        if (stopLanded || runOrgId === null) return false;
+        const canDetach = detachable({ runId, runUserId, threadResolved: runThreadResolved });
+        if (!canDetach) return false;
+        // A slot under the ceiling on turns that go on unattended (DT3 review,
+        // INF-40): each holds its request's pinned connection. Past it, the
+        // turn stops, as before DT3, and its record says why.
+        const slot = claimDetachSlot(runOrgId);
+        if (!slot) {
+          turnRecorder?.warn(detachRefusedWarning(new Date().toISOString()));
+          return false;
+        }
+        detachSlot.release = slot;
+        detachedAt = new Date();
+        stopKeepalive();
+        unattended?.detach(detachedAt.getTime());
+        const at = detachedAt;
+        void inRunTenant('ana-stream:detach', () => markRunDetached(getPool(), runId, at)).catch((err: any) =>
+          console.error('[AnA RI Stream] detach not stamped on the run:', err?.message),
+        );
+        noteDetached();
+        return true;
+      };
       const disconnectRun = () => {
         if (runSettled || res.writableEnded) return;
+        if (detachEligible && !runThreadResolved && !threadSettled) {
+          // Decided when the thread step has run (settleThread, below).
+          closedBeforeThread = true;
+          stopKeepalive();
+          return;
+        }
+        if (detachedAt || detachOnClose()) return;
         runSettled = true;
         // Unless a person's Stop already landed, the turn stopped because the page left (S4).
         if (!runHandle?.cancelSignal.aborted) turnPolicy.noteDisconnected();
@@ -995,6 +1288,13 @@ export function mountStreamRoute(router: Router): void {
       };
       res.on('close', disconnectRun);
       req.on('close', () => { if (req.aborted) disconnectRun(); });
+      /** The thread step has run: a page that closed before it is decided now. */
+      const settleThread = () => {
+        threadSettled = true;
+        if (!closedBeforeThread) return;
+        closedBeforeThread = false;
+        disconnectRun();
+      };
 
       // Status: orchestrating (planning the response, running route prefetch)
       res.write(
@@ -1019,6 +1319,7 @@ export function mountStreamRoute(router: Router): void {
       // before the disconnect listeners existed. Settle that missed close
       // after opening the recorder so its cause is retained too.
       if (res.destroyed || req.aborted) disconnectRun();
+      noteDetached();
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
       // the full AI pipeline and call the tool handler directly.
@@ -1110,6 +1411,11 @@ export function mountStreamRoute(router: Router): void {
               })}\n\n`
             );
             say(parsed.completion.summary);
+          } else if (parsed?.status === 'outside_composition_scope' && parsed.message) {
+            /* The CMC composition boundary refused the answer (decision P-28;
+               services/cmc/interview-composition-scope.ts): its reason, said,
+               not a silent turn. */
+            say(String(parsed.message));
           } else if (parsed?.error) {
             say(`Error: ${parsed.error}`);
           }
@@ -1215,13 +1521,22 @@ export function mountStreamRoute(router: Router): void {
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
+          // The composer's picks, kept on the conversation so they follow it to
+          // another browser (ANA_SKILLS §10). Only when this turn says what they
+          // are; a failed write costs nothing this turn, which loads them anyway.
+          if (Array.isArray(req.body.skills)) {
+            void recordThreadSkills(threadId, Number(orgId), pickedSkillKeysOf(req.body.skills)).catch((err: any) =>
+              console.warn('[AnA RI Stream] conversation skills not kept:', err?.message),
+            );
+          }
           // The verified (or just minted) conversation and the question, on
           // the run, so another device can find it by thread (§2.8).
           if (runHandle?.stampThread) {
             await runHandle
               .stampThread(threadId, typeof userMessageId === 'number' ? userMessageId : null)
               .then(ok => {
-                if (!ok) console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
+                if (ok) runThreadResolved = true;
+                else console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
               })
               .catch((err: any) => console.error('[AnA RI Stream] run thread stamp failed:', err?.message));
           }
@@ -1276,6 +1591,9 @@ export function mountStreamRoute(router: Router): void {
           return;
         }
       }
+      // The thread step has run: a page that closed before it is decided now —
+      // detached when the run carries its conversation, stopped when not.
+      settleThread();
 
       // One bounded transcript drives both routing and the model. Browser
       // turns are accepted only when starting without a named conversation.
@@ -1392,6 +1710,29 @@ export function mountStreamRoute(router: Router): void {
         projectContext: req.body.context ?? null,
       });
 
+      // AnA skills (server/services/ana/skills/): the methods this turn loads,
+      // chosen by what the person asked and what is on screen, from the
+      // platform library as this organization has it set and the
+      // organization's own skills. Read on the request's tenant-scoped
+      // connection in parallel with the context below; it never throws, and a
+      // failed read loads no skill and says so (turn-skills.ts).
+      const turnSkillsPromise =
+        orgId != null && Number.isFinite(Number(orgId))
+          ? resolveTurnSkills(requestPgClient(req), {
+              organizationId: Number(orgId),
+              message,
+              surfaceId: typeof req.body.context?.screenName === 'string' ? req.body.context.screenName : null,
+              documentType: documentTypeIdOf(req.body.module_context, document_context),
+              submissionType:
+                (typeof submission_type === 'string' && submission_type) ||
+                orchestration.detectedSubmissionType ||
+                null,
+              projectId: streamProjectIdNumber,
+              // Skills the person picked in the composer for this conversation.
+              invokedKeys: pickedSkillKeysOf(req.body.skills),
+            })
+          : Promise.resolve(NO_TURN_SKILLS);
+
       // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
       res.write(
         `data: ${JSON.stringify({
@@ -1450,9 +1791,38 @@ export function mountStreamRoute(router: Router): void {
       if (driveState.requested) {
         res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
       }
+      /* D-7, decided 2026-10-22: a Live Drive turn detaches like any other, and
+         from the moment its page closed AnA stops driving the screen. A
+         screen action asked for after that is refused before it runs — never
+         queued as a chip, never applied to a page that is gone — and listed
+         as a step that did not run (SCREEN_GONE_LINE). Read at dispatch, not
+         at the round's start: an approval wait in the same round can outlast
+         the page. */
+      const screenGone = (): boolean => detachedAt !== null && driveState.enabled;
+      const screenActionRefused = (call: { name: string }): boolean => screenGone() && SCREEN_ACTION_TOOLS.has(call.name);
       const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+      // Skills ride the VOLATILE suffix: they are chosen per turn from the
+      // question, so the cached prefix stays the same across turns. The block
+      // names any tool a skill relies on that this turn cannot call.
+      const turnSkills = await turnSkillsPromise;
+      if (turnSkills.status === 'unavailable') {
+        const warning = 'AnA skills could not be read for this turn, so none was loaded.';
+        console.warn('[AnA RI] Skills unavailable:', turnSkills.error);
+        turnRecorder?.warn(warning);
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
+      const skillsBlock = turnSkills.selection
+        ? renderSkillsBlock(turnSkills.selection, {
+            availableTools: new Set(
+              (await toolPolicyPromise)
+                .filter(t => !readOnlyToolRefusal(t.name, {}, readOnly))
+                .map(t => t.name)
+            ),
+          })
+        : '';
       const streamVolatileSuffix =
         memoryBlock +
+        skillsBlock +
         enrichment.block +
         (driveState.enabled
           ? buildLiveDrivePromptBlock(driveState.mode)
@@ -1746,6 +2116,7 @@ export function mountStreamRoute(router: Router): void {
           contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
         ),
         memory: memoryResult,
+        skills: turnSkills,
       });
       turnRecorder?.setContext(contextUsedEvent, uploadChecksums);
       res.write(`data: ${JSON.stringify(contextUsedEvent)}\n\n`);
@@ -2131,6 +2502,11 @@ export function mountStreamRoute(router: Router): void {
             ...SELF_DRIVE_TOOLS,
             // Delegation survives relevance trimming on a turn that may use it.
             ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
+            // The engines a loaded skill's method names: a method that tells
+            // her to run a tool the relevance cap dropped cannot be followed.
+            // Pins choose only among governedTools, so a tenant's deny-list
+            // and a read-only turn still win (turn-skills.ts toolPinsOf).
+            ...turnSkills.toolPins,
           ],
           context: {
             projectType: asStr(submission_type),
@@ -2289,7 +2665,7 @@ export function mountStreamRoute(router: Router): void {
         /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
         const runHold =
           runId && runHandle
-              ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
+              ? streamRunHold({ runId, handle: runHandle, emit: emitControl, policy: runPolicy })
               : null;
 
         /**
@@ -2336,7 +2712,7 @@ export function mountStreamRoute(router: Router): void {
           for (const toolUse of calls) {
             const readOnlyRefusal = readOnlyToolRefusal(toolUse.name, toolUse.input, readOnly);
             if (readOnlyRefusal) {
-              out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true });
+              out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true, readOnly: true });
               continue;
             }
             const verdict = classifyToolCall(toolUse);
@@ -2463,36 +2839,55 @@ export function mountStreamRoute(router: Router): void {
           // the tier and what it asks for are said one way. GovernedActionSignoff
           // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
-          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier);
+          // One builder with the follower's run read (approvalRequiredEnvelope,
+          // DT3 review): a person signing on another device sees this frame.
           emitControl({
             type: 'approval_required',
             round,
-            runId,
-            toolUseId: toolUse.id,
-            action: proposal.action,
-            openModal: proposal.openModal,
-            data: proposal.data,
-            message: `${proposal.message} AnA is waiting on this before she goes on.`,
-            ...checked,
+            ...approvalRequiredEnvelope({
+              runId,
+              toolUseId: toolUse.id,
+              command: verdict.command,
+              params: verdict.params,
+              tier: verdict.tier,
+              ...checked,
+            }),
           });
           timeline.awaiting(round, toolUse);
+          // Nobody watching a detached turn: tell its person it waits on them (§5.5).
+          void noticeIfUnwatched({ kind: 'approval' });
 
           // The wait. Same machinery as pause: woken by the decision, with the
-          // ceiling only bounding a wake that never arrives.
+          // ceiling only bounding a wake that never arrives. A page that closed
+          // is not a reason to stop waiting (AnA detach DT3): the wait used to
+          // test `res.writableEnded`, which Node sets only after `res.end()`,
+          // so it never saw a drop. A turn that cannot detach is stopped by
+          // disconnectRun, which reaches this wait as the run's abort.
           const WAKE_CEILING_MS = 5_000;
           const started = Date.now();
           for (;;) {
             if (runHandle!.cancelSignal.aborted) {
+              // A person may have approved it as the stop landed: the
+              // governed-action route claims the approval before it executes
+              // (DT3 review, finding 4.3). Then it is theirs, and its own audit
+              // record says whether it completed — never "nobody decided".
+              if (await approvalClaimed(getPool(), runId, toolUse.id).catch(() => false)) {
+                return {
+                  ok: false,
+                  stoppedAfterApproval: true,
+                  why: STOPPED_AFTER_APPROVAL_WHY,
+                  result: {
+                    error: 'RUN_STOPPED_AFTER_APPROVAL',
+                    action: verdict.command,
+                    message:
+                      'A person approved this as the run was stopped. The action ran outside this turn, and its own audit record says whether it completed.',
+                    retry: false,
+                  },
+                };
+              }
               return refused(
                 'the run was stopped',
                 'The run was stopped before anyone decided, so this action did not run.'
-              );
-            }
-            if (res.writableEnded) {
-              await stopRunInternally(getPool(), runId, 'client_disconnected', orgId);
-              return refused(
-                'the client disconnected',
-                'The connection dropped before anyone decided, so this action did not run.'
               );
             }
             const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(
@@ -2642,10 +3037,12 @@ export function mountStreamRoute(router: Router): void {
               const toolStart = Date.now();
               let resultStr: string;
               // 'incomplete': an agent that stopped at a budget (sub-agent-result.ts).
-              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' = 'success';
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' | 'not_run' = 'success';
               let toolErrorMessage: string | undefined;
               // A person's no (or no answer): not a failure to work around.
               let heldBack = false;
+              // ...or the read-only answer the person asked for (2aa766a76).
+              let readOnlyRefused = false;
               // What a model wrote while this call ran (generation-capture.ts).
               // Null where the handler ran elsewhere — a person settled it in
               // the governed-action route — so its generations are unknown.
@@ -2654,21 +3051,21 @@ export function mountStreamRoute(router: Router): void {
               const approval = approvals.get(toolUse.id);
               if (approval) {
                 // Already settled by a person (or refused because it could not
-                // be put to one). The handler is NOT called: when the action
-                // ran, it ran inside the governed-action route, which is the
-                // single place that stamps humanConfirmed. What comes back here
-                // is that execution's result, so there is still one execution,
-                // one signature and one audit row.
-                resultStr = JSON.stringify(approval.result);
-                toolStatus = approval.ok ? 'success' : 'error';
-                toolErrorMessage = approval.ok ? undefined : approval.why;
-                heldBack = approval.heldBack === true;
+                // be put to one): settledApprovalOutcome says why the handler
+                // is not called here.
+                ({ resultStr, toolStatus, toolErrorMessage, heldBack, readOnlyRefused } = settledApprovalOutcome(approval));
               } else if (runSignal?.aborted) {
                 // Stopped before this step got its turn. It never ran, and
                 // saying so is the honest record — a step that silently
                 // vanishes reads as one that was never asked for.
                 resultStr = JSON.stringify(CANCELLED_TOOL_RESULT(toolUse.name));
                 toolStatus = 'cancelled';
+              } else if (screenActionRefused(toolUse)) {
+                // The page that started this Live Drive turn is gone (D-7): not
+                // run, and the model is told so it stops asking.
+                resultStr = JSON.stringify(SCREEN_GONE_RESULT(toolUse.name));
+                toolStatus = 'not_run';
+                toolErrorMessage = SCREEN_GONE;
               } else if (lostInput) {
                 // The model chose arguments and the stream lost them; never
                 // dispatch on `{}`. See lostToolInputResult for why the
@@ -2751,7 +3148,7 @@ export function mountStreamRoute(router: Router): void {
               // An agent's own outcome refines a mechanical success: a budget
               // stop reads 'incomplete', a child the person stopped 'cancelled'
               // (brief D16). Every other status is kept as it is.
-              if (toolUse.name === RUN_AGENT_TOOL) {
+              if (toolUse.name === RUN_AGENT_TOOL && toolStatus !== 'not_run') {
                 toolStatus = agentTraceStatus(toolStatus, resultStr);
               }
               void logToolRun({
@@ -2776,7 +3173,7 @@ export function mountStreamRoute(router: Router): void {
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
               return {
-                toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated,
+                toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, readOnlyRefused, latencyMs: Date.now() - toolStart, generated,
                 // Handler dispatch: the wait for a person settled before it (S4).
                 startedAt: toolStart,
                 // From the capture, never from a list of tools (generation-capture.ts).
@@ -2818,7 +3215,7 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel, startedAt } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, readOnlyRefused, latencyMs, usedModel, startedAt } of ran) {
             /* An agent's full result keeps its whole trace — every child step, in
                full — for the turn record. The model and the client read it
                without that trace: it is the record's, not the conversation's. */
@@ -2827,12 +3224,20 @@ export function mountStreamRoute(router: Router): void {
             entries.push({ tool_use_id: toolUse.id, content: shown, name: toolUse.name });
             // The finished step: its label in the right tense, its facts and the
             // sentence for a step that did not succeed (step-presentation.ts).
+            // A step the run row's stop ended — a shutdown, the reaper, the
+            // session's end, an admin, the unattended limit — says what ended
+            // it, never "You stopped …": the person did not (5d8e60f3e). A
+            // person's own Stop carries no row reason and reads as theirs.
+            const stoppedWhy =
+              toolStatus === 'cancelled' && !toolErrorMessage ? stopCause(runStopReasonOf(runSignal)) : undefined;
             const step = finishedStep(toolUse, roundTitles, {
-              status: toolStatus, heldBack, why: toolErrorMessage, result: resultStr, latencyMs, usedModel,
+              status: toolStatus, heldBack, why: toolErrorMessage ?? stoppedWhy, result: resultStr, latencyMs, usedModel,
             });
             const stepLabel = step.label;
             // On the timeline, and what the record adds to the step from it (/4).
-            const ended = timeline.finished(round, toolUse, { ...step.frame, status: toolStatus, heldBack, ms: latencyMs, startedAt });
+            const ended = timeline.finished(round, toolUse, {
+              ...step.frame, status: toolStatus, heldBack, ...(readOnlyRefused ? { readOnly: true } : {}), ms: latencyMs, startedAt,
+            });
             turnRecorder?.addStep({
               toolUseId: toolUse.id,
               round,
@@ -2858,7 +3263,9 @@ export function mountStreamRoute(router: Router): void {
             // model to find another way to do what a person just said no to.
             // Nor is an agent that stopped at a budget: what it found is usable,
             // and "try an alternative" would start the same brief over (D16).
-            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && toolStatus !== 'incomplete' && !heldBack) {
+            // Nor a screen action refused because the page closed (D-7): the
+            // model is told in its result, and there is nothing to work around.
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && toolStatus !== 'incomplete' && toolStatus !== 'not_run' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
                 label: step.doing,
@@ -2918,7 +3325,9 @@ export function mountStreamRoute(router: Router): void {
                 // A validated navigation target AnA resolved this turn. Collected
                 // here, offered as a chip by post-processing; a refused target
                 // (unknown id, missing param) yields null and never becomes one.
-                const directive = directiveFromToolResult(toolUse.name, resultStr);
+                // A move produced while the page was open but reaching here
+                // after it closed is not applied, and never queued (D-7).
+                const directive = screenGone() ? null : directiveFromToolResult(toolUse.name, resultStr);
                 if (directive) {
                   // Past the turn's budget the move is NOT applied — say so to
                   // the model instead of the handler's "being applied now", and
@@ -2966,7 +3375,7 @@ export function mountStreamRoute(router: Router): void {
                 // applied live under Drive within the mode's action budget,
                 // audited per applied operation, client re-validates and only
                 // performs through a handler the mounted surface registered.
-                const actionDirective = surfaceActionFromToolResult(toolUse.name, resultStr);
+                const actionDirective = screenGone() ? null : surfaceActionFromToolResult(toolUse.name, resultStr);
                 if (actionDirective) {
                   if (driveState.enabled && driveActionsApplied >= driveBudget.actions) {
                     amendForModel(
@@ -3018,6 +3427,7 @@ export function mountStreamRoute(router: Router): void {
                   parsed?.status === 'demo_ready' &&
                   parsed?.driven === true &&
                   driveState.enabled &&
+                  !screenGone() &&
                   driveState.mode !== 'demo'
                 ) {
                   driveState = { ...driveState, mode: 'demo' };
@@ -3462,7 +3872,9 @@ export function mountStreamRoute(router: Router): void {
               if (queued.moveId) awaitingMoves.delete(queued.moveId);
               drained.push(queued);
             }
-            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded)
+            // A page that closed confirms nothing more (D-7): the wait ends, and
+            // the moves still awaited are said to the model as unconfirmed.
+            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded || screenGone())
               break;
             const left = MOVE_SETTLE_MAX_MS - (Date.now() - settleStart);
             if (left <= 0) break;
@@ -3487,7 +3899,7 @@ export function mountStreamRoute(router: Router): void {
            (services/ana/turn-run-policy.ts, where it moved in row 74's S4; its
            order and frames without a policy are the ones it had here). */
         const manualDemoExempt = driveState.enabled && driveState.mode === 'demo';
-        const checkpoint = turnPolicy.checkpoint({
+        const policyCheckpoint = turnPolicy.checkpoint({
           run:
             runId && runHandle && runHold
               ? {
@@ -3500,7 +3912,7 @@ export function mountStreamRoute(router: Router): void {
                   // Steers and screen reports: the drain is atomic and covers
                   // both, so neither can be applied twice.
                   drainSteers: async () => spliceQueued(await consumeInterjections(getPool(), runId)),
-                  holdForPerson: () => holdForPerson(getPool(), runId),
+                  holdForPerson: (next: string[]) => holdForPerson(getPool(), runId, next),
                   status: () => readStatus(getPool(), runId),
                 }
               : null,
@@ -3509,6 +3921,10 @@ export function mountStreamRoute(router: Router): void {
           // promotes the turn) must not switch Manual's holds off.
           demo: () => manualDemoExempt,
           isUngoverned: call => classifyToolCall(call).kind === 'UNGOVERNED',
+          // A read-only turn refuses these before they run (settleApprovals):
+          // a Manual hold never offers one as "Run this step".
+          // …nor a screen action once the page has closed (D-7).
+          willRefuse: call => readOnlyToolRefusal(call.name, call.input ?? {}, readOnly) !== null || screenActionRefused(call),
           label: call => describeToolPlan([call])[0].label,
           emit: emitControl,
           // A step she chose that never ran is still a step of this turn: the
@@ -3530,6 +3946,28 @@ export function mountStreamRoute(router: Router): void {
             });
           },
         });
+
+        /* Each round boundary re-checks that the session and the organisation
+           that started this turn still stand (AnA detach §2.9), before the next
+           model call: verifyLiveToken(…, { activity: false }) and
+           shouldProcessTenantInBackground, through the run's handle, which
+           alone holds the credential. Ended, or unreadable: the run is stopped
+           as `session_ended` and the policy's checkpoint then sees the abort.
+           A watch stamped since the last round resets the unattended clock. */
+        const checkpoint: LoopCheckpoint = async (round, pending) => {
+          if (runHandle?.standing && !runHandle.cancelSignal.aborted) {
+            const ended = await runHandle.standing().catch(
+              (): RunStandingEnded => ({ reason: 'session_ended', detail: { cause: 'standing_unreadable' } }),
+            );
+            // With what the check found, so the row and the record name it
+            // (DT3 review, DP-83). A turn with no row (IAM-35) is stopped
+            // here, locally, the same way.
+            if (ended && runId) await stopRunInternally(getPool(), runId, ended.reason, runOrgId ?? undefined, ended.detail);
+            else if (ended) runHandle.abortLocally?.(new RunStopped(ended.reason, ended.detail));
+          }
+          await unattended?.refresh();
+          return policyCheckpoint(round, pending);
+        };
 
         // Kept for endRun: until 2026-09-26 the result was discarded and every
         // run was recorded as ending for want of tools, including one stopped
@@ -3569,9 +4007,15 @@ export function mountStreamRoute(router: Router): void {
         loopStoppedReason = loopResult.stoppedReason;
         loopRounds = loopResult.rounds;
         // Then the turn's reason, not only the loop's: a hold that expired or
-        // could not be made ended it, where the loop saw an abort.
-        loopStoppedReason = turnPolicy.stoppedReason(loopStoppedReason);
+        // could not be made ended it, where the loop saw an abort — and the
+        // run row's own stop, when that is what aborted it (§2.4).
+        loopStoppedReason = turnPolicy.stoppedReason(loopStoppedReason, runStopReasonOf(runSignal));
       }
+      // A stop the row made after the last round (or in a turn with no
+      // rounds): the row's reason wins, so the record never says "answered"
+      // for a run whose row says it was stopped.
+      const rowStopReason = runStopReasonOf(runSignal);
+      if (rowStopReason && rowStopReason !== 'approval_denied') loopStoppedReason = rowStopReason;
       // The answer she was writing was cut off — the length limit, or a stream
       // that stalled mid-answer: the turn did not finish, whatever the loop saw.
       loopStoppedReason = turnEndingReason(loopStoppedReason, lastFinishReason);
@@ -3630,8 +4074,15 @@ export function mountStreamRoute(router: Router): void {
         thinkingEnabled: !!streamThinkingConfig,
       });
 
+      // The row is ended here, before the turn says how it ended: a stop that
+      // another writer made as the last call returned wins it, and the turn
+      // then ends as that stop (settleRunRow).
+      const rowStoppedLate = await settleRunRow('finished', loopStoppedReason);
+      if (rowStoppedLate) loopStoppedReason = rowStoppedLate;
+      const turnStopped = Boolean(runSignal?.aborted) || rowStoppedLate !== null;
+
       // The Summary's closing row: how the turn ended, and why it stopped (S4).
-      timeline.end(runSignal?.aborted ? 'stopped' : 'answered', endStoppedReason(Boolean(runSignal?.aborted), loopStoppedReason));
+      timeline.end(turnStopped ? 'stopped' : 'answered', endStoppedReason(turnStopped, loopStoppedReason));
 
       // Emit `done` as soon as the last token is out. Carries the minimal
       // metadata the client needs to close the assistant turn. Heavier
@@ -3699,13 +4150,14 @@ export function mountStreamRoute(router: Router): void {
             runPolicy,
             pendingSteps: turnPolicy.pendingSteps,
             policyHolds: turnPolicy.policyHolds,
+            detached: unattended?.isDetached() === true,
           }),
         );
       }
       // AnA's own Manual holds are not controls (nobody pressed Pause), so the
       // record's controls do not show them; each is written down here.
       for (const hold of turnPolicy.policyHolds) turnRecorder?.warn(policyHoldWarning(hold));
-      void runStreamPostProcessing({
+      afterTurn(runStreamPostProcessing({
         readOnly,
         res,
         fullContent,
@@ -3746,37 +4198,80 @@ export function mountStreamRoute(router: Router): void {
         turnRecorder,
         // Stop ends the loop at a round boundary, and the turn still closes
         // through here; the record says it was stopped, not answered.
-        stopped: Boolean(runSignal?.aborted),
+        stopped: turnStopped,
         fileTurnRecord,
-      });
+      }).catch(() => undefined));
     } catch (error: any) {
       streamFailed = true;
       console.error('[AnA RI Stream] Error:', error.message);
       // The turn is recorded as it ended: with the part of the answer the
       // person saw, and why it stopped. A stop that aborted the model call
       // lands here too, and is recorded as stopped, not failed.
-      const stopped = Boolean(runHandle?.cancelSignal.aborted);
+      let stopped = Boolean(runHandle?.cancelSignal.aborted);
+      // Why it stopped: the run row's reason when the row's stop aborted it
+      // (a shutdown, the reaper, the session's end, an admin, the unattended
+      // limit) — it wins (§2.4); else what the policy saw.
+      let rowReason = runStopReasonOf(runHandle?.cancelSignal);
+      // A row another writer stopped before its abort arrived: the turn ends
+      // as that stop, and the error is still written down (settleRunRow).
+      const rowStoppedFirst = stopped ? null : await settleRunRow('failed', 'error');
+      if (rowStoppedFirst) {
+        stopped = true;
+        rowReason = rowStoppedFirst;
+      }
+      const stoppedWhy: TurnStoppedReason | undefined = !stopped
+        ? undefined
+        : turnPolicyOf
+          ? turnPolicyOf.stoppedReason('cancelled', rowReason)
+          : rowReason && rowReason !== 'approval_denied'
+            ? rowReason
+            : 'cancelled';
+      if (stoppedWhy) loopStoppedReason = stoppedWhy;
       if (turnRecorder) {
         turnRecorder.setAnswer({ streamed: turnRecorder.streamedText });
         turnRecorder.setControls(await readControlEvents());
-        if (!stopped) {
+        if (!stopped || rowStoppedFirst) {
           turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
+        }
+        if (stopped && rowReason && rowReason !== 'cancelled' && stoppedWhy) {
+          turnRecorder.warn(
+            turnStopWarning(stoppedWhy, loopRounds, {
+              runPolicy: turnRunPolicyOf,
+              detached: unattended?.isDetached() === true,
+            }),
+          );
         }
       }
       // The stop is saved in the conversation as well as the record, with what
       // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
       if (stopped && stoppedTurnThreadId) {
         try {
-          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '', turnPolicyOf?.stoppedReason('cancelled'));
+          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '', stoppedWhy);
           turnRecorder?.setMessageIds({ assistant: answerId });
         } catch (saveErr: any) {
           console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
         }
       }
-      timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
+      timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, stoppedWhy) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       const budgetRefusal = error instanceof ToolResultBudgetExceededError ? error : null;
-      if (res.headersSent) {
+      if (res.headersSent && stopped) {
+        // A stop, not a failure: the page reads it as every stop closes — its
+        // reason on `done`, then the record on `post_done`. Before DT3 only a
+        // person's own Stop came this way, and that page had already let go of
+        // the stream; now the run row's stops (an admin, a shutdown, the
+        // session's end, the unattended limit) reach a page still attached,
+        // which read the generic error frame below as an outage.
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'done',
+            stoppedReason: stoppedWhy,
+            rounds: loopRounds,
+          })}\n\n`
+        );
+        res.write(`data: ${JSON.stringify({ type: 'post_done', turnRecord })}\n\n`);
+        res.end();
+      } else if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
@@ -3798,18 +4293,21 @@ export function mountStreamRoute(router: Router): void {
       // used to leak its LocalRun and AbortController for the life of the
       // process.
       if (runId) releaseLocalRun(runId);
-      if (runId && !runSettled) {
-        runSettled = true;
-        await endRun(
-          getPool(),
-          runId,
-          streamFailed ? 'failed' : 'finished',
-          streamFailed ? 'error' : loopStoppedReason
-        );
+      await settleRunRow(streamFailed ? 'failed' : 'finished', streamFailed ? 'error' : loopStoppedReason);
+      unattended?.stop();
+      detachSlot.release?.();
+      // A detached turn nobody is watching tells its person how it ended
+      // (§5.5): finished, or stopped and why. Never for their own Stop.
+      if (runId && unattended?.isDetached()) {
+        const rowReason = runStopReasonOf(runHandle?.cancelSignal) ?? rowEndedBy;
+        const ended: string | null = rowReason ?? (streamFailed ? 'error' : loopStoppedReason);
+        void noticeIfUnwatched({ kind: 'ended', stoppedReason: ended, notAuthorised: timeline.heldBackCount() });
       }
     }
-  });
+  }
+}
 
+function mountControlRoute(router: Router): void {
   /**
    * How a control refusal reaches the client.
    *
@@ -3830,6 +4328,13 @@ export function mountStreamRoute(router: Router): void {
         return { httpStatus: 403, error: 'That run belongs to someone else' };
       case 'INVALID':
         return { httpStatus: 409, error: `Cannot ${action} a run that is ${result.status}` };
+      // An administrator stopping a colleague's turn says why (DT3 review, DP-82).
+      case 'REASON_REQUIRED':
+        return { httpStatus: 400, error: ADMIN_CANCEL_REASON_REQUIRED };
+      // The cancel and its chained audit row are one transaction: the row was
+      // refused, so the cancel was rolled back and the turn goes on.
+      case 'AUDIT_REFUSED':
+        return { httpStatus: 503, error: ADMIN_CANCEL_AUDIT_REFUSED };
       default:
         return { httpStatus: 409, error: `Run already ${result.status}` };
     }
@@ -3898,11 +4403,12 @@ export function mountStreamRoute(router: Router): void {
       return res.status(404).json({ ok: false, error: 'Run not found or already finished' });
     }
 
+    const userId = resolveUserId(req);
     const result = await applyControl({
       pool: getPool(),
       runId,
       organizationId,
-      userId: resolveUserId(req),
+      userId,
       action: action as
         | 'pause'
         | 'resume'
@@ -3912,6 +4418,16 @@ export function mountStreamRoute(router: Router): void {
         | 'move_landed',
       message,
       ...(moveId ? { moveId } : {}),
+      // An admin or owner of the organisation may cancel any of its runs —
+      // cancel only, never approve (AnA detach §2.5). applyControl admits
+      // nothing else from them, asks them why, and writes the cancel and its
+      // chained audit row in one transaction (DT3 review, DP-82).
+      callerIsAdmin: readsEveryRecord((req as any).user),
+      ...(typeof req.body?.reason === 'string' ? { reason: req.body.reason } : {}),
+      requestMeta: {
+        ipAddress: clientIpOf(req) ?? undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+      },
     });
 
     if (!result.ok) {
@@ -3927,6 +4443,9 @@ export function mountStreamRoute(router: Router): void {
       action,
       status: result.status,
       pendingInterjections: result.pendingInterjections ?? 0,
+      // An administrator's cancel: accepted only with its chained audit row
+      // written in the same transaction, so a 200 is a recorded stop.
+      ...(result.byRole === 'admin' ? { byRole: 'admin' } : {}),
     });
   });
 }

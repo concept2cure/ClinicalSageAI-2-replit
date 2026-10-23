@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a stated type that contradicts the recorded one is refused, and nothing is assembled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment 1575ms
+   → expected 'initial' to be 'amendment' // Object.is equality
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial 9ms
+ × tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a stated type that contradicts the recorded one is refused, and nothing is assembled 5ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+
+Number of calls: 0
+
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one 4ms
+ × tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > the status read names the type the compile will be recorded as 6ms
+   → expected { id: 9, sequenceNumber: '0001', …(2) } to match object { sequenceNumber: '0001', …(1) }
+(3 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx > the compile screen and a sequence’s recorded type > opened on amendment 0001, it shows the recorded type and sends none 151ms
+   → expected <select id="ectd-subtype" …(2)>…(2)</select> to be null
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx > the compile screen and a sequence’s recorded type > a sequence that records no type keeps the selector, and its choice is sent 232ms
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)
+   Start at  00:30:18
+   Duration  7.43s (transform 3.45s, setup 239ms, import 4.27s, tests 1.99s, environment 497ms)
+

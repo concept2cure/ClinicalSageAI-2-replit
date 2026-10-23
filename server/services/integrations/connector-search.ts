@@ -75,7 +75,8 @@ export interface ConnectorSearchResponse {
     title: string;
     summary: string;
     url?: string;
-    relevanceScore: number;
+    /** 1-based position in its repository's own response — not a relevance score. */
+    sourceRank: number;
   }>;
   note?: string;
 }
@@ -224,12 +225,16 @@ export async function searchConnectedRepositories(
         title: r.title,
         summary: r.summary,
         url: r.url,
-        relevanceScore: typeof r.relevanceScore === 'number' ? r.relevanceScore : 0,
+        sourceRank: r.sourceRank,
       });
     }
   }
 
-  documents.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  // Merge the repositories by each one's own order: every repository's first
+  // document, then every second, and so on. 2026-10-15: this sorted by a
+  // `relevanceScore` that was the list position on a per-connector slope, so the
+  // merged top-N favoured the connector with the shallowest slope.
+  documents.sort((a, b) => a.sourceRank - b.sourceRank);
   const top = documents.slice(0, limit);
 
   return {

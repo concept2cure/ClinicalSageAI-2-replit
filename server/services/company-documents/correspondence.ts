@@ -9,7 +9,7 @@ import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-i
 import type { CompanyDocumentProfile } from '../../../shared/company-documents';
 import type { CompanyCorrespondenceOrigin } from '../../../shared/company-correspondence';
 import { readSubmissionSequenceForRequest, requireSubmissionReadStillCurrent } from '../submission-service/submission-request-read';
-import { readRecordedPackageIdentity } from '../ectd/package-identity';
+import { readSubmissionPackageIdentity, recordedPackageIdentitySnapshot } from '../ectd/package-identity';
 import { readCurrentProgramActor } from '../c2c/current-program-access';
 import { createDocumentFromDraft } from '../authoring/authoring-from-draft';
 import { companyProfileHash, loadCompanyDocumentProfile, readCompanyDocumentProfile, CompanyDocumentsError } from './profile';
@@ -27,7 +27,7 @@ function actor(req: Request) {
   return { organizationId, userId };
 }
 
-async function admittedOrigin(q: RequestSqlClient, principal: ReturnType<typeof actor>, sequenceId: number, profile: CompanyDocumentProfile): Promise<CompanyCorrespondenceOrigin> {
+async function admittedOrigin(q: RequestSqlClient, principal: ReturnType<typeof actor>, sequenceId: number, profile: CompanyDocumentProfile) {
   const admitted = await readSubmissionSequenceForRequest(q, principal, sequenceId);
   const country = canonicalRegionOf(admitted.sequenceRegion);
   if (!country) throw new CompanyDocumentsError(422, 'MARKET_UNKNOWN', 'Identify the recorded filing market before preparing correspondence.');
@@ -38,17 +38,20 @@ async function admittedOrigin(q: RequestSqlClient, principal: ReturnType<typeof 
   if (records.rows.length !== 1 || typeof row?.title !== 'string' || typeof row.sequence_number !== 'string') {
     throw new CompanyDocumentsError(503, 'CORRESPONDENCE_CONTEXT_UNAVAILABLE', 'The recorded correspondence identity could not be verified.');
   }
-  const identity = await readRecordedPackageIdentity(q, principal.organizationId, admitted.programId);
+  const identity = await readSubmissionPackageIdentity(q, principal.organizationId, admitted.submissionId, { region: admitted.sequenceRegion });
+  if (identity.programId !== admitted.programId) throw new CompanyDocumentsError(409, 'CORRESPONDENCE_CONTEXT_CHANGED', 'The recorded filing project changed. Refresh before preparing correspondence.');
   await requireSubmissionReadStillCurrent(q, admitted);
   const agency = toAgency(country);
   if (!agency) throw new CompanyDocumentsError(422, 'AGENCY_UNKNOWN', 'Identify the recorded filing agency before preparing correspondence.');
-  return { version: 1, organizationId: principal.organizationId, programId: admitted.programId, projectId: admitted.projectId,
+  const origin: CompanyCorrespondenceOrigin = { version: 1, organizationId: principal.organizationId, programId: admitted.programId, projectId: admitted.projectId,
     submissionId: admitted.submissionId, sequenceId, sequenceNumber: row.sequence_number, submissionTitle: row.title,
-    applicationType: admitted.applicationType, applicationNumber: identity.applicationNumber, applicantName: identity.applicantName,
+    applicationType: admitted.applicationType, applicationNumber: identity.applicationNumber,
+    applicantName: country === 'US' && !identity.applicantSponsorId ? null : identity.applicantName,
     country, agency, recipient: { authority: agency, basis: 'recorded_filing_market' },
     companyDocumentRevision: profile.revision, companyProfileHash: companyProfileHash(profile),
     companyBrandingApplied: Boolean(profile.variantId || profile.applyToSubmissionCorrespondence),
     ...(profile.variantId ? { variantId: profile.variantId, explicitSelection: true as const } : {}) };
+  return { origin, packageIdentity: recordedPackageIdentitySnapshot(identity) };
 }
 
 async function selectedPresentation(q: RequestSqlClient, principal: ReturnType<typeof actor>, sequenceId: number, profile: CompanyDocumentProfile, variantId?: string) {
@@ -65,12 +68,12 @@ async function selectedPresentation(q: RequestSqlClient, principal: ReturnType<t
 export async function prepareSubmissionCorrespondence(req: Request, sequenceId: number, profile: CompanyDocumentProfile, variantId?: string) {
   const principal = actor(req), q = requestPgClient(req);
   const presentation = await selectedPresentation(q, principal, sequenceId, profile, variantId);
-  const origin = await admittedOrigin(q, principal, sequenceId, presentation);
-  return { origin, profile: presentation, async assertCurrent(executor: RequestSqlClient = q) {
+  const retained = await admittedOrigin(q, principal, sequenceId, presentation);
+  return { origin: retained.origin, profile: presentation, async assertCurrent(executor: RequestSqlClient = q) {
     const currentProfile = await selectedPresentation(executor, principal, sequenceId,
       variantId ? presentation : await loadCompanyDocumentProfile(principal.organizationId, executor), variantId);
     const current = await admittedOrigin(executor, principal, sequenceId, currentProfile);
-    if (JSON.stringify(current) !== JSON.stringify(origin)) {
+    if (JSON.stringify(current) !== JSON.stringify(retained)) {
       throw new CompanyDocumentsError(409, 'CORRESPONDENCE_CONTEXT_CHANGED', 'The company presentation or filing identity changed. Refresh before preparing this correspondence.');
     }
     if (!variantId) await retainCompanyPresentationRevision(executor, principal.organizationId, currentProfile, principal.userId, 'Retain company presentation used by filing correspondence');

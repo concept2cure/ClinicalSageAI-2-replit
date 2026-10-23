@@ -37,10 +37,16 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
-import { humanControlsOf, policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+import {
+  humanControlsOf,
+  namedControls,
+  policyHoldsOf,
+  type DossierHumanControl,
+  type DossierPolicyHold,
+} from './lineage-dossier-holds.js';
 import { loadProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 
-export type { DossierPolicyHold } from './lineage-dossier-holds.js';
+export type { DossierHumanControl, DossierPolicyHold } from './lineage-dossier-holds.js';
 export { measureProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 import {
   collectArtifactLedger,
@@ -150,15 +156,6 @@ export interface DossierReasoningTurn {
   reasoning: string;
   model: string | null;
   createdAt: string | null;
-}
-
-export interface DossierHumanControl {
-  /** The assistant turn (1-based) the control was recorded against. */
-  turn: number;
-  action: 'pause' | 'resume' | 'interject' | 'cancel';
-  message: string | null;
-  round: number | null;
-  at: string | null;
 }
 
 /**
@@ -428,8 +425,10 @@ async function loadDecisions(
         contextType: contextKind ?? r.domain_track ?? 'unknown',
         contextDescription: r.title ?? null,
         recommendationType: r.recommendation_type ?? null,
-        recommendationSummary: r.recommendation_summary ?? '',
-        confidence: r.confidence_level ?? 'provisional',
+        // 2026-10-15: `?? ''` printed an unrecorded summary blank, and
+        // `?? 'provisional'` gave an unrecorded confidence a level.
+        recommendationSummary: r.recommendation_summary ?? 'not recorded',
+        confidence: r.confidence_level ?? 'not recorded',
         actionState: r.action_state ?? 'recommended_only',
         // The deployed table records no separate approval state; it is what the
         // action state says, not a second field guessed alongside it.
@@ -560,7 +559,7 @@ async function loadTurnRecords(
       policyHolds.push(...held.holds);
       policyHoldsUnreadable += held.unreadable;
     }
-    return { reasoning, humanControls, policyHolds, policyHoldsUnreadable };
+    return { reasoning, humanControls: await namedControls(humanControls), policyHolds, policyHoldsUnreadable };
   } catch (err) {
     warnUnless42P01('turn-records', err);
     return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };

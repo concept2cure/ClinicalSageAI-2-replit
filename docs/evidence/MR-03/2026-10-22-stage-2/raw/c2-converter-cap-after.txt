@@ -1,0 +1,97 @@
+# c2 — conversion-slots.test.ts (final version, 12 tests) after conversion-slots.ts and the converter wrapping
+# HEAD (uncommitted changes on top): 178f0b477c8e92257827a5f64c7f0441af7aa8a1
+# date: 2026-10-22T01:39:01Z
+ M server/integrations/ocrmypdf/client.ts
+ M server/integrations/verapdf/client.ts
+ M server/lib/api-response.ts
+ M server/routes/ectd-compile.ts
+ M server/routes/ectd-export.ts
+ M server/routes/submissions.ts
+ M server/services/docx-pdf-pipeline.ts
+ M server/services/ectd/pdfa-pipeline.ts
+ M server/services/pdf-compression-service.ts
+ M server/services/pdf-converter.ts
+ M server/services/submission-service/submission-service.ts
+ M server/src/mw/observability.ts
+?? docs/evidence/MR-03/2026-10-22-stage-2/
+?? server/services/__tests__/conversion-capacity-compile-http.test.ts
+?? server/services/__tests__/conversion-capacity-http.test.ts
+?? server/services/__tests__/conversion-capacity-submissions-http.test.ts
+?? server/services/__tests__/conversion-slots.test.ts
+?? server/services/conversion-slots.ts
+# command: npx vitest run server/services/__tests__/conversion-slots.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > five concurrent LibreOffice conversions keep at most two children alive, and all five complete 383ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > the cap is one budget for the whole process, across every converter 490ms
+stderr | server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > rejects with ConversionCapacityError and starts no child for that request
+{
+  "timestamp": "2026-10-22T01:39:03.686Z",
+  "level": "warn",
+  "message": "[conversion-slots] Conversion refused: no slot freed within the queue timeout",
+  "context": {
+    "kind": "libreoffice",
+    "waitedMs": 81,
+    "maxConcurrent": 2,
+    "queueTimeoutMs": 80
+  }
+}
+
+ ✓ server/services/__tests__/conversion-slots.test.ts > peak converter children never exceed CONVERTER_MAX_CONCURRENCY > OCRmyPDF is told to run one job, so its own worker pool cannot multiply the slot 122ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > rejects with ConversionCapacityError and starts no child for that request 407ms
+stderr | server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a capacity refusal inside PDF/A finalization is not reported as "returned unchanged"
+{
+  "timestamp": "2026-10-22T01:39:04.113Z",
+  "level": "warn",
+  "message": "[conversion-slots] Conversion refused: no slot freed within the queue timeout",
+  "context": {
+    "kind": "ghostscript",
+    "waitedMs": 80,
+    "maxConcurrent": 2,
+    "queueTimeoutMs": 80
+  }
+}
+
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a capacity refusal inside PDF/A finalization is not reported as "returned unchanged" 407ms
+stderr | server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > with no Ghostscript, a veraPDF run that never started is refused, not written up as a validation note
+{
+  "timestamp": "2026-10-22T01:39:04.520Z",
+  "level": "warn",
+  "message": "[conversion-slots] Conversion refused: no slot freed within the queue timeout",
+  "context": {
+    "kind": "verapdf",
+    "waitedMs": 80,
+    "maxConcurrent": 2,
+    "queueTimeoutMs": 80
+  }
+}
+
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > with no Ghostscript, a veraPDF run that never started is refused, not written up as a validation note 406ms
+stderr | server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > stops a compression batch at the first refusal instead of failing each file in turn
+{
+  "timestamp": "2026-10-22T01:39:04.925Z",
+  "level": "warn",
+  "message": "[conversion-slots] Conversion refused: no slot freed within the queue timeout",
+  "context": {
+    "kind": "ghostscript",
+    "waitedMs": 79,
+    "maxConcurrent": 2,
+    "queueTimeoutMs": 80
+  }
+}
+
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > stops a compression batch at the first refusal instead of failing each file in turn 405ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > a wait past CONVERTER_QUEUE_TIMEOUT_MS > a version probe takes no slot: Ghostscript is reported present while every slot is held 405ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > withConversionSlot > grants slots in arrival order (FIFO) 7ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > withConversionSlot > releases the slot when the conversion throws, and passes the error through unchanged 1ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > withConversionSlot > a conversion started inside a slot runs under that slot, so nesting cannot deadlock 1ms
+ ✓ server/services/__tests__/conversion-slots.test.ts > withConversionSlot > reads CONVERTER_MAX_CONCURRENCY and CONVERTER_QUEUE_TIMEOUT_MS, falling back to 2 and 120000 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  01:39:02
+   Duration  3.64s (transform 207ms, setup 91ms, import 173ms, tests 3.04s, environment 0ms)
+
+# exit code: 0

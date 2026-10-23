@@ -285,6 +285,22 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
       {/* ── CQAs / CPPs ── */}
       {qbd.loading ? (
         <EmptyState icon={I.sigma} title="Deriving CQAs and CPPs from this project’s data…" busy testId="cmc-qbd-loading" />
+      ) : qbd.status === 409 ? (
+        /* The composition boundary (decision P-28: small-molecule Module 3 for
+           a US IND) refused this program. That is an answer about the
+           program, in the server's words, not a register that failed to
+           respond. */
+        <EmptyState
+          icon={I.sigma}
+          title={
+            qbd.code === 'CMC_MODALITY_NOT_ESTABLISHED'
+              ? 'This program’s drug substance is not established yet'
+              : 'Quality attributes are not derived here for this program'
+          }
+          hint={qbd.error}
+          regulation="Serves the CTD Module 3 record (ICH Q8, Q11)"
+          testId="cmc-qbd-out-of-scope"
+        />
       ) : qbd.error ? (
         <EmptyState
           tone="error"

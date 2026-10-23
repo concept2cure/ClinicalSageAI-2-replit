@@ -23,17 +23,25 @@ const DOC = '22222222-2222-4222-8222-222222222222';
 const profile: CompanyDocumentProfile = { version: 1, revision: 4, companyName: 'Presentation brand', address: 'Brand address', contact: '', registrationDetails: '',
   letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: true, legalDocuments: [] };
 const q = { query: mocks.query };
+const SPONSOR = '33333333-3333-4333-8333-333333333333';
+let facts: { primaryRegion: string; marketNumber: string | null; sponsorId: string | null; applicantName: string | null;
+  applicationNumber: string | null; contactName: string; organizationName: string | null; programId: string };
+function filingQuery(sql: string) {
+  if (sql.includes('s.title,e.sequence_number')) return { rows: [{ title: 'Recorded submission', sequence_number: '0002' }] };
+  if (sql.includes('SELECT program_id, primary_region')) return { rows: [{ program_id: facts.programId, primary_region: facts.primaryRegion, market_number: facts.marketNumber }] };
+  if (sql.includes('o.name AS organization_name')) return { rows: [{ organization_name: facts.organizationName, application_number: facts.applicationNumber,
+    primary_agency: 'FDA', applicant_sponsor_id: facts.sponsorId, sponsor_id: facts.sponsorId, sponsor_name: facts.applicantName,
+    duns: '123456789', contact_name: facts.contactName, contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
+  throw new Error(`Unexpected query: ${sql}`);
+}
 const req = { organizationId: 7, userId: 3, user: { id: 3, organizationId: 7, email: 'author@example.test' }, tenantContext: { organizationId: 7 }, dbClient: q,
   headers: { 'user-agent': 'test' }, ip: '127.0.0.1' } as unknown as Request;
 beforeEach(() => {
   Object.values(mocks).forEach(mock => mock.mockReset());
+  facts = { primaryRegion: 'fda', marketNumber: null, sponsorId: SPONSOR, applicantName: 'Recorded applicant',
+    applicationNumber: 'IND123456', contactName: 'Regulatory contact', organizationName: 'Separate tenant account', programId: PROGRAM };
   mocks.admit.mockResolvedValue({ organizationId: 7, userId: 3, programId: PROGRAM, projectId: 42, submissionId: 5, sequenceId: 9, sequenceRegion: 'fda', applicationType: 'ind' });
-  mocks.query.mockImplementation(async (sql: string) => {
-    if (sql.includes('s.title,e.sequence_number')) return { rows: [{ title: 'Recorded submission', sequence_number: '0002' }] };
-    if (sql.includes('SELECT name FROM organizations')) return { rows: [{ name: 'Recorded applicant' }] };
-    if (sql.includes('SELECT application_number')) return { rows: [{ application_number: 'IND123456' }] };
-    throw new Error(`Unexpected query: ${sql}`);
-  });
+  mocks.query.mockImplementation(async (sql: string) => filingQuery(sql));
   mocks.load.mockResolvedValue(profile); mocks.read.mockResolvedValue({ data: profile, canManage: false });
   mocks.actor.mockResolvedValue({ userId: 3, role: 'regulatory-author' });
   mocks.create.mockImplementation(async (_ctx, _input, options) => {
@@ -67,9 +75,7 @@ describe('admitted company correspondence', () => {
     const context = await prepareSubmissionCorrespondence(req, 9, profile);
     mocks.query.mockImplementation(async (sql: string) => {
       if (sql.includes('s.title,e.sequence_number')) return { rows: [{ title: 'Recorded submission', sequence_number: '0003' }] };
-      if (sql.includes('SELECT name FROM organizations')) return { rows: [{ name: 'Recorded applicant' }] };
-      if (sql.includes('SELECT application_number')) return { rows: [{ application_number: 'IND123456' }] };
-      throw new Error('unexpected');
+      return filingQuery(sql);
     });
     await expect(context.assertCurrent()).rejects.toMatchObject({ code: 'CORRESPONDENCE_CONTEXT_CHANGED' });
     expect(mocks.retain).not.toHaveBeenCalled();
@@ -94,9 +100,39 @@ describe('admitted company correspondence', () => {
   });
 
   it('does not substitute company branding for an unknown applicant or application number', async () => {
-    mocks.query.mockImplementation(async (sql: string) => sql.includes('s.title,e.sequence_number')
-      ? { rows: [{ title: 'Recorded submission', sequence_number: '0002' }] } : { rows: [] });
+    facts.sponsorId = null; facts.organizationName = null; facts.applicationNumber = null;
     const context = await prepareSubmissionCorrespondence(req, 9, profile);
     expect(context.origin.applicantName).toBeNull(); expect(context.origin.applicationNumber).toBeNull();
+  });
+  it('reads the additional market number from the submission instead of borrowing the home number', async () => {
+    facts.primaryRegion = 'ema'; facts.marketNumber = 'EU-654321';
+    mocks.admit.mockResolvedValue({ organizationId: 7, userId: 3, programId: PROGRAM, projectId: 42, submissionId: 5,
+      sequenceId: 9, sequenceRegion: 'ema', applicationType: 'maa' });
+    const context = await prepareSubmissionCorrespondence(req, 9, profile);
+    expect(context.origin).toMatchObject({ country: 'EU', agency: 'EMA', applicationNumber: 'EU-654321', applicantName: 'Recorded applicant' });
+    facts.marketNumber = 'EU-NEW';
+    await expect(context.assertCurrent()).rejects.toMatchObject({ code: 'CORRESPONDENCE_CONTEXT_CHANGED' });
+    expect(mocks.retain).not.toHaveBeenCalled();
+  });
+  it.each(['ema', 'pmda'])('leaves an unrecorded %s sequence number missing instead of borrowing the home or another market number', async region => {
+    facts.primaryRegion = 'ema'; facts.marketNumber = region === 'ema' ? null : 'EU-654321';
+    mocks.admit.mockResolvedValue({ organizationId: 7, userId: 3, programId: PROGRAM, projectId: 42, submissionId: 5,
+      sequenceId: 9, sequenceRegion: region, applicationType: 'maa' });
+    expect((await prepareSubmissionCorrespondence(req, 9, profile)).origin.applicationNumber).toBeNull();
+  });
+  it.each(['binding', 'contact'])('refuses a changed applicant %s even when rendered name and number are unchanged', async changed => {
+    const context = await prepareSubmissionCorrespondence(req, 9, profile);
+    if (changed === 'binding') facts.sponsorId = '44444444-4444-4444-8444-444444444444';
+    else facts.contactName = 'New regulatory contact';
+    await expect(context.assertCurrent()).rejects.toMatchObject({ code: 'CORRESPONDENCE_CONTEXT_CHANGED' });
+    expect(mocks.retain).not.toHaveBeenCalled();
+  });
+  it('does not present the tenant name as an unbound FDA applicant', async () => {
+    facts.sponsorId = null;
+    expect((await prepareSubmissionCorrespondence(req, 9, profile)).origin.applicantName).toBeNull();
+  });
+  it('refuses a program that changed after sequence admission', async () => {
+    facts.programId = '44444444-4444-4444-8444-444444444444';
+    await expect(prepareSubmissionCorrespondence(req, 9, profile)).rejects.toMatchObject({ code: 'CORRESPONDENCE_CONTEXT_CHANGED' });
   });
 });

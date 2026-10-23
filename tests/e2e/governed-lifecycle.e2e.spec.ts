@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { devLoginEmail } from './dev-identity';
 
 /**
  * Phase 11 — True E2E: Document Lifecycle, Attestation, Persistence, and Auth Enforcement
@@ -38,7 +39,7 @@ async function login(page: import('@playwright/test').Page) {
   await page.goto(`${BASE_URL}/concept2cure/login`);
   const emailInput = page.locator('input[type="email"], input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jonmichaelpsmith@gmail.com');
+  await emailInput.fill(devLoginEmail());
   await page.click('button:has-text("Continue")');
   const passwordInput = page.locator('input[type="password"], input#password');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });

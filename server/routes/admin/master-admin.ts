@@ -81,6 +81,13 @@ import masterAccessRequestRoutes from './master-access-requests';
 import masterEnterpriseRequestRoutes from './master-enterprise-requests';
 
 const logger = createScopedLogger('admin-master');
+
+/** The platform administrator acting, as an account id, for what a stop says ended a session (AnA detach §2.9). */
+function actorUserIdOf(req: Request): number | null {
+  const id = Number((req as { userId?: unknown }).userId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 const router = Router();
 
 // Auth first, then the strict platform-admin gate, for every route below.
@@ -330,6 +337,14 @@ router.patch('/tenants/:id/status', async (req: Request, res: Response) => {
        RETURNING id, name, slug, status, updated_at`,
       [status, id]
     );
+    // A suspended or inactive organisation's live AnA runs stop now, with
+    // `session_ended`, not at their next round (AnA detach §2.9); the audit
+    // row below says how many this decision stopped.
+    let anaRunsStopped: string[] = [];
+    if (status !== 'active') {
+      const { stopRunsFor } = await import('../../services/ana/run-control.js');
+      anaRunsStopped = await stopRunsFor(getPool(), { organizationId: id }, { cause: 'org_suspended', byUserId: actorUserIdOf(req) });
+    }
 
     /*
      * WO-16C #133. A log BESIDE an already-committed write: the
@@ -353,6 +368,7 @@ router.patch('/tenants/:id/status', async (req: Request, res: Response) => {
         from: before.rows[0].status,
         to: status,
         reason: reason.trim(),
+        anaRunsStopped: anaRunsStopped.length,
       },
     });
 
@@ -427,6 +443,14 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
        RETURNING id, name, email, status, updated_at`,
       [status, id]
     );
+    // A suspended or deactivated person's live AnA runs stop now, on every
+    // device, with `session_ended` (AnA detach §2.9); the audit row below
+    // says how many this decision stopped.
+    let anaRunsStopped: string[] = [];
+    if (status !== 'active') {
+      const { stopRunsFor } = await import('../../services/ana/run-control.js');
+      anaRunsStopped = await stopRunsFor(getPool(), { userId: id }, { cause: 'account_deactivated', byUserId: actorUserIdOf(req) });
+    }
 
     /*
      * WO-16C #133. A log BESIDE an already-committed write: the
@@ -451,6 +475,7 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
         from: before.rows[0].status,
         to: status,
         reason: reason.trim(),
+        anaRunsStopped: anaRunsStopped.length,
       },
     });
 

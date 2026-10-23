@@ -139,7 +139,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'DUNS Number',
             type: 'text',
             placeholder: 'e.g., 123456789',
-            helpText: 'Dun & Bradstreet number required for FDA submissions per OMB guidance.',
+            helpText: 'Optional. An IND (Form FDA 1571) does not require a DUNS number; FDA uses DUNS mainly to identify establishments for drug establishment registration and listing.',
             validation: {
               pattern: '^\\d{9}$',
               patternMessage: 'DUNS number must be exactly 9 digits.',
@@ -155,7 +155,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'What type of IND are you filing, and is this an original submission or an amendment? The submission type dictates the required content and review pathway.',
         guidance:
-          'A Commercial IND (21 CFR 312.23) supports the full development program toward NDA/BLA approval. A Research (Investigator) IND (21 CFR 312.2(b)) is filed by a physician who both initiates and conducts the study. An Emergency IND (21 CFR 312.310) permits immediate use in a life-threatening situation before a standard IND is in effect. An amendment (21 CFR 312.31) modifies an existing IND and must describe what has changed.',
+          'A Commercial IND (21 CFR 312.23) supports the full development program toward NDA/BLA approval. A Research (Investigator) IND is filed by a sponsor-investigator (21 CFR 312.3(b)), typically a physician who both initiates and conducts the study, and must meet the same content requirements of 21 CFR 312.23. An Emergency IND (21 CFR 312.310) permits immediate use in a life-threatening situation before a standard IND is in effect. An amendment (21 CFR 312.31) modifies an existing IND and must describe what has changed.',
         fields: [
           {
             id: 'ind_type_selection',
@@ -164,7 +164,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             required: true,
             options: [
               { value: 'commercial', label: 'Commercial IND', description: '21 CFR 312.23 — full development program toward marketing approval' },
-              { value: 'research', label: 'Research / Investigator IND', description: '21 CFR 312.2(b) — physician-initiated, physician-conducted study' },
+              { value: 'research', label: 'Research / Investigator IND', description: 'Sponsor-investigator (21 CFR 312.3(b)) — physician-initiated, physician-conducted study' },
               { value: 'emergency', label: 'Emergency IND', description: '21 CFR 312.310 — life-threatening condition, no alternative therapy' },
             ],
           },
@@ -252,7 +252,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Provide details about the investigational drug product. These are required elements under 21 CFR 312.23(a)(7).',
         guidance:
-          'Per 21 CFR 312.23(a)(7), the IND must include a description of the drug substance and drug product, including the name, chemical structure, mechanism of action, route of administration, and proposed indication. For biologics, describe the expression system and purification process at a high level. Include the USAN/INN if one has been assigned.',
+          'Per 21 CFR 312.23, the IND must identify the drug: its name, structural formula, pharmacological class, formulation and route of administration go in the introductory statement (312.23(a)(3)), together with the broad objectives and proposed indication; mechanism of action goes in the pharmacology section (312.23(a)(8)); and the description of the drug substance and drug product goes in the chemistry, manufacturing and controls section (312.23(a)(7)). For biologics, describe the expression system and purification process at a high level. Include the USAN/INN if one has been assigned.',
         fields: [
           {
             id: 'drug_name_generic',
@@ -325,7 +325,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Expedited Program Designations',
             type: 'multi_select',
             options: [
-              { value: 'fast_track', label: 'Fast Track (21 CFR 312.300)', description: 'Serious condition with unmet need' },
+              { value: 'fast_track', label: 'Fast Track (FD&C Act 506(b))', description: 'Serious condition with unmet need' },
               { value: 'breakthrough', label: 'Breakthrough Therapy', description: 'Substantial improvement over existing therapies' },
               { value: 'rmat', label: 'RMAT (Regenerative Medicine Advanced Therapy)', description: 'Cell/gene therapy for serious condition' },
               { value: 'none', label: 'None at this time' },
@@ -422,7 +422,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the formulation composition, dosage form, and manufacturing site for the investigational product.',
         guidance:
-          'Per 21 CFR 312.23(a)(7)(iv)(a), the IND chemistry section must describe the drug product including its components, composition, and manufacturing. All excipients should be listed with their function. Novel excipients (not in the FDA Inactive Ingredients Database, IIG) require additional safety justification. Clinical supplies must be manufactured under cGMP per 21 CFR Parts 210 and 211.',
+          'Per 21 CFR 312.23(a)(7)(iv)(b), the IND chemistry section must describe the drug product including its components, composition, and manufacturing. All excipients should be listed with their function. Novel excipients (not in the FDA Inactive Ingredients Database, IIG) require additional safety justification. Clinical supplies must be manufactured under cGMP: 21 CFR Parts 210 and 211 apply from Phase 2 onward, while most Phase 1 investigational drugs are exempt from Part 211 under 21 CFR 210.2(c) and follow FDA guidance on CGMP for Phase 1 investigational drugs.',
         fields: [
           {
             id: 'dosage_form',
@@ -476,7 +476,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'manufacturing_site_fda_inspected',
             label: 'Has this manufacturing site been inspected by FDA within the last 3 years?',
             type: 'yes_no',
-            helpText: 'FDA conducts pre-approval inspections (PAI) per 21 CFR 211. A site without prior FDA inspection history may receive increased scrutiny.',
+            helpText: 'FDA conducts pre-approval inspections (PAI) during NDA/BLA review (CPGM 7346.832), not before an IND takes effect. A site without prior FDA inspection history may receive increased scrutiny at the marketing application stage.',
           },
           {
             id: 'gmp_compliance',
@@ -484,7 +484,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             required: true,
             helpText:
-              'Per 21 CFR Parts 210 and 211, all clinical trial material must be manufactured under current Good Manufacturing Practice (cGMP). Non-compliance is grounds for clinical hold per 21 CFR 312.42.',
+              'All clinical trial material must be manufactured under current Good Manufacturing Practice (cGMP). Investigational drugs for Phase 2 and Phase 3 studies must comply with 21 CFR Parts 210 and 211; most Phase 1 investigational drugs are exempt from Part 211 under 21 CFR 210.2(c) but must still be made under cGMP as required by FD&C Act 501(a)(2)(B), following FDA guidance on CGMP for Phase 1 investigational drugs (2008). Non-compliance is grounds for clinical hold per 21 CFR 312.42.',
           },
         ],
         defaultNext: 'nonclinical_summary',
@@ -496,7 +496,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             title: 'cGMP Non-Compliance',
             message:
               'Clinical trial material must be manufactured under cGMP. FDA will place a clinical hold (21 CFR 312.42(b)(1)(iv)) if cGMP compliance cannot be demonstrated.',
-            reference: '21 CFR Parts 210, 211; 21 CFR 312.42',
+            reference: 'FD&C Act 501(a)(2)(B); 21 CFR 210.2(c); 21 CFR Parts 210, 211 (Phase 2 onward); 21 CFR 312.42',
           },
           {
             id: 'novel_excipient_flag',
@@ -513,7 +513,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Manufacturing Site Not Recently FDA-Inspected',
             message:
-              'A manufacturing site without recent FDA inspection history may face a pre-approval inspection (PAI), which can delay clinical supply release. Consider proactive engagement with the FDA district office.',
+              'FDA does not routinely inspect the manufacturing site before an IND takes effect, and a pre-approval inspection (PAI) does not gate clinical supply release; PAIs occur during NDA/BLA review. A site without recent FDA inspection history may face a PAI later, at the marketing application stage, so confirm its cGMP compliance status early. Consider proactive engagement with the FDA district office.',
             reference: '21 CFR 211; FDA Compliance Program Guidance Manual 7346.832',
           },
         ],
@@ -584,7 +584,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Immunogenicity Assessment Plan in Place (biologics only)',
             type: 'yes_no',
             visibleWhen: { field: 'is_biologic', operator: 'eq', value: true },
-            helpText: 'Per FDA Guidance on Immunogenicity Testing (2014) and ICH S6(R1), biologic products require an immunogenicity risk assessment and anti-drug antibody (ADA) assay strategy.',
+            helpText: 'Per FDA Guidance "Immunogenicity Assessment for Therapeutic Protein Products" (2014) and ICH S6(R1), biologic products require an immunogenicity risk assessment and anti-drug antibody (ADA) assay strategy.',
           },
         ],
         defaultNext: 'toxicology',
@@ -596,7 +596,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             title: 'Biologic Product Missing Immunogenicity Assessment Plan',
             message:
               'Biologic products require an immunogenicity risk assessment and validated ADA assay strategy before Phase 1. FDA expects an immunogenicity assessment plan in the IND, including screening, confirmatory, and neutralizing antibody assays.',
-            reference: 'FDA Guidance: Immunogenicity Testing of Therapeutic Protein Products (2014); ICH S6(R1)',
+            reference: 'FDA Guidance: Immunogenicity Assessment for Therapeutic Protein Products (2014); FDA Guidance: Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection (2019); ICH S6(R1)',
           },
         ],
       },
@@ -669,7 +669,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Are carcinogenicity studies needed per ICH S1A?',
             type: 'select',
             options: [
-              { value: 'not_yet', label: 'Not yet — typically required before Phase 3 / NDA' },
+              { value: 'not_yet', label: 'Not yet — typically required for the marketing application (NDA), not before Phase 3 unless there is a specific concern' },
               { value: 'completed', label: 'Completed' },
               { value: 'waived', label: 'Waived (with scientific justification)' },
             ],
@@ -684,7 +684,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'GLP Toxicology Studies Required',
             message:
-              'GLP-compliant pivotal toxicology studies (21 CFR Part 58) are required before initiating human studies. Absence of GLP tox data will result in a clinical hold per 21 CFR 312.42(b)(1)(ii).',
+              'GLP-compliant pivotal toxicology studies (21 CFR Part 58) are required before initiating human studies. Absence of GLP tox data may result in a clinical hold per 21 CFR 312.42(b)(1)(i) and (iv).',
             reference: '21 CFR 312.23(a)(8); 21 CFR Part 58; ICH M3(R2)',
           },
           {
@@ -693,8 +693,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Genetic Toxicology Studies Required',
             message:
-              'The ICH S2(R1) standard genotoxicity battery must be completed before first-in-human dosing. Missing genotoxicity data is grounds for clinical hold.',
-            reference: 'ICH S2(R1); ICH M3(R2) Section 8',
+              'Per ICH M3(R2), an in vitro bacterial reverse mutation (Ames) assay must be completed before first-in-human dosing, with an additional assessment of chromosomal damage in a mammalian system before multiple-dose trials; the complete ICH S2(R1) standard genotoxicity battery must be completed before initiation of Phase 2. Missing genotoxicity data is grounds for clinical hold.',
+            reference: 'ICH S2(R1); ICH M3(R2) Section 9',
           },
         ],
       },
@@ -861,7 +861,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the status and content of the Investigator\'s Brochure (IB). Per 21 CFR 312.23(a)(5), the IB is a required component of the initial IND submission.',
         guidance:
-          'Per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human participants. The IB should be updated at least annually (21 CFR 312.55(a)) and whenever significant new information becomes available. The IB structure should follow ICH E6(R3) Appendix A (Investigator\'s Brochure) and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
+          'Per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human participants. The IB should be reviewed at least annually and revised as necessary (ICH E6 GCP), and the sponsor must keep each participating investigator informed of significant new information as the investigation proceeds (21 CFR 312.55(b)). The IB structure should follow ICH E6(R3) Appendix A (Investigator\'s Brochure) and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
         fields: [
           {
             id: 'ib_version',
@@ -910,7 +910,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Provide details about the principal investigator(s) and planned clinical sites. Each site requires Form FDA 1572 and IRB approval.',
         guidance:
-          'Per 21 CFR 312.53, each participating investigator must complete Form FDA 1572 (Statement of Investigator), which outlines qualifications, commitments, and the IRB overseeing the study. The PI must be qualified by training and experience as an appropriate expert per 21 CFR 312.53(c)(1). Institutional Review Board approval is required per 21 CFR Part 56 before any study activities can begin, including informed consent per 21 CFR Part 50.',
+          'Per 21 CFR 312.53, each participating investigator must complete Form FDA 1572 (Statement of Investigator), which outlines qualifications, commitments, and the IRB overseeing the study. The sponsor must select only investigators qualified by training and experience as appropriate experts to investigate the drug, per 21 CFR 312.53(a). Institutional Review Board approval is required per 21 CFR Part 56 before any study activities can begin, including informed consent per 21 CFR Part 50.',
         fields: [
           {
             id: 'pi_name',
@@ -1004,7 +1004,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the safety reporting plan for the IND. FDA requires timely reporting of serious adverse events and annual reports.',
         guidance:
-          'Per 21 CFR 312.32, the sponsor must report to FDA any suspected adverse reaction that is both serious and unexpected (SUSAR) within 15 calendar days of initial receipt (7 days for fatal or life-threatening events). IND Safety Reports must be submitted per 21 CFR 312.32(c) using Form FDA 3500A (MedWatch). The sponsor must also notify all participating investigators per 21 CFR 312.32(c)(1)(iii). Annual reports are due per 21 CFR 312.33 within 60 days of the IND anniversary date. Per ICH E2A, the sponsor must maintain a Development Safety Update Report (DSUR) framework.',
+          'Per 21 CFR 312.32, the sponsor must report to FDA any suspected adverse reaction that is both serious and unexpected (SUSAR) within 15 calendar days after the sponsor determines that the information qualifies for reporting (7 calendar days after the sponsor\'s initial receipt of the information for unexpected fatal or life-threatening suspected adverse reactions). IND Safety Reports must be submitted per 21 CFR 312.32(c) using Form FDA 3500A (MedWatch). The sponsor must also notify all participating investigators per 21 CFR 312.32(c)(1). Annual reports are due per 21 CFR 312.33 within 60 days of the IND anniversary date. Per ICH E2F, the sponsor must maintain a Development Safety Update Report (DSUR) framework.',
         fields: [
           {
             id: 'safety_reporting_sops',
@@ -1032,7 +1032,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Confirmed SUSAR Reporting Timeline Awareness',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 312.32: 7 calendar days for fatal/life-threatening SUSARs (with 8-day follow-up); 15 calendar days for all other SUSARs. Are these timelines built into your safety SOPs?',
+            helpText: 'Per 21 CFR 312.32: 7 calendar days for fatal/life-threatening SUSARs (follow-up information submitted as soon as available, no later than 15 calendar days after receipt); 15 calendar days for all other SUSARs. Are these timelines built into your safety SOPs?',
           },
           {
             id: 'dsur_plan',
@@ -1043,7 +1043,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'annual_report_only', label: 'IND Annual Report (21 CFR 312.33) only' },
               { value: 'both', label: 'Both DSUR (ICH E2F) and IND Annual Report' },
             ],
-            helpText: 'ICH E2F recommends annual DSURs for all investigational products. The FDA IND Annual Report (21 CFR 312.33) is separately required and due within 60 days of the IND anniversary.',
+            helpText: 'ICH E2F recommends annual DSURs for all investigational products. The FDA IND Annual Report (21 CFR 312.33) is due within 60 days of the IND anniversary; FDA accepts a DSUR prepared per ICH E2F in lieu of it, provided the DSUR includes the US-specific annual report content and is submitted on that timeline.',
           },
           {
             id: 'safety_monitoring_plan_detail',
@@ -1065,7 +1065,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Have you had any previous interactions with the FDA regarding this product? Pre-IND meetings and prior correspondence can significantly shape the IND strategy.',
         guidance:
-          'Per 21 CFR 312.82 and the FDA Guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (2017), sponsors may request a Pre-IND (Type B) meeting to discuss IND content, nonclinical requirements, clinical trial design, and CMC strategy. FDA responses from Pre-IND meetings should be addressed in the IND submission. Include Type A, B, or C meeting minutes and any FDA written responses.',
+          'Per 21 CFR 312.82 and the FDA draft guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (revised September 2023, which replaced the 2017 draft and added Type D and INTERACT meetings), sponsors may request a Pre-IND (Type B) meeting to discuss IND content, nonclinical requirements, clinical trial design, and CMC strategy. FDA responses from Pre-IND meetings should be addressed in the IND submission. Include Type A, B, or C meeting minutes and any FDA written responses.',
         fields: [
           {
             id: 'previous_fda_interactions',
@@ -1096,7 +1096,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'fda_division',
             label: 'FDA Review Division',
             type: 'text',
-            placeholder: 'e.g., Division of Oncology Products 1, Office of New Drugs / CDER',
+            placeholder: 'e.g., Division of Oncology 1, Office of Oncologic Diseases, Office of New Drugs / CDER',
             helpText: 'Knowing the review division helps anticipate expectations and timing. You can find this from the Pre-IND meeting or FDA correspondence.',
           },
           {
@@ -1128,7 +1128,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Since this is an IND amendment, provide a detailed summary of what has changed since the last submission. FDA reviewers need a clear description of all modifications.',
         guidance:
-          'Per 21 CFR 312.31 (Amendments to an IND), amendments must describe the nature and significance of each change. Protocol amendments (21 CFR 312.30) must describe the change, the rationale, and any effect on subject safety. CMC amendments must describe manufacturing changes and their impact on product quality. Safety reports (21 CFR 312.32) must be filed as IND Safety Reports. Information amendments (21 CFR 312.31(b)) cover all other changes. Ensure the amendment cover letter provides a clear summary of changes with cross-references to the affected sections.',
+          'Per 21 CFR 312.31 (Information amendments), an information amendment must state the nature and purpose of the amendment. Protocol amendments (21 CFR 312.30) must describe the change, the rationale, and any effect on subject safety. CMC amendments must describe manufacturing changes and their impact on product quality. Safety reports (21 CFR 312.32) must be filed as IND Safety Reports. Information amendments (21 CFR 312.31(a)) cover essential information not within the scope of a protocol amendment, an IND safety report or the annual report. Ensure the amendment cover letter provides a clear summary of changes with cross-references to the affected sections.',
         fields: [
           {
             id: 'amendment_rationale',
@@ -1182,7 +1182,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Let\'s cover the submission timeline, environmental considerations, and final regulatory checklist.',
         guidance:
-          'Per 21 CFR 312.40, the FDA has 30 calendar days to review an IND before clinical trials may proceed. If FDA does not place a clinical hold within 30 days, the IND goes into effect and studies may begin. A Special Protocol Assessment (SPA, 21 CFR 312.82 and FDA Guidance 2018) adds 45 days of FDA review for protocol agreement. Per 21 CFR 312.23(a)(7)(iv)(e), an Environmental Assessment (EA) or Categorical Exclusion (CE) per 21 CFR Part 25 must be included. REMS evaluation is required per 21 USC 355-1 (FDAAA Section 505-1).',
+          'Per 21 CFR 312.40, the FDA has 30 calendar days to review an IND before clinical trials may proceed. If FDA does not place a clinical hold within 30 days, the IND goes into effect and studies may begin. A Special Protocol Assessment (SPA, FD&C Act section 505(b)(5)(B) and FDA Guidance: Special Protocol Assessment, 2018) adds 45 days of FDA review for protocol agreement. Per 21 CFR 312.23(a)(7)(iv)(e), an Environmental Assessment (EA) or Categorical Exclusion (CE) per 21 CFR Part 25 must be included. A REMS is not an IND requirement: FD&C Act section 505-1 (21 USC 355-1), added by FDAAA Section 901, lets FDA require a REMS for a drug under a pending or approved NDA or BLA.',
         fields: [
           {
             id: 'target_ind_submission_date',
@@ -1202,7 +1202,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'spa_requested',
             label: 'Special Protocol Assessment (SPA) Requested',
             type: 'yes_no',
-            helpText: 'An SPA (21 CFR 312.82) provides binding FDA agreement on trial design, endpoints, and statistical analysis. FDA has 45 days to respond.',
+            helpText: 'An SPA (FD&C Act section 505(b)(5)(B)) provides binding FDA agreement on trial design, endpoints, and statistical analysis. FDA has 45 days to respond.',
           },
           {
             id: 'environmental_assessment',
@@ -1210,11 +1210,11 @@ export function createIndSubmissionFlow(): FlowDefinition {
             type: 'select',
             required: true,
             options: [
-              { value: 'categorical_exclusion', label: 'Categorical Exclusion (21 CFR 25.31(a))', description: 'Most IND clinical investigations qualify' },
+              { value: 'categorical_exclusion', label: 'Categorical Exclusion (21 CFR 25.31(e))', description: 'Most IND clinical investigations qualify' },
               { value: 'ea_prepared', label: 'Environmental Assessment Prepared (21 CFR Part 25)' },
               { value: 'not_addressed', label: 'Not Yet Addressed' },
             ],
-            helpText: 'Per 21 CFR 25.31(a), most IND submissions qualify for a categorical exclusion from the requirement to prepare an environmental assessment.',
+            helpText: 'Per 21 CFR 25.31(e), most IND submissions qualify for a categorical exclusion from the requirement to prepare an environmental assessment.',
           },
           {
             id: 'rems_assessment',
@@ -1225,7 +1225,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'rems_likely', label: 'REMS likely required — preliminary plan prepared' },
               { value: 'not_assessed', label: 'Not yet assessed' },
             ],
-            helpText: 'Per FDAAA Section 505-1 (21 USC 355-1), FDA may require a Risk Evaluation and Mitigation Strategy for products with known serious safety risks.',
+            helpText: 'Per FD&C Act section 505-1 (21 USC 355-1, added by FDAAA), FDA may require a Risk Evaluation and Mitigation Strategy for products with known serious safety risks.',
           },
           {
             id: 'additional_notes',
@@ -1250,8 +1250,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'SPA Request — Additional Review Timeline',
             message:
-              'A Special Protocol Assessment adds 45 days to the FDA review timeline. Ensure the protocol is finalized before SPA submission. FDA agreement is binding unless the sponsor fails to follow the agreed-upon protocol.',
-            reference: '21 CFR 312.82; FDA Guidance: Special Protocol Assessment (2018)',
+              'A Special Protocol Assessment adds 45 days to the FDA review timeline. Ensure the protocol is finalized before SPA submission. An SPA agreement binds FDA, but it can be changed with the sponsor\'s written agreement, or if a substantial scientific issue essential to determining safety or effectiveness is identified after testing begins (FD&C Act 505(b)(5)(C)); per FDA\'s SPA guidance it also no longer binds if the sponsor does not follow the agreed protocol or the data relied on prove false, misleading or materially incomplete.',
+            reference: 'FD&C Act section 505(b)(5)(B); FDA Guidance: Special Protocol Assessment (2018)',
           },
           {
             id: 'environmental_not_addressed',
@@ -1259,7 +1259,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Environmental Assessment Not Addressed',
             message:
-              'An environmental assessment or categorical exclusion claim (21 CFR Part 25) must be included in the IND. Most clinical investigations qualify for a categorical exclusion per 21 CFR 25.31(a), but the claim must be explicitly stated.',
+              'An environmental assessment or categorical exclusion claim (21 CFR Part 25) must be included in the IND. Most clinical investigations qualify for a categorical exclusion per 21 CFR 25.31(e), but the claim must be explicitly stated.',
             reference: '21 CFR Part 25; 21 CFR 312.23(a)(7)(iv)(e)',
           },
           {
@@ -1268,8 +1268,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'REMS Evaluation Not Performed',
             message:
-              'While REMS is typically not required at the IND stage, it is prudent to assess REMS potential early. Known safety signals (e.g., QTc prolongation, hepatotoxicity, teratogenicity) may require a REMS plan during development.',
-            reference: '21 USC 355-1 (FDAAA Section 505-1)',
+              'While REMS is typically not required at the IND stage, it is prudent to assess REMS potential early. Known safety signals (e.g., QTc prolongation, hepatotoxicity, teratogenicity) may lead FDA to require a REMS at the marketing application (NDA/BLA) stage.',
+            reference: 'FD&C Act section 505-1 (21 USC 355-1)',
           },
         ],
       },
@@ -1286,6 +1286,17 @@ export function createIndSubmissionFlow(): FlowDefinition {
         guidance:
           'Per 21 CFR 312.23(a)(7)(iv)(a) and ICH Q6A (Specifications: Test Procedures and Acceptance Criteria for New Drug Substances and New Drug Products: Chemical Substances), the IND must include a description of the drug substance, its physical and chemical characteristics, stability, and analytical controls. For chiral compounds, identify the stereochemistry and enantiomeric purity. Describe any known polymorphs (ICH Q6A Decision Tree #4) and their impact on bioavailability. Include stability-indicating analytical methods.',
         fields: [
+          {
+            /* 2026-10-22 (D2): asked so ind_drug_substance can be assessed. */
+            id: 'drug_substance',
+            label: 'Drug Substance Identity and Source',
+            type: 'textarea',
+            required: false,
+            placeholder:
+              'e.g., ABC-1234 free base (proposed INN: exampletinib). Synthetic small molecule, manufactured by Example API Co., Site X, by a 6-step chemical synthesis. Or: recombinant humanised IgG1 expressed in CHO cells.',
+            helpText:
+              'The CMC section of an IND describes the drug substance, including its physical, chemical or biological characteristics, its manufacturer and its general method of preparation (21 CFR 312.23(a)(7)). For a biologic, name the expression system or source material.',
+          },
           {
             id: 'molecular_formula',
             label: 'Molecular Formula and Weight',
@@ -1330,7 +1341,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'racemate', label: 'Racemic mixture — justified for development' },
               { value: 'na_biologic', label: 'Not applicable (biologic)' },
             ],
-            helpText: 'Per FDA Policy Statement on Development of New Stereoisomeric Drugs (1992), single-enantiomer development is generally preferred. A racemate requires justification.',
+            helpText: 'Per FDA Policy Statement on Development of New Stereoisomeric Drugs (1992), the sponsor may develop either a racemate or a single enantiomer; either way, the stereoisomeric composition must be characterised and controlled, and the individual enantiomers\' pharmacology and pharmacokinetics assessed to support the choice.',
           },
           {
             id: 'stability_indicating_methods',
@@ -1350,7 +1361,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the drug product composition in detail, including excipient justification and container closure system.',
         guidance:
-          'Per 21 CFR 312.23(a)(7)(iv)(a), the IND must describe the drug product composition, including all components and their amounts. Excipient selection should be justified by reference to the FDA Inactive Ingredients Guide (IIG) database with regard to route and maximum daily exposure. The container closure system must meet 21 CFR 211.94 requirements and be suitable for its intended use. Compatibility studies between drug product and container closure system should be summarized, especially for parenteral products (USP <661>, <381>).',
+          'Per 21 CFR 312.23(a)(7)(iv)(b), the IND must describe the drug product composition, including all components and their amounts. Excipient selection should be justified by reference to the FDA Inactive Ingredients Guide (IIG) database with regard to route and maximum daily exposure. The container closure system must meet 21 CFR 211.94 requirements and be suitable for its intended use. Compatibility studies between drug product and container closure system should be summarized, especially for parenteral products (USP <661>, <381>).',
         fields: [
           {
             id: 'quantitative_composition',
@@ -1408,7 +1419,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the stability program for the drug substance and drug product. What data are available to support the proposed shelf life and storage conditions?',
         guidance:
-          'Per ICH Q1A(R2) "Stability Testing of New Drug Substances and Drug Products," stability studies must include long-term (25°C/60% RH), accelerated (40°C/75% RH), and, where relevant, intermediate (30°C/65% RH) conditions. Forced degradation (stress testing) per ICH Q1A(R2) Section 2.1.2 should demonstrate specificity of the stability-indicating method. At the IND stage, sufficient stability data must support the proposed clinical trial duration. A minimum of 1-2 months accelerated data and available long-term data should be included per ICH Q1A(R2) and 21 CFR 312.23(a)(7)(iv)(b).',
+          'Per ICH Q1A(R2) "Stability Testing of New Drug Substances and Drug Products," stability studies must include long-term (25°C/60% RH), accelerated (40°C/75% RH), and, where relevant, intermediate (30°C/65% RH) conditions. Forced degradation (stress testing) per ICH Q1A(R2) Section 2.1.2 should demonstrate specificity of the stability-indicating method. At the IND stage, sufficient stability data must support the proposed clinical trial duration. Under 21 CFR 312.23(a)(7) and FDA\'s IND CMC guidances, the IND should include the available accelerated and long-term data showing the material stays within specification for the planned clinical studies; the ICH Q1A(R2) data package applies to the marketing application, not the IND.',
         fields: [
           {
             id: 'long_term_stability_data',
@@ -1479,8 +1490,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'No Stability Data Available',
             message:
-              'ICH Q1A(R2) requires stability data at submission. At minimum, preliminary accelerated stability data (1-3 months at 40°C/75% RH) should be available for the IND. Absence of any stability data may result in a Refuse to File or clinical hold.',
-            reference: 'ICH Q1A(R2); 21 CFR 312.23(a)(7)(iv)(b)',
+              '21 CFR 312.23(a)(7) requires the IND to include stability information showing that the drug substance and drug product remain within specification for the planned clinical studies (ICH Q1A(R2) governs the registration stability package, not the IND). At minimum, preliminary accelerated stability data (1-3 months at 40°C/75% RH) should be available for the IND. Absence of any stability data may result in a clinical hold (21 CFR 312.42); Refuse to File applies to NDAs/BLAs, not INDs.',
+            reference: '21 CFR 312.23(a)(7); FDA IND CMC guidance',
           },
         ],
       },
@@ -1495,7 +1506,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the clinical pharmacology program. What PK/PD, ADME, and bioavailability data are available or planned?',
         guidance:
-          'Per 21 CFR 312.23(a)(7)(ii), the IND must include a summary of the pharmacokinetic and pharmacodynamic properties of the drug, including ADME (absorption, distribution, metabolism, and excretion) characterization. For oral drugs, bioavailability and food effect assessment are expected per FDA Guidance "Food-Effect Bioavailability and Fed Bioequivalence Studies" (2002, revised 2022). PK/PD modeling to support dose selection is increasingly expected by FDA, especially for oncology (ICH E4).',
+          'Per 21 CFR 312.23(a)(8)(i), the IND must describe the drug\'s pharmacological effects and mechanism(s) of action in animals and its absorption, distribution, metabolism, and excretion (ADME), if known; previous human experience, including any human pharmacokinetic data, is provided under 21 CFR 312.23(a)(9). For oral drugs, bioavailability and food effect assessment are expected per FDA Guidance "Assessing the Effects of Food on Drugs in INDs and NDAs — Clinical Pharmacology Considerations" (June 2022), which replaced the 2002 food-effect guidance. PK/PD modeling to support dose selection is increasingly expected by FDA, especially for oncology (ICH E4).',
         fields: [
           {
             id: 'nonclinical_pk_summary',
@@ -1526,7 +1537,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Food Effect Study Planned (oral products)?',
             type: 'yes_no',
             visibleWhen: { field: 'route_of_administration', operator: 'eq', value: 'oral' },
-            helpText: 'Per FDA Guidance "Food-Effect Bioavailability and Fed Bioequivalence Studies" (2022), a food effect study is recommended early in development for oral products to determine whether administration with food significantly alters PK.',
+            helpText: 'Per FDA Guidance "Assessing the Effects of Food on Drugs in INDs and NDAs — Clinical Pharmacology Considerations" (June 2022), a food effect study is recommended early in development for oral products to determine whether administration with food significantly alters PK.',
           },
           {
             id: 'bioavailability_estimate',
@@ -1551,14 +1562,14 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'What drug-drug interaction (DDI) assessments have been completed or are planned? In vitro CYP and transporter profiling are expected at the IND stage.',
         guidance:
-          'Per FDA Guidance "In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions" (January 2020) and "Clinical Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions" (January 2020), the sponsor must characterize the drug\'s metabolic pathway (CYP enzymes), assess whether it is a CYP inhibitor or inducer, and evaluate key transporter interactions (P-gp, BCRP, OATP1B1, OATP1B3, OCT2, OAT1, OAT3, MATE1, MATE2-K). The FDA DDI Decision Trees (Figure 1-7 of the 2020 guidance) dictate when clinical DDI studies are required.',
+          'Per ICH M12 "Drug Interaction Studies" (adopted by FDA as final guidance, August 2024, replacing FDA\'s January 2020 in vitro and clinical CYP/transporter DDI guidances), the sponsor must characterize the drug\'s metabolic pathway (CYP enzymes), assess whether it is a CYP inhibitor or inducer, and evaluate key transporter interactions (P-gp, BCRP, OATP1B1, OATP1B3, OCT2, OAT1, OAT3, MATE1, MATE2-K). The decision criteria in ICH M12 determine when clinical DDI studies are required.',
         fields: [
           {
             id: 'cyp450_profiling',
             label: 'CYP450 Metabolism Profiling Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Per FDA 2020 DDI Guidance, reaction phenotyping should identify all CYP enzymes contributing ≥25% to total metabolism. Major CYPs to evaluate: CYP1A2, 2B6, 2C8, 2C9, 2C19, 2D6, 3A4.',
+            helpText: 'Per ICH M12 (FDA final guidance, 2024), reaction phenotyping should identify all CYP enzymes contributing ≥25% to total metabolism. Major CYPs to evaluate: CYP1A2, 2B6, 2C8, 2C9, 2C19, 2D6, 3A4.',
           },
           {
             id: 'primary_cyp_enzymes',
@@ -1593,7 +1604,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Transporter Interaction Studies Completed',
             type: 'yes_no',
             required: true,
-            helpText: 'Per FDA 2020 DDI Guidance, evaluate the drug as a substrate and inhibitor of: P-gp, BCRP, OATP1B1, OATP1B3, OCT2, OAT1, OAT3, MATE1, MATE2-K.',
+            helpText: 'Per ICH M12 (FDA final guidance, 2024), evaluate the drug as a substrate and inhibitor of: P-gp, BCRP, OATP1B1, OATP1B3, OCT2, OAT1, OAT3, MATE1, MATE2-K.',
           },
           {
             id: 'transporters_assessed',
@@ -1627,8 +1638,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'CYP3A4 Substrate — Clinical DDI Studies Expected',
             message:
-              'This drug is metabolized by CYP3A4. Per FDA DDI Guidance (2020) Figure 4, clinical studies with a strong CYP3A4 inhibitor (e.g., itraconazole, ketoconazole) and strong inducer (e.g., rifampin) are expected. Plan these studies early in development.',
-            reference: 'FDA Guidance: Clinical Drug Interaction Studies (January 2020)',
+              'This drug is metabolized by CYP3A4. Per ICH M12 (FDA final guidance, 2024), clinical studies with a strong CYP3A4 inhibitor (e.g., itraconazole, ketoconazole) and strong inducer (e.g., rifampin) are expected. Plan these studies early in development.',
+            reference: 'ICH M12: Drug Interaction Studies (FDA final guidance, August 2024)',
           },
           {
             id: 'cyp450_not_profiled',
@@ -1636,8 +1647,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'CYP450 Profiling Not Completed',
             message:
-              'In vitro CYP reaction phenotyping is expected at the IND stage per FDA 2020 DDI Guidance. Without this data, FDA cannot assess DDI risk and may request it during the 30-day review.',
-            reference: 'FDA Guidance: In Vitro Drug Interaction Studies (January 2020)',
+              'In vitro CYP reaction phenotyping is expected at the IND stage per ICH M12 (FDA final guidance, 2024). Without this data, FDA cannot assess DDI risk and may request it during the 30-day review.',
+            reference: 'ICH M12: Drug Interaction Studies (FDA final guidance, August 2024)',
           },
         ],
       },
@@ -1648,7 +1659,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'What is the QTc/cardiac safety assessment strategy? Has the drug\'s potential for QT prolongation been evaluated?',
         guidance:
-          'Per ICH E14 "Clinical Evaluation of QT/QTc Interval Prolongation and Proarrhythmic Potential for Non-Antiarrhythmic Drugs" (R3, 2015) and ICH S7B "Nonclinical Evaluation of the Potential for Delayed Ventricular Repolarization," the sponsor must assess the drug\'s potential for QT prolongation. The traditional approach requires a dedicated Thorough QT (TQT) study. The ICH E14 Q&A (R3) allows an alternative concentration-QTc (C-QTc) modeling approach using ECG data from Phase 1. The nonclinical hERG assay (ICH S7B) should be completed before FIH dosing.',
+          'Per ICH E14 "Clinical Evaluation of QT/QTc Interval Prolongation and Proarrhythmic Potential for Non-Antiarrhythmic Drugs" (2005), with the E14 Q&A (R3, 2015) and the E14/S7B Q&As (2022), and ICH S7B "Nonclinical Evaluation of the Potential for Delayed Ventricular Repolarization," the sponsor must assess the drug\'s potential for QT prolongation. The traditional approach requires a dedicated Thorough QT (TQT) study. The ICH E14 Q&A (R3) allows an alternative concentration-QTc (C-QTc) modeling approach using ECG data from Phase 1. The nonclinical hERG assay (ICH S7B) should be completed before FIH dosing.',
         fields: [
           {
             id: 'herg_assay_completed',
@@ -1762,7 +1773,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the analytical methods, release specifications, and impurity control strategy for the drug substance and drug product.',
         guidance:
-          'Per 21 CFR 312.23(a)(7)(iv)(a) and ICH Q6A, the IND should include proposed specifications (test procedures and acceptance criteria) for both drug substance and drug product. Methods should be validated or at minimum qualified per ICH Q2(R2) "Validation of Analytical Procedures" (2023 revision). The impurity profile must be assessed per ICH Q3A(R2) "Impurities in New Drug Substances" and ICH Q3B(R2) "Impurities in New Drug Products." Impurities above ICH thresholds require identification and qualification.',
+          'Per 21 CFR 312.23(a)(7)(iv)(a)-(b) and ICH Q6A, the IND should include proposed specifications (test procedures and acceptance criteria) for both drug substance and drug product. Methods should be validated or at minimum qualified per ICH Q2(R2) "Validation of Analytical Procedures" (2023 revision). The impurity profile must be assessed per ICH Q3A(R2) "Impurities in New Drug Substances" and ICH Q3B(R2) "Impurities in New Drug Products." Impurities above ICH thresholds require identification and qualification.',
         fields: [
           {
             id: 'release_testing_summary',
@@ -1793,7 +1804,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'impurity_profile',
             label: 'Impurity Profile Summary',
             type: 'textarea',
-            placeholder: 'e.g., Process-related impurities: Impurity A (0.15%), Impurity B (0.08%). Degradation products: Des-fluoro degradant (0.12%). All below ICH Q3A reporting threshold (0.10%) except Impurity A — identified and qualified.',
+            placeholder: 'e.g., Process-related impurities: Impurity A (0.15%), Impurity B (0.08%). Degradation products: Des-fluoro degradant (0.12%). All above ICH Q3A(R2) reporting threshold (0.05%); Impurity A and the des-fluoro degradant exceed the identification threshold (0.10%) — identified; Impurity A qualified.',
             required: true,
           },
           {
@@ -1805,9 +1816,9 @@ export function createIndSubmissionFlow(): FlowDefinition {
           },
           {
             id: 'residual_solvents',
-            label: 'Residual Solvents Assessed per ICH Q3C(R8)?',
+            label: 'Residual Solvents Assessed per ICH Q3C(R9)?',
             type: 'yes_no',
-            helpText: 'ICH Q3C(R8) classifies residual solvents by toxicity (Class 1 = avoid, Class 2 = limit, Class 3 = low toxic potential). All solvents used in the synthesis must be assessed.',
+            helpText: 'ICH Q3C(R9) classifies residual solvents by toxicity (Class 1 = avoid, Class 2 = limit, Class 3 = low toxic potential). All solvents used in the synthesis must be assessed.',
           },
           {
             id: 'elemental_impurities',
@@ -1819,7 +1830,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'nitrosamine_assessment',
             label: 'Nitrosamine Impurity Risk Assessment Completed?',
             type: 'yes_no',
-            helpText: 'Per FDA Guidance "Control of Nitrosamine Impurities in Human Drugs" (2021), all sponsors must conduct a risk assessment for nitrosamine impurities (NDMA, NDEA, etc.) in their drug products.',
+            helpText: 'Per FDA Guidance "Control of Nitrosamine Impurities in Human Drugs" (Rev. 2, September 2024), FDA recommends (in non-binding guidance) that manufacturers and applicants assess and control the risk of nitrosamine impurities (NDMA, NDEA, etc.) in their drug products; assessing it early is good practice at the IND stage.',
           },
         ],
         defaultNext: 'pediatric_study_plan',
@@ -1839,8 +1850,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Nitrosamine Risk Assessment Not Completed',
             message:
-              'FDA requires all drug product sponsors to complete a nitrosamine impurity risk assessment per the 2021 guidance. Nitrosamine contamination (NDMA, NDEA, etc.) has led to major drug recalls. Complete this assessment before IND submission.',
-            reference: 'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (February 2021)',
+              'FDA recommends (in non-binding guidance) that manufacturers and applicants assess and control nitrosamine impurity risk per the current FDA guidance (Rev. 2, September 2024). Nitrosamine contamination (NDMA, NDEA, etc.) has led to major drug recalls. It is not a regulatory requirement for IND submission, but completing the assessment early is good practice.',
+            reference: 'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (Rev. 2, September 2024)',
           },
         ],
       },
@@ -1855,7 +1866,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'What is the pediatric development strategy? PREA requirements must be addressed for most new drugs and biologics.',
         guidance:
-          'Per the Pediatric Research Equity Act (PREA, as amended by FDARA 2017, 21 USC 355c) and FDA Guidance "Pediatric Study Plans: Content of and Process for Submitting Initial Pediatric Study Plans and Amended Initial Pediatric Study Plans" (2020), sponsors of new drugs and biologics must submit an initial Pediatric Study Plan (iPSP) no later than 60 days after the End-of-Phase 2 (EOP2) meeting request or at an equivalent timepoint. Orphan-designated drugs are exempt from PREA. Pediatric formulation development (age-appropriate dosage form per ICH E11(R1)) and juvenile animal studies should be considered early.',
+          'Per the Pediatric Research Equity Act (PREA, as amended by FDARA 2017, 21 USC 355c) and FDA Guidance "Pediatric Study Plans: Content of and Process for Submitting Initial Pediatric Study Plans and Amended Initial Pediatric Study Plans" (2020), sponsors of new drugs and biologics must submit an initial Pediatric Study Plan (iPSP) no later than 60 calendar days after the End-of-Phase 2 (EOP2) meeting, or at another time agreed with FDA. Indications with orphan designation are exempt from PREA, except molecularly targeted cancer drugs subject to section 505B(a)(3) (applicable to original applications submitted on or after August 18, 2020). Pediatric formulation development (age-appropriate dosage form per ICH E11(R1)) and juvenile animal studies should be considered early.',
         fields: [
           {
             id: 'prea_applicable',
@@ -1864,7 +1875,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             required: true,
             options: [
               { value: 'yes', label: 'Yes — PREA applies (non-orphan drug for disease relevant to pediatrics)' },
-              { value: 'orphan_exempt', label: 'No — Orphan Drug Designation exemption' },
+              { value: 'orphan_exempt', label: 'No — Orphan Drug Designation exemption (not available to molecularly targeted cancer drugs under 505B(a)(3))' },
               { value: 'waiver_planned', label: 'PREA waiver or deferral will be requested' },
               { value: 'not_determined', label: 'Not yet determined' },
             ],
@@ -1922,7 +1933,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Address the development strategy for special populations: renal impairment, hepatic impairment, geriatric patients, and reproductive toxicity.',
         guidance:
-          'Per ICH E7 "Studies in Support of Special Populations: Geriatrics" and FDA Guidances on Pharmacokinetics in Patients with Impaired Renal Function (2020) and Impaired Hepatic Function (2003), PK studies in organ-impaired populations are generally required during development. Reproductive and developmental toxicology per ICH S5(R3) must be completed before enrolling women of childbearing potential (WOCBP) in clinical trials. The FDA Pregnancy and Lactation Labeling Rule (PLLR, 21 CFR 201.57(c)(9)) requires structured safety information for these populations.',
+          'Per ICH E7 "Studies in Support of Special Populations: Geriatrics" and FDA Guidances on Pharmacokinetics in Patients with Impaired Renal Function (2020) and Impaired Hepatic Function (2003), PK studies in organ-impaired populations are generally required during development. Per ICH M3(R2), women of childbearing potential (WOCBP) may be enrolled in early clinical trials before embryo-fetal development (EFD) studies per ICH S5(R3) are completed, provided pregnancy risk is minimised through pregnancy testing and highly effective contraception; in the US, definitive EFD studies are generally expected before Phase 3, or before larger or longer trials without such controls. The FDA Pregnancy and Lactation Labeling Rule (PLLR, 21 CFR 201.57(c)(9)) requires structured safety information for these populations.',
         fields: [
           {
             id: 'renal_impairment_study',
@@ -1930,11 +1941,11 @@ export function createIndSubmissionFlow(): FlowDefinition {
             type: 'select',
             options: [
               { value: 'planned', label: 'Yes — dedicated renal impairment PK study planned' },
-              { value: 'not_needed', label: 'Not needed — minimal renal elimination (<30%)' },
+              { value: 'not_needed', label: 'Not needed — justified by elimination pathway and intended population' },
               { value: 'pop_pk', label: 'Will be assessed via population PK analysis' },
               { value: 'not_decided', label: 'Not yet decided' },
             ],
-            helpText: 'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020), a dedicated study is recommended when renal clearance accounts for ≥30% of total clearance or the drug has a narrow therapeutic index.',
+            helpText: 'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020), a renal impairment PK study is recommended for most drugs likely to be used in patients with renal impairment, including drugs eliminated mainly by non-renal routes; a reduced or staged design may be acceptable when renal elimination is minor.',
           },
           {
             id: 'hepatic_impairment_study',
@@ -1963,7 +1974,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             options: [
               { value: 'completed', label: 'Completed (embryo-fetal development studies per ICH S5(R3))' },
               { value: 'in_progress', label: 'In Progress' },
-              { value: 'planned', label: 'Planned — timing per ICH M3(R2) Table 3' },
+              { value: 'planned', label: 'Planned — timing per ICH M3(R2) Section 11 (Reproduction Toxicity Studies)' },
               { value: 'not_needed', label: 'Not needed — male-only study population initially' },
             ],
             helpText: 'Per ICH M3(R2) and ICH S5(R3), embryo-fetal development (EFD) studies must be completed before enrolling women of childbearing potential (WOCBP), unless adequate contraception requirements are in place.',
@@ -1985,7 +1996,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'sex_differences_assessment',
             label: 'Plan to Assess Sex-Based Differences in PK/PD',
             type: 'yes_no',
-            helpText: 'Per FDA Guidance "Evaluation of Sex-Specific Data in Medical Device Clinical Studies" and ICH E1/E7, adequate enrollment of both sexes and analysis of sex-based differences is expected.',
+            helpText: 'Per FDA Guideline "Study and Evaluation of Gender Differences in the Clinical Evaluation of Drugs" (1993), 21 CFR 312.33(a)(2) (IND annual report enrollment by sex) and 21 CFR 314.50(d)(5) (NDA effectiveness and safety data by gender), adequate enrollment of both sexes and analysis of sex-based differences is expected.',
           },
         ],
         defaultNext: null,
@@ -1997,7 +2008,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'WOCBP Enrollment — Ensure Reproductive Toxicology Coverage',
             message:
-              'Enrollment of women of childbearing potential requires embryo-fetal development (EFD) studies to be completed per ICH M3(R2) Table 3, or adequate contraception requirements per ICH M3(R2) Note 5 must be in place. Ensure pregnancy testing and reporting protocols are included in the clinical protocol.',
+              'Enrollment of women of childbearing potential requires embryo-fetal development (EFD) studies to be completed per ICH M3(R2) Section 11 (Reproduction Toxicity Studies), or adequate contraception requirements per ICH M3(R2) Note 5 must be in place. Ensure pregnancy testing and reporting protocols are included in the clinical protocol.',
             reference: 'ICH M3(R2) Section 11; ICH S5(R3)',
           },
         ],

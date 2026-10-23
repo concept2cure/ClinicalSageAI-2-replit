@@ -1,0 +1,19 @@
+# F18 review fixes: each mutation applied alone, the file restored and the restore checked after (mutate.py).
+# Tests: dispatchReadinessActs.test.tsx, submissionCenterBuilderSection.test.tsx
+# 16 mutations, 16 red. The last runs against dispatchReadinessProgramScope.test.tsx.
+RED  a write does not retire the arrival: the tests went red
+RED  Cancel does not retire the arrival: the tests went red
+RED  the place line stays above the leaves: the tests went red
+RED  several leaves called the one named: the tests went red
+RED  release-signature state read as blocked: the tests went red
+RED  no door while awaiting the release signature: the tests went red
+RED  transmit offered while the release must be re-signed: the tests went red
+RED  Builder acts on a frozen sequence: the tests went red
+RED  names without the market's title: the tests went red
+RED  list role dropped: the tests went red
+RED  the door note says 'your' signature again: the tests went red
+RED  the head wording: the tests went red
+RED  a leaf act told the form was not opened: the tests went red
+RED  focus taken whatever the person is on: the tests went red
+RED  focus never moved to the line: the tests went red
+RED  no-market hint without the way to record an existing submission: the tests went red

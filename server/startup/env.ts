@@ -17,24 +17,28 @@ export interface StartupFlags {
   experimentalRoutesEnabled: boolean;
   /**
    * Test/QA-only route families (test-assembly, integration-test) allowed to
-   * mount. Fenced OFF in production by default; set ENABLE_TEST_ROUTES=true to
-   * force-enable even in production (escape hatch for prod smoke tests).
+   * mount. Never in production: ENABLE_TEST_ROUTES=true, once an escape hatch
+   * for production smoke tests, is refused there at boot (MR-03 OPS-28).
    */
   testRoutesEnabled: boolean;
 }
 
 /**
- * Production refuses the dev/mock route flags, AUTH_BOUNDARY_MODE=warn and
+ * Production refuses the dev/mock/test route flags, AUTH_BOUNDARY_MODE=warn and
  * SECURITY_SELF_TEST_NONBLOCKING=true at boot: a flag flipped on in a production
  * deploy is a misconfiguration to catch before a dev surface is served to
  * customers (security audit 2026-09-24, IAM-16), or before a process with a
- * failing security self-test serves anyone (MR-08).
+ * failing security self-test serves anyone (MR-08). The hosted deployment also
+ * refuses every operator override (P-43; refuseHostedOverrides below).
  */
 function refuseForbiddenProductionPosture(): void {
   const PROD_FORBIDDEN_FLAGS = [
     'ENABLE_ANA_FEATURES_MOCK_ROUTES',
     'ENABLE_EXPERIMENTAL_ROUTES',
     'ENABLE_DEMO_ROUTES',
+    // Test-assembly and integration-test routes (MR-03 OPS-28). Nothing sets
+    // it, and test routes have no production use.
+    'ENABLE_TEST_ROUTES',
   ];
   const enabled = PROD_FORBIDDEN_FLAGS.filter(k => process.env[k] === 'true');
   if (enabled.length > 0) {
@@ -76,13 +80,102 @@ function refuseForbiddenProductionPosture(): void {
     );
     process.exit(1);
   }
+
+  refuseHostedOverrides(process.env);
+  refuseHostedOwnerCredential(process.env);
+}
+
+/** Set by the ECS agent in every task; a task definition cannot remove it. */
+function isEcsTask(env: NodeJS.ProcessEnv): boolean {
+  return Boolean(env.ECS_CONTAINER_METADATA_URI_V4 || env.ECS_CONTAINER_METADATA_URI);
+}
+
+/**
+ * The hosted deployment refuses every operator override (decision P-43,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md; MR-03 SEC-18).
+ *
+ * Each *_ACCEPT_* variable switches a production refusal off on the operator's
+ * written word: an unsealed audit chain, a permissive AI gate, vault documents
+ * on local disk, an HMAC signer, fixed AI responses. A self-hosted install (the
+ * compose install SKU) needs some of them and keeps them. The hosted stack
+ * needs none, and until this check only the deploy preflight kept them out
+ * (deploy-aws.yml), so a revision registered or edited outside the pipeline
+ * booted with one. The rule is the name's shape, so a later override is
+ * covered too; any value but `false` is an acceptance. AUDIT_REQUIRE_ENFORCE=false
+ * is the same kind of statement and is refused with them.
+ */
+function refuseHostedOverrides(env: NodeJS.ProcessEnv): void {
+  if (!isEcsTask(env)) return;
+  const accepted = Object.keys(env)
+    .filter(k => /^[A-Z0-9_]+_ACCEPT_[A-Z0-9_]+$/.test(k))
+    .filter(k => {
+      const v = (env[k] ?? '').trim().toLowerCase();
+      return v !== '' && v !== 'false';
+    })
+    .sort();
+  if ((env.AUDIT_REQUIRE_ENFORCE ?? '').trim().toLowerCase() === 'false') {
+    accepted.push('AUDIT_REQUIRE_ENFORCE=false');
+  }
+  if (accepted.length > 0) {
+    console.error(
+      `[FATAL] Operator overrides are not permitted on the hosted deployment (an ECS task): ` +
+        `${accepted.join(', ')}. Each switches a production refusal off. Remove it from the ` +
+        'task definition (terraform/stack); a self-hosted install may keep it.',
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Every name a production process reads a database owner's URL from, and the
+ * password app_service is minted with (MR-03 Stage 3, OPS-16; MR-05 DATA-03).
+ * The owner role owns every table and bypasses RLS. The hosted API serves as
+ * app_service (APP_DATABASE_URL) and creates no schema, and only the one-off
+ * database task carries these (terraform/modules/ecs-fargate). deploy-aws.yml's
+ * preflight refuses the same names on the API task definition;
+ * env-hosted-owner-credential.test.ts holds the two lists together.
+ */
+export const HOSTED_OWNER_CREDENTIAL_NAMES = [
+  'DATABASE_URL',
+  'DATABASE_URL_PROD',
+  'DATABASE_NEON_NEW_SECRET',
+  'NEON_DATABASE_URL',
+  'DATABASE_OWNER_URL',
+  'APP_SERVICE_DB_PASSWORD',
+] as const;
+
+/**
+ * On the hosted deployment the API refuses to boot holding the owner's
+ * credential. The deploy preflight keeps it out of every revision the pipeline
+ * rolls; this keeps it out of one registered or edited outside the pipeline,
+ * as refuseHostedOverrides does for the overrides (P-43). A self-hosted install
+ * keeps its owner URL: it migrates from the same host.
+ */
+function refuseHostedOwnerCredential(env: NodeJS.ProcessEnv): void {
+  if (!isEcsTask(env)) return;
+  const held = HOSTED_OWNER_CREDENTIAL_NAMES.filter(k => (env[k] ?? '').trim() !== '');
+  if (held.length > 0) {
+    console.error(
+      `[FATAL] The database owner's credential is not permitted in the API on the hosted deployment ` +
+        `(an ECS task): ${held.join(', ')}. That role owns every table and bypasses RLS; the API ` +
+        'serves as app_service (APP_DATABASE_URL), and only the one-off database task holds it. ' +
+        'Remove it from the API task definition (terraform/stack).',
+    );
+    process.exit(1);
+  }
 }
 
 export function validateEnvironment(): void {
   const isProduction = process.env.NODE_ENV === 'production';
-  const required: string[] = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'].some(k => process.env[k])
-    ? []
-    : ['DATABASE_URL'];
+  // Production serves from the runtime role (APP_DATABASE_URL, NOSUPERUSER
+  // NOBYPASSRLS) and needs nothing else: the owner credential is the deploy's,
+  // and the boot creates no schema (MR-03 Stage 3, OPS-16). Elsewhere any one
+  // database URL will do, as before.
+  const required: string[] = isProduction
+    ? ['APP_DATABASE_URL']
+    : ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'APP_DATABASE_URL'].some(k => process.env[k])
+      ? []
+      : ['DATABASE_URL'];
 
   const jwtEnvByNodeEnv: Record<string, string> = {
     development: 'JWT_SECRET_DEV',
@@ -145,8 +238,7 @@ export function resolveStartupFlags(): StartupFlags {
     debug,
     experimentalRoutesEnabled:
       process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production',
-    testRoutesEnabled:
-      process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_ROUTES === 'true',
+    testRoutesEnabled: process.env.NODE_ENV !== 'production',
   };
 }
 

@@ -1,0 +1,84 @@
+# trunk's AnaToolExecutor.ts (HEAD), this change's tests and boundary modules
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a biologic program: the refusal in its own words, and no Q1E estimate 12ms
+   → expected { status: 'computed', …(3) } to match object { …(3) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a study filed under no program is not established, and not estimated 3ms
+   → expected 'computed' to be 'outside_composition_scope' // Object.is equality
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a small-molecule IND program is estimated as before 1ms
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > one study on a biologic program refuses the whole comparison 2ms
+   → expected { status: 'computed', …(3) } to match object { …(2) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > a study filed under no program is named, and nothing is assessed 1ms
+   → expected undefined to be 'CMC_MODALITY_NOT_ESTABLISHED' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > studies on a small-molecule IND program are assessed as before 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a monoclonal_antibody stated as the molecule type is refused before any answer is judged 6ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a adc stated as the molecule type is refused before any answer is judged 2ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a recombinant_protein stated as the molecule type is refused before any answer is judged 2ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a cell_therapy stated as the molecule type is refused before any answer is judged 1ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a gene_therapy stated as the molecule type is refused before any answer is judged 1ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a vaccine stated as the molecule type is refused before any answer is judged 1ms
+   → expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > peptide, which ICH Q3A(R2) and M7 exclude by scope, is refused 1ms
+   → expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > oligonucleotide, which ICH Q3A(R2) and M7 exclude by scope, is refused 1ms
+   → expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > "other" does not establish a small molecule 1ms
+   → expected undefined to be 'CMC_MODALITY_NOT_ESTABLISHED' // Object.is equality
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a later answer is refused when the molecule type stated earlier is a biologic 1ms
+   → expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a small molecule advances as before 1ms
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > the program the interview is bound to is asked too: a biologic program's interview takes no answer 2ms
+   → expected { …(4) } to match object { …(2) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked 1ms
+   → expected { …(4) } to match object { …(2) }
+ ✓ server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a program with no substance recorded yet is not refused: the interview is how it gets recorded 1ms
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > starting one on a biologic program is refused, so no one is walked through an interview that cannot finish 103ms
+   → expected { Object (error) } to match object { …(2) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > with a session, the program asked is the session's own, not the caller's 2ms
+   → expected { …(2) } to match object { …(2) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > resume does not re-present a session whose stated molecule type is outside the boundary 2ms
+   → expected { …(6) } to match object { …(3) }
+ × server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > in production, a caller-supplied flow_state for an interview that commits nothing is refused, as start refuses it 4ms
+   → .toMatch() expects to receive a string, but got undefined
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a biologic program: the refusal in its own words, and no Q1E estimate
+AssertionError: expected { status: 'computed', …(3) } to match object { …(3) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > estimate_recorded_shelf_life asks the boundary of the program the study is filed under > a study filed under no program is not established, and not estimated
+AssertionError: expected 'computed' to be 'outside_composition_scope' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > one study on a biologic program refuses the whole comparison
+AssertionError: expected { status: 'computed', …(3) } to match object { …(2) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > a study filed under no program is named, and nothing is assessed
+AssertionError: expected undefined to be 'CMC_MODALITY_NOT_ESTABLISHED' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > assess_recorded_batch_poolability asks it of every program the studies are filed under > studies on a small-molecule IND program are assessed as before
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a monoclonal_antibody stated as the molecule type is refused before any answer is judged
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a adc stated as the molecule type is refused before any answer is judged
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a recombinant_protein stated as the molecule type is refused before any answer is judged
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a cell_therapy stated as the molecule type is refused before any answer is judged
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a gene_therapy stated as the molecule type is refused before any answer is judged
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a vaccine stated as the molecule type is refused before any answer is judged
+AssertionError: expected 'intelligence_question' to be 'outside_composition_scope' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > peptide, which ICH Q3A(R2) and M7 exclude by scope, is refused
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > oligonucleotide, which ICH Q3A(R2) and M7 exclude by scope, is refused
+AssertionError: expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > "other" does not establish a small molecule
+AssertionError: expected undefined to be 'CMC_MODALITY_NOT_ESTABLISHED' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the molecule type stated > a later answer is refused when the molecule type stated earlier is a biologic
+AssertionError: expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > the program the interview is bound to is asked too: a biologic program's interview takes no answer
+AssertionError: expected { …(4) } to match object { …(2) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > a boundary that cannot be asked refuses as a failed read; the answer is not judged unasked
+AssertionError: expected { …(4) } to match object { …(2) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > starting one on a biologic program is refused, so no one is walked through an interview that cannot finish
+AssertionError: expected { Object (error) } to match object { …(2) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > with a session, the program asked is the session's own, not the caller's
+AssertionError: expected { …(2) } to match object { …(2) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > resume does not re-present a session whose stated molecule type is outside the boundary
+AssertionError: expected { …(6) } to match object { …(3) }
+ FAIL  server/services/ana/__tests__/cmc-tools-composition-boundary.test.ts > the CMC specification interview: the program, the session and the release > in production, a caller-supplied flow_state for an interview that commits nothing is refused, as start refuses it
+ Test Files  1 failed (1)
+      Tests  21 failed | 3 passed (24)

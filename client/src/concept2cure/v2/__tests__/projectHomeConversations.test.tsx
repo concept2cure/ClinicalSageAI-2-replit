@@ -33,7 +33,11 @@ const THREADS = [
 
 function route(threads: 'ok' | 'empty' | 'error' | 'shapeless') {
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', readiness: 42 });
+    if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301' });
+    // The readiness ring is the dossier read's home figure (F23).
+    if (url === `/api/c2c/projects/${PID}/dossier`) {
+      return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 42, counted: 50, complete: 21 }, markets: [], rows: [] });
+    }
     if (url.startsWith('/api/chat/threads?program_id=')) {
       if (threads === 'error') return fail(503);
       if (threads === 'shapeless') return ok({ data: [] });
@@ -114,7 +118,11 @@ describe('ProjectHome — older conversations are reachable', () => {
 
   function pages(pageOf: (offset: number) => Response) {
     apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', readiness: 42 });
+      if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301' });
+    // The readiness ring is the dossier read's home figure (F23).
+    if (url === `/api/c2c/projects/${PID}/dossier`) {
+      return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 42, counted: 50, complete: 21 }, markets: [], rows: [] });
+    }
       if (url.startsWith('/api/chat/threads?program_id=')) {
         const offset = Number(new URLSearchParams(url.split('?')[1]).get('offset') ?? 0);
         return pageOf(offset);
