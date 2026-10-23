@@ -1,0 +1,208 @@
+{
+  "qualifiedSourceCommit": "07617e6b3cef1232115051084a9c690c5eeb523b",
+  "implementationCommit": "34942873dbc19830c5af0e1b1f7a2b5ef38c8358",
+  "comparisonBase": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "scope": "Changed source plus selected test files and unchanged canonical converter/source/Word dependencies. Tests and real artifact runs preceded the source-only commit and documentation merge; these file hashes match the qualified tree.",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringExports.test.tsx",
+      "sha256": "f88b07cf33302301463721e94793e06ac005ba65ab1ccba6b6db48715e5f70aa"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx",
+      "sha256": "044962680a2bc87644efc3de44171fd5fa216f39c54bd985641c7518657f8063"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx",
+      "sha256": "e308938866d4bcf018b4b2df725f074cda39420a8c18a1bf1b89c1876d842720"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "sha256": "ac95fc3ce7a6421157b8d75834f098d1f2dba5d63b8c25735155b401e910ceba"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts",
+      "sha256": "d80ea0735cc4a86d91f4dd7aa31be5c1019d5902292117d2939297611235e589"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+      "sha256": "60dbf36718a9edbd140bd68c1af49ccc560c1185465d85f6a0c7c16bebf7b123"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "sha256": "7a60af4b407816bf4df689f86a3c381469ee77074f1aaadce114dc6ba3388240"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringPdfRefusal.ts",
+      "sha256": "e3dfeef0e58d8fdf8930ebbbcc242d3e1b388b60ecc6f8217dfa3eb0122ef983"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+      "sha256": "8e97c08d10edac6ed0f0f06b1dff007c238aae7aa2e7ec50732a39951d6e550e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "0e5277ef35299a5bfdd1e61bed305c4f8115cd3680fc8f46a5b2773912995921"
+    },
+    {
+      "path": "server/export/__tests__/authoring-captions.test.ts",
+      "sha256": "b613dc238b5227472b9a5e9ba1319788cf6d063e00139450a7afe10b070c3d51"
+    },
+    {
+      "path": "server/export/__tests__/authoring-citations.test.ts",
+      "sha256": "ad358be944b383ed3b622f5af46823d2b8996845935beb294003f59102ad2bb4"
+    },
+    {
+      "path": "server/export/__tests__/authoring-cross-references.test.ts",
+      "sha256": "00de661c8272d0d128fa72b5fc7d09de72d59121452367f69d026248019208ee"
+    },
+    {
+      "path": "server/export/__tests__/authoring-footnotes-docx.test.ts",
+      "sha256": "f54dccc5ef0208d5e0d4dbd38406a1b3c28c56850f126edcd73949c1ef3260c1"
+    },
+    {
+      "path": "server/export/__tests__/authoring-footnotes.test.ts",
+      "sha256": "6aeeb2e6d5b55a6e8c7427bd327115d44b4e2352e1d198c68b89d1b90a7daf2f"
+    },
+    {
+      "path": "server/export/__tests__/authoring-heading-depth.test.ts",
+      "sha256": "531b5ca53daf6e660181f0f4dbf28823c7f2f227214583fab23f8717878248df"
+    },
+    {
+      "path": "server/export/__tests__/authoring-image-export.test.ts",
+      "sha256": "e794030650281351aa51113caad5d4c5ce8f7bc5d986a8063bd449909d046597"
+    },
+    {
+      "path": "server/export/__tests__/authoring-images-figure-rule.test.ts",
+      "sha256": "5b9ad8f6ef6a566c41ce6b0089e9e8e128b9d22867acb3800fa148be69f5dabd"
+    },
+    {
+      "path": "server/export/__tests__/authoring-list-depth-export.test.ts",
+      "sha256": "9088a70aa1946e8474b534c34b4ff38829643c1dc8e3d9974f1f64bf79632819"
+    },
+    {
+      "path": "server/export/__tests__/authoring-table-export.test.ts",
+      "sha256": "7e1930a1b6317cad51d0c6ac19f43f660a53bd22d41cef5fbc8c835423b34aba"
+    },
+    {
+      "path": "server/export/__tests__/authoring-tracked-changes-export.test.ts",
+      "sha256": "61c00cca0099631faf0a21c1ca036834d7c26eabbd91872c9a08b4a1b53b9ac5"
+    },
+    {
+      "path": "server/export/__tests__/inline-marks-to-text.test.ts",
+      "sha256": "08d81d0b2970732f59a473c8af7840293f3b0333dd0317452d47b78c3d648b82"
+    },
+    {
+      "path": "server/export/authoring-blocks-to-docx.ts",
+      "sha256": "ded3f48a50137b9cbeaab3c589278b4d30ba43eefc456b01e52f2478e484e343"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-pdf-converter-fixture.ts",
+      "sha256": "d2446c6b9d5c12b86d6d6dd5d4fc4324aa04321358ed37d03a01b6538d2bb849"
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportDocx.test.ts",
+      "sha256": "e9db6879aa0db0baf32d4a5b9ae87e301ce8f38d0ed6d0fc3c499fd37d0389b0"
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportHistory.test.ts",
+      "sha256": "d373d8b6cda1d30fc2771e6573cc2257f90ecb925c091004eeadd6a2bf9685e0"
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportPdf.test.ts",
+      "sha256": "ff1a540cb2e277defaefce7cba5180f980bebcd736432172b46a2ca25df2d445"
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportSignatureManifest.test.ts",
+      "sha256": "a247052e18aa86373c130d4ffba120b03bf0f8a757279e8edb4277dc2e7060f1"
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "sha256": "21dd1e17ef1a7ac4072d8aef2c793da94c276582a48ee2406561123a8df1b71e"
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "sha256": "9795d7c865b2a213a6a7762237301a26d66c301e4ad14aab6d1e50ee283a34ca"
+    },
+    {
+      "path": "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+      "sha256": "b3a71971b3f49b7c3e77a01606454b39c10eb434bb8bd06a7208dd863fc3d123"
+    },
+    {
+      "path": "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+      "sha256": "2c8b7769611aecfd6ffeb86ddb30ee0b74a6c2ab8b8b2d4db1c61508f3e6ed55"
+    },
+    {
+      "path": "server/routes/__tests__/authoringWorkingCopy.test.ts",
+      "sha256": "9849f7bd064e8c0e0d5c69855e9e286a5aa56a8318c62e9c195b2cf4cbe2e3d9"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "fb2e16e9e6387e59f1f57368ba7bd9a739d2c5d214c0d4fa3ce0e2c1f315cbec"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "sha256": "bc8544a570c80a7c4f5c4163e72570fd68ade06b62dfdee2a2d798c037fd1169"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-export-xml-figures.test.ts",
+      "sha256": "3fa02e2d5de82f91abeacd375354825c327922a215ae0f640976ed704adfc340"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "3f4dee11f69dceae484b8c6cc82a06969a18e7c55d1fc2a3907b0cc9acd78aa0"
+    },
+    {
+      "path": "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts",
+      "sha256": "e041949ca36c67d326903c2a2897593b508b23f91626c24507a4448fd65f2f3e"
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "sha256": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "sha256": "0d70805e7bd05ca9accd1919a6dbd0270651827e37b1d9e9048559dccda2153f"
+    },
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "sha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d"
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515"
+    },
+    {
+      "path": "server/services/authoring/draft-source-references.ts",
+      "sha256": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "sha256": "02185f2f304a09c5f613dc2a88d9ea0bf8f210fdaad5a94fcba3f66ba45d1513"
+    },
+    {
+      "path": "server/services/company-documents/correspondence-rendering.ts",
+      "sha256": "bef580d0015021bf3b64fba8fb98ceee3995ef52faf51aad403bc184718395b4"
+    },
+    {
+      "path": "server/services/conversion-slots.ts",
+      "sha256": "ebcf63905a6a16096bf06b136f33aefebbc65d08ae3d891d743c1710c64272b8"
+    },
+    {
+      "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "fe46636df74a407fc1669e7034fb1d6612ba8233941ed84c29d70e44c82cdb47"
+    },
+    {
+      "path": "server/services/pdf-converter.ts",
+      "sha256": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "sha256": "456824383e699e316a400c6ba2cbf77202d42de5cde6ee12be2d0dac997cad93"
+    }
+  ]
+}

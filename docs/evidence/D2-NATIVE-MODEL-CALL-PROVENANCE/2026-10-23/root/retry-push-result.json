@@ -1,0 +1,15 @@
+{
+  "head": "4718e17cb1224022684829a0e45f92f5048b5850",
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "remoteBefore": "aa09f55f55385a843b26057210cc26f973539f1c",
+  "startedAt": "2026-10-23T17:44:38.396459+00:00",
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "note": "Normal retry after erased fixture-cast correction; original rejected push retained; no bypass or baseline change.",
+  "exitCode": 0,
+  "endedAt": "2026-10-23T17:45:55.533123+00:00"
+}

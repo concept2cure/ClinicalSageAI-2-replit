@@ -1,0 +1,28 @@
+{
+  "frozenAt": "2026-10-23T17:29:40.817125+00:00",
+  "test": "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+  "sha256": "0c7540856954e7a13c272a6eedbe659ad4596fcbc12df360fbc9b97ead5a5d0b",
+  "contractCommit": "f158bf3f00a7fc898e78ed376787eb523458e36d",
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "intendedSemanticFailures": 7,
+  "passingControls": 3,
+  "skips": 0,
+  "all26SelectedBaselineInputsUnchanged": true,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "failures": [
+    "mounted classic chat records every returned model call records the no-tools first call with raw model identity while retaining the composite display model",
+    "mounted classic chat records every returned model call retains repeated-model requests in chronological order and exposes each distinct author to qualification",
+    "mounted classic chat records every returned model call keeps an unknown early author instead of replacing it with the later known author",
+    "mounted classic chat records every returned model call copies reported metadata before a response object is subsequently changed",
+    "mounted classic chat records every returned model call retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call",
+    "mounted classic chat records every returned model call retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call",
+    "mounted classic chat records every returned model call retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call"
+  ],
+  "passingControlNames": [
+    "existing classic carrier and legacy observation controls CONTROL: a first-call context failure records no guessed requested model",
+    "existing classic carrier and legacy observation controls CONTROL: an executor that reports no model observations retains the existing fallback and limitation",
+    "existing classic carrier and legacy observation controls CONTROL: an invalid message opens neither an executor nor a turn record"
+  ],
+  "boundary": "Real mounted classic route/sharedcollector/recordLoopTurn/TurnRecorder/authorreader; scripted executor,DB/retrieval/context and finalwriter. Real recorder sealed in memory, no durable database or audit chain proof in this file."
+}

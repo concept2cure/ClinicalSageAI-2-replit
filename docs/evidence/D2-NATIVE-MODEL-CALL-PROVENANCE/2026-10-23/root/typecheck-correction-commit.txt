@@ -1,0 +1,24 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3400 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 4718e17cb] Correct intentional malformed-model fixture typing without changing runtime
+ 18 files changed, 1221 insertions(+), 1 deletion(-)
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/frozen-tests-current.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/qualification-source-manifest-current.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/implementation-commit.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/implementation-push-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/implementation-push-result.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/implementation-push.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/incoming-merge.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/incoming-verification.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/publication-fetch.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/retained-ancestors.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/runtime-continuity.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/typecheck-correction-original.ts.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/typecheck-correction.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/typecheck-correction.patch.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/typecheck-runtime-equivalence.json

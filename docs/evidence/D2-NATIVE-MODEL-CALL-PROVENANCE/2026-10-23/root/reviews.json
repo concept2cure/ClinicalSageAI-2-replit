@@ -1,0 +1,19 @@
+{
+  "initialImplementation": {
+    "context_resume_stop_review": "CLEAR:4files, copiedprimitive metadata, no clock/reset/policy/identitychange, 3hostswired",
+    "native_model_adapter_controls": "CLEAR:actualreturnedresponsesonly; earliermetadataretainedonlatefailure/stopped;unknownnotmasked; typedcatchesunchanged"
+  },
+  "postHelperExtraction": {
+    "context_resume_stop_review": "CLEAR:helper64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893; methodorderpreserved;3hosthashesunchanged"
+  },
+  "finalEvidence": {
+    "context_resume_evidence_review": "FINAL CLEAR:330/34,43newcases,0skip;551selected/34test/4production/3frozen/7lintpinsmatch;0errors22existingwarnings0growth"
+  },
+  "finalProductionHashes": {
+    "server/services/ana/turn-record-loop.ts": "64adee61e2e9bd1ce11f83d7e5ab282d9cdf23e1e183a2b4ab3ff7a2322b0893",
+    "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+    "server/routes/ana-intelligence.ts": "7495cc668f701daac9292f7cccd4aa95fcb0bc69c8272c6882dc6e180aca518d",
+    "server/services/ana/ana-realtime.ts": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0"
+  },
+  "frozenTestsUnchanged": true
+}

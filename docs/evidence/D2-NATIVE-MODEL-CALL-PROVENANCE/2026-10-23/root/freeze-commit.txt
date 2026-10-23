@@ -1,0 +1,59 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3400 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 544cfcbf0] Freeze native model provenance regressions and compatibility evidence
+ 51 files changed, 4258 insertions(+)
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/README.md
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/SUMMARY.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/baseline-after.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/baseline-before.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/raw.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/README.md
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/baseline-after.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/baseline-before.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/frozen.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/lint-before-freeze.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/lint-before-freeze.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red-exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red-results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/README.md
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/artifacts.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/baseline-after.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/baseline-before.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/freeze.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-before-freeze.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-before-freeze.stderr.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/lint-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red-results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/collector/red.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/frozen-tests.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/README.md
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1-exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1-results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1-test.ts.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-after.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-before.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-summary.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/frozen-tests.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/lint-before.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/lint-before.stderr.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/lint-before.stdout.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/contract-reviews.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-baseline.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/regression-inputs-before.json
+ create mode 100644 server/routes/chat/__tests__/send-message-model-calls.test.ts
+ create mode 100644 server/services/ana/__tests__/turn-record-loop-model-calls.test.ts
+ create mode 100644 server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
