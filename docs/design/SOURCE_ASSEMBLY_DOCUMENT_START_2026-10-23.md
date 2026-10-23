@@ -166,4 +166,33 @@ form-close sequencing, dirty bookkeeping after form cancellation, and a reordere
 inventory replacing the original dirty canvas. Existing task-drawer test fixtures
 were aligned to the already-program-scoped native reads without changing those
 reads or weakening their assertions. Final evidence is in the named packet; human
-cases 76–83 are added to the existing Codespaces handoff and remain Not run.
+cases 84–91 are added to the existing Codespaces handoff and remain Not run.
+
+## Incoming eSTAR export ownership correction
+
+What already exists: `mdx/hooks/useEstarExport.ts` owns the existing official/draft
+export request, current-context checks, download and outcome. `OfficialEstarPanel.tsx`
+shows that outcome after a deliberate Generate action. `useFetchJson.ts` builds
+current headers; `authService.tsx` owns a canonical adopted bearer, session revision
+and account snapshot. The canonical `refreshToken()` replaces access credentials
+without changing session revision/account. Incoming eSTAR code compares all header
+bytes and suppresses a valid same-session refreshed response; the panel ignores
+the returned promise, leaving no outcome. No schema, endpoint, AnA tool or new
+export surface is needed. Extend that existing ownership guard only.
+
+Approved scoped contract: capture and use the original request headers once;
+retain mounted/generation, original account object, original session revision and
+parent program/pathway/variant guard. A changed Authorization is current only if
+the organization header is unchanged and the new bearer is actually adopted by
+`authService.captureSessionReadGuard(currentBearer).current()` in that same
+session. Raw storage credential replacement, account/org/session change, parent
+visit change/reset/unmount and duplicate requests remain refused. Preserve the
+existing unchanged-header legacy/mock path; no anonymous refresh fallback.
+
+A scoped worker owns only `mdx/hooks/useEstarExport.ts`, a new focused real-auth
+refresh/ownership test and the packet's `estar-owner/` folder. It must record a
+meaningful failing canonical refresh case before production edits, use synthetic
+HTTP with actual auth refresh/session APIs, qualify negatives and strict lint,
+and freeze those bytes. No Git/compiler/build/global scan/dependency/other file
+edit is authorized to the worker. Root owns native integration, compiler/build,
+server legacy-fixture alignment and normal direct canonical publication.

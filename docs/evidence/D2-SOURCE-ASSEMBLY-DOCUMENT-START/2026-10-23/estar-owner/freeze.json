@@ -1,0 +1,20 @@
+{
+  "scope": "Final focused canonical refresh owner correction, pinned original request headers and adopted same-actor bearer rotation.",
+  "files": {
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts": "cd963095aafb62371e155e5f1093058b5cdb63720a38b6683d19395703f4c76f",
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts": "93c0b7578c6e78b040613bc7aebad98d65320268a5c034d8f75b86733bd763f6",
+    "client/src/concept2cure/mdx/hooks/useFetchJson.ts": "67c208e934b7d14c83ab0ceed6cf5f5fd71b88b2eedcfceead6981f50d0aae31",
+    "client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts": "5dfa2a24a68f280a517620eda0fad529dd49c6b07bec64abc7c5e07946fd2299",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/taskTarget.ts": "418d356efef8e314012f6b00355b5b5008fbeea06947d68b78525cfed12e1856",
+    "client/src/concept2cure/v2/download.ts": "21503192353a07854d1935813eb9f47ae177451cf69244e0c7ce4e75829b1960",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/run-check.py": "a24c6b4ca3d5c8d232b74bb021b2441c71a8a8967fbbe7d757adeab9128cbc4d"
+  }
+}

@@ -523,5 +523,23 @@
     "server/routes/c2c/__tests__/projects-create-stated-facts.test.ts",
     "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx"
   ],
-  "retrySourceFreeze": "retry-source-freeze.json"
+  "retrySourceFreeze": "retry-source-freeze.json",
+  "estarBackend": [
+    "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts",
+    "server/routes/__tests__/510k-estar-attachment-slots.test.ts",
+    "server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts",
+    "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+    "tests/routes/estar-official-pdf.test.ts"
+  ],
+  "estarUI": [
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts"
+  ],
+  "finalPublicationSourceFreeze": "final-publication-source-freeze.json"
 }

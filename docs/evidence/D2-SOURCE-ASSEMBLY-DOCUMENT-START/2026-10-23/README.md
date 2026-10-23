@@ -122,8 +122,8 @@ start integration blocker. Bounded backend regressions include those seams.
 Normal direct publication and exact Git-object verification are recorded after
 qualification. No new branch, PR, force or hook bypass is permitted.
 
-The existing Codespaces handoff now has **83 cases, all Not run**, including new
-source-start cases 76–83. jsdom tests use synthetic HTTP/auth responses and actual
+The existing Codespaces handoff now has **91 cases, all Not run**, including new
+source-start cases 84–91. jsdom tests use synthetic HTTP/auth responses and actual
 client owners; the selected server suites declare their synthetic/PGlite seams.
 No human session, native production-like installation, live provider/model,
 agency transmission or deployment is qualified by this increment. Universal
@@ -180,7 +180,7 @@ Final combined qualification passes **1,052 tests / 51 distinct suites**, zero
 TypeScript errors, the full warning ratchet, build and all eighteen repository
 gates on the 623-input merged freeze. No baseline or dependency changed. All
 source-start production/test bytes and incoming filing repairs are represented
-in the final Git-object verification. The human handoff remains 83 Not run cases.
+in the final Git-object verification. The human handoff remains 91 Not run cases.
 
 
 The first normal push passed every hook, including zero-error compiler, lint and
@@ -192,3 +192,32 @@ surface pin changed, with seven source-start production paths unchanged.
 passed 109 tests, the two additional intake guards passed 40 tests, and the build
 passed. The repeated 17-case source-flow test is not added again as new coverage.
 Normal pre-push checks qualify the complete current compiler before publication.
+
+
+The eSTAR canonical update appended eight human cases that used the same 76–83
+numbers as the independent source-start cases. The normal merge retained all
+incoming 1–83 and moved source-start cases to 84–91, preserving the workspace step
+and source contract notes. All 91 cases remain Not run. Read-only source/server/UI
+review found no source-start compatibility blocker, but found the existing export
+hook discarded a successful same-session refreshed response through header-byte
+equality. The approved bounded correction is documented in the design before
+implementation and captured in `estar-owner/`. The native official-PDF route
+fixture is also checked against the new request SQL-client/resolver contract;
+fixture mismatches are not counted as product RED or fixed by weakening guards.
+
+
+The final 674-input publication envelope is `final-publication-qualification.json`.
+The combined current editor/export/Vault UI selection passes **177 tests / 8 suites**;
+the official eSTAR server selection passes **125 tests / 5 suites**. The legacy
+request-client fixture alignment passes 46 tests and is not a product RED. The
+worker's real-auth export refresh regression fails in all three intended refresh
+cases before the correction, then its 92-test hook selection passes. The current
+warning ratchet, production build, design-system and shell CSS checks pass with
+no declared source drift. These selections overlap earlier cohorts and are not
+added to their counts. Independent read-only review found no ownership blocker.
+The final current full compiler is checked by the ordinary pre-push hook; its
+actual receipt and Git source-object verification are retained with publication.
+
+The last pre-publication fetch found only documentation/work-order additions at
+`df869f281`. No declared source input changed; normal merge preserves these
+concurrent contracts. The human checklist remains 91 cases, all Not run.

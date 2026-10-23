@@ -1,0 +1,149 @@
+{
+  "at": "2026-10-23T19:52:05.217037+00:00",
+  "scope": "Final publication envelope after canonical workspace intake and official eSTAR attachment integration; final-qualification.json retains its historical 623-input epoch. Cohorts overlap and must not be summed.",
+  "sourceFreeze": "final-publication-source-freeze.json",
+  "sourceFreezeSha256": "2fb4fea203f5e86591f203356da3cc0bfef2ec186e4b628b492856c74f2a375c",
+  "sourceCount": 674,
+  "sourceDrift": [],
+  "coreQualification": "final-qualification.json",
+  "checks": [
+    {
+      "receipt": "retry-project-intake.json",
+      "sha256": "296ffac0a1c0ad936330e665d5e9d0256241daf51825b5777457d5cd0d004ed6",
+      "exitCode": 0,
+      "sourceFreeze": "retry-source-freeze.json",
+      "rawGzipSha256": "5e1ffb9149a9770b8ed066e77ded305aa4bb0e81f1748cb67824b1858758b525",
+      "testSummary": [
+        "Test Files  6 passed (6)",
+        "Tests  109 passed (109)",
+        "Duration  32.00s (transform 4.59s, setup 293ms, import 5.11s, tests 24.50s, environment 1.21s)"
+      ]
+    },
+    {
+      "receipt": "retry-intake-guards.json",
+      "sha256": "3c89efdff7215e4fdd7fdb4846aa3050df234f57a14a72c528d1b0bdd217c637",
+      "exitCode": 0,
+      "sourceFreeze": "retry-source-freeze.json",
+      "rawGzipSha256": "0a8b93e16474d33b48413af896f7432efb883be92ed9822d0fe6b8b1a5250235",
+      "testSummary": [
+        "Test Files  2 passed (2)",
+        "Tests  40 passed (40)",
+        "Duration  7.11s (transform 2.63s, setup 158ms, import 4.35s, tests 1.88s, environment 410ms)"
+      ]
+    },
+    {
+      "receipt": "retry-build.json",
+      "sha256": "7eaaaf5985ef9d1c37eb2187412971fdc39ab537b74330f99e8111db14bda61a",
+      "exitCode": 0,
+      "sourceFreeze": "retry-source-freeze.json",
+      "rawGzipSha256": "b88f48b497b208806bd49b664f4b0912db2a8d8ca117fcbb105e13d65fa35bf3",
+      "testSummary": []
+    },
+    {
+      "receipt": "estar-backend.json",
+      "sha256": "5e5503ae53c9c225001caafde0433c9aa808194fb05b7d36fb13b7c0937efff4",
+      "exitCode": 0,
+      "sourceFreeze": "estar-backend-source-freeze.json",
+      "rawGzipSha256": "0063dde82ef61ea955954cabf7e77018dbde327f5015764111e41fa187d3baf5",
+      "testSummary": [
+        "Test Files  5 passed (5)",
+        "Tests  125 passed (125)",
+        "Duration  36.28s (transform 4.10s, setup 123ms, import 10.43s, tests 24.93s, environment 0ms)"
+      ]
+    },
+    {
+      "receipt": "estar-legacy-qualified.json",
+      "sha256": "dfb2639517551f651e1a3f37df9eb2b1acf3214049275eb9362d7b2ebd2ffc46",
+      "exitCode": 0,
+      "sourceFreeze": "estar-legacy-qualified-freeze.json",
+      "rawGzipSha256": "e22f2f66227deb49134fe073f1166a9b1f034f091647ae8b3f66d4283237fb32",
+      "testSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  46 passed (46)",
+        "Duration  24.95s (transform 10.31s, setup 241ms, import 17.11s, tests 6.99s, environment 0ms)"
+      ]
+    },
+    {
+      "receipt": "estar-sql-proof.json",
+      "sha256": "9662e0c4eab1cc29524846ab52442cec997111a697d378d756776eae4a881bb7",
+      "exitCode": 0,
+      "sourceFreeze": "estar-backend-source-freeze.json",
+      "rawGzipSha256": "b0b28ed68650579ea9542ed10d55f36cc1b75c5a459610ae558add1449eae0c0",
+      "testSummary": []
+    },
+    {
+      "receipt": "estar-sql-selftest.json",
+      "sha256": "2c0d8f7b369bbcd8c3d0eb7d36c1b5723b34f937142f92a3a7e017e060f3c591",
+      "exitCode": 0,
+      "sourceFreeze": "estar-backend-source-freeze.json",
+      "rawGzipSha256": "7a6c287c19944493cc5cf95a93c8cc119ae13fba121c1831137aedb9e0eb1757",
+      "testSummary": []
+    },
+    {
+      "receipt": "final-warning-ratchet.json",
+      "sha256": "3f9fe14fa08b2a5b8f62a27fa5195d2c3fcae3072474cb766ea4de10a48d33c9",
+      "exitCode": 0,
+      "sourceFreeze": "final-publication-source-freeze.json",
+      "rawGzipSha256": "d01d71255bc6094d186ca69ce666472c362fd5016a1ea24955707a9218a155ad",
+      "testSummary": []
+    },
+    {
+      "receipt": "final-estar-ui.json",
+      "sha256": "5fa800efd432a8721f81d473d28f751845d15a3cf9cd85ba219ed02d1e1e362b",
+      "exitCode": 0,
+      "sourceFreeze": "final-publication-source-freeze.json",
+      "rawGzipSha256": "59e4d7e29804353102f0bb844e6478be94080c1dfb9ca0ddf69e531f87ffba41",
+      "testSummary": [
+        "Test Files  8 passed (8)",
+        "Tests  177 passed (177)",
+        "Duration  35.50s (transform 3.08s, setup 605ms, import 5.06s, tests 25.33s, environment 3.41s)"
+      ]
+    },
+    {
+      "receipt": "final-build.json",
+      "sha256": "7f6e92632215eb6f9dbbf784c09ad333b2cfcdb081315fd21bc551dfd9878c30",
+      "exitCode": 0,
+      "sourceFreeze": "final-publication-source-freeze.json",
+      "rawGzipSha256": "5b5887bdde0c610b06caf6baf5136c9f863ebc3e66eef8889e0749dde9180041",
+      "testSummary": []
+    },
+    {
+      "receipt": "final-vault-picker-css.json",
+      "sha256": "4beb825264a41fe7453d20fabaf763dae160f157d84a07ba6078a3161203138b",
+      "exitCode": 0,
+      "sourceFreeze": "final-publication-source-freeze.json",
+      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
+      "testSummary": []
+    },
+    {
+      "receipt": "final-design-system.json",
+      "sha256": "848aa90ba946faa4d9f8e2810515a127c0aebcdb111440d0b39a4db63a42c347",
+      "exitCode": 0,
+      "sourceFreeze": "final-publication-source-freeze.json",
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "testSummary": []
+    }
+  ],
+  "workerRefreshQualification": "estar-owner/qualified-hooks.json",
+  "independentReview": "final-readonly-review.json",
+  "fullCurrentCompiler": "Actual normal pre-push hook output is captured at publication; do not infer it from historical compiler runs.",
+  "humanCases": 91,
+  "humanStatus": "All Not run",
+  "sourceStartHumanCases": [
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91
+  ],
+  "dependencyChanges": false,
+  "baselineChanges": false,
+  "limits": [
+    "Synthetic HTTP/auth and selected PGlite/mock suites; no current human acceptance session.",
+    "No live provider or agency transmission, deployment, or universal sector/region completeness.",
+    "No durable creation idempotency across remount/reload/another tab."
+  ]
+}
