@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:empty-state-honesty"
+  ],
+  "startedAt": "2026-10-23T17:38:03Z",
+  "elapsedSeconds": 0.604,
+  "exitCode": 0,
+  "output": "release-ci-empty-state-honesty.log.gz",
+  "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

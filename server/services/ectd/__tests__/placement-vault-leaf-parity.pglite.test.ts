@@ -79,6 +79,7 @@ import path from 'node:path';
 import type express from 'express';
 import { createJourneyDb, makeRequestDbClient, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { requestDb } from '../../../db/requestDb';
+import { runWithTenantScope } from '../../../db/tenantStore';
 import { LEAF_SOURCE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/pglite-harness';
 import {
   PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
@@ -147,6 +148,7 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
       'migrations/20260925_canonical_documents_append_only.sql',
+      'migrations/20260930_vault_documents_version_lineage.sql',
       'migrations/20261006_document_data_dispositions.sql',
       'migrations/20261018_company_legal_registry.sql',
     ],
@@ -497,5 +499,54 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
   // client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx.
   // This file
   // qualifies the actual authoring/ingest/leaf services and approval gates.
-  it.todo('step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today');
+  it('new numeric refiling links the successor while the old leaf stays pinned and blocked', async () => {
+    h.engine = 'stand-in';
+    const docId = await authoringDocument('Editable device clinical overview', false);
+    const first = await placeAsVaultVersion(docId);
+    await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, async () => {
+      const { editVaultDocumentMetadata } = await import('../../vault/vault-metadata-edit.service');
+      expect(await editVaultDocumentMetadata({ ...CTX, programId: PROGRAM, documentId: first.vaultId,
+        classification: 'CONFIDENTIAL', documentType: 'OTHER', reason: 'Classify the retained device evidence.' })).toMatchObject({ ok: true });
+      const { placeVaultDocument } = await import('../../vault/vault-placement.service');
+      expect(await placeVaultDocument({ ...CTX, programId: PROGRAM, documentId: first.vaultId,
+        folderId: 'module-3', note: 'Retain this deliberate Vault filing.' })).toMatchObject({ ok: true });
+    });
+    const [retained] = await q('SELECT * FROM vault.documents WHERE id=$1', [first.vaultId]);
+    const oldBytes = Buffer.from(h.objects.get(retained.storage_version_id)!);
+    await q(`UPDATE authoring_sections SET content=content || '<p>Revised device performance evidence.</p>' WHERE doc_id=$1`, [docId]);
+    const second = await placeAsVaultVersion(docId);
+    expect(second.filed).toMatchObject({ version: '2.0', supersedesDocumentId: first.vaultId });
+    expect(await q('SELECT supersedes_id, version FROM vault.documents WHERE id=$1', [second.vaultId]))
+      .toEqual([{ supersedes_id: first.vaultId, version: '2.0' }]);
+    expect(await q('SELECT classification, document_type, folder_id FROM vault.documents WHERE id=$1', [second.vaultId]))
+      .toEqual([{ classification: 'CONFIDENTIAL', document_type: 'OTHER', folder_id: 'module-3' }]);
+    expect(await q('SELECT * FROM vault.documents WHERE id=$1', [first.vaultId])).toEqual([retained]);
+    expect(h.objects.get(retained.storage_version_id)).toEqual(oldBytes);
+    const [oldLeaf] = await q('SELECT document_uuid, document_content_sha256 FROM submission_leaves WHERE id=$1', [first.leaf.id]);
+    expect(oldLeaf).toEqual({ document_uuid: first.vaultId, document_content_sha256: first.filed.sha256 });
+    const compiledOld = await compile(first.leaf);
+    expect(compiledOld.staged.sha256).toBe(first.filed.sha256);
+    const oldGates = await gates(first.leaf, compiledOld);
+    expect(oldGates.resolution.notTransmittable).toMatch(/superseded/);
+    expect([oldGates.release, oldGates.transmitClear]).toEqual([false, false]);
+    const compiledNew = await compile(second.leaf);
+    expect(compiledNew.staged.sha256).toBe(second.filed.sha256);
+    expect(compiledNew.staged.derivation).toMatchObject({ status: 'recorded', source: { nativeId: docId } });
+    expect(second.filed.approval.carried).toBe(false);
+    expect((await gates(second.leaf, compiledNew)).release).toBe(false);
+  }, T);
+
+  it('new numeric PDF and Word renditions keep separate version families', async () => {
+    h.engine = 'stand-in';
+    const docId = await authoringDocument('Separate device renditions', false);
+    const pdf = await placeAsVaultVersion(docId);
+    const word = await placeAsVaultVersion(docId, 'docx');
+    expect(pdf.filed).toMatchObject({ version: '1.0', supersedesDocumentId: null });
+    expect(word.filed).toMatchObject({ version: '1.0', supersedesDocumentId: null });
+    await q(`UPDATE authoring_sections SET content=content || '<p>Updated diagnostic performance.</p>' WHERE doc_id=$1`, [docId]);
+    const nextPdf = await placeAsVaultVersion(docId);
+    expect(nextPdf.filed).toMatchObject({ version: '2.0', supersedesDocumentId: pdf.vaultId });
+    expect(await q('SELECT supersedes_id FROM vault.documents WHERE id=$1', [word.vaultId])).toEqual([{ supersedes_id: null }]);
+    expect((await gates(word.leaf, await compile(word.leaf))).resolution.status).toBe('missing');
+  }, T);
 });

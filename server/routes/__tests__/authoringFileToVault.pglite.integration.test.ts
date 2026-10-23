@@ -99,6 +99,7 @@ beforeAll(async () => {
       'migrations/20260814d_document_alias_map.sql',
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
+      'migrations/20260930_vault_documents_version_lineage.sql',
     ],
   });
   h.db = jdb.db;
@@ -161,6 +162,7 @@ describe('POST /docs/:docId/file-to-vault', () => {
     const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const { vaultDocumentId, folder, sha256, format, sealed } = res.body.data;
+    expect(res.body.data).toMatchObject({ version: '1.0', supersedesDocumentId: null });
     expect(format).toBe('pdf');
     expect(sealed).toBe(false);
     // The hash the response and the row carry IS the hash of the bytes that went to storage.
@@ -193,7 +195,8 @@ describe('POST /docs/:docId/file-to-vault', () => {
     expect(hist.rows).toHaveLength(1);
     const rawMeta = (hist.rows[0] as { metadata: string | Record<string, unknown> }).metadata;
     const meta = typeof rawMeta === 'string' ? JSON.parse(rawMeta) : rawMeta;
-    expect(meta).toMatchObject({ filedToVault: true, vaultDocumentId, artifactSha256: sha256 });
+    expect(meta).toMatchObject({ filedToVault: true, vaultDocumentId, artifactSha256: sha256,
+      version: '1.0', supersedesDocumentId: null });
 
     // ONE governed action in the tenant's hash chain, naming everything.
     const governed = await jdb.pool.query(
@@ -319,7 +322,7 @@ describe('POST /docs/:docId/file-to-vault', () => {
     // The admitted row is no longer visible to any vault read (soft-deleted)…
     const rows = await jdb.pool.query(
       `SELECT deleted_at FROM vault.documents WHERE document_code = $1`,
-      [`authoring-${docId}`],
+      [`authoring-${docId}-pdf`],
     );
     expect(rows.rows).toHaveLength(1);
     expect((rows.rows[0] as { deleted_at: string | null }).deleted_at).not.toBeNull();
@@ -336,7 +339,111 @@ describe('POST /docs/:docId/file-to-vault', () => {
       [ORG],
     );
     expect(reverted.rows.length).toBeGreaterThanOrEqual(1);
+    const puts = h.put.mock.calls.length;
+    const retry = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(retry.status).toBe(409);
+    expect(retry.body.error.code).toBe('AUTHORING_VAULT_VERSION_REVIEW_REQUIRED');
+    expect(h.put.mock.calls.length).toBe(puts);
   });
+});
+
+describe('Authoring refiling preserves retained Vault versions', () => {
+  const file = (docId: string) => author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+
+  it('refuses a filing changed during storage instead of undoing the current Vault move', async () => {
+    const docId = await draftDocument('Storage interleaving retains current filing');
+    const first = await file(docId);
+    expect(first.status).toBe(201);
+    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>New performance evidence.</p>' WHERE doc_id=$1`, [docId]);
+    const stored = h.put.getMockImplementation()!;
+    const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
+    h.put.mockImplementationOnce(async (opts: { bytes: Buffer }) => {
+      expect(await placeVaultDocument({ organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM,
+        documentId: first.body.data.vaultDocumentId, folderId: 'module-3', note: 'Move while the new export is stored.' })).toMatchObject({ ok: true });
+      return stored(opts);
+    });
+    const result = await file(docId);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.error.code).toBe('VERSION_METADATA_CHANGED');
+    const versions = await jdb.pool.query('SELECT version, folder_id FROM vault.documents WHERE document_code=$1', [`authoring-${docId}-pdf`]);
+    expect(versions.rows).toEqual([{ version: '1.0', folder_id: 'module-3' }]);
+    expect((await jdb.pool.query('SELECT id FROM authoring_export_history WHERE document_id=$1', [docId])).rows).toHaveLength(1);
+  }, T);
+
+  it('rechecks the Authoring family at commit when a legacy record appears during storage', async () => {
+    const docId = await draftDocument('Storage interleaving detects legacy records');
+    const stored = h.put.getMockImplementation()!;
+    const { ingestVaultDocument } = await import('../../services/vault/vault-ingest.service');
+    h.put.mockImplementationOnce(async (opts: { bytes: Buffer }) => {
+      const legacy = await ingestVaultDocument({ organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM,
+        documentCode: `authoring-${docId}`, documentTitle: 'Concurrent legacy rendition', documentType: 'OTHER',
+        version: 'draft-abcdef12', fileName: 'legacy.pdf', mimeType: 'application/pdf', origin: 'platform-generated',
+        fileBuffer: Buffer.from(`%PDF-1.7\nlegacy ${docId}`), executor: jdb.pool });
+      expect(legacy.ok).toBe(true);
+      return stored(opts);
+    });
+    const result = await file(docId);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.error.code).toBe('AUTHORING_VAULT_VERSION_REVIEW_REQUIRED');
+    expect((await jdb.pool.query('SELECT id FROM vault.documents WHERE document_code=$1', [`authoring-${docId}-pdf`])).rows).toEqual([]);
+    expect((await jdb.pool.query('SELECT id FROM vault.documents WHERE document_code=$1', [`authoring-${docId}`])).rows).toHaveLength(1);
+    expect((await jdb.pool.query('SELECT id FROM authoring_export_history WHERE document_id=$1', [docId])).rows).toEqual([]);
+  }, T);
+
+  it('advances past a compensated successor for changed bytes without altering the retained head or placement', async () => {
+    const docId = await draftDocument('Device evidence compensation retry');
+    const first = await file(docId);
+    expect(first.status, JSON.stringify(first.body)).toBe(201);
+    const firstId = first.body.data.vaultDocumentId;
+    const before = await jdb.pool.query('SELECT * FROM vault.documents WHERE id=$1', [firstId]);
+    const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
+    const placements = vi.mocked(placeVaultDocument).mock.calls.length;
+    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>First revision.</p>' WHERE doc_id=$1`, [docId]);
+    await jdb.pool.query('ALTER TABLE authoring_export_history RENAME TO authoring_export_history_gone');
+    let failed: request.Response;
+    try { failed = await file(docId); }
+    finally { await jdb.pool.query('ALTER TABLE authoring_export_history_gone RENAME TO authoring_export_history'); }
+    expect(failed.status, JSON.stringify(failed.body)).toBe(500);
+    const retired = await jdb.pool.query(`SELECT version, supersedes_id, deleted_at FROM vault.documents
+      WHERE program_id=$1 AND organization_id=$2 AND document_code=$3 AND version='2.0'`, [PROGRAM, ORG, `authoring-${docId}-pdf`]);
+    expect(retired.rows).toHaveLength(1);
+    expect(retired.rows[0]).toMatchObject({ version: '2.0', supersedes_id: firstId });
+    expect(retired.rows[0]).toHaveProperty('deleted_at', expect.anything());
+    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>Second revision.</p>' WHERE doc_id=$1`, [docId]);
+    const recovered = await file(docId);
+    expect(recovered.status, JSON.stringify(recovered.body)).toBe(201);
+    expect(recovered.body.data).toMatchObject({ version: '3.0', supersedesDocumentId: firstId,
+      folder: { folderId: 'module-2', placementStatus: 'confirmed' } });
+    expect(await jdb.pool.query('SELECT * FROM vault.documents WHERE id=$1', [firstId])).toMatchObject({ rows: before.rows });
+    expect(vi.mocked(placeVaultDocument).mock.calls.length).toBe(placements);
+    const history = await jdb.pool.query(`SELECT metadata FROM authoring_export_history WHERE document_id=$1 AND tenant_id=$2`, [docId, ORG]);
+    expect(history.rows).toHaveLength(2);
+    expect(history.rows.some(rawRow => {
+      const row = rawRow as { metadata: string | Record<string, unknown> };
+      const metadata = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata;
+      return metadata.version === '3.0' && metadata.supersedesDocumentId === firstId;
+    })).toBe(true);
+  }, T);
+
+  it.each([false, true])('refuses retained legacy hash labels before storage, including retired=%s', async deleted => {
+    const docId = await draftDocument(`Legacy device rendition ${deleted}`);
+    const { ingestVaultDocument } = await import('../../services/vault/vault-ingest.service');
+    const legacy = await ingestVaultDocument({ organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM,
+      documentCode: `authoring-${docId}`, documentTitle: 'Legacy rendition', documentType: 'OTHER',
+      version: 'draft-abcdef12', fileName: 'legacy.pdf', mimeType: 'application/pdf', origin: 'platform-generated',
+      fileBuffer: Buffer.from(`%PDF-1.7\nlegacy ${docId}`), executor: jdb.pool });
+    expect(legacy.ok).toBe(true);
+    if (!legacy.ok) throw new Error(JSON.stringify(legacy));
+    if (deleted) await jdb.pool.query('UPDATE vault.documents SET deleted_at=now() WHERE id=$1', [legacy.document.id]);
+    const retained = await jdb.pool.query('SELECT * FROM vault.documents WHERE id=$1', [legacy.document.id]);
+    const puts = h.put.mock.calls.length;
+    const result = await file(docId);
+    expect(result.status, JSON.stringify(result.body)).toBe(409);
+    expect(result.body.error.code).toBe('AUTHORING_VAULT_VERSION_REVIEW_REQUIRED');
+    expect(h.put.mock.calls.length).toBe(puts);
+    expect(await jdb.pool.query('SELECT * FROM vault.documents WHERE id=$1', [legacy.document.id])).toMatchObject({ rows: retained.rows });
+    expect((await jdb.pool.query('SELECT id FROM authoring_export_history WHERE document_id=$1', [docId])).rows).toEqual([]);
+  }, T);
 });
 
 /* The 2026-09-22 review's handed-off items #9 and #13, run last so their rows do

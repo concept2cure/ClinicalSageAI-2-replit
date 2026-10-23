@@ -7,7 +7,8 @@
  * through the existing export path, ingests through the existing vault ingest
  * service, files through the existing filing service, audits the whole thing
  * as one governed action and answers
- * `201 { data: { vaultDocumentId, programId, folder, sha256, format, approval } }`. It
+ * `201 { data: { vaultDocumentId, programId, folder, sha256, format, approval,
+ * version, supersedesDocumentId } }`. It
  * refuses a document with no program and never files a document that is
  * mid-freeze. `approval` says whether the Authoring approval carried to the
  * Vault version (FD5 (c)) and, when it did not, why.
@@ -33,6 +34,9 @@ export interface FileToVaultResult {
   folder: string | null;
   sha256: string;
   format: 'pdf' | 'docx';
+  /** Present together only when the server confirmed assigned Vault lineage. */
+  version?: string;
+  supersedesDocumentId?: string | null;
   /** What the server said about the Authoring approval; null when it said nothing. */
   approval: FiledApproval | null;
 }
@@ -88,19 +92,39 @@ function readFolderLabel(raw: unknown): string | null {
   return typeof r.folderId === 'string' && r.folderId.trim() ? r.folderId.trim() : null;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Older receipts have no lineage; a partial or invalid pair confirms none. */
+function readFiledVersion(data: Record<string, unknown>, vaultDocumentId: string): Pick<FileToVaultResult, 'version' | 'supersedesDocumentId'> | null {
+  const hasVersion = Object.prototype.hasOwnProperty.call(data, 'version');
+  const hasPredecessor = Object.prototype.hasOwnProperty.call(data, 'supersedesDocumentId');
+  if (!hasVersion && !hasPredecessor) return {};
+  const { version, supersedesDocumentId } = data;
+  if (!hasVersion || !hasPredecessor || typeof version !== 'string' ||
+      version.trim() !== version || !/^[1-9][0-9]{0,5}\.0$/.test(version)) return null;
+  if ((version === '1.0') !== (supersedesDocumentId === null)) return null;
+  if (supersedesDocumentId !== null && (typeof supersedesDocumentId !== 'string' ||
+      !isCanonicalId(supersedesDocumentId) || supersedesDocumentId.toLowerCase() === vaultDocumentId.toLowerCase())) return null;
+  return { version, supersedesDocumentId };
+}
+
 /** Confirm this request's project, admitted version, bytes and requested format. */
 export function readFileToVaultResult(body: unknown, expected: { programId: string; format: 'pdf' | 'docx' }): FileToVaultResult | null {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
-  const envelope = body as Record<string, unknown>;
+  if (!isRecord(body)) return null;
+  const envelope = body;
   if (envelope.error != null) return null;
   if ('success' in envelope && envelope.success !== true) return null;
-  if (!envelope.data || typeof envelope.data !== 'object' || Array.isArray(envelope.data)) return null;
-  const data = envelope.data as Record<string, unknown>;
+  if (!isRecord(envelope.data)) return null;
+  const data = envelope.data;
   const identities = [data.vaultDocumentId, data.programId];
   if (!identities.every((id): id is string => typeof id === 'string' && isCanonicalId(id))) return null;
   const [vaultDocumentId, programId] = identities;
   if (programId !== expected.programId ||
       typeof data.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(data.sha256) || data.format !== expected.format) return null;
+  const version = readFiledVersion(data, vaultDocumentId);
+  if (!version) return null;
   return {
     vaultDocumentId,
     programId,
@@ -109,6 +133,7 @@ export function readFileToVaultResult(body: unknown, expected: { programId: stri
     folder: readFolderLabel(data.folder),
     sha256: data.sha256,
     format: expected.format,
+    ...version,
     approval: readFiledApproval(data.approval),
   };
 }
@@ -149,6 +174,11 @@ function filedFormatLabel(result: FileToVaultResult, chosenFormat: string): stri
   return result.format.toUpperCase() || chosenFormat.toUpperCase();
 }
 
+function filedVersionLine(result: FileToVaultResult): string {
+  if (!result.version) return '';
+  return ` Vault version ${result.version}.${result.supersedesDocumentId ? ` Supersedes Vault id ${result.supersedesDocumentId}.` : ''}`;
+}
+
 /**
  * The next step on the filing path, in the order the path enforces: a
  * submission takes PDF, and a sequence is not frozen or transmitted until each
@@ -185,10 +215,11 @@ function FileToVaultOutcome({
       {result && (
         <div className="de-gov" role="status" data-testid="ftv-result">
           <span className="ico">{I.checkCircle}</span>
-          <span className="de-gov-t">
+          <span className="de-gov-t" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
             Filed as {filedFormatLabel(result, chosenFormat)}
             {result.folder ? ` under ${result.folder}` : ' — the server reported no folder'}.
             {' '}Vault id {result.vaultDocumentId}.
+            {filedVersionLine(result)}
             {result.sha256 ? ` SHA-256 ${result.sha256}.` : ' No content hash was reported.'}
           </span>
         </div>
@@ -378,10 +409,12 @@ function FileToVaultForm({ docTitle, docStatus, programId, programName, onClose,
               </label>
             </div>
           </fieldset>
-          <div className="de-gov">
+          <div className="de-gov" data-testid="ftv-version-policy">
             <span className="ico">{I.lock}</span>
             <span className="de-gov-t">
-              One governed action: export, ingest and filing are recorded together in the audit trail. The vault folder is decided by the project’s filing rules and shown below once recorded.
+              One governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project’s filing rules; later versions keep the recorded Vault filing.
+              {' '}PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved.
+              {' '}Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.
             </span>
           </div>
           <FileToVaultOutcome result={result} error={error} chosenFormat={format} onOpenVault={onOpenVault} />

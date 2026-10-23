@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-23T17:47:36.877710+00:00",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "branch": "concept2cure-v2",
+  "sourceFreeze": "final-source-freeze.json",
+  "regressions": {
+    "report": "final-regressions-tests.json",
+    "files": 23,
+    "passed": 384,
+    "failed": 0,
+    "todo": 0
+  },
+  "checks": "final-checks.json",
+  "staticGates": 16,
+  "typecheck": {
+    "report": "final-typecheck.json",
+    "errors": 0,
+    "baselineUnchanged": true
+  },
+  "build": "final-build.json",
+  "lint": {
+    "report": "final-eslint.json",
+    "errors": 0,
+    "existingWarnings": 23,
+    "warningGrowth": 0
+  },
+  "browser": {
+    "report": "browser/component-browser-review.json",
+    "layouts": 8,
+    "horizontalOverflow": false,
+    "scope": "Serialized mounted dialog DOM with built CSS, no live-app or human acceptance"
+  },
+  "review": "independent-review.json",
+  "humanCases": {
+    "count": 72,
+    "status": "Not run"
+  },
+  "limits": [
+    "Legacy hash-labelled and all-retired families require review; no automatic migration",
+    "Identical retained bytes remain refused, including compensated versions",
+    "Existing sealed Authoring revision policy unchanged",
+    "No native multi-writer phantom prevention, human acceptance, provider readiness, deployment or agency transmission qualification"
+  ]
+}

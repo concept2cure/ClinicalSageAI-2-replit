@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+    "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+    "server/routes/authoring.router.ts",
+    "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts",
+    "server/services/authoring/authoring-file-to-vault.ts",
+    "server/services/authoring/authoring-vault-version-plan.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/services/vault/__tests__/vault-version-checkin-race.test.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+    "server/services/vault/vault-version-checkin.ts",
+    "--format=json"
+  ],
+  "startedAt": "2026-10-23T17:38:05Z",
+  "elapsedSeconds": 1.413,
+  "exitCode": 0,
+  "output": "release-eslint.log.gz",
+  "outputSha256": "413687391fc46eba911a846c7bbbbf2c2c50fe1b6d32aeb4dafa84f8c993ea47",
+  "sourceFreeze": "release-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}
