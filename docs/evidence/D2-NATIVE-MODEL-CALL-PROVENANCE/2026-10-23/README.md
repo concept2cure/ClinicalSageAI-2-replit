@@ -24,3 +24,12 @@ Disjoint fail-first and compatibility evidence will be filed alongside this
 README. Root owns production and direct canonical commits. Qualification and
 actual publication outcomes will be appended after completion; this document
 is not yet a claim of a passing or deployed implementation.
+
+Three owners froze **43 new tests: 30 intended semantic failures and 13 passing
+controls**, zero skips, with included lint at zero errors/warnings. All 26
+selected baseline inputs and 31 existing regression files stayed unchanged
+before production. Another 35 existing adapter/author-reader controls passed
+unchanged. [Frozen tests](frozen-tests.json) pins exact bytes; raw transcripts
+and substituted/real boundaries are under `collector/`, `native-hosts/`, `chat/`
+and `adapter-controls/`. No missing-export/method or fixture failure counts
+as red evidence. Production edits follow this freeze.

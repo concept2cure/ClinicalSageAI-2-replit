@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts"
+  ],
+  "exitCode": 0,
+  "errors": 0,
+  "warnings": 0,
+  "testSha256": "3a8947e2200c2abbde23f891ea0948180c18d1cb80fd4ab581038496e128a9f1",
+  "stdoutSha256": "aa52fb8e5898277d80d812baf8ed094ba8f5e6c37efd43b038421dc34a636d97",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

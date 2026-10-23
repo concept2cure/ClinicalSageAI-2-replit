@@ -1,0 +1,11 @@
+{
+  "frozenAt": "2026-10-23T17:30:00.433041+00:00",
+  "scope": "Final lint-clean native-host test after observed semantic red; root owns all future edits/execution.",
+  "files": {
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": "3a8947e2200c2abbde23f891ea0948180c18d1cb80fd4ab581038496e128a9f1"
+  },
+  "tests": 15,
+  "intendedSemanticFailures": 10,
+  "passingControls": 5,
+  "skipped": 0
+}

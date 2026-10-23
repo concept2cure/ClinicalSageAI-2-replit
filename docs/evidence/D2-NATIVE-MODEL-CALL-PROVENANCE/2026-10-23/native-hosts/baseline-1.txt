@@ -1,0 +1,467 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:28:59.731Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:29:00.362Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:29:00.363Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts
+{
+  "timestamp": "2026-10-23T17:29:00.363Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:29:12.027Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:29:12.071Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 85ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+[Claude Intelligence] Agent error: synthetic late gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:29:12.096Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic late gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+{
+  "timestamp": "2026-10-23T17:29:12.359Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 17ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 20ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+{
+  "timestamp": "2026-10-23T17:29:12.375Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+{
+  "timestamp": "2026-10-23T17:29:12.394Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:29:12.410Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+[Claude Intelligence] Agent error: synthetic first gateway failure
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:29:12.431Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "synthetic first gateway failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:29:12.443Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested
+{
+  "timestamp": "2026-10-23T17:29:12.457Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call
+{
+  "timestamp": "2026-10-23T17:29:12.473Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order 270ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers 18ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call 14ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested 16ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: a first-call failure records no invented model or call 17ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 16ms
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested 15ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning
+{
+  "timestamp": "2026-10-23T17:29:12.484Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws
+{
+  "timestamp": "2026-10-23T17:29:12.502Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns
+{
+  "timestamp": "2026-10-23T17:29:12.515Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+{
+  "timestamp": "2026-10-23T17:29:12.533Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: a first-call failure records no invented model or call 11ms
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning 17ms
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws 14ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ × server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns 13ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ ✓ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > CONTROL: an agent without its request DB client records nothing through the shared pool 8ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > records mixed models, repeated calls and request IDs in actual observation order
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "gpt-4o",
+-     "provider": "openai",
+-     "requestId": "req-initial",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 1,
+-     "sent": null,
+-   },
+-   {
+-     "call": 3,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 2,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts:147:30
+    145|     const { body, stored } = await runHost(host);
+    146|     assertPreserved(body, stored, 'answered');
+    147|     expect(body.model.calls).toEqual([
+       |                              ^
+    148|       recordedCall(1, 0, 'openai', 'gpt-4o', 'req-initial'),
+    149|       recordedCall(2, 1, 'anthropic', 'claude-opus-5-5', 'req-repeat'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > keeps an earlier unknown author when a later qualified model answers
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": null,
+-     "provider": null,
+-     "requestId": null,
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts:166:30
+    164|     const { body, stored } = await runHost(host);
+    165|     assertPreserved(body, stored, 'answered');
+    166|     expect(body.model.calls).toEqual([recordedCall(1, 0, null, null, n…
+       |                              ^
+    167|     expect(qualifyServedModels(servedModelsOf(body.model), { NODE_ENV:…
+    168|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host records returned model calls > retains earlier responses on late failure without inventing a served failed call
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "gpt-4o",
+-     "provider": "openai",
+-     "requestId": "req-initial",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts:175:30
+    173|     const { body, stored, httpStatus, error } = await runHost(host);
+    174|     assertPreserved(body, stored, 'failed');
+    175|     expect(body.model.calls).toEqual([recordedCall(1, 0, 'openai', 'gp…
+       |                              ^
+    176|     expect(body.model.model).toBeNull();
+    177|     expect(body.warnings.join(' ')).toContain(failure.message);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > agent native host compatibility > records the first returned response even when no tool was requested
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime native host compatibility > records the first returned response even when no tool was requested
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 0,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts:193:30
+    191|     expect(body.turn.outcome).toBe('answered');
+    192|     expect(body.steps).toEqual([]);
+    193|     expect(body.model.calls).toEqual([recordedCall(1, 0, 'anthropic', …
+       |                              ^
+    194|     expect(h.invocations).toBe(1);
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor throws
+ FAIL  server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts > realtime cancellation keeps actual returned provenance > retains the prior response when the stopped executor returns
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "gpt-4o",
+-     "provider": "openai",
+-     "requestId": "req-initial",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "req-repeat",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts:237:30
+    235|     const { body, stored } = await newRecord(before);
+    236|     assertPreserved(body, stored, 'stopped');
+    237|     expect(body.model.calls).toEqual([recordedCall(1, 0, 'openai', 'gp…
+       |                              ^
+    238|     if (ending === 'throws') expect(error).toBe(failure);
+    239|     else expect(stored.texts.get(body.answer.streamed!.sha256)).toBe(A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 5 passed (15)
+   Start at  17:28:58
+   Duration  14.31s (transform 8.05s, setup 62ms, import 10.81s, tests 3.19s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/native-hosts/baseline-1-results.json

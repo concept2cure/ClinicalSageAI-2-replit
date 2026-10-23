@@ -1,0 +1,37 @@
+{
+  "classification": "Existing unchanged passing compatibility controls; no new tests or fail-first red evidence.",
+  "passed": 35,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "files": 3,
+  "perFile": {
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": 3,
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts": 23,
+    "server/services/ana/__tests__/turn-record-served-models.test.ts": 9
+  },
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "all26SelectedBaselineInputsUnchanged": true,
+  "testHashes": {
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts": "0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6",
+    "server/services/ana/__tests__/turn-record-served-models.test.ts": "2e131cb902fa8cf0f181ec35acc07f1b01253fde07fb4fe7af8c31f27ee7e0bb",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0"
+  },
+  "rawSha256": "4b17b3f7e13fc067de8ebf5fada4693449f5ee39444dfbe8cbf0d2dd38723753",
+  "reportSha256": "a84bb322033988d53d93fc78e78b022d5b36de806c65d8f8205d8bf92573faca",
+  "meaningfulControls": [
+    "Existing real executeAgenticLoop observer receives every returned scripted gateway call in chronological rounds [0,1,2].",
+    "Existing observer that throws is contained: tools reach subsequent model call and turn completes.",
+    "Canonical servedModelsOf retains explicit unknown author entries, deduplicates distinct authors in first-seen order, and preserves legacy/malformed-record fallback.",
+    "Canonical qualification applies unchanged high-risk/PQ rules, including unknown/unqualified and production PQ-pending refusals.",
+    "Initial and follow-up canonical GatewayContextWindowError retain the original error object; follow-up retains exact staging, raw callback data and synthetic admitted source receipt."
+  ],
+  "boundaries": [
+    "Gateway/provider dispatch is scripted, not live. No gateway admission/tokenizer/provider-payload qualification.",
+    "Real adapter/core loop/dispatch/staging/framing and canonical recorder/reader/qualification execute; source/Vault/receipt access and selected tool authorization are deterministic fixtures.",
+    "TurnRecorder model-reader tests seal in memory; no durable record DB write is qualified by these three suites.",
+    "No new source/test/dependency/hook/compiler/Git changes performed. Existing development audit-service warning remains in raw log; no production HMAC/DB integrity claim.",
+    "A callback for a failed gateway call, first-call fast-path observer specifically, and native host wiring are not newly established here; separate root/owner cases cover that slice."
+  ]
+}

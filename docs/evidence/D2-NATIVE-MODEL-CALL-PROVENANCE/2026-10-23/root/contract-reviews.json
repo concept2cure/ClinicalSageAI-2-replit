@@ -1,0 +1,27 @@
+{
+  "reviewedAt": "2026-10-23T17:27:59.994365+00:00",
+  "contractCommit": "f158bf3f00a7fc898e78ed376787eb523458e36d",
+  "approval": "Root approved after independent source/contract/architecture review; no user permission gate required.",
+  "reviews": {
+    "context_resume_source_review": "Confirmed native final-only/late-failure omission and classic composite-model summary; existing observer+canonical record support completion.",
+    "context_resume_evidence_review": "CLEAR:26baseline pins match Git/current, 3hosts, unknown qualification, legacy fallback and failure-call limits correct.",
+    "context_resume_stop_review": "CLEAR:metadata-only copied primitives; no runtime executor import/cycle; no tool latency-clock reset; reuse addServed/servedModelsOf; no invented failed call."
+  },
+  "newLimitationWarning": "This turn reports its served model calls and raw tool calls; tool-step round assignments and later model inputs are not reported by this door.",
+  "legacyWarning": "Unchanged when servedCalls omitted or empty.",
+  "productionFiles": [
+    "server/services/ana/turn-record-loop.ts",
+    "server/routes/chat/send-message.ts",
+    "server/routes/ana-intelligence.ts",
+    "server/services/ana/ana-realtime.ts"
+  ],
+  "sourceChangesSoFar": false,
+  "baselinePinsStillUnchanged": 26,
+  "testOwnership": {
+    "collector": "context_resume_source_review; new turn-record-loop-model-calls.test.ts only",
+    "native-hosts": "context_resume_evidence_review; new turn-record-loop-model-hosts.test.ts only",
+    "chat": "native_model_chat_tests; new send-message-model-calls.test.ts only",
+    "adapter-controls": "native_model_adapter_controls; existing unchanged test/control evidence only"
+  },
+  "rootOwnership": "All production edits, Git, integration qualification, compiler and normal canonical pushes."
+}
