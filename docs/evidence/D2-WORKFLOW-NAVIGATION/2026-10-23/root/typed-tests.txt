@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > adopts /catalog + /license: live names, retained additional categories, tiers, quotas 85ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > toggle PUTs to the real endpoint and reports the result 158ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > server rejection reverts the switch and surfaces the reason 4266ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > the switch asks for a reason first and sends nothing until one is confirmed 44ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > says so when the server reports the audit row was not written 52ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > offline → honest failed-load states, never a fixture or sample pill 11ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > nests each live feature once in its existing work area and explains when, where to start and what follows 256ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > shows only work areas represented by live rows instead of inventing the missing catalog 16ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > finds a subordinate feature, expands its workflow and opens its original destination 60ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches original backend categories even when their features belong to different workflows 42ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches the workflow guidance as well as feature names 37ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > retains unknown live capabilities and their category, including search and original navigation 46ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > keeps mapped and additional release-excluded features locked even when their grant is enabled 27ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > uses the original module and backend group for a governed toggle after regrouping and search 142ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > explains a no-match search and restores the actual live features when cleared 62ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports a genuinely empty catalog without claiming a search or read failure 12ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports network failure as a failed read, never an empty catalog 10ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports malformed successful body as a failed read, never an empty catalog 12ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > above the plan: names the plan that includes it and routes to plans, with no switch 83ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > wrong industry: says so, and offers no plan — because no plan changes it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > an administrator switched it off: a workspace decision, not an upsell, and the switch is offered 26ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > in the plan but never provisioned: it opens, like the rail says, and blames nobody 26ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > switched on: no lock sentence at all, and the card opens 16ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — writes the UI offers are writes the server accepts > an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it) 148ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a 200 that is not the catalog contract is an error, never "no apps" 13ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a genuinely empty catalog is still the honest empty state 13ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > with the licence unreadable, an unavailable module is not blamed on the plan 12ms
+
+ Test Files  3 passed (3)
+      Tests  27 passed (27)
+   Start at  20:22:05
+   Duration  8.87s (transform 883ms, setup 234ms, import 1.47s, tests 5.71s, environment 1.13s)
+

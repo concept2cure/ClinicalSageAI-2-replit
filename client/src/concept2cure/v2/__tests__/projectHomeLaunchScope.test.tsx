@@ -24,6 +24,17 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* The document list now consumes both the auth hook and the service's current-
+   session guards. Keep the real service/guards; only supply the provider hook
+   for this component fixture, as projectHomeSubmitStage.test.tsx does. */
+vi.mock('@/services/portal/authService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    useAuth: () => ({ user: actual.authService.getUser() }),
+    useAuthUser: () => actual.authService.getUser(),
+  };
+});
 /* The server's verdicts with enforcement on: every surface outside the launch
    scope reads 'launch-scope'. */
 vi.mock('../navEntitlements', async (importOriginal) => {

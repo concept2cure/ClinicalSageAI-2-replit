@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Apps catalog — entitlement honesty.
+ * Workflows — entitlement honesty.
  *
  * appsLive.test.tsx locks the WIRING (the surface reads the real endpoints and
  * renders no fixture). This file locks what the surface then SAYS, because the
@@ -42,7 +42,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Apps catalog', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Workflows', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -99,6 +99,19 @@ function mockCatalog(
   });
 }
 
+/** Open the feature list as a person does before asserting its controls. */
+async function findFeature(label: string) {
+  const title = await screen.findByText(label);
+  const disclosures: (HTMLElement & { open: boolean })[] = [];
+  for (let parent = title.parentElement; parent; parent = parent.parentElement) {
+    if (parent.tagName === 'DETAILS') disclosures.push(parent as HTMLElement & { open: boolean });
+  }
+  for (const details of disclosures.reverse()) {
+    if (!details.open) fireEvent.click(details.querySelector('summary')!);
+  }
+  return title;
+}
+
 const noop = () => {};
 const mount = () => render(<Apps surface={SURFACE} onAsk={noop} onNav={noop} segment="biotech" />);
 
@@ -112,7 +125,7 @@ afterEach(() => {
   apiRequest.mockReset();
 });
 
-describe('Apps catalog — the five entitlement states are five different cards', () => {
+describe('Workflows — the five entitlement states are five different cards', () => {
   it('above the plan: names the plan that includes it and routes to plans, with no switch', async () => {
     mockCatalog([
       row({
@@ -122,7 +135,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
       }),
     ]);
     mount();
-    await screen.findByText('Insight Synthesis');
+    await findFeature('Insight Synthesis');
 
     // The real minimum tier, in the shell's own words — not 'Add-on', which
     // names no plan, and not the org's own tier.
@@ -151,7 +164,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
       }),
     ]);
     mount();
-    await screen.findByText('Device 510(k)');
+    await findFeature('Device 510(k)');
 
     expect(screen.getByText(/Not offered for this workspace/)).toBeTruthy();
     expect(screen.getByText(/Device 510\(k\) is not offered for this workspace\./)).toBeTruthy();
@@ -172,7 +185,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
       }),
     ]);
     mount();
-    await screen.findByText('Risk Register');
+    await findFeature('Risk Register');
 
     expect(screen.getByText(/Turned off for this workspace/)).toBeTruthy();
     expect(screen.getByText(/Risk Register is turned off for this workspace\./)).toBeTruthy();
@@ -193,7 +206,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
       }),
     ]);
     mount();
-    await screen.findByText('Labeling');
+    await findFeature('Labeling');
 
     // Finding 44: the server calls this 'included' — entitled, no row needed —
     // and the rail opens it. The card said it was not switched on, drew a lock
@@ -225,7 +238,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
       }),
     ]);
     mount();
-    await screen.findByText('IND Wizard');
+    await findFeature('IND Wizard');
 
     expect(screen.getByText('Cross-module IND assembly')).toBeTruthy();
     expect(screen.getByText('Open')).toBeTruthy();
@@ -235,7 +248,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
   });
 });
 
-describe('Apps catalog — writes the UI offers are writes the server accepts', () => {
+describe('Workflows — writes the UI offers are writes the server accepts', () => {
   it('an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it)', async () => {
     /* The downgrade case: the org dropped to a lower tier, so isAvailable is
        false, but the subscription row is still enabled. canAccessModule returns
@@ -254,7 +267,7 @@ describe('Apps catalog — writes the UI offers are writes the server accepts', 
       { onPut: put },
     );
     mount();
-    await screen.findByText('Insight Synthesis');
+    await findFeature('Insight Synthesis');
     showAdminControls();
     fireEvent.click(screen.getByTitle('Disable module'));
     // A governed change: the switch opens the reason-for-change dialog first.
@@ -278,7 +291,7 @@ describe('Apps catalog — writes the UI offers are writes the server accepts', 
   });
 });
 
-describe('Apps catalog — no verdict is not a verdict', () => {
+describe('Workflows — no verdict is not a verdict', () => {
   it('a 200 that is not the catalog contract is an error, never "no apps"', async () => {
     /* The failure this pins: a proxy login page, an envelope change, `{data:[]}`
        — all arrive as HTTP 200. The surface used to map any of them to null and
@@ -294,15 +307,15 @@ describe('Apps catalog — no verdict is not a verdict', () => {
       throw new Error(`unexpected ${method} ${url}`);
     });
     mount();
-    expect(await screen.findByText("Couldn't load the apps catalog")).toBeTruthy();
-    expect(screen.queryByText('No apps in the catalog')).toBeNull();
+    expect(await screen.findByText("Couldn't load workflows")).toBeTruthy();
+    expect(screen.queryByText('No workflows available')).toBeNull();
   });
 
   it('a genuinely empty catalog is still the honest empty state', async () => {
     mockCatalog([]);
     mount();
-    expect(await screen.findByText('No apps in the catalog')).toBeTruthy();
-    expect(screen.queryByText("Couldn't load the apps catalog")).toBeNull();
+    expect(await screen.findByText('No workflows available')).toBeTruthy();
+    expect(screen.queryByText("Couldn't load workflows")).toBeNull();
   });
 
   it('with the licence unreadable, an unavailable module is not blamed on the plan', async () => {
@@ -322,7 +335,7 @@ describe('Apps catalog — no verdict is not a verdict', () => {
       { license: { tier: 42 } }, // fails mapLiveLicense — no tier to compare against
     );
     mount();
-    await screen.findByText('Insight Synthesis');
+    await findFeature('Insight Synthesis');
     expect(screen.getByText(/License & entitlement details are unavailable/)).toBeTruthy();
     expect(screen.queryByText(/not included in your plan/)).toBeNull();
     expect(screen.queryByTestId('admin-upgrade-plan')).toBeNull();

@@ -19,7 +19,15 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { firstName: 'Dana', displayName: 'Dana' } }) }));
+/* Retain the service's real session guards and event subscriptions, while
+   preserving this fixture's display name for Home's welcome. */
+vi.mock('@/services/portal/authService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    useAuth: () => ({ user: { firstName: 'Dana', displayName: 'Dana' } }),
+  };
+});
 vi.mock('@/hooks/useGlobalRiCatalog', () => ({ useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }) }));
 vi.mock('../navEntitlements', async (importOriginal) => {
   const real = await importOriginal<typeof import('../navEntitlements')>();
