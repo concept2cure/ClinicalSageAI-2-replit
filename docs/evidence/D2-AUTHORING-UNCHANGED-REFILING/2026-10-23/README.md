@@ -98,6 +98,15 @@ company-original packaging remain unchanged. Independent review found no
 remaining source blocker. `verification.json` records the completed build,
 compiler and lint checks; publication requires the mandatory repository hooks.
 
+Before publication, later upstream `43cde0d11` merged cleanly into
+`ee160a52b`. All 71 original source pins remain unchanged. A separate
+**499-case, 14-file supplemental run**, fresh production build and
+full TypeScript check (zero errors, process exit 0) qualify its template,
+planning and Unicode-reading changes. `late-incoming.json` pins those inputs
+and results; `late-incoming-test-files.json` selects the affected suites,
+including both unchanged callers of modified fixtures. These results are
+kept separate from the earlier 595/32 run.
+
 ## Reproduction and limits
 
 ```sh

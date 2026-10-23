@@ -170,3 +170,10 @@ Of the original 14 boundary pins, 11 remain unchanged: the canonical membership
 extraction is this completion's one approved change, and the filer/version
 check-in files exactly match the incoming update. Renderer, converter, rich
 editor, generic mutation policy and company-original packaging remain unchanged.
+
+A later upstream template/planning and Unicode-reading update at `43cde0d11`
+merged cleanly at `ee160a52b`. Independent review confirmed no change to this
+completion's 13 owned paths or 71 qualified source pins. Planning remains
+internal/manual without filing authority; Unicode reads retain current access
+and receipt-span checks. The separate late-incoming evidence records the
+affected 14-suite run and fresh whole-tree build/compiler results.

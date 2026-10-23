@@ -1,0 +1,16 @@
+[
+  "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+  "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+  "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+  "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+  "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+  "server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+  "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+  "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+  "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts",
+  "server/services/market-specs/__tests__/document-template-library.test.ts",
+  "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+  "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts"
+]

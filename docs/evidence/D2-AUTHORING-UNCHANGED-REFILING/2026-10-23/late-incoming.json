@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T18:44:52.995301+00:00",
+  "qualifiedSourceCommit": "ee160a52bc4bb1be0324ff511768ab73452fae04",
+  "incomingUpstreamCommit": "43cde0d111d1c9fdd8f6454435b15ccf3f7541b1",
+  "earlierQualifiedSourceCommit": "90facc53e10a8047627b54c11583864a8a966cee",
+  "scope": "Supplemental review of eight incoming production paths, twelve changed suites, two changed fixtures and two unchanged fixture callers. No original feature source changes.",
+  "review": {
+    "independentCompatibilityReviewPassed": true,
+    "original71SourcePinsAllMatch": true,
+    "incomingProductionFilesMatchUpstream": true,
+    "featureOwnedPathsTouched": 0,
+    "policy": "Planning remains internal/manual with no filing authority; Unicode receipt spans preserve source/access checks."
+  },
+  "tests": {
+    "files": 14,
+    "passed": 499,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "processExit": 0,
+    "selection": "late-incoming-test-files.json",
+    "results": "late-incoming-tests.json",
+    "countsKeptSeparateFromEarlier595": true
+  },
+  "build": {
+    "processExit": 0,
+    "transcriptSha256": "7b5c0f9e2c556eb06754b5df22ba2011d2fbc38457a1b62fe810fb14176eeeb1"
+  },
+  "typecheck": {
+    "finishedAt": "2026-10-23T18:44:03.578998+00:00",
+    "processExit": 0,
+    "sourceCommit": "ee160a52bc4bb1be0324ff511768ab73452fae04",
+    "transcriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "errors": 0
+  },
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+      "sha256": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx",
+      "sha256": "a345f1d7f5cc79d95b9a22d06a444d71e84a5b471cfc49b899a754b90ce589e7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+      "sha256": "18409f47e6b873598b0aa54e2364ff3aabcbfd567ada657954cb70bd007989bb"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-assembly-filing-cases.ts",
+      "sha256": "6cf38d8b7630b80e342c4c4ed44234ede888d20ff84a6db828fcae276d3faf00"
+    },
+    {
+      "path": "server/routes/__tests__/_template-editor-fixture.ts",
+      "sha256": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+      "sha256": "505a55e44ea19e6eebc71f5e19477f7c054f6040aaa31577be8af619859fb777"
+    },
+    {
+      "path": "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+      "sha256": "58c55b4e407eb65fab0bdf54794af346274e9ee1f084e78d63d60de156df550f"
+    },
+    {
+      "path": "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts",
+      "sha256": "a82942e92b4d97b4fa2b9101b3aca2c20e6f0adca0e137f576fb0591cbe33eee"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+      "sha256": "af3876cf8321b2267fb69ebd6636b479e61d15ed6b7b563b0f137f9e2285c962"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+      "sha256": "e18899e5e13cf94e8ce7376050ed397992a0681baeec773a4fec0af9af0e317b"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+      "sha256": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+      "sha256": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7"
+    },
+    {
+      "path": "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+      "sha256": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b"
+    },
+    {
+      "path": "server/services/ana/builtin-template-reference.ts",
+      "sha256": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tool-defs.ts",
+      "sha256": "229febe0bbcb7cc489d536177d3d1fc8d800c6c260b5a9f409507024cca0b1f0"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tools.ts",
+      "sha256": "7b2713e2f101ad86e97e8f26f31c3cbf614f8a9ff8767628300e254edb0e9f25"
+    },
+    {
+      "path": "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+      "sha256": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0"
+    },
+    {
+      "path": "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts",
+      "sha256": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7"
+    },
+    {
+      "path": "server/services/authoring/builtin-authoring-templates.ts",
+      "sha256": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82"
+    },
+    {
+      "path": "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "sha256": "54e75972fb48f127ddbcdb516b9023aac4b73663a0519e880163b542e49c8137"
+    },
+    {
+      "path": "server/services/market-specs/document-preparation.ts",
+      "sha256": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d"
+    },
+    {
+      "path": "server/services/market-specs/document-template-library.ts",
+      "sha256": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9"
+    },
+    {
+      "path": "server/services/market-specs/shared-planning-preparation.ts",
+      "sha256": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+    },
+    {
+      "path": "shared/regulatory/global-document-registry.ts",
+      "sha256": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a"
+    }
+  ],
+  "limits": "Local tests/build/compiler only; no production deployment, remote CI or agency acceptance observed."
+}
