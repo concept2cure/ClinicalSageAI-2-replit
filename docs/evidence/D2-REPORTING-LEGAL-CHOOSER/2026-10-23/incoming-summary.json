@@ -1,0 +1,11 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx client/src/concept2cure/v2/__tests__/appsLive.test.tsx client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx client/src/concept2cure/v2/__tests__/shellNav.test.tsx client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx client/src/concept2cure/v2/__tests__/appMentions.test.tsx client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts client/src/concept2cure/v2/__tests__/navigationReachability.test.ts shared/navigation/__tests__/navigation.test.ts shared/navigation/__tests__/surface-actions.test.ts shared/navigation/__tests__/callable-apps.test.ts shared/navigation/__tests__/demo-scripts.test.ts tests/ui/one-shell.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/incoming-results.json",
+  "finishedAt": "2026-10-23T20:41:05.530232+00:00",
+  "exitCode": 0,
+  "files": 20,
+  "passed": 195,
+  "failed": 0,
+  "pending": 0,
+  "unchangedInputs": true,
+  "failures": []
+}

@@ -1,7 +1,7 @@
 # Reporting legal chooser completion — W1 / D2
 
 Discovery source: `9f8cae7f0` on `concept2cure-v2`. Status: implementation,
-component qualification and build complete; canonical catch-up/publication pending.
+component/canonical qualification and build complete; normal push gates/publication pending.
 Contract:
 `docs/design/REPORTING_LEGAL_CHOOSER_COMPLETION_2026-10-23.md`.
 
@@ -39,7 +39,7 @@ not missing-provider or rejected-fixture setup failures.
 
 `red-inputs.json` pins all three production components and the three test inputs
 before that run; `red-freeze-verification.json` verifies all six stayed unchanged.
-`red-results.json`, `red.log` and `red-run.json` retain the actual 0-pass / 2-fail
+`red-results.json`, `red-output.txt` and `red-run.json` retain the actual 0-pass / 2-fail
 result, command and failure messages. The two `red-*.test.tsx.txt` files retain
 the initial tests separately from later coverage additions. Production hashes
 also match the discovery manifest captured before implementation.
@@ -71,7 +71,27 @@ blockers; all 14 protected discovery boundaries are unchanged
 (`review-and-boundaries.json`). No auth helper, shared resource hook, server
 export policy or registry change was made.
 
-Canonical catch-up and normal push gates remain pending. Local mounted checks do
-not establish production deployment or agency acceptance. The separate
+## Canonical catch-up
+
+Implementation `1790d8fcf` was merged with incoming workflow discovery
+`aef1b6a15` at `38ed4c587`, with no conflicts. All 37 component-qualified inputs
+remained byte-identical. All 27 incoming changed code/test paths match upstream
+(including retirement of the duplicate Home browser into the existing canonical
+catalog). Independent read-only review found no integration blocker; root also
+verified the incoming 71 source pins and 75 evidence artifacts. The incoming
+502/46 and browser counts remain upstream historical qualification only.
+
+Root reran **195 passing cases in 20 navigation/catalog files**, then the
+review-requested audit-path consumer separately (**10 passing cases / 1 file**),
+with zero failures/skips. Both include all 11 changed incoming suites and direct
+navigation consumers. These are separate cohorts from the company/report 231/13
+run; counts are not added. `incoming-*` retain exact selections, results and
+source snapshots. The merged production build exited zero with stable inputs
+(`canonical-build-*`, `canonical-build.txt`). `qualified-source.json` records the
+106-input selected union, all verified at the merged commit. It is not a full
+dependency closure.
+
+Normal push gates remain pending. Local mounted checks do not establish
+production deployment or agency acceptance. The separate
 [reader check](reader-check.md) is not run. Separate correspondence form ownership
 and live deployment qualification remain outside this bounded completion.

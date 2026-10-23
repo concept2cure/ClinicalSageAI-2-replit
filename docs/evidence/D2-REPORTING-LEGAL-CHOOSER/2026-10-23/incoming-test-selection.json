@@ -1,0 +1,25 @@
+{
+  "scope": "Incoming workflow navigation changed cases and direct registry/navigation consumers on merged source",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsLive.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx",
+    "client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx",
+    "client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx",
+    "client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx",
+    "client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx",
+    "client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appMentions.test.tsx",
+    "client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts",
+    "client/src/concept2cure/v2/__tests__/navigationReachability.test.ts",
+    "shared/navigation/__tests__/navigation.test.ts",
+    "shared/navigation/__tests__/surface-actions.test.ts",
+    "shared/navigation/__tests__/callable-apps.test.ts",
+    "shared/navigation/__tests__/demo-scripts.test.ts",
+    "tests/ui/one-shell.test.ts"
+  ]
+}
