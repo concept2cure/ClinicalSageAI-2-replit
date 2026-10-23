@@ -1,0 +1,39 @@
+{
+  "testFile": "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+  "sha256": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+  "cases": 8,
+  "status": "authored; not yet executed or qualified",
+  "realComponents": [
+    "chunkAndEmbedDocument",
+    "chunkExtractedText",
+    "ownership and binary-disposition SQL",
+    "transactional DELETE/INSERT statements",
+    "pageForOffset",
+    "PGlite parameter UTF-8 encoding and PostgreSQL SQL execution",
+    "buildPassageContext",
+    "draftSourceIdentityForText"
+  ],
+  "replacedSeams": [
+    "pool connection bridged to isolated PGlite database",
+    "embedding-service factory spy; embedding is off"
+  ],
+  "schemaScope": "Minimal isolated schema includes columns used by actual writer and eligibility SQL; no migrations or native RLS qualification claimed",
+  "casesExpectedToExposeDefect": [
+    "default hard-end split of supplementary Japanese character",
+    "default overlap-start split with actual page attribution",
+    "reindex replacement preserving new Unicode source"
+  ],
+  "passingControls": [
+    "keyless BMP storage and exact identities",
+    "legacy UTF-8-corrupted chunk remains basis_mismatch",
+    "malformed source identity remains refused",
+    "foreign-organization ownership refusal preserves prior chunks",
+    "binary-disposition refusal preserves prior chunks"
+  ],
+  "limitations": [
+    "PGlite runs as database owner, not native PostgreSQL RLS proof",
+    "no live embedding provider or model",
+    "no deployment or agency acceptance",
+    "atomicity exercised through successful replacement, not concurrent transaction fault injection"
+  ]
+}

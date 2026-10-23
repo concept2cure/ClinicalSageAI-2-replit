@@ -1,0 +1,28 @@
+{
+  "receipt": "../merged-regressions.json",
+  "rawOutput": "../merged-regressions.log.gz",
+  "rawGzipSha256": "1817a597b64d6c7007d7545fc4d168d1e3ba7108ef1202d4b99423a9d4238539",
+  "rootExitCode": 1,
+  "ownedFailures": [
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > offers Build in editor on the selected real Vault upload beside the actual document",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false)",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true)",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > preserves current source selection and dirty text on Stay, then adopts only after an explicit guarded leave",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > holds the current canvas when its rail project differs from the current shell project",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > retains uncertainty when the actual host recovery read is 503 after a verified inspection",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > retains uncertainty when the actual host recovery read is malformed after a verified inspection",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks account ownership before applying a delayed actual host recovery read",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks bearer ownership before applying a delayed actual host recovery read",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks refresh ownership before applying a delayed actual host recovery read",
+    "FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > refuses retained candidate navigation when a governed ceremony opens during its exact read"
+  ],
+  "ownedBeforePins": {
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "245681c36a0b7f5772b280bc72b1abd95b0f8c3cc9c70b2b5b94793afb9c270e",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "c7e952a5943869a294635e3c3acab636ed6be4f96e21183085e3aa41ca653f85"
+  },
+  "meaningfulFailure": "Existing fixture URL interceptors no longer matched the canonical scoped current-record request. Initial Project files read fell through to unrelated generic body; six Workbench recovery seams were never reached."
+}

@@ -1,0 +1,14 @@
+{
+  "files": {
+    "server/services/authoring/builtin-authoring-templates.ts": "ac55ec8d21cdf306c307e8141d60706edbcbb43aa3d2cac8768e0a4b9b207cab",
+    "server/services/market-specs/document-template-library.ts": "ab1d491af23a3d5f30852e2682035bb40e994d5ab061fab212348d975379b6f3",
+    "server/services/market-specs/document-preparation.ts": "89f691d9f8b4bc6a70c45a582d09891422cef3d536ea138d3c43673dce8b7685",
+    "server/services/ana/builtin-template-reference.ts": "0d97bb5ca61642a5470f5a146306beba5eca9a9a50d5f3783ca266fd73768e72",
+    "shared/regulatory/global-document-registry.ts": "2ec8929bfad2ce60ff9934b97200d270cb3fa52d110f88b7011e7f45f4c7f80d",
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "58c55b4e407eb65fab0bdf54794af346274e9ee1f084e78d63d60de156df550f",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

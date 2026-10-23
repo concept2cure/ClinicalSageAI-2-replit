@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import type { RecordedTemplateFilingContext } from '../../../shared/authoring/recorded-template-source';
 import type { IndAuthoringTemplateRef } from '../../../shared/authoring/ind-document-catalog';
-import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry, isSharedPlanningRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import {
   DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getDocumentTemplate, getRegistryDocumentTemplate,
@@ -85,7 +85,7 @@ function outlineSections(outline: DocumentTemplateStructure): IndTemplateOutline
 
 function projectOutline(input: {
   entryId: string; outline: DocumentTemplateStructure; filingContext: RecordedTemplateFilingContext;
-  metadata?: CatalogTemplateEntry; originalFormat: string; limitations: string[];
+  metadata?: CatalogTemplateEntry; originalFormat: string; limitations: string[]; description?: string;
 }): BuiltinAuthoringTemplate {
   const { entryId, outline, filingContext, metadata, originalFormat } = input;
   const aiDraftable = metadata?.aiDraftable === true;
@@ -95,7 +95,7 @@ function projectOutline(input: {
     name: aiDraftable ? title : `${title} — preparation worksheet`,
     module: singleModule(outline), kind: aiDraftable ? 'narrative' : 'preparation', aiDraftable,
     authoringMode: aiDraftable ? 'ai_draft' : 'manual', originalFormat,
-    description: `${outline.title}. ${filingContext.region} ${filingContext.agency} working outline.`,
+    description: input.description ?? `${outline.title}. ${filingContext.region} ${filingContext.agency} working outline.`,
     limitations: [...LIMITATIONS, ...(outline.outlineLimitations ?? []), ...input.limitations,
       ...(!outline.basis ? ['This existing outline supplies advisory citations; regulator-text verification and current currency are not recorded for this projection.'] : [])],
     version: 1, sections: outlineSections(outline), filingContext: { ...filingContext }, families: [...outline.families],
@@ -105,14 +105,21 @@ function projectOutline(input: {
 async function registryTemplate(entry: RegulatoryApplicationType): Promise<BuiltinAuthoringTemplate> {
   const outline = await getRegistryDocumentTemplate(entry.id);
   if (!outline?.sections.length) throw new Error(`The exact ${entry.id} authoring outline could not be resolved.`);
+  const sharedPlanning = isSharedPlanningRegistryEntry(entry);
   return projectOutline({
     entryId: `registry:${entry.id}`, outline,
     filingContext: { registryId: entry.id, region: entry.region as RecordedTemplateFilingContext['region'], agency: entry.agency },
     metadata: exactComponentMetadata(componentTemplateIdForRegistry(entry.id)),
     originalFormat: entry.submissionFormat ?? entry.dossierStandard,
+    ...(sharedPlanning ? { description: `${outline.title}. Internal planning outline for device, diagnostics, biotech, pharma, laboratory and research work; confirm its actual purpose and sources.` } : {}),
     limitations: [
       `Registry applicability metadata: ${entry.productClass.join(', ')}. This does not establish this sponsor's product class or filing eligibility.`,
       ...(entry.moduleAuthority ? [`Recorded module authority: ${entry.moduleAuthority}`] : []),
+      ...(sharedPlanning ? [
+        'Internal planning work product, not an agency submission or filing authority. Select its actual purpose, audience, analysis date and source records; no product pathway is inferred.',
+        'The ICH agency value is retained registry classification, not an ICH-prescribed template, endorsement, receiving authority or delivery destination.',
+        'Distinguish source findings, analysis and proposed actions. Preserve actual meeting records and confirmed commitments; this outline does not establish that a meeting or agreement occurred.',
+      ] : []),
     ],
   });
 }
@@ -151,7 +158,7 @@ function leafletPreparation(): BuiltinAuthoringTemplate {
 }
 
 function regionalEntries(): RegulatoryApplicationType[] {
-  return GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry))
+  return GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry))
     && REGIONS.includes(entry.region as typeof REGIONS[number]));
 }
 

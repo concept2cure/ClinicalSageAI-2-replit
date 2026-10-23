@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-23T18:08:51.486665+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "8ba496f6989dfee0c92d5bb994fb2ac817faac97"
+  ],
+  "mergeStartExit": 1,
+  "conflictsResolved": [
+    "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
+  ],
+  "head": "557370ed9a826276b41fcf78782860eab3541fb7",
+  "guide": {
+    "cases": 75,
+    "notRun": 75,
+    "existingRefilingIds": "68\u201372",
+    "sharedPlanningIds": "73\u201375",
+    "sha256": "4ae3ed9f097bfff6fbc41b30271c3ee9fdf167a7613f99ce293804cfd5782372"
+  },
+  "scope": "Keep all incoming guide content and design links; append our three planning cases after incoming refiling cases. No production conflict or source edit."
+}

@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:48:38.316995+00:00",
+  "elapsedSeconds": 3.458,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "56f1911f7f9ea8588e2e6648f49dd3d9496f3fafd756ae6fe1a8ac49ad04cf61",
+  "testSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  25 passed (25)",
+    "Duration  2.91s (transform 462ms, setup 132ms, import 594ms, tests 1.50s, environment 515ms)"
+  ]
+}
