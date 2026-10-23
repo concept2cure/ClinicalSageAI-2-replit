@@ -47,7 +47,13 @@ The first normal push of `9eba8a7dc` passed every pre-push gate and the full Typ
 
 Normal merge `d8ef73f27` preserves the incoming governed Authoring refiling completion. It extends existing Vault check-in with verified source-bound rendition families, assigned versions and predecessors, retained numeric slots and locked metadata revalidation. Existing sequence placements keep their exact byte pins until explicitly replaced. The former re-filing TODO is implemented for these new numeric PDF/Word families; historical hash-labelled and all-retired families still require review. The [late-refiling packet](late-refiling/README.md) records bounded independent review and **170 passing tests in seven suites**, zero failures, pending cases or TODOs, in 39.97 seconds. All 18 before/after inputs and all 68 prior reporting/native pins remain unchanged. Eight prior Authoring pins legitimately changed and their original/new hashes are retained; the remaining 14 are preserved. Earlier TODO-bearing reports retain their historical source and result.
 
-The latest combined production build passed in **21.85 seconds**, including server and audit verifier. All 94 selected build inputs remain unchanged. `release/checks.json` preserves the latest build and the first push attempt, with separate exit statuses and lossless logs. No reporting or native source pins changed.
+That combined production build passed in **21.85 seconds**, including server and audit verifier. All 94 selected build inputs remain unchanged. `release/checks.json` preserves the latest build and the first push attempt, with separate exit statuses and lossless logs. No reporting or native source pins changed.
+
+## Preserve concurrent Unicode boundary repair
+
+The second normal push of `7e0a8332c` again passed every gate and the full compiler with zero errors, then received a fetch-first rejection because canonical advanced through `70e5ea3bb`. Normal merge `41c39279a` preserves its small Vault chunk-boundary repair: cuts and overlap starts keep surrogate pairs intact across UTF-8 storage. No reporting, native or previously qualified refiling source pin changed. The [late-unicode packet](late-unicode/README.md) retains independent review and **33 passing tests across three suites**, zero failures, pending cases or TODOs, in 9.53 seconds. The property census covers 2,688 deterministic inputs and 8,080 chunks with zero violations. All four new before/after inputs and all prior reporting/native/refiling selected pins remain unchanged.
+
+The latest combined production build passed in **20.27 seconds**, including server and audit verifier. All 98 selected build input hashes remain unchanged. `release/checks.json` and lossless archives preserve this build and the second checked-but-rejected publication attempt. The fix does not claim migration of historical chunks, complete grapheme segmentation or resolution of separate retrieval defects.
 
 ## Remaining acceptance
 
