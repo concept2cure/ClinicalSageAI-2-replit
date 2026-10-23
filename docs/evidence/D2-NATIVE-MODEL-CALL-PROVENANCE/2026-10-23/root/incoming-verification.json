@@ -1,0 +1,14 @@
+{
+  "implementationCommit": "8aaefa580e6525cb85d06a9e52aaacd6d360bc67",
+  "incomingHead": "aa09f55f55385a843b26057210cc26f973539f1c",
+  "mergeHead": "a36245bc48c865fdb3ca5cd5d238ac52ba06043b",
+  "incomingPaths": [
+    "docs/design/NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md",
+    "docs/evidence/W5/2026-10-23-nonus-release-identity/README.md",
+    "docs/work-orders/README.md"
+  ],
+  "selectedOverlap": [],
+  "all551SelectedInputsUnchanged": true,
+  "unmergedEntries": 0,
+  "qualification": "Unrelated documentation only; no runtime/test/config input changed, no regression rerun needed."
+}

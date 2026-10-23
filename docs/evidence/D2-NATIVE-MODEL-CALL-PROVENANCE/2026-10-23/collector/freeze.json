@@ -1,0 +1,62 @@
+{
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "contractCommit": "f158bf3f00a7fc898e78ed376787eb523458e36d",
+  "test": "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+  "sha256": "54852ab5276fc6d11e32b635ce50e7be4a9a26ce2d80d7eb1acb0f41c07a74e6",
+  "frozenAt": "2026-10-23T17:29:47.598881+00:00",
+  "nodeVersion": "v22.23.3",
+  "tests": 18,
+  "intendedSemanticFailures": 13,
+  "passingControls": 5,
+  "skips": 0,
+  "todo": 0,
+  "baselineInputs": 26,
+  "allBaselineInputsUnchangedBeforeAndAfter": true,
+  "includedLint": {
+    "files": 1,
+    "errors": 0,
+    "warnings": 0
+  },
+  "failureClassification": "All failed assertions are AssertionError about absent served-call facts or obsolete limitation copy; no missing method/export or fixture fault. Optional callback invocation is deliberate.",
+  "semanticFailures": [
+    "the native collector retains detached served-call metadata copies only primitive metadata immediately, without retaining or mutating the response",
+    "the native collector retains detached served-call metadata keeps first-round zero, later rounds and repeated-model calls with their distinct request IDs in callback order",
+    "the native collector retains detached served-call metadata retains an unknown returned author for unusable metadata {\"provider\":\"\",\"model\":\"\",\"requestId\":\"\"}",
+    "the native collector retains detached served-call metadata retains an unknown returned author for unusable metadata {\"provider\":42,\"model\":false,\"requestId\":{\"not\":\"a request id\"}}",
+    "the native collector retains detached served-call metadata retains an unknown returned author for unusable metadata {}",
+    "the native collector retains detached served-call metadata preserves nonempty strings exactly, including whitespace under the existing helper rule",
+    "the native writer reaches existing per-call author qualification files every served call in order while the canonical author list deduplicates repeated models",
+    "the native writer reaches existing per-call author qualification keeps an earlier unknown author {\"provider\":\"anthropic\",\"model\":null} when the final model is known",
+    "the native writer reaches existing per-call author qualification keeps an earlier unknown author {\"provider\":null,\"model\":\"claude-opus-5-5\"} when the final model is known",
+    "the native writer reaches existing per-call author qualification keeps an earlier unknown author {\"provider\":null,\"model\":null} when the final model is known",
+    "the native writer reaches existing per-call author qualification retains earlier returned calls on a late failed turn without inventing a call from its error",
+    "the native writer reaches existing per-call author qualification retains earlier returned calls on a late stopped turn without inventing a call from its error",
+    "the native writer reaches existing per-call author qualification states the remaining tool-round and later-input gaps when served calls are recorded"
+  ],
+  "passingControlNames": [
+    "the native collector retains detached served-call metadata preserves the existing raw tool collector without a model observer",
+    "the native writer reaches existing per-call author qualification preserves the omitted observation-list legacy fallback and exact warning",
+    "the native writer reaches existing per-call author qualification preserves the empty observation-list legacy fallback and exact warning",
+    "the native writer reaches existing per-call author qualification names no served model when the first call fails without returning a response",
+    "the native writer reaches existing per-call author qualification keeps an unbound turn unrecorded despite observed models"
+  ],
+  "seams": {
+    "real": [
+      "loopToolCollector",
+      "recordLoopTurn",
+      "TurnRecorder",
+      "PGlite SQL",
+      "writeTurnRecord + canonical chained audit writer",
+      "loadTurnRecord + verifyStoredTurnRecord",
+      "servedModelsOf + qualifyServedModels"
+    ],
+    "scripted": [
+      "gateway-response callback fixtures; no executeAgenticLoop invocation",
+      "caller-supplied readonly servedCalls for independent writer proof"
+    ],
+    "limits": [
+      "No provider/gateway, SDK dispatch, live PostgreSQL, RLS, HMAC seal, full chain walk, complete input trace, deployment or agency approval is qualified.",
+      "Whole response/content/usage/tool-argument retention is excluded. Native tool-step rounds and later model input gaps remain."
+    ]
+  }
+}

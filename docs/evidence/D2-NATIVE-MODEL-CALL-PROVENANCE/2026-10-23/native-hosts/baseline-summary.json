@@ -1,0 +1,38 @@
+{
+  "scope": "Native agent/realtime host observer wiring and real shared record persistence. Scripted executor, no actual gateway/provider/authentication/deployed-role proof.",
+  "tests": 15,
+  "intendedSemanticFailures": 10,
+  "passingControls": 5,
+  "skipped": 0,
+  "failureCause": "All ten fail because model.calls is empty instead of actual observed metadata; no missing callback/export, fixture, import or lint errors.",
+  "failures": [
+    "agent native host records returned model calls records mixed models, repeated calls and request IDs in actual observation order",
+    "agent native host records returned model calls keeps an earlier unknown author when a later qualified model answers",
+    "agent native host records returned model calls retains earlier responses on late failure without inventing a served failed call",
+    "realtime native host records returned model calls records mixed models, repeated calls and request IDs in actual observation order",
+    "realtime native host records returned model calls keeps an earlier unknown author when a later qualified model answers",
+    "realtime native host records returned model calls retains earlier responses on late failure without inventing a served failed call",
+    "agent native host compatibility records the first returned response even when no tool was requested",
+    "realtime native host compatibility records the first returned response even when no tool was requested",
+    "realtime cancellation keeps actual returned provenance retains the prior response when the stopped executor throws",
+    "realtime cancellation keeps actual returned provenance retains the prior response when the stopped executor returns"
+  ],
+  "controls": [
+    "agent native host compatibility CONTROL: a first-call failure records no invented model or call",
+    "agent native host compatibility CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning",
+    "realtime native host compatibility CONTROL: a first-call failure records no invented model or call",
+    "realtime native host compatibility CONTROL: an executor that reports no observer keeps its legacy fallback and exact warning",
+    "realtime cancellation keeps actual returned provenance CONTROL: an agent without its request DB client records nothing through the shared pool"
+  ],
+  "testSha256": "3a8947e2200c2abbde23f891ea0948180c18d1cb80fd4ab581038496e128a9f1",
+  "testSnapshot": "baseline-1-test.ts.txt",
+  "selectedBaselineInputs": 26,
+  "selectedInputsUnchanged": true,
+  "baseline": "../baseline-inputs.json",
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "exactCommand": "baseline-1-command.json",
+  "rawTranscript": "baseline-1.txt",
+  "jsonReport": "baseline-1-results.json",
+  "exit": "baseline-1-exit.json"
+}
