@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/red-frozen.results.json"
+  ],
+  "head": "0fff4da02f2d42cca7c2770fe1f2ef8c651f790d",
+  "startedAt": "2026-10-23T18:05:15.495023+00:00",
+  "node": "v22.23.3",
+  "files": {
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts": "517e92a5a0296735aa9b617db982d447beaf2f94deed7bdcb7a2def566e24b78",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts": "745e91904101a74ce2544415fa2ccfdc98c10ee554963be6c96064b13ba501a3"
+  },
+  "productionSha256": "6533ceaf11fbc725f487c1b7772665068828eec8b3f5f30fdbdc4dcc24df8ef1"
+}

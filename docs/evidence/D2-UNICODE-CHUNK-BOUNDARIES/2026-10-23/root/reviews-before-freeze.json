@@ -1,0 +1,7 @@
+{
+  "contract": "CLEAR unicode_read_inventory",
+  "pureTests": "CLEAR unicode_read_inventory; no mirrored algorithm or incorrect anchors",
+  "storageTests": "CLEAR unicode_source_safety; real SQL/UTF8/context/identity, explicit owner/PGlite limits",
+  "fuzzDesign": "Independent complete-token corpus; no malformed generated originals",
+  "lintFix": "Top-level describe regroup only before frozen rerun; all fixtures/assertions/cases unchanged"
+}
