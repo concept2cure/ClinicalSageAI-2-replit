@@ -25,9 +25,14 @@
     "totalDisjoint": 649
   },
   "humanCasesNotRun": 102,
-  "compilerAndDirectPublication": "pending normal push hook",
+  "compilerAndDirectPublication": {
+    "acceptedCodeCommit": "2ebf8520eff1b054f071ac96f8472e226dd25298",
+    "errors": 0,
+    "pushReceipt": "canonical-push-corrected.json"
+  },
   "limits": [
     "Bounded input closure",
     "Synthetic client HTTP and PGlite are not native PostgreSQL concurrency/RLS or live provider/agency proof"
-  ]
+  ],
+  "successorSourceFreeze": "compiler-corrected-source-freeze.json"
 }
