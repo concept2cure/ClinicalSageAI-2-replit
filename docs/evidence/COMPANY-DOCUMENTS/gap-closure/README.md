@@ -4,11 +4,13 @@ The company stationery and legal-document workflows are connected inside Concept
 
 ## What already exists
 
-The 2026-10-18 implementation inventory and 2026-10-21 merge review extend these canonical paths. The limitations below describe the starting behavior, before this completion.
+The October 18 implementation inventory and October 21/23 merge reviews extend these canonical paths. The limitations below describe the starting behavior, before this completion.
 
 | Existing piece | Existing responsibility | Completion in this work |
 | --- | --- | --- |
 | `client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx`; `server/services/company-documents/profile.ts` | Company identity, logo/letterhead editing and registered legal PDF references. | Reach the same settings from Account; add reviewed designs, retained revisions, permissions and a scalable registry. |
+| `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx:VaultVersionPicker` | Shared admitted Vault-version selection, extended upstream with metadata filters and shared result mapping. | Converge company selection onto this picker; retain same-query retry, paging and request-scope guards. |
+| `server/services/ectd/package-identity.ts`; `server/services/ind-forms/form-context-assembler.ts` | Canonical submission/market applicant identity and the established program-address authority. | Use the same identity in company comparison and correspondence; bind review/reservation to applicant/contact/market snapshots without borrowing a home-market number. |
 | `server/routes/client-branding.ts` | Legacy tenant branding and letterhead import. | Explicitly adopt or replace legacy assets; keep delegated brand extraction on the same admission path. |
 | `server/services/tenant/tenant-settings-writer.ts` | Tenant settings, locking and chained audit transaction. | Add registry/history/projection checks to its transaction rather than introducing another settings writer. |
 | `server/services/vault/vault-ingest.service.ts`; `server/services/vault/vault-lifecycle.ts` | Original bytes, project admission, exact versions and current approval. | Retain immutable copied-original lineage and legal lifecycle refusals; reuse native ingest, review and placement. |
@@ -19,7 +21,7 @@ The 2026-10-18 implementation inventory and 2026-10-21 merge review extend these
 | `server/routes/report-os.ts`; `server/services/export/governedExportConsequence.ts` | Report exports and audited delivery. | Explicit report/legal companion ZIPs with unchanged originals and current source checks. |
 | `server/services/tenant-export/`; `server/services/tenant/tenant-offboarding.ts` | Customer data return, receipts, holds and eligible disposal. | Bind exact company metadata/designs to the same receipt and purge transaction. |
 
-The deletion-history search `git log --all --diff-filter=D -- '*company-document*' '*CompanyDocument*' '*letterhead*'` returned no matching removed implementation. Existing surfaces, storage, approvals and gateways are extended; none is replaced by a parallel implementation.
+The initial deletion-history search `git log --all --diff-filter=D -- '*company-document*' '*CompanyDocument*' '*letterhead*'` found no earlier removed implementation. Subsequent merge review converged the duplicate `company-documents/CompanyVaultPicker.tsx` onto the reachable `VaultLibraryResults.tsx:VaultVersionPicker`; settings, legal evidence and their retry/paging regressions use that canonical replacement. October 23 history review also covered picker and package-identity names. Existing surfaces, storage, approvals and gateways are extended.
 
 ## Where customers use it
 
@@ -42,18 +44,22 @@ Current database membership and project access govern reads, counts and mutation
 
 Saved, applicable company requirements gate dispatch readiness and assembly. Unreviewed regional suggestions remain advisory until explicitly reviewed/configured. Unreviewed suggestions have null reviewer/time; saved reviews record the actual actor and server timestamp. A reason cannot replace missing filing facts, required legal companions or current source approval.
 
-The native migration replay succeeded against local PostgreSQL. All five company tables have row-level security enabled. Renewal deduplication and tenant/record-bounded copy-audit indexes were verified installed.
+Company identity review and correspondence now reuse the current canonical submission identity. Bound applicant names and each market's application number follow the filing; an absent added-market number cannot borrow the home-market number. The established program-address authority remains unchanged. Rebinding the applicant or changing recorded contact/market facts invalidates the old review/reservation snapshot. Unbound legacy FDA tenant names are not presented as applicants of record.
+
+The October 23 native migration replay succeeded against local PostgreSQL with 429 migrations. All five company tables have row-level security enabled, and the actual `app_service` role passes the 1,314-relation readiness contract without superuser, RLS bypass or table ownership. Renewal deduplication and tenant/record-bounded copy-audit indexes were verified installed.
 
 ## Evidence and reproducibility
 
-The October 21 result and source checksums are recorded in `verification.json` and `source-pins.json`. Qualification follows integration of all 443 upstream commits since the paused October 18 session. `test-files.json` selects 122 unique suites. The first aggregate run passed 1,519 cases and failed 10 cases in one malformed-PDF fixture; using the existing real qualification PDF fixed that fixture, with all 25 focused layout/DTD/original-preservation cases passing. `test-summary.json` records the latest result per exact file: **1,529 passed, zero failed or skipped**, without counting overlapping reruns twice. Raw full-run output is retained in the private execution workspace; focused shareable proof is retained here:
+The October 23 result and source checksums are recorded in `verification.json` and `source-pins.json`. Qualification follows integration of another 419 upstream commits after the October 21 review. `test-files.json` selects 154 unique suites; `test-summary.json` records the latest completed result per exact file: **1,976 passed, zero failed or skipped**, without counting overlapping reruns twice. Initial failures are retained honestly: malformed converter/FDA PDF fixtures were replaced with real PDFs; company identity/correspondence adopted the canonical regional identity; the attestation authority fixture gained the newly required sender audit outcome and a negative refusal regression. Production integrity and audit gates remain enabled. Raw completed-run reports and the excluded, terminated intermediate diagnostic are identified in the summary; focused shareable proof is retained here:
 
-- `browser/2026-10-21-post443/README.md`: fresh actual Chromium checks and nine screenshots, including genuine offline→Retry recovery in both inventory and the canonical Vault picker, unsaved DOCX proof, default-policy explanation, font zoom and Account layout. The parent folder preserves historical October 18 evidence.
-- `correspondence/verification.json`: actual five-page landscape DOCX/LibreOffice PDF, historical logo/style/text and geometry evidence.
+- `browser/2026-10-23-updated/README.md`: fresh actual Chromium checks and nine screenshots, including genuine offline→Retry recovery in both inventory and the canonical Vault picker, unsaved DOCX proof, default-policy explanation, font zoom and Account layout. October 18/21 evidence is preserved separately.
+- `correspondence/2026-10-23-updated/verification.json`: fresh actual five-page landscape DOCX/LibreOffice PDF, historical logo/style/text and geometry evidence with the current shared converter limiter.
+- `identity/2026-10-23/`: canonical applicant/market identity, missing facts and changed-reservation regressions.
 - `packaging/`: admitted-source-to-final-ZIP integrity and removed-control proofs.
 - `legal/README.md`: actual registry/Vault/filing SQL, requirement gates, lineage, renewal and unreviewed-state regressions.
 - `governance-independent-review.md`: independent permission/default-policy/lineage review and addressed findings.
-- `database/verification-2026-10-21.json`: actual PostgreSQL replay, company-table row-level security, indexes and runtime-role checks.
+- `database/verification-2026-10-23.json`: fresh actual PostgreSQL replay, company-table row-level security, indexes and runtime-role checks.
+- `exports/`: current report/source admission, audited attestation, complete data return and receipt/retention qualification.
 - `environment/verification-2026-10-21.json`: tested native XML tool restoration and saved environment draft status.
 
 Reproduce the selected tests with Node 22 and the locked dependencies:
@@ -72,7 +78,7 @@ npm run build
 
 ## Operational boundaries
 
-No production deployment is claimed. Remote CI is unobserved: the current environment denies the GitHub API destination, although authenticated Git fetch/push works. The saved environment draft adds that destination for review and includes tested Node/PostgreSQL/LibreOffice/XML-tool installation/startup instructions. Draft revision 5 remains unpublished; saving a draft does not apply it to a new task. The XML tool was restored twice through the narrow installer, with valid-DTD acceptance and invalid-DTD refusal; the full installer was not rerun.
+No production deployment is claimed. Remote CI is unobserved: an earlier GitHub API request was denied and current policy metadata still excludes that destination, although authenticated Git fetch/push works. The saved environment draft adds that destination for review and includes tested Node/PostgreSQL/LibreOffice/XML-tool installation/startup instructions. Draft revision 5 remains unpublished; saving a draft does not apply it to a new task. The XML tool was restored twice through the narrow installer, with valid-DTD acceptance and invalid-DTD refusal; the full installer was not rerun. Current startup was rerun successfully through the saved instructions before the fresh browser check.
 
 The browser proof used the existing administrator session and preserved profile revision 2. It did not activate a published default, compare nonexistent historical records or log in as a separate delegate; real SQL/HTTP/component tests cover the corresponding governance behaviors.
 

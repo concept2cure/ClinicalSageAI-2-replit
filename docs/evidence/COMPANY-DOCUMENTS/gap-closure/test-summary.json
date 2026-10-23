@@ -1,36 +1,125 @@
 {
-  "generatedAt": "2026-10-21T02:23:53.957867+00:00",
-  "qualifiedCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
-  "selectedFiles": 122,
+  "generatedAt": "2026-10-23T15:17:36.753644+00:00",
+  "qualifiedCommit": "a207dbbb62cdd67a355b74a63e3941e5d4572507",
+  "selectedFiles": 154,
   "latestUniqueCaseResults": {
-    "passed": 1529,
+    "passed": 1976,
     "failed": 0,
     "pending": 0,
     "other": 0
   },
-  "aggregation": "Latest result per exact test file; overlapping reruns are not added twice. This is not a claim that the first aggregate run passed.",
+  "aggregation": "Latest completed result per exact test file, selected by recorded end time; overlapping reruns are counted once. Initial failures and fixes are retained below.",
   "runs": [
     {
-      "id": "aggregate-post443",
-      "command": "vitest run [122 exact paths in test-files.json] --reporter=verbose --reporter=json",
-      "passed": 1519,
-      "failed": 10,
-      "privateJsonSha256": "64cc7304dfd77cdec27695b2da596168284b563c357b569f1a3c744afcf4d2ad",
-      "reason": "121 files passed; the regional-backbone-dtd-path fixture contained an invalid PDF with no Catalog or Pages and was correctly refused by the original/signature parser."
+      "id": "root-oct23-native",
+      "completed": true,
+      "passed": 69,
+      "failed": 7,
+      "pending": 0,
+      "files": 6,
+      "privateReportSha256": "e50bfb0f3e8bad186714695a6a7457056d7e3e72d0b257b83858bda717d2a5cf",
+      "reason": "Five suites passed; seven conversion-limiter cases received malformed mock PDF output, correctly refused by structural normalization."
     },
     {
-      "id": "regional-backbone-path-correction",
-      "command": "vitest run server/services/submission-gateways/__tests__/{regional-backbone-dtd-path,regional-packager-dtd-validation,original-legal-pdf}.test.ts --reporter=verbose",
+      "id": "conversion-slots-oct23-corrected",
+      "completed": true,
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "privateReportSha256": "a77e5d582159c8bade607a358960d92ca4788da054aca5fc0b9c886a2cb8fbec",
+      "reason": "The mock child now writes a real pdf-lib-created page. All twelve shared-capacity/FIFO/refusal cases pass; production limits and PDF normalization remain unchanged."
+    },
+    {
+      "id": "oct23-communications-tests",
+      "completed": true,
+      "passed": 305,
+      "failed": 4,
+      "pending": 0,
+      "files": 26,
+      "privateReportSha256": "f9c6cb908c1743a1418b4461d176a28c74764f2acb38801d53869ebad926cacf",
+      "reason": "Twenty-five files passed. Four correspondence fixture cases expected the obsolete identity SQL; the company workflow also required canonical submission/market identity integration, qualified in the dedicated correction run."
+    },
+    {
+      "id": "oct23/exports-tests",
+      "completed": true,
+      "passed": 427,
+      "failed": 0,
+      "pending": 0,
+      "files": 28,
+      "privateReportSha256": "5a87f2349920ecd5fba748963243eaf0b0d03d9ecf52e2df4814efe246be9098",
+      "reason": "Current report scope/plan, audited export, exact company receipt and locked retention/purge checks passed."
+    },
+    {
+      "id": "oct23-packaging-tests",
+      "completed": true,
+      "passed": 347,
+      "failed": 11,
+      "pending": 0,
+      "files": 32,
+      "privateReportSha256": "5f170e60d471879872ae8923fdcd28a650cc3d026234e4587714fb90ed666b3e",
+      "reason": "Thirty files passed. Eleven FDA structure cases in two files used malformed PDF stubs that the original/signature parser correctly refused."
+    },
+    {
+      "id": "oct23-packaging-fixture-correction",
+      "completed": true,
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "files": 3,
+      "privateReportSha256": "ef17b81f5095d4ab3977564e5ba17b40b677066c6b756d307eaa9ef751162408",
+      "reason": "Existing goldenPdf fixtures replace only malformed bytes; the two corrected suites and a shared-helper consumer all pass, with conformance assertions retained."
+    },
+    {
+      "id": "oct23-company-identity-tests",
+      "completed": true,
+      "passed": 29,
+      "failed": 0,
+      "pending": 0,
+      "files": 2,
+      "privateReportSha256": "1ae3ddfd0e9ab712901a959d22f460c94271f2edabc8818d41cb6dde9a79adda",
+      "reason": "Canonical submission identity, bound applicant, market-specific and missing application numbers, snapshot/rebinding reservations and retained identity cases all pass."
+    },
+    {
+      "id": "remaining-oct23-tests",
+      "completed": true,
+      "passed": 821,
+      "failed": 1,
+      "pending": 0,
+      "files": 62,
+      "privateReportSha256": "b0f8cbcbf187ec2bf96d51cd7067fb262086a68ffd24b459ba2eaa772707a214",
+      "reason": "Sixty-one files passed; the attestation authority fixture lacked the new independent audited sender outcome and correctly refused delivery."
+    },
+    {
+      "id": "oct23/data-return-authority-correction",
+      "completed": true,
       "passed": 25,
       "failed": 0,
-      "shareableLog": "packaging/post443-native-tests.txt",
-      "reason": "Use the existing real goldenPdf fixture; no production gate was changed. The corrected 11-case file plus actual DTD and original-byte preservation suites all pass."
+      "pending": 0,
+      "files": 3,
+      "privateReportSha256": "dc4bd3ebbd177fc956dcd1bd3b2dd02acb3686f4a03f69c694c51323d5f7e5c5",
+      "reason": "Add the canonical sender audit-outcome fixture and an explicit failed-audit refusal regression; current authority and containment suites pass without production edits."
+    },
+    {
+      "id": "identity-type-oct23",
+      "completed": true,
+      "passed": 29,
+      "failed": 0,
+      "pending": 0,
+      "files": 2,
+      "privateReportSha256": "719ed3c2885aa86da69b8665bb1a71edb24938036668f336abd6fec1509bc7b9",
+      "reason": "Repeat all 29 identity/correspondence cases after typing the applicant helper against the canonical region result, including its undefined case; runtime conditions unchanged."
     }
   ],
+  "excludedDiagnosticRun": {
+    "target": "conversion-slots.test.ts",
+    "status": "terminated before test results",
+    "reason": "Intermediate mock-factory diagnostic introduced a circular fixture import. Replaced by direct pdf-lib fixture creation before the completed twelve-case correction run; no production change."
+  },
   "files": [
     {
       "file": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 24,
       "failed": 0,
       "pending": 0,
@@ -39,7 +128,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/agencyInboxDueDays.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 3,
       "failed": 0,
       "pending": 0,
@@ -48,7 +137,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 29,
       "failed": 0,
       "pending": 0,
@@ -57,7 +146,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 18,
       "failed": 0,
       "pending": 0,
@@ -66,7 +155,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -74,8 +163,17 @@
       "sourceSha256": "cdc2dca6300ef8dd27bc5693ffcd82ea6ec85d8b3e1b7e61192cf6c76cd584cf"
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx",
+      "run": "oct23-communications-tests",
+      "passed": 3,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "033d5ea9480a326ff32909e33c2b83d72ac75315a6a0a82cdbda46a347c2c020"
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -84,7 +182,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 23,
       "failed": 0,
       "pending": 0,
@@ -93,7 +191,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -102,7 +200,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 1,
       "failed": 0,
       "pending": 0,
@@ -111,16 +209,16 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx",
-      "run": "aggregate-post443",
-      "passed": 3,
+      "run": "oct23-communications-tests",
+      "passed": 7,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "3c16dccadc90b8c144c2cdc91a886b846886ded069a500fd1e6c6e1302876cab"
+      "sourceSha256": "5d896609fff65d0dbc07d40469dd4fa69b4349474c43b8aeb4b6f2fcc13b7c9b"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -129,7 +227,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -138,7 +236,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -147,7 +245,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -156,7 +254,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -165,7 +263,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 16,
       "failed": 0,
       "pending": 0,
@@ -174,7 +272,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 1,
       "failed": 0,
       "pending": 0,
@@ -183,7 +281,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -192,7 +290,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 3,
       "failed": 0,
       "pending": 0,
@@ -201,7 +299,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -210,7 +308,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -219,7 +317,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/complianceReports.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 19,
       "failed": 0,
       "pending": 0,
@@ -228,7 +326,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 9,
       "failed": 0,
       "pending": 0,
@@ -236,8 +334,17 @@
       "sourceSha256": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f"
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx",
+      "run": "oct23-communications-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "b9c06b4a5f9894298682cf0b8f81a42b537255a79cc9afcf40be579561883334"
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -245,8 +352,17 @@
       "sourceSha256": "297381d53cd4786d65802b8ac791525653c73c8eec6dd87f3411ebb9eaa8dfc3"
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx",
+      "run": "oct23-communications-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "9174b365baa2f87b36831283e86986df9ed664b307eb9f743718b443d0caf031"
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -254,8 +370,17 @@
       "sourceSha256": "aa4f7e0d28559c261bffc12d13604131a108e19aad40fefae2be6941aec68c51"
     },
     {
+      "file": "client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx",
+      "run": "oct23-communications-tests",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8437aadf7f1e20664e8e06c6ac3cf5e5eaf7a8cb989f2fb8358e7be8fad42514"
+    },
+    {
       "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 41,
       "failed": 0,
       "pending": 0,
@@ -264,7 +389,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 12,
       "failed": 0,
       "pending": 0,
@@ -273,7 +398,7 @@
     },
     {
       "file": "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 9,
       "failed": 0,
       "pending": 0,
@@ -282,16 +407,16 @@
     },
     {
       "file": "server/__tests__/routes/tenant-export.test.ts",
-      "run": "aggregate-post443",
-      "passed": 8,
+      "run": "oct23/data-return-authority-correction",
+      "passed": 10,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "b220840f9496906fb6515fd1fdabbbebadf3e5cc9d7e7c62f2b16290ac0ec19b"
+      "sourceSha256": "62e38b0e47ca99fde74e2c806a8299aecab768413f50ce47e942a8802c5b7c54"
     },
     {
       "file": "server/__tests__/security/tenant-isolation-client-branding.contract.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -300,7 +425,7 @@
     },
     {
       "file": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 29,
       "failed": 0,
       "pending": 0,
@@ -309,16 +434,16 @@
     },
     {
       "file": "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 14,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16"
+      "sourceSha256": "f9ce13537cb3c431be7c6e5e43da1601f58f60bb92ebf875fb221fdb66d3cc2a"
     },
     {
       "file": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 27,
       "failed": 0,
       "pending": 0,
@@ -327,7 +452,7 @@
     },
     {
       "file": "server/routes/__tests__/company-document-actions.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 15,
       "failed": 0,
       "pending": 0,
@@ -336,7 +461,7 @@
     },
     {
       "file": "server/routes/__tests__/company-document-designs.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -345,7 +470,7 @@
     },
     {
       "file": "server/routes/__tests__/company-document-governance.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 22,
       "failed": 0,
       "pending": 0,
@@ -354,7 +479,7 @@
     },
     {
       "file": "server/routes/__tests__/company-documents.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 46,
       "failed": 0,
       "pending": 0,
@@ -363,7 +488,7 @@
     },
     {
       "file": "server/routes/__tests__/organizations-profile-settings.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 38,
       "failed": 0,
       "pending": 0,
@@ -372,7 +497,7 @@
     },
     {
       "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 21,
       "failed": 0,
       "pending": 0,
@@ -380,8 +505,35 @@
       "sourceSha256": "5a6f9e9454907b0fda377725555c5a18b9bddeb6e271a07b8d27a56f31522751"
     },
     {
+      "file": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c8196c396137c740f3533b221f4c26e7fbd7ee530cc9ac34688eb7dfe52d85e7"
+    },
+    {
+      "file": "server/routes/__tests__/report-os-delivery-recording.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 27,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d"
+    },
+    {
+      "file": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 25,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
       "file": "server/routes/__tests__/report-os-report-pack-export.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 50,
       "failed": 0,
       "pending": 0,
@@ -389,8 +541,26 @@
       "sourceSha256": "a314d85d231829d1406451fbb5e42ac0b36a8dc6f1f2f9ac90c5d52bd073fd06"
     },
     {
+      "file": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 25,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "14514924164062f82161d2a092813b3881246e7dcb2337bffd2686d57dc45be2"
+    },
+    {
+      "file": "server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "0199944dd2290716a6ae0d809c40da8a51d445fcfbae80cf788432f1fcb11b3a"
+    },
+    {
       "file": "server/routes/__tests__/tenant-config-audit.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 17,
       "failed": 0,
       "pending": 0,
@@ -399,16 +569,16 @@
     },
     {
       "file": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
-      "run": "aggregate-post443",
-      "passed": 10,
+      "run": "oct23/data-return-authority-correction",
+      "passed": 11,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "566499045897bbc3b6ee5816d506ee7c36eed7c40818dff68644564ce02fbf1c"
+      "sourceSha256": "f6879bb341410b0d965b84af2b854e59395e64a7736f880faead125a2974895e"
     },
     {
       "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/data-return-authority-correction",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -417,16 +587,34 @@
     },
     {
       "file": "server/routes/c2c/__tests__/communication-center.test.ts",
-      "run": "aggregate-post443",
-      "passed": 20,
+      "run": "oct23-communications-tests",
+      "passed": 24,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "bb1da07d776b82a2551deabc1e527e60b16112012d794d16711e28dd758370d0"
+      "sourceSha256": "402846fdd79c793bd6e5d990db2a1f6711c6d11781ad38af6c4a387245789218"
+    },
+    {
+      "file": "server/services/__tests__/conversion-slots.test.ts",
+      "run": "conversion-slots-oct23-corrected",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "18ca291c5a907d2a9111d3c7ebac56745ec30278451d00ef13c1aded9c09ffdc"
+    },
+    {
+      "file": "server/services/__tests__/docx-pdf-pipeline.test.ts",
+      "run": "root-oct23-native",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7559000d64445c64e4ae941db5d513a55514cb9564076362057a2c78726c393d"
     },
     {
       "file": "server/services/__tests__/generated-pdf-normalization.test.ts",
-      "run": "aggregate-post443",
+      "run": "root-oct23-native",
       "passed": 2,
       "failed": 0,
       "pending": 0,
@@ -435,7 +623,7 @@
     },
     {
       "file": "server/services/__tests__/pdf-converter.test.ts",
-      "run": "aggregate-post443",
+      "run": "root-oct23-native",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -444,7 +632,7 @@
     },
     {
       "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
-      "run": "aggregate-post443",
+      "run": "root-oct23-native",
       "passed": 17,
       "failed": 0,
       "pending": 0,
@@ -453,7 +641,7 @@
     },
     {
       "file": "server/services/authoring/__tests__/authoring-export-xml-figures.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 3,
       "failed": 0,
       "pending": 0,
@@ -462,7 +650,7 @@
     },
     {
       "file": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
-      "run": "aggregate-post443",
+      "run": "root-oct23-native",
       "passed": 32,
       "failed": 0,
       "pending": 0,
@@ -471,7 +659,7 @@
     },
     {
       "file": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 28,
       "failed": 0,
       "pending": 0,
@@ -480,7 +668,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/ana-settings-privacy.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -489,7 +677,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/communication-links.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 9,
       "failed": 0,
       "pending": 0,
@@ -498,7 +686,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -507,16 +695,16 @@
     },
     {
       "file": "server/services/company-documents/__tests__/correspondence.test.ts",
-      "run": "aggregate-post443",
-      "passed": 6,
+      "run": "identity-type-oct23",
+      "passed": 13,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "5505a520bb76b3d046f9847867132beb77b521fd25bfe580bbcc5f6d0ec52500"
+      "sourceSha256": "0c201d86735541522b8635b8f899534e8969706b13413d0b951cb1cf60ae3a1e"
     },
     {
       "file": "server/services/company-documents/__tests__/designs.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 16,
       "failed": 0,
       "pending": 0,
@@ -525,7 +713,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/governance-store.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 8,
       "failed": 0,
       "pending": 0,
@@ -534,16 +722,16 @@
     },
     {
       "file": "server/services/company-documents/__tests__/identity.pglite.test.ts",
-      "run": "aggregate-post443",
-      "passed": 10,
+      "run": "identity-type-oct23",
+      "passed": 16,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "e777b7a99eacf170c7c7ef865ecf59631324fe3a0af29cdbcb86e5cbe2f0f349"
+      "sourceSha256": "788240e4b0067c5e9733e8716949fde3b1969d5835a93de32200dcf0b1518f90"
     },
     {
       "file": "server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -552,7 +740,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/legal-inventory.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -561,7 +749,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/legal-readiness.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -570,7 +758,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/legal-registry.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -579,7 +767,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/legal-renewal.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -588,7 +776,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/legal-workflow.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 12,
       "failed": 0,
       "pending": 0,
@@ -597,7 +785,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/managed-settings.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 12,
       "failed": 0,
       "pending": 0,
@@ -606,7 +794,7 @@
     },
     {
       "file": "server/services/company-documents/__tests__/profile.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 64,
       "failed": 0,
       "pending": 0,
@@ -615,7 +803,7 @@
     },
     {
       "file": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-communications-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -623,8 +811,17 @@
       "sourceSha256": "c8415a69796b15cfef99e9ea97ed71157b0cd7cf12979998ab57ef2f4528d22b"
     },
     {
+      "file": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "3915651ccb90cb9f5b1df1dd0d5790bf724a12b3eed3fd218bba57310a041aa1"
+    },
+    {
       "file": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -633,7 +830,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 1,
       "failed": 0,
       "pending": 0,
@@ -642,7 +839,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assemble-from-core.multisource.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 1,
       "failed": 0,
       "pending": 0,
@@ -651,7 +848,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -660,7 +857,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 9,
       "failed": 0,
       "pending": 0,
@@ -669,7 +866,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 15,
       "failed": 0,
       "pending": 0,
@@ -678,7 +875,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 8,
       "failed": 0,
       "pending": 0,
@@ -687,7 +884,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -696,7 +893,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -705,7 +902,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -714,7 +911,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/dtd-bundler.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 29,
       "failed": 0,
       "pending": 0,
@@ -723,7 +920,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/dtd-validation-proof.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 18,
       "failed": 0,
       "pending": 0,
@@ -731,8 +928,26 @@
       "sourceSha256": "fbcb3c793a9224cca1daea949120271daf93e094e0abb51bf9dce34e6fefc530"
     },
     {
+      "file": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "fe33b190ef93a90537129c88d8249e38d9cef46ed03f991a18bb7817b21406b5"
+    },
+    {
+      "file": "server/services/ectd/__tests__/fda-sequence-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "b1a1345c93f359f5ed460f8dc03755719848918971e93986aa7180a7c3cf97dc"
+    },
+    {
       "file": "server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 17,
       "failed": 0,
       "pending": 0,
@@ -741,7 +956,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 13,
       "failed": 0,
       "pending": 0,
@@ -750,7 +965,7 @@
     },
     {
       "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 12,
       "failed": 0,
       "pending": 0,
@@ -758,8 +973,17 @@
       "sourceSha256": "000e6859d0363d8c9a22250cf2b95509b33c6c7e278b0fdeaa254c57e4835a90"
     },
     {
+      "file": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "53e8f3f57acaa189e15d7df3ebfbd55513d8e056a06d7e0730d1cfc0a8de7e65"
+    },
+    {
       "file": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 28,
       "failed": 0,
       "pending": 0,
@@ -767,26 +991,89 @@
       "sourceSha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
     },
     {
+      "file": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "18b67c7e64f3ea7bfe970f782dd4570c6b876706c1585113cbbc427e1829b5e0"
+    },
+    {
+      "file": "server/services/ectd/__tests__/prior-sequence-loader.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7e1fdde209a0cefb1be8268ee17532cbf8a8d88539b3bcf51421c161beb6846e"
+    },
+    {
+      "file": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 27,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb"
+    },
+    {
+      "file": "server/services/ectd/__tests__/sequence-manifest-unreadable-is-an-error-naming-the-sequence.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c7e548767e62433795b7af0008651d465096f2b98f45fce3a0a462d821e22f1f"
+    },
+    {
+      "file": "server/services/ectd/__tests__/sequence-manifest.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 15,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e3385a23072179b769cf8907e645b10067243d6a7ab6c22c33bcda89ac1fe14f"
+    },
+    {
       "file": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 21,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "44ee20276bf450066799691057bbfd6f9e7b1d46cc37bf124959721b7ace6931"
+      "sourceSha256": "6abab20838eeb02567f4831626d6f3d4361380c163bf7795f5085a3353e63bbf"
     },
     {
       "file": "server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 16,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "5bd3c10955acc6002168da39938cfc399e08a251eab8a85bbc765aa2cff76050"
+      "sourceSha256": "b4cebaa42d573a3762cae6536a853f600f3221011a193bdf6f71e7cd7e1c7585"
+    },
+    {
+      "file": "server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "565d5fec8fef7a2345d36f39fcfe25b851a3a0a8e86d915a7d793f530f36210b"
+    },
+    {
+      "file": "server/services/report-os/__tests__/lineage-trace-unread-signatures-are-unavailable.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 5,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "6c48f6385cf01f3f73c56f673a6a3f13ba502a1f31ca285efc45f18120d9839c"
     },
     {
       "file": "server/services/report-os/__tests__/report-package-legal.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 19,
       "failed": 0,
       "pending": 0,
@@ -795,7 +1082,7 @@
     },
     {
       "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -804,7 +1091,7 @@
     },
     {
       "file": "server/services/report-os/pdf/__tests__/company-branding.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -813,7 +1100,7 @@
     },
     {
       "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -822,7 +1109,7 @@
     },
     {
       "file": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -831,7 +1118,7 @@
     },
     {
       "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 15,
       "failed": 0,
       "pending": 0,
@@ -839,8 +1126,17 @@
       "sourceSha256": "ac39e29b819d816090ce92a12b602ec797320032036acd1c02163e380de19c6f"
     },
     {
+      "file": "server/services/report-os/sealing/__tests__/run-seal.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 45,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "75f7ce44b5105a2d74a826bf5c753cbe89115fb41009eaa35e09cbf63757a241"
+    },
+    {
       "file": "server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -849,7 +1145,7 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -857,8 +1153,35 @@
       "sourceSha256": "42ee1bb548518757af686693c819fbf6b13b40bd25baec61513e010d414b3977"
     },
     {
+      "file": "server/services/submission-gateways/__tests__/fda-admin-forms.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 2,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "8f3734c221288cabb1888c2bc2d4fe4ea787220fff6c9a375e3e4455ab4599b5"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-applicant-info.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "19ce084822c04fa6ead2c64c04f5f67c56c68f2b3ba0d617ebbdc2b76c55a2d6"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/fda-module1-headings.test.ts",
+      "run": "oct23-packaging-fixture-correction",
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "e2bc0545e1ac7e7bd6767625abd901606d57285ca15e6cfecec2866bb5010aae"
+    },
+    {
       "file": "server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -867,7 +1190,7 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -876,7 +1199,7 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -885,7 +1208,7 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
-      "run": "regional-backbone-path-correction",
+      "run": "oct23-packaging-tests",
       "passed": 8,
       "failed": 0,
       "pending": 0,
@@ -894,16 +1217,25 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts",
-      "run": "aggregate-post443",
-      "passed": 28,
+      "run": "oct23-packaging-tests",
+      "passed": 38,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "40fc5c25f4521f26bb4a7ef8c14fa460fa3d443820da62595b8fc60bce074fe2"
+      "sourceSha256": "299c2b8dcb23f4313afb3a771cdc30450c93f6bb46a44bc404654f6681293f22"
+    },
+    {
+      "file": "server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "67ad04045928154932db465652e48fa70592004cf4f407aaf84d9c86001357e1"
     },
     {
       "file": "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts",
-      "run": "regional-backbone-path-correction",
+      "run": "oct23-packaging-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -912,7 +1244,7 @@
     },
     {
       "file": "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
-      "run": "regional-backbone-path-correction",
+      "run": "oct23-packaging-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -921,7 +1253,7 @@
     },
     {
       "file": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23-packaging-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -929,8 +1261,26 @@
       "sourceSha256": "83aac49cc07062cc5208f1be3568e4805a7946733abab64630b6cc64ca9d1247"
     },
     {
+      "file": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 23,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc"
+    },
+    {
       "file": "server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -939,7 +1289,7 @@
     },
     {
       "file": "server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 17,
       "failed": 0,
       "pending": 0,
@@ -948,7 +1298,7 @@
     },
     {
       "file": "server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 4,
       "failed": 0,
       "pending": 0,
@@ -957,7 +1307,7 @@
     },
     {
       "file": "server/services/submission-service/__tests__/leaf-source-pin.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -966,7 +1316,7 @@
     },
     {
       "file": "server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -974,8 +1324,26 @@
       "sourceSha256": "8bfb58811dc046b9d686968fcb34181fdb50fc68e1ede7369fde4c786c4b4871"
     },
     {
+      "file": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d"
+    },
+    {
+      "file": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "run": "oct23-packaging-tests",
+      "passed": 8,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "598a622923f8fb8d295411424a5cd9cee545681303c1c27815839b7d61798c8e"
+    },
+    {
       "file": "server/services/templates/__tests__/clinical-csr-templates.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -984,7 +1352,7 @@
     },
     {
       "file": "server/services/templates/__tests__/nonclinical-templates.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -993,7 +1361,7 @@
     },
     {
       "file": "server/services/templates/__tests__/template-store-audit-outcome.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 7,
       "failed": 0,
       "pending": 0,
@@ -1002,7 +1370,7 @@
     },
     {
       "file": "server/services/tenant-export/__tests__/company-document-export.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 8,
       "failed": 0,
       "pending": 0,
@@ -1011,7 +1379,7 @@
     },
     {
       "file": "server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 3,
       "failed": 0,
       "pending": 0,
@@ -1020,7 +1388,7 @@
     },
     {
       "file": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 5,
       "failed": 0,
       "pending": 0,
@@ -1028,8 +1396,17 @@
       "sourceSha256": "c2d8875588fe5ca490ed0fc4d49b0c2ffa2504b1a0f95d65e2fb151b071af3d7"
     },
     {
+      "file": "server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts",
+      "run": "oct23/exports-tests",
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "other": 0,
+      "sourceSha256": "75507d6e2a584ae3349eb0b344ce203c091936c973724c0a8f927401f2ae1be3"
+    },
+    {
       "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 10,
       "failed": 0,
       "pending": 0,
@@ -1038,7 +1415,7 @@
     },
     {
       "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 3,
       "failed": 0,
       "pending": 0,
@@ -1047,16 +1424,16 @@
     },
     {
       "file": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
-      "run": "aggregate-post443",
-      "passed": 24,
+      "run": "oct23/exports-tests",
+      "passed": 26,
       "failed": 0,
       "pending": 0,
       "other": 0,
-      "sourceSha256": "81f6ea754b53e6f06204a7f94c025ed02fdb67efa2c5b8f7a73e190bf5bb8e3c"
+      "sourceSha256": "046293f21a2522ec14d9869030093061840ae3d71a51bd5087329c974ff9c618"
     },
     {
       "file": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 12,
       "failed": 0,
       "pending": 0,
@@ -1065,7 +1442,7 @@
     },
     {
       "file": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 21,
       "failed": 0,
       "pending": 0,
@@ -1074,7 +1451,7 @@
     },
     {
       "file": "server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 11,
       "failed": 0,
       "pending": 0,
@@ -1083,7 +1460,7 @@
     },
     {
       "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
-      "run": "aggregate-post443",
+      "run": "oct23/exports-tests",
       "passed": 26,
       "failed": 0,
       "pending": 0,
@@ -1092,7 +1469,7 @@
     },
     {
       "file": "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 14,
       "failed": 0,
       "pending": 0,
@@ -1101,7 +1478,7 @@
     },
     {
       "file": "server/services/vault/__tests__/company-legal-validity.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 6,
       "failed": 0,
       "pending": 0,
@@ -1110,7 +1487,7 @@
     },
     {
       "file": "shared/__tests__/company-documents.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 25,
       "failed": 0,
       "pending": 0,
@@ -1119,7 +1496,7 @@
     },
     {
       "file": "shared/__tests__/saved-assembly-sources.test.ts",
-      "run": "aggregate-post443",
+      "run": "remaining-oct23-tests",
       "passed": 15,
       "failed": 0,
       "pending": 0,

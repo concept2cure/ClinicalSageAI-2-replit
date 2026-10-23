@@ -7,11 +7,13 @@ Reporting. Work remains on `concept2cure-v2`. Evidence belongs under
 
 ## What already exists
 
-The 2026-10-18 implementation inventory and 2026-10-21 merge review extend these canonical paths. The limitations below describe the starting behavior, before this completion.
+The October 18 implementation inventory and October 21/23 merge reviews extend these canonical paths. The limitations below describe the starting behavior, before this completion.
 
 | Existing piece | Existing responsibility | Completion in this work |
 | --- | --- | --- |
 | `client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx`; `server/services/company-documents/profile.ts` | Company identity, logo/letterhead editing and registered legal PDF references. | Reach the same settings from Account; add reviewed designs, retained revisions, permissions and a scalable registry. |
+| `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx:VaultVersionPicker` | Shared admitted Vault-version selection, extended upstream with metadata filters and shared result mapping. | Converge company selection onto this picker; retain same-query retry, paging and request-scope guards. |
+| `server/services/ectd/package-identity.ts`; `server/services/ind-forms/form-context-assembler.ts` | Canonical submission/market applicant identity and the established program-address authority. | Use the same identity in company comparison and correspondence; bind review/reservation to applicant/contact/market snapshots without borrowing a home-market number. |
 | `server/routes/client-branding.ts` | Legacy tenant branding and letterhead import. | Explicitly adopt or replace legacy assets; keep delegated brand extraction on the same admission path. |
 | `server/services/tenant/tenant-settings-writer.ts` | Tenant settings, locking and chained audit transaction. | Add registry/history/projection checks to its transaction rather than introducing another settings writer. |
 | `server/services/vault/vault-ingest.service.ts`; `server/services/vault/vault-lifecycle.ts` | Original bytes, project admission, exact versions and current approval. | Retain immutable copied-original lineage and legal lifecycle refusals; reuse native ingest, review and placement. |
@@ -22,7 +24,7 @@ The 2026-10-18 implementation inventory and 2026-10-21 merge review extend these
 | `server/routes/report-os.ts`; `server/services/export/governedExportConsequence.ts` | Report exports and audited delivery. | Explicit report/legal companion ZIPs with unchanged originals and current source checks. |
 | `server/services/tenant-export/`; `server/services/tenant/tenant-offboarding.ts` | Customer data return, receipts, holds and eligible disposal. | Bind exact company metadata/designs to the same receipt and purge transaction. |
 
-The deletion-history search `git log --all --diff-filter=D -- '*company-document*' '*CompanyDocument*' '*letterhead*'` returned no matching removed implementation. Existing surfaces, storage, approvals and gateways are extended; none is replaced by a parallel implementation.
+The initial deletion-history search `git log --all --diff-filter=D -- '*company-document*' '*CompanyDocument*' '*letterhead*'` found no earlier removed implementation. Subsequent merge review converged the duplicate `company-documents/CompanyVaultPicker.tsx` onto the reachable `VaultLibraryResults.tsx:VaultVersionPicker`; settings, legal evidence and their retry/paging regressions use that canonical replacement. October 23 history review also covered picker and package-identity names. Existing surfaces, storage, approvals and gateways are extended.
 
 ## Invariants
 

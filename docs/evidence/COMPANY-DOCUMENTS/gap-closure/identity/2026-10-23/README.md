@@ -28,3 +28,5 @@ admission. Correspondence exercises the real canonical reader with a SQL transpo
 double, including third-market non-borrowing, same-name sponsor rebind, changed
 contact, current-context refusal and canonical Authoring reservation. No provider,
 agency or production endpoint is called. Historical public provenance is unchanged.
+
+Final release qualification corrected the applicant helper annotation to the exact canonical region reader return type, which includes `undefined`. Its runtime condition is unchanged. `type-correction-tests.txt` records all 29 identity/correspondence cases passing afterward; the root source pins identify the final qualified source.

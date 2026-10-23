@@ -1,8 +1,8 @@
 {
-  "qualifiedCommit": "040586fc377beb3fd5e06aaefd6f3ce199b31ae6",
-  "comparisonBase": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
-  "generatedAt": "2026-10-21T02:23:53.957867+00:00",
-  "scope": "Existing company-document source pins, selected regression suites and changed source/configuration paths against the synchronized upstream merge parent. Evidence files are excluded to avoid self-referential hashes.",
+  "qualifiedCommit": "a207dbbb62cdd67a355b74a63e3941e5d4572507",
+  "comparisonBase": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "generatedAt": "2026-10-23T15:17:36.753644+00:00",
+  "scope": "Existing company-document source pins, final selected regression suites and changed source/configuration paths against synchronized upstream. Canonical identity and converter dependencies included. Evidence files excluded to avoid self-referential hashes.",
   "deletedPaths": [
     "client/src/concept2cure/v2/surfaces/company-documents/CompanyVaultPicker.tsx"
   ],
@@ -39,6 +39,10 @@
       "sha256": "cdc2dca6300ef8dd27bc5693ffcd82ea6ec85d8b3e1b7e61192cf6c76cd584cf"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/c2cFormLiveDescription.test.tsx",
+      "sha256": "033d5ea9480a326ff32909e33c2b83d72ac75315a6a0a82cdbda46a347c2c020"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx",
       "sha256": "10d5a8da59c6d48ebdfbc22db25567b818efb1174881ef5cab7eb5e2fe30b61b"
     },
@@ -56,7 +60,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx",
-      "sha256": "3c16dccadc90b8c144c2cdc91a886b846886ded069a500fd1e6c6e1302876cab"
+      "sha256": "5d896609fff65d0dbc07d40469dd4fa69b4349474c43b8aeb4b6f2fcc13b7c9b"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx",
@@ -111,8 +115,16 @@
       "sha256": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx",
+      "sha256": "b9c06b4a5f9894298682cf0b8f81a42b537255a79cc9afcf40be579561883334"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx",
       "sha256": "297381d53cd4786d65802b8ac791525653c73c8eec6dd87f3411ebb9eaa8dfc3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx",
+      "sha256": "9174b365baa2f87b36831283e86986df9ed664b307eb9f743718b443d0caf031"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
@@ -124,11 +136,15 @@
     },
     {
       "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-      "sha256": "0878625e7946b28677d4208241518e237d1b9986c8c6e5bb8d14493ad2f39d18"
+      "sha256": "5b15412b24e2f9de672ea6f01596298b21501bef91ab299de53288209635c33c"
     },
     {
       "path": "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
       "sha256": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx",
+      "sha256": "8437aadf7f1e20664e8e06c6ac3cf5e5eaf7a8cb989f2fb8358e7be8fad42514"
     },
     {
       "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
@@ -172,11 +188,11 @@
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx",
-      "sha256": "675840d2488edcf8c05ad441b97c898210d177667d5a87e1047692611f715c47"
+      "sha256": "ca01183744db3d5073691e6a0a91377272248b32d89442beef8695bd9c017f95"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx",
-      "sha256": "a5b5d7e09c252e678a786564d919ecaf3ae3a4def58c89c84f72a89b8a437fc6"
+      "sha256": "351a6ae1e3e4d6a63bbb453fc3503c83dd62785401d5fc0ff418584549939736"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx",
@@ -216,11 +232,11 @@
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx",
-      "sha256": "7c4cf4dec025fd1e56ffa555152777e9d1ebcf0f8467f6f005055e9c53cfef40"
+      "sha256": "1837f7e03dec3b9459437a10369a03063296106ad6be81a209f7998b389524b6"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx",
-      "sha256": "b73a428da2deda5eff175cf683458d49c8d215ec8f9b0c67609d21ca3cc4142a"
+      "sha256": "9d72e1f77429470f7e31be75299350c50104b03cf359dcc1ac1a4eda24f7139f"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx",
@@ -340,11 +356,11 @@
     },
     {
       "path": "scripts/ci/lib/approved-sql-predicates.mjs",
-      "sha256": "e98bb3e0d36e5b7e654a5f616bc5351cd22f76154d407b1a62786d371037aa5f"
+      "sha256": "bd55448f64e95cc2c151ddfd6b79917c115b66265dd1bbb5e5b7956ab809db8b"
     },
     {
       "path": "scripts/db/migration-set.mjs",
-      "sha256": "24a5141466b620587e86334e37687b5a2c1e7c9fb32f4758ebd510875c5e137b"
+      "sha256": "3acdb0a1bb75cc7806f35374d2f15ee6fbe35a5e86e3d46478a389b63b9edd37"
     },
     {
       "path": "scripts/verify-company-correspondence.ts",
@@ -352,7 +368,7 @@
     },
     {
       "path": "server/__tests__/routes/tenant-export.test.ts",
-      "sha256": "b220840f9496906fb6515fd1fdabbbebadf3e5cc9d7e7c62f2b16290ac0ec19b"
+      "sha256": "62e38b0e47ca99fde74e2c806a8299aecab768413f50ce47e942a8802c5b7c54"
     },
     {
       "path": "server/__tests__/security/tenant-isolation-client-branding.contract.test.ts",
@@ -360,7 +376,7 @@
     },
     {
       "path": "server/db/pglite-harness.ts",
-      "sha256": "927ef41724fcc6e8df0690d37ab3738fcc3130034c4baff7f8844d3b913541db"
+      "sha256": "dd60b3bee483aa4da711dbe35431af867a640f0cad124b75d30fd15ac306a9ee"
     },
     {
       "path": "server/jobs/companyLegalRenewalSweep.ts",
@@ -376,7 +392,7 @@
     },
     {
       "path": "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts",
-      "sha256": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16"
+      "sha256": "f9ce13537cb3c431be7c6e5e43da1601f58f60bb92ebf875fb221fdb66d3cc2a"
     },
     {
       "path": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
@@ -407,6 +423,18 @@
       "sha256": "5a6f9e9454907b0fda377725555c5a18b9bddeb6e271a07b8d27a56f31522751"
     },
     {
+      "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+      "sha256": "c8196c396137c740f3533b221f4c26e7fbd7ee530cc9ac34688eb7dfe52d85e7"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-delivery-recording.test.ts",
+      "sha256": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "sha256": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
       "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
       "sha256": "a314d85d231829d1406451fbb5e42ac0b36a8dc6f1f2f9ac90c5d52bd073fd06"
     },
@@ -415,12 +443,16 @@
       "sha256": "14514924164062f82161d2a092813b3881246e7dcb2337bffd2686d57dc45be2"
     },
     {
+      "path": "server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts",
+      "sha256": "0199944dd2290716a6ae0d809c40da8a51d445fcfbae80cf788432f1fcb11b3a"
+    },
+    {
       "path": "server/routes/__tests__/tenant-config-audit.test.ts",
       "sha256": "e26c3eddb782e1f2940e6252a274c9f9e9f69c9c150158ee2ddd7cd5152d89ff"
     },
     {
       "path": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
-      "sha256": "566499045897bbc3b6ee5816d506ee7c36eed7c40818dff68644564ce02fbf1c"
+      "sha256": "f6879bb341410b0d965b84af2b854e59395e64a7736f880faead125a2974895e"
     },
     {
       "path": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
@@ -432,11 +464,11 @@
     },
     {
       "path": "server/routes/c2c/__tests__/communication-center.test.ts",
-      "sha256": "bb1da07d776b82a2551deabc1e527e60b16112012d794d16711e28dd758370d0"
+      "sha256": "402846fdd79c793bd6e5d990db2a1f6711c6d11781ad38af6c4a387245789218"
     },
     {
       "path": "server/routes/c2c/communication-center.ts",
-      "sha256": "b2cb46c673df8099961dc6572f284493c4dba3b001631e1c81dd5e08fe705af8"
+      "sha256": "d676ade28211a2bf87b67b961a096d9054dd2a138246b8902beaa01bd4027b72"
     },
     {
       "path": "server/routes/client-branding.ts",
@@ -472,11 +504,19 @@
     },
     {
       "path": "server/routes/report-os.ts",
-      "sha256": "0c54f2a18c65a4295deb4f69b183b5e8c2f593228afedcfe4d3304cc01a33169"
+      "sha256": "d0c0d239860a39561d86ee9a7ada27f717ac0a9658bb6d58f10a9f2b722b41af"
     },
     {
       "path": "server/routes/tenant-export.ts",
-      "sha256": "015bef07f5f53d3aa4c3e2d766b0d170def327d064c07f222da677539c9139f2"
+      "sha256": "030e6fb05635528510d76565aad07300f4617a4ce4232cbcadc09b5c0831a5ca"
+    },
+    {
+      "path": "server/services/__tests__/conversion-slots.test.ts",
+      "sha256": "18ca291c5a907d2a9111d3c7ebac56745ec30278451d00ef13c1aded9c09ffdc"
+    },
+    {
+      "path": "server/services/__tests__/docx-pdf-pipeline.test.ts",
+      "sha256": "7559000d64445c64e4ae941db5d513a55514cb9564076362057a2c78726c393d"
     },
     {
       "path": "server/services/__tests__/generated-pdf-normalization.test.ts",
@@ -508,7 +548,7 @@
     },
     {
       "path": "server/services/authoring/authoring-from-draft.ts",
-      "sha256": "93b0dbc07e3991775ce8843dd6abc2756321a743407d148546f2cfa10f2ce5dd"
+      "sha256": "166444e48fd43769ed4409b035ec18bedf6e57d2e8897d1f0aae2bf76f94d308"
     },
     {
       "path": "server/services/authoring/authoring-saved-assembly-sources.ts",
@@ -532,7 +572,7 @@
     },
     {
       "path": "server/services/company-documents/__tests__/correspondence.test.ts",
-      "sha256": "5505a520bb76b3d046f9847867132beb77b521fd25bfe580bbcc5f6d0ec52500"
+      "sha256": "0c201d86735541522b8635b8f899534e8969706b13413d0b951cb1cf60ae3a1e"
     },
     {
       "path": "server/services/company-documents/__tests__/designs.pglite.test.ts",
@@ -544,7 +584,7 @@
     },
     {
       "path": "server/services/company-documents/__tests__/identity.pglite.test.ts",
-      "sha256": "e777b7a99eacf170c7c7ef865ecf59631324fe3a0af29cdbcb86e5cbe2f0f349"
+      "sha256": "788240e4b0067c5e9733e8716949fde3b1969d5835a93de32200dcf0b1518f90"
     },
     {
       "path": "server/services/company-documents/__tests__/legacy-adoption.pglite.test.ts",
@@ -596,7 +636,7 @@
     },
     {
       "path": "server/services/company-documents/correspondence.ts",
-      "sha256": "50a069f7e366e6f305d7a0b38f3565df8ab3af489d3d24212bbd84470425ed6b"
+      "sha256": "2ec42a889591d1145d2e7777dd35c33f8749dfc777444f5e5f6bd654afac0a93"
     },
     {
       "path": "server/services/company-documents/designs.ts",
@@ -608,7 +648,7 @@
     },
     {
       "path": "server/services/company-documents/identity.ts",
-      "sha256": "9a9da0e0046485c4479d3fa283de78cbc11e1e0f81f6560aefd3f2f9c4eccf5f"
+      "sha256": "e23c07298de270c31cb55be8987123a9de2d9630417ff461eae70ab5c99afdef"
     },
     {
       "path": "server/services/company-documents/legacy-adoption.ts",
@@ -655,12 +695,20 @@
       "sha256": "3106aa81a9e39cb8262815b29c237700fbbe9f1b7d80d4cccdc3c249867ba9fc"
     },
     {
+      "path": "server/services/conversion-slots.ts",
+      "sha256": "ebcf63905a6a16096bf06b136f33aefebbc65d08ae3d891d743c1710c64272b8"
+    },
+    {
       "path": "server/services/docx/__tests__/company-letterhead-layout.test.ts",
       "sha256": "c8415a69796b15cfef99e9ea97ed71157b0cd7cf12979998ab57ef2f4528d22b"
     },
     {
       "path": "server/services/docx/docxFactory.ts",
       "sha256": "0b2d267f13195f7883811c53b51b294d07d8e15c23567115e27863f8255fc7bf"
+    },
+    {
+      "path": "server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts",
+      "sha256": "3915651ccb90cb9f5b1df1dd0d5790bf724a12b3eed3fd218bba57310a041aa1"
     },
     {
       "path": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
@@ -711,6 +759,14 @@
       "sha256": "fbcb3c793a9224cca1daea949120271daf93e094e0abb51bf9dce34e6fefc530"
     },
     {
+      "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "sha256": "fe33b190ef93a90537129c88d8249e38d9cef46ed03f991a18bb7817b21406b5"
+    },
+    {
+      "path": "server/services/ectd/__tests__/fda-sequence-identity.test.ts",
+      "sha256": "b1a1345c93f359f5ed460f8dc03755719848918971e93986aa7180a7c3cf97dc"
+    },
+    {
       "path": "server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts",
       "sha256": "741617afcc83664402acdc4616e2d088df44048fe45e78b5a79905cc3a4a4acf"
     },
@@ -723,12 +779,36 @@
       "sha256": "000e6859d0363d8c9a22250cf2b95509b33c6c7e278b0fdeaa254c57e4835a90"
     },
     {
+      "path": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "53e8f3f57acaa189e15d7df3ebfbd55513d8e056a06d7e0730d1cfc0a8de7e65"
+    },
+    {
       "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
       "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152"
     },
     {
+      "path": "server/services/ectd/__tests__/prior-sequence-fold.test.ts",
+      "sha256": "18b67c7e64f3ea7bfe970f782dd4570c6b876706c1585113cbbc427e1829b5e0"
+    },
+    {
+      "path": "server/services/ectd/__tests__/prior-sequence-loader.test.ts",
+      "sha256": "7e1fdde209a0cefb1be8268ee17532cbf8a8d88539b3bcf51421c161beb6846e"
+    },
+    {
+      "path": "server/services/ectd/__tests__/recorded-applicant-identity.test.ts",
+      "sha256": "74f3a5692cef079f13212008d636378dabbfb3363572169bd526937aa8dad1bb"
+    },
+    {
+      "path": "server/services/ectd/__tests__/sequence-manifest-unreadable-is-an-error-naming-the-sequence.test.ts",
+      "sha256": "c7e548767e62433795b7af0008651d465096f2b98f45fce3a0a462d821e22f1f"
+    },
+    {
+      "path": "server/services/ectd/__tests__/sequence-manifest.test.ts",
+      "sha256": "e3385a23072179b769cf8907e645b10067243d6a7ab6c22c33bcda89ac1fe14f"
+    },
+    {
       "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
-      "sha256": "44ee20276bf450066799691057bbfd6f9e7b1d46cc37bf124959721b7ace6931"
+      "sha256": "6abab20838eeb02567f4831626d6f3d4361380c163bf7795f5085a3353e63bbf"
     },
     {
       "path": "server/services/ectd/__tests__/support/signed-pdf-fixture.ts",
@@ -736,11 +816,11 @@
     },
     {
       "path": "server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts",
-      "sha256": "5bd3c10955acc6002168da39938cfc399e08a251eab8a85bbc765aa2cff76050"
+      "sha256": "b4cebaa42d573a3762cae6536a853f600f3221011a193bdf6f71e7cd7e1c7585"
     },
     {
       "path": "server/services/ectd/assemble-from-core.ts",
-      "sha256": "fe3c4511a25c6e659860c54768e382f42a0446810dcff3232613d10fb6dad0c5"
+      "sha256": "1d4bc6444c4db355005ce09da250b207294abb70eceaec30feea289730a32276"
     },
     {
       "path": "server/services/ectd/assess-dispatch-readiness.ts",
@@ -748,11 +828,11 @@
     },
     {
       "path": "server/services/ectd/core-to-packager.ts",
-      "sha256": "2d7d0f53c07c94413570a5fd8c708a62ee6f3ac03ff9ed1430f9ccf7a55eb0bd"
+      "sha256": "764ad389349309fb28db04e8be45a1b0351f22701af31052b80c18572db8afb1"
     },
     {
       "path": "server/services/ectd/leaf-source-resolver.ts",
-      "sha256": "6abaf756fc4c40ae68c99a652f5866430e1c6e5f721051daa7d6ca31edd8fbeb"
+      "sha256": "26f2ab3da2e7a7e17e2f8e3df954a0849b0c11a04cffcb13a3f84382683993fc"
     },
     {
       "path": "server/services/ectd/original-pdf-contract.ts",
@@ -767,16 +847,36 @@
       "sha256": "56ab56335f0753f4c05fa5f3e5ab3dfceeb8a33f920e9be44c70e837759755ca"
     },
     {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "f4e3b6d0b4bafaa9660909876f9486eb49bca0bca1556c749321f28d6657bcad"
+    },
+    {
       "path": "server/services/ectd/pdfa-readiness.ts",
       "sha256": "c6f538d8c905c628f419e81fd097d34bac774903f1b6a74fb5f26f6c56afc5f7"
     },
     {
+      "path": "server/services/ectd/run-package-identity.ts",
+      "sha256": "c170254bb828765d810f3c7f9d7ea7d1c2f53eb84e74910fa82e987e58471052"
+    },
+    {
       "path": "server/services/ectd/sequence-manifest.ts",
-      "sha256": "f48f6ed64929a91031455c5fe2da20a4bd867915932109bc27bab2788566aa6f"
+      "sha256": "6f76052d480a99e0f0ee52afb5571d92da351a80db27d807f09640aafec24734"
+    },
+    {
+      "path": "server/services/ind-forms/form-context-assembler.ts",
+      "sha256": "7a6b2987b9d3b5de923f130bc72d5c80e634650b07666d18c3c015bffa811acd"
     },
     {
       "path": "server/services/pdf-converter.ts",
-      "sha256": "a7ac5861c4533d9875a931bd0c317b4cb38bfea271eed363315fb6b13cf8ff5d"
+      "sha256": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230"
+    },
+    {
+      "path": "server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+      "sha256": "565d5fec8fef7a2345d36f39fcfe25b851a3a0a8e86d915a7d793f530f36210b"
+    },
+    {
+      "path": "server/services/report-os/__tests__/lineage-trace-unread-signatures-are-unavailable.test.ts",
+      "sha256": "6c48f6385cf01f3f73c56f673a6a3f13ba502a1f31ca285efc45f18120d9839c"
     },
     {
       "path": "server/services/report-os/__tests__/report-package-legal.test.ts",
@@ -811,12 +911,28 @@
       "sha256": "3a08a1482cc89d0877a154a556411c3468ac9625c0950270eb96df7bc297ca21"
     },
     {
+      "path": "server/services/report-os/sealing/__tests__/run-seal.test.ts",
+      "sha256": "75f7ce44b5105a2d74a826bf5c753cbe89115fb41009eaa35e09cbf63757a241"
+    },
+    {
       "path": "server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts",
       "sha256": "13bfe50f0f681440e26f1e8f4e07e2af4663a27bdb3309b49de98cbc4492425c"
     },
     {
       "path": "server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts",
       "sha256": "42ee1bb548518757af686693c819fbf6b13b40bd25baec61513e010d414b3977"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-admin-forms.test.ts",
+      "sha256": "8f3734c221288cabb1888c2bc2d4fe4ea787220fff6c9a375e3e4455ab4599b5"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-applicant-info.test.ts",
+      "sha256": "19ce084822c04fa6ead2c64c04f5f67c56c68f2b3ba0d617ebbdc2b76c55a2d6"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-module1-headings.test.ts",
+      "sha256": "e2bc0545e1ac7e7bd6767625abd901606d57285ca15e6cfecec2866bb5010aae"
     },
     {
       "path": "server/services/submission-gateways/__tests__/governed-transmit-independence.test.ts",
@@ -836,7 +952,11 @@
     },
     {
       "path": "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts",
-      "sha256": "40fc5c25f4521f26bb4a7ef8c14fa460fa3d443820da62595b8fc60bce074fe2"
+      "sha256": "299c2b8dcb23f4313afb3a771cdc30450c93f6bb46a44bc404654f6681293f22"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts",
+      "sha256": "67ad04045928154932db465652e48fa70592004cf4f407aaf84d9c86001357e1"
     },
     {
       "path": "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts",
@@ -847,16 +967,20 @@
       "sha256": "0bfac52b44c6df59c9089fc620d5f40aa9817847dc50561def5225fe21b812b6"
     },
     {
+      "path": "server/services/submission-gateways/__tests__/support/fda-backbone.ts",
+      "sha256": "7f73600ec50dd8220e4a351761772112aae982fae2c96e4943f4d38b3a3d793a"
+    },
+    {
       "path": "server/services/submission-gateways/ectd-packager/types.ts",
       "sha256": "5ef193b078125614ea901c8f15a642281937db5fe646104d8ec902f3fada3aa4"
     },
     {
       "path": "server/services/submission-gateways/pre-transmit-check.ts",
-      "sha256": "b85ace5c602138b0a63a83de39e3cd507fe571d8ee2afca7367c4aba8e80cc2b"
+      "sha256": "b9d79e6ad8176ba115997092aa503b162325d2f83ea527a4412fadca4cda4dd5"
     },
     {
       "path": "server/services/submission-gateways/regional-packager.ts",
-      "sha256": "486e3c95d3cc6b372b69bd25c50577202ac5946e566cd1a4d05407585548cd6b"
+      "sha256": "aecaa9dec672caddf5b7d066b5370d6b147a94edc8cbd11b512e2a77c10b1e49"
     },
     {
       "path": "server/services/submission-gateways/types.ts",
@@ -865,6 +989,14 @@
     {
       "path": "server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts",
       "sha256": "83aac49cc07062cc5208f1be3568e4805a7946733abab64630b6cc64ca9d1247"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts",
+      "sha256": "7e222ffdda4b7642f6452def90be9cc3997f4f0a68e8bcef73213c523c12181a"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts",
+      "sha256": "32397826aad49070c68bd0a5b28be89edc1a082c1bdc467f30511fe0e3005afc"
     },
     {
       "path": "server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts",
@@ -887,8 +1019,16 @@
       "sha256": "8bfb58811dc046b9d686968fcb34181fdb50fc68e1ede7369fde4c786c4b4871"
     },
     {
+      "path": "server/services/submission-service/__tests__/packageability-dry-run.test.ts",
+      "sha256": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-recorded-identity.test.ts",
+      "sha256": "598a622923f8fb8d295411424a5cd9cee545681303c1c27815839b7d61798c8e"
+    },
+    {
       "path": "server/services/submission-service/submission-service.ts",
-      "sha256": "c750ad2897313d0efdf92274e3a3d37e611e96164e4ecf826249b85b71824698"
+      "sha256": "c28f18ad87e3fcb0a9824c162a64be2ab0e5916b188880403ea862961a3ec2ff"
     },
     {
       "path": "server/services/templates/__tests__/clinical-csr-templates.test.ts",
@@ -917,6 +1057,10 @@
     {
       "path": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
       "sha256": "c2d8875588fe5ca490ed0fc4d49b0c2ffa2504b1a0f95d65e2fb151b071af3d7"
+    },
+    {
+      "path": "server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts",
+      "sha256": "75507d6e2a584ae3349eb0b344ce203c091936c973724c0a8f927401f2ae1be3"
     },
     {
       "path": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
@@ -952,7 +1096,7 @@
     },
     {
       "path": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
-      "sha256": "81f6ea754b53e6f06204a7f94c025ed02fdb67efa2c5b8f7a73e190bf5bb8e3c"
+      "sha256": "046293f21a2522ec14d9869030093061840ae3d71a51bd5087329c974ff9c618"
     },
     {
       "path": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
@@ -972,7 +1116,7 @@
     },
     {
       "path": "server/services/tenant/tenant-offboarding.ts",
-      "sha256": "130d6d021f291cf8a6819ed4573886ad8bcb3f7f250202c0c755d6f77f772b85"
+      "sha256": "1ec72187e14a8e0d88966f4207be0c49b942ce7eea9cc8f5a517bad2ae0e011a"
     },
     {
       "path": "server/services/tenant/tenant-purge-audit.ts",
@@ -1028,7 +1172,7 @@
     },
     {
       "path": "shared/types/communication-center.ts",
-      "sha256": "a439838f25c04ddaf0b580ce73546e619cb5cf8811e276a1b057ef65715135d4"
+      "sha256": "4433c56c5b9b49a9c92997d1ce6a2d1ba3f6ae2d341477e8d52665695a568130"
     }
   ]
 }

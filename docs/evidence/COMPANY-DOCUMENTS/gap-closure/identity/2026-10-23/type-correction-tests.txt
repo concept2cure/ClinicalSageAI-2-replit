@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > normalizes whitespace/case, but retains meaningful legal-name and address differences 6ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > reports the separate brand/applicant identities without changing either recorded source 9ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > retains a reasoned role difference bound to exact company and filing hashes 17ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > invalidates the old role review after the actual applicant changes 14ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > requires separate review for identically styled default and named presentations 27ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > refuses a review prepared against an earlier company revision 8ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not let a reason replace missing application identity 13ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > rolls the review back if its chained audit cannot be written 13ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > refuses a changed submission admission before the review commits 11ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > filing identity reconciliation against actual recorded facts > does not query applicant or review records before target admission succeeds 1ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > uses the added market number rather than the home project number 4ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > cannot acknowledge a missing added-market number using the home number 12ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > invalidates reviewed facts when the bound sponsor changes even with the same name 18ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > invalidates reviewed facts when the bound regulatory contact changes 12ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > does not label a tenant as the FDA applicant when sponsor binding is null 9ms
+ ✓ server/services/company-documents/__tests__/identity.pglite.test.ts > company reconciliation follows recorded package applicant and market authority > does not label a tenant as the FDA applicant when sponsor binding is 44444444-4444-4444-8444-444444444444 9ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > derives every filing fact from the admitted sequence and canonical identity reader 5ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > selects only an explicit published variant in the actual admitted market and retains its variant identity 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > refuses a filing identity change during render or before the canonical create transaction 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > saves through the canonical Authoring creator with server origin, sanitized text and explicit reason 2ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > rejects spoofed project, recipient and company presentation fields before creating a draft 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > does not substitute company branding for an unknown applicant or application number 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > reads the additional market number from the submission instead of borrowing the home number 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > leaves an unrecorded ema sequence number missing instead of borrowing the home or another market number 0ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > leaves an unrecorded pmda sequence number missing instead of borrowing the home or another market number 0ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > refuses a changed applicant binding even when rendered name and number are unchanged 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > refuses a changed applicant contact even when rendered name and number are unchanged 0ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > does not present the tenant name as an unbound FDA applicant 0ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > refuses a program that changed after sequence admission 0ms
+
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+   Start at  15:15:34
+   Duration  3.80s (transform 818ms, setup 76ms, import 1.45s, tests 1.92s, environment 0ms)
+
+JSON report written to /workspace/.cloud-setup/gap-closure/identity-type-oct23.json
