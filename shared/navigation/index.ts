@@ -123,7 +123,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'ind-checklist', label: 'IND Checklist', description: 'The IND submission checklist.', scope: 'project', group: 'project' },
   { id: 'template-library', label: 'Template Library', description: 'The project template library.', scope: 'project', group: 'project' },
   { id: 'review-readiness', label: 'Review Readiness', description: 'The submission review-readiness assessment.', scope: 'project', group: 'project' },
-  { id: 'report-engine', label: 'Report Engine', description: 'The reporting / analytics report engine.', scope: 'project', group: 'project' },
+  { id: 'report-engine', label: 'Protocol analysis', description: 'Analyze protocol text and draft design recommendations, statistical insights and IND-readiness notes for Authoring.', scope: 'project', group: 'project' },
 
   // ── Module workstreams (project-scoped) ──
   { id: 'cmc', label: 'CMC / Quality (Module 3)', description: 'The CMC workstream (specifications, stability, batch, etc.).', scope: 'project', group: 'module' },

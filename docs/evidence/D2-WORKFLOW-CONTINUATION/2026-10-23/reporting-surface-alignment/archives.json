@@ -1,0 +1,37 @@
+{
+  "regressions.txt.gz": {
+    "decodedBytes": 12082,
+    "decodedSha256": "ffadd09e356b6d865b3290737309429c627fcfbb861831291809b65db7f6cd69",
+    "archiveSha256": "869722a4a08b39281271881379295de12204f79518cbbb0f4ad42159fbf18139"
+  },
+  "regressions.json.gz": {
+    "decodedBytes": 16894,
+    "decodedSha256": "78ff9e35cf1e777334d48c0850d3cef7756c0333861c9b9c2cf9b54f5707fee0",
+    "archiveSha256": "c95c0baab0449036e5842fb35a324fcf98a685855f24ed771a39f85f36e8240d"
+  },
+  "build.txt.gz": {
+    "decodedBytes": 16123,
+    "decodedSha256": "e0b7b78d07cb66c5dfdb1ab5806dec3f1a3afb7d4da215d62826958b359f749f",
+    "archiveSha256": "42471b63fdc49fd0d303486a7ff9f7fa07a61fd9cfe3fd47f25c4975f485a447"
+  },
+  "eslint.txt.gz": {
+    "decodedBytes": 1293,
+    "decodedSha256": "44646a17b4afbfbeec391ea93fd0b04afd78076ecb1cac020d6647f0a56d5279",
+    "archiveSha256": "676e3f939e48c9e88a226e7518b9676637970ce4a4827ff1e205b4574cdc9018"
+  },
+  "catalog-copy.txt.gz": {
+    "decodedBytes": 96,
+    "decodedSha256": "9ff7d517539ba44770f1e0cb48f6ad0fc211e46dd902cf7f7a26661bc44a9a93",
+    "archiveSha256": "4de05c74efa6488fc82db943f29205e4e77bd6e1e84d05892b1a33314d91e10b"
+  },
+  "internals-in-copy.txt.gz": {
+    "decodedBytes": 75,
+    "decodedSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "archiveSha256": "93e8f01fc034c49b2b403c769f0578f8af17b3cda2de3e650841370d199c1403"
+  },
+  "prior-successful-normal-push.txt.gz": {
+    "decodedBytes": 14026,
+    "decodedSha256": "16a02d46e6363f864feeb93d9501414f3262ded1868599853b0ba3bb3102c988",
+    "archiveSha256": "2fdeca8ac271859a1a66cca4010955d81992317f0945f0554e0d2c22a356aecc"
+  }
+}
