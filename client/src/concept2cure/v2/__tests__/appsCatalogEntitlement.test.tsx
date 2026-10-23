@@ -102,9 +102,9 @@ function mockCatalog(
 /** Open the feature list as a person does before asserting its controls. */
 async function findFeature(label: string) {
   const title = await screen.findByText(label);
-  const disclosures: HTMLDetailsElement[] = [];
+  const disclosures: (HTMLElement & { open: boolean })[] = [];
   for (let parent = title.parentElement; parent; parent = parent.parentElement) {
-    if (parent.tagName === 'DETAILS') disclosures.push(parent as HTMLDetailsElement);
+    if (parent.tagName === 'DETAILS') disclosures.push(parent as HTMLElement & { open: boolean });
   }
   for (const details of disclosures.reverse()) {
     if (!details.open) fireEvent.click(details.querySelector('summary')!);

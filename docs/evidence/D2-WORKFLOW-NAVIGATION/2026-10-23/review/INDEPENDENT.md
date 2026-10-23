@@ -65,3 +65,19 @@ The following SHA-256 values identify the source reviewed for this disposition; 
 | `shared/navigation/index.ts` | `f7c7a02c1bc41a32421e169a26ab349484ae5ac6232afffff380ef4e4970d391` |
 | `shared/navigation/surface-actions.ts` | `9442088ffdab90df203f211635b3ce1130b42a6805943ca70ef6b8ff9e231800` |
 | `shared/navigation/demo-scripts.ts` | `55a49a2303baaa80070d2ead387ef61d859cc3f6e99e22e449604f77e113bcf3` |
+
+## Typed test freeze review
+
+The first normal push reported six added ESLint `no-undef` warnings for browser-global `HTMLDetailsElement` type references. Root retained the qualified originals under `root/qualified-test-originals/` and supplied `root/test-type-corrections.json` plus `root/test-runtime-equivalence.json`.
+
+The reviewer compared all three archived originals with the corrected test sources and read the proof files without executing tests, a compiler or Git. The changes are confined to type annotations/assertions; assertions, selectors, fixture data, API calls and navigation behavior are unchanged. Root's proof reports byte-identical emitted JavaScript for each file. This is evidence of runtime equivalence, not a substitute for TypeScript qualification.
+
+Initial typed-freeze review found a type-precedence defect in the two legacy helpers: `HTMLElement & { open: boolean }[]` means an element intersected with an array. The intended array is `(HTMLElement & { open: boolean })[]`. This was reported to root before acceptance. Root corrected both annotations and regenerated the correction hashes and JavaScript-equivalence proof. The reviewer then reread both final diffs and independently checked the current three file SHA-256 values against `root/test-type-corrections.json`; all match. Root's regenerated proof again reports the same byte-identical executable JavaScript for all three files.
+
+**Final typed-freeze disposition: accepted.** The six original browser-global type positions now use correctly parenthesized structural types. Runtime assertions are unchanged. The normal push gate must still perform final TypeScript/lint qualification; this source review does not claim execution of those checks. The 15 production-source pins above remain untouched.
+
+| Test path | Reviewed final SHA-256 |
+| --- | --- |
+| `client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx` | `3c806c431581d575472dfabeafe8fa556ca36afeaf572443970c1860fd250b35` |
+| `client/src/concept2cure/v2/__tests__/appsLive.test.tsx` | `279793f747e7f85f65870fcd7520e9a7a8c62d31e6ae603deae252d2165d6332` |
+| `client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx` | `79329ecfd4c5854e84af98116cd60d823214c576258c0bd45b1aeb3221ed64a8` |

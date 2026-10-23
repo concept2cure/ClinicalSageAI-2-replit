@@ -89,8 +89,8 @@ function mount() {
   return { ...render(<Apps surface={SURFACE} onAsk={() => {}} onNav={onNav} segment="biopharma" />), onNav };
 }
 
-function workflow(container: HTMLElement, id: string): HTMLDetailsElement {
-  const result = container.querySelector<HTMLDetailsElement>(`details[data-workflow="${id}"]`);
+function workflow(container: HTMLElement, id: string): HTMLElement & { open: boolean } {
+  const result = container.querySelector<HTMLElement & { open: boolean }>(`details[data-workflow="${id}"]`);
   expect(result, `the existing ${id} features have a workflow home`).not.toBeNull();
   if (!result) throw new Error(`Missing workflow ${id}`);
   return result;
