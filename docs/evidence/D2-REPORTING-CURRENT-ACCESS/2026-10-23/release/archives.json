@@ -8,5 +8,10 @@
     "decodedBytes": 16345,
     "decodedSha256": "34c57c9e39094e00ab02faff2289f96f008e46028f13598fc8d3fc9174bca341",
     "archiveSha256": "3974b46e14e9eabc064bcca3d6073c4049212ff8bb708cee27076d531ed1fdf0"
+  },
+  "build-native-reconciled.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "ce71012c47c86164fa3e4668950b0e5831752db85dd4c1c3cc732ad07b9796b8",
+    "archiveSha256": "d5165a06e5dc632efcc1f40abf9cea33ffd3ccd1650d267b293621c13b964097"
   }
 }

@@ -29,6 +29,12 @@ Only three existing runtime files changed. The [client packet](client/README.md)
 
 `release/checks.json` and its lossless build archives record final integration. The earlier successful 23.08-second build remains explicitly a pre-uncertainty-refinement phase. Root verifies the published canonical SHA and actual hosted CI state after the normal direct push, without a PR, force push, hook bypass or increased baseline.
 
+## Concurrent canonical reconciliation
+
+Normal merge `484ed08fc` preserves the reporting completion `4f3ebaf73` and concurrent canonical changes through `2148660b9`. Four incoming native model-provenance runtime files and three test files have no reporting source overlap. All 36 client and 20 backend reporting pins remain unchanged.
+
+The [late-native packet](late-native/README.md) records the independent review and **50 passing tests in four suites**, no failures, pending cases or TODOs, in 36.51 seconds. The latest merged-source production build completed in **29.84 seconds**; server and audit verifier passed. `release/checks.json` and `release/build-native-reconciled.txt.gz` retain this additional phase without overwriting the earlier reporting build evidence. Synthetic native tests do not establish live provider qualification.
+
 ## Remaining acceptance
 
 Current actor rows are retained through commit; source-project policy is re-evaluated on the supplied executor. This does not establish serialization against every independent sharing writer. The SQL-backed tests do not establish native hosted acceptance.
