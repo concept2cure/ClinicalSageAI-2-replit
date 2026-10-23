@@ -1,0 +1,131 @@
+{
+  "mergeParents": {
+    "retained": "944735c720e0b75b393b22ed8e830da51a6c98c3",
+    "incoming": "b66c6108dc3d7a6f0107fb5fd3ef7ecc9a49ecef"
+  },
+  "node": "22.22.0",
+  "backendBeforeLate": {
+    "suites": 23,
+    "passed": 362,
+    "skipped": 0,
+    "failed": 0
+  },
+  "clientPrimary": {
+    "suitesPassed": 41,
+    "suitesFailed": 2,
+    "passed": 466,
+    "failed": 3,
+    "status": "RED retained"
+  },
+  "clientSuccessor": {
+    "suites": 6,
+    "passed": 104,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 34.74
+  },
+  "lateIntegration": {
+    "suites": 10,
+    "passed": 147,
+    "todo": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 57.54
+  },
+  "finalBuild": {
+    "exitCode": 0,
+    "clientSeconds": 19.9,
+    "outputs": [
+      "dist/public",
+      "dist/index.js",
+      "dist/ops/verify-audit-chain.mjs"
+    ]
+  },
+  "finalWarningGate": {
+    "exitCode": 0,
+    "changedPaths": 117,
+    "netWarnings": -1,
+    "sealedHistoricalObserverUnchanged": true
+  },
+  "coverageNote": "Separate phases with exact target pins; no summed total or full all-green 43-suite claim. Full-program TypeScript and normal repository gates run at pre-push.",
+  "publicationNote": "Exact delivered SHA and actual hosted CI state are verified after the direct canonical push; live approved-model and Codespace acceptance are separate.",
+  "firstNormalPush": {
+    "sourceCommit": "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+    "prePushGates": "all passed",
+    "typecheckErrors": 0,
+    "tscExitCode": 0,
+    "typecheckBaseline": 0,
+    "typeRelevantPaths": 115,
+    "gitPushExitCode": 1,
+    "publication": "rejected because canonical advanced during checking",
+    "expectedRemote": "b66c6108dc3d7a6f0107fb5fd3ef7ecc9a49ecef",
+    "observedRemote": "ee3089b5afa5ecb10fa6192fd56e023875573fd6"
+  },
+  "lateTaskReconciliation": {
+    "retainedParent": "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+    "incomingParent": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+    "sourceEditsByReconciliation": 0,
+    "client": {
+      "suites": 5,
+      "passed": 75,
+      "skipped": 0,
+      "failed": 0,
+      "durationSeconds": 10.32
+    },
+    "backendShared": {
+      "suites": 4,
+      "passed": 75,
+      "skipped": 0,
+      "failed": 0,
+      "todo": 0,
+      "durationSeconds": 10.46
+    },
+    "productionBuild": {
+      "exitCode": 0,
+      "clientSeconds": 19.68,
+      "serverAndAuditVerifier": "passed"
+    }
+  },
+  "lateDeviceReconciliation": {
+    "retainedParent": "7895e36ce",
+    "incomingParent": "d8082acfa",
+    "mergeCommit": "40aa75d908ddff0a35afdbebaf94376ce1a25ca7",
+    "runtimeEditsByReconciliation": 0,
+    "assertionsChanged": 0,
+    "initial": {
+      "status": "RED retained",
+      "testFilesPassed": 8,
+      "testFilesFailed": 2,
+      "passed": 213,
+      "failed": 48,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 27.8
+    },
+    "successor": {
+      "status": "GREEN",
+      "testFilesPassed": 2,
+      "testFilesFailed": 0,
+      "passed": 48,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "durationSeconds": 8.85
+    },
+    "sourcePins": 19,
+    "changedFixtures": [
+      "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+      "client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx"
+    ],
+    "productionBuild": {
+      "exitCode": 0,
+      "clientSeconds": 18.89,
+      "serverAndAuditVerifier": "passed"
+    },
+    "fixtureLint": {
+      "exitCode": 0,
+      "outputBytes": 0
+    },
+    "details": "device-reconciliation.json"
+  }
+}

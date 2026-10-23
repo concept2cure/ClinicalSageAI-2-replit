@@ -1,0 +1,12 @@
+{
+  "phase": "GREEN source freeze before focused regression",
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "branch": "concept2cure-v2",
+  "node": "v22 (session binary)",
+  "files": {
+    "server/routes/chat/send-message.ts": "daf72275d59c90601b99de6952109e6175b93372aeb5e5227655917af430712f",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": "a288ddf2fcfedf08c906f687677add0d6dbfda1aafbb03142cf889d9f209ba70",
+    "server/services/ana/read-only-turn.ts": "b6eeb3d2975c0f704f3c351f71965b0cea26622c9e0095fba5eac274e8907a0a",
+    "server/services/ana/AnaToolExecutor.ts": "c6c2b1e5625d828a24b391900715f249c1c92bb9d1992ffb554c43bb2665ce97"
+  }
+}

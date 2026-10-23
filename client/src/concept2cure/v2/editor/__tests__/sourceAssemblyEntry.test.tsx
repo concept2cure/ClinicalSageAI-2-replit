@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }) };
+});
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 import { SourceAssemblyAction, SourceAssemblyDialog } from '../SourceAssemblyDialog';
 import { authService } from '@/services/portal/authService';
@@ -119,6 +123,22 @@ describe('source-first entry in the existing Data Room rail', () => {
 });
 
 describe('shared read-only source target chooser', () => {
+  it('does not offer an explicit section-only read as a whole-document build target', async () => {
+    documents = () => ok({ success: true, documents: [{ ...documentRow, readScope: 'sections' }] });
+    render(<SourceAssemblyDialog programId={PROGRAM} sources={selectors()} onClose={vi.fn()} />);
+    await screen.findByText('No working documents are available in this project.');
+    expect(screen.queryByRole('option', { name: documentRow.title })).toBeNull();
+    expect(mutations()).toHaveLength(0);
+  });
+  it('withdraws a whole-document build target when the fresh list confirms section-only access', async () => {
+    const view = await action();
+    documents = () => ok({ success: true, documents: [{ ...documentRow, readScope: 'sections' }] });
+    fireEvent.click(screen.getByRole('button', { name: 'Open in editor' }));
+    await screen.findByText(/That working document is no longer available/);
+    expect(view.onNav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeNull();
+    expect(mutations()).toHaveLength(0);
+  });
   it('opens the exact project/document with selected identities and no write or generation', async () => {
     const view = await action();
     fireEvent.click(screen.getByRole('button', { name: 'Open in editor' }));

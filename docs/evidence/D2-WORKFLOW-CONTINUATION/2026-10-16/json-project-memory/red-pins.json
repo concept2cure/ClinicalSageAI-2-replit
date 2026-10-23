@@ -1,0 +1,8 @@
+{
+  "phase": "RED: raw project UUID still reaches memory assembler",
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "files": {
+    "server/routes/chat/send-message.ts": "daf72275d59c90601b99de6952109e6175b93372aeb5e5227655917af430712f",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9"
+  }
+}

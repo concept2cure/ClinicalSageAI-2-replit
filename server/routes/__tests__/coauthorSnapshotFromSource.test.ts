@@ -40,7 +40,7 @@ type Exec = { query: (sql: string, params?: unknown[]) => Promise<unknown> };
 const holder = vi.hoisted(() => ({
   db: null as any,
   pglite: null as any,
-  /** Runs right after the placement's first read of the source's status, before its transaction. */
+  /** Runs after the request executor's source identity read, before the physical status lock. */
   afterSourceRead: null as null | (() => Promise<void>),
   /** Run just before / just after the canonical assembler reads the sections, on the
    *  queryable it reads with (the placement's transaction, when it passes one). */
@@ -52,9 +52,8 @@ const holder = vi.hoisted(() => ({
    seam around its read. 2026-09-23 (W5/D7, co-author final pass): the seam
    now receives the queryable the assembler reads on, so a case can change a
    section just before the read and restore it just after (the A-B-A the
-   final review found), and SOURCE_CHANGED's hook moved to the pool (below),
-   because the read it used to precede now runs inside the placement's
-   transaction. */
+   final review found). SOURCE_CHANGED observes the supplied request executor's
+   first identity read, before the transaction's physical status lock. */
 vi.mock('../../services/ana/authoring-canonical-bridge.js', async (importOriginal) => {
   const orig = await importOriginal<typeof import('../../services/ana/authoring-canonical-bridge.js')>();
   return {
@@ -78,11 +77,6 @@ vi.mock('../../db', () => {
   const pool = {
     query: async (sql: string, params?: unknown[]) => {
       const r = await holder.pglite.query(sql, params);
-      if (holder.afterSourceRead && /^SELECT status FROM authoring_documents/.test(sql.trim())) {
-        const hook = holder.afterSourceRead;
-        holder.afterSourceRead = null;
-        await hook();
-      }
       return r;
     },
   };
@@ -118,6 +112,7 @@ import express from 'express';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { expandRoleClaims } from '../../middleware/auth';
 import coauthorRoutes from '../coauthor';
+import { snapshotRequestClient, installCurrentSnapshotActor, grantSnapshotDocumentView } from './_coauthor-current-source-fixture';
 
 const ORG = 7;
 const OTHER_ORG = 8;
@@ -127,6 +122,13 @@ const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
   req.user = { id: 3, userId: 3, organizationId: ORG, role: 'member', roles: expandRoleClaims('member', undefined) };
+  req.dbClient = snapshotRequestClient(holder.pglite, async (sql) => {
+    if (holder.afterSourceRead && /\bFROM authoring_documents\b/i.test(sql) && !/\bFOR UPDATE\b/i.test(sql)) {
+      const hook = holder.afterSourceRead;
+      holder.afterSourceRead = null;
+      await hook();
+    }
+  });
   next();
 });
 app.use('/api/coauthor', coauthorRoutes);
@@ -162,6 +164,11 @@ async function seal(
 ): Promise<void> {
   const tenant = opts.tenant ?? ORG;
   const doc = (await h.pglite.query<Record<string, unknown>>('SELECT * FROM authoring_documents WHERE id = $1', [id])).rows[0];
+  // Legacy-order constructors bypass source(); admit only their exact actual
+  // tenant-owned source to this intended positive fixture reader.
+  if (tenant === ORG && doc?.tenant_id === ORG) {
+    await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: id });
+  }
   /* 2026-09-23 (W5/D7, co-author final pass): the router's seal order now.
      `legacyOrder` is the order the router sealed in before: order_index alone,
      so tied sections are recorded in storage order. */
@@ -206,7 +213,7 @@ async function source(
   opts: { tenant?: number; title?: string; seal?: boolean } = {},
 ): Promise<void> {
   await h.pglite.query(
-    'INSERT INTO authoring_documents (id, tenant_id, status, title, module) VALUES ($1, $2, $3, $4, $5)',
+    'INSERT INTO authoring_documents (id, tenant_id, status, title, module, created_by) VALUES ($1, $2, $3, $4, $5, \'3\')',
     [id, opts.tenant ?? ORG, status, opts.title ?? 'Cover letter', 'm1'],
   );
   for (const [i, [code, title, content]] of sections.entries()) {
@@ -214,6 +221,9 @@ async function source(
       'INSERT INTO authoring_sections (doc_id, tenant_id, code, title, content, order_index) VALUES ($1, $2, $3, $4, $5, $6)',
       [id, opts.tenant ?? ORG, code, title, content, i],
     );
+  }
+  if ((opts.tenant ?? ORG) === ORG) {
+    await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: id });
   }
   if (/^(APPROVED|FROZEN)$/i.test(status) && opts.seal !== false) await seal(id, { tenant: opts.tenant });
 }
@@ -251,15 +261,15 @@ beforeAll(async () => {
       ADD COLUMN IF NOT EXISTS module_name TEXT, ADD COLUMN IF NOT EXISTS embedding TEXT;
     INSERT INTO organizations (id, name) VALUES (${ORG}, 'Org');
     CREATE TABLE IF NOT EXISTS authoring_documents (
-      id TEXT PRIMARY KEY, tenant_id INTEGER NOT NULL, status TEXT, title TEXT, module TEXT);
+      id UUID PRIMARY KEY, tenant_id INTEGER NOT NULL, status TEXT, title TEXT, module TEXT, created_by TEXT);
     CREATE TABLE IF NOT EXISTS authoring_sections (
-      id SERIAL PRIMARY KEY, doc_id TEXT NOT NULL, tenant_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY, doc_id UUID NOT NULL, tenant_id INTEGER NOT NULL,
       code TEXT, title TEXT, content TEXT, order_index INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now());
-    -- The columns of db/migrations/20260725_authoring_document_loop_tables.sql,
-    -- with document_id as TEXT to match this harness's authoring ids.
+    -- Real UUID source keys; retain historical numeric section IDs to prove
+    -- canonical legacy seal ordering without changing the filed content.
     CREATE TABLE IF NOT EXISTS frozen_documents (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id TEXT NOT NULL,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id UUID NOT NULL,
       version TEXT NOT NULL, frozen_content TEXT NOT NULL, content_hash TEXT NOT NULL,
       frozen_by TEXT NOT NULL, frozen_reason TEXT, tenant_id INTEGER NOT NULL,
       frozen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (document_id, version, tenant_id));
@@ -281,7 +291,7 @@ beforeAll(async () => {
     CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL);
     CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT);
     CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, regulatory_program_id UUID,
-      client_workspace_id INTEGER, owner_id INTEGER, created_by_id INTEGER, settings JSONB DEFAULT '{}');
+      client_workspace_id INTEGER, owner_id INTEGER, created_by_id INTEGER, status TEXT DEFAULT 'planning', settings JSONB DEFAULT '{}');
     CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
     CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
     CREATE TABLE concept2cure_artifacts (id INTEGER, organization_id INTEGER, project_id INTEGER);
@@ -291,9 +301,11 @@ beforeAll(async () => {
       content_hash TEXT, deleted_at TIMESTAMPTZ);
     CREATE TABLE document_data_dispositions (organization_id INTEGER, program_id UUID, vault_document_id UUID,
       linked_ids JSONB, source_sha256 TEXT, choice TEXT);
-    INSERT INTO users VALUES (3,'active'),(9,'active');
+    INSERT INTO users (id,status) VALUES (3,'active'),(9,'active');
     INSERT INTO organization_users VALUES (${ORG},3,'member'),(${ORG},9,'member');
   `);
+  await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 3, role: 'member', email: 'filer@org.test' });
+  await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 9, role: 'member', email: 'source-owner@org.test' });
   await h.pglite.exec(readFileSync(path.resolve(__dirname, '../../../db/migrations/20260725_authoring_audit_trail.sql'), 'utf8'));
   // The real alias map, not a copy of its DDL.
   await h.pglite.exec(
@@ -392,12 +404,12 @@ describe('a saved binary import retains current source access when copied into c
   async function grant(projectId: number) {
     await h.pglite.query("INSERT INTO project_members VALUES ($1,$2,3,'use','active')", [projectId,ORG]);
   }
-  async function assertRefusalBeforeBody(docId: string) {
+  async function assertRefusalBeforeBody(docId: string,expected={status:409,code:'SOURCE_REFERENCES_UNAVAILABLE'}) {
     let assembled = false;
     holder.onLoad = async () => { assembled = true; };
     const response = await place(docId);
-    expect(response.status,JSON.stringify(response.body)).toBe(409);
-    expect(response.body.error).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(response.status,JSON.stringify(response.body)).toBe(expected.status);
+    expect(response.body.error).toBe(expected.code);
     expect(response.body.document).toBeUndefined();
     expect(assembled).toBe(false);
     expect(await rowsFor(docId)).toEqual([]);
@@ -405,7 +417,7 @@ describe('a saved binary import retains current source access when copied into c
   }
   it('refuses a same-organization saved import before assembling private text or creating a filing copy',async () => {
     const { docId } = await imported();
-    await assertRefusalBeforeBody(docId);
+    await assertRefusalBeforeBody(docId,{status:403,code:'PROJECT_PERMISSION_DENIED'});
   });
   it('allows the exact saved source for a currently assigned project member',async () => {
     const { docId,projectId } = await imported();
@@ -418,7 +430,7 @@ describe('a saved binary import retains current source access when copied into c
     const { docId,projectId } = await imported();
     await grant(projectId);
     await h.pglite.query("UPDATE project_members SET status='revoked' WHERE project_id=$1", [projectId]);
-    await assertRefusalBeforeBody(docId);
+    await assertRefusalBeforeBody(docId,{status:403,code:'PROJECT_PERMISSION_DENIED'});
   });
   it('refuses an assigned member whose original binary source version changed',async () => {
     const { docId,projectId,originalId } = await imported();
@@ -430,7 +442,7 @@ describe('a saved binary import retains current source access when copied into c
     const { docId,projectId } = await imported();
     await grant(projectId);
     await h.pglite.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=3',[ORG]);
-    try { await assertRefusalBeforeBody(docId); }
+    try { await assertRefusalBeforeBody(docId,{status:403,code:'PROJECT_ACTOR_ACCESS_DENIED'}); }
     finally { await h.pglite.query("INSERT INTO organization_users VALUES ($1,3,'member')",[ORG]); }
   });
   it('leaves an existing filing copy and its trail unchanged after source-project access is revoked',async () => {
@@ -444,8 +456,8 @@ describe('a saved binary import retains current source access when copied into c
     let assembled = false;
     holder.onLoad = async () => { assembled = true; };
     const response = await place(docId);
-    expect(response.status,JSON.stringify(response.body)).toBe(409);
-    expect(response.body.error).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(response.status,JSON.stringify(response.body)).toBe(403);
+    expect(response.body.error).toBe('PROJECT_PERMISSION_DENIED');
     expect(response.body.document).toBeUndefined();
     expect(assembled).toBe(false);
     expect(await row(first.body.document.id)).toEqual(before);

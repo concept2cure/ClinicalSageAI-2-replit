@@ -1,0 +1,14 @@
+Post-reconciliation phase, HEAD 45fbf8d8f9ce65da6f67ab805da2551f6621fdc9
+Node /home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node, v22.22.0
+PATH prefixed with that bin; NODE_OPTIONS=--max-old-space-size=4096.
+One Vitest process; repository maxWorkers=1, fileParallelism=false.
+
+node node_modules/vitest/vitest.mjs run --config vitest.config.ts \
+  server/routes/chat/__tests__/send-message-read-only.test.ts \
+  server/routes/chat/__tests__/send-message-private-project.test.ts \
+  server/services/ana/__tests__/read-only-turn.test.ts \
+  server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+
+Lint: ESLint API lintText(source,{filePath}) with unchanged repository eslint.config.js.
+Recall baseline reads the same paths at HEAD with git show; new test baseline is empty.
+JSON baseline uses retained preceding scoped-lint.json, with exact rule messages compared.

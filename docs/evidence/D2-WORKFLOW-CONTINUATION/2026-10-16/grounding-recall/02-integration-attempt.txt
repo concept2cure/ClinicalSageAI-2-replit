@@ -1,0 +1,607 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 13ms
+   → expected "vi.fn()" to be called with arguments: [ 'thread-deadline', 7 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-deadline",
+    7,
++   {
++     "projectId": 33,
++   },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 5ms
+   → expected { workingMemory: 'timeout', …(2) } to deeply equal { workingMemory: 'timeout', …(2) }
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 2ms
+   → expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'empty', …(2) }
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 9ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Client Memory unavailable (timeout)'
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 2ms
+   → expected { workingMemory: 'error', …(2) } to deeply equal { workingMemory: 'error', …(2) }
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+   → expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'empty', …(2) }
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+   → expected "vi.fn()" to be called with arguments: [ 'thread-deadline', 7 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-deadline",
+    7,
++   {
++     "projectId": 33,
++   },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 3ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+   → expected 'skipped' to be 'timeout' // Object.is equality
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 14ms
+   → expected '## Session memory — picking up where …' to contain 'Client fact'
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > withholds both catalogue arms when access changes after their prose and counts were read 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > does not start any prose loader for an inactive or unavailable current actor 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > never turns an unresolved open project into a library recall 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > keeps genuine evaluated catalogue emptiness distinct from unavailable access 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > does not inject recall for a session without an authenticated actor 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > names refused source reads without exposing SQL or private details 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > keeps organization recall actor-filtered with no invented project 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > derives an exact chat scope count only from a page with no next row 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > a fresh project conversation recalls exact project facts without querying client operational atoms 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > an organization conversation retains its existing client recall 1ms
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when client stalls 9ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "
+    ---
+    ## IMPORTANT: Project Intelligence (Read Before Responding)
+    The following is learned intelligence about the active project.
+    Use it to tailor analysis, drafting, and guidance to this specific submission.
+    Project decision
+    ---",
+    ]
+
+
+Number of calls: 1
+
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when project stalls 6ms
+   → expected '\n## Intelligence recall availability…' to contain 'Client preference'
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when wisdom stalls 4ms
+   → expected '\n## Intelligence recall availability…' to contain 'Client preference'
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > starts client recall before a stalled program resolution and never starts late project reads 2ms
+   → expected "vi.fn()" to be called with arguments: [ 5004 ]
+
+Number of calls: 0
+
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > shares one deadline across program resolution and dependent recall 2ms
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails 2ms
+   → expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'client intelligence'
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not allow a late timed-out result to fill the cache 2ms
+   → expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'Client preference'
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover 1ms
+   → expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'Intelligence recall unavailable'
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not query without an organization or share healthy recall between organizations 3ms
+   → expected [] to deeply equal [ 5010, 6010 ]
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row 26ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 14ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 13ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 13ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read 17ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 13ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity 6ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row 26ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 147ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 6ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 4ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary 3ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 0ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 2ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > records project_id on the row when the column exists 79ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > degrades to the pre-migration INSERT — with one warning — when the column is missing 5ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > never records a non-positive or non-finite project id 4ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell 7ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts 6ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > does not broaden an explicitly unresolved project into organization recall 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > retains organization caller behavior and separates cached A/B/organization contexts 2ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall 5ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback 1ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > retains organization recall when the caller names no project 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument
+AssertionError: expected '## Session memory — picking up where …' to contain 'Client fact'
+
+- Expected
++ Received
+
+- Client fact
++ ## Session memory — picking up where we left off
++ ### Where we left off
++ Earlier endpoint discussion
++ ### Project memory (most important)
++ - **Project fact**: Recorded project data
++ ### Project files in your accessible source scope
++ - **Study report** (confirmed): cataloged (your suggestion, not yet confirmed by a person). Automatic scope: legacy value-presence check; label/context verification is not recorded; scientific qualification is unassessed.
++ _1 file(s) in your accessible source scope at this recall check._
++ _Use list_project_documents for the full folder; read_project_document to study a file (all of it)._
++ ### Past chat files in your accessible source scope
++ - **prior-upload.pdf** (file-7) — attached earlier, not filed into the vault.
++ _1 chat file(s) in your accessible source scope at this recall check._
++ _Only the OPENING of each is in the retrieval index. Reopen one with read_uploaded_document; file_chat_upload_to_vault files it and indexes all of it, page by page._
++ ### What I learned on past work here
++ - (review, success) Cite the evidence.
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:85:20
+     83|     expect(Date.now() - start).toBe(200);
+     84|     for (const value of ['Earlier endpoint discussion', 'Project fact'…
+     85|       expect(text).toContain(value);
+       |                    ^
+     86|     }
+     87|     expect(sources.working).toHaveBeenCalledWith('thread-7', 7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'thread-deadline', 7 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-deadline",
+    7,
++   {
++     "projectId": 33,
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:84:28
+     82|     await vi.advanceTimersByTimeAsync(0);
+     83|
+     84|     expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.…
+       |                            ^
+     85|     expect(sources.client).toHaveBeenCalledWith(null, 7, INPUT.query, …
+     86|     expect(sources.project).toHaveBeenCalledWith(null, 33, 7, INPUT.qu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline
+AssertionError: expected { workingMemory: 'timeout', …(2) } to deeply equal { workingMemory: 'timeout', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "clientMemory": "ok",
++   "clientMemory": "skipped",
+    "projectMemory": "empty",
+    "workingMemory": "timeout",
+  }
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:101:46
+     99|     expect(settled).toHaveBeenCalledTimes(1);
+    100|     const result = await promise;
+    101|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+       |                                              ^
+    102|     expect(result.diagnostics.workingMemoryMode).toBe('none');
+    103|     expect(result.memoryBlock).toContain('Working Memory unavailable (…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:115:28
+    113|     const { promise } = observeAssembly();
+    114|     await vi.advanceTimersByTimeAsync(0);
+    115|     expect(sources.client).toHaveBeenCalledTimes(1);
+       |                            ^
+    116|     expect(sources.project).toHaveBeenCalledTimes(1);
+    117|     expect(sources.latest).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable
+AssertionError: expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'empty', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "clientMemory": "timeout",
++   "clientMemory": "skipped",
+    "projectMemory": "timeout",
+    "workingMemory": "empty",
+  }
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:133:46
+    131|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    132|     const result = await promise;
+    133|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+       |                                              ^
+    134|     expect(result.memoryBlock).toContain('Client Memory unavailable (t…
+    135|     expect(result.memoryBlock).toContain('Project Memory unavailable (…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Client Memory unavailable (timeout)'
+
+- Expected
++ Received
+
+- Client Memory unavailable (timeout)
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Working Memory
++ Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary...
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:146:32
+    144|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    145|     const result = await promise;
+    146|     expect(result.memoryBlock).toContain('Client Memory unavailable (t…
+       |                                ^
+    147|     expect(result.memoryBlock).toContain('Do not infer that missing me…
+    148|     expect(result.memoryBlock.indexOf('unavailable')).toBeLessThan(res…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall
+AssertionError: expected { workingMemory: 'error', …(2) } to deeply equal { workingMemory: 'error', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "clientMemory": "error",
++   "clientMemory": "skipped",
+    "projectMemory": "error",
+    "workingMemory": "error",
+  }
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:158:46
+    156|     sources.project.mockRejectedValue(Object.assign(new Error('relatio…
+    157|     const result = await buildMemoryContextForChat(INPUT);
+    158|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+       |                                              ^
+    159|     expect(result.memoryBlock).toContain('Working Memory unavailable (…
+    160|     expect(result.memoryBlock).toContain('Client Memory unavailable (e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source
+AssertionError: expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'empty', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "clientMemory": "empty",
++   "clientMemory": "skipped",
+    "projectMemory": "empty",
+    "workingMemory": "empty",
+  }
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:168:46
+    166|     const result = await buildMemoryContextForChat(INPUT);
+    167|     expect(result.memoryBlock).toBe('');
+    168|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+       |                                              ^
+    169|     expect(result.read).toEqual([]);
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'thread-deadline', 7 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-deadline",
+    7,
++   {
++     "projectId": 33,
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:196:28
+    194|     sources.latest.mockResolvedValue('Existing working summary');
+    195|     const result = await buildMemoryContextForChat({ ...INPUT, query: …
+    196|     expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.…
+       |                            ^
+    197|     expect(sources.semantic).not.toHaveBeenCalled();
+    198|     expect(sources.client).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback
+AssertionError: expected 'skipped' to be 'timeout' // Object.is equality
+
+Expected: "timeout"
+Received: "skipped"
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:287:60
+    285|     recency.resolve('Fallback working summary');
+    286|     const result = await promise;
+    287|     expect(result.diagnostics.layerOutcomes?.clientMemory).toBe('timeo…
+       |                                                            ^
+    288|     expect(result.atoms.some(atom => atom.layer === 'client_memory')).…
+    289|     expect(result.memoryBlock).not.toContain('Keep risk summaries conc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when client stalls
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "
+    ---
+    ## IMPORTANT: Project Intelligence (Read Before Responding)
+    The following is learned intelligence about the active project.
+    Use it to tailor analysis, drafting, and guidance to this specific submission.
+    Project decision
+    ---",
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:37:25
+     35|     const { settled, pending } = observe();
+     36|     await vi.advanceTimersByTimeAsync(2999);
+     37|     expect(settled).not.toHaveBeenCalled();
+       |                         ^
+     38|     await vi.advanceTimersByTimeAsync(1);
+     39|     expect(settled).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when project stalls
+AssertionError: expected '\n## Intelligence recall availability…' to contain 'Client preference'
+
+- Expected
++ Received
+
+- Client preference
++
++ ## Intelligence recall availability
++ Intelligence recall unavailable: project intelligence. Do not infer that missing intelligence or prior decisions do not exist. Check the relevant records before relying on their absence.
++
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:44:44
+     42|     expect(block).toContain('Intelligence recall unavailable');
+     43|     expect(block).toContain('Do not infer that missing intelligence or…
+     44|     if (source !== 'client') expect(block).toContain('Client preferenc…
+       |                                            ^
+     45|     if (source !== 'project') expect(block).toContain('Project decisio…
+     46|     expect(vi.getTimerCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when wisdom stalls
+AssertionError: expected '\n## Intelligence recall availability…' to contain 'Client preference'
+
+- Expected
++ Received
+
+- Client preference
++
++ ## Intelligence recall availability
++ Intelligence recall unavailable: learned wisdom. Do not infer that missing intelligence or prior decisions do not exist. Check the relevant records before relying on their absence.
++
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ Project decision
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:44:44
+     42|     expect(block).toContain('Intelligence recall unavailable');
+     43|     expect(block).toContain('Do not infer that missing intelligence or…
+     44|     if (source !== 'client') expect(block).toContain('Client preferenc…
+       |                                            ^
+     45|     if (source !== 'project') expect(block).toContain('Project decisio…
+     46|     expect(vi.getTimerCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > starts client recall before a stalled program resolution and never starts late project reads
+AssertionError: expected "vi.fn()" to be called with arguments: [ 5004 ]
+
+Number of calls: 0
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:54:22
+     52|     const { settled, pending } = observe(PROGRAM);
+     53|     await vi.advanceTimersByTimeAsync(0);
+     54|     expect(h.client).toHaveBeenCalledWith(org);
+       |                      ^
+     55|     await vi.advanceTimersByTimeAsync(3000);
+     56|     expect(settled).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails
+AssertionError: expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'client intelligence'
+
+- Expected
++ Received
+
+- client intelligence
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ Project decision
++ ---
++
++ ---
++ ## AnA Wisdom (Learned Intelligence — v2)
++ Use these accumulated insights to guide responses proactively.
++ **Active Risks:**
++ - [HIGH] Review stability gap
++ **Lesson Learned:** Retain the comparator
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:89:20
+     87|     expect(prefix).toContain('Review stability gap');
+     88|     expect(prefix).toContain('Retain the comparator');
+     89|     expect(prefix).toContain('client intelligence');
+       |                    ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not allow a late timed-out result to fill the cache
+AssertionError: expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'Client preference'
+
+- Expected
++ Received
+
+- Client preference
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ Project decision
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:102:23
+    100|     await vi.advanceTimersByTimeAsync(0);
+    101|     const recovered = await getIntelligencePrefix(org, 42);
+    102|     expect(recovered).toContain('Client preference');
+       |                       ^
+    103|     expect(recovered).not.toContain('Late client preference');
+    104|     expect(h.client).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover
+AssertionError: expected '\n---\n## IMPORTANT: Project Intellig…' to contain 'Intelligence recall unavailable'
+
+- Expected
++ Received
+
+- Intelligence recall unavailable
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ Project decision
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:111:19
+    109|     h.client.mockRejectedValueOnce(new Error('unavailable'));
+    110|     const first = await getIntelligencePrefix(org, 42);
+    111|     expect(first).toContain('Intelligence recall unavailable');
+       |                   ^
+    112|     const second = await getIntelligencePrefix(org, 42);
+    113|     expect(second).toContain('Client preference');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:122:22
+    120|     expect(await getIntelligencePrefix(org, 42)).toBe('');
+    121|     expect(await getIntelligencePrefix(org, 42)).toBe('');
+    122|     expect(h.client).toHaveBeenCalledTimes(1);
+       |                      ^
+    123|     await vi.advanceTimersByTimeAsync(60000);
+    124|     await getIntelligencePrefix(org, 42);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not query without an organization or share healthy recall between organizations
+AssertionError: expected [] to deeply equal [ 5010, 6010 ]
+
+- Expected
++ Received
+
+- [
+-   5010,
+-   6010,
+- ]
++ []
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts:137:48
+    135|     await getIntelligencePrefix(org, 42);
+    136|     await getIntelligencePrefix(org + 1000, 42);
+    137|     expect(h.client.mock.calls.map(c => c[0])).toEqual([org, org + 100…
+       |                                                ^
+    138|   });
+    139| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  3 failed | 7 passed (10)
+      Tests  19 failed | 59 passed (78)
+   Start at  21:31:35
+   Duration  6.60s (transform 1.02s, setup 210ms, import 1.69s, tests 3.06s, environment 1ms)
+

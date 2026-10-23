@@ -154,6 +154,8 @@ export interface EsignModalProps {
    */
   signedRows?: ReadonlyArray<{ label: string; value: string }>;
   onMeaningChange?: (meaning: EsigMeaning) => void;
+  /** A current source-read refusal blocks a new confirmation, never a sent mutation's outcome. */
+  commitRefusal?: string | null;
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -199,6 +201,7 @@ export function EsignModal({
   meanings,
   renderMeaningDetails,
   onMeaningChange,
+  commitRefusal = null,
   signedRows,
   signer,
   requireMfa = false,
@@ -243,6 +246,9 @@ export function EsignModal({
   const doneSummaryId = React.useId();
   const doneRef = React.useRef<HTMLButtonElement>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
+  const refusalRef = React.useRef(commitRefusal);
+  refusalRef.current = commitRefusal;
+  const refusalId = React.useId();
 
   // Reset state when opened; remember the trigger to restore focus on close.
   // A layout effect, so the reset lands in the same commit that shows the
@@ -333,6 +339,7 @@ export function EsignModal({
   if (!open) return null;
 
   const canCommit =
+    !commitRefusal &&
     reason.trim().length >= MIN_REASON &&
     password.length >= MIN_PASSWORD &&
     (!needCode || /^\d{6}$/.test(totp));
@@ -369,6 +376,7 @@ export function EsignModal({
       }
       // Re-auth passed. Run the caller's governed mutation, forwarding the
       // credentials so the server can re-verify inside its own transaction.
+      if (refusalRef.current) throw new Error(refusalRef.current);
       const signed = await onSign({
         meaning,
         reason: reason.trim(),
@@ -624,6 +632,7 @@ export function EsignModal({
                 {error}
               </div>
             ) : null}
+            {commitRefusal && <div className="es-error" role="status" id={refusalId}>{commitRefusal}</div>}
 
             <div className="es-foot">
               <button
@@ -639,7 +648,7 @@ export function EsignModal({
                 type="button"
                 onClick={commit}
                 disabled={!canCommit || committing}
-                aria-describedby={error ? errorId : undefined}
+                aria-describedby={commitRefusal ? refusalId : error ? errorId : undefined}
               >
                 {committing ? (
                   <>

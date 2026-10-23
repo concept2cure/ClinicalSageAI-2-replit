@@ -1,0 +1,21 @@
+{
+  "node": "v22.22.0",
+  "vitest": "4.1.7",
+  "manifest": "regression-files.json",
+  "suitesPassed": 6,
+  "casesPassed": 106,
+  "failed": 0,
+  "skipped": 0,
+  "durationSeconds": 106.45,
+  "red": {
+    "failed": 3,
+    "nameFilteredSkipped": 12,
+    "durationSeconds": 17.11
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 12,
+    "qualification": "Existing Workbench warnings; saved-source notice/controller/transport and both suites have zero warnings."
+  },
+  "sourceInputs": 18
+}

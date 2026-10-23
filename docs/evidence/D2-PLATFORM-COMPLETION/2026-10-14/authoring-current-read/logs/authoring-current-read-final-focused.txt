@@ -1,0 +1,262 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:28.134Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:31.058Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:31:31.059Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:31.059Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > omits same-org private project metadata even with a real document grant and stale admin claims 77ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses private details and sections before reading their metadata or prose 34ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > does not turn a current viewer into a document admin from cached JWT or ALS claims 19ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an inactive actor despite the otherwise valid captured bearer 46ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an expired or revoked grant without reading the content 30ms
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool
+{
+  "timestamp": "2026-10-14T22:31:31.813Z",
+  "level": "error",
+  "message": "[authoring-router] loading docs failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > reports actual resolver query failure as unavailable rather than content or a fabricated empty list 12ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool 7ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > rejects explicit malformed or multivalued program IDs without silently broadening the read 10ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > lists the granted section parent and counts only visible saved content 46ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > returns only the exact granted section rather than all sibling prose 23ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > withholds full provenance and hidden comment totals on the admitted parent 32ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > does not leak a hidden provenance association through source or conversation filtering 59ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > preserves full saved sections and counters for a real full Viewer grant 23ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > keeps actual NULL-program organization records while selected-program reads exclude them 48ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > retains zero-section full records and case-insensitive frozen status filtering 41ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > does not describe a foreign or missing parent as a legitimate empty document 10ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual grant withdrawal after the real content query settles 20ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual OU role change even when the same actor retains full object IDs 35ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses current OU withdrawal after a real read without returning an initial-refusal shape 13ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a removed OU without reading the previously admitted document 6ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > uses the current stored email for an email grant and refuses after that email changes 40ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a future valid_from and an actually expired valid_until 21ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > does not make an ungranted historical NULL-program document organization-public 31ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > emits mandatory full versus partial coverage on every relevant response 112ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > preserves recorded whole-document provenance for a real full grant 29ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports an actually absent provenance store as unavailable while preserving the qualification 26ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports a failed provenance-store inspection as unknown rather than an invented source absence 20ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > rejects mismatched tenant parents and excludes legitimate foreign child counters 54ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses actual project sharing withdrawal after real rows settle 15ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses the exact section grant withdrawn after the admitted section was actually read 21ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > binds the captured internal reader identity even if its caller object changes during actual admission 25ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:38.558Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:31:38.559Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:38.560Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:38.838Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2ab7dd80-5b00-408d-b4eb-b2d81f4a489d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:38.861Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2ab7dd80-5b00-408d-b4eb-b2d81f4a489d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:31:38.877Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2ab7dd80-5b00-408d-b4eb-b2d81f4a489d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 42ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 33ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no document grant cannot read its metadata and still cannot send it for review
+{
+  "timestamp": "2026-10-14T22:31:39.105Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/2ab7dd80-5b00-408d-b4eb-b2d81f4a489d/request-review",
+    "action": "edit",
+    "docId": "2ab7dd80-5b00-408d-b4eb-b2d81f4a489d",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 62ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 30ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > an unavailable read permission store refuses before returning private metadata or ceremony hints 13ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no document grant cannot read its metadata and still cannot send it for review 22ms
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-14T22:31:39.201Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2ab7dd80-5b00-408d-b4eb-b2d81f4a489d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 36ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 79ms
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-14T22:31:43.341Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-14T22:31:44.704Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:31:44.705Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-14T22:31:44.705Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > compares status case-insensitively, so lower-case filters reach upper-case rows 72ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > the same holds for in_review and approved, which also matched nothing 78ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > status=all applies NO status predicate, so no state can orphan a document 26ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > an absent status lists every accessible state instead of silently defaulting to draft 27ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > other filters are unaffected 24ms
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-14T22:31:50.339Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-14T22:31:51.433Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:31:51.434Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-14T22:31:51.434Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > filters on the recorded conversation as a bound value evaluated by actual SQL 109ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > narrows to what AnA drafted in the admitted program with no source value to inject 59ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > returns the recorded conversation and source so the list can say where it came from 36ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > adds no provenance predicate when none is asked for 31ms
+
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+   Start at  22:31:18
+   Duration  33.25s (transform 5.42s, setup 525ms, import 4.12s, tests 27.61s, environment 81ms)
+

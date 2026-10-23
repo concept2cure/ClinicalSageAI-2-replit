@@ -1,0 +1,15 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+    "client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx"
+  ],
+  "config": "vitest.config.ts",
+  "node": "22.22.0",
+  "heapMb": 4096,
+  "canonical": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+  "retainedHead": "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+  "scope": "Read-only late task-assignment integration and retained Team/My work context"
+}

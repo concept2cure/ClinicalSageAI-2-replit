@@ -1,0 +1,14 @@
+[
+  {
+    "file": "client/src/concept2cure/v2/Shell.tsx",
+    "errors": 0,
+    "warnings": 5,
+    "rules": [
+      "max-lines-per-function",
+      "complexity",
+      "max-lines-per-function",
+      "max-lines-per-function",
+      "max-lines"
+    ]
+  }
+]

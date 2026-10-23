@@ -1,0 +1,33 @@
+{
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "node": "v22.22.0",
+  "red": {
+    "exit": 1,
+    "passed": 12,
+    "failed": 1,
+    "cases": 13
+  },
+  "green": {
+    "exit": 0,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "cases": 13
+  },
+  "orchestratorUnchanged": true,
+  "files": {
+    "tests/ops/report-os-foundation.test.mjs": "6f1e89f46611ca29a204ceef20f1aefba816edd347b74b8a841a73347df54e69",
+    "server/services/report-os/orchestrator.ts": "ff2955b060ef1a394c88686fde81b24cdae98b43e29fea39550c2c0159d15bde"
+  },
+  "stashObjects": {
+    "8555ddd92aab26cefbac9452222926e6523079c0": "8555ddd92aab26cefbac9452222926e6523079c0",
+    "8555ddd92aab26cefbac9452222926e6523079c0^2": "51b547f12f4948b4f7241baba23ddabaf9c4ce1f",
+    "8555ddd92aab26cefbac9452222926e6523079c0^3": "969fe6a05d0fd96595f2fd6052b7e76cc73d0d61"
+  },
+  "evidence": {
+    "README.md": "f7b3ba9d88365cda4364b8a0187169cbd6cbc887b45947313ca8a80c9d6ea31e",
+    "green.log": "e4fd8cb1e892dd72cdc6960d976dd59da41d0b957d111bf13722d77744127d2d",
+    "red-pins.json": "ce352898b51f6407f7450ec473d41025ae25536357a3920b9ebd2408f2b621e6",
+    "red.log": "fab5a53dcff214d00582e67e72becd83e3d0c75906ea6011cea1522325547ad0"
+  }
+}

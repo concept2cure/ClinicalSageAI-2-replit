@@ -1,0 +1,39 @@
+{
+  "node": "22.22.0",
+  "heapMb": 4096,
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+    "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "tests/lineage/founder-path-lineage.pglite.test.ts",
+    "server/services/__tests__/memory-context-selected-project.test.ts",
+    "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "server/services/__tests__/report-state-memory-isolation.pglite.test.ts",
+    "server/services/__tests__/memory-consolidation.pglite.integration.test.ts",
+    "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+    "server/services/ana-ri/__tests__/project-memory-read.pglite.test.ts",
+    "server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+    "server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts",
+    "server/services/report-os/__tests__/lineage-trace-unread-signatures-are-unavailable.test.ts",
+    "server/services/pv/__tests__/expedited-reporting-clock-due-date-is-the-canonical-deadline.test.ts",
+    "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts"
+  ],
+  "suites": 23,
+  "phase": {
+    "localCheckpoint": "b513b53e404e49ceed1596d5e6db420333e67105",
+    "canonical": "55f75b72fac95a387d3b72e82a1998a08ff5ef96"
+  }
+}

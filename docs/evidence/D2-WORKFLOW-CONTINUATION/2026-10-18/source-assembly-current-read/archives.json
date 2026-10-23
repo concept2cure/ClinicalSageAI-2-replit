@@ -1,0 +1,20 @@
+[
+  {
+    "path": "chooser-red.txt.gz",
+    "uncompressedBytes": 37578,
+    "uncompressedSha256": "a701bea8be7a662f207e00ea052cb509d4fd65aaa17d6b1685f3924079e188af",
+    "archiveSha256": "9efc70966514460ed68b7819ac764d44e35b7ac346fb8dac94b17d3605b012ed"
+  },
+  {
+    "path": "integration-first.txt.gz",
+    "uncompressedBytes": 95031,
+    "uncompressedSha256": "e760268d7c8e601976702fb0975c1bbde3318559a300841ff0ec4c25f4c87fd9",
+    "archiveSha256": "789002773c4f34ae8a987dd48c5427d66e06594b55d9b581bb26734ecb6b43cc"
+  },
+  {
+    "path": "source-entry-green.txt.gz",
+    "uncompressedBytes": 6842,
+    "uncompressedSha256": "490f5c4d064c5c6cb3e239c9f0064449f256937438a3974ad50481217eb4fcb6",
+    "archiveSha256": "19a6b4347264ce44a30748ddbce4ef2af91f515d5b44160f68d2b06509ef663e"
+  }
+]

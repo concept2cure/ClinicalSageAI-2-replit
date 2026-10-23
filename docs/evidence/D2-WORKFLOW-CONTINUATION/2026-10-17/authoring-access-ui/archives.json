@@ -1,0 +1,50 @@
+[
+  {
+    "path": "regression-before-transport.txt.gz",
+    "uncompressedBytes": 640304,
+    "uncompressedSha256": "811720207482ea3b305717be901cbaf337b5c865dbe06f51d412c2aaf12838c6",
+    "archiveSha256": "44ef00dd907b87a60a7971927ad89f09ec9fbc51cba6c61d95e0637fbb75b298"
+  },
+  {
+    "path": "regression-runtime-interrupted.txt.gz",
+    "uncompressedBytes": 470749,
+    "uncompressedSha256": "f177cfe031205120f3179d1044852863aa7e3a401e3688672378b09cbe56c8f0",
+    "archiveSha256": "140aa557b0aec173dc0f17a2e4c350c06c27f3f060fab01cd007323756f47bc3"
+  },
+  {
+    "path": "assembly-and-fixture-green.txt.gz",
+    "uncompressedBytes": 9638,
+    "uncompressedSha256": "a2326fe589140afda3ebf56a9f2b6468e9e91b3993f170ac156f61e5b20b519b",
+    "archiveSha256": "b4bf7143d3bc1188234ea4cdddb8d299f084f5b0d9b4e9c3adb1d3f35496984c"
+  },
+  {
+    "path": "assembly-transport-red.txt.gz",
+    "uncompressedBytes": 7563,
+    "uncompressedSha256": "c5885520b28103adb4228a3ceca1eed4748b437406d337ed8ea65cc988e25da0",
+    "archiveSha256": "1285b86915d66859d29d8dc0a7f5516748f4e10bf2a1f55b2f72aa0e6c6b8e89"
+  },
+  {
+    "path": "upstream-integration-green.txt.gz",
+    "uncompressedBytes": 3564,
+    "uncompressedSha256": "613e29e77d3982168daebe5ba3b13f39b6f3c39a509822cdac8eca93ca16ce44",
+    "archiveSha256": "42955427b891a6968354612cca13f92a75dce05fc18c77b6a535f806e0bd4a11"
+  },
+  {
+    "path": "upstream-integration-red.txt.gz",
+    "uncompressedBytes": 28920,
+    "uncompressedSha256": "c6a54be1960272d6104cb84782e6721d3244115fa507bb30fb7766387e3e81c7",
+    "archiveSha256": "3e277b150c9176887b3c38e18f4b2c1fabb57e4ddf2e3f75eff30dbf508f4dcf"
+  },
+  {
+    "path": "regression-node22.txt.gz",
+    "uncompressedBytes": 635081,
+    "uncompressedSha256": "4a511fcb2eed4e81448736a667bf227ad00ec5faca27753070f95e8d6467644d",
+    "archiveSha256": "7a38863696c85e745f830a4b113ec7ed52ef481cef56eb722513f8f1e1013a78"
+  },
+  {
+    "path": "fixture-type-successor-node22.txt.gz",
+    "uncompressedBytes": 3282,
+    "uncompressedSha256": "21dd2c825ebd03a781c8bfd6ca3f732ff26b3da294f1eb3b74e21489cad66830",
+    "archiveSha256": "55f535b8436c6c1e120448dbd5d16eb7588b3a284afc9c537d779f8b465e7ed1"
+  }
+]

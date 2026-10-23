@@ -35,7 +35,7 @@ export async function getCurrentAuthoringReadScope(q: RequestSqlClient, input: {
   organizationId: number; userId: number | undefined; programId?: string | null; documentId?: string | null;
   /** The unfiltered Review board also retains pre-project organization records. */
   includeOrganizationDocuments?: boolean;
-}): Promise<{ scope: 'verified-accessible-authoring-sections'; actor:{userId:number;email:string|null}; documentIds: string[]; sectionDocumentIds:string[]; sectionIds: string[] }> {
+}): Promise<{ scope: 'verified-accessible-authoring-sections'; actor:{userId:number;email:string|null;role:string}; documentIds: string[]; sectionDocumentIds:string[]; sectionIds: string[] }> {
   try {
     const programs = await getCurrentAccessibleProgramScope(q,input);
     const principal=await currentPrincipal(q,input.organizationId,programs.actor);
@@ -51,7 +51,7 @@ export async function getCurrentAuthoringReadScope(q: RequestSqlClient, input: {
     if (input.documentId && !access.documentIds.includes(input.documentId) && !access.sectionDocumentIds.includes(input.documentId)) {
       throw new AuthoringReadScopeError(404,'AUTHORING_DOCUMENT_NOT_FOUND','Document not found.');
     }
-    return {scope:'verified-accessible-authoring-sections',actor:{userId:programs.actor.userId,email:principal.email},...access};
+    return {scope:'verified-accessible-authoring-sections',actor:{userId:programs.actor.userId,email:principal.email,role:programs.actor.role},...access};
   } catch (error) {
     if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError) throw error;
     throw new AuthoringReadScopeError(503,'AUTHORING_READ_ACCESS_UNAVAILABLE','Current Authoring access could not be verified.');
@@ -62,13 +62,14 @@ export async function requireAuthoringReadScopeStillCurrent(q: RequestSqlClient,
   input: Parameters<typeof getCurrentAuthoringReadScope>[1], prior: Awaited<ReturnType<typeof getCurrentAuthoringReadScope>>): Promise<void> {
   let current: Awaited<ReturnType<typeof getCurrentAuthoringReadScope>>;
   try { current=await getCurrentAuthoringReadScope(q,input); } catch(error) {
-    if (error instanceof AuthoringReadScopeError && error.status===404) {
+    if (error instanceof AuthoringReadScopeError && error.status===404 ||
+      error instanceof ProgramReadAccessError && [403,404,409].includes(error.status)) {
       throw new AuthoringReadScopeError(503,'AUTHORING_READ_ACCESS_CHANGED','Current Authoring access changed during the read.');
     }
     throw error;
   }
   const documents=new Set(current.documentIds); const parents=new Set(current.sectionDocumentIds); const sections=new Set(current.sectionIds);
-  if (prior.actor.userId!==current.actor.userId || prior.actor.email!==current.actor.email ||
+  if (prior.actor.userId!==current.actor.userId || prior.actor.email!==current.actor.email || prior.actor.role!==current.actor.role ||
       prior.documentIds.some(id=>!documents.has(id)) || prior.sectionDocumentIds.some(id=>!parents.has(id)) || prior.sectionIds.some(id=>!sections.has(id))) {
     throw new AuthoringReadScopeError(503,'AUTHORING_READ_ACCESS_CHANGED','Current Authoring access changed during the read.');
   }

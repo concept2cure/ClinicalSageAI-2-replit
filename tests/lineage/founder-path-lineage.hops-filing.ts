@@ -11,7 +11,9 @@ import os from 'node:os';
 import path from 'node:path';
 import type { PoolClient } from 'pg';
 import type { Queryable as SpanQueryable } from '../../server/services/clinical-regulatory-evidence/span-lineage.service';
-import { REPO_ROOT } from '../golden-journeys/harness';
+import { REPO_ROOT, makeRequestDbClient } from '../golden-journeys/harness';
+import type { Request } from 'express';
+import { requestDb } from '../../server/db/requestDb';
 import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipal, type World } from './founder-path-lineage.world';
 import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch-readiness';
 
@@ -70,7 +72,9 @@ export async function hopPlace(w: World): Promise<void> {
   const { takeAuthoringSnapshot } = await import('../../server/services/coauthor/coauthor-snapshot');
   const snap = await takeAuthoringSnapshot({
     organizationId: ORG_A, sourceAuthoringDocId: String(k.docId), moduleNumber: '2.5', templateId: null,
-    createdBy: AUTHOR.id, actor: { userId: Number(AUTHOR.id), email: AUTHOR.email } as never,
+    executor: requestDb({ dbClient: makeRequestDbClient(w.jdb.pglite) } as unknown as Request),
+    createdBy: AUTHOR.id, actor: { userId: Number(AUTHOR.id), name: AUTHOR.name, role: 'admin', ip: '' },
+    reason: 'Taking the sealed Module 2.5 filing copy for the original IND sequence.',
   });
   expect(snap.ok, JSON.stringify(snap)).toBe(true);
   k.coauthorId = Number((snap as { document: { id: number } }).document.id);

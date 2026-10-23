@@ -1,0 +1,20 @@
+{
+  "oldLeaderPid": 120498,
+  "oldRuntimePid": 120511,
+  "newLeaderPid": 213923,
+  "newGroup": 213923,
+  "newSession": 213923,
+  "configKeys": 12,
+  "mintPasswordFlagEmpty": true,
+  "healthIsLivenessOnly": true,
+  "healthzStatus": 200,
+  "readyzStatus": 503,
+  "preservedConfigurationMatches": true,
+  "ownedRuntimeVerified": true,
+  "observedLauncherExitCode": 0,
+  "oldGroupStoppedGracefully": true,
+  "oldPrivateLogPreserved": true,
+  "newPrivateLogCreatedExclusively": true,
+  "privateLogContentExcluded": true,
+  "configurationValuesExcluded": true
+}

@@ -1,0 +1,32 @@
+{
+  "node": "v22.22.0",
+  "config": "vitest.config.ts",
+  "maxWorkers": 1,
+  "fileParallelism": false,
+  "manifest": "regression-files.json",
+  "primaryRun": {
+    "suitesPassed": 9,
+    "suitesFailed": 1,
+    "testsPassed": 157,
+    "testsFailed": 2,
+    "skipped": 0,
+    "durationSeconds": 67.06,
+    "failureClass": "Fixture ProjectHome mount lacked AuthProvider for canonical useDocumentList; actual authService retained in narrow partial module mock."
+  },
+  "affectedSuiteSuccessor": {
+    "suitesPassed": 1,
+    "testsPassed": 31,
+    "testsFailed": 0,
+    "skipped": 0,
+    "durationSeconds": 4.55
+  },
+  "finalCoverage": {
+    "uniqueSuites": 10,
+    "uniqueCases": 159,
+    "passedOnFinalProduction": true,
+    "claim": "The nine unaffected suites passed the primary run (128 cases); the modified chooser fixture passed all 31 cases in its successor run. This is not a single all-green 10-file invocation."
+  },
+  "historical719ManifestUnchanged": true,
+  "historical719ManifestSha256": "1dccfbf8456bbc3969c740177cd83f9c1f7532531809c0b77736b3b975135f39",
+  "currentPinsChecked": 37
+}

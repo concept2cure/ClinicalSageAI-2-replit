@@ -1,0 +1,145 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > rejects an old same-URL deferred body after the canonical session is replaced 5105ms
+   → expected '{"state":"loading","rows":null}' to contain 'Replacement-session visible list'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<output[39m
+        [33mdata-testid[39m=[32m"current-list"[39m
+      [36m>[39m
+        [0m{"state":"loading","rows":null}[0m
+      [36m</output>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 401 refusal 19ms
+   → expected '{"state":"error","rows":[{"id":"aaaaa…' to contain '"rows":null'
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 403 refusal 11ms
+   → expected '{"state":"error","rows":[{"id":"aaaaa…' to contain '"rows":null'
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 404 refusal 11ms
+   → expected '{"state":"error","rows":[{"id":"aaaaa…' to contain '"rows":null'
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 503 refusal 8ms
+   → expected '{"state":"error","rows":[{"id":"aaaaa…' to contain '"rows":null'
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > retains explicitly stale rows on an ordinary transient refresh failure 6ms
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > preserves partial readScope without inheriting whole-source conversation or origin fields 5ms
+   → expected { ok: true, rows: [ { …(9) } ] } to match object { ok: true, rows: [ { …(4) } ] }
+(6 matching properties omitted from actual)
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > with the side column closed by the person, the list shows by itself even beside a type-B draft
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list
+ ↓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > rejects an old same-URL deferred body after the canonical session is replaced
+AssertionError: expected '{"state":"loading","rows":null}' to contain 'Replacement-session visible list'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<output[39m
+        [33mdata-testid[39m=[32m"current-list"[39m
+      [36m>[39m
+        [0m{"state":"loading","rows":null}[0m
+      [36m</output>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "Replacement-session visible list"
+Received: "{"state":"loading","rows":null}"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:181:80
+    179|     render(<CurrentList />); await waitFor(() => expect(decoding).toBe…
+    180|     act(() => { authService.endSession(null);authService.setToken('syn…
+    181|     await waitFor(() => expect(screen.getByTestId('current-list').text…
+       |                                                                                ^
+    182|     await act(async () => { release({ documents:[{ ...A,title:'Prior-s…
+    183|     expect(screen.getByTestId('current-list').textContent).not.toConta…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 401 refusal
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 403 refusal
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 404 refusal
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 503 refusal
+AssertionError: expected '{"state":"error","rows":[{"id":"aaaaa…' to contain '"rows":null'
+
+Expected: ""rows":null"
+Received: "{"state":"error","rows":[{"id":"aaaaaaaa-0000-4000-8000-00000000000a","title":"Clinical Overview","module":"M2","status":"DRAFT","sectionCount":4,"updatedAt":"2026-10-07T10:42:00Z","source":"ana","conversationId":"thread-1","programId":"5ac45b38-a1d8-4a41-9488-fac39a57b852"},{"id":"bbbbbbbb-0000-4000-8000-00000000000b","title":"Nonclinical Overview","module":"M2","status":"IN_REVIEW","sectionCount":6,"updatedAt":"2026-10-07T10:42:00Z","source":"ana","conversationId":"thread-1","programId":"5ac45b38-a1d8-4a41-9488-fac39a57b852"}]}"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:193:60
+    191|     view.rerender(<CurrentList refreshKey={1} />);
+    192|     await waitFor(() => expect(screen.getByTestId('current-list').text…
+    193|     expect(screen.getByTestId('current-list').textContent).toContain('…
+       |                                                            ^
+    194|     expect(screen.getByTestId('current-list').textContent).not.toConta…
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > preserves partial readScope without inheriting whole-source conversation or origin fields
+AssertionError: expected { ok: true, rows: [ { …(9) } ] } to match object { ok: true, rows: [ { …(4) } ] }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": true,
+    "rows": [
+      {
+-       "conversationId": null,
++       "conversationId": "thread-1",
+        "id": "aaaaaaaa-0000-4000-8000-00000000000a",
+-       "readScope": "sections",
+-       "source": null,
++       "source": "ana",
+      },
+    ],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:207:20
+    205|     apiRequest.mockResolvedValue(ok({ documents:[{ ...A,readScope:'sec…
+    206|     const result=await readDocumentList(CONVERSATION_URL);
+    207|     expect(result).toMatchObject({ ok:true,rows:[{ id:DOC_A,readScope:…
+       |                    ^
+    208|   });
+    209| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed | 22 skipped (29)
+   Start at  21:17:32
+   Duration  11.93s (transform 3.83s, setup 327ms, import 4.84s, tests 5.17s, environment 1.35s)
+

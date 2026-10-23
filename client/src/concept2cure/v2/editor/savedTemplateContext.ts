@@ -8,7 +8,14 @@ export interface SavedTemplateContext {
 }
 
 /** Display/handoff context only; AnA's saved review re-reads authoritative records. */
-export function readSavedTemplateContext(documentId: string, document: { template_id?: unknown; provenance?: unknown }): SavedTemplateContext {
+export function sourceMetadataUnavailable(document: { readScope?: unknown; sourceMetadataState?: unknown }): boolean {
+  return document.readScope === 'sections' || (document.sourceMetadataState !== undefined && document.sourceMetadataState !== 'available');
+}
+
+export function readSavedTemplateContext(documentId: string, document: {
+  template_id?: unknown; provenance?: unknown; readScope?: unknown; sourceMetadataState?: unknown;
+}): SavedTemplateContext {
+  if (sourceMetadataUnavailable(document)) return { documentId, templateId: null, templateSourceState: 'unavailable' };
   const templateId = typeof document.template_id === 'string' ? document.template_id : null;
   const provenance = document.provenance && typeof document.provenance === 'object'
     ? document.provenance as Record<string, unknown> : null;

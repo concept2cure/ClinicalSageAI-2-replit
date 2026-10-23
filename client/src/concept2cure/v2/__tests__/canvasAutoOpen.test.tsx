@@ -45,7 +45,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -113,10 +113,10 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     for (const [id, title] of [[DOC, 'Module 2.5 Clinical Overview — C2C-101'], [DOC_B, 'Module 2.7 Summary']] as const) {
-      if (method === 'GET' && url === `/api/authoring/docs/${id}`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${id}`) {
         return ok({ success: true, document: { id, title, module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1, provenance: { source: 'ana', model: 'claude-fable-5-1', conversationId: 'thread-1' } } });
       }
-      if (method === 'GET' && url === `/api/authoring/docs/${id}/sections`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${id}/sections`) {
         return ok({ success: true, sections: [{ id: `S-${id}`, doc_id: id, code: '2.5.1', title: 'Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
       }
     }

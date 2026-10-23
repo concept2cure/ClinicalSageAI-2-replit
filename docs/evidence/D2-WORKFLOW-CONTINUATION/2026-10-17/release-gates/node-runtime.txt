@@ -1,0 +1,2 @@
+Node runtime contracts are pinned to Node 22 (16 fixed surfaces plus active workflows).
+Node runtime guard self-test passed: 9 simulated drifts were rejected; new and deleted workflow inventory was verified.

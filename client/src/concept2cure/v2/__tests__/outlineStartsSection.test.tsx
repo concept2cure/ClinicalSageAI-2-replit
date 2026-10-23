@@ -30,7 +30,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -72,13 +72,14 @@ function wire(opts: { docs?: DocRow[]; create?: CreateReply; sections?: ReturnTy
   let release: (() => void) | null = null;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
+    const pathname = new URL(url, 'http://localhost').pathname;
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
       return ok({
         success: true,
         documents: docs.map(d => ({ product_code: 'ABC', updated_at: '2026-08-01T10:00:00Z', section_count: 1, ...d })),
       });
     }
-    const secs = /^\/api\/authoring\/docs\/([^/]+)\/sections$/.exec(url);
+    const secs = /^\/api\/authoring\/docs\/([^/]+)\/sections$/.exec(pathname);
     if (method === 'GET' && secs) {
       return ok({ success: true, sections: sections.map(s => ({ ...s, doc_id: secs[1] })) });
     }

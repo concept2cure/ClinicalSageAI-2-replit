@@ -1,0 +1,71 @@
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+   ✅ eCTD bundle validation passed.
+   ✅ Risk code validation passed.
+[ci:migration-set-order] OK — 382 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+   ✅ Migration apply-order passed.
+[ci:migration-drop-safety] OK — 382 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+[ci:class-vocabulary] OK — 4991 file(s) scanned, no restated class vocabulary.
+   ✅ One class vocabulary passed.
+[ci:migration-deploy-path] OK — 110 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+[ci:column-reachability] OK — 3154 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   ✅ Migration manifest in sync.
+[ci:drizzle-tenant-scope] OK — 103 site(s), all baselined; 24 fixed since the baseline was written.
+   ✅ Drizzle tenant scope passed.
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+   ✅ No new session-scoped RLS bypass.
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1011 baselined interpolation(s) in 218 file(s); the baseline may only shrink.
+   ✅ No new value interpolated into SQL text.
+   ✅ Ledger integrity passed.
+[ci:catalog-copy] OK — 119 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+[self-test] OK — 10 copies found, 6 reads passed.
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   ✅ No discarded audit-write outcome.
+   ✅ One source for the client address.
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+✅ repo health strict gate passed.
+   ✅ No new oversized file.
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+[ci:untracked-imports] OK — every relative import in 55 file(s) resolves to a tracked file.
+   ✅ Pushed imports all resolve to tracked files.
+[ci:pushed-lint-errors] OK — no ESLint errors in 55 changed file(s) against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+[ci:eslint-warning-ratchet] no file changed its warning count since 6ffcb425284d68c159fbfc8c4af78e52b589504a.
+   ✅ The pushed files gained no ESLint warnings.
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.

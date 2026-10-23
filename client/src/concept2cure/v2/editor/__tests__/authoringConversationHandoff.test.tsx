@@ -7,7 +7,8 @@ import { originWithSavedVersion, type AskOrigin } from '../askAnaToDraft';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', async original => ({ ...(await original<typeof import('@/services/portal/authService')>()), useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()), useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
@@ -37,8 +38,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { content?: string }) => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (method === 'PATCH' && url === `/api/authoring/sections/${SEC}`) return ok({ section: { ...section, content: body?.content, updated_at: SAVED_AT } });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true });

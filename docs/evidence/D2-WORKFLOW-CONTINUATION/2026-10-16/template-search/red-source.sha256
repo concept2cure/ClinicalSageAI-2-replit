@@ -1,0 +1,4 @@
+8354628d13beb3992926bbdefa10fdd7d4f361334cd3bbdf07946114539e88ac  client/src/concept2cure/v2/C2CForm.tsx
+ef3884db3e24de05b3ab5d53fcd74d0f95ce007fc604b720ac476c29beb93400  client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx
+dfda3a9665a67522811b072b146c7079266842394898a9ed1db4e863fc6ffd30  client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx
+142764f1e34b25e1c56ba17843c4e606711f395c89a2aae607b4aa862b556472  client/src/concept2cure/v2/__tests__/c2cFormCustomField.test.tsx

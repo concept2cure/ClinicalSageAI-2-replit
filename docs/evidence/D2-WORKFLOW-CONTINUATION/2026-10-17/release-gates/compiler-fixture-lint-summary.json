@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "path": "server/routes/__tests__/_authoring-current-read-fixture.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "rawReportSha256": "e268fe5782cddaaca70532550300cea53ffb05d32289caef9d38e7cf1217d656"
+}

@@ -1,0 +1,11 @@
+# Native Authoring reads after 17 October reconciliation
+
+Node22 actual PostgreSQL run: 37/37 passed, zero skips, 11.33s (`native-green.txt`). The restricted app_service role is NOSUPERUSER/NOBYPASSRLS with enforcement on. Fixture preflight verifies twelve FORCE-RLS stores and canonical constraints before creating fresh, retained synthetic namespaces in the specifically guarded local QA database. Actual authentication, membership, project/object ACL, lazy request executor and tenant/PID traces run unchanged. The database is independent of the work order’s Codespace demo target.
+
+The first reconciled run had 34 passes/3 failures because its exact-key assertion predated upstream’s new edit hint. The only fixture update adds edit to the expected sorted keys; every current-viewer hint must still be denied with a reason. Both failed and passing phases, including exact generated observations compressed losslessly, remain retained. No production authority or test refusal was weakened.
+
+`source-pins.json` records current exercised sources. `observations.json.gz` contains the exact final actual query/posture observations; decode with gzip -dc. Transport hashes are recorded alongside it. Earlier 16 October proofs remain separate historical snapshots.
+
+This qualifies these three Authoring READs on the reviewed QA target. It is not native snapshot-writer, Codespace deployment, real provider, browser or full-platform compliance qualification. Fixtures and old audit/history remain retained; no schema or role changes were made.
+
+18 October successor: the SQL interpolation gate rejected the new list predicate assembly even though individual values were bound. The compositor now uses fixed SQL with bound optional filters, retaining exact full-versus-section provenance filtering and NULL-program behavior. The actual native suite was rerun on the same guarded QA target: **37/37 passed**, zero skips, 10.02s (`static-sql-green.txt`). `static-sql-phase.json` records the successor source pins and exact compressed query/posture observations. Original phase pins and results above are unchanged. The two PGlite filter suites separately passed ten cases, including bound filter text with SQL metacharacters (`../release-gates/authoring-bound-sql.txt`). No SQL gate/baseline, schema, grant or authority was relaxed.

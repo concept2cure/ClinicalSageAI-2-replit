@@ -1,0 +1,22 @@
+{
+  "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts": "32241c9cc91241fab9911a51c47d98c8178b05a4e6acf91e55131d9bc8f06f1b",
+  "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts": "22883ed2e2acb0eea2d9e1b6ed585e2709c250c16d8b4329348dcdf83c6b885a",
+  "server/routes/chat/__tests__/send-message-context-window.test.ts": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+  "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts": "fd5ec0fc4e3130510500e7dd3ec4ea248e5b26e0b12855e8f8e5b986295cb226",
+  "server/routes/chat/__tests__/send-message-read-only.test.ts": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9",
+  "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb",
+  "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "1bac1d42bba2d8ac0a08a896acb39e0dca5365eec5f86b7419bbd84fb39347dd",
+  "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9",
+  "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90",
+  "tests/lineage/founder-path-lineage.pglite.test.ts": "e082b86e95fef8a9c9362ce1e6ca4c7f82a0bf5309f54b26f277157cb164dbe3",
+  "client/src/concept2cure/components/ana/useAnaChat.ts": "1ae18f34277d318de67a93feb85aff18c5178390c2fc361e799ec264d6eabca1",
+  "server/routes/ana-ri/stream.ts": "d35e5775faa1004c603052f9f2898b4eaa3b530539fd22a479232402e6a2d45a",
+  "server/routes/chat/send-message.ts": "8b207088e548ee52e32f876f599b7ea0f40817a2e63ae37de82addfcd3eee45f",
+  "server/services/ai-gateway/gateway-error-map.ts": "fb162287a12defca16c65b997464c519bc0a8d0b9b20a08755c7caa285d4120c",
+  "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+  "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+  "server/services/ectd/assemble-from-core.ts": "e29501ca970b9971b9b296f5d5a67c3880c94c496a4602444cd8ff0dd79c4c7c",
+  "server/services/ectd/core-to-packager.ts": "08b6468ea7a9f090b336591a9e852e24cd4e4f6c1a4fe776edbbb80825b95f13",
+  "server/services/ectd/leaf-source-resolver.ts": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+  "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e"
+}

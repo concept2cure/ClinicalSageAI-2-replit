@@ -1,0 +1,14 @@
+{
+  "phase": "final source freeze after fixed SQL repair",
+  "command": "Node22.22.0 node_modules/eslint/bin/eslint.js . --format json --output-file <private-report>",
+  "exitCode": 0,
+  "files": 9472,
+  "errors": 0,
+  "warnings": 5879,
+  "unchangedWarningBaseline": 6090,
+  "exactRawReportSha256": "48a32a3f1c6bb96fb1380f78e56a19dbbc9b5f4898b9c1d7a449fff0dfb4afbf",
+  "exactRawReportBytes": 52912959,
+  "derivedCountsPath": "full-eslint-counts.json.gz",
+  "derivedCountsEncodedSha256": "db9052b3a27cb204741383c57b4c14e03c04381b59a707928f319d6e403f9d13",
+  "errorsByFile": []
+}

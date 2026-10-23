@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 161ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false) 215ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true) 136ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 52ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 57ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 153ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 213ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 59ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers the Apps catalog 65ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers every client type once, the current one checked, by more than colour 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing a client type sets it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 37ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a surface’s published context is readable for that surface 27ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > is NOT readable for a different active surface 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > unmounting a surface clears its context 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a late unmount does not wipe a newer surface’s context 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > the last publisher wins when surfaces swap 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a surface publishing null clears rather than sending an empty context 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > updates the reader when the publisher’s context changes 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > returns null for no context, so module_context is omitted entirely 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > carries the surface, summary, facts and actions 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > omits empty facts and actions rather than sending empty containers 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > uses a registry fallback when a surface has not published live state 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > keeps richer published state ahead of the registry fallback 0ms
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  00:25:52
+   Duration  3.93s (transform 789ms, setup 187ms, import 987ms, tests 1.72s, environment 783ms)
+

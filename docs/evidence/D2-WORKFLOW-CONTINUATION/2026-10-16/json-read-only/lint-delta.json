@@ -1,0 +1,242 @@
+{
+  "baseline": [
+    {
+      "file": "server/routes/chat/send-message.ts",
+      "errors": 0,
+      "warnings": 18,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 99,
+          "message": "Async arrow function has too many lines (992). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 99,
+          "message": "Async arrow function has a complexity of 212. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 166,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 376,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 380,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 404,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 415,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 561,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "line": 655,
+          "message": "File has too many lines (1066). Maximum allowed is 500."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 679,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 741,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 911,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1100,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1102,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1122,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1145,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1148,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1170,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        }
+      ]
+    }
+  ],
+  "current": [
+    {
+      "file": "server/routes/chat/send-message.ts",
+      "errors": 0,
+      "warnings": 18,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 100,
+          "message": "Async arrow function has too many lines (1000). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 100,
+          "message": "Async arrow function has a complexity of 222. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 171,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 384,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 388,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 412,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 423,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 569,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "line": 660,
+          "message": "File has too many lines (1075). Maximum allowed is 500."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 687,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 750,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "line": 924,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1114,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1116,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1136,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1159,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1162,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 1184,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

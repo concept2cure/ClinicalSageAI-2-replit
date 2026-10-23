@@ -1,0 +1,14 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx"
+  ],
+  "config": "vitest.config.ts",
+  "node": "22.22.0",
+  "heapMb": 4096,
+  "scope": "Final affected successor after initial43RED: session/read/Vault remedy; no baseline changes"
+}

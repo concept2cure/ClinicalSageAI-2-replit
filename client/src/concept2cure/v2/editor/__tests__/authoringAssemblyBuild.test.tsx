@@ -9,7 +9,7 @@ import { surfaceLeaveRefusal } from '../../navParams';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 import { useAuthoringAssemblyBuild } from '../useAuthoringAssemblyBuild';
-import { readAssemblyCommit, readAssemblyPlan } from '../assemblyBuildTransport';
+import { inspectAssemblyDocument, readAssemblyCommit, readAssemblyPlan } from '../assemblyBuildTransport';
 import { publishShellProject } from '../../shellProject';
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -35,7 +35,7 @@ function configure(planned: AssemblyPlan, sections: AssemblySection[], generate?
   apiRequest.mockImplementation(async (method: string, path: string, input: unknown) => {
     if (path.endsWith('/assembly/preview')) return reply({ success: true, data: planned });
     if (path.endsWith('/assembly/commit')) return reply({ success: true, data: { docId: DOC, programId: PROGRAM, plan: planned, sections } });
-    if (path.endsWith('/sections')) return reply({ success: true, sections });
+    if (new URL(path, 'http://localhost').pathname.endsWith('/sections')) return reply({ success: true, sections });
     if (generate && path.endsWith('/ai/draft')) return generate(path);
     return base(method, path, input);
   });
@@ -55,8 +55,8 @@ beforeEach(() => {
     if (path.endsWith('/assembly/commit')) return reply({ success: true, data: { docId: DOC, programId: PROGRAM, plan: plan(), sections: [saved()] } });
     if (path.endsWith('/ai/draft')) return reply({ success: true, draft: { content: 'Review candidate', draftId: 'candidate', metadata: {} } });
     if (path.includes('/docs?')) return reply({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-    if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
-    if (path.endsWith('/sections')) return reply({ success: true, sections: [saved()] });
+    if (new URL(path, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
+    if (new URL(path, 'http://localhost').pathname.endsWith('/sections')) return reply({ success: true, sections: [saved()] });
     throw new Error(`Unexpected request ${path}`);
   });
 });
@@ -101,11 +101,11 @@ describe('assembly structural ownership and recovery release', () => {
   });
   it('rejects wrong-program detail despite correctly scoped inventory', async () => {
     const view = mount(); await unknown(view); const base = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method, path, input, headers) => path === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method, path, input, headers) => new URL(path, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`
       ? Promise.resolve(reply({ success: true, document: { id: DOC, client_program_id: OTHER } })) : base(method, path, input, headers));
     await act(async () => { await view.result.current.check(); });
     expect(view.result.current.phase).toBe('unknown'); expect(view.onRecoveryChecked).not.toHaveBeenCalled();
-    expect(apiRequest.mock.calls.some(call => String(call[1]).endsWith('/sections'))).toBe(false);
+    expect(apiRequest.mock.calls.some(call => new URL(String(call[1]), 'http://localhost').pathname.endsWith('/sections'))).toBe(false);
   });
   it.each(['account', 'session', 'bearer'] as const)('retires pending structural ownership synchronously on %s replacement', async transition => {
     const view = mount(); await preview(view); act(() => view.result.current.setReason('Append missing sections.'));
@@ -170,6 +170,57 @@ describe('assembly ownership boundary responses', () => {
     expect(view.result.current.phase).toBe('idle'); expect(view.result.current.receipt).toBeNull();
   });
 });
+describe('assembly saved-record checks keep the selected project and full read projection', () => {
+  function wireProjection(partial?: 'inventory' | 'detail' | 'sections') {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      const path = new URL(url, 'http://localhost').pathname;
+      if (path === '/api/authoring/docs') return reply({ success: true, documents: [{ id: DOC,
+        program_id: PROGRAM, readScope: partial === 'inventory' ? 'sections' : 'document' }] });
+      if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM,
+        readScope: partial === 'detail' ? 'sections' : 'document', sourceMetadataState: 'unavailable' } });
+      if (path === `/api/authoring/docs/${DOC}/sections`) return reply({ success: true,
+        readScope: partial === 'sections' ? 'sections' : 'document', sections: [saved()] });
+      throw new Error(`Unexpected request ${url}`);
+    });
+  }
+  it('uses the exact project on all three reads and accepts a full read with unavailable source metadata', async () => {
+    wireProjection();
+    expect(await inspectAssemblyDocument(DOC, PROGRAM, () => true)).toEqual([saved()]);
+    expect(apiRequest.mock.calls.map(([, url]) => url)).toEqual([
+      `/api/authoring/docs?status=all&programId=${PROGRAM}`,
+      `/api/authoring/docs/${DOC}?programId=${PROGRAM}`,
+      `/api/authoring/docs/${DOC}/sections?programId=${PROGRAM}`,
+    ]);
+  });
+  it.each(['inventory', 'detail', 'sections'] as const)('refuses an explicit partial %s projection before reporting the saved document checked', async partial => {
+    wireProjection(partial);
+    expect(await inspectAssemblyDocument(DOC, PROGRAM, () => true)).toBeNull();
+    expect(apiRequest.mock.calls).toHaveLength({ inventory: 1, detail: 2, sections: 3 }[partial]);
+  });
+  it('rejects a document whose current inventory belongs to another project', async () => {
+    wireProjection();
+    apiRequest.mockImplementationOnce(async () => reply({ success: true, documents: [{ id: DOC, program_id: OTHER }] }));
+    expect(await inspectAssemblyDocument(DOC, PROGRAM, () => true)).toBeNull();
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+  });
+  it('does not accept a deferred body or start the sections read after the captured owner changes', async () => {
+    wireProjection();
+    const normal = apiRequest.getMockImplementation()!;
+    const pending = deferred<unknown>();
+    let current = true;
+    let decoding = false;
+    apiRequest.mockImplementation((method: string, url: string, input: unknown) =>
+      new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`
+        ? { ok: true, status: 200, json: () => { decoding = true; return pending.promise; } } as Response
+        : normal(method, url, input));
+    const read = inspectAssemblyDocument(DOC, PROGRAM, () => current);
+    await waitFor(() => expect(decoding).toBe(true));
+    current = false;
+    pending.resolve({ success: true, document: { id: DOC, client_program_id: PROGRAM, readScope: 'document' } });
+    expect(await read).toBeNull();
+    expect(apiRequest).toHaveBeenCalledTimes(2);
+  });
+});
 describe('one editor assembly orchestration', () => {
   it('accepts normalized single-section selection while preserving exact saved code identity', () => {
     const expected = { programId: PROGRAM, templateId: 'builtin:example', selection: { target: 'section' as const, code: ' 3.2.s.1 ' } };
@@ -214,8 +265,8 @@ describe('one editor assembly orchestration', () => {
       if (path.endsWith('/assembly/preview')) return reply({ success: true, data: two });
       if (path.endsWith('/assembly/commit')) return reply({ success: true, data: { docId: DOC, programId: PROGRAM, plan: two, sections: [saved(), { ...saved(SECOND, '3.2.S.2'), order_index: 1 }] } });
       if (path.includes('/docs?')) return reply({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-      if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
-      if (path.endsWith('/sections')) return reply({ success: true, sections: [saved(), saved(SECOND, '3.2.S.2')] });
+      if (new URL(path, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
+      if (new URL(path, 'http://localhost').pathname.endsWith('/sections')) return reply({ success: true, sections: [saved(), saved(SECOND, '3.2.S.2')] });
       return reply({ success: true, draft: { content: `Candidate ${path}`, draftId: path, metadata: {} } });
     });
     const view = mount(); await preview(view);

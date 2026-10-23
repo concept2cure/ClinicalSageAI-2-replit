@@ -1,5 +1,52 @@
 # Regulated project workflow reachability — read-only assessment
 
+## Demo recovery reconciliation — 2026-10-16
+
+The supplied C2C-2026-10-16 work order now sets the immediate demo priorities.
+Current control and ownership are in `DEMO_READINESS_2026_10_16.md`; current
+verification is under `docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-16/`.
+The shared branch was reconciled through `990a687c6` before these repairs.
+The earlier read-only assessment below remains an account of its original
+source phase. Code gates, restricted-role database checks and actual Codespace
+acceptance are tracked separately. Governed AI authoring and selected-project
+grounding remain open until their required real model/source traces and full
+workflow acceptance are demonstrated.
+
+## Delivery checkpoint — 2026-10-14
+
+The Required Deliverables workspace is now published directly on
+`concept2cure-v2` in `1bd3af0bc5abaff99f9eea0a0c139617842a32a2`. It uses the
+existing Submission Center selectors, table, status chips and editor handoff.
+Its canonical readers verify current project access, retained source identity,
+content pins and lifecycle evidence. Missing, unavailable and undetermined
+requirements remain distinct from governed dispatch readiness. Unsupported
+IND/NDA/BLA coverage is disclosed rather than presented as complete.
+
+Verification is filed under
+`docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/`: the final native boundary
+suite passed 38 cases, the UI phase passed 251 checks, and the actual browser
+review covered 36 cases in desktop/mobile and light/dark. These are separate
+proof classes with their own source pins and limitations; their counts must
+not be combined. Normal push gates passed. Hosted CI subsequently failed Lint and Semgrep;
+those failures remain separate from the local results and are not a green release claim. The subsequent owned development
+runtime refresh is recorded under
+`docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/`;
+AnA correctly remains unavailable there without a configured provider.
+
+The next work addresses current Authoring read admission and the separately
+reviewed filing-copy source writer. Their bounded contracts are
+`AUTHORING_CURRENT_READ_BOUNDARY.md` and
+`COAUTHOR_CURRENT_SOURCE_WRITER_BOUNDARY.md`. Implementation in progress is
+not published or qualified behavior. After these boundaries are verified,
+the remaining product priorities are selected-program protocol continuity,
+application-specific IND requirements and source evidence, a reachable CSR
+build workflow with qualified drafting, and project-specific Pyramid progress.
+Each must reuse the existing launch apps and canonical records. The existing
+CMC composer retains its explicit small-molecule US IND boundary.
+
+The original assessment below is preserved as the starting-point review. Its
+line references and proposed increment describe that earlier source phase.
+
 Reviewed branch: concept2cure-v2. Code assessment only: no build, browser, compiler or test execution. Existing regional/free-plan/protocol/QMS sources were not changed.
 
 ## Product assessment

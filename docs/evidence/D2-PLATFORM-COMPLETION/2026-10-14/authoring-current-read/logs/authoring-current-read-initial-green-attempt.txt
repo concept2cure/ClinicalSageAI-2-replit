@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:23:44.814Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:23:47.054Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:23:47.055Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:23:47.055Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > omits same-org private project metadata even with a real document grant and stale admin claims 66ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses private details and sections before reading their metadata or prose 31ms
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool
+{
+  "timestamp": "2026-10-14T22:23:47.806Z",
+  "level": "error",
+  "message": "[authoring-router] loading docs failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > does not turn a current viewer into a document admin from cached JWT or ALS claims 15ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an inactive actor despite the otherwise valid captured bearer 7ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an expired or revoked grant without reading the content 13ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > reports actual resolver query failure as unavailable rather than content or a fabricated empty list 9ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool 5ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > rejects explicit malformed or multivalued program IDs without silently broadening the read 9ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > lists the granted section parent and counts only visible saved content 39ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > returns only the exact granted section rather than all sibling prose 23ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > withholds full provenance and hidden comment totals on the admitted parent 25ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > does not leak a hidden provenance association through source or conversation filtering 53ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > preserves full saved sections and counters for a real full Viewer grant 17ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > keeps actual NULL-program organization records while selected-program reads exclude them 45ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > retains zero-section full records and case-insensitive frozen status filtering 40ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > does not describe a foreign or missing parent as a legitimate empty document 8ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual grant withdrawal after the real content query settles 19ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual OU role change even when the same actor retains full object IDs 36ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses current OU withdrawal after a real read without returning an initial-refusal shape 13ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  22:23:38
+   Duration  10.04s (transform 4.24s, setup 92ms, import 623ms, tests 9.03s, environment 0ms)
+

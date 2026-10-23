@@ -78,8 +78,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return docRead();
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ success: true, sections: [SECTION] });
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return docRead();
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ success: true, sections: [SECTION] });
     if (method === 'GET' && url === '/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history/verify') return ledgerAnswer();
     if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history')) return ok({ success: true, revisions: [] });
     if (method === 'GET' && url === '/api/tasks/tasks/by-module/Authoring') return ok({ success: true, data: [] });

@@ -1,0 +1,158 @@
+[
+  {
+    "filePath": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+        "line": 340,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 340,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (4851). Maximum allowed is 500.",
+        "line": 786,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 6400,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has too many lines (4038). Maximum allowed is 100.",
+        "line": 1218,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 1218,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has a complexity of 430. Maximum allowed is 15.",
+        "line": 1218,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1218,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (101). Maximum allowed is 100.",
+        "line": 2251,
+        "column": 16,
+        "messageId": "exceed",
+        "endLine": 2251,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 33. Maximum allowed is 15.",
+        "line": 2251,
+        "column": 16,
+        "messageId": "complex",
+        "endLine": 2251,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 2969,
+        "column": 50,
+        "messageId": "complex",
+        "endLine": 2969,
+        "endColumn": 52
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+        "line": 3025,
+        "column": 55,
+        "messageId": "complex",
+        "endLine": 3025,
+        "endColumn": 57
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+        "line": 3190,
+        "column": 5,
+        "endLine": 3190,
+        "endColumn": 50,
+        "suggestions": [
+          {
+            "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+            "fix": {
+              "range": [
+                160507,
+                160552
+              ],
+              "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+            }
+          }
+        ]
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 3557,
+        "column": 43,
+        "messageId": "complex",
+        "endLine": 3557,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+        "line": 6027,
+        "column": 28,
+        "messageId": "exceed",
+        "endLine": 6027,
+        "endColumn": 30
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+        "line": 6027,
+        "column": 28,
+        "messageId": "complex",
+        "endLine": 6027,
+        "endColumn": 30
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 12
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0
+  }
+]

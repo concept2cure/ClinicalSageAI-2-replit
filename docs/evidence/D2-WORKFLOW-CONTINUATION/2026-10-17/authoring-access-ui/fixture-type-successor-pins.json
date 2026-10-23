@@ -1,0 +1,28 @@
+{
+  "atUtc": "2026-10-18T00:12:25.847Z",
+  "baseCommit": "87824205c33c4bc3e586060f61eab62ffb26a852",
+  "node": "v22.22.0",
+  "file": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+  "historical719SourcePins": "source-pins.json",
+  "historical719ManifestSha256": "1dccfbf8456bbc3969c740177cd83f9c1f7532531809c0b77736b3b975135f39",
+  "beforeSha256": "33d726ae6fcab4aad5bef8462317bd023ba503b67a452df7f4e23719826dc41a",
+  "afterSha256": "aa4a42d200d02775cc056931448c0d9960e6af46fed0b6678ff5fcf4f29cadf4",
+  "changes": [
+    "Add type-only FireToast import",
+    "Use FireToast at the canvas helper callback boundary",
+    "Use vi.fn<FireToast>() for the toast mock"
+  ],
+  "emittedJavaScriptEqual": true,
+  "emittedJavaScriptSha256": "af92dd838c517170c90a24e115a5d0c8cc975b786a1fd6b666cf6d0960d21ffd",
+  "validation": {
+    "suite": "fixture-type-successor-node22.txt.gz",
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 4.51,
+    "scopedLint": "fixture-type-successor-lint.json",
+    "lintErrors": 0,
+    "lintWarnings": 0
+  },
+  "limits": "Type-only test fixture successor. The 719-case result and its historical pins remain unchanged; the full compiler is root-owned."
+}

@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-18T00:04:24.838Z","pid":2301,"hostname":"c6da4f13be8a","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-18T00:04:24.839Z","pid":2301,"hostname":"c6da4f13be8a","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-18T00:04:24.839Z","pid":2301,"hostname":"c6da4f13be8a","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-current-read.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-current-read.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-current-read.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > pins actual app_service/NOSUPERUSER/NOBYPASSRLS/FORCE RLS before fixture writes and on a real authenticated read 328ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > retains full Viewer list content, counters and source semantics 183ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > retains full Viewer detail content, counters and source semantics 95ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > retains full Viewer sections content, counters and source semantics 44ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent object permission for list within an accessible public project 127ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent object permission for detail within an accessible public project 60ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent object permission for sections within an accessible public project 37ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent current project sharing for list despite a full object grant 110ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent current project sharing for detail despite a full object grant 21ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current Authoring request and durable authority > requires independent current project sharing for sections despite a full object grant 20ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > keeps the exact section-only list projection without sibling prose, source facts or counts 211ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > keeps the exact section-only detail projection without sibling prose, source facts or counts 37ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > keeps the exact section-only sections projection without sibling prose, source facts or counts 47ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > withholds partial whole-document conversation associations even from matching filter predicates 86ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > withholds partial whole-document source associations even from matching filter predicates 73ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > distinguishes an actual accessible zero-section full document from a missing parent 78ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > retains legitimate ACL-controlled NULL-program records only in organization mode 159ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > does not turn an ungranted NULL-program zero-section parent into an empty successful read 53ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > refuses a real foreign detail identity despite forged context/role headers 20ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > refuses a real foreign sections identity despite forged context/role headers 21ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native full and exact section projections > excludes legal hidden/foreign counters while retaining a separate physical cross-tenant 23503 control 121ms
+{"level":40,"time":"2026-10-18T00:04:32.814Z","pid":2301,"hostname":"c6da4f13be8a","context":{"userId":51,"organizationId":7},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > uses the persisted current viewer for ceremony hints despite a signed stale-admin claim 36ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual missing-ou standing before any pane is assembled 10ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual inactive standing before any pane is assembled 5ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses a retained real expired object grant before private metadata 15ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses a retained real revoked object grant before private metadata 16ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual late ou withdrawal/change after the real native content query settles 24ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual late role withdrawal/change after the real native content query settles 39ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual late sharing withdrawal/change after the real native content query settles 54ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual late section withdrawal/change after the real native content query settles 34ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses actual late email withdrawal/change after the real native content query settles 29ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > preserves exact selected input refusal for malformed 12ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > preserves exact selected input refusal for multivalued 11ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > preserves exact selected input refusal for wrong-program 13ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > preserves mixed modules/statuses, full source/conversation positives and no implicit status filter 214ms
+{"level":50,"time":"2026-10-18T00:04:33.321Z","pid":2301,"hostname":"c6da4f13be8a","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[authoring-router] loading docs failed"}
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > refuses mismatched saved status between actual header and hint-scope reads 29ms
+ ✓ tests/db/authoring-current-read.dbtest.ts > native current identity and late read refusal > fails closed when the real authenticated request executor is absent instead of using a shared pool 11ms
+
+ Test Files  1 passed (1)
+      Tests  37 passed (37)
+   Start at  00:04:23
+   Duration  10.02s (transform 3.95s, setup 58ms, import 1.64s, tests 8.06s, environment 0ms)
+

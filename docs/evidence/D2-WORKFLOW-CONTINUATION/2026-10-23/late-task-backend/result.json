@@ -1,0 +1,28 @@
+{
+  "sourcePhase": {
+    "localCheckpoint": "d4acaf1e46688cbb258ff0f8631b63f5bc8c4a9c",
+    "canonical": "ee3089b5afa5ecb10fa6192fd56e023875573fd6"
+  },
+  "result": {
+    "exitCode": 0,
+    "suitesPassed": 4,
+    "testsPassed": 75,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "testsTodo": 0,
+    "durationSeconds": 10.46
+  },
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "heapMb": 4096,
+  "pinCount": 10,
+  "pinsVerifiedAfterRun": true,
+  "archive": {
+    "file": "tests-green.txt.gz",
+    "gzipMtime": 0,
+    "archiveSha256": "ec45c849ced365ab561333b5d0e1d77ef0bb3dbfa48f562527f4ed6df938bd9b",
+    "decodedSha256": "6e5b0d94367e667fc600a41c66ddb682737ae39a961f7528cdaa24ea4379ab0e",
+    "decodedBytes": 29267
+  },
+  "qualification": "Bounded PGlite and mocked route/shared integration checks; no native RLS, live provider, Codespace, agency or commercial qualification. Earlier packets retain their original source phases; counts are not combined. Client, final build/compiler, normal publication and actual published-SHA CI are root-owned."
+}

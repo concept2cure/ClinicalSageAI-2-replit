@@ -12,12 +12,11 @@ import crypto from 'crypto';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
-import { enforceOrgMembership, GOVERNED_WRITE_ROLES, requireEditorAccess } from '../middleware/orgMembership';
-import { expandRoleClaims, roleClaimsSatisfy } from '../middleware/auth';
-import { getTenantScope } from '../db/tenantStore';
-import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
+import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
 import { getPool } from '../db';
-import { requestConnectable } from '../db/requestDb';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+import { readAuthoringDocuments, readAuthoringDocument, readAuthoringDocumentSections, AuthoringReadInputError } from '../services/authoring/authoring-document-read';
 import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
 import {
   readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews,
@@ -28,7 +27,6 @@ import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import { writeChainedAuditRow } from '../services/auditService';
-import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
@@ -66,9 +64,7 @@ import {
   grantAuthoringPermission,
   resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
-  type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
-import { sectionStructureIssues } from '../../shared/regulatory/section-code';
 import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.js';
 import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
 import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
@@ -113,7 +109,6 @@ import { requireGovernedReason, optionalGovernedReason } from './governed-reason
 import {
   createDocumentFromDraft,
   parseDraftInput,
-  readDocumentProvenance,
 } from '../services/authoring/authoring-from-draft';
 import {
   writeAuthoringAuditTrail,
@@ -1323,153 +1318,37 @@ router.post(
 
 // ============= CRUD Operations =============
 
-// GET /api/authoring/docs?module=M3 - List documents by module
+/** Current read identity is captured once; selected program is never ignored. */
+function currentAuthoringReadIdentity(req: Request, documentId?: unknown) {
+  const program = req.query.programId;
+  if ((program !== undefined && (typeof program !== 'string' || !isUuid(program))) ||
+      (documentId !== undefined && (typeof documentId !== 'string' || !isUuid(documentId)))) {
+    throw new AuthoringReadInputError();
+  }
+  const actor = getActorId(req);
+  return { organizationId: getTenantId(req), userId: actor == null ? undefined : Number(actor),
+    programId: typeof program === 'string' ? program.toLowerCase() : undefined,
+    ...(typeof documentId === 'string' ? { documentId: documentId.toLowerCase() } : {}) };
+}
+function currentAuthoringReadFailure(error: unknown, res: Response, operation: string) {
+  if (error instanceof AuthoringReadInputError) return res.status(400).json({ success: false, code: error.code, error: error.message });
+  if (error instanceof AuthoringReadScopeError || error instanceof ProgramReadAccessError) {
+    return res.status(error.status).json({ success: false, code: error.code, error: error.message });
+  }
+  return serverError(res, logger, operation, error);
+}
+
+// GET /api/authoring/docs - No module/status default; current ACL precedes counts.
 router.get('/docs', async (req: Request, res: Response) => {
   try {
-    /*
-     * `module` has NO default, and that is the fix.
-     *
-     * It used to read `module = 'M3'`, and the filter below applies whatever
-     * `module` holds — unconditionally. So a caller that deliberately sent no
-     * `module` got an M3-only list and no way to tell.
-     *
-     * The editor is exactly that caller, and says so in as many words
-     * (DocumentAuthoring.tsx:282): "No `module` filter. Every filter on this
-     * route is optional server-side, and pinning one hid the rest of the
-     * dossier behind a dropdown — the outline is what selects a section now,
-     * so the document list must span all modules for it to select into."
-     * Every filter on this route was optional except the one the client was
-     * counting on being optional.
-     *
-     * The POST default at :1182 is untouched — a new document does need a
-     * module, and M3 is a reasonable one to start from.
-     */
-    /* BP-W0-7: `status` had a `= 'draft'` default here, which is the same defect
-       the `module = 'M3'` default above was fixed for and documented at length —
-       a caller that deliberately sent no status filter got one anyway and had no
-       way to tell. Combined with the case-sensitive comparison below, that made
-       draft the only state the API would answer about by default. No default. */
-    const { module, product_code, status, programId, conversationId, source } = req.query;
-    const tenantId = getTenantId(req);
-
-    /* The documents a conversation built (docs/design/ONE_ANA_ONE_CANVAS.md
-       §4.3, slice 11): read from each document's own provenance, which AnA
-       records as { source: 'ana', conversationId, turnId, model } when it
-       drafts (authoring-from-draft.ts). A reopened conversation lists its
-       documents from here, not from a capped copy of a tool result. Read
-       through to_jsonb, as the export route reads provenance, so a database
-       without the column answers rather than fails. */
-    let query = `
-      SELECT
-        d.id,
-        d.title,
-        d.module,
-        d.product_code,
-        d.locale,
-        d.status,
-        d.created_at,
-        d.updated_at,
-        d.created_by,
-        to_jsonb(d)->'provenance'->>'source' AS provenance_source,
-        to_jsonb(d)->'provenance'->>'conversationId' AS conversation_id,
-        to_jsonb(d)->>'client_program_id' AS program_id,
-        to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,
-        COUNT(s.id) as section_count,
-        COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
-      FROM authoring_documents d
-      LEFT JOIN authoring_sections s ON s.doc_id = d.id
-      WHERE d.tenant_id = $1
-    `;
-
-    const params: any[] = [tenantId];
-    let paramCount = 1;
-
-    if (module) {
-      paramCount++;
-      query += ` AND d.module = $${paramCount}`;
-      params.push(module);
-    }
-
-    if (product_code) {
-      paramCount++;
-      query += ` AND d.product_code = $${paramCount}`;
-      params.push(product_code);
-    }
-
-    /*
-     * BP-W0-7 — "frozen documents are unreachable under all status filters".
-     *
-     * They were, and so was everything else that had left draft. This compared
-     * `d.status = $n` case-SENSITIVELY against a vocabulary the router writes in
-     * two cases. `POST /docs` inserts `'draft'`; submit writes `'IN_REVIEW'`
-     * (:5204), approve writes `'APPROVED'` (:5399, :5415) and freeze writes
-     * `'FROZEN'` (:3859). The editor's dropdown offers `['draft', 'in_review',
-     * 'approved']`, all lower case. So:
-     *
-     *   status=draft       matched                        (both sides lower)
-     *   status=in_review   matched NOTHING                (server wrote IN_REVIEW)
-     *   status=approved    matched NOTHING                (server wrote APPROVED)
-     *   FROZEN             had no dropdown option at all
-     *
-     * A document was therefore reachable only while it was a draft. The moment
-     * it was submitted it vanished from the surface that authors it — freezing
-     * was just the most visible instance.
-     *
-     * This file had already met this exact split and solved it: the comment on
-     * LOCKED_DOCUMENT_STATUSES above spells out that the router writes both
-     * cases and that "a case-sensitive comparison would silently miss a locked
-     * record". That reasoning was applied to the lock check and never to this
-     * filter. Same fix, same reason.
-     *
-     * `all` (and an explicitly empty string) means no status predicate. That is
-     * the part that makes this durable rather than another enumeration to keep
-     * in sync: whatever status a future handler invents, the document stays
-     * reachable, which is the property the acceptance criterion actually asks
-     * for. Normalising the stored values instead would need a data migration
-     * across live tenants and would break the equality checks in the freeze and
-     * approve handlers; this is the change that fixes retrieval without touching
-     * the Part 11 chain.
-     */
-    const statusFilter = typeof status === 'string' ? status.trim() : '';
-    if (statusFilter && statusFilter.toLowerCase() !== 'all') {
-      paramCount++;
-      query += ` AND upper(d.status) = upper($${paramCount})`;
-      params.push(statusFilter);
-    }
-
-    // Project scope (optional): filter to one regulatory_programs UUID. The
-    // new column is referenced ONLY when programId is supplied, so the org-wide
-    // path — and any database without the 20260727 migration — is untouched.
-    if (programId) {
-      paramCount++;
-      query += ` AND d.client_program_id = $${paramCount}`;
-      params.push(programId);
-    }
-
-    if (typeof conversationId === 'string' && conversationId.trim()) {
-      paramCount++;
-      query += ` AND to_jsonb(d)->'provenance'->>'conversationId' = $${paramCount}`;
-      params.push(conversationId.trim());
-    }
-
-    if (source === 'ana') {
-      query += ` AND to_jsonb(d)->'provenance'->>'source' = 'ana'`;
-    }
-
-    query += ` GROUP BY d.id ORDER BY d.updated_at DESC`;
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      success: true,
-      documents: result.rows,
-      count: result.rowCount,
-      filters: { module, product_code, status, programId, conversationId, source },
+    const identity = currentAuthoringReadIdentity(req);
+    const filter = (key: string) => typeof req.query[key] === 'string' ? req.query[key] as string : undefined;
+    const result = await readAuthoringDocuments(requestPgClient(req), identity, {
+      module: filter('module'), product_code: filter('product_code'), status: filter('status'),
+      conversationId: filter('conversationId'), source: filter('source'),
     });
-  } catch (error) {
-    console.error('Error listing documents:', error);
-    return serverError(res, logger, 'loading docs', error);
-  }
+    return res.json(result);
+  } catch (error) { return currentAuthoringReadFailure(error, res, 'loading docs'); }
 });
 
 // POST /api/authoring/docs - Create new document
@@ -1599,328 +1478,22 @@ router.get('/ind-document-catalog', (_req: Request, res: Response) => {
   res.json({ success: true, data: buildIndDocumentCatalog() });
 });
 
-/* ── What the caller may do to this document, as the server will decide it ──
-   2026-09-28, coverage-gap sweep GE-P-3. Freeze, E-sign, Assign review and
-   File to vault were offered to every member who could open a document; a
-   member without the grant filled in the governed dialog (a freeze reason, a
-   password) and only then met the refusal. This reports, per act, the SAME
-   decision the write will meet, computed by the same code — never a second
-   permission model:
-
-     freeze        authoringObjectAuthorization classifies /freeze as
-                   'approve' → decideAuthoringPermission (OWNER or APPROVER
-                   grant, or a global admin role), then — a freeze is signed
-                   (DP-35) — the same §11.10(g) check as esign.
-     esign         the same 'approve' decision, then the §11.10(g) check
-                   (checkSigningAuthority, as the e-sign route asks it).
-     esignReview   the review signature alone (meaning REVIEWER), which the
-                   middleware classes as 'review' (REVIEWER, APPROVER or OWNER
-                   grant), then the same §11.10(g) check (QA 2026-10-08, j4).
-     fileToVault   authoringObjectAuthorization classifies /file-to-vault as
-                   'export' (any status; OWNER, AUTHOR or APPROVER), then the
-                   vault ingest's vaultWriteRefusal() on the request's
-                   tenant-scope role.
-     assignReview  Send for review. POST /api/tasks/tasks runs
-                   requireEditorAccess, whose role rule is membership of
-                   GOVERNED_WRITE_ROLES on the request's role — the same set,
-                   read the same way, here. Then POST
-                   /documents/:id/request-review, which
-                   authoringObjectAuthorization classifies as 'edit' (wave 2D):
-                   an OWNER or AUTHOR grant, or a global admin, on a document
-                   that is not sealed.
-
-   Each entry is `{ allowed, reason }`, or null when this read could not
-   determine it (a lookup failed, no tenant scope): the client treats null as
-   unknown and leaves the control to the server. The write routes still
-   enforce; this only tells the user before they start. */
-type DocumentActGate = { allowed: boolean; reason: string | null } | null;
-
-function titleCaseRoles(roles: readonly string[] | undefined): string {
-  const names = (roles ?? []).map(r => r.charAt(0) + r.slice(1).toLowerCase());
-  return names.length ? names.join(', ') : 'none';
-}
-
-function objectGate(
-  decision: AuthoringPermissionDecision,
-  act: string,
-  needs: string,
-): DocumentActGate {
-  if (decision.allowed) return { allowed: true, reason: null };
-  if (decision.reason === 'document-immutable') {
-    return {
-      allowed: false,
-      reason: `${act} is refused while the document's status is ${decision.scope?.documentStatus ?? 'unknown'}.`,
-    };
-  }
-  if (decision.reason === 'organization-read-only') {
-    return { allowed: false, reason: `${act} needs an editing role in this organization. Your current organization access is read-only.` };
-  }
-  if (decision.reason === 'permission-denied') {
-    return {
-      allowed: false,
-      reason: `${act} needs ${needs} on this document. Your grants on it: ${titleCaseRoles(decision.matchedRoles)}.`,
-    };
-  }
-  return null; // principal-missing / object-not-found: not a decision about this user
-}
-
-/** A refusal is certain when either step refuses; otherwise unknown if either is unknown. */
-function bothGates(first: DocumentActGate, second: DocumentActGate): DocumentActGate {
-  if (first && !first.allowed) return first;
-  if (second && !second.allowed) return second;
-  if (!first || !second) return null;
-  return { allowed: true, reason: null };
-}
-
-async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T): Promise<T | null> {
-  try {
-    return await fn();
-  } catch (error) {
-    logger.warn('Document access could not be determined; reported as unknown', {
-      what,
-      docId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/** QMS content and signature standing stay separate: a controlled editing copy
- * can refuse further text changes while its current governance status is read. */
-async function qmsDocumentAccessGates(tenantId: number, docId: string): Promise<{ content: DocumentActGate; signing: DocumentActGate }> {
-  const { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal } = await import('../services/qms/controlled-document-content');
-  const [content, governance] = await Promise.all([
-    qmsAuthoringWriteRefusal(pool, tenantId, docId), qmsAuthoringGovernanceRefusal(pool, tenantId, docId),
-  ]);
-  return {
-    content: content ? { allowed: false, reason: content.error } : { allowed: true, reason: null },
-    signing: governance ? { allowed: false, reason: governance.error } : { allowed: true, reason: null },
-  };
-}
-
-async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
-  const unknown = { edit: null, freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null, placeIntoFiling: null } as Record<
-    'edit' | 'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview' | 'placeIntoFiling',
-    DocumentActGate
-  >;
-  const principal = authoringPrincipalFromRequest(req);
-  if (!principal) return unknown;
-  const scope = await settle('scope', docId, () => resolveAuthoringDocumentScope(pool, tenantId, docId));
-  if (!scope) return unknown;
-  const qmsGates = await qmsDocumentAccessGates(tenantId, docId);
-  const editGate = await settle('edit', docId, async () =>
-    objectGate(await decideAuthoringPermission({ pool, principal, scope, action: 'edit' }), 'Editing', 'an Owner or Author grant'),
-  );
-
-  const approve = await settle('approve', docId, () =>
-    decideAuthoringPermission({ pool, principal, scope, action: 'approve' }),
-  );
-  const produce = await settle('export', docId, () =>
-    decideAuthoringPermission({ pool, principal, scope, action: 'export' }),
-  );
-  /* The review signature (POST /e-sign, meaning REVIEWER) is a 'review' act —
-     authoringObjectAuthorization classes it so (QA 2026-10-08, j4). */
-  const review = await settle('review', docId, () =>
-    decideAuthoringPermission({ pool, principal, scope, action: 'review' }),
-  );
-  const approveGate = (act: string) =>
-    approve ? objectGate(approve, act, 'an Owner or Approver grant') : null;
-
-  /* resolveSignerOrgRole answers null for "no membership row" (the e-sign
-     route refuses that) and throws when the lookup fails (unknown here). */
-  const signing = await settle('signing-role', docId, async () => ({
-    role: await resolveSignerOrgRole(Number(getActorId(req)), tenantId),
-  }));
-  const signingGate: DocumentActGate = !signing
-    ? null
-    : isSigningAuthorized(signing.role)
-      ? { allowed: true, reason: null }
-      : {
-          allowed: false,
-          reason:
-            'Applying an electronic signature needs a signing role in this organization ' +
-            `(${signingAuthorityRoles().join(', ')}). Your role: ${signing.role ?? 'none recorded'}.`,
-        };
-
-  /* An org role ABSENT from this request is not evidence the write request
-     will lack one (it is attached upstream, by the global /api gate), so both
-     role checks below report unknown rather than a refusal in that case. */
-  const vaultGate = await settle('vault-role', docId, (): DocumentActGate => {
-    const role = String(getTenantScope()?.role ?? '').toLowerCase();
-    if (!role) return null;
-    if (!vaultWriteRefusal()) return { allowed: true, reason: null };
-    return {
-      allowed: false,
-      reason: `Filing into the vault needs an editing role in this organization. Your role: ${role}.`,
-    };
-  });
-
-  /* Send for review meets two checks, reported in this order so a viewer reads
-     the organization-role sentence first: the role (requireEditorAccess on the
-     task create), then the document. POST /documents/:id/request-review is
-     classified 'edit' by authoringObjectAuthorization since wave 2D: an Owner
-     or Author grant, or a global admin, on a document that is not sealed. Until
-     then this reported the role only, so a member without the grant, or anyone
-     on a FROZEN document, was offered the control and refused after filling it
-     in (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/). */
-  const assignGate = await settle('editor-access', docId, async (): Promise<DocumentActGate> => {
-    const role = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
-    const roleGate: DocumentActGate = !role
-      ? null
-      : GOVERNED_WRITE_ROLES.has(role)
-        ? { allowed: true, reason: null }
-        : { allowed: false, reason: `Sending for review needs an editing role in this organization. Your role: ${role}.` };
-    if (roleGate && !roleGate.allowed) return roleGate;
-    const edit = await settle('edit', docId, () => decideAuthoringPermission({ pool, principal, scope, action: 'edit' }));
-    return bothGates(roleGate, edit ? objectGate(edit, 'Sending for review', 'an Owner or Author grant') : null);
-  });
-
-  /* Place into filing (FILING_SPINE.md F17). Its two writes, the filing copy
-     (POST /api/coauthor/documents with a source) and the leaf (PUT
-     /api/submissions/sequences/:id/leaves), each run
-     requireRole('regulatory-author') over req.user's expanded role claims.
-     The org role is read as Send for review reads it, and expanded as it is
-     where those writes run, then judged by requireRole's own decision
-     (roleClaimsSatisfy). A viewer was offered the control and met a 403 after
-     filling it in (design review 2026-10-08, Part 11 lens). */
-  const placeRole = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
-  const placeGate: DocumentActGate = !placeRole
-    ? null
-    : roleClaimsSatisfy({ roles: expandRoleClaims(placeRole, undefined) }, ['regulatory-author'])
-      ? { allowed: true, reason: null }
-      : { allowed: false, reason: `Placing into a filing needs an authoring role in this organization. Your role: ${placeRole}.` };
-
-  return {
-    edit: bothGates(qmsGates.content, editGate),
-    // A freeze is signed (DP-35): the same two decisions as E-sign.
-    freeze: bothGates(qmsGates.signing, bothGates(approveGate('Freezing'), signingGate)),
-    esign: bothGates(qmsGates.signing, bothGates(approveGate('Signing'), signingGate)),
-    // The review signature alone: a Reviewer grant suffices for it.
-    esignReview: bothGates(qmsGates.signing, bothGates(
-      review ? objectGate(review, 'Signing the review', 'a Reviewer, Approver or Owner grant') : null,
-      signingGate,
-    )),
-    fileToVault: bothGates(
-      produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
-      vaultGate ?? null,
-    ),
-    assignReview: bothGates(qmsGates.content, assignGate ?? null),
-    placeIntoFiling: placeGate,
-  };
-}
-
-// GET /api/authoring/docs/:docId - Get document details
+// GET /api/authoring/docs/:docId - Current admitted header, source facts and hints.
 router.get('/docs/:docId', async (req: Request, res: Response) => {
   try {
-    const { docId } = req.params;
-    const tenantId = getTenantId(req);
-
-    const docResult = await pool.query(
-      `SELECT
-        d.id, d.title, d.module, d.product_code, d.locale, d.status, d.created_at, d.updated_at, d.created_by, d.template_id, d.submitted_at, d.current_workflow_id, d.approved_at, d.frozen_at, d.locked_at, d.locked_by, d.tenant_id, d.version,
-        to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,
-        to_jsonb(d)->>'client_program_id' AS client_program_id,
-        COUNT(DISTINCT s.id) as section_count,
-        COUNT(DISTINCT c.id) as comment_count,
-        COUNT(DISTINCT r.id) as revision_count
-       FROM authoring_documents d
-       -- Same defect, same fix as the per-section counters below: only the
-       -- document was tenant-scoped, so its own section / comment / revision
-       -- counts included rows belonging to other tenants.
-       LEFT JOIN authoring_sections s ON s.doc_id     = d.id AND s.tenant_id = d.tenant_id
-       LEFT JOIN authoring_comments c ON c.doc_id     = d.id AND c.tenant_id = d.tenant_id
-       LEFT JOIN doc_revisions r      ON r.section_id = s.id AND r.tenant_id = s.tenant_id
-       WHERE d.id = $1 AND d.tenant_id = $2
-       GROUP BY d.id`,
-      [docId, tenantId]
-    );
-
-    if (((docResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Document not found',
-      });
-    }
-
-    /* Provenance (WM, 2026-09-21): whether AnA drafted this document, a seed
-       produced it or it was imported — NULL when a person authored it. Read
-       through the service so a deployment without the 20260921 column reports
-       `provenanceStore` honestly instead of a null that reads as "a person". */
-    const prov = await readDocumentProvenance(pool, String(docId), tenantId);
-    /* GE-P-3 (2026-09-28): what this caller may do here — see callerDocumentAccess. */
-    const access = await callerDocumentAccess(req, tenantId, String(docId));
-    res.json({
-      success: true,
-      document: { ...docResult.rows[0], provenance: prov.provenance },
-      access,
-      ...(prov.provenanceStore !== 'present' ? { provenanceStore: prov.provenanceStore } : {}),
-    });
-  } catch (error) {
-    console.error('Error getting document:', error);
-    return serverError(res, logger, 'loading docs', error);
-  }
+    const identity = currentAuthoringReadIdentity(req, req.params.docId);
+    if (!identity.documentId) throw new AuthoringReadInputError();
+    return res.json(await readAuthoringDocument(requestPgClient(req), { ...identity, documentId: identity.documentId }));
+  } catch (error) { return currentAuthoringReadFailure(error, res, 'loading docs'); }
 });
 
-// GET /api/authoring/docs/:docId/sections - Get all sections for a document
+// GET /api/authoring/docs/:docId/sections - Exact admitted sections, never siblings.
 router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
   try {
-    const { docId } = req.params;
-    const tenantId = getTenantId(req);
-
-    const result = await pool.query(
-      `SELECT
-        s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id,
-        COUNT(DISTINCT c.id) as comment_count,
-        COUNT(DISTINCT r.id) as revision_count,
-        COUNT(DISTINCT ct.id) as citation_count
-       FROM authoring_sections s
-       -- The counters must count what the panels list (MDX UAT item A5).
-       -- Reported as an off-by-one: the toolbar read "History 2" / "2 revisions"
-       -- while the history panel said "No prior revisions". It is not an
-       -- off-by-one -- the two sides ran differently-scoped queries. Only the
-       -- section carried a tenant predicate, so these joins counted every row in
-       -- the three child tables that matched on id ALONE, across tenants, while
-       -- every panel that LISTS them is tenant-scoped (history, comments and
-       -- citations all filter their own tenant_id). Any row whose tenant_id did
-       -- not match the section's -- another tenant's, or a null one -- was
-       -- counted and then not shown.
-       --
-       -- Scoping the joins makes the label and the list the same question. It
-       -- also closes a cross-tenant count leak: the old form disclosed the
-       -- existence of other tenants' rows through a number on the toolbar.
-       LEFT JOIN authoring_comments c  ON c.section_id  = s.id AND c.tenant_id  = s.tenant_id
-       LEFT JOIN doc_revisions r       ON r.section_id  = s.id AND r.tenant_id  = s.tenant_id
-       LEFT JOIN authoring_citations ct ON ct.section_id = s.id AND ct.tenant_id = s.tenant_id
-       WHERE s.doc_id = $1 AND s.tenant_id = $2
-       GROUP BY s.id
-       ORDER BY s.order_index, s.created_at`,
-      [docId, tenantId]
-    );
-
-    /* Two structural facts about the document as a whole, computed from the
-       rows just read — no second query, and every client that already reads
-       this endpoint gets them.
-
-       They are worth stating because neither is visible from any one section:
-       a code filed twice puts two 3.2.S in the assembled dossier with nothing
-       to say which is meant, and a stored order that disagrees with the codes
-       means the dossier assembles in the wrong order. Documents created before
-       the section-create path assigned a real position have every section at
-       index 0, so this is how one is recognised. */
-    const structure = sectionStructureIssues(
-      result.rows.map((r: { code?: string | null }) => String(r.code ?? '')),
-    );
-
-    res.json({
-      success: true,
-      sections: result.rows,
-      count: result.rowCount,
-      structure,
-    });
-  } catch (error) {
-    console.error('Error getting sections:', error);
-    return serverError(res, logger, 'loading sections', error);
-  }
+    const identity = currentAuthoringReadIdentity(req, req.params.docId);
+    if (!identity.documentId) throw new AuthoringReadInputError();
+    return res.json(await readAuthoringDocumentSections(requestPgClient(req), { ...identity, documentId: identity.documentId }));
+  } catch (error) { return currentAuthoringReadFailure(error, res, 'loading sections'); }
 });
 
 // POST /api/authoring/sections - Create new section

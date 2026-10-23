@@ -1,0 +1,430 @@
+[
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > retains a genuine source-derived full-document positive and unchanged retake"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > normalizes valid source UUID case without guessing a source identity"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a malformed supplied source UUID before writes"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a array supplied source UUID before writes"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a blank supplied source UUID before writes"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > a foreign source is a404 without source metadata or prose"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > document VIEW does not bypass current private project sharing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > public project sharing does not supply a missing whole-document ACL"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > an exact section VIEW grant cannot assemble its confidential sibling"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > a current OU viewer with full VIEW and stale admin claims cannot write a filing copy"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses removed-membership before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses inactive-user before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses inactive-organization before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a revoked source grant before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a expired source grant before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > refuses a changed-email source grant before source assembly"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > allows a legitimate NULL-program historical source only with its full current ACL"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > does not fall back to the global source pool when request context is absent"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "current whole-source authority before a filing copy > a failed actual policy query is503 rather than a successful source copy"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "late observed source authority must roll back the entire writer > a full grant withdrawn after the real assembler read withholds a new copy"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "late observed source authority must roll back the entire writer > a different still-readable unique integer anchor cannot inherit the captured project identity"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "late observed source authority must roll back the entire writer > withdrawal after actual retake version and audit writes rolls back every side effect"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+    "case": "late observed source authority must roll back the entire writer > an actual audit persistence refusal still rolls back the retaken copy and replaced version"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title \u2014 a forged body is not what gets approved"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections \u2014 there is nothing to file \u2014 and creates nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > refuses a same-organization saved import before assembling private text or creating a filing copy"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > allows the exact saved source for a currently assigned project member"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > refuses a revoked project member before reading the previously accessible body"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > refuses an assigned member whose original binary source version changed"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > refuses an assigned member whose organization membership was removed"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a saved binary import retains current source access when copied into coauthor filing > leaves an existing filing copy and its trail unchanged after source-project access is revoked"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "placing the same source again re-takes the same copy \u2014 the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "placing the same source again re-takes the same copy \u2014 the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "placing the same source again re-takes the same copy \u2014 the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "placing the same source again re-takes the same copy \u2014 the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "placing the same source again re-takes the same copy \u2014 the path the 409 names > placing an unchanged source again writes nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the server holds a source to the same \"has saved content\" rule as the placement dialog > refuses a source whose sections are headings with no text \u2014 the body would be empty"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the server holds a source to the same \"has saved content\" rule as the placement dialog > refuses whitespace-only sections the same way"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced \u2014 even saved co-author edits"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a filing copy is written by an author, for a stated reason > without a reason it is refused, and nothing is taken or re-taken"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a filing copy is written by an author, for a stated reason > a viewer is refused, and nothing is taken"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a filing copy is written by an author, for a stated reason > a document with no source is not this write: no reason or author role is asked of it here"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the seal compare is of what is filed: heading, code, text and order \u2014 in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the seal compare is of what is filed: heading, code, text and order \u2014 in this tenant > (b) a section code changed after the seal: 409, nothing written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the seal compare is of what is filed: heading, code, text and order \u2014 in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the seal compare is of what is filed: heading, code, text and order \u2014 in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the seal compare is of what is filed: heading, code, text and order \u2014 in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > files the editor order"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > a section created later but placed first files where the seal placed it (order_index before created_at)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a sourceAuthoringDocId that is not a string > [\"0a000000-0000-4000-8000-000000000001\"] is refused 400 and nothing is written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a sourceAuthoringDocId that is not a string > {\"id\":\"0a000000-0000-4000-8000-000000000001\"} is refused 400 and nothing is written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+    "case": "a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order \u2014 and re-placing it writes nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+    "case": "sections sharing an order_index: editor, seal and filing agree > the same document with its two sections swapped after the seal is still refused (409, nothing written)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "a filing copy a leaf pins is never rewritten by placing its source again > refuses to re-place an edited document over the copy leaf 2.5 files: text, title and hash stay the pin"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "a filing copy a leaf pins is never rewritten by placing its source again > a leaf in a dispatched sequence pins its copy the same way, and the refusal says the sequence keeps it"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "a filing copy a leaf pins is never rewritten by placing its source again > the same text, now approved, promotes the copy status in place and says it wrote; the pin still holds"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "a filing copy a leaf pins is never rewritten by placing its source again > an unchanged re-place writes nothing, and says so"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "a filing copy a leaf pins is never rewritten by placing its source again > once the leaf is removed the copy is no longer filed, and an edited document is re-taken into it"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "upsertLeaf answers \"unchanged\" only while the pin still matches > re-placing a document whose text changed since its leaf pinned it is refused by name, and the leaf is untouched"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+    "case": "upsertLeaf answers \"unchanged\" only while the pin still matches > the same document with its pinned text intact is still answered unchanged"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+    "case": "GA demo seeds produce documents \"Place into filing\" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+    "case": "GA demo seeds produce documents \"Place into filing\" accepts > 112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+    "case": "GA demo seeds produce documents \"Place into filing\" accepts > 112 does not seal an unsealed APPROVED document whose sections are not the text it seeded"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+    "case": "GA demo seeds produce documents \"Place into filing\" accepts > 112 does not seal an unsealed document that is no longer APPROVED"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+    "case": "GA demo seeds produce documents \"Place into filing\" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201)"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the snapshot carries what the source document earned > an APPROVED document files as approved \u2014 the case that was impossible"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the snapshot carries what the source document earned > a FROZEN document files as finalized"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the snapshot carries what the source document earned > a source with no status at all files as a draft"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the caller cannot award the status itself > ignores a status sent in the body"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the caller cannot award the status itself > ignores a status even with no source document named"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "the caller cannot award the status itself > refuses a source document that is not this organization's"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "source identity syntax > refuses a malformed string id with 400 and creates nothing"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "provenance > records which document the status came from"
+  },
+  {
+    "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+    "case": "provenance > leaves an unsourced snapshot with no provenance claim"
+  }
+]

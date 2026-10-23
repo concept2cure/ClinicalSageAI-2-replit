@@ -1,0 +1,27 @@
+{
+  "backend-merge-regressions.txt.gz": {
+    "decodedBytes": 109651,
+    "decodedSha256": "ae17b7e7ec6a774a9f5ff86ef65bdcdf730ab8bedd4871be1b15583aed133d58",
+    "archiveSha256": "01bc6b7a5e2bace54927887d1730bc9152a0ea686ec0741c9c17b4c044ab416d"
+  },
+  "memory-project-regressions.txt.gz": {
+    "decodedBytes": 53248,
+    "decodedSha256": "02107a3144cfb94524be13807a1eedac86f4d68fe0232660840e817a8f140185",
+    "archiveSha256": "b91f425ce4b4998476f896954178b2d5f0020881e868aa42769d1f67bcb4c34b"
+  },
+  "build.txt.gz": {
+    "decodedBytes": 15605,
+    "decodedSha256": "f7e99c93583353b166bf976bdc532f605814c80ecf75729d1c555fddcd98c315",
+    "archiveSha256": "32356b4cccc485fe85c79a4f6f23ce52ef6b29fd8b250ba15579bf0e828e14c6"
+  },
+  "resolved-source-lint.json.gz": {
+    "decodedBytes": 908881,
+    "decodedSha256": "50a9c88d58d52b4ea911a8e7601fc31138979ec8790d9d6fa80a30b966a9d6b9",
+    "archiveSha256": "9d952a9139ee48a371ac8591b49184751d3d6895fdcae05803bdb645cfbea5d2"
+  },
+  "warning-gate-initial-red.txt.gz": {
+    "decodedBytes": 2277,
+    "decodedSha256": "783ca60b66de50d99e28dea91369cbb2aae8e518e2fa46a49f5c9775a6e8ef0a",
+    "archiveSha256": "f7789778387bb1830f16201f8471b6afe08b8e9723d750305ba0e5363eebea54"
+  }
+}

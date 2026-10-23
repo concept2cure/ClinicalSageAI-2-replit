@@ -1,0 +1,271 @@
+{
+  "phase": "2026-10-17 after upstream fast-forward and conflict reconciliation",
+  "baseCommit": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "nodeVersion": "v22.22.0",
+  "maxOldSpaceSizeMiB": 4096,
+  "sources": [
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "d47e453ab8fd3657b37189793bf2d54481041a719effcdd469c4aa84b0d4c693",
+      "bytes": 381000
+    },
+    {
+      "path": "server/routes/coauthor.ts",
+      "sha256": "a65737e397d7fa31d0774b1d5433f21356b1864d981b154893565eaa62821506",
+      "bytes": 40182
+    },
+    {
+      "path": "server/services/authoring/authoring-document-read.ts",
+      "sha256": "59cc23ee6e892fea5fbf762cc6358ff3c74e734ade74a41b856d3b7f1101b428",
+      "bytes": 12799
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "sha256": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+      "bytes": 5751
+    },
+    {
+      "path": "server/services/coauthor/coauthor-snapshot.ts",
+      "sha256": "e39cc765db6854e07ecdd5f270a6dc83bd27664def710c0960306058d6ac74a0",
+      "bytes": 35912
+    },
+    {
+      "path": "shared/authoring/read-projection.ts",
+      "sha256": "74482596193d8466626b87f663d986e2bda7f011dafb0817139edeeadbd971ec",
+      "bytes": 287
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "dc8a3b4e41748c22066189bdba6800d74edf8d29f557b78489ef034f53e8fbb1",
+      "bytes": 19795
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsByConversation.test.ts",
+      "sha256": "e6378199a92122bd7154b98ac7318eca9fe3b970cec83f453ac255abfa633349",
+      "bytes": 4043
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsStatusFilter.test.ts",
+      "sha256": "32a44c65d238f4b2dd818a3d89b0f0c48632875cff88f16f7e53ca2a7078c809",
+      "bytes": 4523
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-current-read-fixture.ts",
+      "sha256": "a773419caa07a131faeaa7a93bdf34450e5c0e9dece2e034e648b7002507a82e",
+      "bytes": 7734
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+      "sha256": "b1b11c0f7172204e2a0e9a5c12fefe361bf60239f65831173a5ba61d46639f66",
+      "bytes": 17753
+    },
+    {
+      "path": "server/routes/__tests__/_coauthor-current-source-fixture.ts",
+      "sha256": "935da6cc74029f4f32790b10dabc588fb155b2f6048849b3405367e3bbc070f5",
+      "bytes": 6653
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "sha256": "5a52923b77f11ffddff87c09cf5cfb2cb2eb9e1fc44c030adf287cbeef9e0cd6",
+      "bytes": 14021
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+      "sha256": "f995cc8efa4d4b67e6ef665d2bb196ea0394dc0d8918278f43beb6c234b2aae1",
+      "bytes": 63936
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+      "sha256": "06ccf4406ffb72d78a5f513ee702b64fa90a6adfb8e372f3beb7c386ae419e33",
+      "bytes": 17507
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+      "sha256": "be4b8aabd812053c83bb0defd43b742055c897997df214f4d5edced936f6a614",
+      "bytes": 19637
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+      "sha256": "bc7b8fdf715f2bf2c293a74cb678bbb227d113bed9832c5c3d4c4d8cd65b9f10",
+      "bytes": 14815
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "sha256": "c5cb5137a2da03d844dcbed45bef7efe64244ef8e3569d6ea85ce077e38d54b4",
+      "bytes": 14613
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.hops-filing.ts",
+      "sha256": "4f3f9cbb93c15e6d78a3c42e9bac4ed50068289ca6ea942476c26e91d8a6aaec",
+      "bytes": 37392
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "sha256": "f38ad5d7c98ed09f416d481490d25879494cca5c0e56ea342fe33c540a18bed4",
+      "bytes": 17365
+    }
+  ],
+  "upstreamPolicyDependencies": [
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+      "bytes": 13374,
+      "equalsHead": true
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "1ca5d557a44a0c8c47fc5fa04c29c39d83ec36b3abab58e6c5f86f45906d704a",
+      "bytes": 17416,
+      "equalsHead": true
+    },
+    {
+      "path": "server/middleware/uploadAllowlist.ts",
+      "sha256": "c3a318534aa116e8fa748ac520f53cbfd7e5c1a941c37e9669dda09fb64facd5",
+      "bytes": 4660,
+      "equalsHead": true
+    },
+    {
+      "path": "server/services/authoring/draft-source-references.ts",
+      "sha256": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+      "bytes": 15859,
+      "equalsHead": true
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "bytes": 8717,
+      "equalsHead": true
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "sha256": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+      "bytes": 6329,
+      "equalsHead": true
+    },
+    {
+      "path": "server/services/qms/controlled-document-content.ts",
+      "sha256": "f819bf700d9a53a0ca73efcdeeceb9a60258ff3109ec43561bec29421a3d8282",
+      "bytes": 7481,
+      "equalsHead": true
+    }
+  ],
+  "focusedResult": {
+    "log": "2026-10-17-reconciled.log",
+    "exitCode": 0,
+    "passed": 159,
+    "files": 10,
+    "skipped": 0,
+    "seconds": 59.52
+  },
+  "compatibilityResult": {
+    "log": "2026-10-17-compatibility.log",
+    "exitCode": 1,
+    "passed": 140,
+    "failed": 4,
+    "files": 6,
+    "seconds": 44.37,
+    "failure": "Founder-path transmit fixture still stubs legacy AS2 signing and receipt seams; upstream FDA ESG now uses CMS preparation and verified receipt classification. Four cascading founder cases fail; other five files pass."
+  },
+  "notQualified": [
+    "Native PostgreSQL/FORCE-RLS on this snapshot by this agent",
+    "Production providers or agency wire",
+    "Browser/deployment",
+    "Complete demo acceptance"
+  ],
+  "finalSourceFreezeChecks": [
+    {
+      "path": "server/routes/authoring.router.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/coauthor.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/services/authoring/authoring-document-read.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/services/coauthor/coauthor-snapshot.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "shared/authoring/read-projection.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsByConversation.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsStatusFilter.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-current-read-fixture.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/_coauthor-current-source-fixture.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.hops-filing.ts",
+      "unchangedSinceFocused159": true
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "unchangedSinceFocused159": true
+    }
+  ],
+  "rootSuccessorObservations": [
+    {
+      "log": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-17/release-gates/template-nav-journeys.txt",
+      "passed": 183,
+      "files": 9,
+      "includesFounderLineageCases": 11,
+      "ownership": "Root; separate run, not a new combined 144-case batch"
+    },
+    {
+      "packet": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-17/authoring-native/README.md",
+      "passed": 37,
+      "ownership": "Root; exact qualification and source pins in native packet"
+    }
+  ]
+}

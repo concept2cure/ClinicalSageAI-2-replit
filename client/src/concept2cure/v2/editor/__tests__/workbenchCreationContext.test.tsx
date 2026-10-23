@@ -16,7 +16,7 @@ vi.mock('@/services/portal/authService', async original => {
   const canonical = await original<typeof import('@/services/portal/authService')>();
   return { ...canonical,
   useAuth: () => ({ user: { displayName: 'Author', email: 'author@example.test' } }),
-  authService: { getUser: () => ({ id: 41 }),
+  authService: { getUser: vi.fn().mockReturnValue({ id: 41 }),
     captureSessionReadGuard: canonical.authService.captureSessionReadGuard.bind(canonical.authService),
     on: canonical.authService.on.bind(canonical.authService) },
   };
@@ -57,9 +57,9 @@ beforeEach(() => {
   localStorage.clear(); clearEditorTarget(); creation.current = null;
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => {
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
-    if (url === `/api/authoring/docs/${CREATED}/sections`) return ok({ sections: [{ ...nextSection, doc_id: CREATED }] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    if (url.split('?')[0] === `/api/authoring/docs/${CREATED}/sections`) return ok({ sections: [{ ...nextSection, doc_id: CREATED }] });
     if (url.includes('/sources')) return ok({ sources: [] });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true });
@@ -216,12 +216,12 @@ describe('created sections use the current leave decision after the refresh', ()
 it('completes the current section read when the host filter changes while the first read is pending', async () => {
   const refresh = deferred<Response>();
   const normal = apiRequest.getMockImplementation()!;
-  apiRequest.mockImplementation((method: string, url: string) => url === `/api/authoring/docs/${DOC}/sections`
+  apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
     ? refresh.promise : normal(method, url));
   const props: DocumentWorkbenchProps = { docs: [doc], docsState: 'ready', status: 'all',
     programId: PID, onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined) };
   const { rerender } = render(<DocumentWorkbench {...props} />);
-  await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === `/api/authoring/docs/${DOC}/sections`)).toBe(true));
+  await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`)).toBe(true));
   rerender(<DocumentWorkbench {...props} status="DRAFT" />);
   await act(async () => { refresh.resolve(ok({ sections: [section] })); await refresh.promise; });
   await waitFor(() => expect(editorNode()?.textContent).toContain('18 months'));
@@ -280,11 +280,11 @@ describe('unknown creation checks refresh the existing host', () => {
   it('refreshes the current document sections without repeating a creation or changing the selected editor', async () => {
     await mounted();
     const original = editorNode();
-    const readsBefore = apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`).length;
+    const readsBefore = apiRequest.mock.calls.filter(([, url]) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`).length;
     apiRequest.mockImplementationOnce(async () => ok({ success: true, sections: [section] }));
     expect(creation.current?.onCheckCreation).toBeTypeOf('function');
     await act(async () => { await creation.current!.onCheckCreation!('section'); });
-    expect(apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(readsBefore + 1);
+    expect(apiRequest.mock.calls.filter(([, url]) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(readsBefore + 1);
     expect(editorNode()).toBe(original);
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });

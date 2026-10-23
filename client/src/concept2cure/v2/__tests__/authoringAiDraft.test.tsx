@@ -27,7 +27,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
 }));
 
@@ -452,7 +453,7 @@ describe('DocumentAuthoring — the drafting panel is reachable', () => {
     try { localStorage.clear(); } catch { /* ignore */ }
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return res(200, DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return res(200, SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return res(200, SECTIONS);
       return res(200, { success: true, revisions: [], comments: [], sources: [], events: [] });
     });
   });

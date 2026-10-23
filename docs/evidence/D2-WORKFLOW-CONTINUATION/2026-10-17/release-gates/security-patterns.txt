@@ -1,0 +1,1 @@
+check-security-patterns: 0 violations across 3280 file(s).

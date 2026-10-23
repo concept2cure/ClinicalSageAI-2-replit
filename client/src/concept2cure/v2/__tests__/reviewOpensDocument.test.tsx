@@ -82,10 +82,10 @@ function mockApi() {
         { id: DOC, title: 'Clinical Overview §2.5', module: 'M2', product_code: null, status: 'IN_REVIEW', updated_at: null, section_count: 1 },
       ] });
     }
-    if (url === `/api/authoring/docs/${OTHER_DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${OTHER_DOC}/sections`) {
       return ok({ sections: [{ id: 'S-OTHER', doc_id: OTHER_DOC, code: '2.4', title: 'Nonclinical', content: '<p>Default document.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The pivotal study met its primary endpoint.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     return ok({ success: true, data: [], sources: [], revisions: [], comments: [] });
@@ -151,7 +151,7 @@ describe('Review board — opening the document under review', () => {
     const authoringProps = { surface: { id: 'document-authoring', label: 'Authoring' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' } as any;
     render(<DocumentAuthoring {...authoringProps} />);
     expect(await screen.findByText(/Opened “Clinical Overview §2\.5” — the linked document/)).toBeTruthy();
-    await waitFor(() => expect(apiRequest.mock.calls.some(c => c[1] === `/api/authoring/docs/${DOC}/sections`)).toBe(true));
+    await waitFor(() => expect(apiRequest.mock.calls.some(c => c[1] === `/api/authoring/docs/${DOC}/sections?programId=${PROGRAM}`)).toBe(true));
     expect(screen.queryByText(/Couldn’t open/)).toBeNull();
   });
 

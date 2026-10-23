@@ -25,8 +25,9 @@
  * freeze's seal and the filed copy agree when sections share an order_index.
  *
  * Real authoring router (real JWT verification, real authoring migrations),
- * real coauthor router, PGlite. Mocked: the live org-membership re-check and
- * the lineage gate — neither is a lock.
+ * real coauthor router, PGlite. Mocked: Authoring middleware membership and
+ * the lineage gate — neither is a lock. Snapshot current membership and exact
+ * whole-document VIEW use the actual request client and seeded records.
  */
 import { vi } from 'vitest';
 
@@ -99,6 +100,7 @@ import jwt from 'jsonwebtoken';
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../db/pglite-harness';
 import { expandRoleClaims } from '../../middleware/auth';
 import coauthorRoutes from '../coauthor';
+import { snapshotRequestClient, installCurrentSnapshotActor, grantSnapshotDocumentView } from './_coauthor-current-source-fixture';
 
 const ROOT = path.resolve(__dirname, '../../..');
 const ORG = 7;
@@ -113,6 +115,7 @@ const token = () =>
 
 const MIGRATIONS = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
+  'migrations/20260727_authoring_document_program_scope.sql',
   'migrations/20260728_authoring_document_governed_binding.sql',
   'db/migrations/20260730_authoring_comments_router_columns.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -141,9 +144,14 @@ beforeAll(async () => {
   `);
   for (const m of MIGRATIONS) await h.pglite.exec(readFileSync(path.join(ROOT, m), 'utf8'));
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 3, role: 'member', email: 'member@org.test' });
   const authoringRouter = (await import('../authoring.router')).default;
   app = express();
   app.use(express.json());
+  app.use((req: any, _res, next) => {
+    req.dbClient = snapshotRequestClient(holder.pglite);
+    next();
+  });
   app.use('/api/authoring', authoringRouter);
   app.use(
     '/api/coauthor',
@@ -159,11 +167,13 @@ afterAll(async () => {
   await h?.close();
 });
 
-const freeze = (docId: string) =>
-  request(app)
+const freeze = async (docId: string) => {
+  await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: docId });
+  return request(app)
     .post(`/api/authoring/docs/${docId}/freeze`)
     .set('Authorization', `Bearer ${token()}`)
     .send({ reason: 'seal for filing', meaning: 'AUTHOR', password: 'signer-password' });
+};
 
 /** A DRAFT authoring document with one section, frozen through the real router. */
 async function frozenDocument(docId: string, sectionId: string, text: string): Promise<void> {
@@ -298,6 +308,7 @@ describe('sections sharing an order_index: editor, seal and filing agree', () =>
       [DOC, ORG],
     );
 
+    await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: DOC });
     const editor = await request(app).get(`/api/authoring/docs/${DOC}/sections`).set('Authorization', `Bearer ${token()}`);
     expect(editor.status, JSON.stringify(editor.body)).toBe(200);
     const editorSections = (editor.body.sections ?? editor.body.data ?? editor.body) as Array<{ code: string }>;
@@ -348,6 +359,7 @@ describe('sections sharing an order_index: editor, seal and filing agree', () =>
        VALUES ('00000000-0000-4000-8000-0000000000d3', $1, '1.2', 'Beta', 'beta', 0, $2, '2026-01-01T00:00:00.000900Z')`,
       [DOC, ORG],
     );
+    await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: DOC });
     const editor = await request(app).get(`/api/authoring/docs/${DOC}/sections`).set('Authorization', `Bearer ${token()}`);
     const editorSections = (editor.body.sections ?? editor.body.data ?? editor.body) as Array<{ code: string }>;
     expect(editorSections.map((x) => x.code)).toEqual(['1.1', '1.2']);

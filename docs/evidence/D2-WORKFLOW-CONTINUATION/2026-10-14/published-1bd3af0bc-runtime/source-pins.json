@@ -1,0 +1,55 @@
+{
+  "scope": "Twelve critical source/entrypoint pins; no complete dependency-graph freeze claim",
+  "transport": "Lossless path/sha256 row array avoids secret-key-like JSON map labels",
+  "rows": [
+    {
+      "path": "scripts/db/deploy-migrate.mjs",
+      "sha256": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "sha256": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0"
+    },
+    {
+      "path": "scripts/db/authoring-subsystem.mjs",
+      "sha256": "5bff39183cfa8367a829eaab3173039239b7a219ba1e9ebf1dcc5912fb2af160"
+    },
+    {
+      "path": "scripts/db/provision-app-role.mjs",
+      "sha256": "1cf41357d41035bd9d3fbe71343050697c1f089fe3415f6cd7ad1a3f6a91aa63"
+    },
+    {
+      "path": "scripts/db/connection.mjs",
+      "sha256": "cc3069d79277b187693c2463d51579d7a1f3406b5785112be4add7c4864d9216"
+    },
+    {
+      "path": "scripts/db/migration-journal.mjs",
+      "sha256": "aecca7b3689b249127e23e84608f2c9e4a47e410759c422ef7e7b8e33d842c75"
+    },
+    {
+      "path": "scripts/db/readiness-contract.mjs",
+      "sha256": "8fa8c13de6eeea96e1533b64f8c787a5674c0d44fbe02175e245ec228e4cfb4a"
+    },
+    {
+      "path": "scripts/db/readiness-audit.mjs",
+      "sha256": "a623cb89592a7ad279793e8850233d5f227765a88fc07b4e8d3adeba605625a2"
+    },
+    {
+      "path": "scripts/db/lib/declared-tables.mjs",
+      "sha256": "88a4c60371f078f491f3813ca4cc6a5bbacae0cc80b39139cda206771092b714"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "path": "migrations/20260728_authoring_reviews.sql",
+      "sha256": "8514465d058ad27a11d18e6a97c806143e73c0f6583e622377c6f80374e9868a"
+    },
+    {
+      "path": "server/index.ts",
+      "sha256": "fd159bc0eeebe051a0345b46f321885deccb1a45787e06ac645ebb037b658fe3"
+    }
+  ],
+  "allStillMatchAfterRefresh": true
+}

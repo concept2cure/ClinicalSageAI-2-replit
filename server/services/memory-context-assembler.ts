@@ -259,12 +259,14 @@ async function readWorkingMemory(
   const semanticAttempted = Boolean(
     isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()
   );
+  const projectSelector = input.projectId === undefined ? undefined : { projectId: input.projectId };
   let semantic: MemoryLayerRead | undefined;
   if (semanticAttempted && input.organizationId) {
     semantic = await readMemoryLayer(
       searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
         limit: 1,
         minSimilarity,
+        ...projectSelector,
       }).then(hits => hits.map((hit): RetrievedMemoryAtom => ({
         id: hit.id,
         layer: 'working_memory',
@@ -281,7 +283,9 @@ async function readWorkingMemory(
   // Preserve semantic-first selection and its recency fallback, each bounded.
   const recency: MemoryLayerRead = input.organizationId
     ? await readMemoryLayer(
-        getLatestWorkingMemoryByThread(input.threadId, input.organizationId).then<RetrievedMemoryAtom[]>(summary => summary ? [{
+        (projectSelector
+          ? getLatestWorkingMemoryByThread(input.threadId, input.organizationId, projectSelector)
+          : getLatestWorkingMemoryByThread(input.threadId, input.organizationId)).then<RetrievedMemoryAtom[]>(summary => summary ? [{
           id: 0,
           layer: 'working_memory',
           title: 'Latest Working Memory Summary',
@@ -312,14 +316,14 @@ async function readSemanticLayers(
   }
   const semanticStart = Date.now();
   const [client, project] = await Promise.all([
-    readMemoryLayer(
+    input.projectId !== undefined ? Promise.resolve(skipped) : readMemoryLayer(
       searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
         limit,
         minSimilarity,
       }).then(result => result.entries.map(mapClientEntryToAtom)),
       'Client semantic retrieval'
     ),
-    input.projectId
+    typeof input.projectId === 'number' && Number.isSafeInteger(input.projectId) && input.projectId > 0
       ? readMemoryLayer(
           searchProjectMemoryEntriesSemantic(
             null, input.projectId, input.organizationId, input.query, { limit, minSimilarity }

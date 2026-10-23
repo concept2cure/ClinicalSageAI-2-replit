@@ -1,0 +1,9 @@
+{
+  "server/routes/authoring.router.ts": "b312e01776008a2ebcbaecf24a3d9574150e30ca57219e744403d78a2c58bb53",
+  "server/services/authoring/authoring-document-read.ts": "d13f625c88d0b0faa198521cb6f4ec47147cf8b9665e151f617249a3ab8e8f73",
+  "server/services/authoring/authoring-read-scope.ts": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+  "shared/authoring/read-projection.ts": "74482596193d8466626b87f663d986e2bda7f011dafb0817139edeeadbd971ec",
+  "tests/db/authoring-current-read.dbtest.ts": "2aecac9b402b185b73fa9b0040eb557b44a83c84913d9372f5fda6085089bd74",
+  "tests/db/authoring-current-read-fixture.ts": "06b87a010f102e0ba8c2d9fa704c87ad24cbd314df5a8b21543c69f0902e19a2",
+  "tests/db/catalog-native-fixture.ts": "0711edcd607f5f99433cf124a5d12b4210500fb9b386c8ac123eeb97b7bcf507"
+}

@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > omits same-org private project metadata even with a real document grant and stale admin claims
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses private details and sections before reading their metadata or prose
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > does not turn a current viewer into a document admin from cached JWT or ALS claims
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an inactive actor despite the otherwise valid captured bearer
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an expired or revoked grant without reading the content
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > reports actual resolver query failure as unavailable rather than content or a fabricated empty list
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > rejects explicit malformed or multivalued program IDs without silently broadening the read
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > lists the granted section parent and counts only visible saved content
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > returns only the exact granted section rather than all sibling prose
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > withholds full provenance and hidden comment totals on the admitted parent
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > does not leak a hidden provenance association through source or conversation filtering
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > preserves full saved sections and counters for a real full Viewer grant
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > keeps actual NULL-program organization records while selected-program reads exclude them
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > retains zero-section full records and case-insensitive frozen status filtering
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > does not describe a foreign or missing parent as a legitimate empty document
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual grant withdrawal after the real content query settles
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual OU role change even when the same actor retains full object IDs
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses current OU withdrawal after a real read without returning an initial-refusal shape
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts [ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts ]
+error: duplicate key value violates unique constraint "authoring_sections_doc_code_tenant_uq"
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 311, severity: 'ERROR', code: '23505', detail: 'Key (doc_id, code, tenant_id)=(d0000000-0000-4000-8000-000000000003, 2.5, 1) already exists.', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'authoring_sections', dataType: undefined, constraint: 'authoring_sections_doc_code_tenant_uq', file: 'nbtinsert.c', routine: '_bt_check_unique', query: 'INSERT INTO authoring_sections(id,doc_id,code,title,content,order_index,tenant_id)\n      VALUES($1,$2,\'2.5\',$3,$4,$5,1)', params: [ 'e0000000-0000-4000-8000-000000000004', 'd0000000-0000-4000-8000-000000000003', 'Synthetic hidden section', '<p>HIDDEN_SIBLING_PROSE</p>', 2 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 skipped (19)
+   Start at  22:18:31
+   Duration  4.90s (transform 191ms, setup 97ms, import 702ms, tests 3.71s, environment 0ms)
+

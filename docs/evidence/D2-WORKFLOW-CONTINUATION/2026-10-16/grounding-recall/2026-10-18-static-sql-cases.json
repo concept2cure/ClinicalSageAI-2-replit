@@ -1,0 +1,98 @@
+[
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > retains the actual project id in a structured row read"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "shouldEmbedWorkingMemory \u2014 safe-to-flip gate > embeds only when the feature is on AND the column exists"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "shouldEmbedWorkingMemory \u2014 safe-to-flip gate > never embeds when the embedding column is absent \u2014 even with the flag on"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "shouldEmbedWorkingMemory \u2014 safe-to-flip gate > never embeds when the feature is off"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "isSemanticWorkingMemoryEnabled \u2014 flag reader > is off by default and only true for the exact string \"true\""
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "buildWorkingMemoryPrompt > embeds the conversation and asks for the exact JSON shape"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "buildWorkingMemoryPrompt > folds a previous summary in for incremental update"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "formatWorkingMemoryForPrompt > always renders the objective and only the non-empty sections"
+  },
+  {
+    "file": "server/services/__tests__/working-memory.test.ts",
+    "case": "working-memory embeddings migration \u2014 guard > is idempotent and additive (pgvector + nullable embedding column)"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > records project_id on the row when the column exists"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > degrades to the pre-migration INSERT \u2014 with one warning \u2014 when the column is missing"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > never records a non-positive or non-finite project id"
+  }
+]

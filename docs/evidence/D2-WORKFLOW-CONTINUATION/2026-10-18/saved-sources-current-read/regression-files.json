@@ -1,0 +1,8 @@
+[
+  "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx"
+]

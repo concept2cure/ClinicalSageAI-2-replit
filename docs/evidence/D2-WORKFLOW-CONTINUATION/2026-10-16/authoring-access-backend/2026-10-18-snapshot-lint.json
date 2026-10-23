@@ -1,0 +1,45 @@
+{
+  "head": "9197e92c079a6c8ee79322d921ef70ef64703c5e",
+  "records": [
+    {
+      "file": "server/services/coauthor/coauthor-snapshot.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 1,
+        "messages": [
+          {
+            "ruleId": "max-params",
+            "severity": 1,
+            "line": 542,
+            "message": "Async function 'writeSnapshotCopy' has too many parameters (6). Maximum allowed is 5."
+          }
+        ]
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      }
+    },
+    {
+      "file": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 1,
+        "messages": [
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "line": 71,
+            "message": "Arrow function has a complexity of 20. Maximum allowed is 15."
+          }
+        ]
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      }
+    }
+  ]
+}

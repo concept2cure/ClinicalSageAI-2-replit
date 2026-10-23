@@ -241,22 +241,15 @@ describe('GET /docs/:docId — the caller’s access', () => {
     }
   });
 
-  it('a failed permission lookup is reported as unknown, not as a denial', async () => {
+  it('an unavailable read permission store refuses before returning private metadata or ceremony hints', async () => {
     await jdb.pool.query('ALTER TABLE doc_permissions RENAME TO doc_permissions_unavailable');
     try {
       const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
-      expect(res.status, 'the document read itself must not fail').toBe(200);
-      const { access } = res.body;
-      expect(access.fileToVault).toBeNull();
-      /* E-sign's grant is unknown, but its org-role step is a certain refusal
-         for a member — the route refuses on that step alone. Freeze too: it is
-         a signature (DP-35) and meets the same step. */
-      expect(access.esign.allowed).toBe(false);
-      expect(access.freeze.allowed).toBe(false);
-      /* Send for review's role step allows a member, but its grant step (the
-         request's 'edit' decision, wave 2D) could not be read: unknown. */
-      expect(access.assignReview).toBeNull();
-      expect(access.edit).toBeNull();
+      expect(res.status).toBe(503);
+      expect(res.body.code).toBe('AUTHORING_READ_ACCESS_UNAVAILABLE');
+      expect(res.body).not.toHaveProperty('document');
+      expect(res.body).not.toHaveProperty('access');
+
     } finally {
       await jdb.pool.query('ALTER TABLE doc_permissions_unavailable RENAME TO doc_permissions');
     }
@@ -279,13 +272,11 @@ describe('Send for review: the report is the decision the request meets', () => 
       reason: 'Ready for medical review.',
     });
 
-  it('a member with an editing role but no grant on the document is told it needs an Owner or Author grant', async () => {
+  it('a member with an editing role but no document grant cannot read its metadata and still cannot send it for review', async () => {
     const res = await colleague(request(app).get(`/api/authoring/docs/${docId}`));
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.access.assignReview).toEqual({
-      allowed: false,
-      reason: 'Sending for review needs an Owner or Author grant on this document. Your grants on it: none.',
-    });
+    expect(res.status).toBe(404);
+    expect(res.body).not.toHaveProperty('document');
+    expect(res.body).not.toHaveProperty('access');
 
     const sent = await send(colleague);
     expect(sent.status, JSON.stringify(sent.body)).toBe(403);

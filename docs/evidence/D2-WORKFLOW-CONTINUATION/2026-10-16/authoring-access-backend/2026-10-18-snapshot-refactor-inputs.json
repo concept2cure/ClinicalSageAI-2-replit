@@ -1,0 +1,87 @@
+{
+  "phase": "2026-10-18 snapshot lint publication repair",
+  "head": "9197e92c079a6c8ee79322d921ef70ef64703c5e",
+  "files": [
+    {
+      "path": "server/services/coauthor/coauthor-snapshot.ts",
+      "sha256": "b44d6e840ca16b450afdec45e4d2440f1e411ca436879cda99c31bdf0853f26b",
+      "bytes": 36032
+    },
+    {
+      "path": "server/routes/coauthor.ts",
+      "sha256": "a65737e397d7fa31d0774b1d5433f21356b1864d981b154893565eaa62821506",
+      "bytes": 40182
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "sha256": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+      "bytes": 5751
+    },
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+      "bytes": 13374
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "bytes": 8717
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "sha256": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+      "bytes": 6329
+    },
+    {
+      "path": "server/routes/__tests__/_coauthor-current-source-fixture.ts",
+      "sha256": "935da6cc74029f4f32790b10dabc588fb155b2f6048849b3405367e3bbc070f5",
+      "bytes": 6653
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-canvas-fixture.ts",
+      "sha256": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+      "bytes": 10188
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "sha256": "6de21c11a1396aa4bd3bb870cdd57196a29e8b51a55a2605d79fc12055679ad0",
+      "bytes": 14872
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "sha256": "caf40cc18e2d9ea1f6f82d4004dadd1b17038be5a92f3a109d86d501a04dd563",
+      "bytes": 14041
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+      "sha256": "f995cc8efa4d4b67e6ef665d2bb196ea0394dc0d8918278f43beb6c234b2aae1",
+      "bytes": 63936
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+      "sha256": "06ccf4406ffb72d78a5f513ee702b64fa90a6adfb8e372f3beb7c386ae419e33",
+      "bytes": 17507
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+      "sha256": "be4b8aabd812053c83bb0defd43b742055c897997df214f4d5edced936f6a614",
+      "bytes": 19637
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+      "sha256": "bc7b8fdf715f2bf2c293a74cb678bbb227d113bed9832c5c3d4c4d8cd65b9f10",
+      "bytes": 14815
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "bytes": 3983
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "bytes": 17904
+    }
+  ],
+  "runner": "Node22/heap4096; maxWorkers1/fileParallelismfalse"
+}

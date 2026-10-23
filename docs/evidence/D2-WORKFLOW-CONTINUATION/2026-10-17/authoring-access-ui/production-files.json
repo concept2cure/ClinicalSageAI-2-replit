@@ -1,0 +1,15 @@
+[
+  "client/src/concept2cure/_shared/components/EsignModal.tsx",
+  "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+  "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+  "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+  "client/src/concept2cure/v2/editor/SendForReviewDialog.tsx",
+  "client/src/concept2cure/v2/editor/savedTemplateContext.ts",
+  "client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx",
+  "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx",
+  "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+  "client/src/concept2cure/v2/surfaces/placeIntoFilingCopy.ts",
+  "client/src/concept2cure/v2/editor/CanvasDocumentList.tsx",
+  "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+  "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts"
+]

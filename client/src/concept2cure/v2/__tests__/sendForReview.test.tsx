@@ -35,7 +35,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -63,7 +63,9 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { SendForReviewDialog } from '../editor/SendForReviewDialog';
+import { authService } from '@/services/portal/authService';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -98,8 +100,8 @@ function documentRead(url: string): Response | null {
   if (url.startsWith('/api/authoring/docs?')) {
     return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
   }
-  if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
-  if (url === `/api/authoring/docs/${DOC}/sections`) {
+  if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+  if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
     return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
   }
   if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
@@ -140,6 +142,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as any).C2C_PROJECT;
 });
 
@@ -157,6 +160,66 @@ function fill(dlg: HTMLElement, reviewers: string[], reason = REASON) {
   for (const id of reviewers) fireEvent.click(within(dlg).getByTestId(`sfr-reviewer-${id}`));
   fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: reason } });
 }
+
+async function openPreparedReviewDialog() {
+  const { dlg: dialog } = await openOwnDialog({ docTitle: 'Synthetic overview', sectionCode: null, onCheckTasks: undefined, onOpenBoard: undefined });
+  await within(dialog).findByTestId('sfr-reviewer-42');
+  fill(dialog, ['42']);
+  return dialog;
+}
+
+describe('a current partial canvas preserves a sent review request', () => {
+  it('checks the canonical session again before a prepared confirmation can write', async () => {
+    const dialog = await openPreparedReviewDialog();
+    authService.endSession(null);
+    fireEvent.click(within(dialog).getByTestId('sfr-submit'));
+    expect((await within(dialog).findByTestId('sfr-error')).textContent).toContain('Your session changed');
+    expect(calls('POST', REQUEST_URL)).toHaveLength(0);
+  });
+
+  it('does not create follow-on tasks using a replacement session after a sent review request', async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    answerRequest = () => pending;
+    const dialog = await openPreparedReviewDialog();
+    fireEvent.click(within(dialog).getByTestId('sfr-submit'));
+    await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
+    authService.endSession(null);
+    await act(async () => { release(recorded({ reviewers: [{ id: '42', name: 'OQ Signer' }] })); await pending; });
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+    expect(within(dialog).queryByTestId('sfr-result')).toBeNull();
+  });
+
+  it('blocks new confirmation and retains the actual pending review/task receipt', async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    answerRequest = () => pending;
+    const canvas = (refreshKey: number) => <DocumentCanvas docId={DOC} programId={PID} conversationId={null}
+      fromThisConversation={false} expanded={false} onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()}
+      fireToast={vi.fn()} refreshKey={refreshKey} />;
+    const view = render(canvas(0));
+    await screen.findByText('The product rationale.');
+    fireEvent.click(screen.getByTestId('dc-assign-review'));
+    const dialog = await screen.findByTestId('send-for-review-dialog');
+    await within(dialog).findByTestId('sfr-reviewer-42');
+    fill(dialog,['42']); fireEvent.click(within(dialog).getByTestId('sfr-submit'));
+    await waitFor(() => expect(calls('POST',REQUEST_URL)).toHaveLength(1));
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, input?: Record<string,unknown>) =>
+      url.split('?')[0] === `/api/authoring/docs/${DOC}`
+        ? Promise.resolve(ok({ document: { id: DOC, title: 'Current accessible overview', module: 'M2', status: 'draft',
+          readScope: 'sections', sourceMetadataState: 'unavailable' } })) : normal(method,url,input));
+    view.rerender(canvas(1));
+    await screen.findByTestId('dc-read-scope');
+    expect(screen.getByTestId('send-for-review-dialog')).toBe(dialog);
+    await act(async () => { release(recorded({ reviewers: [{ id: '42', name: 'OQ Signer' }] })); await pending; });
+    await within(dialog).findByTestId('sfr-result');
+    expect(within(dialog).getByTestId('sfr-reviews').textContent).toContain('OQ Signer');
+    expect(calls('POST',REQUEST_URL)).toHaveLength(1);
+    expect(calls('POST','/api/tasks/tasks')).toHaveLength(1);
+    expect(within(dialog).queryByTestId('sfr-submit')).toBeNull();
+  });
+});
 
 describe('Send for review — the workbench records a review request the Review board reads', () => {
   it('POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer', async () => {
@@ -332,11 +395,11 @@ const standingRow = (reviewerId: string, name: string, status: string) => ({
 });
 
 /** The dialog on its own, with the toast it fires. */
-async function openOwnDialog() {
+async function openOwnDialog(overrides: Partial<React.ComponentProps<typeof SendForReviewDialog>> = {}) {
   const fireToast = vi.fn();
   const onCheckTasks = vi.fn();
   render(<SendForReviewDialog docId={DOC} docTitle="Module 2.5 Clinical Overview" programId={PID} sectionCode="2.5.1"
-    onClose={vi.fn()} fireToast={fireToast} onCheckTasks={onCheckTasks} onOpenBoard={vi.fn()} />);
+    onClose={vi.fn()} fireToast={fireToast} onCheckTasks={onCheckTasks} onOpenBoard={vi.fn()} {...overrides} />);
   const dlg = await screen.findByTestId('send-for-review-dialog');
   return { dlg, fireToast, onCheckTasks };
 }

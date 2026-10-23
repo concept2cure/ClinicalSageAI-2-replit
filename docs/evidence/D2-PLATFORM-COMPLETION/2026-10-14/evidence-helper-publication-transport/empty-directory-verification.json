@@ -1,0 +1,18 @@
+{
+  "decodedTransportRecords": 12,
+  "originalSeals": [
+    {
+      "manifestPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/artifact-manifest.json",
+      "manifestSha256": "bdee649e7523ac31e8401d7394b7c4c9ee0e9b8ca10ad7724bec4c6b638bd760",
+      "verifiedRecords": 141
+    },
+    {
+      "manifestPath": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/sha256-manifest.json",
+      "manifestSha256": "9795d80e6b139935c8d0d974259edd92525cd44c4f1c36cfb844c28f02f5d9a8",
+      "verifiedRecords": 12
+    }
+  ],
+  "retainedAddenda": 2,
+  "observedProcessExitCode": 0,
+  "qualification": "Actual empty-directory reconstruction and SHA-256 verification only; no helper execution or scanner rerun."
+}

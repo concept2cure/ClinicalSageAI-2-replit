@@ -1,0 +1,9 @@
+# Current Authoring reads: native PostgreSQL qualification
+
+On 16 October the actual Node 22 native suite passed **37/37 cases**, zero skips, in 14.06 seconds. It used the retained, explicitly guarded `platform_ci_review_binding_blank_20261014_51cb8284` QA target at local port 55432, independently of the inaccessible Codespace demo. No schema, role, policy or older fixture/history was replaced. New fixture rows remain retained in a unique synthetic namespace.
+
+Owner setup and independent late-change witnesses use a separate owner connection. HTTP reads pass through the real authentication boundary, organization membership checks, tenant context, lazy request executor and Authoring router as `app_service`, NOSUPERUSER/NOBYPASSRLS with enforcement on. Preflight verifies twelve FORCE-RLS stores, canonical same-tenant constraints and the distinct-section-code index before any fixture writes. The actual query trace records tenant, role and backend PID. Late role, membership, email, status, project-sharing and section-grant changes refuse the combined response; full and exact section-only positives remain admitted.
+
+`native.txt` is the unedited run output. `source-pins.json` identifies the exact exercised sources. `observations.json.gz` contains the exact generated observations compressed without modification; inspect with `gzip -dc observations.json.gz`. Those observations include the actual posture and SQL trace, synthetic IDs and retained fixture namespace. No credentials or JWTs are recorded.
+
+This proves the three Authoring READ endpoints on this QA target. Snapshot writer behavior is separately exercised by PGlite integration/compatibility tests. These results do not establish Codespace deployment, model qualification, selected-project AnA grounding, browser acceptance or full-platform compliance.

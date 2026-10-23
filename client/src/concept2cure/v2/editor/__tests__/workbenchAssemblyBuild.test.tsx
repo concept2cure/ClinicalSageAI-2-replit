@@ -87,14 +87,15 @@ beforeEach(async () => {
   commitReply = input => ok({ success: true, data: commit(input) });
   draftReply = sectionId => ok({ success: true, draft: { content: `Retained candidate for ${sectionId}.`, draftId: `draft-${sectionId}`, metadata: {}, check: null } });
   apiRequest.mockReset().mockImplementation(async (method: string, url: string, body?: AssemblyPreviewInput) => {
+    const pathname = new URL(url, 'http://localhost').pathname;
     if (url === '/api/authoring/templates') return ok({ success: true, templates: [template] });
     if (method === 'POST' && url.endsWith('/assembly/preview')) return previewReply(body!);
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(body!);
     const draftSection = url.match(/\/sections\/([^/]+)\/ai\/draft$/)?.[1];
     if (method === 'POST' && draftSection) return draftReply(draftSection);
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PID }] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: doc });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: savedSections });
+    if (pathname === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: doc });
+    if (pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: savedSections });
     if (url.includes('/sources')) return ok({ sources: [] });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true });
@@ -297,7 +298,7 @@ describe('assembly follows the current server edit decision', () => {
     let allowed = true;
     const normal = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string, input?: AssemblyPreviewInput) =>
-      method === 'GET' && url === `/api/authoring/docs/${DOC}`
+      method === 'GET' && new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`
         ? ok({ success: true, document: doc, access: { edit: { allowed, reason: allowed ? null : reason } } })
         : normal(method, url, input));
     const view = await mounted();
@@ -340,9 +341,9 @@ describe('assembly late results preserve current work and scope', () => {
     const refresh = deferred<Response>();
     const normal = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string, input?: AssemblyPreviewInput) =>
-      method === 'GET' && url === `/api/authoring/docs/${DOC}/sections` ? refresh.promise : normal(method, url, input));
+      method === 'GET' && new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections` ? refresh.promise : normal(method, url, input));
     await buildDocument(true);
-    await waitFor(() => expect(apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(2));
+    await waitFor(() => expect(apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === `/api/authoring/docs/${DOC}/sections?programId=${PID}`)).toHaveLength(2));
     const original = editorNode();
     localEdit();
     await act(async () => { refresh.resolve(ok({ success: true, sections: savedSections })); await refresh.promise; });

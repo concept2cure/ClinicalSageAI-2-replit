@@ -29,7 +29,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -80,7 +80,7 @@ function wire(route: Route) {
     const r = route(method, String(url ?? ''));
     if (r) return r;
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     return ok({ success: true, revisions: [], comments: [], sources: [] });
   });
 }
@@ -95,7 +95,7 @@ afterEach(() => cleanup());
 
 describe('DocumentAuthoring — unsettled reads are not rendered as facts', () => {
   it('the Document view says the sections are being read, never "no sections yet", while the read is in flight', async () => {
-    wire((m, u) => (m === 'GET' && u === '/api/authoring/docs/D1/sections' ? never() : undefined));
+    wire((m, u) => (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections' ? never() : undefined));
     render(<DocumentAuthoring {...props()} />);
     fireEvent.click(await screen.findByTitle('Read the whole document'));
     await waitFor(() => expect(text()).toMatch(/Reading this document’s sections/));
@@ -104,7 +104,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('the masthead never prints "0 sections" over a failed sections read', async () => {
-    wire((m, u) => (m === 'GET' && u === '/api/authoring/docs/D1/sections' ? fail(500) : undefined));
+    wire((m, u) => (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections' ? fail(500) : undefined));
     render(<DocumentAuthoring {...props()} />);
     fireEvent.click(await screen.findByTitle('Read the whole document'));
     await waitFor(() => expect(text()).toMatch(/Couldn’t read this document’s sections/));
@@ -152,7 +152,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
             outline: [{ key: '2.7', parent_key: null, label: 'Clinical Summary', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
           });
         }
-        if (m === 'GET' && u === '/api/authoring/docs/D1/sections') return fail(500);
+        if (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections') return fail(500);
         return undefined;
       });
       render(<DocumentAuthoring {...props()} />);
@@ -239,7 +239,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     }] };
     wire((m, u) => {
       if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok(DOCS2);
-      if (m === 'GET' && u === '/api/authoring/docs/D2/sections') return ok({ success: true, sections: [{ ...SECTIONS.sections[0], id: 'S2', doc_id: 'D2', code: '2.5', title: 'Clinical Overview' }] });
+      if (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D2/sections') return ok({ success: true, sections: [{ ...SECTIONS.sections[0], id: 'S2', doc_id: 'D2', code: '2.5', title: 'Clinical Overview' }] });
       if (m === 'GET' && u === '/api/authoring/documents/D1/comments') return ok(THREAD);
       if (m === 'GET' && u === '/api/authoring/documents/D2/comments') return never();
       return undefined;
@@ -261,7 +261,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       };
       apiRequest.mockImplementation(async (method: string, url: string) => {
         if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-        if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], citation_count: 1 }] });
+        if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], citation_count: 1 }] });
         if (method === 'GET' && url === '/api/authoring/sections/S1/sources') return ok({ sources: [citation] });
         if (method === 'DELETE') {
           // apiRequest THROWS the server's 404 refusal — the old handler had no catch.
@@ -303,7 +303,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       let releaseS1: (r: Response) => void = () => {};
       const slowS1 = new Promise<Response>((resolve) => { releaseS1 = resolve; });
       wire((m, u) => {
-        if (m === 'GET' && u === '/api/authoring/docs/D1/sections') return ok(TWO);
+        if (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(TWO);
         if (m === 'GET' && u === '/api/authoring/sections/S1/sources') return slowS1;
         if (m === 'GET' && u === '/api/authoring/sections/S2/sources') return ok({ sources: [] });
         return undefined;

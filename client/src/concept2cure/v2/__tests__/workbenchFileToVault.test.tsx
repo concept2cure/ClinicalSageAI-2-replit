@@ -11,8 +11,9 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
+import type { FireToast } from '../toast';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -39,6 +40,10 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { DocumentCanvas } from '../editor/DocumentCanvas';
+import { FileToVaultDialog } from '../editor/FileToVaultDialog';
+import { DocumentWorkbench } from '../editor/DocumentWorkbench';
+import { authService } from '@/services/portal/authService';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -54,8 +59,8 @@ function mockApi() {
     if (url.startsWith('/api/authoring/docs?')) {
       return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     if (method === 'POST' && url === `/api/authoring/docs/${DOC}/file-to-vault`) return fileToVault();
@@ -81,6 +86,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as any).C2C_PROJECT;
   delete (window as any).C2C_VAULT_TARGET;
 });
@@ -185,6 +191,98 @@ describe('DocumentWorkbench — File to vault', () => {
     fireEvent.click(within(dlg).getByTestId('ftv-submit'));
     const next = await within(dlg).findByTestId('ftv-next');
     expect(next.textContent).toBe('Next: review and approve this version in the Vault. It can be placed into a submission before then, but the sequence is not frozen or transmitted until it is approved.');
+  });
+});
+
+describe('canvas current-access refusal preserves a sent vault outcome', () => {
+  it('keeps the existing workbench writer through a host refusal without retaining private document text', async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    fileToVault = () => pending;
+    const workbench = (refused: boolean) => <DocumentWorkbench programId={PID} status="all" docsState={refused ? 'error' : 'ready'}
+      docs={refused ? [] : [{ id: DOC, title: 'Private saved overview', module: 'M2', status: 'draft', product_code: null, updated_at: null, section_count: 1 }]}
+      readRefusal={refused ? 'Current access could not be verified.' : null} onNav={vi.fn()} reloadDocs={vi.fn()} />;
+    const view = render(workbench(false));
+    await screen.findAllByText('Rationale');
+    fireEvent.click(screen.getByTestId('file-to-vault-open'));
+    const dialog = screen.getByTestId('file-to-vault-dialog');
+    fireEvent.click(within(dialog).getByTestId('ftv-submit'));
+    view.rerender(workbench(true));
+    expect(screen.getByTestId('file-to-vault-dialog')).toBe(dialog);
+    expect(document.body.textContent).not.toContain('Private saved overview');
+    expect(document.body.textContent).not.toContain('The product rationale.');
+    await act(async () => { release(ok(FILED, 201)); await pending; });
+    expect(await within(dialog).findByTestId('ftv-result')).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method,url]) => method === 'POST' && String(url).endsWith('/file-to-vault'))).toHaveLength(1);
+  });
+
+  it('does not remount an expanded editor’s sent writer when its canvas read is refused', async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    fileToVault = () => pending;
+    const editor = (refreshKey: number) => <DocumentCanvas docId={DOC} programId={PID} conversationId={null}
+      fromThisConversation={false} expanded onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()}
+      fireToast={vi.fn()} refreshKey={refreshKey} />;
+    const view = render(editor(0));
+    fireEvent.click(await screen.findByTestId('file-to-vault-open'));
+    const dialog = screen.getByTestId('file-to-vault-dialog');
+    fireEvent.click(within(dialog).getByTestId('ftv-submit'));
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ error: { code: 'AUTHORING_READ_ACCESS_UNAVAILABLE', message: 'Current access could not be verified.' } },503)) : normal(method,url));
+    view.rerender(editor(1));
+    await waitFor(() => expect(dialog.textContent).not.toContain('Module 2.5 Clinical Overview'));
+    expect(screen.getByTestId('file-to-vault-dialog')).toBe(dialog);
+    await act(async () => { release(ok(FILED, 201)); await pending; });
+    expect(await within(dialog).findByTestId('ftv-result')).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method,url]) => method === 'POST' && String(url).endsWith('/file-to-vault'))).toHaveLength(1);
+  });
+
+  it('checks the canonical session immediately before a prepared filing confirmation', async () => {
+    render(<FileToVaultDialog docId={DOC} docTitle="Synthetic overview" docStatus="draft" programId={PID}
+      programName={null} onClose={vi.fn()} fireToast={vi.fn()} />);
+    const dialog = screen.getByTestId('file-to-vault-dialog');
+    authService.endSession(null);
+    fireEvent.click(within(dialog).getByTestId('ftv-submit'));
+    expect(await screen.findByText(/Your session changed/)).toBeTruthy();
+    expect((within(screen.getByTestId('file-to-vault-dialog')).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(screen.getByTestId('file-to-vault-dialog')).getByTestId('ftv-submit'));
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  function canvas(refreshKey: number, fireToast: FireToast) {
+    return <DocumentCanvas docId={DOC} programId={PID} conversationId={null} fromThisConversation={false}
+      expanded={false} onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()} fireToast={fireToast} refreshKey={refreshKey} />;
+  }
+  it.each(['unsent', 'pending'])('keeps the %s dialog generic and blocks new confirmation after a refused current read', async phase => {
+    const fireToast = vi.fn<FireToast>();
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    if (phase === 'pending') fileToVault = () => pending;
+    const view = render(canvas(0, fireToast));
+    await screen.findByText('The product rationale.');
+    fireEvent.click(screen.getByTestId('dc-file-to-vault'));
+    const dialog = await screen.findByTestId('file-to-vault-dialog');
+    if (phase === 'pending') {
+      fireEvent.click(within(dialog).getByTestId('ftv-submit'));
+      await waitFor(() => expect(apiRequest.mock.calls.filter(([method,url]) => method === 'POST' && String(url).endsWith('/file-to-vault'))).toHaveLength(1));
+    }
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ error: { code: 'AUTHORING_READ_FORBIDDEN', message: 'Current access refused.' } },403)) : normal(method,url));
+    view.rerender(canvas(1, fireToast));
+    await screen.findByTestId('dc-error');
+    expect(screen.getByTestId('file-to-vault-dialog')).toBe(dialog);
+    expect(dialog.textContent).not.toContain('Module 2.5 Clinical Overview');
+    if (phase === 'pending') {
+      await act(async () => { release(ok(FILED,201)); await pending; });
+      await within(dialog).findByTestId('ftv-result');
+      expect(fireToast).toHaveBeenCalledOnce();
+      expect(fireToast.mock.calls[0][0]).not.toContain('Module 2.5 Clinical Overview');
+    } else {
+      expect(within(dialog).getByTestId('ftv-submit')).toHaveProperty('disabled',true);
+      expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+    }
   });
 });
 

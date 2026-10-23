@@ -16,7 +16,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -52,14 +52,14 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const document = { id: DOC, title: 'Nonclinical Overview', module: 'M2', status: 'APPROVED', section_count: 1 };
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [document] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.4', title: 'Overview', content: '<p>Saved summary.</p>', order_index: 0 }] });
-    if (method === 'POST' && url === `/api/authoring/docs/${DOC}/export`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.4', title: 'Overview', content: '<p>Saved summary.</p>', order_index: 0 }] });
+    if (method === 'POST' && url.split('?')[0] === `/api/authoring/docs/${DOC}/export`) {
       exports.push({ id: 'X1', document_id: DOC, export_type: 'docx', exported_at: '2026-10-06T21:00:00Z', file_name: 'nonclinical-overview.docx', file_size: 1024, doc_sha256: 'aaaa', exported_by: 'author@test.co' });
       throw new ApiRequestError('Reply lost', 502);
     }
-    if (url === `/api/authoring/docs/${DOC}/exports`) return ok({ success: true, exports, total: exports.length, last_export: exports[0] ?? null, current_content_hash: 'aaaa', content_changed_since_last_export: exports.length ? false : null });
-    if (url === `/api/authoring/docs/${DOC}/diff-since-export`) return ok({ baseline: exports.length ? '2026-10-06T21:00:00Z' : null, changed: [] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/exports`) return ok({ success: true, exports, total: exports.length, last_export: exports[0] ?? null, current_content_hash: 'aaaa', content_changed_since_last_export: exports.length ? false : null });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/diff-since-export`) return ok({ baseline: exports.length ? '2026-10-06T21:00:00Z' : null, changed: [] });
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({ success: false }), ok: false, status: 404 };
     return ok({ success: true, templates: [], sources: [], revisions: [], comments: [] });

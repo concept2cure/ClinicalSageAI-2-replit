@@ -1,0 +1,18 @@
+{
+  "canonicalBase": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "codespaceCliAccessible": false,
+  "codespaceCliResult": "No accessible Codespaces listed by current GitHub CLI connection",
+  "forwardedDemoHttpStatus": 404,
+  "localPostgresContainer": "c2c-platform-pg",
+  "localContainerReused": true,
+  "intendedDemoDatabasePresentLocally": false,
+  "localAppProcessAtResume": false,
+  "nativeQaTarget": "platform_ci_review_binding_blank_20261014_51cb8284",
+  "nativeQaRuntimeRole": "app_service",
+  "nativeQaRoleSuperuser": false,
+  "nativeQaRoleBypassRls": false,
+  "nativeQaRlsEnforce": "on",
+  "workOrderFile": "Concept2Cure Developer Work Order for Demo Readiness.md",
+  "workOrderSha256": "1941aa0aec872b99e5a053efedcbc6c07f249aabf2649c59a6d6223525baaa8b",
+  "limits": "Local QA is separate from Codespace acceptance. No provider/model readiness claimed."
+}

@@ -1,0 +1,16 @@
+{
+  "node": "v22.22.0",
+  "incoming": "e62320e0a",
+  "baseline": {
+    "errors": 0,
+    "warnings": 13
+  },
+  "current": {
+    "errors": 0,
+    "warnings": 12
+  },
+  "tests": {
+    "errors": 0,
+    "warnings": 0
+  }
+}

@@ -36,12 +36,9 @@ import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from
 import { downloadBlob, safeFileName } from '../download';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
-import type { RecordedTemplateFilingContext } from '@shared/authoring/recorded-template-source';
 import { useAuthoringCreation, type CreationKind, type CreationState } from '../editor/useAuthoringCreation';
 import { AuthoringRecoveryNotice } from '../AuthoringRecoveryNotice';
-
-interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null;
-  module?: string | null; limitations?: string[]; filingContext?: RecordedTemplateFilingContext }
+import { AuthoringTemplatePicker, BLANK_DOCUMENT, templateLabel, type AuthoringTemplate, type TemplateCatalogState } from './AuthoringTemplatePicker';
 
 export interface AuthoringCreateExportProps {
   /** Currently open document (null when none). */
@@ -75,7 +72,7 @@ export interface AuthoringCreateExportProps {
   onCheckExports?: () => void;
 }
 
-const NONE = '(blank document)';
+const NONE = BLANK_DOCUMENT;
 function creationModule(template: AuthoringTemplate | undefined, entered: string, fallback: string): string | null {
   return template?.module === undefined ? entered || fallback : template.module;
 }
@@ -101,10 +98,6 @@ function sectionCreationForm(title: string | null, state: CreationState | undefi
     ] };
 }
 
-function templateLabel(template: AuthoringTemplate): string {
-  return String(template.name ?? template.title ?? 'Template ' + template.id);
-}
-
 function documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state }: {
   templates: AuthoringTemplate[]; selectedTemplate?: AuthoringTemplate; module: string;
   globalCatalog: string; state?: CreationState;
@@ -127,7 +120,7 @@ function documentCreationForm({ templates, selectedTemplate, module, globalCatal
         derive: values => { const selected = templates.find(t => String(t.id) === values.template);
           return selected?.module === undefined ? null : selected.module ?? 'No CTD placement (preparation)'; } },
       { key: 'template', label: 'Start from', type: 'select', options: [{ value: NONE, label: NONE },
-        ...templates.map(t => ({ value: String(t.id), label: templateLabel(t) }))], default: NONE, half: true,
+        ...templates.map(t => ({ value: String(t.id), label: templateLabel(t) }))], default: NONE,
         desc: templateStartDescription(selectedTemplate) },
     ],
   };
@@ -168,14 +161,15 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   });
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
   const [templateChoice, setTemplateChoice] = useState('');
-  useEffect(() => { if (dialog !== 'doc') setTemplateChoice(''); }, [dialog]);
+  const [templateQuery, setTemplateQuery] = useState('');
+  useEffect(() => { if (dialog !== 'doc') { setTemplateChoice(''); setTemplateQuery(''); } }, [dialog]);
   // 'unavailable' = the server said the shared reference catalog failed to
   // read (its fail-soft still lists the org's own templates). A SHORT list
   // and a FAILED half are different facts; the dialog states which.
   // 'failed' = the whole read failed (401, throw). It used to collapse into
   // the ok/short-list case, so an author started a filing document blank
   // believing the org had no templates.
-  const [globalCatalog, setGlobalCatalog] = useState<'ok' | 'unavailable' | 'failed'>('ok');
+  const [globalCatalog, setGlobalCatalog] = useState<TemplateCatalogState>('loading');
 
   // Template roster for create-from-template; an unavailable list simply means
   // the picker offers only a blank document — never a fabricated template.
@@ -186,9 +180,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
         const body = await res.json().catch(() => null);
         if (res.ok && Array.isArray(body?.templates)) {
           setTemplates(body.templates as AuthoringTemplate[]);
-          if ((body as { globalCatalog?: string })?.globalCatalog === 'unavailable') {
-            setGlobalCatalog('unavailable');
-          }
+          setGlobalCatalog(body.globalCatalog === 'unavailable' ? 'unavailable' : 'ok');
         } else {
           setGlobalCatalog('failed');
         }
@@ -252,7 +244,10 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
       )}
       {noticeContainer ? createPortal(notices, noticeContainer) : notices}
       {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={() => setDialog(null)} onSubmit={createDoc}
-        onFieldChange={(key, value) => { if (key === 'template') setTemplateChoice(value); }} />}
+        onFieldChange={(key, value) => { if (key === 'template') setTemplateChoice(value); }}
+        renderField={(field, control) => field.key === 'template'
+          ? <AuthoringTemplatePicker templates={templates} catalog={globalCatalog} query={templateQuery} onQueryChange={setTemplateQuery} control={control} />
+          : undefined} />}
       {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={() => setDialog(null)} onSubmit={createSection} />}
     </>
   );

@@ -4,6 +4,7 @@ import { authService } from '@/services/portal/authService';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { taskActorScope } from '../taskTarget';
 import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
+import { authoringCurrentReadPath } from './authoringCurrentRead';
 import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 import { assemblyManifestForSelection, sameAssemblyManifest } from './assemblySourceSelection';
 
@@ -95,6 +96,11 @@ export async function requestAssembly<T>(path: string, input: unknown, decode: (
   } catch (error) { return assemblyException(error, writing); }
 }
 
+function inventoryAdmitsWholeDocument(inventory: Record<string, unknown> | null, docId: string, programId: string): boolean {
+  return Array.isArray(inventory?.documents) && inventory.documents.every(row => record(row)?.program_id === programId)
+    && inventory.documents.some(row => record(row)?.id === docId && record(row)?.readScope !== 'sections');
+}
+
 /** Both the scoped inventory and exact detail must confirm the saved parent. */
 export async function inspectAssemblyDocument(docId: string, programId: string, current: () => boolean, capturedHeaders?: Record<string, string>): Promise<AssemblySection[] | null> {
   let headers: Record<string, string>;
@@ -109,12 +115,11 @@ export async function inspectAssemblyDocument(docId: string, programId: string, 
     if (!current()) return null;
     headers = capturedHeaders ?? captureAssemblyHeaders();
     const inventory = await read(`/api/authoring/docs?status=all&programId=${encodeURIComponent(programId)}`);
-    if (!Array.isArray(inventory?.documents) || !inventory.documents.every(row => record(row)?.program_id === programId)
-      || !inventory.documents.some(row => record(row)?.id === docId)) return null;
-    const detail = await read(`/api/authoring/docs/${encodeURIComponent(docId)}`);
+    if (!inventoryAdmitsWholeDocument(inventory, docId, programId)) return null;
+    const detail = await read(authoringCurrentReadPath(docId, programId));
     const document = record(detail?.document);
-    if (document?.id !== docId || document.client_program_id !== programId) return null;
-    const body = await read(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    return readAssemblySections(body?.sections, docId);
+    if (document?.id !== docId || document.client_program_id !== programId || document.readScope === 'sections') return null;
+    const body = await read(authoringCurrentReadPath(docId, programId, true));
+    return body?.readScope === 'sections' ? null : readAssemblySections(body?.sections, docId);
   } catch { return null; }
 }

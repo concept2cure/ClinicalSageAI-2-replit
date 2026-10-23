@@ -1,0 +1,39 @@
+{
+  "phase": {
+    "canonical": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+    "preservationCommit": "b513b53e404e49ceed1596d5e6db420333e67105",
+    "successor": "bounded retained Vault writer/session-refusal remedy"
+  },
+  "initial43": {
+    "exitCode": 1,
+    "suitesPassed": 41,
+    "suitesFailed": 2,
+    "testsPassed": 466,
+    "testsFailed": 3,
+    "testsSkipped": 0,
+    "durationSeconds": 238.27
+  },
+  "successor": {
+    "exitCode": 0,
+    "suitesPassed": 6,
+    "testsPassed": 104,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "durationSeconds": 34.74
+  },
+  "sourceChangesAfterInitial43": [
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx"
+  ],
+  "targetPinsUnchangedDuringSuccessor": true,
+  "targetPinsCount": 58,
+  "lint": {
+    "files": 4,
+    "errors": 0,
+    "warnings": 12,
+    "warningsOwner": "Previously recorded DocumentWorkbench warnings; FileToVaultDialog and both test files have zero warnings"
+  },
+  "qualification": "jsdom and mocked HTTP; no live Codespace, browser, approved-model, native database, agency or commercial acceptance claimed"
+}

@@ -77,7 +77,8 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type express from 'express';
-import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import { createJourneyDb, makeRequestDbClient, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import { requestDb } from '../../../db/requestDb';
 import { LEAF_SOURCE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/pglite-harness';
 import {
   PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
@@ -295,6 +296,7 @@ async function placeAsCoauthorCopy(docId: string): Promise<{ leaf: UpsertedLeaf;
   const taken = await takeAuthoringSnapshot({
     organizationId: ORG, sourceAuthoringDocId: docId, moduleNumber: '2.5', templateId: null, createdBy: AUTHOR.email,
     actor: { userId: CTX.userId, name: AUTHOR.name } as never, reason: 'Placing this document into the filing',
+    executor: requestDb({ dbClient: makeRequestDbClient(jdb.pglite) } as unknown as express.Request),
   });
   expect(taken.ok, JSON.stringify(taken)).toBe(true);
   const copyId = Number((taken as { document: { id: number } }).document.id);

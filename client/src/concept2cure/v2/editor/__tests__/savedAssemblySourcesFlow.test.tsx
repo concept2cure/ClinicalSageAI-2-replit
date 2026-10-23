@@ -76,8 +76,8 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: 'Fresh selected-source candidate.', draftId: 'fresh-candidate', metadata: {} } });
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PROGRAM }] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { ...doc, client_program_id: PROGRAM } });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: storedSections });
+    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { ...doc, client_program_id: PROGRAM } });
+    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: storedSections });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], comments: [], revisions: [], events: [] });
   });
@@ -150,6 +150,40 @@ describe('saved references reopen in the one actual editor', () => {
 });
 
 describe('historical checks fail closed in the actual editor', () => {
+  it.each(['detail', 'sections'])('withholds saved source history when the current %s read admits only sections', async projection => {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, input?: AssemblyPreviewInput) => {
+      const path = new URL(url, 'http://localhost').pathname;
+      if (method === 'GET' && projection === 'detail' && path === `/api/authoring/docs/${DOC}`)
+        return ok({ success: true, document: { ...doc, readScope: 'sections', sourceMetadataState: 'unavailable' } });
+      if (method === 'GET' && projection === 'sections' && path === `/api/authoring/docs/${DOC}/sections`)
+        return ok({ success: true, sections: storedSections, readScope: 'sections' });
+      return normal(method, url, input);
+    });
+    await mounted();
+    const check = await openBuild();
+    expect((check as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(check);
+    expect(savedReads()).toHaveLength(0);
+    expect(screen.queryByText('Historical retained study')).toBeNull();
+    expect(posts()).toHaveLength(0);
+  });
+  it('withdraws cached saved source history after the current document read becomes partial', async () => {
+    const view = await mounted(); await inspectSaved();
+    expect(screen.getByText('Historical retained study')).toBeTruthy();
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, input?: AssemblyPreviewInput) =>
+      method === 'GET' && new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`
+        ? ok({ success: true, document: { ...doc, readScope: 'sections', sourceMetadataState: 'unavailable' } })
+        : normal(method, url, input));
+    view.rerender(<DocumentWorkbench docs={[{ ...doc, status: 'IN_REVIEW' }]} docsState="ready" status="all"
+      programId={PROGRAM} onNav={vi.fn()} reloadDocs={vi.fn(async () => undefined)} />);
+    await screen.findByTestId('workbench-read-scope');
+    await waitFor(() => expect(screen.queryByText('Historical retained study')).toBeNull());
+    expect((screen.getByRole('button', { name: 'Check saved sources' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Use saved sources' })).toBeNull();
+    expect(savedReads()).toHaveLength(1); expect(posts()).toHaveLength(0);
+  });
   it('distinguishes an admitted empty history from a failed read without selecting or changing text', async () => {
     savedReply = () => ok({ success: true, data: { ...savedRecord, record: null } });
     await mounted(); fireEvent.click(await openBuild()); await checkSettled(1);

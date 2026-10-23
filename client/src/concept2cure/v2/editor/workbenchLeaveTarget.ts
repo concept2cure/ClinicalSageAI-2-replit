@@ -6,13 +6,15 @@ export type WorkbenchLeaveTarget =
   | { kind: 'external-document'; id: string; module?: string; assemblyIntent?: AssemblySourceIntent }
   | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
   | { kind: 'host-back'; label: string; onContinue: () => void; module?: never }
+  | { kind: 'filter'; status: string; module?: never }
   | { kind: 'view'; mode: 'section' | 'document'; module?: never }
   | { kind: 'conversation'; prompt: string; module?: never };
 
 export function workbenchAssemblyIntent(target: WorkbenchLeaveTarget): AssemblySourceIntent | undefined {
   return target.kind === 'document' || target.kind === 'external-document' ? target.assemblyIntent : undefined;
 }
-export function workbenchAlreadyThere(target: WorkbenchLeaveTarget, state: { viewMode: string; sectionId: string | null; docId: string | null; dirty: boolean }): boolean {
+export function workbenchAlreadyThere(target: WorkbenchLeaveTarget, state: { viewMode: string; sectionId: string | null; docId: string | null; dirty: boolean; status?: string }): boolean {
+  if (target.kind === 'filter') return target.status === state.status;
   if (target.kind === 'view') return target.mode === state.viewMode;
   if (target.kind === 'section') return target.id === state.sectionId && (!target.mode || target.mode === state.viewMode);
   return target.kind === 'document' && target.id === state.docId && (!target.sectionId || target.sectionId === state.sectionId)

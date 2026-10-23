@@ -70,6 +70,7 @@ import express from 'express';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { expandRoleClaims } from '../../middleware/auth';
 import coauthorRoutes from '../coauthor';
+import { snapshotRequestClient, installCurrentSnapshotActor, grantSnapshotDocumentView } from './_coauthor-current-source-fixture';
 import { upsertLeaf, removeLeaf, SubmissionError } from '../../services/submission-service/submission-service';
 
 const ORG = 7;
@@ -80,6 +81,7 @@ const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
   req.user = { id: 3, userId: 3, organizationId: ORG, role: 'member', roles: expandRoleClaims('member', undefined) };
+  req.dbClient = snapshotRequestClient(holder.pglite);
   next();
 });
 app.use('/api/coauthor', coauthorRoutes);
@@ -113,7 +115,7 @@ let sourceSeq = 0;
 async function source(): Promise<string> {
   sourceSeq += 1;
   const id = `a${String(sourceSeq).padStart(7, '0')}-0000-4000-8000-00000000c0de`;
-  await q('INSERT INTO authoring_documents (id, tenant_id, status, title, module) VALUES ($1, $2, $3, $4, $5)', [
+  await q('INSERT INTO authoring_documents (id, tenant_id, status, title, module, created_by) VALUES ($1, $2, $3, $4, $5, \'3\')', [
     id, ORG, 'DRAFT', 'Clinical Overview', 'M2',
   ]);
   await q(
@@ -122,6 +124,7 @@ async function source(): Promise<string> {
             ($1, $2, '2.5.2', 'Overview of Biopharmaceutics', '', 200)`,
     [id, ORG],
   );
+  await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: id });
   return id;
 }
 
@@ -193,7 +196,7 @@ beforeAll(async () => {
     -- alias map's canonical_id (uuid) to it.
     CREATE TABLE IF NOT EXISTS authoring_documents (
       id UUID PRIMARY KEY, tenant_id INTEGER NOT NULL, status TEXT, title TEXT, module TEXT,
-      client_program_id UUID);
+      client_program_id UUID, created_by TEXT);
     CREATE TABLE IF NOT EXISTS authoring_sections (
       id SERIAL PRIMARY KEY, doc_id UUID NOT NULL, tenant_id INTEGER NOT NULL,
       code TEXT, title TEXT, content TEXT, order_index INTEGER NOT NULL DEFAULT 0,
@@ -214,6 +217,7 @@ beforeAll(async () => {
       timestamp TIMESTAMPTZ, reason TEXT, metadata JSONB, regulatory_significant BOOLEAN,
       gxp_relevant BOOLEAN, created_at TIMESTAMPTZ);
   `);
+  await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 3, role: 'member', email: 'filer@org.test' });
   await h.pglite.exec(
     readFileSync(path.resolve(__dirname, '../../../migrations/20260814d_document_alias_map.sql'), 'utf8'),
   );

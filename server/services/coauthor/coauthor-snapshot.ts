@@ -87,7 +87,7 @@
  */
 import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { db, pool } from '../../db';
+import type { RequestDb } from '../../db/requestDb';
 import { coauthorDocuments } from '../../../shared/schema';
 import { queryableFromDrizzle, type DrizzleQueryable } from '../../db/drizzle-queryable.js';
 import { aliasesFor, recordDocumentAlias } from '../c2c/document-alias-map.js';
@@ -105,6 +105,9 @@ import { filingCopyPins, pinnedCopyAccepts, pinnedCopyRefusal, retakeChanges } f
 import { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from '../authoring/workflow-import-governance';
 import { SavedDraftSourceError, verifySavedDraftSourceReferences } from '../authoring/draft-source-references';
+import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent, AuthoringReadScopeError } from '../authoring/authoring-read-scope';
+import { readCurrentProgramActor, requireCurrentProgramAccess, ProgramReadAccessError } from '../c2c/current-program-access';
+import { expandRoleClaims, roleClaimsSatisfy } from '../../middleware/auth';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
@@ -127,6 +130,66 @@ const refuse = (httpStatus: SnapshotRefusal['httpStatus'], error: string, messag
 
 const NOTHING = 'Nothing was filed or changed.';
 const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
+const SOURCE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+type SnapshotDatabase = Pick<RequestDb, 'execute' | 'transaction'>;
+interface SnapshotArguments {
+  organizationId: number; sourceAuthoringDocId: string; moduleNumber: string | null; templateId: number | null;
+  createdBy: string | null; actor: CoauthorAuditActor; reason: string; executor: SnapshotDatabase;
+}
+type SourceReadInput = Parameters<typeof getCurrentAuthoringReadScope>[1];
+interface SourceAdmission {
+  input: SourceReadInput; scope: Awaited<ReturnType<typeof getCurrentAuthoringReadScope>>;
+  programId: string | null; projectId: number | null; readState: string;
+  actor: CoauthorAuditActor & { email: string | null };
+}
+type SourceDocument = { id: string; provenance?: unknown; client_program_id?: unknown } & Record<string, unknown>;
+type FiledSource = { body: AuthoringDocumentSnapshot; seal: Seal | null; details: SourceDocument };
+class SnapshotTransactionRefusal extends Error {
+  constructor(readonly refusal: SnapshotRefusal) { super('Filing snapshot refused'); }
+}
+
+async function sourceIdentity(q: DrizzleQueryable, sourceId: string, organizationId: number) {
+  const rows = await q.query<{ status: string | null; client_program_id: string | null }>(
+    'SELECT status, client_program_id FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [sourceId, organizationId]);
+  if (rows.rows.length !== 1) throw new SnapshotTransactionRefusal(refuse(404, 'Source document not found',
+    `The source document is not available in this organization. ${NOTHING}`));
+  return rows.rows[0];
+}
+function requireSnapshotWriter(role: string): void {
+  if (!roleClaimsSatisfy({ role, roles: expandRoleClaims(role, undefined) }, ['regulatory-author'])) {
+    throw new SnapshotTransactionRefusal(refuse(403, 'SOURCE_WRITER_PERMISSION_DENIED',
+      `Current organization permissions do not permit taking a filing copy. ${NOTHING}`));
+  }
+}
+async function admitSnapshotSource(q: DrizzleQueryable, args: SnapshotArguments, sourceId: string): Promise<SourceAdmission> {
+  const identity = { organizationId: args.organizationId, userId: args.actor.userId ?? undefined };
+  const actor = await readCurrentProgramActor(q, identity); requireSnapshotWriter(actor.role);
+  const row = await sourceIdentity(q, sourceId, args.organizationId);
+  const programId = row.client_program_id == null ? null : row.client_program_id.toLowerCase();
+  const parent = programId ? await requireCurrentProgramAccess(q, { ...identity, programId }) : null;
+  const input: SourceReadInput = { ...identity, documentId: sourceId, programId,
+    includeOrganizationDocuments: programId === null };
+  const scope = await getCurrentAuthoringReadScope(q, input); requireSnapshotWriter(scope.actor.role);
+  if (!scope.documentIds.includes(sourceId)) throw new SnapshotTransactionRefusal(refuse(403, 'SOURCE_FULL_DOCUMENT_ACCESS_REQUIRED',
+    `Taking a filing copy requires current access to the whole source document. ${NOTHING}`));
+  return { input, scope, programId, projectId: parent?.projectId ?? null, readState: String(row.status ?? '').toUpperCase(),
+    actor: { ...args.actor, userId: scope.actor.userId, role: scope.actor.role, email: scope.actor.email } };
+}
+
+async function requireSnapshotSourceStillCurrent(q: DrizzleQueryable, sourceId: string, admission: SourceAdmission): Promise<void> {
+  try {
+    await requireAuthoringReadScopeStillCurrent(q, admission.input, admission.scope);
+    const current = await sourceIdentity(q, sourceId, admission.input.organizationId);
+    if ((current.client_program_id?.toLowerCase() ?? null) !== admission.programId || String(current.status ?? '').toUpperCase() !== admission.readState) throw new Error('Source parent or state changed');
+    if (admission.programId) {
+      const parent = await requireCurrentProgramAccess(q, { ...admission.input, programId: admission.programId });
+      if (parent.projectId !== admission.projectId) throw new Error('Source project anchor changed');
+    }
+  } catch {
+    throw new SnapshotTransactionRefusal(refuse(503, 'SOURCE_ACCESS_CHANGED',
+      `The source or current access changed while the copy was being taken. Refresh and retry. ${NOTHING}`));
+  }
+}
 
 type SectionRow = Pick<AuthoringSectionRow, 'code' | 'title' | 'content'> & Partial<AuthoringSectionRow>;
 
@@ -310,8 +373,8 @@ export async function checkAgainstSeal(
  */
 async function readSourceForFiling(
   q: DrizzleQueryable,
-  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor>; actor: CoauthorAuditActor },
-): Promise<{ ok: true; body: AuthoringDocumentSnapshot; seal: Seal | null } | SnapshotRefusal> {
+  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor>; admission: SourceAdmission },
+): Promise<({ ok: true } & FiledSource) | SnapshotRefusal> {
   const { sourceId, organizationId, readState, status } = args;
   /* The source is locked for the rest of the placement, and must still be in
      the state its text was read under: a source frozen or approved between
@@ -331,10 +394,11 @@ async function readSourceForFiling(
     );
   }
 
-  const details = await q.query(`SELECT d.*, to_jsonb(d)->'provenance' AS provenance,
+  await requireSnapshotSourceStillCurrent(q, sourceId, args.admission);
+  const details = await q.query<SourceDocument>(`SELECT d.*, to_jsonb(d)->'provenance' AS provenance,
     to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d
     WHERE d.id=$1 AND d.tenant_id=$2`, [sourceId, organizationId]);
-  const currentActor = { id: String(args.actor.userId ?? ''), email: null };
+  const currentActor = { id: String(args.admission.actor.userId), email: args.admission.actor.email };
   try {
     // A grant to the retained copy cannot replace current access to its exact
     // private binary source. Refuse before the assembler reads saved prose.
@@ -376,12 +440,12 @@ async function readSourceForFiling(
       'This document has no saved section text, so there is nothing to file. Nothing was created.',
     );
   }
-  if (status === 'draft') return { ok: true, body, seal: null };
+  if (status === 'draft') return { ok: true, body, seal: null, details: details.rows[0] };
   const held = await checkAgainstSeal(q, { sourceId, organizationId, live, title: body.title, verdict: status });
-  return held.ok ? { ok: true, body, seal: held.seal } : held;
+  return held.ok ? { ok: true, body, seal: held.seal, details: details.rows[0] } : held;
 }
 
-type SnapshotTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type SnapshotTx = Parameters<Parameters<SnapshotDatabase['transaction']>[0]>[0];
 
 /**
  * Re-take the copy the alias map already names (`id`), on the placement's
@@ -475,103 +539,133 @@ async function retakeAliasedCopy(
  * when the copy is created (or re-created) and when the copy has none, and is
  * otherwise left as it is — the leaf records where each placement goes.
  */
-export async function takeAuthoringSnapshot(args: {
-  organizationId: number;
-  sourceAuthoringDocId: string;
-  moduleNumber: string | null;
-  templateId: number | null;
-  createdBy: string | null;
-  /** Who is placing it; recorded when an existing copy is re-taken. */
-  actor: CoauthorAuditActor;
-  /** The person's stated reason, validated by the route (governed-reason.ts). */
-  reason: string;
-}): Promise<SnapshotOutcome> {
-  const { organizationId, moduleNumber, templateId, createdBy, actor, reason } = args;
-  const sourceId = String(args.sourceAuthoringDocId);
+interface SnapshotCopySource {
+  sourceId: string;
+  admission: SourceAdmission;
+  source: FiledSource;
+}
 
-  const src = await pool.query<{ status: string | null }>(
-    'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-    [sourceId, organizationId],
-  );
-  if (src.rows.length === 0) {
-    return refuse(
-      404,
-      'Source document not found',
-      'The document this snapshot was to be taken from does not exist in this organization. Nothing was created.',
-    );
-  }
-  const readState = String(src.rows[0].status ?? '').toUpperCase();
+async function writeSnapshotCopy(tx: SnapshotTx, q: DrizzleQueryable, args: SnapshotArguments,
+  input: SnapshotCopySource): Promise<SnapshotOutcome> {
+  const { sourceId, admission, source } = input;
+  const actor = admission.actor;
+  const { organizationId, moduleNumber, templateId, reason } = args;
+  const createdBy = String(actor.userId);
+  const { body, seal } = source;
+  const { readState } = admission;
   const status = snapshotStatusFor(readState);
-
-  return db.transaction(async (tx): Promise<SnapshotOutcome> => {
-    const q = queryableFromDrizzle(tx);
-    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status, actor });
-    if (!source.ok) return source;
-    const { body, seal } = source;
-    const provenance = {
-      source: 'authoring-document',
-      docId: sourceId,
-      status: readState || 'UNKNOWN',
-      ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
-    };
-    const retaken = (id: number, before: CoauthorRow | null, supersededVersion: number | null = null) =>
-      recordCoauthorDocumentEvent(q, {
-        organizationId,
-        documentId: id,
-        eventType: 'coauthor_document.retaken',
-        actor,
-        /* The person's stated reason (2026-10-08, filing-spine design review,
-           Part 11 lens). These were sentences the code composed; what the
-           system did is in the fields below (recreated, before, after). */
-        reason,
-        metadata: {
-          sourceAuthoringDocId: sourceId,
-          recreated: before === null,
-          before: before
-            ? { status: before.status, title: before.title, contentSha256: sha256(before.content ?? '') }
-            : null,
-          after: { status, title: body.title, contentSha256: sha256(body.content) },
-          supersededVersion,
-          ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
-        },
-      });
-
-    const derived = { title: body.title, content: body.content, status };
-    const aliases = await aliasesFor(q, { organizationId, canonicalId: sourceId });
-    const nativeId = aliases.available
-      ? aliases.aliases.find((a) => a.store === 'coauthor_documents')?.nativeId
-      : undefined;
-
-    if (nativeId !== undefined) {
-      return retakeAliasedCopy(tx, q, {
-        id: Number(nativeId),
-        organizationId,
-        derived,
-        moduleNumber,
-        templateId,
-        createdBy,
-        provenance,
-        replacedBy: actor.name,
-        retaken,
-      });
-    }
-
-    const [document] = await tx
-      .insert(coauthorDocuments)
-      .values({ organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
-      .returning();
-    const alias = await recordDocumentAlias(q, {
+  const provenance = {
+    source: 'authoring-document',
+    docId: sourceId,
+    status: readState || 'UNKNOWN',
+    ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
+  };
+  const retaken = (id: number, before: CoauthorRow | null, supersededVersion: number | null = null) =>
+    recordCoauthorDocumentEvent(q, {
       organizationId,
-      canonicalId: sourceId,
-      store: 'coauthor_documents',
-      nativeId: String(document.id),
+      documentId: id,
+      eventType: 'coauthor_document.retaken',
+      actor,
+      /* The person's stated reason (2026-10-08, filing-spine design review,
+         Part 11 lens). These were sentences the code composed; what the
+         system did is in the fields below (recreated, before, after). */
+      reason,
+      metadata: {
+        sourceAuthoringDocId: sourceId,
+        recreated: before === null,
+        before: before
+          ? { status: before.status, title: before.title, contentSha256: sha256(before.content ?? '') }
+          : null,
+        after: { status, title: body.title, contentSha256: sha256(body.content) },
+        supersededVersion,
+        ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
+      },
     });
-    return {
-      ok: true,
-      created: true,
-      written: true,
-      document,
-      aliasRecorded: !(!alias.recorded && alias.reason === 'relation_absent'),
-    };
-  }, { isolationLevel: 'repeatable read' });
+
+  const derived = { title: body.title, content: body.content, status };
+  const aliases = await aliasesFor(q, { organizationId, canonicalId: sourceId });
+  const nativeId = aliases.available
+    ? aliases.aliases.find((a) => a.store === 'coauthor_documents')?.nativeId
+    : undefined;
+
+  if (nativeId !== undefined) {
+    return retakeAliasedCopy(tx, q, {
+      id: Number(nativeId),
+      organizationId,
+      derived,
+      moduleNumber,
+      templateId,
+      createdBy,
+      provenance,
+      replacedBy: actor.name,
+      retaken,
+    });
+  }
+
+  const [document] = await tx
+    .insert(coauthorDocuments)
+    .values({ organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
+    .returning();
+  const alias = await recordDocumentAlias(q, {
+    organizationId,
+    canonicalId: sourceId,
+    store: 'coauthor_documents',
+    nativeId: String(document.id),
+  });
+  return {
+    ok: true,
+    created: true,
+    written: true,
+    document,
+    aliasRecorded: !(!alias.recorded && alias.reason === 'relation_absent'),
+  };
+}
+
+function snapshotAuthorityRefusal(error: unknown): SnapshotRefusal | null {
+  if (error instanceof SnapshotTransactionRefusal) return error.refusal;
+  if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError) {
+    return refuse(error.status, error.code, error.status === 503
+      ? `Current source access could not be verified. Refresh and retry. ${NOTHING}` : `${error.message} ${NOTHING}`);
+  }
+  if (error instanceof SavedDraftSourceError) return refuse(409, error.code, error.message);
+  if (error instanceof WorkflowImportGovernanceError) return refuse(error.status, error.code, error.message);
+  return null;
+}
+
+export async function takeAuthoringSnapshot(args: SnapshotArguments): Promise<SnapshotOutcome> {
+  if (typeof args.sourceAuthoringDocId !== 'string' || !SOURCE_UUID.test(args.sourceAuthoringDocId)) {
+    return refuse(400, 'INVALID_SOURCE_DOCUMENT_ID', `Provide the source document UUID. ${NOTHING}`);
+  }
+  if (!args.executor || typeof args.executor.transaction !== 'function' || typeof args.executor.execute !== 'function') {
+    return refuse(503, 'SOURCE_SNAPSHOT_EXECUTOR_REQUIRED', `The request-owned source writer is unavailable. ${NOTHING}`);
+  }
+  const sourceId = args.sourceAuthoringDocId.toLowerCase();
+  try {
+    return await args.executor.transaction(async (tx): Promise<SnapshotOutcome> => {
+      const q = queryableFromDrizzle(tx);
+      const admission = await admitSnapshotSource(q, args, sourceId);
+      const source = await readSourceForFiling(q, { sourceId, organizationId: args.organizationId,
+        readState: admission.readState, status: snapshotStatusFor(admission.readState), admission });
+      if (!source.ok) return source;
+      const outcome = await writeSnapshotCopy(tx, q, args, { sourceId, admission, source });
+      if (!outcome.ok) return outcome;
+      await requireSnapshotSourceStillCurrent(q, sourceId, admission);
+      const actor = { id: String(admission.actor.userId), email: admission.actor.email };
+      try {
+        await verifySavedDraftSourceReferences(source.details, q, args.organizationId, actor);
+        await assertWorkflowImportRelease(q, { organizationId: args.organizationId, doc: source.details,
+          sections: (source.body.sections ?? []).map(section => ({ id: String(section.id), code: String(section.code),
+            title: section.title, content: section.content == null ? null : String(section.content) })), actor });
+      } catch (error) {
+        const refusal = snapshotAuthorityRefusal(error);
+        if (refusal) throw new SnapshotTransactionRefusal(refusal);
+        throw error;
+      }
+      return outcome;
+    }, { isolationLevel: 'read committed' });
+  } catch (error) {
+    const refusal = snapshotAuthorityRefusal(error);
+    if (refusal) return refusal;
+    throw error;
+  }
 }

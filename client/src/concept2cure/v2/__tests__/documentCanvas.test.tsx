@@ -79,8 +79,8 @@ const PROGRAM = { id: PID, code: 'CAMA', name: '[Demo · Biotech] C2C-101 anti-I
 function mockApi(over: Partial<Record<'doc' | 'sections', () => Response>> = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return (over.doc ?? (() => ok(DOC_ROW)))();
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return (over.sections ?? (() => ok(SECTIONS)))();
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) return (over.doc ?? (() => ok(DOC_ROW)))();
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return (over.sections ?? (() => ok(SECTIONS)))();
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok(PROGRAM);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/')) return ok({ success: true, sources: [], revisions: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/')) return ok({ success: true, comments: [] });

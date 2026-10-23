@@ -12,6 +12,7 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable.js';
 import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
 import { applyCoauthorDocumentPut, withCoauthorReadOnly } from '../services/coauthor/coauthor-status-write.js';
 import { takeAuthoringSnapshot } from '../services/coauthor/coauthor-snapshot.js';
+import { requestDb } from '../db/requestDb';
 import {
   coauthorAuditActor,
   coauthorDeleteHistoryRefusal,
@@ -232,10 +233,11 @@ router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req
      * not a string is refused 400. It was coerced with String(): an array of
      * one id named that document (and re-took its copy), and anything else
      * came back as a 404 or a 500. */
-    if (sourceAuthoringDocId !== undefined && sourceAuthoringDocId !== null && typeof sourceAuthoringDocId !== 'string') {
+    if (sourceAuthoringDocId !== undefined && sourceAuthoringDocId !== null &&
+      (typeof sourceAuthoringDocId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sourceAuthoringDocId))) {
       return res.status(400).json({
         error: 'INVALID_SOURCE_DOCUMENT_ID',
-        message: 'sourceAuthoringDocId must be the id of an authoring document, as a string. Nothing was created.',
+        message: 'sourceAuthoringDocId must be an authoring document UUID. Nothing was created.',
       });
     }
     if (sourceAuthoringDocId) {
@@ -247,9 +249,10 @@ router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req
         });
       }
       const outcome = await takeAuthoringSnapshot({
+        executor: requestDb(req),
         reason: stated.reason,
         organizationId,
-        sourceAuthoringDocId,
+        sourceAuthoringDocId: sourceAuthoringDocId.toLowerCase(),
         moduleNumber: moduleNumber || null,
         templateId: templateId ? Number(templateId) : null,
         createdBy: userId ? String(userId) : null,

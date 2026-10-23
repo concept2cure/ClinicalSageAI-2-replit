@@ -1,0 +1,11 @@
+# Retained integration checkpoint, 23 October 2026
+
+## What already exists
+
+The pending normal merge combines local `70a3db998` with canonical `30afd3bd1`. The existing authoring reader, editor, Vault dialog, filing and session helpers are described in the two 21 October packets. Their final warning remedy also moves the existing Escape effect into `client/src/concept2cure/v2/editor/canvasFocus.ts`; it adds no separate read implementation or capability.
+
+The retained 40-suite client run was **incomplete** and diagnostically terminated with status 143. A local inspector identified a synchronous React loop in `conversationThreadCanvas.test.tsx`. Its mock returned a new account object on every call, whereas the real `AuthService.getUser()` returns its stored account. Stable account fixtures and the two required actual-service identities were restored without changing assertions. The section-only test initializes a real synthetic author session so the canonical account guard and partial-document refusal are both exercised. No final 40-suite pass is claimed here.
+
+After the first production build and the changed-file warning failure, six merged runtime warnings were removed through existing helpers, transport/decoder separation, pure predicates and the intact Escape-effect move. The retained nine-file lint output has zero errors and 16 existing warnings. Neither baseline nor suppression was increased; the sealed historical observer remains unchanged. `retained-input-pins.json` records the resulting nine runtime files and 40 test files. These are current checkpoint pins, distinct from the frozen incomplete-run test pins in the archived `client-test-merge-final-oct21.json`.
+
+`archives.json` pins lossless deterministic gzip copies of the incomplete command, results, original test pins, diagnostic stack and scoped runtime lint. Backend 181/8 and memory 119/9 results in the 21 October packet retain their source phase. This commit preserves completed reconciliation before applying 419 additional canonical commits through `55f75b72f`; it is not publication or final merged-tree acceptance. Final regressions, build, normal pre-push compiler and hosted CI are checked after that latest merge. The specified Codespace and approved-model demo remain unqualified.

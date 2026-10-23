@@ -164,7 +164,7 @@ function mockApi(status = 'DRAFT', stored = STORED) {
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
     if (url.startsWith('/api/authoring/sections/S1/')) return ok({ success: true, sources: [], revisions: [] });
     if (url.startsWith('/api/authoring/documents/')) return ok({ success: true, comments: [] });
-    const hit = exact[url];
+    const hit = exact[url.split('?')[0]];
     return hit ? hit() : ok({ success: true });
   });
 }

@@ -164,7 +164,7 @@ const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], _init?: Fetch
       ],
     });
   }
-  if (url === `/api/authoring/docs/${DOC}/sections`) {
+  if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
     return reply({
       success: true,
       sections: [

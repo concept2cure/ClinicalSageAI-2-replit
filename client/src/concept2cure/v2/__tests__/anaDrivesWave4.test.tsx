@@ -20,7 +20,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 // useAuthUser is the display-only hook SopRegister and ChangeControl read the
 // e-signature signer's name from (028a0c704); the server resolves the signer.
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
   useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
 }));
@@ -251,7 +252,7 @@ describe('DocumentAuthoring — authoring.find opens the real find bar', () => {
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(AUTH_DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
       return ok({ success: true });
     });
   });

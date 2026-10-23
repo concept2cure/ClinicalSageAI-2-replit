@@ -1,0 +1,95 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-18T00:04:09.457Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-18T00:04:12.134Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:04:12.135Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+{
+  "timestamp": "2026-10-18T00:04:12.135Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsStatusFilter.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > compares status case-insensitively, so lower-case filters reach upper-case rows 58ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > the same holds for in_review and approved, which also matched nothing 60ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > status=all disables the bound status filter, so no state can orphan a document 23ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > an absent status lists every accessible state instead of silently defaulting to draft 20ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > other filters are unaffected 20ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > binds module and product filter text without turning it into executable SQL 40ms
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-18T00:04:15.498Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-18T00:04:16.396Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:04:16.397Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocsByConversation.test.ts
+{
+  "timestamp": "2026-10-18T00:04:16.397Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocsByConversation.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > filters on the recorded conversation as a bound value evaluated by actual SQL 81ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > narrows to what AnA drafted in the admitted program with no source value to inject 21ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > returns the recorded conversation and source so the list can say where it came from 33ms
+ ✓ server/routes/__tests__/authoringDocsByConversation.test.ts > the documents a conversation built > disables the bound provenance filters when none is asked for 28ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  00:04:01
+   Duration  15.44s (transform 4.55s, setup 143ms, import 2.13s, tests 12.71s, environment 0ms)
+

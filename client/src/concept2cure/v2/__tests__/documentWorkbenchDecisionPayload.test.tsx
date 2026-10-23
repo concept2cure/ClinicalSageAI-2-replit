@@ -28,7 +28,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -94,7 +94,7 @@ function mockApi() {
         ],
       });
     }
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') {
       return ok({
         success: true,
         sections: [

@@ -1,0 +1,33 @@
+{
+  "sourcePhase": {
+    "localCheckpoint": "944735c720e0b75b393b22ed8e830da51a6c98c3",
+    "canonical": "b66c6108dc3d7a6f0107fb5fd3ef7ecc9a49ecef",
+    "runtimeDeliveries": [
+      "264560f40a3d984289d5fb3311d0986094735410",
+      "0ac54306868ba236b68db2fc4f612f7a2b5d7220"
+    ]
+  },
+  "result": {
+    "exitCode": 0,
+    "suitesPassed": 10,
+    "testsPassed": 147,
+    "testsTodo": 1,
+    "testsSkipped": 0,
+    "testsTotal": 148,
+    "durationSeconds": 57.54
+  },
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "heapMb": 4096,
+  "pinCount": 20,
+  "pinsVerifiedAfterRun": true,
+  "archive": {
+    "file": "tests-green.txt.gz",
+    "gzipMtime": 0,
+    "archiveSha256": "8a0113069daed33b519186c4e9f0bfa4be78160abd8f4bd409981fb29891aa08",
+    "decodedSha256": "42e7a69c481272e567b7784ea308969827e7608ef7677f4b32811986ac9e1ebf",
+    "decodedBytes": 153405
+  },
+  "remainingTodo": "Re-filing an edited authoring document must supersede the Vault version pinned by a live leaf; file-to-vault does not pass supersedesDocumentId.",
+  "qualification": "Existing config; PGlite, mocked-provider and rendered-byte seams. No native database, approved live model, agency transmission or commercial validation."
+}

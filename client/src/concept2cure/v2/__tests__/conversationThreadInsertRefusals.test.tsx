@@ -42,7 +42,7 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -96,10 +96,10 @@ beforeEach(() => {
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'thread-1' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) {
       return ok({ success: true, document: { id: DOC, program_id: PROGRAM, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1 } });
     }
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ success: true, sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
     }
     return ok({ success: true });

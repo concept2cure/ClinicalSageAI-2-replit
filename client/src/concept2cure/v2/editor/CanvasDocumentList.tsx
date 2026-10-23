@@ -25,7 +25,10 @@
  * earlier on screen and says so.
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService, useAuth } from '@/services/portal/authService';
+import type { AuthoringReadProjection } from '@shared/authoring/read-projection';
+import { authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { I } from '../icons';
 import { ErrorState } from '../dataConnect';
 import { DownloadMenu } from './DownloadMenu';
@@ -42,6 +45,7 @@ export interface BuiltDocument {
   source: string | null;
   conversationId: string | null;
   programId: string | null;
+  readScope?: AuthoringReadProjection;
 }
 
 export type ListScope = 'conversation' | 'project';
@@ -69,13 +73,14 @@ function toBuiltDocument(raw: unknown): BuiltDocument | null {
     status: text(r.status),
     sectionCount: Number.isFinite(sections) ? sections : null,
     updatedAt: text(r.updated_at),
-    source: text(r.provenance_source),
-    conversationId: text(r.conversation_id),
+    source: r.readScope === 'sections' ? null : text(r.provenance_source),
+    conversationId: r.readScope === 'sections' ? null : text(r.conversation_id),
     programId: text(r.program_id),
+    ...(r.readScope === 'sections' || r.readScope === 'document' ? { readScope: r.readScope } : {}),
   };
 }
 
-type ListAnswer = { ok: true; rows: BuiltDocument[] } | { ok: false; message: string };
+type ListAnswer = { ok: true; rows: BuiltDocument[] } | { ok: false; message: string; refused?: boolean };
 
 /** One read of the list. A failure is the sentence to show, never an empty list. */
 export async function readDocumentList(url: string): Promise<ListAnswer> {
@@ -83,14 +88,16 @@ export async function readDocumentList(url: string): Promise<ListAnswer> {
     const res = await apiRequest('GET', url);
     const body = (await res.json().catch(() => null)) as { documents?: unknown } | null;
     if (!res.ok) {
-      return { ok: false, message: res.status === 401 ? 'Your session isn’t authenticated. Sign in and try again.' : serverMessage(body) ?? `The list did not load (HTTP ${res.status}).` };
+      return { ok: false, refused: authoringReadRefused(res.status, body),
+        message: res.status === 401 ? 'Your session isn’t authenticated. Sign in and try again.' : serverMessage(body) ?? `The list did not load (HTTP ${res.status}).` };
     }
     if (!body || !Array.isArray(body.documents)) {
       return { ok: false, message: 'The answer did not include a list of documents.' };
     }
     return { ok: true, rows: body.documents.map(toBuiltDocument).filter((d): d is BuiltDocument => d !== null) };
   } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
+    return { ok: false, refused: e instanceof ApiRequestError && authoringReadRefused(e.status, e.payload),
+      message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
   }
 }
 
@@ -111,26 +118,33 @@ export function rowsOf(read: ListRead): BuiltDocument[] | null {
  * the rows on screen while it runs and after it fails.
  */
 export function useDocumentList(url: string | null, refreshKey = 0): { read: ListRead; reload: () => void } {
-  const [read, setRead] = useState<ListRead>({ state: 'idle' });
+  const { user } = useAuth();
+  const session = useAuthoringReadSession(user);
+  const key = JSON.stringify([session.actor, session.key, url]);
+  const currentKey = useRef(key);
+  currentKey.current = key;
+  const [stored, setRead] = useState<{ key: string; read: ListRead } | null>(null);
   const [nonce, setNonce] = useState(0);
-  const urlRef = useRef<string | null>(null);
   useEffect(() => {
-    const same = urlRef.current === url;
-    urlRef.current = url;
     if (!url) {
-      setRead({ state: 'idle' });
+      setRead({ key, read: { state: 'idle' } });
       return undefined;
     }
     let live = true;
-    const kept = (prev: ListRead) => (same ? rowsOf(prev) : null);
-    setRead(prev => ({ state: 'loading', rows: kept(prev) }));
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const current = () => live && currentKey.current === key && session.sameRevision() && revision();
+    const kept = (prev: typeof stored) => prev?.key === key ? rowsOf(prev.read) : null;
+    setRead(prev => ({ key, read: { state: 'loading', rows: kept(prev) } }));
     void readDocumentList(url).then(answer => {
-      if (!live) return;
-      setRead(prev => (answer.ok ? { state: 'ready', rows: answer.rows } : { state: 'error', message: answer.message, rows: kept(prev) }));
+      if (!current()) return;
+      setRead(prev => ({ key, read: answer.ok ? { state: 'ready', rows: answer.rows }
+        : { state: 'error', message: answer.message, rows: answer.refused ? null : kept(prev) } }));
     });
     return () => { live = false; };
-  }, [url, refreshKey, nonce]);
+  }, [url, refreshKey, nonce, key, session]);
   const reload = useCallback(() => setNonce(n => n + 1), []);
+  const read: ListRead = stored?.key === key && session.sameRevision() ? stored.read
+    : url ? { state: 'loading', rows: null } : { state: 'idle' };
   return { read, reload };
 }
 

@@ -73,9 +73,9 @@ function mockApi(routes: Routes = {}) {
     if (url.startsWith('/api/authoring/docs?')) {
       return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [] });

@@ -64,6 +64,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { captureAuthoringSession } from './authoringCurrentRead';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import type { FireToast } from '../toast';
@@ -126,6 +127,8 @@ export interface SendForReviewDialogProps {
   onCheckTasks?: () => void;
   /** Open the Review board, where the request is listed. */
   onOpenBoard?: () => void;
+  /** Current read limit; a request already sent keeps its recorded outcome. */
+  refusal?: string | null;
 }
 
 type RequestOutcome =
@@ -271,6 +274,7 @@ interface TaskForm {
 async function createTasksFor(reviewers: Assignee[], form: TaskForm, alive: () => boolean): Promise<ReviewTaskOutcome[] | null> {
   const out: ReviewTaskOutcome[] = [];
   for (const a of reviewers) {
+    if (!alive()) return null;
     const outcome: AssignOutcome = isSubmittableReviewer(a.id)
       ? await createReviewTask(buildReviewTaskBody({ ...form, assignee: a.id }))
       : { ok: false, unconfirmed: false, message: 'This member’s id is not one the task ledger takes.' };
@@ -463,9 +467,12 @@ function SentReceipt({ result }: { result: SendForReviewResult }) {
 
 /** The dialog's state and its one act. Its own hook so the dialog body is markup. */
 function useSendForReview(props: SendForReviewDialogProps) {
+  const [owner] = useState(captureAuthoringSession);
   const { docId, docTitle, programId, sectionCode, authorId, fireToast, onSent } = props;
   const generation = useRef(0);
   const pending = useRef(false);
+  const refusalRef = useRef(props.refusal);
+  refusalRef.current = props.refusal;
   useEffect(() => () => { generation.current++; }, []);
   const { roster, rosterState, reload: reloadRoster, authorWithheld } = useReviewerRoster(authorId);
   const standing = useDocumentReviews(docId);
@@ -486,14 +493,15 @@ function useSendForReview(props: SendForReviewDialogProps) {
     ? roster.filter(a => selected.includes(a.id) && !alreadyAsked(standing.rows.find(r => r.reviewerId === a.id)))
     : [];
   const reasonProblem = reviewReasonProblem(reason);
-  const canSend = phase === 'form' && !needsReconciliation && chosen.length > 0 && !reasonProblem;
+  const canSend = !props.refusal && phase === 'form' && !needsReconciliation && chosen.length > 0 && !reasonProblem;
   const toggle = (id: string) => setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
 
   const send = async () => {
-    if (pending.current || !canSend) return;
+    if (pending.current || !canSend || refusalRef.current) return;
+    if (!owner.sameRevision()) return setError('Your session changed. Close and reopen this document before requesting review.');
     pending.current = true;
     const seq = generation.current;
-    const alive = () => seq === generation.current;
+    const alive = () => seq === generation.current && owner.sameRevision();
     setPhase('requesting');
     setError(null);
     try {
@@ -612,6 +620,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
           <button className="de-x" onClick={onClose} aria-label="Close" disabled={busy}>{I.close}</button>
         </div>
         <div className="de-body">
+          {props.refusal && <div className="de-err" role="status">{props.refusal}</div>}
           {s.result ? <SentReceipt result={s.result} /> : (
             <>
               <ReviewerChecklist

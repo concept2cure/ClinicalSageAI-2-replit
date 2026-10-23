@@ -73,7 +73,10 @@ test('orchestrator includes lifecycle-aware readiness computation', () => {
 });
 
 test('report-os orchestrator includes regional obligation provider', () => {
-  assert.ok(orchestratorSource.includes("provider: 'regional_registry_readiness'"));
+  // Readiness has one canonical evaluator; the regional package observation
+  // remains separate without a second readiness calculation or confidence.
+  assert.ok(!orchestratorSource.includes("provider: 'regional_registry_readiness'"));
+  assert.ok(orchestratorSource.includes("provider: 'submission_readiness'"));
   assert.ok(orchestratorSource.includes("provider: 'regional_package_manifest'"));
   assert.ok(orchestratorSource.includes('evaluateReadiness('));
   assert.ok(orchestratorSource.includes('buildPackageManifest('));

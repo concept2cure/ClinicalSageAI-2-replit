@@ -1,0 +1,19 @@
+{
+  "phase": "2026-10-18 fixed SQL and bound optional Authoring list filters",
+  "result": "37 passed, zero skips/failures,10.02s",
+  "sources": {
+    "server/routes/authoring.router.ts": "d47e453ab8fd3657b37189793bf2d54481041a719effcdd469c4aa84b0d4c693",
+    "server/services/authoring/authoring-document-read.ts": "e51ee0204e9b524ed15a5305f8220c6dff016f6f70d458dd990319bd4428d076",
+    "server/services/authoring/authoring-read-scope.ts": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+    "shared/authoring/read-projection.ts": "74482596193d8466626b87f663d986e2bda7f011dafb0817139edeeadbd971ec",
+    "tests/db/authoring-current-read.dbtest.ts": "17ae0eb7ca8f59791e013ed6bf0491830577f23c6e1449464a019562d11b0d58",
+    "tests/db/authoring-current-read-fixture.ts": "06b87a010f102e0ba8c2d9fa704c87ad24cbd314df5a8b21543c69f0902e19a2"
+  },
+  "previousPhasePins": "source-pins.json",
+  "observationTransport": {
+    "path": "static-sql-observations.json.gz",
+    "encodedSha256": "84617107460acd9ddc19ced32822d223c04d6cf9678fa65c8484dc396ad65917",
+    "decodedSha256": "4732edd1eed0e8b5dccbca5ade4081b2b1a4151c971de06cf16959eb45898cca",
+    "decodedBytes": 554231
+  }
+}

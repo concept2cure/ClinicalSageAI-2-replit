@@ -36,8 +36,8 @@ beforeEach(async () => {
     if (path.endsWith('/assembly/preview')) return reply({ success: true, data: plan(input) });
     if (path.endsWith('/assembly/commit')) return reply({ success: true, data: { docId: DOC, programId: PROGRAM, plan: plan(input), sections: [section] } });
     if (path.includes('/docs?')) return reply({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-    if (path === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
-    if (path.endsWith('/sections')) return reply({ success: true, sections: [section] });
+    if (new URL(path, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return reply({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
+    if (new URL(path, 'http://localhost').pathname.endsWith('/sections')) return reply({ success: true, sections: [section] });
     if (path.endsWith('/ai/draft')) return reply({ success: true, draft: { content: 'Retained candidate', draftId: 'candidate' } });
     throw new Error(`Unexpected request ${path}`);
   });

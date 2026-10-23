@@ -1,0 +1,36 @@
+{
+  "errors": 0,
+  "warnings": 12,
+  "files": [
+    {
+      "file": "DocumentWorkbench.tsx",
+      "errors": 0,
+      "warnings": 12
+    },
+    {
+      "file": "SavedAssemblySourcesNotice.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "savedAssemblySources.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "savedAssemblySourcesFlow.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "savedAssemblySourcesController.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "savedAssemblySourcesTransport.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

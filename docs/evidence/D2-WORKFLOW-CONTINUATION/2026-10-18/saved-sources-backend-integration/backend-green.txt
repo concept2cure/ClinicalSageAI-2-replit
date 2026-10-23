@@ -1,0 +1,424 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:47:46.137Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:48:10.055Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:48:10.056Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:48:10.056Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text
+{
+  "timestamp": "2026-10-18T00:48:10.788Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc d24425a2-a794-43bb-9ac1-e856e463062f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text 485ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > returns explicit null only for an admitted exact document with no saved selection 31ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest
+{
+  "timestamp": "2026-10-18T00:48:11.305Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 8e52ff42-d5d2-45eb-9b0c-313104d661ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest 509ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window
+{
+  "timestamp": "2026-10-18T00:48:11.700Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 6e3d8c24-7876-4e03-b862-bdce30db1b05 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window 353ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2030-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 82d7b05c-7857-46db-b432-cc25817692fa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2028-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 82d7b05c-7857-46db-b432-cc25817692fa by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order 637ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document
+{
+  "timestamp": "2026-10-18T00:48:12.666Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc d2f38f49-9063-41f2-8d31-26e442a82b74 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document 324ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=false 14ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true
+{
+  "timestamp": "2026-10-18T00:48:13.028Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 4e9df474-40b9-48f4-b7b6-232f4b668164 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true 240ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests
+{
+  "timestamp": "2026-10-18T00:48:13.258Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 8ab9be17-75ff-46d2-85fa-798ca41762a4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests 236ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant
+{
+  "timestamp": "2026-10-18T00:48:13.506Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e9f57a01-c417-43c4-8276-0f78475437ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant 250ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:48:13.852Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 79520ebc-1d1f-4b8b-8e13-1f37a3b9125e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:48:14.261Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 79520ebc-1d1f-4b8b-8e13-1f37a3b9125e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent 775ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes
+{
+  "timestamp": "2026-10-18T00:48:14.574Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 0a941b2f-2523-480a-a010-ca17feeea4a7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes 432ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history
+{
+  "timestamp": "2026-10-18T00:48:15.007Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e11c359d-bdbc-4650-9a5e-a57d876365ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history 301ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:48:15.222Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e610d171-56ec-4aba-a629-7416985d5454 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:48:15.403Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e610d171-56ec-4aba-a629-7416985d5454 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation 378ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:48:15.636Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 744c9a5e-b906-484a-acb4-60e619fadaba by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:48:15.915Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 744c9a5e-b906-484a-acb4-60e619fadaba by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action 521ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:48:16.127Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 50fe84d8-e07e-4624-a1d4-715caa398b79 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:48:16.312Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 50fe84d8-e07e-4624-a1d4-715caa398b79 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata 388ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:48:16.542Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc db459157-e3b4-49c8-9af4-96374a2a3cb6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:48:16.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc db459157-e3b4-49c8-9af4-96374a2a3cb6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time 469ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:48:17.404Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b5c465a3-140f-4a27-8a76-c1ddced5d199 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:48:17.906Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b5c465a3-140f-4a27-8a76-c1ddced5d199 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence 1174ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:48:18.399Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 1c6d9fc2-6609-458d-afb7-4ce710e705ee by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair 542ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:48:19.180Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 4b2c31c2-0c6e-4e1f-83f0-e2ab27c5668a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair 705ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:48:19.516Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 749c1611-f589-4037-af3d-0b6958775181 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair 330ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered
+{
+  "timestamp": "2026-10-18T00:48:19.819Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 69f7e5d9-3b4d-42ec-9342-df8d413be8b0 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered 391ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false
+{
+  "timestamp": "2026-10-18T00:48:20.209Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 7cfda578-cca8-4ed1-96fc-a64bfe2d06d4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false 285ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:48:20.410Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 3f3e4bad-cdf0-4035-bb0f-963a4ddf2985 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:48:20.695Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 3f3e4bad-cdf0-4035-bb0f-963a4ddf2985 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true 549ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck
+{
+  "timestamp": "2026-10-18T00:48:21.034Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 78ec9550-891b-4773-81fb-be8d94fef796 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck 360ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification
+{
+  "timestamp": "2026-10-18T00:48:21.388Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b9b7eb53-46ec-416f-84e1-0a7d6c4cca11 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification 334ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > keeps an unavailable history query distinct from successfully empty history 14ms
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-18T00:48:25.982Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-18T00:48:27.812Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:48:27.813Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-18T00:48:27.813Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > omits same-org private project metadata even with a real document grant and stale admin claims 139ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses private details and sections before reading their metadata or prose 209ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > does not turn a current viewer into a document admin from cached JWT or ALS claims 80ms
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool
+{
+  "timestamp": "2026-10-18T00:48:28.669Z",
+  "level": "error",
+  "message": "[authoring-router] loading docs failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an inactive actor despite the otherwise valid captured bearer 113ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an expired or revoked grant without reading the content 19ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > reports actual resolver query failure as unavailable rather than content or a fabricated empty list 12ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool 9ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > rejects explicit malformed or multivalued program IDs without silently broadening the read 27ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > lists the granted section parent and counts only visible saved content 85ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > returns only the exact granted section rather than all sibling prose 22ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > withholds full provenance and hidden comment totals on the admitted parent 59ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > does not leak a hidden provenance association through source or conversation filtering 204ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > preserves full saved sections and counters for a real full Viewer grant 22ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > keeps actual NULL-program organization records while selected-program reads exclude them 283ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > retains zero-section full records and case-insensitive frozen status filtering 197ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > does not describe a foreign or missing parent as a legitimate empty document 9ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual grant withdrawal after the real content query settles 19ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual OU role change even when the same actor retains full object IDs 40ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses current OU withdrawal after a real read without returning an initial-refusal shape 11ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a removed OU without reading the previously admitted document 5ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > uses the current stored email for an email grant and refuses after that email changes 31ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a future valid_from and an actually expired valid_until 20ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > does not make an ungranted historical NULL-program document organization-public 60ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > emits mandatory full versus partial coverage on every relevant response 135ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > preserves recorded whole-document provenance for a real full grant 24ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports an actually absent provenance store as unavailable while preserving the qualification 31ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports a failed provenance-store inspection as unknown rather than an invented source absence 17ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > does not count a valid-schema comment whose recorded document points at a different private section parent 20ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > rejects mismatched tenant parents and excludes legitimate foreign child counters 69ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses actual project sharing withdrawal after real rows settle 18ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses the exact section grant withdrawn after the admitted section was actually read 21ms
+ ✓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > binds the captured internal reader identity even if its caller object changes during actual admission 19ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > copies the text-free receipt without preserving extra source or audit content 3ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > distinguishes an explicit empty record from missing or failed data 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'unsupported version' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'missing document' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'non-UUID project' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'array body' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'string body' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'invalid event' without treating it as empty history 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'invalid time' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'local date' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'normalized invalid day' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'ambiguous timezone' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses 'coerced time' in the saved event 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses a valid manifest for a different response project 0ms
+ ✓ shared/__tests__/saved-assembly-sources.test.ts > saved assembly reference response boundary > refuses malformed saved excerpts instead of dropping a source 0ms
+
+ Test Files  3 passed (3)
+      Tests  74 passed (74)
+   Start at  00:47:35
+   Duration  55.24s (transform 14.25s, setup 183ms, import 10.38s, tests 43.15s, environment 0ms)
+

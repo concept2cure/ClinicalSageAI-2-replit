@@ -2,7 +2,7 @@
 /** Independent actual editor/target/controller/transport checks; synthetic HTTP only. */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { Editor } from '@tiptap/core';
 import type { AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '@shared/authoring/assembly-sources';
@@ -67,14 +67,15 @@ beforeEach(async () => {
   await authService.adoptSession(`fixture.${btoa(JSON.stringify({ userId: 281, organizationId: 28 }))}.synthetic`); publishShellProject({ id: PROGRAM });
   commitReply = input => ok({ success: true, data: { docId: TARGET, programId: PROGRAM, plan: plan(input), sections: targetSections } });
   apiRequest.mockReset().mockImplementation(async (method: string, url: string, input?: AssemblyPreviewInput) => {
+    const pathname = new URL(url, 'http://localhost').pathname;
     if (url === '/api/authoring/templates') return ok({ success: true, templates: [{ id: TEMPLATE, name: 'Source-led organization template', module: 'M3' }] });
     if (method === 'POST' && url.endsWith('/assembly/preview')) return ok({ success: true, data: plan(input!) });
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: `Candidate ${url}`, draftId: `draft-${url}`, metadata: {}, check: null } });
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM })) });
-    if (url === `/api/authoring/docs/${PRIOR}` || url === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(url.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
-    if (url === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
-    if (url === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });
+    if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(pathname.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
+    if (pathname === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
+    if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], revisions: [], events: [], comments: [] });
   });
@@ -119,6 +120,24 @@ async function prepareCandidates() {
 }
 
 describe('source-first intent reaches the one actual document editor', () => {
+  it.each(['detail', 'sections'])('blocks a source-first structure action when the current %s read admits only sections', async projection => {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, input?: AssemblyPreviewInput) => {
+      const pathname = new URL(url, 'http://localhost').pathname;
+      if (method === 'GET' && projection === 'detail' && pathname === `/api/authoring/docs/${TARGET}`)
+        return ok({ success: true, document: { ...targetDoc, readScope: 'sections', sourceMetadataState: 'unavailable' } });
+      if (method === 'GET' && projection === 'sections' && pathname === `/api/authoring/docs/${TARGET}/sections`)
+        return ok({ success: true, sections: targetSections, readScope: 'sections' });
+      return normal(method, url, input);
+    });
+    await mounted(); await chooseFromCatalogue();
+    const assembly = within(screen.getByLabelText('Document assembly'));
+    expect(assembly.getByText(/Whole-document actions require the full document/)).toBeTruthy();
+    expect((assembly.getByRole('button', { name: 'Preview build' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(postCalls('/assembly/preview')).toHaveLength(0);
+    expect(postCalls('/assembly/commit')).toHaveLength(0);
+    expect(postCalls('/ai/draft')).toHaveLength(0);
+  });
   it.each([false, true])('preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=%s)', async consumeDeepLinks => {
     await mounted({ consumeDeepLinks }); await chooseFromCatalogue();
     expect(postCalls('/assembly/preview')).toHaveLength(0);

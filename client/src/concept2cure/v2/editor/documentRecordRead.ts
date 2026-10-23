@@ -1,9 +1,11 @@
 /** The canvas's single metadata/sections reader, for normal and verified recovery refresh. */
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { taskActorScope } from '../taskTarget';
 import type { AuthDoc } from './DocumentWorkbench';
+import { authoringCurrentReadPath, authoringReadRefused } from './authoringCurrentRead';
+import type { AuthoringReadProjection, AuthoringSourceMetadataState } from '@shared/authoring/read-projection';
 
 /** Authority of this exact read, not of a later same-account token refresh. */
 export function captureDocumentRecordReadOwner() {
@@ -21,6 +23,11 @@ export function captureDocumentRecordReadOwner() {
   } catch { return null; }
 }
 
+/** Normal reads retain the host's session guard; recovery additionally pins the exact bearer. */
+export function captureDocumentRefreshOwner(recovery: boolean) {
+  return recovery ? captureDocumentRecordReadOwner() : { headers: undefined, current: () => true };
+}
+
 /** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
 /* c2c_document_id: the filing this is the editing copy of, or null (F4). */
 export interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> {
@@ -33,6 +40,8 @@ export interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> 
   updated_at: string | null;
   section_count: number | string | null;
   provenance?: unknown;
+  readScope?: AuthoringReadProjection;
+  sourceMetadataState?: AuthoringSourceMetadataState;
 }
 
 export interface SectionRow {
@@ -46,7 +55,7 @@ export interface SectionRow {
 }
 
 type DocumentReply = { success?: boolean; document?: DocRow; access?: unknown };
-type SectionReply = { success?: boolean; sections?: SectionRow[] };
+type SectionReply = { success?: boolean; sections?: SectionRow[]; readScope?: AuthoringReadProjection };
 
 function nullableText(value: unknown): boolean {
   return value === null || typeof value === 'string';
@@ -78,7 +87,32 @@ function verifiedRecordReply(document: DocumentReply, sections: SectionReply, do
 /** One read of the record: the document row, the caller's access, the sections. */
 type RecordRead =
   | { ok: true; doc: DocRow; access: unknown; sections: SectionRow[] }
-  | { ok: false; message: string; doc?: DocRow };
+  | { ok: false; message: string; doc?: DocRow; refused?: boolean };
+
+/** Interpret the same scoped responses, keeping refusals distinct from incomplete reads. */
+function decodeDocumentRecord(responses: { document: Response; sections: Response },
+  bodies: { document: DocumentReply | null; sections: SectionReply | null },
+  context: { docId: string; programId: string | null; recovery: boolean }): RecordRead {
+  const { document: d, sections: s } = responses;
+  const { document: dj, sections: sj } = bodies;
+  const { docId, programId, recovery } = context;
+    if (!d.ok || !dj?.document) {
+      return {
+        ok: false,
+        refused: authoringReadRefused(d.status, dj),
+        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
+      };
+    }
+    if (!s.ok || !sj) {
+      /* The document row is real; its sections did not read. Say that,
+         rather than rendering a document with no sections. */
+      return { ok: false, doc: dj.document, refused: authoringReadRefused(s.status, sj), message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
+    }
+    if (recovery && !verifiedRecordReply(dj, sj, docId, programId)) {
+      return { ok: false, message: 'The current document and section recovery read could not be verified.' };
+    }
+    return { ok: true, doc: { ...dj.document, ...(sj.readScope === 'sections' ? { readScope: 'sections' as const } : {}) }, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
+}
 
 /**
  * GET /docs/:id and /sections, together. A failure is the sentence to show,
@@ -86,31 +120,20 @@ type RecordRead =
  * or a store that could not be reached each say which.
  */
 export async function readDocumentRecord(docId: string, recovery = false, programId: string | null = null,
-  headers?: Record<string, string>): Promise<RecordRead> {
+  options: { headers?: Record<string, string>; current?: () => boolean } = {}): Promise<RecordRead | null> {
+  const { headers, current = () => true } = options;
   try {
     const read = (path: string) => headers ? apiRequest('GET', path, undefined, headers) : apiRequest('GET', path);
     const [d, s] = await Promise.all([
-      read(`/api/authoring/docs/${encodeURIComponent(docId)}`),
-      read(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
+      read(authoringCurrentReadPath(docId, programId)),
+      read(authoringCurrentReadPath(docId, programId, true)),
     ]);
+    if (!current()) return null;
     const dj = (await d.json().catch(() => null)) as DocumentReply | null;
     const sj = (await s.json().catch(() => null)) as SectionReply | null;
-    if (!d.ok || !dj?.document) {
-      return {
-        ok: false,
-        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
-      };
-    }
-    if (!s.ok || !sj) {
-      /* The document row is real; its sections did not read. Say that,
-         rather than rendering a document with no sections. */
-      return { ok: false, doc: dj.document, message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
-    }
-    if (recovery && !verifiedRecordReply(dj, sj, docId, programId)) {
-      return { ok: false, message: 'The current document and section recovery read could not be verified.' };
-    }
-    return { ok: true, doc: dj.document, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
+    if (!current()) return null;
+    return decodeDocumentRecord({ document: d, sections: s }, { document: dj, sections: sj }, { docId, programId, recovery });
   } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
+    return { ok: false, refused: e instanceof ApiRequestError && authoringReadRefused(e.status, e.payload), message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
   }
 }

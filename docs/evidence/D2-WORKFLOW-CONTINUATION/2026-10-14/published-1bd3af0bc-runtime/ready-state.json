@@ -1,0 +1,20 @@
+{
+  "httpStatus": 503,
+  "ready": false,
+  "failed": [
+    "ana"
+  ],
+  "dependencies": {
+    "database": "ok",
+    "schema": "ok",
+    "ana": "down",
+    "storage": "ok",
+    "redis": "skipped",
+    "worker": "skipped"
+  },
+  "schemaState": "ready",
+  "anaState": "no_provider",
+  "capabilityRegistry": "seeded",
+  "privateDetailOmitted": true,
+  "qualification": "Local liveness/readiness status only; not launch or regulatory qualification"
+}

@@ -1,0 +1,35 @@
+{
+  "sourceCommit": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
+  "branch": "concept2cure-v2",
+  "normalPushObservedExitCode": 0,
+  "pushExitAttribution": "Root observed normal push exit0; retained log confirms successful range and complete gates",
+  "normalPushAllGatesPassed": true,
+  "pushedTypecheckErrors": 0,
+  "changedLintableFiles": 55,
+  "pushedLintErrors": 0,
+  "warningCountGrowth": 0,
+  "pushLogSha256": "f676304dc6c59c02dce013e5475adc1278a61cf73647d91920684b1a317d5104",
+  "independentLeakScans": [
+    {
+      "phase": "staged",
+      "findings": 0,
+      "commitsScanned": 0,
+      "reportSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "logSha256": "0a2140bea1bad916e2c12a4c344971d49ad821c6ef5348aab37b65e79463b81b",
+      "independentLoggedScan": true
+    },
+    {
+      "phase": "full-history",
+      "findings": 0,
+      "commitsScanned": 10246,
+      "reportSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "logSha256": "4d5f75b4507386dcbbe2a7b411925112dbb4bede5a95eeaee7aec987a1594b3c",
+      "independentLoggedScan": true
+    }
+  ],
+  "subsequentDocsOnlyHealthbotCommit": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "healthbotChangedPaths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ]
+}

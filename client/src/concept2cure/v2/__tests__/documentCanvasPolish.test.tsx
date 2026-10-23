@@ -39,8 +39,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
-
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
@@ -87,8 +87,8 @@ const PROGRAM = { id: PID, code: 'CAMA', name: '[Demo · Biotech] C2C-101 anti-I
 function mockApi() {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok(DOC_ROW);
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok(DOC_ROW);
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok(SECTIONS);
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok(PROGRAM);
     if (method === 'GET' && url === '/api/task-management/assignees') return ok({ success: true, data: [{ id: '42', name: 'OQ Signer' }], total: 1 });
     if (method === 'GET' && url.startsWith('/api/authoring/sections/')) return ok({ success: true, sources: [], revisions: [] });
@@ -452,7 +452,7 @@ describe('DocumentCanvas — acts the server will refuse', () => {
   function withAccess(access: unknown) {
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, ...rest: unknown[]) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok({ ...DOC_ROW, access });
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ ...DOC_ROW, access });
       return base(method, url, ...rest);
     });
   }

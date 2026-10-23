@@ -1,0 +1,26 @@
+{
+  "sourcePhase": {
+    "localCheckpoint": "b513b53e404e49ceed1596d5e6db420333e67105",
+    "canonical": "55f75b72fac95a387d3b72e82a1998a08ff5ef96"
+  },
+  "result": {
+    "exitCode": 0,
+    "suitesPassed": 23,
+    "testsPassed": 362,
+    "testsSkipped": 0,
+    "durationSeconds": 146.63
+  },
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "heapMb": 4096,
+  "pinCount": 40,
+  "pinsVerifiedAfterRun": true,
+  "archive": {
+    "file": "tests-green.txt.gz",
+    "gzipMtime": 0,
+    "archiveSha256": "7d777da0af05b12dabcf440e560d5f6478f2d71e9899e8f1fe84d721ae6ff4ce",
+    "decodedBytes": 196243,
+    "decodedSha256": "8f040ca8dea10548bbe4f52f2c983c534534f69c996f20602c6ca7561f104855"
+  },
+  "qualification": "Existing config, PGlite and explicit mock/provider/agency seams. No native database, live approved model, live Codespace or commercial qualification claimed."
+}

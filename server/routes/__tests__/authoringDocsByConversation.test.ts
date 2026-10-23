@@ -10,83 +10,58 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { SignJWT } from 'jose';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { JourneyDb } from '../../../tests/golden-journeys/harness';
+import { DOC, PROGRAM, READ_SECRET, createCurrentReadDb, currentReadApp, observedReadClient,
+  readToken, type ReadObservation } from './_authoring-current-read-fixture';
 
-const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
-
-vi.mock('../../db', () => ({
-  pool: { query: (...a: unknown[]) => mockQuery(...a) },
-  getPool: () => ({ query: (...a: unknown[]) => mockQuery(...a) }),
-  query: (...a: unknown[]) => mockQuery(...a),
-  db: {},
-}));
-
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-status';
-process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
-
-import router from '../authoring.router';
-
-async function bearer(): Promise<string> {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  return (
-    'Bearer ' +
-    (await new SignJWT({ sub: 'u1', organizationId: 7, email: 'author@test.co' })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret))
-  );
+const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+vi.mock('../../db', () => ({ get db() { return h.db; }, get pool() { return h.pool; }, getPool: () => h.pool }));
+process.env.JWT_SECRET = READ_SECRET;
+process.env.JWT_SECRET_DEV = READ_SECRET;
+let jdb: JourneyDb;
+let app: express.Express;
+let bearer: string;
+const observation: ReadObservation = { sql: [] };
+const get = (path: string) => request(app).get(`/api/authoring/docs${path}`).set('Authorization', `Bearer ${bearer}`);
+function listSql() {
+  const sql = observation.sql.find(sql => sql.includes('FROM authoring_documents d') && sql.includes('d.title'));
+  if (!sql) throw new Error('admitted list projection was never issued');
+  return sql;
 }
+beforeAll(async () => {
+  jdb = await createCurrentReadDb(); h.db = jdb.db; h.pool = observedReadClient(jdb, observation);
+  const { default: router } = await import('../authoring.router');
+  app = currentReadApp(router, jdb, observation); bearer = await readToken();
+}, 180_000);
+afterAll(async () => { await jdb?.close(); });
+beforeEach(async () => { observation.sql = []; });
 
-function makeApp() {
-  const app = express();
-  app.use(express.json());
-  app.use('/api/authoring', router);
-  return app;
-}
-
-function listCall(): { sql: string; params: unknown[] } {
-  const call = mockQuery.mock.calls.find((c) => String(c[0]).includes('FROM authoring_documents d'));
-  if (!call) throw new Error('list query was never issued');
-  return { sql: String(call[0]), params: (call[1] ?? []) as unknown[] };
-}
-
-beforeEach(() => {
-  mockQuery.mockReset();
-  mockQuery.mockResolvedValue({ rowCount: 0, rows: [] });
+const CONVERSATION = 'ana-ri_1791422302138_3qisj9qga';
+beforeEach(async () => {
+  await jdb.pool.query('UPDATE authoring_documents SET provenance=$2 WHERE id=$1',
+    [DOC.partial, { source: 'ana', conversationId: CONVERSATION }]);
 });
-
 describe('the documents a conversation built', () => {
-  it('filters on the conversation recorded in the document\'s provenance, as a parameter', async () => {
-    const res = await request(makeApp())
-      .get('/api/authoring/docs?conversationId=ana-ri_1791422302138_3qisj9qga')
-      .set('Authorization', await bearer());
-    expect(res.status).toBe(200);
-    const { sql, params } = listCall();
-    expect(sql).toMatch(/to_jsonb\(d\)->'provenance'->>'conversationId' = \$2/);
-    expect(params).toEqual([7, 'ana-ri_1791422302138_3qisj9qga']);
+  it('filters on the recorded conversation as a bound value evaluated by actual SQL', async () => {
+    const res = await get(`?conversationId=${CONVERSATION}`); expect(res.status).toBe(200);
+    expect(listSql()).toMatch(/to_jsonb\(d\)->'provenance'->>'conversationId' = \$/);
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual([DOC.partial]);
+    const other = await get('?conversationId=another-conversation'); expect(other.status).toBe(200); expect(other.body.documents).toEqual([]);
   });
-
-  it('narrows to what AnA drafted when asked, with no parameter to inject', async () => {
-    await request(makeApp()).get('/api/authoring/docs?source=ana&programId=5ac45b38-a1d8-4a41-9488-fac39a57b852').set('Authorization', await bearer());
-    const { sql, params } = listCall();
-    expect(sql).toContain("to_jsonb(d)->'provenance'->>'source' = 'ana'");
-    expect(params).toEqual([7, '5ac45b38-a1d8-4a41-9488-fac39a57b852']);
+  it('narrows to what AnA drafted in the admitted program with no source value to inject', async () => {
+    const res = await get(`?source=ana&programId=${PROGRAM}`); expect(res.status).toBe(200);
+    expect(listSql()).toContain("to_jsonb(d)->'provenance'->>'source' = 'ana'");
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual([DOC.partial]);
   });
-
-  it('returns each document\'s conversation and source, so a list can say where it came from', async () => {
-    await request(makeApp()).get('/api/authoring/docs').set('Authorization', await bearer());
-    const { sql } = listCall();
-    expect(sql).toContain("AS conversation_id");
-    expect(sql).toContain("AS provenance_source");
+  it('returns the recorded conversation and source so the list can say where it came from', async () => {
+    const res = await get(''); expect(res.status).toBe(200);
+    expect(listSql()).toContain('AS conversation_id'); expect(listSql()).toContain('AS provenance_source');
+    expect(res.body.documents.find((d: { id: string }) => d.id === DOC.partial)).toMatchObject({ conversation_id: CONVERSATION, provenance_source: 'ana' });
   });
-
-  it('adds no provenance predicate when none is asked for', async () => {
-    await request(makeApp()).get('/api/authoring/docs').set('Authorization', await bearer());
-    const { sql, params } = listCall();
-    expect(sql).not.toMatch(/->>'conversationId' =/);
-    expect(sql).not.toMatch(/->>'source' = 'ana'/);
-    expect(params).toEqual([7]);
+  it('disables the bound provenance filters when none is asked for', async () => {
+    const res = await get(''); expect(res.status).toBe(200);
+    expect(listSql()).toContain('$9::text IS NULL OR'); expect(listSql()).toContain('NOT $10::boolean OR');
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual(expect.arrayContaining([DOC.full, DOC.empty]));
   });
 });

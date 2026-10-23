@@ -18,7 +18,7 @@ export interface SourceAssemblyDialogProps {
   onNav?: (surfaceId: string) => void;
   isCurrent?: () => boolean;
 }
-interface WorkingDocument { id: string; title: string; program_id: string; status: string; locked_at?: unknown }
+interface WorkingDocument { id: string; title: string; program_id: string; status: string; locked_at?: unknown; readScope?: unknown }
 const CONTEXT_CHANGED = 'The project, selected sources or signed-in account changed. Close this dialog and select the sources again.';
 async function readDocuments(programId: string, current: () => boolean): Promise<WorkingDocument[]> {
   if (!current()) throw new Error(CONTEXT_CHANGED);
@@ -31,7 +31,7 @@ async function readDocuments(programId: string, current: () => boolean): Promise
     && typeof row.id === 'string' && NOTICE_UUID.test(row.id) && typeof row.title === 'string'
     && row.program_id === programId && typeof row.status === 'string')
     || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error('The working documents could not be verified for this project. Retry the document list.');
-  return (rows as WorkingDocument[]).filter(row => !isSealedStatus(row.status) && row.locked_at == null);
+  return (rows as WorkingDocument[]).filter(row => row.readScope !== 'sections' && !isSealedStatus(row.status) && row.locked_at == null);
 }
 
 /** A read-only chooser; fresh scope and membership are checked before handoff. */

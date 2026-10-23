@@ -1,0 +1,14 @@
+{
+  "baseCommit": "9197e92c079a6c8ee79322d921ef70ef64703c5e",
+  "frozenAtUtc": "2026-10-18T00:28:07.307139+00:00",
+  "sources": {
+    "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx": "54a9cceef7b75754c2e224a82193f9dcdf5f3207072f848b4ca4040e715d0d62",
+    "client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx": "b75c9d2a74fa012f12cd09e13dfc7c4fb21ffa236a5e3a83208ef320e2483fdf",
+    "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx": "6e5dc121dd80002ae408055edb7b0961db4cfe06145136a04a31823a0b1b68fa",
+    "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx": "32b08d15befbd9e64f67c1d8968a4b6d952df6ae7ee346dce9e9ed744c651fce",
+    "client/src/concept2cure/v2/__tests__/sendForReview.test.tsx": "3824a4d7228974d5caa7e23a9cac37d52ea34da743375de939fe3c73f23d052c",
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "90997990a451a1d99b8ee72e0117a43c6024230644d4231a675b0f742e863eaa",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx": "d9853b62c97a7664602f1e4657aa53ba5b0c7fa4a8c020a42c13a11e4cfd1b78",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "f08887c5869a85d2b2a2c05242c2a28f2ae3eb7ec0ddbbbd1ef348f71e13b4be"
+  }
+}
