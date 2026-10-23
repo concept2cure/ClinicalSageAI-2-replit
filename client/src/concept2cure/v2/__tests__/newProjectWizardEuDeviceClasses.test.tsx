@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({
-  ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
+  ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args),
 }));
 const filings = vi.hoisted(() => ({
   mdr: { id: 'eu_mdr_techdoc', displayName: 'EU MDR technical documentation', pathwayKey: 'mdr', agency: 'EU / Notified Body', region: 'EU' },
@@ -27,15 +28,17 @@ vi.mock('../surfaces/RegistryBridge', () => ({
 import { NewProjectWizard } from '../surfaces/Projects';
 
 const proceed = () => fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-function configure(which: keyof typeof filings) {
+async function configure(which: keyof typeof filings) {
   render(<NewProjectWizard segment="medtech" onClose={() => {}} onNav={() => {}} />);
   fireEvent.click(screen.getByRole('button', { name: `Pick ${which}` }));
   proceed();
+  await waitForIntakeWorkspace();
   fireEvent.change(screen.getByRole('textbox', { name: /project name/i }), { target: { value: 'Regional device study' } });
 }
 async function create() {
+  await waitForIntakeWorkspace();
   proceed();
-  fireEvent.click(screen.getByRole('button', { name: /create project/i }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /create project/i })); });
   const calls = () => apiRequest.mock.calls.filter(c => c[0] === 'POST' && c[1] === '/api/c2c/projects');
   await vi.waitFor(() => expect(calls()).toHaveLength(1));
   return calls()[0][2] as Record<string, unknown>;
@@ -50,21 +53,21 @@ describe('existing EU classification vocabulary reaches project initialization',
     { filing: 'ivdrA', label: 'EU IVDR class', choices: ['A'] },
     { filing: 'ivdrCD', label: 'EU IVDR class', choices: ['C', 'D'] },
   ] as const)('$filing offers only its exact declared-class scope, without choosing one', async ({ filing, label, choices }) => {
-    configure(filing); await act(async () => {});
+    await configure(filing); await act(async () => {});
     const select = screen.getByRole('combobox', { name: label }) as HTMLSelectElement;
     expect(select.value).toBe('');
     expect(within(select).getAllByRole('option').slice(1).map(o => (o as HTMLOptionElement).value)).toEqual(choices);
   });
 
   it('leaves a class-specific filing unconfirmed when the sponsor has not stated its class', async () => {
-    configure('mdrIII'); const body = await create(); expect(body.euMdrClass).toBeNull();
+    await configure('mdrIII'); const body = await create(); expect(body.euMdrClass).toBeNull();
   });
 
   it.each([
     ['mdr', 'EU MDR class', ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III']],
     ['ivdr', 'EU IVDR class', ['A', 'B', 'C', 'D']],
   ] as const)('%s asks its regional class, initially unstated', async (filing, label, choices) => {
-    configure(filing);
+    await configure(filing);
     await act(async () => {});
     const select = screen.getByRole('combobox', { name: label }) as HTMLSelectElement;
     expect(select.value).toBe('');
@@ -80,7 +83,7 @@ describe('existing EU classification vocabulary reaches project initialization',
     ['mdr', 'EU MDR class', 'IIa', 'euMdrClass', 'euIvdrClass'],
     ['ivdr', 'EU IVDR class', 'D', 'euIvdrClass', 'euMdrClass'],
   ] as const)('%s sends and reviews only the stated regional classification', async (filing, label, value, field, other) => {
-    configure(filing);
+    await configure(filing);
     fireEvent.change(screen.getByRole('combobox', { name: label }), { target: { value } });
     const body = await create();
     expect(screen.getByText(`EU ${filing.toUpperCase()} Class ${value}`)).toBeDefined();
@@ -91,14 +94,14 @@ describe('existing EU classification vocabulary reaches project initialization',
   });
 
   it('an unstated IVDR class sends null, never an FDA class', async () => {
-    configure('ivdr');
+    await configure('ivdr');
     const body = await create();
     expect(body.euIvdrClass).toBeNull();
     expect(body.deviceClassification).toEqual({ intendedUse: '' });
   });
 
   it('changing from FDA to IVDR retires hidden FDA facts and does not restore them on return', async () => {
-    configure('fda');
+    await configure('fda');
     fireEvent.change(screen.getByRole('textbox', { name: /^product code/i }), { target: { value: 'BZH' } });
     fireEvent.change(screen.getByRole('textbox', { name: /predicate 510/i }), { target: { value: 'K181234' } });
     fireEvent.change(screen.getByRole('textbox', { name: /predicate device name/i }), { target: { value: 'Prior meter' } });
@@ -122,7 +125,7 @@ describe('existing EU classification vocabulary reaches project initialization',
   });
 
   it('changing MDR to IVDR and back retires both earlier regional classifications', async () => {
-    configure('mdr');
+    await configure('mdr');
     fireEvent.change(screen.getByRole('combobox', { name: 'EU MDR class' }), { target: { value: 'IIa' } });
     fireEvent.click(screen.getByRole('button', { name: /step 1.*choose filing type/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Pick ivdr' })); proceed();

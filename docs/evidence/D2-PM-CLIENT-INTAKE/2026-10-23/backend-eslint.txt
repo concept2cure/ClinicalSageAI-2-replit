@@ -1,0 +1,22 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/projects-create.test.ts
+  116:39  warning  Arrow function has too many lines (256). Maximum allowed is 100  max-lines-per-function
+  433:68  warning  Arrow function has too many lines (152). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/projects.ts
+  655:54  warning  Async arrow function has too many lines (312). Maximum allowed is 100  max-lines-per-function
+  655:54  warning  Async arrow function has a complexity of 106. Maximum allowed is 15    complexity
+  865:1   warning  File has too many lines (1396). Maximum allowed is 500                 max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/clients-routes.ts
+   501:39  warning  Async arrow function has too many lines (133). Maximum allowed is 100  max-lines-per-function
+   501:39  warning  Async arrow function has a complexity of 31. Maximum allowed is 15     complexity
+   658:1   warning  File has too many lines (923). Maximum allowed is 500                  max-lines
+   806:14  warning  'updatedSettings' is assigned a value but never used                   @typescript-eslint/no-unused-vars
+   822:14  warning  'newSettings' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+   993:46  warning  Async arrow function has a complexity of 20. Maximum allowed is 15     complexity
+  1121:11  warning  'workspaceId' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  1132:14  warning  'updatedSettings' is assigned a value but never used                   @typescript-eslint/no-unused-vars
+  1149:14  warning  'newSettings' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+
+✖ 14 problems (0 errors, 14 warnings)

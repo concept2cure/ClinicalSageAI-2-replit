@@ -23,7 +23,7 @@ function app() {
 }
 const eu = (type = 'mdr') => ({ name: 'Regional device file', productName: 'Meter', programType: type, productType: type === 'ivdr' ? 'ivd' : 'device', primaryAgency: 'EU / Notified Body', submissionTypeId: type === 'ivdr' ? 'eu_ivdr' : 'eu_mdr_techdoc' });
 function queueCreate() {
-  for (const result of [[], [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }], [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }], [], [{ id: 9001 }], [], [], [{ id: 'x', title: 'Meter' }]]) query.mockResolvedValueOnce({ rows: result });
+  for (const result of [[], [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }], [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }], [], [{ id: 55, name: 'Fixture client' }], [{ id: 9001 }], [], [], [{ id: 'x', title: 'Meter' }], [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }]]) query.mockResolvedValueOnce({ rows: result });
 }
 function inserted() {
   const call = query.mock.calls.find(c => String(c[0]).includes('INSERT INTO regulatory_programs'));

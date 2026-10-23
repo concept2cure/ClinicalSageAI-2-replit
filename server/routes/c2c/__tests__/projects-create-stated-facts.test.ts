@@ -73,6 +73,7 @@ const callWith = (frag: string) =>
 const ANCHOR = [
   { rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }] },
   { rows: [] },
+  { rows: [{ id: 55, name: 'Fixture client' }] },
   { rows: [{ id: 9001 }] },
 ];
 const KEYS = ['id', 'title', 'ws', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];
@@ -83,10 +84,11 @@ const queueDrugCreate = () =>
     .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2])
+    .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3])
     .mockResolvedValueOnce({ rows: [] })
     .mockResolvedValueOnce({ rows: [] })
-    .mockResolvedValueOnce({ rows: [shapedRow()] });
+    .mockResolvedValueOnce({ rows: [shapedRow()] })
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
 const validBody = {
   name: 'BX-204 — NDA',
   productName: 'BX-204',

@@ -1,0 +1,118 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrIII' offers only its exact declared-class scope, without choosing one 773ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrI' offers only its exact declared-class scope, without choosing one 371ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrA' offers only its exact declared-class scope, without choosing one 255ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrCD' offers only its exact declared-class scope, without choosing one 331ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > leaves a class-specific filing unconfirmed when the sponsor has not stated its class 463ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr asks its regional class, initially unstated 398ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr asks its regional class, initially unstated 483ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr sends and reviews only the stated regional classification 998ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr sends and reviews only the stated regional classification 885ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > an unstated IVDR class sends null, never an FDA class 750ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing from FDA to IVDR retires hidden FDA facts and does not restore them on return 1723ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing MDR to IVDR and back retires both earlier regional classifications 874ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 1228ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 640ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 370ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 803ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 1013ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 758ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 670ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 671ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 29ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 988ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 301ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 187ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 187ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 216ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 184ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 445ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 459ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 437ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 441ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 436ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 535ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 744ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 916ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 542ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 556ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 286ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 655ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 841ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 869ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 1185ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 661ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 534ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 755ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 669ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 668ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 338ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 1064ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 706ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 705ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 644ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 449ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 791ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 338ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 349ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 341ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 324ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 218ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 13ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 111ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 24ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 443ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry for a confirmed refusal, after verifying workspaces again 355ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 286ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 269ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 300ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 300ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 571ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 369ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 367ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 182ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 287ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 279ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 259ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > asks for the trade name as well as the number 525ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > sends both halves when both are given 405ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > does not read a number with no trade name as a recorded predicate 330ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > says nothing about a predicate when neither half is given 280ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 720ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 352ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 398ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 426ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 526ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 236ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 325ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 314ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 290ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 726ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > another confirmed refusal keeps "Try again" 439ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > admits a verified active list, including a genuine empty list 2ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope null 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope undefined 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":false,"clients":[{"id":"21","name":"Sponsor A","organizationId":"7","status":"active"}],"meta":{"purpose":"project-intake","actorUserId":12,"organizationId":7}} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":true,"clients":null,"meta":{"purpose":"project-intake","actorUserId":12,"organizationId":7}} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects malformed directory envelope {"success":true,"clients":[{"id":"21","name":"Sponsor A","organizationId":"7","status":"active"}],"meta":{"actorUserId":12,"organizationId":7,"purpose":"other"}} 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier 0 1ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier -1 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier 1.5 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "01" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "1.5" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier "2147483648" 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier true 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier null 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > rejects invalid database identifier undefined 0ms
+ ✓ shared/__tests__/project-intake-workspace.test.ts > the creator-bound project intake wire > admits only a created UUID program linked to the exact actor, parent and name 1ms
+
+ Test Files  11 passed (11)
+      Tests  110 passed (110)
+   Start at  17:35:39
+   Duration  66.20s (transform 2.91s, setup 1.74s, import 6.55s, tests 46.64s, environment 8.65s)

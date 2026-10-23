@@ -36,11 +36,12 @@ export function projectFixtureApp(router: Router, org: number | null, userId?: n
   return app;
 }
 
-/** Program anchor preflight, no existing anchor, then INSERT. These unchanged
- * results belong to the program transaction, not current actor admission. */
+/** Canonical anchor preflight, no existing anchor, locked active workspace,
+ * then INSERT. These are business SQL, separate from current actor admission. */
 export const ANCHOR = [
   { rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }] },
   { rows: [] },
+  { rows: [{ id: 55, name: 'Fixture client' }] },
   { rows: [{ id: 9001 }] },
 ];
 export const KEYS = ['id', 'title', 'ws', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];

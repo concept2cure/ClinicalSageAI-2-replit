@@ -1,0 +1,503 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable
+ × client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 5728ms
+   → Unable to find a label with the text of: Organization member
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Project sharing"[39m
+      [33mclass[39m=[32m"pj-sharing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-sharing-heading"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0mProject sharing[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRefresh sharing[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load project sharing[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mProject sharing could not be verified. Retry the read.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry sharing[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tb-detail-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tb-assignment-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mChange assignee[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mAuto-assign task[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tb-detail-note"[39m
+      [36m>[39m
+        [0mAssignment records who does the work. Project access, document review assignments and electronic signing remain separate.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Project sharing"[39m
+      [33mclass[39m=[32m"pj-sharing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-sharing-heading"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0mProject sharing[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRefresh sharing[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load project sharing[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mProject sharing could not be verified. Retry the read.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry sharing[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tb-detail-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tb-assignment-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mChange assignee[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mAuto-assign task[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tb-detail-note"[39m
+      [36m>[39m
+        [0mAssignment records who does the work. Project access, document review assignments and electronic signing remain separate.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 582ms
+   → expected "vi.fn()" to be called once with arguments: [ { id: '21', …(2) } ]
+
+Number of calls: 0
+
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard
+TestingLibraryElementError: Unable to find a label with the text of: Organization member
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Project sharing"[39m
+      [33mclass[39m=[32m"pj-sharing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-sharing-heading"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0mProject sharing[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRefresh sharing[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load project sharing[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mProject sharing could not be verified. Retry the read.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry sharing[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tb-detail-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tb-assignment-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mChange assignee[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mAuto-assign task[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tb-detail-note"[39m
+      [36m>[39m
+        [0mAssignment records who does the work. Project access, document review assignments and electronic signing remain separate.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Project sharing"[39m
+      [33mclass[39m=[32m"pj-sharing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-sharing-heading"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0mProject sharing[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRefresh sharing[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load project sharing[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mProject sharing could not be verified. Retry the read.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry sharing[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tb-detail-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tb-assignment-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mChange assignee[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mAuto-assign task[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tb-detail-note"[39m
+      [36m>[39m
+        [0mAssignment records who does the work. Project access, document review assignments and electronic signing remain separate.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx:252:18
+    250|     expect(fixture.setWorkspace).not.toHaveBeenCalled();
+    251|     await act(async () => { fireEvent.click(screen.getByRole('button',…
+    252|     await screen.findByLabelText('Organization member');
+       |                  ^
+    253|     fireEvent.click(screen.getByRole('button', { name: 'Change assigne…
+    254|     await screen.findByLabelText('New assignee');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { id: '21', …(2) } ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx:272:34
+    270|     const notice = await screen.findByTestId('new-project-outcome');
+    271|     expect(notice.textContent).toMatch(/created without a dossier outl…
+    272|     expect(fixture.setWorkspace).toHaveBeenCalledExactlyOnceWith({ id:…
+       |                                  ^
+    273|     expect(onNav).not.toHaveBeenCalled();
+    274|     expect(readShellProject()).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 skipped (26)
+   Start at  18:07:04
+   Duration  9.31s (transform 1.16s, setup 342ms, import 1.43s, tests 6.32s, environment 989ms)

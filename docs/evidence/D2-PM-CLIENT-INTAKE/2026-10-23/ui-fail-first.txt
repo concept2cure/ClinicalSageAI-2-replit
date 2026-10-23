@@ -1,0 +1,1880 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 5408ms
+   → Unable to find role="combobox" and name "Client workspace"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mChoose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mReview & create[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</nav>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-scroll"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-inner"[39m
+          [33mdata-measure[39m=[32m"form"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"npw-form"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"npw-h2"[39m
+            [36m>[39m
+              [0mConfigure your [0m
+              [0mTraditional 510(k)[0m
+              [0m project[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"npw-seg-s"[39m
+              [33mdata-testid[39m=[32m"npw-market-support"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mdata-state[39m=[32m"error"[39m
+                [33mdata-testid[39m=[32m"market-support"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mPlatform support for this market could not be read.[0m
+                [0m [0m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+                  [33mclass[39m=[32m"btn ghost sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mRetry[0m
+                [36m</button>[39m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"npw-seg-t"[39m
+              [36m>[39m
+                [0mStart from your saved discovery[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"npw-field-help"[39m
+              [36m>[39m
+                [0mReview your organization's recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"sp-ask"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReview saved discovery[0m
+              [36m</button>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-fields"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProject name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-name-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. Aurora CGM — 510(k)"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-name-help"[39m
+                [36m>[39m
+                  [0mRequired. The program is listed under this name.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mIndication[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-indication-help"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. idiopathic pulmonary fibrosis"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-indication-help"[39m
+                [36m>[39m
+                  [0mThe disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct type[0m
+                [36m</span>[39m
+                [36m<select[39m
+                  [33maria-describedby[39m=[32m"npw-class-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mrequired[39m=[32m""[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mNot stated — choose[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-class-help"[39m
+                [36m>[39m
+                  [0mRequired. [0m
+                  [0mA 510K[0m
+                  [0m covers drugs and biologics; the program records which.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mTarget submission date[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mtype[39m=[32m"date"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-field-l"[39m
+              [36m>[39m
+                [0mTeam members[0m
+              [36m</span>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-info"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 16v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 8h.01"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mTeam assignment isn't available yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mYou'll be able to add teammates once the project exists and org members can be listed.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-foot"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-foot-inner"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"npw-foot-gap"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mChoose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mReview & create[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</nav>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-scroll"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-inner"[39m
+          [33mdata-measure[39m=[32m"form"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"npw-form"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"npw-h2"[39m
+            [36m>[39m
+              [0mConfigure your [0m
+              [0mTraditional 510(k)[0m
+              [0m project[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"npw-seg-s"[39m
+              [33mdata-testid[39m=[32m"npw-market-support"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mdata-state[39m=[32m"error"[39m
+                [33mdata-testid[39m=[32m"market-support"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mPlatform support for this market could not be read.[0m
+                [0m [0m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+                  [33mclass[39m=[32m"btn ghost sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mRetry[0m
+                [36m</button>[39m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"npw-seg-t"[39m
+              [36m>[39m
+                [0mStart from your saved discovery[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"npw-field-help"[39m
+              [36m>[39m
+                [0mReview your organization's recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"sp-ask"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReview saved discovery[0m
+              [36m</button>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-fields"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProject name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-name-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. Aurora CGM — 510(k)"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-name-help"[39m
+                [36m>[39m
+                  [0mRequired. The program is listed under this name.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mIndication[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-indication-help"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. idiopathic pulmonary fibrosis"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-indication-help"[39m
+                [36m>[39m
+                  [0mThe disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct type[0m
+                [36m</span>[39m
+                [36m<select[39m
+                  [33maria-describedby[39m=[32m"npw-class-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mrequired[39m=[32m""[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mNot stated — choose[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-class-help"[39m
+                [36m>[39m
+                  [0mRequired. [0m
+                  [0mA 510K[0m
+                  [0m covers drugs and biologics; the program records which.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mTarget submission date[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mtype[39m=[32m"date"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-field-l"[39m
+              [36m>[39m
+                [0mTeam members[0m
+              [36m</span>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-info"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 16v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 8h.01"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mTeam assignment isn't available yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mYou'll be able to add teammates once the project exists and org members can be listed.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-foot"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-foot-inner"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"npw-foot-gap"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > retires sponsor form contents on an account or organization change
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > does not send a stale write after a token switch
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor
+TestingLibraryElementError: Unable to find role="combobox" and name "Client workspace"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mChoose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mReview & create[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</nav>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-scroll"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-inner"[39m
+          [33mdata-measure[39m=[32m"form"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"npw-form"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"npw-h2"[39m
+            [36m>[39m
+              [0mConfigure your [0m
+              [0mTraditional 510(k)[0m
+              [0m project[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"npw-seg-s"[39m
+              [33mdata-testid[39m=[32m"npw-market-support"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mdata-state[39m=[32m"error"[39m
+                [33mdata-testid[39m=[32m"market-support"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mPlatform support for this market could not be read.[0m
+                [0m [0m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+                  [33mclass[39m=[32m"btn ghost sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mRetry[0m
+                [36m</button>[39m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"npw-seg-t"[39m
+              [36m>[39m
+                [0mStart from your saved discovery[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"npw-field-help"[39m
+              [36m>[39m
+                [0mReview your organization's recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"sp-ask"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReview saved discovery[0m
+              [36m</button>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-fields"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProject name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-name-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. Aurora CGM — 510(k)"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-name-help"[39m
+                [36m>[39m
+                  [0mRequired. The program is listed under this name.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mIndication[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-indication-help"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. idiopathic pulmonary fibrosis"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-indication-help"[39m
+                [36m>[39m
+                  [0mThe disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct type[0m
+                [36m</span>[39m
+                [36m<select[39m
+                  [33maria-describedby[39m=[32m"npw-class-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mrequired[39m=[32m""[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mNot stated — choose[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-class-help"[39m
+                [36m>[39m
+                  [0mRequired. [0m
+                  [0mA 510K[0m
+                  [0m covers drugs and biologics; the program records which.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mTarget submission date[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mtype[39m=[32m"date"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-field-l"[39m
+              [36m>[39m
+                [0mTeam members[0m
+              [36m</span>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-info"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 16v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 8h.01"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mTeam assignment isn't available yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mYou'll be able to add teammates once the project exists and org members can be listed.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-foot"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-foot-inner"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"npw-foot-gap"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mChoose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mReview & create[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</nav>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-scroll"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-inner"[39m
+          [33mdata-measure[39m=[32m"form"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"npw-form"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"npw-h2"[39m
+            [36m>[39m
+              [0mConfigure your [0m
+              [0mTraditional 510(k)[0m
+              [0m project[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"npw-seg-s"[39m
+              [33mdata-testid[39m=[32m"npw-market-support"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mdata-state[39m=[32m"error"[39m
+                [33mdata-testid[39m=[32m"market-support"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0mPlatform support for this market could not be read.[0m
+                [0m [0m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+                  [33mclass[39m=[32m"btn ghost sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mRetry[0m
+                [36m</button>[39m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"npw-seg-t"[39m
+              [36m>[39m
+                [0mStart from your saved discovery[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"npw-field-help"[39m
+              [36m>[39m
+                [0mReview your organization's recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.[0m
+              [36m</p>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"sp-ask"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReview saved discovery[0m
+              [36m</button>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-fields"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProject name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-name-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. Aurora CGM — 510(k)"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-name-help"[39m
+                [36m>[39m
+                  [0mRequired. The program is listed under this name.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct name[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mIndication[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33maria-describedby[39m=[32m"npw-indication-help"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mplaceholder[39m=[32m"e.g. idiopathic pulmonary fibrosis"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-indication-help"[39m
+                [36m>[39m
+                  [0mThe disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mProduct type[0m
+                [36m</span>[39m
+                [36m<select[39m
+                  [33maria-describedby[39m=[32m"npw-class-help"[39m
+                  [33maria-required[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mrequired[39m=[32m""[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mNot stated — choose[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-help"[39m
+                  [33mid[39m=[32m"npw-class-help"[39m
+                [36m>[39m
+                  [0mRequired. [0m
+                  [0mA 510K[0m
+                  [0m covers drugs and biologics; the program records which.[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"npw-field"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-field-l"[39m
+                [36m>[39m
+                  [0mTarget submission date[0m
+                [36m</span>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mtype[39m=[32m"date"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-field-l"[39m
+              [36m>[39m
+                [0mTeam members[0m
+              [36m</span>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-info"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 16v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 8h.01"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mTeam assignment isn't available yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mYou'll be able to add teammates once the project exists and org members can be listed.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"npw-foot"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-foot-inner"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"npw-foot-gap"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mContinue[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ configure client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx:27:16
+     25|   fireEvent.click(screen.getByRole('button', { name: 'Pick filing' }));
+     26|   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+     27|   await screen.findByRole('combobox', { name: 'Client workspace' });
+       |                ^
+     28|   await waitFor(() => expect((screen.getByRole('combobox', { name: 'Cl…
+     29|   fireEvent.change(screen.getByRole('textbox', { name: /project name/i…
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx:47:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  17:28:35
+   Duration  7.49s (transform 836ms, setup 196ms, import 1.03s, tests 5.41s, environment 674ms)

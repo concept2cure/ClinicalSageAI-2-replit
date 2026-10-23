@@ -270,9 +270,12 @@ program. Existing unanchored programs are anchored by an idempotent statement in
 laptop script.
 
 The fixer raised three questions about P-19, decided the same day:
-- An organisation with several workspaces and none marked as its own is refused (409) rather than having one guessed.
-  The workspace decides who may see a project. The follow-up is a workspace choice in the New Project wizard for
-  multi-client organisations (a CRO), not a default.
+- The New Project wizard records an active client-workspace choice, with its name on Configure and Review
+  (PM-05, 2026-10-23; [evidence](evidence/D2-PM-CLIENT-INTAKE/2026-10-23/README.md)). With several active workspaces,
+  intake requires an explicit choice (409 if missing), even with an organisation default; a sole active workspace
+  remains compatible. The project anchor, dossier/submission links and audit commit together under that parent.
+  This controls placement and preserves the existing project-sharing policy, including organisation-public visibility;
+  it creates no client-portal or sharing grant. Legacy anchor callers retain their existing default-marker policy.
 - When a backfilled program's recorded creator is not a user id, its project owner is left empty. Ownership grants
   access, so it is not inferred.
 - The demo seeds use the code BX-204 for two different products. The seed's dossier-map project gets its own code;
