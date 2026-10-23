@@ -1,0 +1,21 @@
+{
+  "previousCanonical": "264560f40a3d984289d5fb3311d0986094735410",
+  "incomingCanonical": "0a15a0725731eb50d33ca25902c67ca3421da792",
+  "incomingPaths": [
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/PUBLICATION.md",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/README.md",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-prefetch.txt",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-push-command.json",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-push-result.json",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-push.txt",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-verification-fetch.txt",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-code-verification.json",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-publication-manifest.json",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-publication-review.json",
+    "docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-qualification-commit.txt"
+  ],
+  "mergeExit": 0,
+  "mergeHead": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
+  "all100QualifiedCodeConfigTestPinsUnchanged": true,
+  "reasonNoRepeatedTests": "Only evidence documents changed; no code/config/instruction path changed."
+}
