@@ -1,0 +1,21 @@
+{
+  "incomingCanonical": "62a8d5e7f",
+  "mergedCommit": "ba41b4cac79f700b33299782c9512dff74d0141b",
+  "sourceScope": "Existing Workflows catalog now integrates device and diagnostics work through Projects; own auth/header, TaskBoard, route and request database reader unchanged",
+  "tests": {
+    "suites": 17,
+    "passed": 189,
+    "failed": 0,
+    "note": "Bounded overlapping cohort covering own fixes, catalog/discovery, MDX Projects/host/preview and launch scope. Do not sum with earlier counts."
+  },
+  "buildExitCode": 0,
+  "browser": "Fresh native API session, real catalog and saved task board; after second-tab shared org drift, matching bearer org headers persist and all targeted reads return 200 without uncaught errors. No responses intercepted.",
+  "review": "Two read-only reviewers found no blocker. MDX headers use existing auth helpers; new presentation has no extra fetch/store/bootstrap dependency. Preview verifies tenant/project access and request database. Feature grants remain governed.",
+  "typecheck": {
+    "command": "TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental",
+    "exitCode": 0,
+    "errors": 0,
+    "baseline": 0,
+    "note": "Complete program; normal push repeats required gates."
+  }
+}

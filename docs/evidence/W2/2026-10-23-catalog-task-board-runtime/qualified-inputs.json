@@ -1,0 +1,19 @@
+{
+  "qualifiedCommit": "66110e1a74cf0d477af208f692fc5b276529e8d8",
+  "sourceCommit": "bf47a69643f502805d1f02115bc5f9882321fb74",
+  "canonicalCatchup": "5ff6d225274079e9a08444409471394d9963970c",
+  "sourceStatus": "",
+  "sha256": {
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/utils/__tests__/authToken.test.ts": "3f19ea8dcda587b31429e362fc857d4ae0c4c238eae7838a0f362698d4435832",
+    "client/src/lib/__tests__/api-request-active-organization.test.ts": "24f10586f171280a3c1fc1e57d0171fd20c1d83197297e91311df6616ad694bb",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "67b1ab926e37493de2827a56691406e0d982bc4f5cd1a369a46201550336f2f2",
+    "client/src/concept2cure/v2/__tests__/taskBoardResponseShape.test.tsx": "ae3565107a63856f98e548b326c9ffd0eb8db4c41de5569ff1d06cc98db969d2",
+    "server/routes/taskBoard.routes.ts": "662e7e4c2bc1de275eaa1a454c1408367d5c5f3d5f35b032a9c304802826a35c",
+    "server/routes/__tests__/taskBoard-runtime-recovery.test.ts": "18dcda1a2b386e85aa27244eeb201262a89df3cf899aba94e5d64b7553efc4c7",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "client/src/concept2cure/v2/dataConnect.tsx": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d",
+    "server/services/unified-work/unified-work-view.ts": "bf851a65bf2ed82456611592dc01d9d925d39a8810b8bb5c4036db2d3d9744dd",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  }
+}

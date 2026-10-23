@@ -1,0 +1,85 @@
+{
+  "kind": "Chromium real Vite client + actual authenticated/RLS HTTP; synthetic local dev-issued session",
+  "apps": {
+    "url": "http://127.0.0.1:5198/concept2cure/apps",
+    "loaded": true,
+    "hasProjects": true,
+    "tail": "finder (fit scoring), CITI training matrix, continuing-review portfolio analytics.\nStandard\nOpen\nPlatform services\nNot apps — capabilities that run inside apps\nA service is not a destination. You never \"open\" a service; it works inside the applications above — grounding a draft, routing a model, sealing a report, signing an action. Listed here for transparency, not navigation.\nRIM -- Regulatory Intelligence Model\nThe non-LLM judgment layer that accumulates regulatory precedent over time and powers every app's recommendations.\nEvidence retrieval (RAG)\nGrounds answers and drafts in the corpus and returns cited source chunks. Runs inside authoring, evidence and chat.\nAnA gateway & model routing\nRisk-tiered routing of every AI call to the right model, with human-review gates on high-impact actions.\nPrecedent engine\nDeterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.\nDeterministic tool registry\n142 pure-function regulatory tools (TTC, estimand, causality...) that AnA calls for submission-defensible output.\nDeep-research orchestrator\nMulti-connector fan-out and grounded synthesis that drives the Deep research app.\nTemplate & rendering\nGenerates DOCX and PDF from governed templates -- produces the files in Artifacts Center and the editor.\nE-signature (21 CFR Part 11)\nReason-for-change + identity re-assertion on governed actions across every app.\nAudit hash-chain\nTamper-evident ss11.10(e) ledger written by every governed mutation.\nConnectors\nClinicalTrials.gov, FAERS/MAUDE, EUDAMED, EHR/FHIR, DMS -- feed evidence and deep research."
+  },
+  "board": {
+    "url": "http://127.0.0.1:5198/concept2cure/tasks",
+    "loaded": true,
+    "hasSeededTask": true,
+    "tail": "MO · Technology transfer package review\n[DEMO] Consultancy · Client regulatory gap assessment\n[DEMO] Health system · Diagnostic pilot evidence review\nVorelinib · KIT-mutant GIST (IND)\nBX-256 · systemic lupus erythematosus (IND)\nBX-420 · neuromyelitis optica (J-NDA)\nBX-301 · paroxysmal nocturnal hemoglobinuria (BLA)\nBX-099 · generalized myasthenia gravis (MAA)\nCV-117 ECG Patch\nIV-415 Companion Diagnostic\nNM-512 Neuromodulation Lead\nPM-660 Patient Monitor\nRX-340 Surgical Stapler\nOR-801 Pedicle Screw System\nBX-204 Continuous Glucose Monitor\nAll modules\nCMC\nProtocolDesign\nMedicalDevice\nVault\nIND\neCTD\nMy tasks\nBoard\nCritical path\nAnalytics\nTable\nTo do\n3\neCTD\nValidate BX-099 sequence 0003 against eCTD 3.2.2 criteria\nReview\nMedium\nBoard\n1\nin 9 days\nJS\nIND\nCompile BX-301 genotoxicity study reports for Module 4\nAction\nMedium\nBoard\nin 21 days\nEW\nVault\nMigrate BX-420 legacy stability reports into controlled vault\nAction\nLow\nBoard\n1\nin 30 days\nMB\nIn progress\n5\nMedicalDevice\nObtain BX-204 summative usability participant dataset from vendor\nAction\nHigh\nBoard\n1\nin 2 days\nDK\nMedicalDevice\nUpdate BX-204 dFMEA for predictive low glucose alert\nAction\nCritical\nBoard\n1\nin 6 days\nJS\nIND\nAssemble BX-256 pre-IND briefing package\nDeliverable\nCritical\nBoard\n2\nin 7 days\nSC\nCMC\nFinalize BX-099 drug substance specification justification (3.2.S.4.5)\nDeliverable\nHigh\nBoard\n2\nin 10 days\nLJ\neCTD\nAuthor BX-256 Module 2.5 Clinical Overview first draft\nDeliverable\nHigh\nBoard\n1\nin 14 days\nEW\nBlocked\n1\nMedicalDevice\nComplete BX-204 CGM summative usability report\nBlocked\nDeliverable\nHigh\nBoard\n2\noverdue 3 days\nDK\nIn review\n2\nProtocolDesign\nIncorporate FDA feedback into BX-256 Phase 1 dose-escalation protocol\nDeliverable\nHigh\napproval — pending\nBoard\n1\nin 4 days\nRP\nCMC\nReview BX-099 host cell protein assay validation report\nReview\nMedium\napproval — pending\nBoard\n1\nin 5 days\nDK\nDone\n3\nCMC\nApprove BX-099 drug product stability protocol amendment 2\nReview\nHigh\napproved\nBoard\ndone\nLJ\nProtocolDesign\nDraft BX-420 pediatric cohort statistical analysis outline\nAction\nMedium\nBoard\ndone\nMB\nVault\nArchive superseded BX-301 Investigator Brochure v3.1\nAction\nLow\nBoard\n1\ndone\nMB\nWhat is enforced, and what is not yet"
+  },
+  "consistency": {
+    "storedOrg": "391",
+    "resolvedOrg": "391",
+    "catalogStatus": 200,
+    "boardStatus": 200,
+    "storedOrgUnchanged": true
+  },
+  "requests": [
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/license",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/navigation",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/task-management/board",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/task-management/board",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/module-subscriptions/catalog",
+      "org": "391",
+      "bearer": true
+    },
+    {
+      "path": "/api/task-management/board",
+      "org": "391",
+      "bearer": true
+    }
+  ],
+  "uncaughtErrors": []
+}

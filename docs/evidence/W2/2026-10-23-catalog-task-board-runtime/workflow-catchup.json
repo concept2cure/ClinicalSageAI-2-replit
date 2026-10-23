@@ -1,0 +1,22 @@
+{
+  "secondPush": {
+    "commit": "8442aa51a",
+    "allNormalGatesPassed": true,
+    "typeErrors": 0,
+    "exitCode": 1,
+    "reason": "remote advanced during compiler; ref lock rejected"
+  },
+  "incomingCanonical": "aef1b6a15",
+  "mergedCommit": "d6ce8f9250e6b42cd1778576773376f45f1f48d3",
+  "tests": {
+    "suites": 18,
+    "passed": 220,
+    "failed": 0
+  },
+  "buildExitCode": 0,
+  "catalogPath": "AdminSurfaces.Apps re-export -> WorkflowCatalog.Apps; same /concept2cure/apps and module-subscriptions APIs",
+  "screenLabel": "Workflows",
+  "criticalAuthBoardAndTransportSourcesUnchanged": true,
+  "browser": "browser-cross-tab-current.json; fresh dev-issued synthetic session, actual UI/API, stale sharedorg retained, no uncaught errors",
+  "firstBrowserAttempt": "Old synthetic session expired; real session endpoint returned401 and signed out. Renewed with existing dev-login; no lifetime/auth guard changed."
+}

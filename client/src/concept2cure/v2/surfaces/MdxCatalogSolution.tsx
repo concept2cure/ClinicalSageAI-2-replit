@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 
 export interface MdxCatalogFeature {
   id: string;
@@ -33,7 +32,7 @@ export function MdxCatalogSolution({
           submission and post-market work share that project’s context.
         </div>
         <div className="launch-foot">
-          <Button onClick={onOpenProjects}>Open projects</Button>
+          <button type="button" className="btn primary" onClick={onOpenProjects}>Open projects</button>
         </div>
         <details style={{ marginTop: 16 }} open={expanded}>
           <summary style={{ cursor: 'pointer' }}>Feature access ({features.length})</summary>

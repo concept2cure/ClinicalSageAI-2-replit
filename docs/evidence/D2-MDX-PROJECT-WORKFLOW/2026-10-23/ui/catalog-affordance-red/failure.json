@@ -1,0 +1,231 @@
+{
+  "passed": false,
+  "error": "AssertionError [ERR_ASSERTION]: Catalog project action needs the existing shell button affordance: {\"height\":40,\"padding\":0,\"border\":0}",
+  "checks": [
+    {
+      "check": "510(k) shows engineering/quality filing ownership, snapshot cadence and declared applicability without invented completion",
+      "passed": true
+    },
+    {
+      "check": "Native workstream disclosure and action retain visible keyboard focus; existing engineering route and AnA callback carry the actual synthetic project name, discipline and deliverables",
+      "passed": true,
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "actionFocus": {
+        "focused": true,
+        "outline": "solid",
+        "width": "2px"
+      },
+      "navigation": "device-engineering",
+      "ask": "For the open project Synthetic device Alpha, prepare the design controls work with R&D / Systems Engineering. Use the project's recorded evidence to identify inputs, gaps, deliverables and review handoffs. Deliverables: Design & development plan; Design inputs / outputs with traceability matrix; Design verification protocols and reports; Design history file (DHF) index."
+    },
+    {
+      "check": "Specialist bench work uses project Evidence, writing uses Author, and eSTAR assembly reaches the existing 510(k) surface",
+      "passed": true
+    },
+    {
+      "check": "MDR CER has clinical ownership, qualified evaluation and literature contributors with its living-update cadence and existing CER destination",
+      "passed": true
+    },
+    {
+      "check": "IVDR PER uses analytical/clinical performance and PMPF with the diagnostic evidence route, distinct from MDR CER",
+      "passed": true
+    },
+    {
+      "check": "Recorded secondary MDR/IVDR filings share each evidence workstream once while retaining primary 510(k) and distinct evaluation destinations",
+      "passed": true,
+      "feeds": "Contributors\nLaboratory Specialists · Biostatistics / Epidemiology · Quality Assurance / Quality Systems\nApplicability\nTailor deliverables and acceptance criteria to the recorded product, pathway, claims and justified evidence needs.\nInputs from\nDesign controls · Risk management\nFeeds\n510k: Performance testing – analytical · ivdr: Analytical performance report"
+    },
+    {
+      "check": "Expanded multi-filing workstreams and their action buttons fit a 390px viewport",
+      "passed": true,
+      "viewport": 390,
+      "scroll": 390
+    },
+    {
+      "check": "Dark workflow body and discipline-owner text meet 4.5:1 contrast; canonical v2 workflow action sizing is present",
+      "passed": true,
+      "colors": {
+        "background": "rgb(38, 38, 36)",
+        "text": "rgb(232, 230, 220)",
+        "owner": "rgb(176, 174, 165)",
+        "button": "rgb(232, 230, 220)",
+        "buttonBackground": "rgba(0, 0, 0, 0)",
+        "buttonHeight": "32px",
+        "buttonPadding": "14px"
+      },
+      "textContrast": 12.116767964724726,
+      "ownerContrast": 6.817942542636305
+    },
+    {
+      "check": "De Novo submission assembly reaches existing project Author documents without relabeling the filing as 510(k)",
+      "passed": true
+    },
+    {
+      "check": "Unreadable additional filings are explicit and unavailable feature actions retain the project Evidence fallback",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/catalog",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/license",
+      "query": ""
+    }
+  ],
+  "unexpectedRequests": [],
+  "browserErrors": [],
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "sha256": "3c2d5e02c05f70940717c4cbedb16f1591f2c2b46db41a0c7bd66fb7ea2f8336"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+      "sha256": "13751478538065b414c8a643e29bbac3cf1b77f84efce503b50944b318cc475f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "sha256": "017a1c39c142d27272b0ea4eaf27e22c1b683937eac3e9705ea7498656d3ccc4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MdxCatalogSolution.tsx",
+      "sha256": "dff6b69e323b6265b8e78c86321c04d7192b801e9e67d2848bdf6788eb9761d5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "sha256": "b6ef55d17f8b86de6ab74d49ebfab2330ce83f2495acd2f98a14a2b1fdb9422c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/programSequence.ts",
+      "sha256": "d71e1a662e18e1b62be14167757a7b1f3eb941118d0b8520a7f64cf8a6dee6b5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "sha256": "fb27293457be5e8e0c60c70160f63530f4c17c8f2593d3710a24b78e78ba7349"
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "sha256": "920f3698dac5fbe0c2c1d78a1558f5f10128cb948f6f759a3cdc993506a1480a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/catalogWorkflows.ts",
+      "sha256": "2610f896670528e7ce6f1afb8aaca3ce67d06a234e4f2f1e8dd4f9fe31a28808"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceContext.ts",
+      "sha256": "34c1c9de2db15bfefe23a63ac6197b5412657a1e317e8f00db71e9e533287bf5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceAvailable.ts",
+      "sha256": "bef88805540c6b20722bfbafa6a86b34fd3071dc89440efb97f611748bbf6456"
+    },
+    {
+      "path": "shared/regulatory/work-packages.ts",
+      "sha256": "959830cf449e49446be6a667c8392f33512f78fc4341cccd05b712369da2c454"
+    },
+    {
+      "path": "shared/constants/mdx-project-features.ts",
+      "sha256": "743756372655d218ae03a82c4680f40b723e26117c3245f52a4a8a956e522d65"
+    },
+    {
+      "path": "shared/constants/launch-scope.ts",
+      "sha256": "1ce4daaea6d6c0d8c98c5d52ff4a316e88fda4864012a8079cfc2d4b122291c5"
+    },
+    {
+      "path": "client/src/components/ui/button.tsx",
+      "sha256": "44ca1b2b396b7c15a9b4bdc38de0685a82b72aa407a18a3b7ba5e72ed27fe30b"
+    },
+    {
+      "path": "client/src/index.css",
+      "sha256": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b"
+    },
+    {
+      "path": "postcss.config.js",
+      "sha256": "fe78f76eb483fdc486e5f0ba4aabe66c85575aeec3c2d3e89f7024fc4632e67f"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "sha256": "d6e1d64a798c47f437bb6279404a988aca64e3acd0897fcb8eacc94e849104b3"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surfaces-v2.css",
+      "sha256": "1f9d1ddd7b5a3b1f1ed5e609e346facc6f5a71001de541862fcac9d81ad064c3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "sha256": "5de39b9fa3d594254ca0b9a1f7f632e17ad32e31007f26c0198622ddff4cfa40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "sha256": "3e2727dcfbe4d5b1499a59cbf1d44c21cd6c96c8456a96dd3e7a19467ad83647"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/project-home-v2.css",
+      "sha256": "82443905c6f3c4985a0e4fa69804d03dad4416b2e33beea1eb7047639e57c006"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/mdx-project-workflow.css",
+      "sha256": "209ef1eabdf2f831226e31383371207f8d6f3458ca5ce029c22ac41dfa7ea0ce"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/workflows-v2.css",
+      "sha256": "a75ed4dcfe3eae52a7e3d25c98293f4db808817bdeb7dee59dbaba2f5fcb0979"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-probe.tsx",
+      "sha256": "26ebf1b97e06449ad0a4ef38b9f986e50b97b1ec99be2304f27be0d69faa321f"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-fixtures.mjs",
+      "sha256": "c4af3bcb556b2c2b349301e41ff37b55320fb23a256dfc4d4865b6478316476a"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-check.mjs",
+      "sha256": "fa29677dab595fec69da622e132dfb1bde284924af25395fd55bea782e8aadb6"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-index.html",
+      "sha256": "74f179b109d21f0a4911d5689b865b4b24d4231d4a9cd65209f7887fc8656dba"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-server.mjs",
+      "sha256": "3f750069e3eaf5c10f037b2b7157b3174c515514fc59c4708d2a0ebaf95a4854"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs",
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    },
+    {
+      "path": "scripts/visual-qa/playwright.mjs",
+      "sha256": "365bc31bba210b40fc103c71dee1467003503b3053fbc67530c9e5c0a7932a04"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+      "sha256": "5b33f949d0d364cbd3757ac96758a6e5b8d154b77debacd41f462a8441c8619d"
+    }
+  ]
+}

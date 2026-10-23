@@ -248,13 +248,11 @@ function mapSource(sourceEntityType: string | null): string {
   return 'unified';
 }
 
-/** Postgres "relation does not exist" — fail closed to an empty board. */
+/** Postgres "relation does not exist" — report the store as unread, including
+ * the driver error wrapped by Drizzle's node-postgres adapter. */
 function isMissingTable(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    (error as { code?: string }).code === '42P01'
-  );
+  const e = error as { code?: string; cause?: { code?: string } } | null;
+  return e?.code === '42P01' || e?.cause?.code === '42P01';
 }
 
 /** The cross-store view's status, in the board's column vocabulary. */
@@ -497,7 +495,7 @@ export default function createTaskBoardRoutes(): Router {
 
       // Every other store, through the one cross-store view. Its own read of
       // unified_tasks is the board's store above, so only the others count here.
-      const view = await loadUnifiedWork({ organizationId, includeCompleted: true });
+      const view = await loadUnifiedWork({ organizationId, includeCompleted: true }, db);
       for (const [table, outcome] of Object.entries(view.sources) as Array<[UnifiedWorkSourceTable, { ran: boolean }]>) {
         if (table !== 'unified_tasks' && !outcome.ran) unreadSources.push(table);
       }

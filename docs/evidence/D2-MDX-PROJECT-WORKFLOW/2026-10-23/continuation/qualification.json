@@ -1,0 +1,132 @@
+{
+  "branch": "concept2cure-v2",
+  "canonical_base": "8c89c43b05363a6b9e0b1482c833430b765044b3",
+  "checked_local_source_revision": "b8c4f5c5abac7572b2dd7838b7b1592b57da255f",
+  "product_model": "Capabilities required along a project journey; no customer-facing app-count product model. Existing route/module IDs retain access governance internally.",
+  "source_files": [
+    {
+      "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+      "git_blob": "7ec418a099caf0f829723cbf7ca022fa4f56d01d",
+      "sha256": "22fe0d00d0879ee88353b0d42a481587bb8adffcf35e7b1d526b5ce31cf2480b",
+      "bytes": 23634
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+      "git_blob": "1882a3713effacedf1da4fa8aa1ddecb676886c8",
+      "sha256": "f9f4e5ad6ab3e4cdbb58b1ff328fa8565ad41816b9797e3be5118b15cff08699",
+      "bytes": 6755
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx",
+      "git_blob": "d30f4be36f09125d2904c654ab62f7de35762a1b",
+      "sha256": "f0eb3b646e0d3121b624c57e61be4d914f2cf2e3d5bc1e4d5226695387d67fae",
+      "bytes": 8065
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MdxCatalogSolution.tsx",
+      "git_blob": "bab53f82623b70d51e250a6af35ae1b8e3a4ba00",
+      "sha256": "c8656f107c5aea318f1bcf700210036cba70b0a046ea94a4a0d89f394caf6204",
+      "bytes": 2253
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+      "git_blob": "575a08b33b21a49adc21beb5e5873078bbe74d9c",
+      "sha256": "13751478538065b414c8a643e29bbac3cf1b77f84efce503b50944b318cc475f",
+      "bytes": 9400
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "git_blob": "87b16f15f22ae5f1ade0734a0c8c1f38de792e2d",
+      "sha256": "e233bb618cd14e4400851bc927ac968fac857539209926a7e52a595714bdf632",
+      "bytes": 41278
+    }
+  ],
+  "automated_tests": {
+    "files": 16,
+    "tests": 261,
+    "passed": true,
+    "receipt": "continuation/merged-tests.txt.gz"
+  },
+  "browser": {
+    "passed": true,
+    "checks": 14,
+    "source_pins": 38,
+    "unexpected_requests": 0,
+    "page_errors": 0,
+    "receipt": "ui/browser-result/result.json",
+    "synthetic": true,
+    "authenticated_client_acceptance": false
+  },
+  "production_build_passed": true,
+  "browser_harness_lint": {
+    "errors": 0,
+    "warnings": 0,
+    "receipt": "continuation/browser-lint.json"
+  },
+  "receipts": [
+    {
+      "path": "continuation/de-novo-handoff-red.txt.gz",
+      "raw_sha256": "2876b65d8be1bc38f66719f2052af0b9b44fe47263aba1e06a03a92b305af3a6",
+      "stored_sha256": "96e3ba7c9870b6298986ce6040e3a3539eb59769a96989046dfbffc04f8b6eb7",
+      "stored_bytes": 2344
+    },
+    {
+      "path": "continuation/journey-grounding-red.txt.gz",
+      "raw_sha256": "6cd68d2d9a37e07229d66386d13617c6fd1457ca64f19fec73fa42d788d91220",
+      "stored_sha256": "f8fb29fcf1a1312a16becadbc3359605677d99096db0e87904b2fa59d209ac2e",
+      "stored_bytes": 3859
+    },
+    {
+      "path": "continuation/merged-tests.txt.gz",
+      "raw_sha256": "df3c4694722df661654010dc7048ee4a27e0e2fca5e57ccd5cdb843de68840cc",
+      "stored_sha256": "5b2fe097b25f932613e60b79959a6240bcd5f6fdce7ac75a8cb41b474bf14a00",
+      "stored_bytes": 10704
+    },
+    {
+      "path": "continuation/production-build.txt",
+      "raw_sha256": "e1bde57938c1bd10cdae70a87145815754023f21df9382d694b4107f648b771b",
+      "stored_sha256": "e1bde57938c1bd10cdae70a87145815754023f21df9382d694b4107f648b771b",
+      "stored_bytes": 16567
+    },
+    {
+      "path": "continuation/companion-tests.txt",
+      "raw_sha256": "468bb93d088afd3441659a4f65c3df9b6a16628bc30d05c6649d98d23e22f028",
+      "stored_sha256": "468bb93d088afd3441659a4f65c3df9b6a16628bc30d05c6649d98d23e22f028",
+      "stored_bytes": 198
+    },
+    {
+      "path": "continuation/browser-lint.json",
+      "raw_sha256": "833f3e8743de0f8f686d03d3222be321015c07bb54ddd40d4a41d9d764818556",
+      "stored_sha256": "833f3e8743de0f8f686d03d3222be321015c07bb54ddd40d4a41d9d764818556",
+      "stored_bytes": 1130
+    },
+    {
+      "path": "continuation/full-prepush.txt",
+      "raw_sha256": "63a66a3eb716bf3395f8fa52ef495cadc2aca0a8307a8fb8759af11c9bc79dc1",
+      "stored_sha256": "63a66a3eb716bf3395f8fa52ef495cadc2aca0a8307a8fb8759af11c9bc79dc1",
+      "stored_bytes": 13687
+    },
+    {
+      "path": "continuation/launch-scope-api.txt",
+      "raw_sha256": "4d9afb2c4386f9400127c15668f5493be023a28dea59e019ee06a669f9c7b5ff",
+      "stored_sha256": "4d9afb2c4386f9400127c15668f5493be023a28dea59e019ee06a669f9c7b5ff",
+      "stored_bytes": 230
+    }
+  ],
+  "full_pre_push_status": "passed",
+  "live_deployment_verified": false,
+  "full_typecheck": {
+    "errors": 0,
+    "exit": 0,
+    "receipt": "continuation/full-prepush.txt"
+  },
+  "launch_scope_api": {
+    "named_paths": 530,
+    "refused": 0,
+    "receipt": "continuation/launch-scope-api.txt"
+  },
+  "changed_file_lint": {
+    "errors": 0,
+    "warning_delta": 0
+  }
+}

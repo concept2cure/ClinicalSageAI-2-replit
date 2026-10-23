@@ -226,3 +226,34 @@ categories remain disclosed. Exact command output is retained as
 `isolation-red.txt`, `preview-red.txt`, `isolation-green.txt`, and
 `isolation-eslint.txt` in the evidence directory. Root's final combined gates
 supersede these owned-scope receipts for the integrated source tree.
+
+## Browser follow-through of the project handoffs
+
+The continuation audit reuses the actual-component Vite/Chromium harness in
+`docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/`. The MDX fixture imports
+the shipped catalog, `ProjectHome` and `ProjectMdxWorkflow`; synthetic request
+interception is confined to evidence tooling. It neither recreates those screens
+nor proves an authenticated deployed session.
+
+The existing `.btn` / `.btn.ghost` recipe in
+`client/src/concept2cure/v2/styles/app-v2.css` supplies the shell's button sizing,
+padding, borders and focus treatment. The shell also resets generic button
+styles, overriding the utility-only controls originally used in the MDX
+workstream. The workstream now reaches that existing button recipe. No new
+button component or global reset is introduced.
+
+The same native recipe supplies the MDX catalog's project entry and the host's
+return-to-project controls. The founder reaffirmed that the platform has no
+customer-facing app-count model: these are capabilities required along a
+project journey. The catalog's AnA context now describes those stages and
+feature access; it no longer publishes `totalApps` / `enabledApps` or groups
+capabilities under an `apps` fact. Existing technical route/module identifiers
+and access enforcement remain internal implementation contracts.
+
+Where a filing has no suitable specialist assembly destination, the existing
+Author stage is the handoff for its assembly documents. In particular, De Novo
+assembly must not fall back to Evidence or be relabeled as a 510(k) workspace.
+The existing eSTAR helper supports De Novo, while the surrounding 510(k) view
+still carries predicate/SE-specific content; its existence does not justify
+routing De Novo strategy through that entire view. A regression first fails
+on the missing Author handoff, then passes with the corrected destination.

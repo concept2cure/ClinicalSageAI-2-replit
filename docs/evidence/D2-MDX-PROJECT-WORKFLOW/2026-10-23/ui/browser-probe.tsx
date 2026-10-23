@@ -1,0 +1,45 @@
+/** Imports shipped components. Only fixture selection and callback observation live here. */
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '../../../../../client/src/services/portal/authService';
+import { Apps } from '../../../../../client/src/concept2cure/v2/surfaces/AdminSurfaces';
+import { ProjectHome } from '../../../../../client/src/concept2cure/v2/surfaces/ProjectHome';
+import { ProjectMdxWorkflow, type MdxWorkflowProject } from '../../../../../client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow';
+import type { SurfaceViewProps } from '../../../../../client/src/concept2cure/v2/surfaceViews';
+import { scenarios } from './browser-fixtures.mjs';
+import '../../../../../design-system/colors_and_type.css';
+import '../../../../../client/src/index.css';
+import '../../../../../client/src/concept2cure/v2/styles/app-v2.css';
+import '../../../../../client/src/concept2cure/v2/styles/surfaces-v2.css';
+import '../../../../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '../../../../../client/src/concept2cure/v2/styles/coverage-v2.css';
+import '../../../../../client/src/concept2cure/v2/styles/surface-text-ramp.css';
+
+const params = new URLSearchParams(location.search);
+const key = params.get('filing') || '510k';
+const scenario = scenarios[key as keyof typeof scenarios] || scenarios['510k'];
+window.C2C_PROJECT = { id: scenario.project.id, title: scenario.project.name, ws: 'MDX', product: scenario.project.product_name };
+const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+function Probe() {
+  const [observed, setObserved] = React.useState({ navigation: '', stage: '', ask: '' });
+  const onNav = (navigation: string) => setObserved(old => ({ ...old, navigation }));
+  const onAsk = (ask: string) => setObserved(old => ({ ...old, ask }));
+  const surface = { id: params.get('view') === 'catalog' ? 'apps' : 'project-home', label: 'Synthetic MDX qualification' } as SurfaceViewProps['surface'];
+  return <QueryClientProvider client={client}><AuthProvider><div data-theme="light" className="c2c-v2" style={{ minHeight: '100vh' }}>
+    <aside style={{ padding: '10px 24px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+      Synthetic browser qualification · intercepted records · no authenticated client acceptance, production write, live signature or agency transmission
+    </aside>
+    {params.get('view') === 'catalog'
+      ? <Apps surface={surface} onAsk={onAsk} onNav={onNav} segment="medtech" />
+      : params.get('view') === 'home'
+        ? <ProjectHome surface={surface} onAsk={onAsk} onNav={onNav} segment="medtech" />
+        : <main className="page-inner"><ProjectMdxWorkflow project={scenario.project as MdxWorkflowProject}
+          otherFilings={scenario.filings} marketsState={params.get('markets') === 'unavailable' ? 'unavailable' : 'ready'}
+          onNav={onNav} onAsk={onAsk} available={() => params.get('locked') !== 'true'}
+          onStage={stage => setObserved(old => ({ ...old, stage }))} /></main>}
+    <output aria-label="Observed callbacks" style={{ display: 'block', padding: 16, overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{JSON.stringify(observed)}</output>
+  </div></AuthProvider></QueryClientProvider>;
+}
+createRoot(document.getElementById('root')!).render(<Probe />);

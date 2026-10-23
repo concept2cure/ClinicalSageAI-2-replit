@@ -1,0 +1,25 @@
+# W2 / D1 — fix catalog and task-board runtime failures
+
+Baseline: `381a42fda` on `concept2cure-v2`. User reports the app could not load its catalog and task board. The deployed URL/status is not yet supplied; do not claim a confirmed deployment incident cause. Evidence: `docs/evidence/W2/2026-10-23-catalog-task-board-runtime/`.
+
+## What already exists
+
+- `client/src/utils/authToken.ts` resolves the active tab/remembered bearer and already has a JWT organization reader. Its generic organization/header readers prefer shared browser storage, which can disagree with a tab's bearer. `client/src/lib/queryClient.ts` supplies these headers to catalog, board, query and upload requests. Extend these readers; do not introduce another session store.
+- `client/src/services/portal/authService.tsx` and the existing login surfaces own login/logout/refresh. Session tokens can be per-tab while organization selection is global. Existing captured-actor headers protect governed ceremonies. Keep those protections and token storage semantics.
+- `server/middleware/enterprise-security.ts` refuses an organization header that differs from the verified bearer. The global auth boundary establishes identity and tenant scope. These checks remain authoritative; client claims are only consistency hints.
+- `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx` originally owned Apps and now re-exports `WorkflowCatalog.tsx` after the canonical workflow-discovery completion. That existing surface still reaches `/api/module-subscriptions/catalog`, license and navigation through the canonical Apps surface. `server/routes/module-subscriptions.ts`, `server/services/license-manager.ts`, `available_modules` and `module_subscriptions` own the catalog and grants. Routes are statically mounted before service startup. Their required incremental migrations are in the deploy set. No static catalog fallback or fabricated entitlement is permitted.
+- `client/src/concept2cure/v2/surfaces/TaskBoard.tsx` reaches the existing authenticated board route. `server/routes/taskBoard.routes.ts` reads its own tasks/dependencies and composes `server/services/unified-work/unified-work-view.ts`. It already reports unread stores explicitly, but its missing-table check misses Drizzle's wrapped driver error. The client already has shared shape guards in `dataConnect.tsx`; an invalid successful response must not become an empty board.
+- Existing token/transport, catalog, board, cross-store and native database suites cover the separate layers, but mock boundaries leave the shared header drift and real Drizzle wrapping unproven. Existing catalog/board UI failure states hide HTTP distinctions. No parallel board, catalog, task writer, auth boundary or AnA tool is needed.
+- Searches covered apps/module catalog/license, task board/task management, tenant/auth headers, route registration, services, schema/migrations, canonical UI and AnA references. Deleted-history searches found retired AppsPage, ProjectTaskBoard, MissionControl board and service shells; none replaces the canonical implementations above.
+
+## Contract
+
+1. Generic authenticated headers use the organization carried by the same active bearer, ahead of stale shared storage. Reuse the existing JWT reader; no token/storage mutation on reads, no new credential mechanism. Preserve unauthenticated/legacy fallback compatibility, explicit captured actor headers and server verification. Check callers before choosing the smallest resolver change.
+2. Reproduce stale organization storage versus per-tab bearer using actual transport and real HTTP tenant enforcement. Correct headers must reach existing catalog/board; mismatching headers must still be rejected. Exercise refresh, remember-me, cross-tab and logout behavior.
+3. The existing board's intended missing-store recovery recognizes real Drizzle-wrapped PostgreSQL missing-table errors. Keep unread-source metadata and never imply a full/empty board from an unread store. Other errors must remain failures. Use the existing request database in the cross-store read where supported, avoiding a second connection while a request holds one.
+4. Qualify the board's successful response shape through the shared guard; malformed containers/scalars and incomplete first-row keys remain visibly unavailable. The existing guard is not full per-record value validation and shared null/204 semantics remain unchanged. Do not fabricate tasks or change task write/approval/signoff behavior.
+5. Reproduce both defects before fixes. Run scoped regression tests, real local HTTP/browser checks against synthetic data, build, compiler and normal push gates. No new dependency, schema, migration, branch, PR, baseline relaxation or access bypass. Root owns integration/commit/push; workers own disjoint source/test scopes.
+
+## Limits
+
+This is a bounded runtime correction, not a D1 deployment or regulated-use qualification. A local reproduction cannot establish the user's live cause without the affected URL/logs. Missing deployment schema, credentials, external services and unrelated workflows remain explicit findings if encountered.

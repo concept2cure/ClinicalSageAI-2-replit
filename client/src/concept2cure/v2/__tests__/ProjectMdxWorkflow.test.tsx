@@ -47,6 +47,18 @@ describe('project MDX workflow', () => {
     expect(analytical[0].filingSectionsSupported.some(s => s.startsWith('510k:'))).toBe(false);
   });
 
+  it('hands De Novo assembly to project authoring while preserving its filing identity', () => {
+    const p = props();
+    render(<ProjectMdxWorkflow {...p} project={{ ...project, program_type: 'DE_NOVO', regulatory_path: 'de_novo' }} />);
+    const workflow = screen.getByTestId('pj-mdx-workflow');
+    expect(workflow.querySelector('h2')?.textContent).toContain('De Novo');
+    const assembly = workflow.querySelector('[data-work-package="submission-assembly"]')! as HTMLElement;
+    fireEvent.click(within(assembly).getByRole('button', { name: 'Open project documents' }));
+    expect(p.onStage).toHaveBeenCalledWith('author');
+    expect(p.onNav).not.toHaveBeenCalled();
+    expect(within(assembly).queryByRole('button', { name: 'Open eSTAR assembly' })).toBeNull();
+  });
+
   it('does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug', () => {
     expect(mdxProjectPlan({ ...project, program_type: 'HDE', regulatory_path: 'hde' })!.primary).toBeNull();
     expect(mdxProjectPlan({ ...project, product_type: 'drug', program_type: 'IND', regulatory_path: null })).toBeNull();

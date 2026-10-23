@@ -1,0 +1,13 @@
+{
+  "kind": "Chromium actual UI + actual app/native PostgreSQL; no intercepted responses; restored own table and retried same screen",
+  "partial": {
+    "message": "Couldn't load the task board\nThe board is incomplete: the board's own tasks could not be read. Retry to load the missing work.\nTry again",
+    "falseEmptyClaim": 0,
+    "retryVisible": true
+  },
+  "recovered": {
+    "savedTaskVisible": true,
+    "unavailableClaim": 0
+  },
+  "uncaughtErrors": []
+}

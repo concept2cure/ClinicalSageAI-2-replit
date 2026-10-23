@@ -1,0 +1,24 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /administrator|switched off|disabled/i. Input:
+
+'Software evidence\n' +
+  'Software evidence is turned off for this workspace.\n' +
+  'Turned off for this workspace\n' +
+  'Admin controls'
+
+    at file:///workspace/ClinicalSageAI-2-replit/docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-check.mjs:189:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Software evidence\n' +
+    'Software evidence is turned off for this workspace.\n' +
+    'Turned off for this workspace\n' +
+    'Admin controls',
+  expected: /administrator|switched off|disabled/i,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v22.23.4

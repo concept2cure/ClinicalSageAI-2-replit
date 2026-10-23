@@ -1,0 +1,69 @@
+{
+  "kind": "native PostgreSQL actual app, non-superuser RLS runtime, synthetic clone only; table renames and grant restored in finally",
+  "rows": [
+    {
+      "case": "missing unified_tasks",
+      "status": 200,
+      "count": 0,
+      "meta": {
+        "partial": true,
+        "unreadSources": [
+          "unified_tasks"
+        ]
+      }
+    },
+    {
+      "case": "missing task_dependencies",
+      "status": 200,
+      "count": 0,
+      "meta": {
+        "partial": true,
+        "unreadSources": [
+          "unified_tasks"
+        ]
+      }
+    },
+    {
+      "case": "permission denial remains failure",
+      "status": 500,
+      "count": null,
+      "error": "Failed to build task board"
+    },
+    {
+      "case": "restored",
+      "status": 200,
+      "count": 14,
+      "meta": {
+        "partial": false,
+        "unreadSources": []
+      }
+    },
+    {
+      "case": "20 concurrent board reads",
+      "elapsedMs": 561,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "allComplete": true
+    }
+  ]
+}
