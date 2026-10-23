@@ -12,7 +12,10 @@ const tests = [
   'client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts',
   ...['sourceAssemblyEntry.test.tsx','sourceDocumentStartChannel.test.tsx','sourceDocumentStartFlow.test.tsx'].map(file => 'client/src/concept2cure/v2/editor/__tests__/' + file),
 ];
-const initial = JSON.parse(readFileSync(`${root}/final-inputs.json`, 'utf8'));
+const inputFile = process.argv[2] ?? 'final-inputs.json';
+const phase = process.argv[3] ?? 'canonical';
+if (phase === 'ref-race') tests.push(...readFileSync(`${root}/ref-race-incoming-paths.txt`, 'utf8').split('\n').filter(file => /\.test\.tsx?$/.test(file)));
+const initial = JSON.parse(readFileSync(`${root}/${inputFile}`, 'utf8'));
 const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex');
 const verify = () => {
   const mismatches = Object.entries(initial.files).filter(([path, expected]) => !existsSync(path) || hash(path) !== expected).map(([path]) => path);
@@ -20,9 +23,9 @@ const verify = () => {
 };
 verify();
 const result = spawnSync(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.config.ts', ...tests], { encoding: 'utf8', maxBuffer: 30 * 1024 * 1024 });
-writeFileSync(`${root}/canonical-tests.txt`, `${result.stdout ?? ''}\n${result.stderr ?? ''}`);
+writeFileSync(`${root}/${phase}-tests.txt`, `${result.stdout ?? ''}\n${result.stderr ?? ''}`);
 verify();
-writeFileSync(`${root}/canonical-test-result.json`, JSON.stringify({ exitCode: result.status, tests, selectedInputsUnchanged: true }, null, 2) + '\n');
+writeFileSync(`${root}/${phase}-test-result.json`, JSON.stringify({ exitCode: result.status, tests, selectedInputsUnchanged: true }, null, 2) + '\n');
 process.stdout.write((result.stdout ?? '').slice(-2200));
 if (result.status !== 0) process.stderr.write((result.stderr ?? '').slice(-3000));
 process.exit(result.status ?? 1);
