@@ -140,6 +140,48 @@
       "sha256": "be8dde2d772420c0f3ad8cc198d8ee75d074447d1b6cdfbd6e86aad7945a62d6",
       "uncompressedBytes": 14304,
       "uncompressedSha256": "8d631bd814ac96096f1a290c47eccf7181383f762de6a3089dc77cf99300f566"
+    },
+    {
+      "file": "final-workflow-reconciled-build.txt.gz",
+      "bytes": 4718,
+      "sha256": "a3be844066b7b5f5d3ffb01e70038eccc201b4bf3156627767dab954be8e4c33",
+      "uncompressedBytes": 16493,
+      "uncompressedSha256": "6b8d9906257b9b8e3a222fedb656295ccbf923a37bb3005e4294a198c157a5a1"
+    },
+    {
+      "file": "final-workflow-reconciled-build-command.json.gz",
+      "bytes": 297,
+      "sha256": "8ef9ccbc2122fd1a836eec029537cca93e499e8770ffcdd361aeac05a7680908",
+      "uncompressedBytes": 404,
+      "uncompressedSha256": "9fe41334a00ba771a46a621cd50f181c6ad49baef1fdf3754e44641323e24249"
+    },
+    {
+      "file": "final-workflow-reconciled-build-source-before.json.gz",
+      "bytes": 522595,
+      "sha256": "b5ae449f165d526f0ef8072805473744f5198167275e48a2fbcce75f8f2209cb",
+      "uncompressedBytes": 1353039,
+      "uncompressedSha256": "8579eaba994e653ef5c53dc4721deb0d5ef8111579aa16cade0562490e029b5c"
+    },
+    {
+      "file": "final-workflow-reconciled-build-source-after.json.gz",
+      "bytes": 522595,
+      "sha256": "b5ae449f165d526f0ef8072805473744f5198167275e48a2fbcce75f8f2209cb",
+      "uncompressedBytes": 1353039,
+      "uncompressedSha256": "8579eaba994e653ef5c53dc4721deb0d5ef8111579aa16cade0562490e029b5c"
+    },
+    {
+      "file": "workflow-discovery-review.json.gz",
+      "bytes": 1892,
+      "sha256": "dbce92ce9b595f70bc27217c49c635667ea660d3cccbd54cbf6a3a2dfabdbf71",
+      "uncompressedBytes": 9603,
+      "uncompressedSha256": "694607d1f10c64223009bd1c069baaa9efd274ed72a4c0055fa6db99b45466d4"
+    },
+    {
+      "file": "workflow-discovery-merge.txt.gz",
+      "bytes": 2118,
+      "sha256": "3ceb132304180aa44783ebef4e0a9e9663c73c4dd8b3aa8c60ae7b05af0234c9",
+      "uncompressedBytes": 14697,
+      "uncompressedSha256": "dc60ccd9d7600e9f41a8f3fe030d140f508aa43cee1bada4919ee24c9621e81e"
     }
   ]
 }

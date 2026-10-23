@@ -21,7 +21,21 @@
     "finishedAt": "2026-10-23T20:24:30.242326+00:00"
   },
   "earlierSelectedBuildFiles": 10286,
-  "build": {
+  "finalCanonicalBase": "26a71d223ae20855157cc6cfed4214b47e7f74c3",
+  "typeOnlyBuiltAssetsComparison": {
+    "observedAt": "2026-10-23T20:33:28.334328+00:00",
+    "beforeAssets": 288,
+    "afterAssets": 288,
+    "allBuiltPublicAssetsUnchangedAcrossTypeOnlyFix": true,
+    "changedAssets": [],
+    "annotationDiff": "Import canonical type ApiResult; use ApiResult<unknown> for refusedWrite parameter after upstream optional-owner overload. No runtime behavior change."
+  },
+  "browserCaptures": {
+    "passed": 12,
+    "total": 12,
+    "scope": "Three serialized mounted artifact-pane states, two themes, two viewports; exact pre-annotation pins retained in browser packet."
+  },
+  "postApiBuild": {
     "argv": [
       "npm",
       "run",
@@ -37,19 +51,33 @@
     "elapsedSeconds": 36.427,
     "finishedAt": "2026-10-23T20:32:27.760566+00:00"
   },
-  "selectedBuildFiles": 10293,
-  "finalCanonicalBase": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
-  "typeOnlyBuiltAssetsComparison": {
-    "observedAt": "2026-10-23T20:33:28.334328+00:00",
-    "beforeAssets": 288,
-    "afterAssets": 288,
-    "allBuiltPublicAssetsUnchangedAcrossTypeOnlyFix": true,
-    "changedAssets": [],
-    "annotationDiff": "Import canonical type ApiResult; use ApiResult<unknown> for refusedWrite parameter after upstream optional-owner overload. No runtime behavior change."
+  "postApiSelectedFiles": 10293,
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:43:42.947606+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.537,
+    "finishedAt": "2026-10-23T20:44:06.484726+00:00"
   },
-  "browserCaptures": {
-    "passed": 12,
-    "total": 12,
-    "scope": "Three serialized mounted artifact-pane states, two themes, two viewports; exact pre-annotation pins retained in browser packet."
+  "selectedBuildFiles": 10296,
+  "workflowReview": "workflow-discovery-review.json.gz",
+  "compilerFirstRefusal": "compiler-first-refusal.json",
+  "correctedBackendFixture": "../backend/compiler-successor/README.md",
+  "postDiscoveryQualification": {
+    "passed": 115,
+    "files": 4,
+    "vitestSeconds": 15.76,
+    "sourcePins": 32,
+    "sourceStable": true,
+    "packet": "../client/post-discovery/README.md"
   }
 }
