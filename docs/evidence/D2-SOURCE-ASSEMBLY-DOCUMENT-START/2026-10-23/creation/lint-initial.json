@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-10-23T18:46:09.986457+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 0.983,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "green-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "2653f46d099d006ac5257caa8147d6a2ca31c0d43fdb661d7cfdd91d9b6bd23d",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "9bc9fe322c5ff563e0bee895c6badf99095fda7685ad4f41427318c7e715fc91",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx": "01880f333f63a2437552b2ae08cbbec0a7f5f7d964ad8fa35b5827408e8da7b1",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/C2CForm.tsx": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "client/src/concept2cure/v2/useDialog.ts": "d53dfb86826cd085e5cd486cd2c97a7764306a0d3acea30b337657822f4a5cf3",
+    "client/src/concept2cure/v2/ceremony.ts": "ef0368d2a486a90ca388c14e761af762f492d7a1a1e1bf0cd6e89ac4fe8d0047",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/concept2cure/v2/newDocumentAction.ts": "52a069ea721bdcf067b8d92b842efcb2587f56b42531ecdb017b50d87aff0712",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "2653f46d099d006ac5257caa8147d6a2ca31c0d43fdb661d7cfdd91d9b6bd23d",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "9bc9fe322c5ff563e0bee895c6badf99095fda7685ad4f41427318c7e715fc91",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx": "01880f333f63a2437552b2ae08cbbec0a7f5f7d964ad8fa35b5827408e8da7b1",
+    "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts": "aa55d41c2fe6b8e96004cea4533fc823e0b45e05d1debdb47bb9f83c0606a9b9",
+    "client/src/concept2cure/v2/C2CForm.tsx": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "client/src/concept2cure/v2/useDialog.ts": "d53dfb86826cd085e5cd486cd2c97a7764306a0d3acea30b337657822f4a5cf3",
+    "client/src/concept2cure/v2/ceremony.ts": "ef0368d2a486a90ca388c14e761af762f492d7a1a1e1bf0cd6e89ac4fe8d0047",
+    "client/src/concept2cure/v2/shellProject.ts": "20563ba2d357a8c10cbd7015b38593132d94b7fcfb8cb8968946ae9ab7c3cc26",
+    "client/src/concept2cure/v2/newDocumentAction.ts": "52a069ea721bdcf067b8d92b842efcb2587f56b42531ecdb017b50d87aff0712",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/utils/authToken.ts": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-initial.log.gz",
+  "rawGzipSha256": "f279e2df15cf3c1ce17d5a8b7ec91e87a8715940b9f1c7071d1575b58ab062ea",
+  "testSummary": []
+}

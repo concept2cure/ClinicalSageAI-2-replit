@@ -2,9 +2,10 @@ import React, { useId, useRef, useState } from 'react';
 import { ASSEMBLY_SOURCE_LIMIT, readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { clearEditorTarget } from '../editorTarget';
+import { setEditorTarget } from '../editorTarget';
 import { readShellProject } from '../shellProject';
 import { captureEditorDraftGuard } from './authoringDraftTransport';
+import { ceremonyOpen } from '../ceremony';
 import { useSourceAssemblyTarget, type SourceAssemblyDialogProps } from './useSourceAssemblyTarget';
 export type { SourceAssemblyDialogProps } from './useSourceAssemblyTarget';
 
@@ -49,8 +50,8 @@ function SelectedSources({ sources, titles }: Pick<SourceAssemblyDialogProps, 's
     {source.expectedChecksum && <div className="source-import-hash">SHA-256 {source.expectedChecksum}</div>}
   </li>)}</ul>;
 }
-function TargetFields({ target, id, external, onCreate }: {
-  target: ReturnType<typeof useSourceAssemblyTarget>; id: string; external: boolean; onCreate: () => void;
+function TargetFields({ target, id, onCreate }: {
+  target: ReturnType<typeof useSourceAssemblyTarget>; id: string; onCreate: () => void;
 }) {
   return <>
     {target.loading && <p role="status">Loading working documents…</p>}
@@ -63,20 +64,26 @@ function TargetFields({ target, id, external, onCreate }: {
       </select>
     </div>
     {!target.loading && !target.documents.length && !target.error && <p>No working documents are available in this project.</p>}
-    <p className="de-desc">To create one, use New document in the editor, then return here to select it.</p>
-    <button type="button" className="de-btn" disabled={target.opening} onClick={onCreate}>{external ? 'Open document editor' : 'Close to create a document'}</button>
+    <p className="de-desc">Start a new document with these selected sources, then preview and build in the editor.</p>
+    <button type="button" className="de-btn" disabled={target.opening} onClick={onCreate}>New document</button>
   </>;
 }
 function ScopedSourceAssemblyDialog(props: SourceAssemblyDialogProps) {
   const labelId = useId(); const targetId = useId();
   const target = useSourceAssemblyTarget(props);
+  const [createError, setCreateError] = useState<string | null>(null);
   const close = props.onClose;
   const dialogRef = useDialog(close);
   const project = readShellProject();
   const createRemedy = () => {
     if (target.invalid || target.opening) return;
+    if (ceremonyOpen()) { setCreateError('Finish or cancel the open governed form, then start a document.'); return; }
+    const current = captureEditorDraftGuard({ programId: props.programId, isCurrent: props.isCurrent });
     props.onClose();
-    if (props.onNav) { clearEditorTarget(); props.onNav('document-authoring'); }
+    if (!current()) return;
+    setEditorTarget({ docType: null, docId: null, programId: props.programId,
+      sourceDocumentStart: { version: 1, sources: props.sources } }, current);
+    if (current()) props.onNav?.('document-authoring');
   };
   return <div className="de-bd" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
     <div className="de de-source-import" role="dialog" aria-modal="true" aria-labelledby={labelId} tabIndex={-1} ref={dialogRef} data-testid="source-assembly-dialog">
@@ -90,7 +97,8 @@ function ScopedSourceAssemblyDialog(props: SourceAssemblyDialogProps) {
         <p className="de-desc">Opens the selected working document. Preview and build there, with or without AnA. No text is changed by opening it.</p>
         <SelectedSources sources={props.sources} titles={props.titles} />
         <p className="de-desc">The editor verifies the selected source versions before building. Retained readable data can be used when the original file is unavailable.</p>
-        <TargetFields target={target} id={targetId} external={!!props.onNav} onCreate={createRemedy} />
+        {createError && <div className="de-err" role="alert">{createError}</div>}
+        <TargetFields target={target} id={targetId} onCreate={createRemedy} />
         </>}
       </div>
       <div className="de-f"><button type="button" className="de-btn" onClick={close}>Cancel</button>

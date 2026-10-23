@@ -1,0 +1,13 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringIdentifiedCreationRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringSectionCreationRecovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+    "client/src/concept2cure/v2/__tests__/useDialogFocusTrap.test.tsx",
+    "client/src/concept2cure/v2/__tests__/c2cFormA11y.test.tsx"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "reviewType": "AI read-only peer review, not human acceptance",
+  "at": "2026-10-23T19:06:13.638324+00:00",
+  "scope": [
+    "DocumentWorkbench.tsx",
+    "workbenchLeaveTarget.ts",
+    "sourceDocumentStartFlow.test.tsx",
+    "creator and channel integration"
+  ],
+  "blockingFinding": "Dirty default-selected canvas could be replaced by reordered refreshed inventory before leave guard.",
+  "reproduction": "dirty-creation-red.json: 1 failed, 16 skipped; no declared source drift",
+  "correction": "Pin current document when admitting document-start, preserve dirty bookkeeping until actual save/navigation, stage delivery after canonical form close, pass original source intent separately from staging scope/navigation guard.",
+  "finalVerdict": "No remaining blocking issue found in final read-only root review.",
+  "uiReview": "Same existing chooser, form, picker, editor and classes. No additional modal trap, writer or automatic build/AnA action.",
+  "limits": "Final compiler/build/gates and publication belong to root; no human/provider/agency outcome inferred."
+}
