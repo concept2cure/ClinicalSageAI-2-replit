@@ -298,12 +298,13 @@ describe('the signature a diverged filing refuses, and the way back', () => {
     expect([refused.status, refused.body.error.code], JSON.stringify(refused.body)).toEqual([409, 'FILING_DIVERGED']);
     /* It names what diverged and how to reconcile it: an error that says only
        "no" leaves the signer nowhere. */
-    expect(refused.body.error.message).toMatch(/section 2\.6[\s\S]*Re-file it from the editor/);
+    expect(refused.body.error.message).toMatch(/section 2\.6[\s\S]*Re-file saved text/);
     /* NOTHING was signed — not even the section that matched. One act, one document. */
     expect(await statuses(f.doc)).toEqual({ '2.5': 'drafted', '2.6': 'drafted' });
     expect(await q(`SELECT 1 FROM authoring_signatures WHERE doc_id = $1`, [f.authoringDocId])).toHaveLength(0);
 
-    /* The recovery the message names: re-file it, then sign again. */
+    /* A governed ordinary content save also restores agreement. The unchanged
+       saved-text action is covered by the native Authoring contract suite. */
     expect((await save(f.sectionIds['2.6'], 'Text the signer saw, re-filed.')).status).toBe(200);
     const signed = await sign();
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);

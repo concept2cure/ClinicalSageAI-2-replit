@@ -55,6 +55,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { DocumentWorkbench } from '../editor/DocumentWorkbench';
 import type { Editor } from '@tiptap/core';
 
 function ok(payload: unknown) {
@@ -105,6 +106,35 @@ beforeEach(() => {
       return ok({ success: true, revision_created: true, section: { ...SECTIONS.sections[0], content: 'EDITED', revision_count: 3 }, ...(filing ? { filing } : {}) });
     }
     return ok({ success: true });
+  });
+});
+
+describe('deliberately re-filing unchanged saved text', () => {
+  const documentId = '11000000-0000-4000-8000-000000000001';
+  const sectionId = '22000000-0000-4000-8000-000000000001';
+  const programId = '33000000-0000-4000-8000-000000000001';
+  const filingDocumentId = 'doc_filing_contract';
+  const updatedAt = '2026-10-23T10:00:00.000Z';
+  const savedDocument = { ...DOCS.documents[0], id: documentId, c2c_document_id: filingDocumentId, client_program_id: programId };
+  const savedSection = { ...SECTIONS.sections[0], id: sectionId, doc_id: documentId, updated_at: updatedAt };
+
+  it('offers a deliberate filing action without making an arbitrary edit or ordinary save', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url.split('?')[0] === `/api/authoring/docs/${documentId}`)
+        return ok({ document: savedDocument, access: { edit: { allowed: true, reason: null } } });
+      if (url.split('?')[0] === `/api/authoring/docs/${documentId}/sections`) return ok({ sections: [savedSection] });
+      return ok({ success: true, sections: [], documents: [] });
+    });
+    render(<DocumentWorkbench docs={[savedDocument]} docsState="ready" status="all" reloadDocs={vi.fn()}
+      pinnedDocId={documentId} programId={programId} onNav={vi.fn()} />);
+    await waitFor(() => expect(canvasText()).toBe(savedSection.content));
+    const ordinarySave = screen.getByTestId('save-section') as HTMLButtonElement;
+    expect(ordinarySave.disabled).toBe(true);
+    const refile = screen.getByRole('button', { name: 'Re-file saved text' }) as HTMLButtonElement;
+    await waitFor(() => expect(refile.disabled).toBe(false));
+    fireEvent.click(refile);
+    expect(screen.getByRole('dialog', { name: 'Re-file saved text' })).toBeTruthy();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 });
 

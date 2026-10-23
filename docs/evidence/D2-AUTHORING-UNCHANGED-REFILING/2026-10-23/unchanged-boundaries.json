@@ -1,0 +1,97 @@
+{
+  "baseCommit": "0a7abf314",
+  "qualifiedCombinedSourceCommit": "90facc53e10a8047627b54c11583864a8a966cee",
+  "unchanged": 11,
+  "reviewedDifferences": 3,
+  "files": [
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "sha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "qualifiedSha256": "f7b4c4672dc2e7a460d19cbd0eeb726255a960d4cbb4a2e699958601d6a3a51d",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "34bf78d7ad240c5d149f00642bb0b06d41afbb9435f0f2da61acc585ea200515",
+      "qualifiedSha256": "41afd5a251f38e70c62e7b81ba1b069fe7d31940c8abee111aaf2f23bfadda6a",
+      "unchanged": false,
+      "reviewedChange": "Reviewed incoming canonical Vault rendition-version completion.",
+      "matchesIncomingUpstreamBytes": true
+    },
+    {
+      "path": "server/services/authoring/authoring-vault-filing-receipt.ts",
+      "sha256": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+      "qualifiedSha256": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/c2c/commit-section-to-filing.ts",
+      "sha256": "bcc168b8b4e2286f1e86bca2ced290dc959a71a4bcc98defca1a49113e269c74",
+      "qualifiedSha256": "bcc168b8b4e2286f1e86bca2ced290dc959a71a4bcc98defca1a49113e269c74",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/c2c/filing-section-target.ts",
+      "sha256": "d881a3e6b80a35cce6179d506edf330451c3e65696df2090260b1699b96b9df4",
+      "qualifiedSha256": "77a86e725ab70fbdd10270f814aacc374efaef1b16ca3afa3742acaa41288d9e",
+      "unchanged": false,
+      "reviewedChange": "Approved extraction of canonical contributor membership, preserving existing assembly."
+    },
+    {
+      "path": "server/services/pdf-converter.ts",
+      "sha256": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230",
+      "qualifiedSha256": "82bf47da13ea662f9ef54793b6ac44d43efbbdf9430f95271a0abda35cfbb230",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/vault/vault-ingest.service.ts",
+      "sha256": "be522c7ceb8b5fc118f9e0402591599cd837850bec553decb58f680547056586",
+      "qualifiedSha256": "be522c7ceb8b5fc118f9e0402591599cd837850bec553decb58f680547056586",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/vault/vault-version-checkin.ts",
+      "sha256": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+      "qualifiedSha256": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f",
+      "unchanged": false,
+      "reviewedChange": "Reviewed incoming canonical check-in completion.",
+      "matchesIncomingUpstreamBytes": true
+    },
+    {
+      "path": "server/services/company-documents/profile.ts",
+      "sha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+      "qualifiedSha256": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/ectd/leaf-source-resolver.ts",
+      "sha256": "9016278808333f0ae4d3fca9e6b43d46b988a1a86db41030ff83f5707ff78afc",
+      "qualifiedSha256": "9016278808333f0ae4d3fca9e6b43d46b988a1a86db41030ff83f5707ff78afc",
+      "unchanged": true
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "sha256": "aecaa9dec672caddf5b7d066b5370d6b147a94edc8cbd11b512e2a77c10b1e49",
+      "qualifiedSha256": "aecaa9dec672caddf5b7d066b5370d6b147a94edc8cbd11b512e2a77c10b1e49",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+      "sha256": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+      "qualifiedSha256": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/_shared/components/GovernedConfirmDialog.tsx",
+      "sha256": "3b89d47cac0846915fac7344dd925cf2184e9faf2926958e85a81f9feea46402",
+      "qualifiedSha256": "3b89d47cac0846915fac7344dd925cf2184e9faf2926958e85a81f9feea46402",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "sha256": "ec56e7281ab93cd0edf6edd6e9b5890dbae7d73e8fe2bc0f6b3e52a96c1bef88",
+      "qualifiedSha256": "ec56e7281ab93cd0edf6edd6e9b5890dbae7d73e8fe2bc0f6b3e52a96c1bef88",
+      "unchanged": true
+    }
+  ]
+}

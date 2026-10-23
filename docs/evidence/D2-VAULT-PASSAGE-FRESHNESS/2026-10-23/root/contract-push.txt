@@ -1,0 +1,458 @@
+From https://github.com/concept2cure/ClinicalSageAI-2-replit
+ * branch                concept2cure-v2 -> FETCH_HEAD
+   3b16fc98c..8cafe704d  concept2cure-v2 -> origin/concept2cure-v2
+Merge made by the 'ort' strategy.
+ .../dispatchApplicantReauthorization.test.tsx      |    39 +-
+ .../__tests__/submissionCenterLifecycleQa.test.tsx |    44 +-
+ .../v2/surfaces/SubmissionSeqWorkspaces.tsx        |     2 +-
+ ...NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md |    44 +-
+ .../HUMAN_CHECK.md                                 |    36 +
+ .../W5/2026-10-23-nonus-release-identity/README.md |   136 +-
+ .../artifact-manifest.json                         |   596 +
+ .../browser/README.md                              |    51 +
+ .../browser/artifact-manifest.json                 |    64 +
+ .../browser/check.mjs                              |   103 +
+ .../browser/execution.txt                          |   340 +
+ .../browser/index.html                             |     1 +
+ .../browser/probe.tsx                              |    39 +
+ .../browser/result/ema-attempted-held.png          |   Bin 0 -> 123300 bytes
+ .../browser/result/eu-renewal-reachable.png        |   Bin 0 -> 128319 bytes
+ .../browser/result/jp-outage-held.png              |   Bin 0 -> 70726 bytes
+ .../browser/result/jp-renewal-reachable.png        |   Bin 0 -> 128384 bytes
+ .../browser/result/result.json                     |   340 +
+ .../browser/result/unknown-unknown-region-held.png |   Bin 0 -> 124924 bytes
+ .../browser/server.mjs                             |    11 +
+ .../callers/README.md                              |   113 +
+ .../callers/fail-first-input-sha256.txt            |     5 +
+ .../callers/fail-first.txt                         |  2450 ++++
+ .../callers/first-green-attempt.txt                |  2569 ++++
+ .../callers/lint-first.txt                         |    26 +
+ .../callers/native-freeze-lock.txt                 |    59 +
+ .../callers/post-refactor-inputs.json              |    69 +
+ .../callers/post-refactor-inputs.sha256            |    28 +
+ .../callers/post-refactor-lint.txt                 |    22 +
+ .../callers/post-refactor-transmit.txt             |    29 +
+ .../callers/post-refactor-warning-ratchet.txt      |     2 +
+ .../callers/second-green-attempt.txt               |  3976 +++++
+ .../callers/shadow-fail-first-input-sha256.txt     |     2 +
+ .../callers/shadow-fail-first.txt                  |   281 +
+ .../typed-number-fail-first-input-sha256.txt       |     2 +
+ .../callers/typed-number-fail-first.txt            |    57 +
+ .../callers/ui/README.md                           |    44 +
+ .../callers/ui/existing-ui-cohort.txt              |    45 +
+ .../callers/ui/lint.txt                            |    15 +
+ .../callers/ui/refactored-inputs.json              |    30 +
+ .../callers/ui/refactored-lint.txt                 |    12 +
+ .../callers/ui/refactored-ui-cohort.txt            |    47 +
+ .../callers/ui/verified-inputs.json                |    21 +
+ .../callers/ui/verified-ui-cohort.txt              |    47 +
+ .../callers/verified-caller-cohort.txt             | 14525 +++++++++++++++++++
+ .../callers/verified-compile-cohort.txt            |   312 +
+ .../callers/verified-compile-lint.txt              |     0
+ .../callers/verified-inputs.json                   |    99 +
+ .../callers/verified-inputs.sha256                 |    28 +
+ .../callers/verified-lint.txt                      |    23 +
+ .../core/README.md                                 |    95 +
+ .../core/artifact-hashes.json                      |    16 +
+ .../core/fail-first-capture-binding.txt            |   304 +
+ .../core/fail-first-export-proof.txt               |  1506 ++
+ .../core/fail-first-legacy-integrity.txt           |    67 +
+ .../core/fail-first-organization-lock.txt          |   154 +
+ .../core/fail-first-submission-lock.txt            |   122 +
+ .../core/final-green.txt                           |  1855 +++
+ .../core/final-inputs.json                         |    29 +
+ .../core/final-lint.txt                            |    11 +
+ .../core/first-integration-test-vocabulary.txt     |  1020 ++
+ .../core/focused-green.txt                         |   885 ++
+ .../core/lint.txt                                  |    14 +
+ .../regression-invalid-pdf-fixture-inputs.json     |    21 +
+ .../core/regression-invalid-pdf-fixture.txt        |  1035 ++
+ .../native/README.md                               |    22 +
+ .../native/green-native-cohort.txt                 |    63 +
+ .../native/green-native-final.txt                  |    63 +
+ .../native/green-organization-lock.txt             |    13 +
+ .../native/inputs-final.json                       |    21 +
+ .../native/inputs.json                             |    21 +
+ .../red-organization-lock-corrected-fixture.txt    |   120 +
+ .../native/red-organization-lock.txt               |    68 +
+ .../review/README.md                               |    71 +
+ .../review/persisted-writer-eslint.json            |     1 +
+ .../review/persisted-writer-inputs.json            |    49 +
+ .../review/persisted-writer.txt                    |    62 +
+ .../review/reviewed-source-inputs.json             |    20 +
+ .../snapshots/README.md                            |   107 +
+ .../snapshots/continuation-green-inputs.sha256     |     8 +
+ .../snapshots/continuation-green-tests.txt         |   221 +
+ .../snapshots/continuation-red-inputs.sha256       |     4 +
+ .../snapshots/continuation-red-tests.txt           |   266 +
+ .../snapshots/continuation-scoped-lint.txt         |    21 +
+ .../snapshots/green-inputs.sha256                  |    13 +
+ .../snapshots/green-tests.txt                      |   230 +
+ .../snapshots/red-inputs.sha256                    |    10 +
+ .../snapshots/red-status-export-inputs.sha256      |     4 +
+ .../snapshots/red-status-export-tests.txt          |   115 +
+ .../snapshots/red-tests.txt                        |   816 ++
+ .../snapshots/release-route-red-inputs.sha256      |     4 +
+ .../snapshots/release-route-red-tests.txt          |   242 +
+ .../snapshots/scoped-lint.txt                      |    26 +
+ .../verification/build-final-inputs.json           |    26 +
+ .../verification/build-final.txt                   |   227 +
+ .../verification/build-inputs.json                 |    25 +
+ .../verification/build-merged-inputs.json          |    35 +
+ .../verification/build-merged.txt                  |   227 +
+ .../verification/build-published-inputs.json       |    47 +
+ .../verification/build-published.txt               |   227 +
+ .../verification/build-refiling-inputs.json        |    38 +
+ .../verification/build-refiling.txt                |   227 +
+ .../verification/build.txt                         |   227 +
+ .../verification/canonical-merge.json              |    26 +
+ .../verification/current-input-verification.json   |    84 +
+ .../verification/evidence-secret-scan.json         |     1 +
+ .../verification/evidence-secret-scan.txt          |     2 +
+ .../verification/final-input-verification.json     |   191 +
+ .../verification/merged-packaging-inputs.json      |   125 +
+ .../verification/merged-packaging.txt              |  1746 +++
+ .../merged-refiling-packaging-inputs.json          |   153 +
+ .../verification/merged-refiling-packaging.txt     |  2080 +++
+ .../verification/publication.json                  |    30 +
+ .../verification/push-accepted.txt.gz              |   Bin 0 -> 4390 bytes
+ .../push-environment-interrupted.txt.gz            |   Bin 0 -> 4256 bytes
+ .../verification/push-refiling-ref-race.txt.gz     |   Bin 0 -> 4585 bytes
+ .../verification/push-resume-ref-race.txt.gz       |   Bin 0 -> 4486 bytes
+ .../verification/push-type-refusal.txt.gz          |   Bin 0 -> 4608 bytes
+ .../verification/push-warning-refusal.txt.gz       |   Bin 0 -> 4426 bytes
+ .../verification/push-zero-errors-ref-race.txt.gz  |   Bin 0 -> 4487 bytes
+ .../verification/qualification.json                |   650 +
+ .../verification/regional-boundary-inputs.json     |    27 +
+ .../verification/regional-boundary.txt             |   392 +
+ .../verification/source-ci-snapshot.json           |     1 +
+ docs/work-orders/README.md                         |     2 +-
+ server/mcp/tools/catalog.ts                        |     1 +
+ ...rned-sign-esignature.pglite.integration.test.ts |    68 +-
+ server/routes/ectd-compile.ts                      |     8 +-
+ server/routes/submission-sign-release.ts           |    18 +-
+ .../__tests__/sign-payload-snapshot.test.ts        |    57 +
+ .../submission-orchestrator-continuation.test.ts   |    67 +-
+ .../__tests__/applicant-snapshot-coverage.test.ts  |    93 +-
+ .../__tests__/core-to-packager-fda-admin.test.ts   |     9 +-
+ .../export-application-identity.pglite.test.ts     |    81 +-
+ .../ectd/__tests__/nonus-identity-lock.pg.test.ts  |    89 +
+ .../__tests__/recorded-applicant-identity.test.ts  |    49 +-
+ .../release-signature-covers-sequence.test.ts      |    45 +-
+ .../ectd/__tests__/run-package-identity.test.ts    |    60 +
+ .../__tests__/sequence-release-signature.test.ts   |    23 +-
+ .../ectd/__tests__/signed-package-export.test.ts   |    32 +
+ server/services/ectd/assemble-from-core.ts         |     3 +-
+ server/services/ectd/package-from-core.ts          |     9 +-
+ server/services/ectd/package-identity.ts           |    41 +-
+ server/services/ectd/release-signature-status.ts   |     6 +-
+ server/services/ectd/run-package-identity.ts       |    11 +-
+ server/services/ectd/sequence-release-signature.ts |     5 +-
+ .../ectd/signed-manifest-covers-sequence.ts        |    68 +-
+ .../ectd-sequence-binding-applicant.test.ts        |    41 +-
+ server/services/part11/ectd-sequence-binding.ts    |    15 +-
+ .../submission-orchestrator-continuation.ts        |     4 +-
+ server/services/submission-package-orchestrator.ts |    16 +-
+ .../dispatch-reauthorization.pglite.test.ts        |    35 +-
+ .../__tests__/packageability-dry-run.test.ts       |    38 +-
+ .../regional-shadow-identity-lock.pglite.test.ts   |    83 +
+ .../transmit-guard-refusal-releases-claim.test.ts  |     3 +-
+ .../__tests__/transmit-recorded-identity.test.ts   |    82 +-
+ .../submission-service/submission-service.ts       |   149 +-
+ tests/routes/ectd-compile-spine.test.ts            |    47 +
+ ...ission-package-orchestrator-moves-3-5-6.test.ts |    26 +-
+ tests/unit/submission-sign-release-route.test.ts   |    48 +-
+ 160 files changed, 44605 insertions(+), 240 deletions(-)
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/HUMAN_CHECK.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/artifact-manifest.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/artifact-manifest.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/check.mjs
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/execution.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/index.html
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/probe.tsx
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/ema-attempted-held.png
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/eu-renewal-reachable.png
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/jp-outage-held.png
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/jp-renewal-reachable.png
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/result.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/result/unknown-unknown-region-held.png
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/browser/server.mjs
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/fail-first-input-sha256.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/fail-first.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/first-green-attempt.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/lint-first.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/native-freeze-lock.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/post-refactor-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/post-refactor-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/post-refactor-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/post-refactor-transmit.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/post-refactor-warning-ratchet.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/second-green-attempt.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/shadow-fail-first-input-sha256.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/shadow-fail-first.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/typed-number-fail-first-input-sha256.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/typed-number-fail-first.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/existing-ui-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/refactored-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/refactored-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/refactored-ui-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/verified-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/ui/verified-ui-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-caller-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-compile-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-compile-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/callers/verified-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/artifact-hashes.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/fail-first-capture-binding.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/fail-first-export-proof.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/fail-first-legacy-integrity.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/fail-first-organization-lock.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/fail-first-submission-lock.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/final-green.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/final-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/final-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/first-integration-test-vocabulary.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/focused-green.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/regression-invalid-pdf-fixture-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/core/regression-invalid-pdf-fixture.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/green-native-cohort.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/green-native-final.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/green-organization-lock.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/inputs-final.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/red-organization-lock-corrected-fixture.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/native/red-organization-lock.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/review/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/review/persisted-writer-eslint.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/review/persisted-writer-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/review/persisted-writer.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/review/reviewed-source-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/README.md
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/continuation-green-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/continuation-green-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/continuation-red-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/continuation-red-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/continuation-scoped-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/green-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/green-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/red-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/red-status-export-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/red-status-export-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/red-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/release-route-red-inputs.sha256
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/release-route-red-tests.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/snapshots/scoped-lint.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-final-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-final.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-merged-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-merged.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-published-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-published.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-refiling-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build-refiling.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/build.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/canonical-merge.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/current-input-verification.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/evidence-secret-scan.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/evidence-secret-scan.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/final-input-verification.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/merged-packaging-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/merged-packaging.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/merged-refiling-packaging-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/merged-refiling-packaging.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/publication.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-accepted.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-environment-interrupted.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-refiling-ref-race.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-resume-ref-race.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-type-refusal.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-warning-refusal.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/push-zero-errors-ref-race.txt.gz
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/qualification.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/regional-boundary-inputs.json
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/regional-boundary.txt
+ create mode 100644 docs/evidence/W5/2026-10-23-nonus-release-identity/verification/source-ci-snapshot.json
+ create mode 100644 server/services/ectd/__tests__/nonus-identity-lock.pg.test.ts
+ create mode 100644 server/services/ectd/__tests__/run-package-identity.test.ts
+ create mode 100644 server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+[ci:migration-set-order] OK — 429 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   Validating that guarded tables are created before they are guarded...
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+   ✅ Migration apply-order passed.
+   Validating the fresh-install overlay can reach what it depends on...
+[ci:install-fresh-overlay-deps] 359 overlay file(s) · 693 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+   ✅ Fresh-install overlay dependencies reachable.
+   Validating DROPs are replay-safe...
+[ci:migration-drop-safety] OK — 429 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating no class vocabulary is restated...
+[ci:class-vocabulary] OK — 5490 file(s) scanned, no restated class vocabulary.
+   ✅ One class vocabulary passed.
+   Validating new migrations are on a deploy path...
+[ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+[ci:column-reachability] OK — 3132 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3392 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+[ci:drizzle-tenant-scope] OK — 98 site(s), all baselined; 29 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 29 fix(es).
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+   Validating every raw client fetch() sends the bearer token...
+✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+   Validating no new session-scoped RLS bypass...
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+   ✅ No new session-scoped RLS bypass.
+   Validating no new value interpolated into SQL text...
+[ci:sql-interpolation] 21 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1359:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1377:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1378:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:102:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-search.ts:186:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1072 baselined interpolation(s) in 225 file(s); the baseline may only shrink.
+   ✅ No new value interpolated into SQL text.
+   Validating ledger integrity (row ids, evidence paths)...
+   ✅ Ledger integrity passed.
+   Validating module catalog copy...
+[ci:catalog-copy] OK — 120 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+   Checking for fixture fallback in client surfaces...
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+   Checking for mock data in production routes...
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+   Checking for manufactured signer identity...
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+   Checking that every program-ownership check is the one check...
+[self-test] OK — 10 copies found, 6 reads passed.
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   Checking for a discarded Part 11 audit-write outcome...
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+   ✅ No discarded audit-write outcome.
+   Checking that the client address has one source...
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+   ✅ One source for the client address.
+   Checking the filing-exit agreement gate catches what it must...
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+   ✅ The filing-exit gate fails on what it must.
+   Checking that every seal asks whether the filing holds this document's text...
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+   ✅ Every seal asks the filing-agreement question.
+   Checking that every sign ledger row comes from a signature ceremony...
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+   Checking that every upload site is bounded, filtered and byte-checked...
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)...
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/Concept2Cure/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)...
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 250   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 114
+
+✅ repo health strict gate passed.
+   ✅ No new oversized file.
+   Checking that no 5xx body carries the caught error's text...
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+   Checking that pushed imports resolve to tracked files...
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+   ✅ Pushed imports all resolve to tracked files.
+   Checking for ESLint errors in the pushed files...
+[ci:pushed-lint-errors] no lintable files changed against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+   Checking that the pushed files gained no ESLint warnings...
+[ci:eslint-warning-ratchet] no lintable file changed between 8cafe704d0ae3892217cf4e99cc767b67786d70d and the working tree.
+  If the ratchet is red anyway, the growth came from a file this diff does not
+  cover -- widen <ref>, or check that you fetched the ref you are comparing to.
+   ✅ The pushed files gained no ESLint warnings.
+   Typechecking (only if this push can change a type)...
+[ci:pushed-typecheck] skipped — none of the 6 file(s) changed against origin/concept2cure-v2 can change a type.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.
+To https://github.com/concept2cure/ClinicalSageAI-2-replit.git
+   8cafe704d..526e86cba  concept2cure-v2 -> concept2cure-v2

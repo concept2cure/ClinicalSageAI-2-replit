@@ -1,0 +1,5 @@
+{
+  "verdict": "CLEAR",
+  "reviewer": "stale_passage_revalidation",
+  "reason": "Literal .query template restores scanner visibility of all five existing interpolations; same bounded SQL, parameters, executor, error/savepoint/parser path; no gate/baseline changed"
+}

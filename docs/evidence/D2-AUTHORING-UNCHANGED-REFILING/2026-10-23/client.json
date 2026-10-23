@@ -1,0 +1,767 @@
+{
+  "schemaVersion": 1,
+  "createdUtc": "2026-10-23T18:15:42.665081+00:00",
+  "headAtCapture": "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+  "sourceFrozen": true,
+  "ownedSourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringRefileSavedText.tsx",
+      "sha256": "e9a28f54de8083ff3c2fa77414c2e0b6b3a4fd91684195512cc67758d9d876c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringRefileSavedTextState.ts",
+      "sha256": "da64e9b34f3dca70e129372aceaf1d2cf9939aeb0ab32a35e672f1d4d45dcb60"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "5af1f81162e7852beae2147439138888edbb470705b08ae4971f7c768a5d82b3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "sha256": "7890cb3044931f96a2df63c0e989aab3fa6401a5e2777f3bcf3edcc960f8b01b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "sha256": "63798a3d3cfbc5287864b25cf566f80fb8f4791c0a20a3c3a40314ee86f78578"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+      "sha256": "7a9f22993072df269b2acf7e3ed0d054658d93f23af0c81c9618df1ee973c68c"
+    }
+  ],
+  "green": {
+    "uniqueFiles": 9,
+    "counts": {
+      "passed": 117
+    },
+    "runs": [
+      {
+        "path": "/workspace/.cloud-setup/authoring-refile/client-array-green.json",
+        "sha256": "fd066d41528a070b9b2be1be8a7fbdbac1541e450fa0dd19357880c3ee552df8",
+        "log": "/workspace/.cloud-setup/authoring-refile/client-array-green.txt",
+        "logSha256": "a6369595484795b9ebd6704173b1fdc0a8dae624709e1b719e8b808257418968",
+        "counts": {
+          "numPassedTests": 56,
+          "numFailedTests": 0,
+          "numPendingTests": 0,
+          "numTodoTests": 0
+        },
+        "files": 3
+      },
+      {
+        "path": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "sha256": "5cb4b27a42cf93322eae0e1d27169288ab08fa407e023fe13752ead33855bf6f",
+        "log": "/workspace/.cloud-setup/authoring-refile/client-regressions.txt",
+        "logSha256": "6dce45cd8b09ea2f7944a389d2e8124bcb55b11c7c9bd92d94c04011241b16ab",
+        "counts": {
+          "numPassedTests": 61,
+          "numFailedTests": 0,
+          "numPendingTests": 0,
+          "numTodoTests": 0
+        },
+        "files": 6
+      }
+    ],
+    "latestPerFile": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-array-green.json",
+        "counts": {
+          "passed": 5
+        },
+        "tests": [
+          {
+            "name": "deliberately re-filing unchanged saved text offers a deliberate filing action without making an arbitrary edit or ordinary save",
+            "status": "passed"
+          },
+          {
+            "name": "the save confirmation carries whether the text reached the filing says the text did not reach the filing, with the server\u2019s reason",
+            "status": "passed"
+          },
+          {
+            "name": "the save confirmation carries whether the text reached the filing says the text was committed to the filing when the server says so",
+            "status": "passed"
+          },
+          {
+            "name": "the save confirmation carries whether the text reached the filing names the filing section a part-of save went into",
+            "status": "passed"
+          },
+          {
+            "name": "the save confirmation carries whether the text reached the filing claims nothing about the filing when the server reported nothing",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-array-green.json",
+        "counts": {
+          "passed": 26
+        },
+        "tests": [
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects unrelated ancestor",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects bare module ancestor",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects unrelated part-of marker",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects unexpected exact target",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity accepts a proper assembled ancestor without inventing a content revision",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects a different documentId source token",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects a different sectionId source token",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects a different programId source token",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects a different filingDocumentId source token",
+            "status": "passed"
+          },
+          {
+            "name": "saved-section receipt agrees with canonical filing identity rejects a different updatedAt source token",
+            "status": "passed"
+          },
+          {
+            "name": "unchanged filing retains one attempt and its exact reviewed owner does not show an old success when A is revisited before its reply",
+            "status": "passed"
+          },
+          {
+            "name": "unchanged filing retains one attempt and its exact reviewed owner rechecks the actual editor at confirmation even before a dirty render",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'bodyless success' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'malformed success' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'contradictory outcome' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'contradictory status' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'error alias' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'reason alias' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'wrong destination' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'contradictory refusal' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'nested result array' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'unconfirmed refusal' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds 'server uncertainty' across close/reopen and A \u2192 B \u2192 A",
+            "status": "passed"
+          },
+          {
+            "name": "uncertain or contradictory filing replies never permit blind replay holds a lost network reply instead of saying nothing was written",
+            "status": "passed"
+          },
+          {
+            "name": "confirmed refusals and successful filing remain deliberate retains the server refusal and allows a fresh explicit confirmation",
+            "status": "passed"
+          },
+          {
+            "name": "confirmed refusals and successful filing remain deliberate sends only pinned intent and the dedicated reason, then confirms no content revision",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-array-green.json",
+        "counts": {
+          "passed": 25
+        },
+        "tests": [
+          {
+            "name": "current authoring reads retain the server edit decision retains the current server edit refusal for a document projection",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring reads retain the server edit decision retains the current server edit refusal for a sections projection",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring lists retain their canonical session owner rejects an old deferred list body after the same actor replaces the canonical session",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring lists retain their canonical session owner retains a current deferred document list during ordinary canonical token refresh",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring reads restrict whole-document ceremonies withdraws metadata and whole-source controls when a sections refresh confirms an access change",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring reads restrict whole-document ceremonies keeps partial section editing/navigation while refusing optimistic whole-document hints",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring bodies retain their project and session owner refuses deferred old bodies for the same document after changing programme",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring bodies retain their project and session owner masks old prose immediately across a same-actor session replacement and ignores its deferred sections",
+            "status": "passed"
+          },
+          {
+            "name": "current authoring bodies retain their project and session owner retains a current deferred body across ordinary canonical bearer refresh",
+            "status": "passed"
+          },
+          {
+            "name": "document access is reachable from the canonical authoring editor opens the current document access rail and uses its verified roster and outline choices",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source sends only the pinned saved-source intent from the existing toolbar, without an editor change",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer unbound source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer partial source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer sealed source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer approved source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer read-only source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source does not offer unversioned source text as a re-filing write",
+            "status": "passed"
+          },
+          {
+            "name": "saved text re-filing requires the currently admitted clean source requires deliberate save or discard when the actual editor is dirty",
+            "status": "passed"
+          },
+          {
+            "name": "an open re-filing confirmation rechecks its source before writing refuses a source timestamp changed by a current saved-section refresh",
+            "status": "passed"
+          },
+          {
+            "name": "an open re-filing confirmation rechecks its source before writing refuses after the current read confirms access withdrawal",
+            "status": "passed"
+          },
+          {
+            "name": "an open re-filing confirmation rechecks its source before writing refuses to replay an old confirmation after its session changes",
+            "status": "passed"
+          },
+          {
+            "name": "an open re-filing confirmation rechecks its source before writing refuses to replay an old confirmation after its programme changes",
+            "status": "passed"
+          },
+          {
+            "name": "a sent re-filing receipt cannot claim success in an obsolete editor context suppresses a late confirmed receipt after access changes",
+            "status": "passed"
+          },
+          {
+            "name": "a sent re-filing receipt cannot claim success in an obsolete editor context suppresses a late confirmed receipt after session changes",
+            "status": "passed"
+          },
+          {
+            "name": "a sent re-filing receipt cannot claim success in an obsolete editor context suppresses a late confirmed receipt after programme changes",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 23
+        },
+        "tests": [
+          {
+            "name": "an open signing ceremony follows the current read without losing sent writes blocks a current refusal before any new credential verification or signature request",
+            "status": "passed"
+          },
+          {
+            "name": "an open signing ceremony follows the current read without losing sent writes rechecks a restriction after deferred credential verification before the freeze writer",
+            "status": "passed"
+          },
+          {
+            "name": "an open signing ceremony follows the current read without losing sent writes retains the confirmed receipt of an already-sent signature after the read becomes restricted",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions freezes through the shared signing dialog: meaning, reason and password go to the real endpoint",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions offers only the meanings a freeze carries \u2014 approval is E-sign",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions a 401 on freeze is shown in the dialog as not sealed \u2014 never as \"frozen and sealed\"",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions when the server refuses because the document is not settled re-asks, naming what is outstanding, instead of reporting a failure",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions when the server refuses because the document is not settled sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions when the server refuses because the document is not settled sends nothing at all when the user chooses to go back and resolve",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions when the server refuses because the document is not settled a settled document goes straight to the signature, with nothing to acknowledge",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes)",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions asks for the authenticator code when one is enrolled, and sends it with the signature",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions offers only the meanings the authoring store takes",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions a refused credential is shown in the dialog, and nothing is signed or claimed",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 real filing actions disables Freeze once the document is already frozen",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 the server\u2019s refusal, before the dialog disables Freeze and E-sign with the reason as visible, described text",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 the server\u2019s refusal, before the dialog a Reviewer grant signs the review: E-sign is offered with the Review meaning alone",
+            "status": "passed"
+          },
+          {
+            "name": "AuthoringFilingBar \u2014 the server\u2019s refusal, before the dialog leaves both enabled when the permission is unknown",
+            "status": "passed"
+          },
+          {
+            "name": "workflow adoption is a deliberate reviewer act in the existing ceremony starts unchecked, discloses the assignment/model boundary and sends no adoption by default",
+            "status": "passed"
+          },
+          {
+            "name": "workflow adoption is a deliberate reviewer act in the existing ceremony posts adoption only after explicit consent for REVIEWER",
+            "status": "passed"
+          },
+          {
+            "name": "workflow adoption is a deliberate reviewer act in the existing ceremony resets consent when the current document changes, even with unchanged source fingerprint",
+            "status": "passed"
+          },
+          {
+            "name": "workflow adoption is a deliberate reviewer act in the existing ceremony does not carry reviewer adoption into another meaning or back into review",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 5
+        },
+        "tests": [
+          {
+            "name": "same-surface editor targets respect the current native write refuses an incoming target while a save is pending without starting another section read",
+            "status": "passed"
+          },
+          {
+            "name": "same-surface editor targets respect the current native write rechecks the current busy state after the exact document read finishes",
+            "status": "passed"
+          },
+          {
+            "name": "same-surface editor targets respect the current native write rechecks the current busy state after the section search read finishes",
+            "status": "passed"
+          },
+          {
+            "name": "same-surface editor targets respect the current native write keeps a document target waiting for the list from replacing an editor whose save has started",
+            "status": "passed"
+          },
+          {
+            "name": "same-surface editor targets respect the current native write uses the existing unsaved-work decision for a section-only target and preserves Cancel",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 7
+        },
+        "tests": [
+          {
+            "name": "the editor asks why, once per section will not save a governed record without one",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section says what is missing rather than just being inert",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section states the requirement in text the field and Save both point to",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section carries the stated reason on the save",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section does not accept whitespace as a reason",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section stays stated across repeated saves of the same section",
+            "status": "passed"
+          },
+          {
+            "name": "the editor asks why, once per section refuses a Cmd-S that bypasses the button, and says so",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 12
+        },
+        "tests": [
+          {
+            "name": "DocumentAuthoring \u2014 saved draft and filing trees keeps the tree basis explicit for null / null",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 saved draft and filing trees keeps the tree basis explicit for 'M5' / 'filing-id'",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 real editable canvas loads the document, opens its section, and shows the real server content in the editor",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 real editable canvas saves edited content via PATCH and reports that a revision was recorded",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 real editable canvas surfaces a failed save honestly and keeps the user\u2019s text (no fabrication)",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 saved section ordering moves the open section \u2014 server-validated reorder, tree redrawn from the canonical order",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 document-level section structure names a section code that is used twice",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 document-level section structure says when the stored order differs from the section codes",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 document-level section structure says nothing when the document is structurally clean",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 document-level section structure claims nothing when the server sent no structure at all",
+            "status": "passed"
+          },
+          {
+            "name": "governed figures belong to the actual open authoring document sends the actual document id with the file, independent of shell program selection",
+            "status": "passed"
+          },
+          {
+            "name": "governed figures belong to the actual open authoring document an upload finishing after a scope switch cannot insert into the replacement editor",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 2
+        },
+        "tests": [
+          {
+            "name": "DocumentAuthoring \u2014 the Save control with nothing open does not say \"Saved\" when the organization has no document",
+            "status": "passed"
+          },
+          {
+            "name": "DocumentAuthoring \u2014 the Save control with nothing open still says \"Saved\" once a section is open and unchanged (over-correction guard)",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts",
+        "report": "/workspace/.cloud-setup/authoring-refile/client-regressions.json",
+        "counts": {
+          "passed": 12
+        },
+        "tests": [
+          {
+            "name": "preserves confirmed refusal at 400",
+            "status": "passed"
+          },
+          {
+            "name": "preserves confirmed refusal at 401",
+            "status": "passed"
+          },
+          {
+            "name": "preserves confirmed refusal at 403",
+            "status": "passed"
+          },
+          {
+            "name": "preserves confirmed refusal at 404",
+            "status": "passed"
+          },
+          {
+            "name": "preserves confirmed refusal at 409",
+            "status": "passed"
+          },
+          {
+            "name": "preserves confirmed refusal at 422",
+            "status": "passed"
+          },
+          {
+            "name": "marks a missing or uncertain reply at 408 as unknown",
+            "status": "passed"
+          },
+          {
+            "name": "marks a missing or uncertain reply at 500 as unknown",
+            "status": "passed"
+          },
+          {
+            "name": "marks a missing or uncertain reply at 502 as unknown",
+            "status": "passed"
+          },
+          {
+            "name": "marks a missing or uncertain reply at undefined as unknown",
+            "status": "passed"
+          },
+          {
+            "name": "a success whose JSON was lost is unconfirmed",
+            "status": "passed"
+          },
+          {
+            "name": "an explicit unknown code overrides a status commonly used for refusal",
+            "status": "passed"
+          }
+        ]
+      }
+    ],
+    "method": "Latest exact-file primary results replace prior primary runs; six disjoint unchanged existing regression files retain their passing qualification. No overlapping cases summed."
+  },
+  "redEvidence": [
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-red.json",
+      "sha256": "ab2a3abd065a219f3ee546b8c875985b1b408665b35588f3f0ebebc0e5ca561d",
+      "log": "/workspace/.cloud-setup/authoring-refile/client-red.txt",
+      "logSha256": "ec2487165b3e0f4a3baa86ba7ccf8ef18d568080b96e0b05f8d6983c305fcb02",
+      "counts": {
+        "numPassedTests": 4,
+        "numFailedTests": 1,
+        "numPendingTests": 0,
+        "numTodoTests": 0
+      },
+      "files": 1,
+      "failedAssertions": [
+        {
+          "file": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+          "name": "deliberately re-filing unchanged saved text offers a deliberate filing action without making an arbitrary edit or ordinary save"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-boundary-red.json",
+      "sha256": "d7b6b0cbeac6a9b255c7d8d8b8f76327c88dc679eaa52e09049951ed6fd9e263",
+      "log": "/workspace/.cloud-setup/authoring-refile/client-boundary-red.txt",
+      "logSha256": "e0ff10469a3c76f46167519b34343fb55dd3498d45707ccb41a60aa8fa441b00",
+      "counts": {
+        "numPassedTests": 10,
+        "numFailedTests": 2,
+        "numPendingTests": 0,
+        "numTodoTests": 0
+      },
+      "files": 1,
+      "failedAssertions": [
+        {
+          "file": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+          "name": "saved-section receipt agrees with canonical filing identity rejects bare module ancestor"
+        },
+        {
+          "file": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+          "name": "unchanged filing retains one attempt and its exact reviewed owner does not show an old success when A is revisited before its reply"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-access-initial.json",
+      "sha256": "37178d59c06f2364cd890745a0db338570e2466dd02cb39e6b33db0f37eeee04",
+      "log": "/workspace/.cloud-setup/authoring-refile/client-access-initial.txt",
+      "logSha256": "98948de5948c869a6315846214c5a7458dec28eca096ee00cff9962397d1df6b",
+      "counts": {
+        "numPassedTests": 24,
+        "numFailedTests": 1,
+        "numPendingTests": 0,
+        "numTodoTests": 0
+      },
+      "files": 1,
+      "failedAssertions": [
+        {
+          "file": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+          "name": "saved text re-filing requires the currently admitted clean source sends only the pinned saved-source intent from the existing toolbar, without an editor change"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-array-red.json",
+      "sha256": "7a52937a90cbfa73c203c35a8d58e471f5070d103489a4c279567a7fd966660c",
+      "log": "/workspace/.cloud-setup/authoring-refile/client-array-red.txt",
+      "logSha256": "e76515b9bb96114244c1300372decdc472ab2e00062a58e239e31b91a1e2d972",
+      "counts": {
+        "numPassedTests": 0,
+        "numFailedTests": 1,
+        "numPendingTests": 25,
+        "numTodoTests": 0
+      },
+      "files": 1,
+      "failedAssertions": [
+        {
+          "file": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+          "name": "uncertain or contradictory filing replies never permit blind replay holds 'nested result array' across close/reopen and A \u2192 B \u2192 A"
+        }
+      ],
+      "note": "Exactly one selected functional RED before array traversal source edit. Twenty-five cases were intentionally unselected and all26 are included in final GREEN."
+    }
+  ],
+  "lint": {
+    "head": "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+    "files": 6,
+    "errors": 0,
+    "warnings": 12,
+    "comparison": [
+      {
+        "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "warnings": 12,
+        "baselineWarnings": 12,
+        "errors": 0,
+        "baselineErrors": 0,
+        "rules": {
+          "complexity": 8,
+          "max-lines": 1,
+          "max-lines-per-function": 2,
+          "react-hooks/exhaustive-deps": 1
+        },
+        "baselineRules": {
+          "complexity": 8,
+          "max-lines": 1,
+          "max-lines-per-function": 2,
+          "react-hooks/exhaustive-deps": 1
+        }
+      }
+    ],
+    "diffCheck": {
+      "exitCode": 0,
+      "output": ""
+    },
+    "method": "HEAD source piped to ESLint stdin; no temporary source files or baseline changes."
+  },
+  "implementation": [
+    "Unconditional host hook retains per-source pending and unknown operation state across toolbar withdrawal, close/reopen and section visits; changing saved text alone does not clear unknown filing holds.",
+    "Deliberate toolbar action uses existing GovernedConfirmDialog and mutateVerbatim, dedicated reason, exact expected document/program/section/binding/saved timestamp and no content or authorship claims.",
+    "Current full metadata identity/project/native binding, section timestamp, document edit/seal state and synchronous canonical editor/session guards are checked before request.",
+    "Exact source receipt and canonical filingSectionKey relationship required; contradictory positive/uncertain failure envelopes stay held.",
+    "Receipt presentation and callbacks require the originating source/session/project/access visit. Assembly scope is described in the confirmation.",
+    "Ordinary Save, RichSectionEditor, generic mutationUnconfirmed, shared confirmation, company documents and Vault writers unchanged.",
+    "Contradiction scanning traverses nested arrays before plain objects, preserving the existing six-level depth bound and generic mutation classifier."
+  ],
+  "limits": [
+    "Qualification uses real mounted editor/UI over synthetic HTTP plus a contained controller fixture. Native server/transaction tests and actual database contract are owned by server worker; parent owns build/full TypeScript/push gates.",
+    "Unknown filing/audit outcomes intentionally cannot be cleared by Authoring-only reads or ordinary dialog reopening in the mounted host. User must check current filing/audit records; this bounded change adds no reconciliation engine."
+  ],
+  "prohibitedActionsPerformed": {
+    "gitMutations": false,
+    "fullTypeScript": false,
+    "wholeBuild": false,
+    "globalRatchet": false
+  },
+  "lintReports": [
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-array-lint.json",
+      "sha256": "dbafdef48664b2c95238d1ee49836b209154714c1a9fdfab731063b12701f997"
+    },
+    {
+      "path": "/workspace/.cloud-setup/authoring-refile/client-array-lint-comparison.json",
+      "sha256": "d806fa5d87f43d1feedae9cbb5afe807790b87a79d191f012a919367daa267f1"
+    }
+  ],
+  "supersedes": {
+    "path": "/workspace/.cloud-setup/authoring-refile/client-verification-pre-array.json",
+    "sha256": "649b890e6ec58fe491b8153aa378ca33af0f907e75087de5276267f063e7001b",
+    "reason": "Independent review found a committed:true claim nested inside a refusal array bypassed contradiction scanning. Added one transport/controller regression, saw RED, then recursed arrays within the existing depth bound. Current primary56 replace prior55."
+  }
+}

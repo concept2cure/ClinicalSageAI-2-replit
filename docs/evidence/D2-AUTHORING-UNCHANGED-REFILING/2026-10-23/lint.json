@@ -1,0 +1,160 @@
+{
+  "method": "ESLint API lintFiles/current and lintText/baseline using the actual file path; no temporary source files or baseline changes.",
+  "baseline": "26d850156",
+  "files": 13,
+  "errors": 0,
+  "newWarnings": 0,
+  "results": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringRefileSavedText.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "errors": 0,
+      "warnings": 12,
+      "baselineWarnings": 12,
+      "rules": {
+        "complexity": 8,
+        "max-lines": 1,
+        "max-lines-per-function": 2,
+        "react-hooks/exhaustive-deps": 1
+      },
+      "baselineRules": {
+        "complexity": 8,
+        "max-lines": 1,
+        "max-lines-per-function": 2,
+        "react-hooks/exhaustive-deps": 1
+      },
+      "growth": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringRefileSavedTextState.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "errors": 0,
+      "warnings": 22,
+      "baselineWarnings": 22,
+      "rules": {
+        "complexity": 10,
+        "max-params": 2,
+        "max-lines": 1,
+        "no-console": 1,
+        "max-lines-per-function": 7,
+        "max-depth": 1
+      },
+      "baselineRules": {
+        "complexity": 10,
+        "max-params": 2,
+        "max-lines": 1,
+        "no-console": 1,
+        "max-lines-per-function": 7,
+        "max-depth": 1
+      },
+      "growth": []
+    },
+    {
+      "path": "server/services/authoring/authoring-refile-saved-section.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "server/services/c2c/filing-section-target.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "rules": {},
+      "baselineRules": {},
+      "growth": []
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "errors": 0,
+      "warnings": 2,
+      "baselineWarnings": 2,
+      "rules": {
+        "complexity": 1,
+        "max-lines": 1
+      },
+      "baselineRules": {
+        "complexity": 1,
+        "max-lines": 1
+      },
+      "growth": []
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "rules": {
+        "max-lines": 1
+      },
+      "baselineRules": {
+        "max-lines": 1
+      },
+      "growth": []
+    }
+  ]
+}
