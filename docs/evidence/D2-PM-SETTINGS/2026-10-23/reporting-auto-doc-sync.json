@@ -1,0 +1,13 @@
+{
+  "recordedAtUtc": "2026-10-23T21:04:03.461778+00:00",
+  "priorHead": "8b5fae9dabb3d9d35a9efd6fdaf224d1baa4f59d",
+  "incomingRemote": "0b3aaa10cbbe46aa19f5041e5c6f50bf0d8d6935",
+  "mergedHead": "9a239e2daa7b20091cf46b817aeff1dcb4a451ae",
+  "paths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "runtimeChanges": 0,
+  "boundInputsUnchanged": 88,
+  "qualification": "Preserve upstream automatic repository-health report refresh only; no runtime/compiler inputs, SQL/ESLint baselines or strict ceiling configuration changed."
+}
