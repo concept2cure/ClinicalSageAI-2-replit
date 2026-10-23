@@ -184,3 +184,27 @@ regional facts bind the existing non-US release proof. This completion's 13
 paths remain unchanged. The sole original-pin overlap is a comment in
 `SubmissionSeqWorkspaces.tsx`. Final integration evidence preserves prior
 counts separately and records focused merged checks and whole-tree gates.
+
+## Required size-ceiling correction
+
+The mandatory pre-push gate refused this completion: the existing section
+contract grew from 80,158 to 105,004 bytes, and `span-lineage.service.ts` grew
+from 1,498 to 1,519 lines. The package ceilings remain unchanged.
+
+What already exists: the section contract owns the PGlite database, HTTP router,
+actor/program fixture and 93 cases; only its added re-filing cases need moving
+to an adjacent registration helper, invoked at their existing position with the
+same fixture and test ancestry. Existing route-suite registration helpers show
+this pattern; a second database fixture or test implementation is unnecessary.
+The lineage service owns the shared error, hash, query interface, lazy default
+executor and read-only saved-span verifier; `span-lineage-vault.ts` and backfill
+serve different policies. Code and deleted-history searches found no competing
+integrity module. Extract those existing primitives/verifier together into
+`span-lineage-integrity.ts`, preserving their service re-exports, error identity,
+exact SQL/hash behavior and call-time pool resolution. Its reference to the
+service's document type is type-only, with no runtime import cycle.
+
+This is a mechanical split of the existing implementation and fixtures, without
+changing gates, test cases or the size baseline. Re-run the registered contract,
+lineage/workflow regressions, lint, build and TypeScript; record new source pins
+and the successful size gate separately from earlier qualifications.
