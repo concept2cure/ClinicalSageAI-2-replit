@@ -1,0 +1,12 @@
+{
+  "build.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "6e847f821ef03a2d4cebb3083b26cd461f75398735076a6a49339886cf223325",
+    "archiveSha256": "738cf84d0a1bf616d6ddb0a672a2d05a7439561677b12518726fd215ff4edc16"
+  },
+  "pre-uncertainty-build.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "34c57c9e39094e00ab02faff2289f96f008e46028f13598fc8d3fc9174bca341",
+    "archiveSha256": "3974b46e14e9eabc064bcca3d6073c4049212ff8bb708cee27076d531ed1fdf0"
+  }
+}

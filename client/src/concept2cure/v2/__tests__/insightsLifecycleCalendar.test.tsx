@@ -6,15 +6,15 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
 const currentUser = vi.hoisted(() => ({ id: 3, organizationId: 7, role: 'manager', permissions: ['governed:write'] }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuthUser: () => currentUser,
-  authService: { getUser: () => currentUser, on: () => () => {} },
-  default: {},
-}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuthUser: () => actual.authService.getUser() };
+});
 vi.mock('../../../../../server/db', () => ({ pool: {}, db: {}, getPool: () => ({}) }));
 import { calculateLifecycleCalendar, LIFECYCLE_CALENDAR_LIMIT, LIFECYCLE_CALENDAR_TYPE } from '../../../../../server/services/report-os/lifecycle-calendar';
 import { renderReport } from '../../../../../server/services/report-os/render/render';
 import { InsightsCanvas } from '../surfaces/Insights';
+import { authService } from '@/services/portal/authService';
 import { queryClient } from '@/lib/queryClient';
 import { getSurface } from '../../../../../shared/constants/ui-surface-registry';
 const programId = 'd979e567-4622-46f1-8cb7-8bf434227f25';
@@ -29,10 +29,10 @@ const calendar = calculateLifecycleCalendar({ observed_at: '2026-10-17T00:00:00Z
   ],
 });
 const report = renderReport({ reportTypeId: LIFECYCLE_CALENDAR_TYPE, reportTypeLabel: type.label, scopeType: 'project', scopeId: '11', providers: [{ provider: 'lifecycle_obligation_calendar', status: 'partial', observedAt: calendar.observedAt }], blockers: [LIFECYCLE_CALENDAR_LIMIT], summary: { domain: { lifecycleCalendar: calendar }, computedScope: 'organization', scopeLabel: 'Selected project' }, status: 'partial', generatedAt: calendar.observedAt });
-afterEach(() => { cleanup(); queryClient.clear(); apiRequest.mockReset(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; sessionStorage.clear(); localStorage.removeItem('currentOrganizationId'); });
+afterEach(() => { cleanup(); authService.endSession(null); queryClient.clear(); apiRequest.mockReset(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; sessionStorage.clear(); localStorage.removeItem('currentOrganizationId'); });
 describe('existing Insights lifecycle run', () => {
   it('runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer', async () => {
-    sessionStorage.setItem('trialsage_access_token', 'signed-in-matrix-fixture');
+    authService.setToken('signed-in-matrix-fixture', { id: String(currentUser.id), organizationId: String(currentUser.organizationId), permissions: currentUser.permissions }, 'fixture-refresh', 3600);
     localStorage.setItem('currentOrganizationId', String(currentUser.organizationId));
     (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: programId, title: 'Selected project', code: 'SEL' };
     apiRequest.mockImplementation(async (method: string, path: string) => {

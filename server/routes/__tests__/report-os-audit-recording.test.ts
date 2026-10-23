@@ -150,7 +150,9 @@ describe('POST /runs records the run on the audit chain, in the same transaction
     h.queued.select.push([TYPE], [{ id: 11, code: 'REPORT-11', name: 'Reporting project' }]);
     const snapshot = { id: 9, runId: RUN.id, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true };
     h.respond.fn = (sql, arrayMode) =>
-      !arrayMode ? [] : /"report_runs"/.test(sql) ? [driverRow(reportRuns, CREATED_RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, snapshot)] : [];
+      !arrayMode ? sql.includes('SELECT ou.role') ? [{ role: 'manager' }]
+        : sql.includes('SELECT id FROM projects WHERE') ? [{ id: 11 }] : []
+        : /"report_runs"/.test(sql) ? [driverRow(reportRuns, CREATED_RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, snapshot)] : [];
   });
 
   it('writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201', async () => {
@@ -167,7 +169,8 @@ describe('POST /runs records the run on the audit chain, in the same transaction
     });
     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     INSERTS.forEach((re, i) => expect(h.statements[2 + i]).toMatch(re));
-    expect(h.statements.slice(4)).toEqual(['<audit row>', 'COMMIT', '<released>']);
+    expect(h.statements.slice(4)).toEqual(['<audit row>', expect.stringContaining('FOR SHARE OF ou,u,o'),
+      expect.stringContaining('SELECT id FROM projects WHERE'), 'COMMIT', '<released>']);
   });
 
   it('rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id', async () => {

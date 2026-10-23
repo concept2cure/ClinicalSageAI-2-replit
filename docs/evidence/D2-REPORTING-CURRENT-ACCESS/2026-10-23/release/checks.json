@@ -1,0 +1,73 @@
+{
+  "recordedAt": "2026-10-23T17:49:05.062507+00:00",
+  "sourceBase": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "finalBuild": {
+    "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+    "files": {
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "eb06070042fca50f66008f1920fbf80073c575e86b51f56e39ed474b5dcdab57",
+      "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+      "server/services/report-os/scheduling/generate-deliver.ts": "a4d809dc5e798ecf639676b4dc010c241783dceb62e0a82da0d4fb41491b616c"
+    },
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin"
+      },
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ]
+    },
+    "exitCode": 0,
+    "clientSeconds": 31.09,
+    "server": "passed",
+    "auditVerifier": "passed",
+    "sourceDrift": []
+  },
+  "preUncertaintyBuild": {
+    "exitCode": 0,
+    "clientSeconds": 23.08,
+    "phase": "historical successful build before last outcome-refinement source change",
+    "pins": {
+      "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+      "files": {
+        "client/src/concept2cure/v2/surfaces/Insights.tsx": "6dd8b6bc183dc0b9e134e20dbe510203833e9d281802c6f3e852f3dc60aa9bce",
+        "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+        "server/services/report-os/scheduling/generate-deliver.ts": "a4d809dc5e798ecf639676b4dc010c241783dceb62e0a82da0d4fb41491b616c"
+      },
+      "command": {
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin"
+        },
+        "argv": [
+          "npm",
+          "run",
+          "build"
+        ]
+      }
+    }
+  },
+  "client": {
+    "packet": "../client/checks.json",
+    "suites": 31,
+    "passed": 277,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationSeconds": 69.43
+  },
+  "backend": {
+    "packet": "../backend/checks.json",
+    "suites": 12,
+    "passed": 164,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 54.93
+  },
+  "crossReview": {
+    "clientRuntime": "backend owner read-only review; no blocker",
+    "backendRuntime": "client owner read-only review; no blocker"
+  },
+  "publication": "Normal pre-push checks, complete compiler and exact remote publication are verified after this evidence commit; hosted CI is separate."
+}

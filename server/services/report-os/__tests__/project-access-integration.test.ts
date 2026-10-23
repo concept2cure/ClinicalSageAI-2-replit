@@ -136,3 +136,61 @@ it('rechecks actual source-project recipient access inside the persistence trans
 it.each([null, {invalid:true}, ['11']])('refuses malformed present source evidence %j on direct account reads', async accessProjectIds => {
   expect(await canAccessReportScope(7,{userId:99,role:'member'},{scopeType:'account',scopeId:'7',dependencySummary:{summary:{accessProjectIds}}},client)).toBe(false);
 });
+
+describe('ordinary scheduled reports retain current authority after computation', () => {
+  const scheduled = (overrides: Partial<ReportSubscriptionRow> = {}) => ({ ...input, id: 60,
+    recipients: ['recipient@example.com'], enabled: true, nextRunAt: new Date('2026-10-10T09:00:00Z'),
+    createdAt: new Date('2026-10-09T10:00:00Z'), updatedAt: new Date('2026-10-09T10:00:00Z'),
+    lastRunAt: null, ...overrides } as ReportSubscriptionRow);
+  const computed = (summary = {}) => ({ computed: { summary, providers: [], blockers: [], criticalBlockers: [], confidence: null } });
+
+  it('refuses a readiness creator demoted while computing without optional source-project evidence', async () => {
+    stubs.compute.mockImplementationOnce(async () => {
+      await database.exec("UPDATE organization_users SET role='viewer' WHERE organization_id=7 AND user_id=99");
+      return computed();
+    });
+    try {
+      await expect(generateAndDeliver(scheduled(), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+      expect(stubs.persist).not.toHaveBeenCalled();
+    } finally { await database.exec("UPDATE organization_users SET role='member' WHERE organization_id=7 AND user_id=99"); }
+  });
+
+  it('refuses a private-project recipient revoked while computing without optional source-project evidence', async () => {
+    stubs.compute.mockImplementationOnce(async () => {
+      await database.exec("UPDATE project_members SET status='revoked' WHERE project_id=11 AND user_id=9");
+      return computed();
+    });
+    try {
+      await expect(generateAndDeliver(scheduled(), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+      expect(stubs.persist).not.toHaveBeenCalled();
+    } finally { await database.exec("UPDATE project_members SET status='active' WHERE project_id=11 AND user_id=9"); }
+  });
+
+  it('refuses an organization-register recipient deactivated while computing', async () => {
+    stubs.compute.mockImplementationOnce(async () => {
+      await database.exec("UPDATE users SET status='inactive' WHERE id=9");
+      return computed();
+    });
+    try {
+      await expect(generateAndDeliver(scheduled({ reportTypeId: 'fcoi.disclosure_register', scopeType: 'account', scopeId: '7' }), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'PROJECT_ACTOR_ACCESS_DENIED', status: 403 });
+      expect(stubs.persist).not.toHaveBeenCalled();
+    } finally { await database.exec("UPDATE users SET status='active' WHERE id=9"); }
+  });
+
+  it.each([null, { invalid: true }, ['11']])('refuses malformed present source evidence %j before scheduled persistence', async accessProjectIds => {
+    stubs.compute.mockResolvedValueOnce(computed({ accessProjectIds }));
+    await expect(generateAndDeliver(scheduled({ reportTypeId: 'fcoi.disclosure_register', scopeType: 'account', scopeId: '7' }), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+    expect(stubs.persist).not.toHaveBeenCalled();
+  });
+
+  it('retains an authorized non-manager program group using its actual computed project set', async () => {
+    await database.exec(`INSERT INTO report_program_groups VALUES(2,7,71,'active');
+      INSERT INTO report_program_group_projects VALUES(2,11,7)`);
+    try {
+      stubs.compute.mockResolvedValueOnce(computed({ accessProjectIds: [11] }));
+      await generateAndDeliver(scheduled({ reportTypeId: 'fcoi.disclosure_register', scopeType: 'program', scopeId: '2' }), new Date('2026-10-13T10:00:00Z'));
+      expect(stubs.compute).toHaveBeenCalledWith(expect.objectContaining({ programProjectIds: [11], scopeType: 'program', scopeId: '2' }));
+      expect(stubs.persist).toHaveBeenCalledOnce();
+    } finally { await database.exec('DELETE FROM report_program_group_projects WHERE program_group_id=2; DELETE FROM report_program_groups WHERE id=2'); }
+  });
+});
