@@ -32,6 +32,7 @@ import type { ReportLegalOriginal } from '../../services/report-os/report-packag
 import { ReportPackageError } from '../../services/report-os/report-package';
 import { DEFAULT_TEMPLATE_SPEC, normalizeTemplateSpec } from '../../../shared/templates/template-spec';
 import { CompanyDocumentsError } from '../../services/company-documents/profile';
+import { ProgramReadAccessError } from '../../services/c2c/current-program-access';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -214,6 +215,26 @@ function prepare(options: PacketOptions = {}) {
 
 
 describe('GET /bundles/:bundleId/export.pdf?content=reports', () => {
+  it.each([false, true])('preserves current-access refusal when cleanup fails (rollback failure: %s)', async rollbackFails => {
+    prepare();
+    const original = new ProgramReadAccessError(403, 'PROJECT_ACTOR_ACCESS_DENIED', 'Current membership is required.');
+    const respond = h.respond.fn;
+    h.respond.fn = (sql, arrayMode) => {
+      if (/SELECT ou.role/.test(sql)) throw original;
+      if (rollbackFails && sql === 'ROLLBACK') throw new Error('rollback unavailable');
+      return respond(sql, arrayMode);
+    };
+    const release = vi.spyOn(await h.pool.connect(), 'release').mockImplementation(() => { throw new Error('cleanup unavailable'); });
+    try {
+      const result = await exportReports();
+      expect(result.status).toBe(403);
+      expect(json(result)).toEqual({ success: false, error: { code: original.code, message: original.message } });
+      expect(h.statements.filter(sql => ['ROLLBACK', 'COMMIT'].includes(sql))).toEqual(['ROLLBACK']);
+      expect(release).toHaveBeenCalledTimes(2);
+      expect(h.audit).not.toHaveBeenCalled();
+    } finally { release.mockRestore(); }
+  });
+
   it('brands all retained packet pages with the tenant profile and audits the exact presentation snapshot', async () => {
     prepare();
     h.company.settings = { companyDocuments: { revision: 8, companyName: 'Packet Sponsor', applyToReports: true } };

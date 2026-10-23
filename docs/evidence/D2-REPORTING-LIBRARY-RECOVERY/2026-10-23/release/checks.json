@@ -1,0 +1,55 @@
+{
+  "scope": "W1 / D2; reporting library recovery integrated with current canonical source",
+  "canonicalBaseBeforeFinalEdits": "5ff6d225274079e9a08444409471394d9963970c",
+  "buildPinsUnchanged": true,
+  "backendArchivesHashVerified": 25,
+  "finalPushedRef": "Observed after normal pre-push outside this pre-publication packet; see final delivery receipt.",
+  "earlierBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:24:06.738784+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 23.503,
+    "finishedAt": "2026-10-23T20:24:30.242326+00:00"
+  },
+  "earlierSelectedBuildFiles": 10286,
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-10-23T20:31:51.333252+00:00",
+    "exitCode": 0,
+    "elapsedSeconds": 36.427,
+    "finishedAt": "2026-10-23T20:32:27.760566+00:00"
+  },
+  "selectedBuildFiles": 10293,
+  "finalCanonicalBase": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "typeOnlyBuiltAssetsComparison": {
+    "observedAt": "2026-10-23T20:33:28.334328+00:00",
+    "beforeAssets": 288,
+    "afterAssets": 288,
+    "allBuiltPublicAssetsUnchangedAcrossTypeOnlyFix": true,
+    "changedAssets": [],
+    "annotationDiff": "Import canonical type ApiResult; use ApiResult<unknown> for refusedWrite parameter after upstream optional-owner overload. No runtime behavior change."
+  },
+  "browserCaptures": {
+    "passed": 12,
+    "total": 12,
+    "scope": "Three serialized mounted artifact-pane states, two themes, two viewports; exact pre-annotation pins retained in browser packet."
+  }
+}

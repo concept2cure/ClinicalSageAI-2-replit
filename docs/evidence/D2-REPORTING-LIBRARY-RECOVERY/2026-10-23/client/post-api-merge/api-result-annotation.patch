@@ -1,0 +1,16 @@
+--- a/client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts
++++ b/client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts
+@@ -32,5 +32,5 @@
+  * @module client/src/concept2cure/v2/surfaces/insightsLibraryModel
+  */
+-import { apiCall, apiErrorText } from '../apiCall';
++import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
+ import { errorCodeOf } from '@/lib/queryClient';
+ import { mutationUnconfirmed } from '../mutationOutcome';
+@@ -569,5 +569,5 @@
+   return record(body) && (body.data != null || body.success === true || body.recordingOutcome === 'unconfirmed' || body.retryAllowed === false);
+ }
+-function refusedWrite<T>(res: Awaited<ReturnType<typeof apiCall>>, noun: string, fallback: string): WriteOutcome<T> {
++function refusedWrite<T>(res: ApiResult<unknown>, noun: string, fallback: string): WriteOutcome<T> {
+   const code = errorCodeOf(res.body);
+   const rollbackKnown = noun === 'bundle' && knownBundleRollback(res.status, res.body, code);

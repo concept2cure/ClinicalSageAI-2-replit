@@ -30,7 +30,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { RUNS, ok, route, renderCanvas, openTab, requestCalls } from './_insights-library-fixture';
+import { RUNS, ok, route, renderCanvas, openTab, requestCalls, libraryWriteResponse } from './_insights-library-fixture';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import { runsUrl } from '../surfaces/insightsLibraryModel';
 import { readFailureOf } from '../surfaces/insightsLibraryShared';
@@ -40,7 +40,7 @@ const boom = (status: number) => ({ ok: false, status, json: async () => ({ erro
 
 beforeEach(() => {
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (_m: string, url: string) => route(url));
+  apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => libraryWriteResponse(method, url, body) ?? route(url));
 });
 afterEach(() => cleanup());
 

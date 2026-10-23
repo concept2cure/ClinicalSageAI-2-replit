@@ -1,0 +1,410 @@
+{
+  "base": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+  "scope": "W1 / D2 existing reporting library write recovery, backend only",
+  "phases": [
+    {
+      "phase": "red",
+      "command": {
+        "cwd": "/workspace/ClinicalSageAI-2-replit",
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/red.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/backend/red.txt"
+      },
+      "exitCode": 1,
+      "vitestDurationSeconds": 17.24,
+      "testFiles": 1,
+      "passed": 17,
+      "failed": 5,
+      "pending": 0,
+      "todo": 0,
+      "resultsArchive": "red.json.gz",
+      "consoleArchive": "red.txt.gz",
+      "sourceSnapshot": {
+        "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+        "files": {
+          "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+        }
+      }
+    },
+    {
+      "phase": "focused",
+      "command": {
+        "cwd": "/workspace/ClinicalSageAI-2-replit",
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/focused.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/backend/focused.txt"
+      },
+      "exitCode": 0,
+      "vitestDurationSeconds": 20.03,
+      "testFiles": 1,
+      "passed": 22,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "resultsArchive": "focused.json.gz",
+      "consoleArchive": "focused.txt.gz",
+      "sourceSnapshot": {
+        "files": {
+          "server/routes/report-os.ts": "6aa7a2bed47387c6a5f6208f7b1879d9250ba0941f84dee1f9875632f6eb9bd9",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+        }
+      }
+    },
+    {
+      "phase": "integration",
+      "command": {
+        "cwd": "/workspace/ClinicalSageAI-2-replit",
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts",
+          "server/routes/__tests__/report-os-audit-recording.test.ts",
+          "server/routes/__tests__/report-os-delivery-recording.test.ts",
+          "server/routes/__tests__/report-os-subscription-access.test.ts",
+          "server/routes/__tests__/insights-subscription-attribution.test.ts",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts",
+          "server/services/report-os/scheduling/__tests__/subscription-service.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/integration.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/backend/integration.txt",
+        "startedAt": "2026-10-23T20:11:40.528606+00:00",
+        "exitCode": 0,
+        "elapsedSeconds": 60.601,
+        "finishedAt": "2026-10-23T20:12:41.129841+00:00"
+      },
+      "exitCode": 0,
+      "vitestDurationSeconds": 59.9,
+      "testFiles": 8,
+      "passed": 151,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "resultsArchive": "integration.json.gz",
+      "consoleArchive": "integration.txt.gz",
+      "sourceBefore": {
+        "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+        "files": {
+          "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts": "0af7999129c6412ced7ca7abc2f996b20e61c71cc05183c8119556f754cf5b37",
+          "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+          "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+          "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+          "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+          "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+        }
+      },
+      "sourceAfter": {
+        "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+        "files": {
+          "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts": "0af7999129c6412ced7ca7abc2f996b20e61c71cc05183c8119556f754cf5b37",
+          "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+          "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+          "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+          "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+          "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+        }
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "phase": "successor",
+      "command": {
+        "cwd": "/workspace/ClinicalSageAI-2-replit",
+        "environment": {
+          "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+          "NODE_OPTIONS": "--max-old-space-size=4096"
+        },
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/successor.json"
+        ],
+        "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/backend/successor.txt",
+        "startedAt": "2026-10-23T20:14:09.736996+00:00",
+        "exitCode": 0,
+        "elapsedSeconds": 18.67,
+        "finishedAt": "2026-10-23T20:14:28.407646+00:00"
+      },
+      "exitCode": 0,
+      "vitestDurationSeconds": 18.14,
+      "testFiles": 1,
+      "passed": 52,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "resultsArchive": "successor.json.gz",
+      "consoleArchive": "successor.txt.gz",
+      "sourceBefore": {
+        "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+        "files": {
+          "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+          "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+          "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+          "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+          "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+          "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+        }
+      },
+      "sourceAfter": {
+        "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+        "files": {
+          "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+          "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+          "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+          "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+          "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+          "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+          "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+          "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+          "server/routes/__tests__/report-os-report-pack-export.test.ts": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+          "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+          "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+          "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+          "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+          "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+          "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+        }
+      },
+      "sourceUnchanged": true
+    }
+  ],
+  "formattingOnlySuccessor": {
+    "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+    "integrationTestedSha256": "0af7999129c6412ced7ca7abc2f996b20e61c71cc05183c8119556f754cf5b37",
+    "finalSha256": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+    "description": "Compacted the local client binding into its release spy and combined COMMIT/ROLLBACK assertions into the same exact statement-order assertion. No runtime change; removes two counted lines to avoid adding a max-lines warning."
+  },
+  "lint": {
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "finalArgv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "server/routes/report-os.ts",
+      "server/routes/__tests__/report-os-bundle-recording.test.ts",
+      "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "--format",
+      "json"
+    ],
+    "finalExitCode": 0,
+    "runs": [
+      {
+        "phase": "lint-before",
+        "exitCode": 0,
+        "rawArchive": "lint-before.json.gz",
+        "files": [
+          {
+            "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+            "errors": 0,
+            "warnings": 0,
+            "rules": []
+          },
+          {
+            "path": "server/routes/report-os.ts",
+            "errors": 0,
+            "warnings": 5,
+            "rules": [
+              {
+                "ruleId": "max-lines",
+                "severity": 1,
+                "message": "File has too many lines (2592). Maximum allowed is 500."
+              },
+              {
+                "ruleId": "max-lines-per-function",
+                "severity": 1,
+                "message": "Async arrow function has too many lines (205). Maximum allowed is 100."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Async arrow function has a complexity of 54. Maximum allowed is 15."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Async arrow function has a complexity of 18. Maximum allowed is 15."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "lint-pack-before",
+        "exitCode": 0,
+        "rawArchive": "lint-pack-before.json.gz",
+        "files": [
+          {
+            "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+            "errors": 0,
+            "warnings": 0,
+            "rules": []
+          }
+        ]
+      },
+      {
+        "phase": "lint-final",
+        "exitCode": 0,
+        "rawArchive": "lint-final.json.gz",
+        "files": [
+          {
+            "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+            "errors": 0,
+            "warnings": 0,
+            "rules": []
+          },
+          {
+            "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+            "errors": 0,
+            "warnings": 0,
+            "rules": []
+          },
+          {
+            "path": "server/routes/report-os.ts",
+            "errors": 0,
+            "warnings": 5,
+            "rules": [
+              {
+                "ruleId": "max-lines",
+                "severity": 1,
+                "message": "File has too many lines (2626). Maximum allowed is 500."
+              },
+              {
+                "ruleId": "max-lines-per-function",
+                "severity": 1,
+                "message": "Async arrow function has too many lines (205). Maximum allowed is 100."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Async arrow function has a complexity of 54. Maximum allowed is 15."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15."
+              },
+              {
+                "ruleId": "complexity",
+                "severity": 1,
+                "message": "Async arrow function has a complexity of 18. Maximum allowed is 15."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "finalSelectedSourcePins": {
+    "head": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+    "files": {
+      "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+      "server/routes/__tests__/report-os-bundle-recording.test.ts": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746",
+      "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+      "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+      "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+      "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+      "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+      "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "server/routes/__tests__/report-os-report-pack-export.test.ts": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+      "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+      "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+      "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+      "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+      "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+      "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+    }
+  },
+  "qualificationLimits": [
+    "PGlite executes actual SQL copies, transaction COMMIT and rollback. The chained audit writer seam inserts an enlisted SQL marker; this fixture does not establish cryptographic audit-chain integration or native multi-connection PostgreSQL qualification.",
+    "No full compiler, production build, hosted acceptance, commit or push was run by this backend agent. Root performs integrated gates and canonical publication.",
+    "This completion is bundle-creation-specific for outcome metadata; other helper callers retain their existing public error contracts. No server idempotency record or automatic retry is added."
+  ]
+}

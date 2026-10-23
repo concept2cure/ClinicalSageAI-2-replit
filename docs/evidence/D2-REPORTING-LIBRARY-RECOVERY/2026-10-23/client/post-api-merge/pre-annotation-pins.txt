@@ -1,0 +1,3 @@
+26b44010c3d0e25e6429d8d713351506b894b2156af4c178b4a0b21c4da38a43  client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts
+7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1  client/src/concept2cure/v2/apiCall.ts
+b6259be583f7f53c7458383bbbc909ab242adaa4d19136fb603fa4defd1b5a8a  client/src/concept2cure/v2/__tests__/apiCall.test.ts

@@ -1,0 +1,23 @@
+[
+  {
+    "artifact": "integration.json.gz",
+    "uncompressedBytes": 128723,
+    "uncompressedSha256": "46f736f5596144c4a5127d3bbb3f8daa7b59fbabdb4ab2218986bb666ad910e4",
+    "compressedBytes": 16749,
+    "compressedSha256": "d2e2cc7f51171da6d83ef58642aad9461e96906892796399b221ff94ec38f188"
+  },
+  {
+    "artifact": "integration.txt.gz",
+    "uncompressedBytes": 97560,
+    "uncompressedSha256": "90a1b48a248b90f86206f68d5ba10c1de4b8d186487e0ee647c0c262ec1b402d",
+    "compressedBytes": 11407,
+    "compressedSha256": "c3b36438e81e5f204cf4adf45fc5bbafc5da08ef92813093efed5202bd88e115"
+  },
+  {
+    "artifact": "lint-scoped.json.gz",
+    "uncompressedBytes": 135252,
+    "uncompressedSha256": "1be934d15c233e994de88f1544e10285bfed15db539eaad7f0f4c5d3da3d461f",
+    "compressedBytes": 40133,
+    "compressedSha256": "6baf35fbe5a9e608b21a2e6dc8c9e06fd36798608039b1294ca2256b6072ad02"
+  }
+]

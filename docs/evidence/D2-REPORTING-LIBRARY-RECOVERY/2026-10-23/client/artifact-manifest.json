@@ -1,0 +1,90 @@
+[
+  {
+    "artifact": "product-red.json.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/red-corrected.json",
+    "uncompressedBytes": 60907,
+    "uncompressedSha256": "6ee55aa2aca00e07549c2ad7ca3a4552a34bcb3b1970870c7c28c0655e15d50f",
+    "compressedBytes": 4161,
+    "compressedSha256": "81f3def21e376c273ac9ee9aa7997c4be519d7b645e5c6a575177e14ee0571a5"
+  },
+  {
+    "artifact": "product-red.txt.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/red-corrected.txt",
+    "uncompressedBytes": 103662,
+    "uncompressedSha256": "4aab11f5678d93daafe00535d6a95e94af17ae3e8c4cdeeb9826d1b879fb72e9",
+    "compressedBytes": 6561,
+    "compressedSha256": "fd78a445e867d49879648b9a679c9c84b911c4443bee7e8fcbb78b08e3cf6495"
+  },
+  {
+    "artifact": "product-red-test.tsx.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/red-source/reportingLibraryRecovery.test.tsx",
+    "uncompressedBytes": 10767,
+    "uncompressedSha256": "ea3b253b6e06eddbb36927aa63efd56eefc6243c752400c5fd68acafea2d5a86",
+    "compressedBytes": 2930,
+    "compressedSha256": "ec3b7de3c10d6c914b1b7361e772d5ac74bf2c4ddf394836c2e1bfee0d7e1cc5"
+  },
+  {
+    "artifact": "review-race-red.json.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/review-race-red.json",
+    "uncompressedBytes": 15675,
+    "uncompressedSha256": "315f74877bd591205f7b983bb9d3c5f0f520b18b2f36353e2fa723d78c6dfb7d",
+    "compressedBytes": 1801,
+    "compressedSha256": "879dd3e5a43dc0b2d8a4006feaa7d059656ac3173f8afe65b134afe4106b7cae"
+  },
+  {
+    "artifact": "review-race-red.txt.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/review-race-red.txt",
+    "uncompressedBytes": 9911,
+    "uncompressedSha256": "d6f43612791c2176e9acb8434e2ea0a7372b9df466d39eb921aee57c1e95c311",
+    "compressedBytes": 1657,
+    "compressedSha256": "013e32f57ec589fc0f61925cd1435c91d1532000384abb24e9f6383aae4b8605"
+  },
+  {
+    "artifact": "review-race-red-test.tsx.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/review-race-red.test.tsx",
+    "uncompressedBytes": 23259,
+    "uncompressedSha256": "e9abbd171885a67438dc44dbdeadf37b31abc623d7f9a843062fd7c80ce6435c",
+    "compressedBytes": 4613,
+    "compressedSha256": "8ae80fa7e48f7637f63099797438eef0dbb29c9f5ed091bae1e0b74e799b1220"
+  },
+  {
+    "artifact": "review-race-red-runtime.tsx.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/integration-initial-source/client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+    "uncompressedBytes": 8373,
+    "uncompressedSha256": "250ec15f05dbd108e2765e49fd6a48fcc02fdabef32226bde4bb43c1dbe31bd1",
+    "compressedBytes": 2759,
+    "compressedSha256": "28e5f0fab50e6f476d85a90f3f6d244d85169058e689e8a9632317462a120e36"
+  },
+  {
+    "artifact": "integration-final.json.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/integration-final.json",
+    "uncompressedBytes": 124469,
+    "uncompressedSha256": "ff9c39d5989b9761f77073c795d023080e37e02239c165041bddb94ef370bb64",
+    "compressedBytes": 16072,
+    "compressedSha256": "20f3d651baf5e0521572753eb073e63ea3257bfd3bbe2a8affce5fb546ee7f84"
+  },
+  {
+    "artifact": "integration-final.txt.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/integration-final.txt",
+    "uncompressedBytes": 95530,
+    "uncompressedSha256": "b9ad818d0fa1214f0593b76b91afc9300396bd1a3554e308393a26827ff25021",
+    "compressedBytes": 11026,
+    "compressedSha256": "5215ccd9d3edef947fe8b62a009d85bb108bfd7eb189e78d40d462fd634a1c46"
+  },
+  {
+    "artifact": "lint-baseline.json.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/lint-baseline.json",
+    "uncompressedBytes": 135847,
+    "uncompressedSha256": "64736028dd4ec7b3bd021d9816a72e74e3b975552e50d272da7f06d416874773",
+    "compressedBytes": 39915,
+    "compressedSha256": "3cf85f56f6ff327b714226d4b9b069710eef2b9eb65925e5068ede7368d8ca2d"
+  },
+  {
+    "artifact": "lint-final.json.gz",
+    "source": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/lint-final-scoped.json",
+    "uncompressedBytes": 135252,
+    "uncompressedSha256": "1be934d15c233e994de88f1544e10285bfed15db539eaad7f0f4c5d3da3d461f",
+    "compressedBytes": 40133,
+    "compressedSha256": "6baf35fbe5a9e608b21a2e6dc8c9e06fd36798608039b1294ca2256b6072ad02"
+  }
+]
