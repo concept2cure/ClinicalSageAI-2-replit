@@ -1,0 +1,137 @@
+{
+  "qualifiedSourceCommit": "784db6fff7baf0dafd2bf8d9384c27730d01e21e",
+  "scope": "Five focused reporting/Authoring merged checks; all earlier case cohorts retained separately.",
+  "files": 5,
+  "passed": 91,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "processExit": 0,
+  "selection": [
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+    "server/routes/__tests__/report-os-current-run-access.test.ts",
+    "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+    "server/services/report-os/__tests__/project-access-integration.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx"
+  ],
+  "reportSha256": "871e77ba0d7d8687fc3c5bc7fa5686e51040acb1f9b64950f37f6fd596cc2cac",
+  "transcriptSha256": "b2ca4effc9deb887d79c43fc490e254f98fb13aa8725a12f1f09644bac6d4868",
+  "results": [
+    {
+      "path": "server/routes/__tests__/report-os-current-run-access.test.ts",
+      "tests": [
+        "every manual report retains current authority at persistence keeps an authorized counterexample and checks membership on the same tenant transaction",
+        "every manual report retains current authority at persistence refuses demoted authority changed during computation and rolls back the entire run",
+        "every manual report retains current authority at persistence refuses inactive authority changed during computation and rolls back the entire run",
+        "every manual report retains current authority at persistence refuses project-revoked authority changed during computation and rolls back the entire run",
+        "every manual report retains current authority at persistence refuses unavailable authority changed during computation and rolls back the entire run",
+        "every manual report retains current authority at persistence refuses project-archived authority changed during computation and rolls back the entire run"
+      ]
+    },
+    {
+      "path": "server/services/report-os/__tests__/project-access-integration.test.ts",
+      "tests": [
+        "reporting reuses the existing project-sharing boundary keeps use-only, public and pending-review admission read-only in explicit edit mode",
+        "reporting reuses the existing project-sharing boundary denies an unassigned same-organization member and viewer while allowing owner and explicit use members",
+        "reporting reuses the existing project-sharing boundary retains public-project and pending-review access without admitting another organization",
+        "reporting reuses the existing project-sharing boundary refuses a writing creator who has no actual access to the private project",
+        "reporting reuses the existing project-sharing boundary permits scheduling by an explicit project member and delivery to an authorized viewer",
+        "reporting reuses the existing project-sharing boundary honors project-membership revocation on the next delivery validation",
+        "reporting reuses the existing project-sharing boundary refuses an unauthorized same-organization recipient before computing or persisting any output",
+        "reporting reuses the existing project-sharing boundary requires access to every private project referenced by a program-group schedule",
+        "reporting reuses the existing project-sharing boundary keeps genuine organization registers governed by their existing organization policy",
+        "guards saved account reports by their actual source projects and rechecks a schedule recipient after compute",
+        "rechecks actual source-project recipient access inside the persistence transaction before cursor or delivery effects",
+        "refuses malformed present source evidence null on direct account reads",
+        "refuses malformed present source evidence {\"invalid\":true} on direct account reads",
+        "refuses malformed present source evidence \"11\" on direct account reads",
+        "ordinary scheduled reports retain current authority after computation refuses a readiness creator demoted while computing without optional source-project evidence",
+        "ordinary scheduled reports retain current authority after computation refuses a private-project recipient revoked while computing without optional source-project evidence",
+        "ordinary scheduled reports retain current authority after computation refuses an organization-register recipient deactivated while computing",
+        "ordinary scheduled reports retain current authority after computation refuses malformed present source evidence null before scheduled persistence",
+        "ordinary scheduled reports retain current authority after computation refuses malformed present source evidence {\"invalid\":true} before scheduled persistence",
+        "ordinary scheduled reports retain current authority after computation refuses malformed present source evidence \"11\" before scheduled persistence",
+        "ordinary scheduled reports retain current authority after computation retains an authorized non-manager program group using its actual computed project set"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+      "tests": [
+        "reporting current session \u2014 private canvas reads withdraws an open report and rereads the overview for a replacement account in the same organization",
+        "reporting current session \u2014 private canvas reads withdraws private data on a current account-role replacement even when its ids stay the same",
+        "reporting current session \u2014 private canvas reads withdraws private results when the server refreshes the current role without rotating the session revision",
+        "reporting current session \u2014 private canvas reads discards an earlier overview that resolves after a replacement account has started its read",
+        "reporting current session \u2014 private canvas reads does not continue a sent run under replacement credentials or imply that it was rolled back",
+        "reporting current session \u2014 private canvas reads refuses a stale Run click in the same frame that the current actor changes",
+        "reporting current session \u2014 private canvas reads discards rendered JSON that finishes after a session ends",
+        "reporting current session \u2014 private canvas reads discards a saved-history document that returns after account replacement",
+        "old reporting forms and signature callbacks blocks a stale Finalize click in the same frame as replacement credentials",
+        "old reporting forms and signature callbacks blocks a stale schedule save in the same frame as replacement credentials",
+        "old reporting forms and signature callbacks blocks a stale schedule PATCH in the same frame as replacement credentials",
+        "old reporting forms and signature callbacks does not describe an uncertain network creation outcome as a failed write",
+        "old reporting forms and signature callbacks does not describe an uncertain missing-id creation outcome as a failed write",
+        "old reporting forms and signature callbacks does not describe an uncertain boolean-id creation outcome as a failed write",
+        "old reporting forms and signature callbacks does not describe an uncertain status-zero creation outcome as a failed write",
+        "old reporting forms and signature callbacks does not describe an uncertain server-error creation outcome as a failed write",
+        "old reporting forms and signature callbacks does not describe an uncertain returned-unavailable creation outcome as a failed write",
+        "old reporting forms and signature callbacks preserves a known recorded rollback in the nested error code",
+        "old reporting forms and signature callbacks preserves a known recorded rollback in the root error code",
+        "old reporting forms and signature callbacks does not finalize after the account changes during password verification",
+        "old reporting forms and signature callbacks withdraws a sent finalization without attributing its delayed seal to a replacement account",
+        "single report export \u2014 current session and pending request discards a PDF response after logout",
+        "single report export \u2014 current session and pending request discards a PDF response after replacement",
+        "single report export \u2014 current session and pending request discards a PDF response after organization",
+        "single report export \u2014 current session and pending request discards a PDF body that finishes after the current account changes",
+        "single report export \u2014 current session and pending request discards an earlier report PDF body when the selected program changes",
+        "single report export \u2014 current session and pending request suppresses an old export refusal that arrives after a current-session change",
+        "single report export \u2014 current session and pending request dispatches one PDF read for duplicate clicks and disables its export while pending",
+        "single report export \u2014 current session and pending request allows a pending PDF body and retains the report across normal bearer refresh in the same session"
+      ]
+    },
+    {
+      "path": "server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts",
+      "tests": [
+        "first scheduled firing against real PostgreSQL semantics handles a legacy microsecond updated_at and commits saved output, inbox row and cursor",
+        "first scheduled firing against real PostgreSQL semantics rolls back the run, notification and cursor if delivery audit recording fails",
+        "first scheduled firing against real PostgreSQL semantics refuses changed schedule content even if its updated_at has the same millisecond",
+        "first scheduled firing against real PostgreSQL semantics rolls back output, notification and cursor when creator-demoted before enlisted admission",
+        "first scheduled firing against real PostgreSQL semantics rolls back output, notification and cursor when recipient-revoked before enlisted admission",
+        "first scheduled firing against real PostgreSQL semantics rolls back output, notification and cursor when recipient-inactive before enlisted admission",
+        "first scheduled firing against real PostgreSQL semantics rolls back the fresh run when project-archived before enlisted scope ownership admission",
+        "first scheduled firing against real PostgreSQL semantics rolls back the fresh run when workspace-moved before enlisted scope ownership admission",
+        "first scheduled firing against real PostgreSQL semantics rolls back the fresh run when workspace-inactive before enlisted scope ownership admission"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+      "tests": [
+        "saved-section receipt agrees with canonical filing identity rejects unrelated ancestor",
+        "saved-section receipt agrees with canonical filing identity rejects bare module ancestor",
+        "saved-section receipt agrees with canonical filing identity rejects unrelated part-of marker",
+        "saved-section receipt agrees with canonical filing identity rejects unexpected exact target",
+        "saved-section receipt agrees with canonical filing identity accepts a proper assembled ancestor without inventing a content revision",
+        "saved-section receipt agrees with canonical filing identity rejects a different documentId source token",
+        "saved-section receipt agrees with canonical filing identity rejects a different sectionId source token",
+        "saved-section receipt agrees with canonical filing identity rejects a different programId source token",
+        "saved-section receipt agrees with canonical filing identity rejects a different filingDocumentId source token",
+        "saved-section receipt agrees with canonical filing identity rejects a different updatedAt source token",
+        "unchanged filing retains one attempt and its exact reviewed owner does not show an old success when A is revisited before its reply",
+        "unchanged filing retains one attempt and its exact reviewed owner rechecks the actual editor at confirmation even before a dirty render",
+        "uncertain or contradictory filing replies never permit blind replay holds 'bodyless success' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'malformed success' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'contradictory outcome' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'contradictory status' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'error alias' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'reason alias' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'wrong destination' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'contradictory refusal' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'nested result array' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'unconfirmed refusal' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds 'server uncertainty' across close/reopen and A \u2192 B \u2192 A",
+        "uncertain or contradictory filing replies never permit blind replay holds a lost network reply instead of saying nothing was written",
+        "confirmed refusals and successful filing remain deliberate retains the server refusal and allows a fresh explicit confirmation",
+        "confirmed refusals and successful filing remain deliberate sends only pinned intent and the dedicated reason, then confirms no content revision"
+      ]
+    }
+  ]
+}

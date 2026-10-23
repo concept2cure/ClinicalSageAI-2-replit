@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type NextFunction } from 'express';
 import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import { readAssemblySourceManifest, type AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 import multer from 'multer';
@@ -105,6 +105,7 @@ import { buildIndDocumentCatalog } from '../services/authoring/ind-document-cata
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
+import { refileSavedAuthoringSection } from '../services/authoring/authoring-refile-saved-section';
 import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
 import {
   createDocumentFromDraft,
@@ -1546,8 +1547,27 @@ router.post('/sections', async (req: Request, res: Response) => {
   }
 });
 
+async function dispatchSavedSectionRefile(req: Request, res: Response, next: NextFunction) {
+  if (!Object.prototype.hasOwnProperty.call(req.body ?? {}, 'filingOnly')) return next();
+  try {
+    const actorId = getActorId(req);
+    if (!actorId) return res.status(401).json({ success: false, error: 'Authentication required' });
+    if (typeof req.params.sectionId !== 'string') return res.status(400).json({ success: false, code: 'REFILING_REQUEST_INVALID', error: 'A saved section is required.' });
+    const result = await refileSavedAuthoringSection({ pool, tenantId: getTenantId(req),
+      actor: { id: actorId, email: getActorEmail(req) }, principal: authoringPrincipalFromRequest(req),
+      audit: auditContextFromRequest(req), sectionId: req.params.sectionId, body: req.body,
+      retainedDraftSource: inputs => restoredMachineAuthor(inputs).draftSource });
+    return res.status(result.status).json(result.body);
+  } catch (error) {
+    logger.error('Saved-section re-filing request could not be completed', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(503).json({ success: false, code: 'OUTCOME_UNKNOWN', retryAllowed: false,
+      error: 'The re-filing outcome could not be confirmed. Do not retry re-filing.' });
+  }
+}
+
+
 // PATCH /api/authoring/sections/:sectionId - Update section (with automatic revision)
-router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
+router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { content, track_changes, title, code } = req.body;
@@ -4667,13 +4687,8 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
  * (`reviseControlledQmsDocument`), and every other document has no path at all
  * — which is exactly why a divergence must never be allowed to reach one.
  *
- * WHY THE COPY SAYS "make any edit and save" RATHER THAN "save". `different`
- * is by construction a state in which the EDITING text did not change — the
- * filing did — so the editor's Save is disabled: `dirty` requires
- * `editorDirty` (client/src/concept2cure/v2/editor/DocumentWorkbench.tsx). A
- * refusal that prescribes a greyed-out button is a dead end, so the copy names
- * what is performable today. Enabling a re-file of an unchanged body is the
- * follow-up; until it lands this wording is the honest one.
+ * The editor's deliberate Re-file saved text action repairs an unchanged saved
+ * body without inventing a content revision or replacing its authorship.
  */
 function filingDivergedRefusal(
   diverged: ReadonlyArray<{ key: string; section: { code: string } }>,
@@ -4694,8 +4709,8 @@ function filingDivergedRefusal(
         `Not ${act} — the filed copy of ${one ? 'section' : 'sections'} ${named.join(', ')} ` +
         `${one ? 'is' : 'are'} not the text this document holds. ${act === 'frozen' ? 'Freezing' : 'Signing'} ` +
         'seals the text for filing, so the signature would attest to text the submission does not ' +
-        `contain. Re-file it from the editor: open ${one ? 'that section' : 'those sections'}, make ` +
-        `any edit and save, which rewrites the filed copy. Then ${act === 'frozen' ? 'freeze' : 'sign'} again.`,
+        `contain. Open ${one ? 'that section' : 'those sections'} and choose Re-file saved text, ` +
+        `which restores the saved text to its filing. Then ${act === 'frozen' ? 'freeze' : 'sign'} again.`,
     },
     diverged,
   };

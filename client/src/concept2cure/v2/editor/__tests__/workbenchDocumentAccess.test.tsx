@@ -21,6 +21,7 @@ import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { DocumentWorkbench } from '../DocumentWorkbench';
 import { authService, type AuthUser } from '@/services/portal/authService';
 import type { OwnedSurfaceViewProps } from '../../surfaceViews';
+import type { Editor } from '@tiptap/core';
 
 const DOC = '10000000-0000-4000-8000-000000000001';
 const SEC = '20000000-0000-4000-8000-000000000001';
@@ -257,5 +258,170 @@ describe('document access is reachable from the canonical authoring editor', () 
     fireEvent.click(rail.getByRole('button', { name: 'Close document access' }));
     expect(screen.queryByRole('complementary', { name: 'Document access' })).toBeNull();
     expect(document.activeElement).toBe(screen.getByTestId('access-rail-open'));
+  });
+});
+
+const FILING = 'filing-native-text-17';
+const SAVED_AT = '2026-10-23T11:00:00.000Z';
+const REFILE_REASON = 'Restore the reviewed saved section to its bound filing.';
+const boundRow = { ...row, module: 'M3', project_id: PID, program_id: PID, client_program_id: PID,
+  c2c_document_id: FILING as string | null, readScope: 'document' as 'document' | 'sections', sourceMetadataState: 'available' as const };
+const savedSection = { ...sectionRow, updated_at: SAVED_AT as string | null };
+
+function savedRefilingReceipt() {
+  return { success: true, refiled: true, revision_created: false,
+    source: { documentId: DOC, sectionId: SEC, programId: PID, filingDocumentId: FILING, updatedAt: SAVED_AT },
+    filing: { committed: true, documentId: FILING, sectionKey: '1' } };
+}
+
+function refilingReadHarness(options: {
+  document?: Partial<typeof boundRow>; section?: Partial<typeof savedSection>; editAllowed?: boolean;
+} = {}) {
+  authService.setToken('synthetic-refile-owner-before', AUTHOR, 'synthetic-refile-refresh-before');
+  window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
+  const documentRow = { ...boundRow, ...options.document };
+  const source = { ...savedSection, ...options.section };
+  const state = { denied: false, source, patch: async () => ok(savedRefilingReceipt()) };
+  apiRequest.mockReset().mockImplementation(async (method: string, url: string) => {
+    const path = url.split('?')[0];
+    if (method === 'PATCH') return state.patch();
+    if (path === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: documentRow,
+      access: { edit: { allowed: options.editAllowed !== false, reason: 'The current editor grant is read-only.' } } });
+    if (path === `/api/authoring/docs/${DOC}/sections`) return state.denied
+      ? { ok: false, status: 503, json: async () => ({ error: { code: 'AUTHORING_READ_ACCESS_CHANGED',
+        message: 'Read current access again.' } }) } as Response
+      : ok({ success: true, sections: [state.source], readScope: documentRow.readScope });
+    return baseRead(url);
+  });
+  const ui = (programId = PID) => <DocumentWorkbench docs={[documentRow]} docsState="ready" status="all"
+    reloadDocs={vi.fn()} pinnedDocId={DOC} programId={programId} onNav={vi.fn()} />;
+  const view = render(ui());
+  return { state, view, ui, patches: () => apiRequest.mock.calls.filter(([method]) => method === 'PATCH') };
+}
+
+async function currentRefilingButton() {
+  await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('Current admitted prose.'));
+  return screen.getByRole('button', { name: 'Re-file saved text' }) as HTMLButtonElement;
+}
+
+async function openRefiling() {
+  const button = await currentRefilingButton();
+  await waitFor(() => expect(button.disabled).toBe(false));
+  fireEvent.click(button);
+  const dialog = await screen.findByRole('dialog', { name: 'Re-file saved text' });
+  fireEvent.change(within(dialog).getByPlaceholderText('Captured verbatim in the audit log. Be specific.'),
+    { target: { value: REFILE_REASON } });
+  fireEvent.change(within(dialog).getByPlaceholderText('refile'), { target: { value: 'refile' } });
+  return dialog;
+}
+
+function confirmRefiling(dialog: HTMLElement) {
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm and log' }));
+}
+
+describe('saved text re-filing requires the currently admitted clean source', () => {
+  it('sends only the pinned saved-source intent from the existing toolbar, without an editor change', async () => {
+    const harness = refilingReadHarness();
+    const dialog = await openRefiling();
+    expect(dialog.textContent).toContain('Visible section');
+    expect(dialog.textContent).toContain(FILING);
+    expect(dialog.textContent).toMatch(/without.*(?:content )?revision|no.*(?:content )?revision/i);
+    expect(harness.patches()).toHaveLength(0);
+    confirmRefiling(dialog);
+    await waitFor(() => expect(harness.patches()).toHaveLength(1));
+    expect(harness.patches()[0]).toEqual(['PATCH', `/api/authoring/sections/${SEC}`, {
+      filingOnly: true, expectedDocumentId: DOC, expectedFilingDocumentId: FILING,
+      expectedProgramId: PID, expectedUpdatedAt: SAVED_AT, changeReason: REFILE_REASON,
+    }]);
+    expect((await screen.findAllByText(/was re-filed/)).length).toBeGreaterThan(0);
+    expect(document.querySelector('.tiptap')?.textContent).toBe('Current admitted prose.');
+    expect(document.body.textContent).not.toMatch(/revision \d+ recorded/i);
+  });
+
+  it.each([
+    ['unbound', { document: { c2c_document_id: null } }],
+    ['partial', { document: { readScope: 'sections' as const } }],
+    ['sealed', { document: { status: 'FROZEN' } }],
+    ['approved', { document: { status: 'APPROVED' } }],
+    ['read-only', { editAllowed: false }],
+    ['unversioned', { section: { updated_at: null } }],
+  ])('does not offer %s source text as a re-filing write', async (_label, options) => {
+    const harness = refilingReadHarness(options as Parameters<typeof refilingReadHarness>[0]);
+    expect((await currentRefilingButton()).disabled).toBe(true);
+    expect(harness.patches()).toHaveLength(0);
+  });
+
+  it('requires deliberate save or discard when the actual editor is dirty', async () => {
+    const harness = refilingReadHarness();
+    const button = await currentRefilingButton();
+    await waitFor(() => expect(button.disabled).toBe(false));
+    const canvas = document.querySelector('.tiptap') as HTMLElement & { editor: Editor };
+    act(() => { canvas.editor.chain().focus().insertContent('Unrecorded local change. ').run(); });
+    await waitFor(() => expect(button.disabled).toBe(true));
+    expect(document.querySelector('.tiptap')?.textContent).toContain('Unrecorded local change.');
+    expect(harness.patches()).toHaveLength(0);
+  });
+});
+
+describe('an open re-filing confirmation rechecks its source before writing', () => {
+  it('refuses a source timestamp changed by a current saved-section refresh', async () => {
+    const harness = refilingReadHarness();
+    const dialog = await openRefiling();
+    harness.state.source = { ...savedSection, updated_at: '2026-10-23T11:05:00.000Z' };
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh sections' }));
+    await waitFor(() => expect(apiRequest.mock.calls.filter(([, url]) =>
+      url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`).length).toBeGreaterThan(1));
+    await waitFor(() => expect(document.body.contains(dialog)).toBe(false));
+    expect(harness.patches()).toHaveLength(0);
+    fireEvent.click(await currentRefilingButton());
+    const replacement = await screen.findByRole('dialog', { name: 'Re-file saved text' });
+    expect((within(replacement).getByPlaceholderText('refile') as HTMLInputElement).value).toBe('');
+  });
+
+  it('refuses after the current read confirms access withdrawal', async () => {
+    const harness = refilingReadHarness();
+    const dialog = await openRefiling();
+    harness.state.denied = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh sections' }));
+    await waitFor(() => expect(document.querySelector('.tiptap')).toBeNull());
+    await waitFor(() => expect(document.body.contains(dialog)).toBe(false));
+    expect(harness.patches()).toHaveLength(0);
+  });
+
+  it.each(['session', 'programme'])('refuses to replay an old confirmation after its %s changes', async change => {
+    const harness = refilingReadHarness();
+    const dialog = await openRefiling();
+    if (change === 'session') act(() => {
+      authService.endSession(null);
+      authService.setToken('synthetic-refile-owner-after', AUTHOR, 'synthetic-refile-refresh-after');
+    });
+    else harness.view.rerender(harness.ui(NEXT_PID));
+    await waitFor(() => expect(document.body.contains(dialog)).toBe(false));
+    await waitFor(() => expect(harness.patches()).toHaveLength(0));
+    expect(document.body.textContent).not.toMatch(/was re-filed/i);
+  });
+});
+
+describe('a sent re-filing receipt cannot claim success in an obsolete editor context', () => {
+  it.each(['access', 'session', 'programme'])('suppresses a late confirmed receipt after %s changes', async change => {
+    const harness = refilingReadHarness();
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    harness.state.patch = () => pending;
+    const dialog = await openRefiling();
+    confirmRefiling(dialog);
+    await waitFor(() => expect(harness.patches()).toHaveLength(1));
+    if (change === 'access') {
+      harness.state.denied = true;
+      fireEvent.click(screen.getByRole('button', { name: 'Refresh sections' }));
+      await waitFor(() => expect(document.querySelector('.tiptap')).toBeNull());
+    } else if (change === 'session') act(() => {
+      authService.endSession(null);
+      authService.setToken('synthetic-refile-owner-after', AUTHOR, 'synthetic-refile-refresh-after');
+    });
+    else harness.view.rerender(harness.ui(NEXT_PID));
+    await act(async () => { release(ok(savedRefilingReceipt())); await pending; });
+    expect(document.body.textContent).not.toMatch(/was re-filed/i);
+    expect(harness.patches()).toHaveLength(1);
   });
 });

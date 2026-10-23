@@ -1,0 +1,10 @@
+[
+  "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+  "server/services/ectd/__tests__/signed-package-export.test.ts",
+  "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+  "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+  "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+  "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+  "client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx",
+  "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx"
+]

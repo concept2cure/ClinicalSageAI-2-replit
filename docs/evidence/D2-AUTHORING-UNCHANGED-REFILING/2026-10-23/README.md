@@ -1,0 +1,173 @@
+# Complete unchanged saved-section re-filing
+
+W1 / D2 on `concept2cure-v2`. Locally qualified after the combined functional,
+production-build and full zero-error TypeScript checks. Design:
+`docs/design/AUTHORING_UNCHANGED_REFILING.md`.
+
+## What already exists
+
+This is the discovery inventory before the completion, at `0a7abf314`.
+
+- `server/routes/authoring.router.ts` owns section PATCH save, atomic revision,
+  saved-source reservation, lineage, `commitSectionToFiling` and audit. Its
+  `filingDivergedRefusal` explicitly records the open unchanged-body remedy:
+  users must make an arbitrary edit because the editor Save requires dirty text.
+- `server/services/c2c/commit-section-to-filing.ts` owns the canonical filing
+  writer; `filing-section-target.ts` owns binding, assembly and agreement reads.
+  These engines remain the only writers/verdicts, with existing locks and gates.
+- `client/src/concept2cure/v2/editor/DocumentWorkbench.tsx` owns editor/save;
+  `surfaces/AuthoringFilingBar.tsx` owns freeze/sign actions and refusal display.
+  `AuthoringPlaceIntoFiling.tsx` creates a whole-document snapshot/leaf, a
+  different existing act, not an unchanged bound-section save remedy.
+- `client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx`
+  and existing server assembly/save/filing/seal tests are the fixture starting
+  points. Extend these boundaries rather than invent another save or version
+  engine.
+- `authoring-file-to-vault.ts`, `vault-version-checkin.ts` and the recorded
+  derivation receipt already own Vault admission/check-in/provenance. Historical
+  hash-labelled Vault supersession and sealed authored-document revision are
+  separate open policies and remain outside this correction.
+
+Searches covered re-file/refile, filing divergence, saved-body/dirty, section
+commit, approval, revision and version in routes/services/client/designs,
+plus deleted history for authoring versions/revisions/refiling and filing names.
+No retired competing unchanged-section remedy was found. Existing deployed
+capabilities are completed, not rebuilt.
+
+## Where to use it
+
+Open a saved section in the existing Authoring editor. With a clean editor and
+current full-document access, choose **Re-file saved text**, state the reason,
+and type **refile** in the existing governed confirmation. The confirmation
+names the section and destination and explains that combined sections file
+their saved text together. Ordinary Save remains the content-edit action.
+
+The existing seal refusal now points at this reachable action instead of asking
+for an arbitrary edit. No content change is invented to repair a filing copy.
+
+## Verified behavior
+
+The explicit intent uses the existing section PATCH authorization and canonical
+filing writer. It rejects content, metadata and authorship claims in the request;
+requires exact saved document, program, native filing identity and timestamp;
+and reads the actual saved text in its reserved transaction. Current whole-read
+admission precedes private provenance reads. Access is rechecked under retained
+grants using the current account email and role; QMS, saved-source, workflow,
+lineage, market, filing-lock and approval gates remain effective.
+
+Authoring section bytes, saved timestamp, content revisions and attribution spans
+remain unchanged. The canonical parent reservation still touches the document
+metadata timestamp to preserve seal-race protection. A separate COMMIT audit,
+with the stated reason and exact source/destination, shares the filing
+transaction. Real filing changes retain their canonical filing-version history.
+No approval or signature is invented; changed approved filing text loses approval.
+
+The client confirms only an exact, coherent receipt. Unrelated assembly keys,
+contradictory results (including nested arrays), malformed replies and uncertain
+commits hold against retry. Pending/unknown bookkeeping survives close/reopen
+and source navigation in the mounted host. Success presentation belongs to the
+originating current visit; a late reply cannot display an obsolete success.
+
+## Qualification and integration
+
+`tests.json` records one completed post-merge run: **595 passed across 32 exact
+files, zero failures, skips or TODOs**. `test-files.json` is the reproducible
+selection. Prior 117-case client and 182-case server runs are retained separately
+in `client.json` and `server.json`; they are not added to the 595 cases. Earlier
+company-document and PDF qualification counts are not inflated.
+
+`red-proof.json` distinguishes original missing-action/ineffective-PATCH failures
+from intentional pre-hardening gate-omission checks. Filtered-out cases are
+identified, never counted as final skips or extra passes. Fixture corrections
+are retained: canonical create/save establishes assembled sections and lineage;
+actual prerequisite migrations are applied; creator grants and privacy-masked
+404 expectations reflect the canonical policy. Gates were not weakened.
+
+The incoming Vault rendition-version and Unicode updates at `26d850156` merged
+cleanly with implementation `848fa68e3` into combined source `90facc53e`.
+Vault versioned re-filing is separate from this saved-section repair; see
+`docs/evidence/D2-AUTHORING-REFILING-VERSIONS/2026-10-23/`. Its numeric-version
+proof replaces the earlier parity TODO, while historical hash-labelled family
+renumbering and sealed Authoring revisions remain separate policies.
+
+`source-manifest.json` pins 71 inputs. `unchanged-boundaries.json` verifies 11
+unchanged boundaries and three reviewed differences: the canonical contributor
+membership extraction, and two files exactly matching the incoming Vault update.
+Ordinary Save, rich editor, renderer/converter, generic mutation policy and
+company-original packaging remain unchanged. Independent review found no
+remaining source blocker. `verification.json` records the completed build,
+compiler and lint checks; publication requires the mandatory repository hooks.
+
+Before publication, later upstream `43cde0d11` merged cleanly into
+`ee160a52b`. All 71 original source pins remain unchanged. A separate
+**499-case, 14-file supplemental run**, fresh production build and
+full TypeScript check (zero errors, process exit 0) qualify its template,
+planning and Unicode-reading changes. `late-incoming.json` pins those inputs
+and results; `late-incoming-test-files.json` selects the affected suites,
+including both unchanged callers of modified fixtures. These results are
+kept separate from the earlier 595/32 run.
+
+The final incoming release-identity work at `4cd0215a5` then merged cleanly
+at `6794c76f6`. `final-integration.json` records **244 passes across
+eight focused interoperability suites**, a fresh passing production build and
+full zero-error TypeScript check. All 13 feature paths and 24 late-input pins
+are unchanged; 70 of the original 71 pins match, with one reviewed comment-only
+difference in `SubmissionSeqWorkspaces.tsx`. All 44 incoming identity manifest
+pins match the merged source. Historical upstream cohorts remain separate;
+native concurrency was not rerun here. The original 595/32 and 499/14 counts
+remain unchanged.
+
+The first mandatory push was refused by the existing source-size ceilings
+(57/115 oversized files versus ceilings 56/114). Commit `32c1061c0` mechanically
+splits the existing filing cases and lineage primitives, preserving the service
+exports, lazy pool access, error identity and same original database fixture.
+All 93 contract cases retain their exact order and ancestry; a separate 154-case
+lineage/workflow run passes. Build, full zero-error TypeScript and lint pass,
+with no warning growth. The size gate now passes at 56/114, with both ceilings
+unchanged. `size-split-qualification.json` supplies the final source pins and
+refusal/remedy evidence; `size-split-tests.json` keeps these runs separate from
+the earlier 595/32, 499/14 and 244/8 qualifications. Publication still requires the
+entire mandatory push hook to pass.
+
+Latest reporting-access work at `b3e5746f6` merged cleanly at `784db6fff`.
+All 143 post-split source pins remain unchanged. A separate **91-case,
+five-suite reporting/Authoring check** and fresh production build pass.
+`reporting-integration.json` records the final input manifest, compatible
+source-bound upstream reporting cohorts and required combined TypeScript/push
+gates. Earlier counts and full compiler results keep their exact source scope;
+nothing is added across overlapping runs.
+
+Every mandatory push gate, including zero-error TypeScript, then passed at
+`dd71e2b49`; the remote advanced during that check and Git refused the push.
+Vault passage freshness at `7fab2aa65` merged cleanly at `7442c4cfa`, leaving
+all 198 earlier inputs unchanged. All 65 incoming freshness pins match the
+merged source. A separate **38-case, three-suite freshness/Authoring check**
+and fresh production build pass. `vault-freshness-integration.json` is the
+final input manifest and preserves the successful-check/ref-race evidence;
+publication requires the complete normal push hook again. Historical 269/27
+upstream freshness cases remain separate from every earlier run.
+
+## Reproduction and limits
+
+```sh
+source /workspace/.cloud-setup/activate.sh
+node --input-type=module - <<'JS'
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const files = JSON.parse(fs.readFileSync('docs/evidence/D2-AUTHORING-UNCHANGED-REFILING/2026-10-23/test-files.json', 'utf8'));
+process.exit(spawnSync('./node_modules/.bin/vitest', ['run', ...files], { stdio: 'inherit' }).status ?? 1);
+JS
+npm run build
+node scripts/ci/typecheck-no-regression.mjs --incremental
+```
+
+Raw reports, transcripts, retained before-hardening snapshots and report hashes
+are kept under `/workspace/.cloud-setup/authoring-refile/`. Native SQL proof here
+uses PGlite with mounted HTTP requests; acknowledgment-loss seams wrap actual
+COMMIT/ROLLBACK, rather than qualifying multiple native PostgreSQL connections.
+UI proof mounts the real editor and existing confirmation over synthetic HTTP.
+No live browser re-filing, provider call, production deployment, remote CI or
+agency acceptance is claimed. Missing or invalid provenance refuses repair;
+legacy authorship is not reconstructed. Authoring-only reloads do not reconcile
+unknown filing/audit outcomes, and this completion adds no reconciliation engine
+or persistent cross-reload idempotency protocol.

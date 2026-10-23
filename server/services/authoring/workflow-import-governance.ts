@@ -3,7 +3,7 @@
 import { isWorkflowImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
 import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
-import { assertLineageCoversContent, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
+import { assertLineageCoversContent, assertLineageHashesMatchContent, SpanLineageError, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
 import { sectionsDigest, computeAuthoringSignatureDigest, fullVisibleAuthoringSnapshot, authoringSnapshotHash } from './authoring-content-digests';
 import { authoringReviewStanding } from './peer-review';
 import type { AuthoringActor } from './authoring-documents';
@@ -113,11 +113,11 @@ async function inspectedWorkflow(q: Queryable, input: WorkflowGovernanceInput) {
 
 async function verifyCurrentLineageHashes(q: Queryable, input: { organizationId: number; section: WorkflowGovernanceSection }): Promise<void> {
   const { section } = input;
-  const spans = await q.query(`SELECT char_start, char_end, span_text_sha256 FROM document_span_lineage
-    WHERE organization_id=$1 AND document_table='authoring_sections' AND document_id=$2 AND deleted_at IS NULL`,
-  [input.organizationId,section.id]);
-  if (spans.rows.some((span: { char_start: number; char_end: number; span_text_sha256: string }) =>
-    hashSpanText((section.content ?? '').slice(Number(span.char_start),Number(span.char_end))) !== span.span_text_sha256)) {
+  try {
+    await assertLineageHashesMatchContent(input.organizationId,
+      { documentTable: 'authoring_sections', documentId: section.id }, section.content ?? '', q);
+  } catch (error) {
+    if (!(error instanceof SpanLineageError)) throw error;
     refusal('WORKFLOW_LINEAGE_UNVERIFIED', 'Current clause lineage does not describe the saved text. A content write without matching lineage is not a verified human replacement.');
   }
 }
