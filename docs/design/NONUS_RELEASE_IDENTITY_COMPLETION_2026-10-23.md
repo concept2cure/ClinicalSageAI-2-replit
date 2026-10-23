@@ -41,6 +41,14 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
 - `SubmissionSeqWorkspaces.tsx` and `SubmissionCenter.tsx` already reach the
   server-owned renewal eligibility through the existing Part 11 sign-and-act
   chain. Text is generic; no new approval control is required.
+- `submission-orchestrator-continuation.ts` already verifies frozen digest,
+  seal and signer envelope before the existing release ceremony; it does not
+  ask the canonical package identity sign-refusal before signing an older run.
+  `server/mcp/tools/catalog.ts` reaches the release resolver but omits the known
+  sequence region. Both callers are completed in this same identity lane.
+- The legacy identity-staleness branch of `sequence-release-signature.ts`
+  compares unchanged content but omits the attribution-hash check already used
+  by modern proof. It must prove the original manifest intact before renewal.
 - P-44 explicitly hands non-US application-number signature coverage to this
   identity lane (`docs/evidence/D2-ONE-ANA/2026-10-22/p44-market-application-number/README.md`).
   EMA slash handling and the unknown-region home-number heuristic are separate.
@@ -70,31 +78,37 @@ store, validator, approval engine, region vocabulary or enforcement-default chan
    classification permits a new independent authorization only with unchanged
    sequence/leaf content and intact proof. Leaf changes, bad hashes, malformed
    proof, wrong parent/region or unexplained mismatches remain invalid/refused.
+   Legacy renewal also requires the existing canonical manifest attribution hash;
+   an absent or damaged hash cannot prove an intact historical signature.
 4. Require captured identity for new and resumed real known-region orchestrator
    releases; incomplete/mismatched facts require reassembly. Reuse the current
    dry-run refusal. Snapshot coverage compares actual sequence parent AND region
    and projected current identity. FDA-only completeness rules apply only to US;
    other regions require existing recorded number/name rules. Unknown region is
-   unreadable coverage, never positive leaf-only coverage.
+   unreadable coverage, never positive leaf-only coverage. The existing release
+   preparation calls the same canonical sign-identity refusal before ceremony;
+   the MCP status caller supplies the actual sequence region already read.
 5. Thread captured proof through existing export/assembly/package functions for
    all known regions. When proof is supplied, verify program/application/name
    against actual package scalars for all regions. Keep FDA ID/contact checks
    FDA-only. Optional non-FDA regional IDs retain their current contract and
    cannot be filled from the FDA DUNS. No contact/ID authority is invented.
-6. Preserve the existing freeze order: submission, then sequence, then program,
-   then sponsor. Add `lockSubmissionPackageIdentity(q, organizationId,
-   submissionId): Promise<{ programId: string | null } | null>` in the existing
-   identity module. It takes the same-tenant, non-deleted submission FOR SHARE,
-   returns its actual program anchor, and returns null for a missing/foreign
-   parent. Keep `lockRecordedPackageIdentity(q, organizationId, programId)` and
-   its program-then-sponsor locks unchanged. Real claims and waiver/disposition
-   acts take the submission lock before the sequence lock, validate the locked
-   sequence parent and actual program anchor, then lock program/sponsor before
-   re-deriving binding. Freeze already takes submission FOR UPDATE before
-   sequence FOR UPDATE; retain that order. The market writer takes submission
-   FOR UPDATE and makes only plain sequence reads; preserve its fixed-number
-   policy. A sequence-first submission lock would deadlock against freeze and is
-   expressly excluded. No transaction is held across gateway network work.
+6. Lock every source of recorded identity, including `organizations.name` for
+   an unbound non-US applicant. Extend `lockSubmissionPackageIdentity(q,
+   organizationId, submissionId, options?: { forUpdate?: boolean }):
+   Promise<{ programId: string | null } | null>` in the existing identity module.
+   First take organization FOR SHARE, then the same-tenant non-deleted submission
+   FOR SHARE (default) or directly FOR UPDATE (`forUpdate:true`). Return its
+   actual program anchor or null for a missing/foreign parent. Preserve the
+   three-argument `lockRecordedPackageIdentity` program-then-sponsor locks.
+   Global order is organization, submission, sequence, program, sponsor, matching
+   company governance's organization-first order. Freeze replaces its inline
+   submission UPDATE lock with the staged helper in UPDATE mode; never take
+   submission SHARE and then upgrade (concurrent freezes could deadlock).
+   Claims and waiver/disposition take the staged SHARE locks before sequence,
+   validate locked parent/anchor, then program/sponsor before deriving binding.
+   Preserve the market writer's submission UPDATE and plain sequence reads,
+   fixed-number policy, and release all capture locks before gateway network work.
 7. Governed packageability judges captured recorded facts for every known
    region. Explicit user test-package/dry-run paths remain clearly dry. Real
    transmit requires the claim-captured identity, packages it, checks proof echo

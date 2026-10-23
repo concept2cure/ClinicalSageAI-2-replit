@@ -39,6 +39,14 @@ Baseline `dd749f3e56f1d9055b19067e90680d70bf9a9fb9`. Contract `docs/design/NONUS
 - `SubmissionSeqWorkspaces.tsx` and `SubmissionCenter.tsx` already reach the
   server-owned renewal eligibility through the existing Part 11 sign-and-act
   chain. Text is generic; no new approval control is required.
+- `submission-orchestrator-continuation.ts` already verifies frozen digest,
+  seal and signer envelope before the existing release ceremony; it does not
+  ask the canonical package identity sign-refusal before signing an older run.
+  `server/mcp/tools/catalog.ts` reaches the release resolver but omits the known
+  sequence region. Both callers are completed in this same identity lane.
+- The legacy identity-staleness branch of `sequence-release-signature.ts`
+  compares unchanged content but omits the attribution-hash check already used
+  by modern proof. It must prove the original manifest intact before renewal.
 - P-44 explicitly hands non-US application-number signature coverage to this
   identity lane (`docs/evidence/D2-ONE-ANA/2026-10-22/p44-market-application-number/README.md`).
   EMA slash handling and the unknown-region home-number heuristic are separate.
