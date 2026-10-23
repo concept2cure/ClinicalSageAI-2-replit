@@ -1,0 +1,29 @@
+[concept2cure-v2 c7ec68c35] Keep Vault chunk boundaries intact across UTF-8 storage
+ 22 files changed, 2848 insertions(+), 1 deletion(-)
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/qualification-source-manifest.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/final-command.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/final-exit.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/final.results.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/final.txt
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/green-command.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/green-exit.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/green.results.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/green.txt
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/implementation-reviews.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/incoming-history.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-correction.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-final.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-final.raw.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-final.stderr.txt
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-green.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-green.raw.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/lint-green.stderr.txt
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/qualification.json
+ create mode 100644 docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/retained-ancestors.json
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3400 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "startedAt": "2026-10-23T17:45:18Z",
+  "elapsedSeconds": 0.095,
+  "exitCode": 0,
+  "output": "final-ci-token-contrast.log.gz",
+  "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+  "sourceFreeze": "final-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

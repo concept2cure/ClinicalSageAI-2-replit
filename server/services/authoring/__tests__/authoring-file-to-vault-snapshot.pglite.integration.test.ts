@@ -49,6 +49,7 @@ beforeAll(async () => {
       ADD COLUMN locale text, ADD COLUMN product_code text, ADD COLUMN template_id uuid;
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
       ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
+    ALTER TABLE vault.documents ADD COLUMN version text, ADD COLUMN mime_type text;
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
@@ -125,15 +126,15 @@ async function workingDraft(): Promise<WorkingDraft> {
 }
 
 function admit(d: WorkingDraft, mutate?: () => Promise<unknown>, admission: unknown = { created: true }) {
-  h.ingest.mockImplementation(async (args: { fileBuffer: Buffer }) => {
+  h.ingest.mockImplementation(async (args: { fileBuffer: Buffer; documentCode: string; version: string; mimeType: string }) => {
     // The canonical admission boundary is replaced explicitly; its committed
     // Vault row and the ensuing authoring queries are real PostgreSQL rows.
     await d.f.pg.query(`INSERT INTO vault.documents
-      (id,organization_id,program_id,document_title,content_hash,processing_status,extracted_text)
-      VALUES ($1,$2,$3,'Working CSR',$4,'INDEXED','Rendered working draft')`,
-    [d.admittedId, d.f.org, d.f.program, createHash('sha256').update(args.fileBuffer).digest('hex')]);
+      (id,organization_id,program_id,document_title,content_hash,processing_status,extracted_text,document_code,version,mime_type)
+      VALUES ($1,$2,$3,'Working CSR',$4,'INDEXED','Rendered working draft',$5,$6,$7)`,
+    [d.admittedId, d.f.org, d.f.program, createHash('sha256').update(args.fileBuffer).digest('hex'), args.documentCode, args.version, args.mimeType]);
     await mutate?.();
-    return { ok: true, ...(admission === 'missing' ? {} : { admission }), document: { id: d.admittedId }, filing: {
+    return { ok: true, ...(admission === 'missing' ? {} : { admission }), document: { id: d.admittedId, version: args.version }, filing: {
       folderId: null, folderLabel: '', evidenceKind: null, ctdSection: null,
       placementStatus: 'NEEDS_REVIEW', confidence: null, rationale: null, needsReview: true,
     } };

@@ -1,0 +1,485 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains a Japanese supplementary character across the default hard end 26ms
+   → expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains the complete overlap character and attributes the adjusted start to its actual page 12ms
+   → expected 'unavailable' to be 'available' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > replaces the old chunk set through the existing writer and verifies the new Unicode text 28ms
+   → expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > keeps keyless BMP text, token counts and absent page/vector metadata intact 16ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a legacy chunk whose split character was replaced in UTF-8 storage 8ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses malformed original text instead of issuing a verified identity 3ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a foreign organization without replacing the existing chunks 14ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still honors the existing binary-disposition fence before replacing chunks 13ms
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T18:04:43.682Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:04:43.684Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T18:04:43.684Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+[database] Database connection successful
+
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > scientific symbol at minimum hard end 8ms
+   → expected 500 to be 499 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > supplementary Japanese at default hard end 1ms
+   → expected 4000 to be 3999 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > mathematical letter at odd hard end 0ms
+   → expected 501 to be 500 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > moves an overlap start past the whole character without increasing overlap 1ms
+   → expected 250 to be 251 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > reduces a one-unit overlap to zero instead of repeating half a character 1ms
+   → expected 499 to be 500 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing half-size overlap clamp 0ms
+   → expected 250 to be 251 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps negative overlap clamped to zero while retaining the boundary character 2ms
+   → expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > protects the default 400-unit overlap start 1ms
+   → expected 3600 to be 3601 // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 500 and overlap 0 3ms
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 0 1ms
+   → expected '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' to be '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 1 1ms
+   → expected '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' to be '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 999 and overlap 499 1ms
+   → expected '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' to be '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing 500-unit minimum chunk size 0ms
+   → expected 500 to be 499 // Object.is equality
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > continues reporting UTF-16 offsets rather than code-point indices 2ms
+   → expected { index: +0, …(3) } to deeply equal { index: +0, charStart: +0, …(2) }
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > preserves the preferred paragraph cut 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > preserves the preferred sentence cut 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > preserves the preferred word cut 0ms
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > retains paragraph priority over a later sentence and word boundary 1ms
+   → expected '日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日…' to be '日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日…' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > preserves the exact existing ASCII chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > preserves the exact existing BMP chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > does not normalize malformed source unit "\ud800" into verified evidence 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > does not normalize malformed source unit "\udc00" into verified evidence 0ms
+ × server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > is deterministic and gap-free across mixed scientific text and option combinations 1ms
+   → expected 'A𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂…' to be 'A𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂…' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps an empty source empty and preserves a short BOM/whitespace source verbatim 0ms
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T18:04:44.631Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T18:04:44.632Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T18:04:44.632Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+[database] Database connection successful
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases
+Unicode chunk property census {"cases":2688,"totalChunks":8080,"violations":{"intact boundaries":1019,"UTF-8 round trip":1019},"examples":["499/-1/𠮷/0/chunk0: intact boundaries","499/-1/𠮷/0/chunk0: UTF-8 round trip","499/-1/𠮷/0/chunk1: intact boundaries","499/-1/𠮷/0/chunk1: UTF-8 round trip","499/-1/𠮷/1/chunk0: intact boundaries","499/-1/𠮷/1/chunk0: UTF-8 round trip","499/-1/𠮷/1/chunk1: intact boundaries","499/-1/𠮷/1/chunk1: UTF-8 round trip"]}
+
+ × server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases 455ms
+   → expected { violations: { …(2) }, …(1) } to deeply equal { violations: {}, examples: [] }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases
+AssertionError: expected { violations: { …(2) }, …(1) } to deeply equal { violations: {}, examples: [] }
+
+- Expected
++ Received
+
+  {
+-   "examples": [],
+-   "violations": {},
++   "examples": [
++     "499/-1/𠮷/0/chunk0: intact boundaries",
++     "499/-1/𠮷/0/chunk0: UTF-8 round trip",
++     "499/-1/𠮷/0/chunk1: intact boundaries",
++     "499/-1/𠮷/0/chunk1: UTF-8 round trip",
++     "499/-1/𠮷/1/chunk0: intact boundaries",
++     "499/-1/𠮷/1/chunk0: UTF-8 round trip",
++     "499/-1/𠮷/1/chunk1: intact boundaries",
++     "499/-1/𠮷/1/chunk1: UTF-8 round trip",
++   ],
++   "violations": {
++     "UTF-8 round trip": 1019,
++     "intact boundaries": 1019,
++   },
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode-properties.test.ts:100:38
+     98|     console.info('Unicode chunk property census', JSON.stringify({ cas…
+     99|     expect(cases).toHaveLength(2688);
+    100|     expect({ violations, examples }).toEqual({ violations: {}, example…
+       |                                      ^
+    101|   });
+    102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains a Japanese supplementary character across the default hard end
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+
+Expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+
+ ❯ verifyStoredSource server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:114:24
+    112|   expect(chunks[chunks.length - 1].charEnd).toBe(text.length);
+    113|   for (const chunk of chunks) {
+    114|     expect(chunk.text).toBe(text.slice(chunk.charStart, chunk.charEnd)…
+       |                        ^
+    115|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+    116|     const result = buildPassageContext({
+ ❯ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:138:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains the complete overlap character and attributes the adjusted start to its actual page
+AssertionError: expected 'unavailable' to be 'available' // Object.is equality
+
+Expected: "available"
+Received: "unavailable"
+
+ ❯ verifyStoredSource server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:120:35
+    118|       hit: { chunkId: chunk.id, chunkIndex: chunk.chunkIndex }, chunks,
+    119|     });
+    120|     expect(result.context.status).toBe('available');
+       |                                   ^
+    121|     if (result.context.status !== 'available') throw new Error(JSON.st…
+    122|     const { reference, text: contextText } = result.context;
+ ❯ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:150:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > replaces the old chunk set through the existing writer and verifies the new Unicode text
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+
+Expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+
+ ❯ verifyStoredSource server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:114:24
+    112|   expect(chunks[chunks.length - 1].charEnd).toBe(text.length);
+    113|   for (const chunk of chunks) {
+    114|     expect(chunk.text).toBe(text.slice(chunk.charStart, chunk.charEnd)…
+       |                        ^
+    115|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+    116|     const result = buildPassageContext({
+ ❯ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts:167:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > scientific symbol at minimum hard end
+AssertionError: expected 500 to be 499 // Object.is equality
+
+- Expected
++ Received
+
+- 499
++ 500
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:36:31
+     34|     const options = maxChars === 4000 ? { overlapChars: 0 } : { maxCha…
+     35|     const chunks = chunkExtractedText(source, options);
+     36|     expect(chunks[0].charEnd).toBe(maxChars - 1);
+       |                               ^
+     37|     expect(chunks[1].charStart).toBe(maxChars - 1);
+     38|     expect(chunks[1].text.startsWith(symbol)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > supplementary Japanese at default hard end
+AssertionError: expected 4000 to be 3999 // Object.is equality
+
+- Expected
++ Received
+
+- 3999
++ 4000
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:36:31
+     34|     const options = maxChars === 4000 ? { overlapChars: 0 } : { maxCha…
+     35|     const chunks = chunkExtractedText(source, options);
+     36|     expect(chunks[0].charEnd).toBe(maxChars - 1);
+       |                               ^
+     37|     expect(chunks[1].charStart).toBe(maxChars - 1);
+     38|     expect(chunks[1].text.startsWith(symbol)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > mathematical letter at odd hard end
+AssertionError: expected 501 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 501
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:36:31
+     34|     const options = maxChars === 4000 ? { overlapChars: 0 } : { maxCha…
+     35|     const chunks = chunkExtractedText(source, options);
+     36|     expect(chunks[0].charEnd).toBe(maxChars - 1);
+       |                               ^
+     37|     expect(chunks[1].charStart).toBe(maxChars - 1);
+     38|     expect(chunks[1].text.startsWith(symbol)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > moves an overlap start past the whole character without increasing overlap
+AssertionError: expected 250 to be 251 // Object.is equality
+
+- Expected
++ Received
+
+- 251
++ 250
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:47:33
+     45|     const chunks = chunkExtractedText(source, { maxChars: 500, overlap…
+     46|     expect(chunks[0].charEnd).toBe(500);
+     47|     expect(chunks[1].charStart).toBe(251);
+       |                                 ^
+     48|     expect(chunks[0].charEnd - chunks[1].charStart).toBe(249);
+     49|     expectIntact(source, chunks, 500, 250);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > reduces a one-unit overlap to zero instead of repeating half a character
+AssertionError: expected 499 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 499
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:56:33
+     54|     const chunks = chunkExtractedText(source, { maxChars: 500, overlap…
+     55|     expect(chunks[0].charEnd).toBe(500);
+     56|     expect(chunks[1].charStart).toBe(500);
+       |                                 ^
+     57|     expectIntact(source, chunks, 500, 1);
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing half-size overlap clamp
+AssertionError: expected 250 to be 251 // Object.is equality
+
+- Expected
++ Received
+
+- 251
++ 250
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:63:33
+     61|     const source = 'a'.repeat(249) + '𠮷' + 'z'.repeat(900);
+     62|     const chunks = chunkExtractedText(source, { maxChars: 500, overlap…
+     63|     expect(chunks[1].charStart).toBe(251);
+       |                                 ^
+     64|     expectIntact(source, chunks, 500, 250);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps negative overlap clamped to zero while retaining the boundary character
+AssertionError: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' to be 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' // Object.is equality
+
+Expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+Received: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa�"
+
+ ❯ expectIntact server/services/vault/__tests__/document-chunking-unicode.test.ts:16:62
+     14|     expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+     15|     expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEn…
+     16|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+       |                                                              ^
+     17|     if (index > 0) {
+     18|       const previous = chunks[index - 1];
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:71:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > protects the default 400-unit overlap start
+AssertionError: expected 3600 to be 3601 // Object.is equality
+
+- Expected
++ Received
+
+- 3601
++ 3600
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:78:33
+     76|     const chunks = chunkExtractedText(source);
+     77|     expect(chunks[0].charEnd).toBe(4000);
+     78|     expect(chunks[1].charStart).toBe(3601);
+       |                                 ^
+     79|     expectIntact(source, chunks, 4000, 400);
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 0
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 1
+AssertionError: expected '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' to be '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' // Object.is equality
+
+Expected: "𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷�"
+Received: "𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷�"
+
+ ❯ expectIntact server/services/vault/__tests__/document-chunking-unicode.test.ts:16:62
+     14|     expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+     15|     expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEn…
+     16|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+       |                                                              ^
+     17|     if (index > 0) {
+     18|       const previous = chunks[index - 1];
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 999 and overlap 499
+AssertionError: expected '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' to be '𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂…' // Object.is equality
+
+Expected: "𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷�"
+Received: "𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷🧬𝛂𠮷�"
+
+ ❯ expectIntact server/services/vault/__tests__/document-chunking-unicode.test.ts:16:62
+     14|     expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+     15|     expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEn…
+     16|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+       |                                                              ^
+     17|     if (index > 0) {
+     18|       const previous = chunks[index - 1];
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing 500-unit minimum chunk size
+AssertionError: expected 500 to be 499 // Object.is equality
+
+- Expected
++ Received
+
+- 499
++ 500
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:98:31
+     96|     const source = 'a'.repeat(499) + '𠮷' + 'z'.repeat(900);
+     97|     const chunks = chunkExtractedText(source, { maxChars: 1, overlapCh…
+     98|     expect(chunks[0].charEnd).toBe(499);
+       |                               ^
+     99|     expectIntact(source, chunks, 500, 0);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > continues reporting UTF-16 offsets rather than code-point indices
+AssertionError: expected { index: +0, …(3) } to deeply equal { index: +0, charStart: +0, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "charEnd": 499,
++   "charEnd": 500,
+    "charStart": 0,
+    "index": 0,
+-   "text": "𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷A",
++   "text": "𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷A�",
+  }
+
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:105:23
+    103|     const source = '𠮷'.repeat(249) + 'A🧬' + '日'.repeat(700);
+    104|     const chunks = chunkExtractedText(source, { maxChars: 500, overlap…
+    105|     expect(chunks[0]).toEqual({ index: 0, charStart: 0, charEnd: 499, …
+       |                       ^
+    106|     expect(Array.from(chunks[0].text)).toHaveLength(250);
+    107|     expect(chunks[1].charStart).toBe(499);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > retains paragraph priority over a later sentence and word boundary
+AssertionError: expected '日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日…' to be '日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日…' // Object.is equality
+
+- Expected
++ Received
+
+  日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日
+
+- 日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日. 日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日 🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬�
++ 日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日. 日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日 🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬🧬�
+
+ ❯ expectIntact server/services/vault/__tests__/document-chunking-unicode.test.ts:16:62
+     14|     expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+     15|     expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEn…
+     16|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+       |                                                              ^
+     17|     if (index > 0) {
+     18|       const previous = chunks[index - 1];
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:128:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > is deterministic and gap-free across mixed scientific text and option combinations
+AssertionError: expected 'A𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂…' to be 'A𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂\r\n日本άA𠮷🧬𝛂…' // Object.is equality
+
+- Expected
++ Received
+
+@@ -34,6 +34,6 @@
+  日本άA𠮷🧬𝛂
+  日本άA𠮷🧬𝛂
+  日本άA𠮷🧬𝛂
+  日本άA𠮷🧬𝛂
+  日本άA𠮷🧬𝛂
+- 日本άA𠮷🧬�
++ 日本άA𠮷🧬�
+
+ ❯ expectIntact server/services/vault/__tests__/document-chunking-unicode.test.ts:16:62
+     14|     expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+     15|     expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEn…
+     16|     expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chun…
+       |                                                              ^
+     17|     if (index > 0) {
+     18|       const previous = chunks[index - 1];
+ ❯ server/services/vault/__tests__/document-chunking-unicode.test.ts:157:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  19 failed | 14 passed (33)
+   Start at  18:04:39
+   Duration  6.11s (transform 1.03s, setup 101ms, import 2.95s, tests 2.47s, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-UNICODE-CHUNK-BOUNDARIES/2026-10-23/root/red.results.json

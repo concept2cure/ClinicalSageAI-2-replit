@@ -97,6 +97,7 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
       'migrations/20260925_canonical_documents_append_only.sql',
+      'migrations/20260930_vault_documents_version_lineage.sql',
       // Current Vault release checks read the canonical company registry even
       // when this ordinary Authoring fixture registers no legal companions.
       'migrations/20261018_company_legal_registry.sql',

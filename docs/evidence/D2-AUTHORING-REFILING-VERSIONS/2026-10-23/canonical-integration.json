@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-23T17:49:53.792481+00:00",
+  "implementationCommit": "f7e6c12fe",
+  "mergedHead": "7909171a2e97ac1f51c683b1a31fdd2dc9c4e64f",
+  "incomingHead": "4718e17cb",
+  "incomingSourceFiles": [
+    "server/routes/ana-intelligence.ts",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+    "server/routes/chat/send-message.ts",
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts",
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts",
+    "server/services/ana/ana-realtime.ts",
+    "server/services/ana/turn-record-loop.ts"
+  ],
+  "authoringQualifiedSourcesUnchanged": true,
+  "qualification": "merged-checks.json",
+  "scope": "Incoming native model-call provenance plus documentation; preserves local Authoring changes in normal canonical merge. Original384pass count retains original final-source-freeze; incoming tests/compiler/build retain merged source freeze."
+}

@@ -49,6 +49,23 @@ describe('File to vault receipt confirmation', () => {
     ['missing format', receipt({ format: undefined })],
     ['another requested format', receipt({ format: 'docx' })],
     ['unsupported format', receipt({ format: 'txt' })],
+    ['version without predecessor metadata', receipt({ version: '2.0' })],
+    ['predecessor without assigned version', receipt({ supersedesDocumentId: OTHER })],
+    ['null assigned version', receipt({ version: null, supersedesDocumentId: null })],
+    ['numeric assigned version', receipt({ version: 2, supersedesDocumentId: OTHER })],
+    ['legacy hash version', receipt({ version: 'draft-12345678', supersedesDocumentId: null })],
+    ['minor version', receipt({ version: '2.1', supersedesDocumentId: OTHER })],
+    ['zero major version', receipt({ version: '0.0', supersedesDocumentId: null })],
+    ['negative major version', receipt({ version: '-1.0', supersedesDocumentId: null })],
+    ['leading-zero major version', receipt({ version: '02.0', supersedesDocumentId: OTHER })],
+    ['major beyond the assigned range', receipt({ version: '1000000.0', supersedesDocumentId: OTHER })],
+    ['unsafe major version', receipt({ version: '9007199254740992.0', supersedesDocumentId: OTHER })],
+    ['initial version with a predecessor', receipt({ version: '1.0', supersedesDocumentId: OTHER })],
+    ['later version without a predecessor', receipt({ version: '2.0', supersedesDocumentId: null })],
+    ['malformed predecessor', receipt({ version: '2.0', supersedesDocumentId: 'another-record' })],
+    ['empty predecessor', receipt({ version: '2.0', supersedesDocumentId: '' })],
+    ['self predecessor', receipt({ version: '2.0', supersedesDocumentId: DOC_ID })],
+    ['case-varied self predecessor', receipt({ version: '2.0', supersedesDocumentId: DOC_ID.toUpperCase() })],
     ['explicit false success', { ...receipt(), success: false }],
     ['contradictory error envelope', { ...receipt(), error: { message: 'The recording failed.' } }],
     ['missing record', { success: true, data: {} }],
@@ -160,7 +177,36 @@ describe('File to vault retained result identity', () => {
     const p = props(); render(<FileToVaultDialog {...p} />); submit();
     await screen.findByTestId('ftv-result');
     expect(screen.getByTestId('ftv-approval').textContent).toContain('did not report whether the approval carried');
+    expect(screen.getByTestId('ftv-result').textContent).not.toContain('Vault version');
+    expect(screen.getByTestId('ftv-result').textContent).not.toContain('Supersedes');
+    expect(p.onFiled).toHaveBeenCalledWith(expect.not.objectContaining({ version: expect.anything() }));
     expect(p.onFiled).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('File to vault version metadata', () => {
+  it.each([
+    ['1.0', null],
+    ['4.0', OTHER],
+    ['999999.0', OTHER],
+  ])('retains the server-confirmed version %s and predecessor in the receipt callback', async (version, supersedesDocumentId) => {
+    apiRequest.mockImplementation(async () => response(receipt({ version, supersedesDocumentId })));
+    const p = props(); render(<FileToVaultDialog {...p} />); submit();
+    await screen.findByTestId('ftv-result');
+    expect(p.onFiled).toHaveBeenCalledWith(expect.objectContaining({ version, supersedesDocumentId }));
+    expect(p.fireToast).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains malformed lineage as an uncertain outcome across close and reopen', async () => {
+    apiRequest.mockImplementation(async () => response(receipt({ version: '2.0', supersedesDocumentId: DOC_ID })));
+    const p = props(); const view = render(<FileToVaultDialog {...p} open />); submit();
+    const error = await screen.findByTestId('ftv-error');
+    view.rerender(<FileToVaultDialog {...p} open={false} />);
+    view.rerender(<FileToVaultDialog {...p} open />);
+    expect(screen.getByTestId('ftv-error').textContent).toBe(error.textContent);
+    expect(screen.getByTestId('ftv-submit')).toHaveProperty('disabled', true);
+    submit(); expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(p.onFiled).not.toHaveBeenCalled();
   });
 });
 

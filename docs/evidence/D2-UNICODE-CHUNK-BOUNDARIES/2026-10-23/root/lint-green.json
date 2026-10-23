@@ -1,0 +1,64 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/vault/document-chunking.service.ts",
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts"
+  ],
+  "exit": 0,
+  "errors": 0,
+  "warnings": 2,
+  "warningGrowth": 1,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode-properties.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode-storage.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/__tests__/document-chunking-unicode.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/vault/document-chunking.service.ts",
+      "errors": 0,
+      "warnings": 2,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'chunkExtractedText' has a complexity of 16. Maximum allowed is 15.",
+          "line": 79,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 79,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'chunkAndEmbedDocument' has a complexity of 20. Maximum allowed is 15.",
+          "line": 232,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 232,
+          "endColumn": 44
+        }
+      ]
+    }
+  ]
+}

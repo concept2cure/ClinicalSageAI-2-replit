@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "scripts/ci/check-eslint-warning-ratchet.mjs",
+    "--since",
+    "64e668e35044e7bccab2facdb78fccfa5da31419",
+    "--gate"
+  ],
+  "startedAt": "2026-10-23T17:55:20Z",
+  "elapsedSeconds": 1.217,
+  "exitCode": 0,
+  "output": "pdf-integrated-warning-ratchet.log.gz",
+  "outputSha256": "2859667b9d0c29313bc206d5d403fc7e2e85b7db9c2e73095465f7fcef9d5d4f",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

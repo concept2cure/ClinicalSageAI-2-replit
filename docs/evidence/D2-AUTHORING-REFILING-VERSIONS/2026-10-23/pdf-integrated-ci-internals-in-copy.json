@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:internals-in-copy"
+  ],
+  "startedAt": "2026-10-23T17:55:16Z",
+  "elapsedSeconds": 0.582,
+  "exitCode": 0,
+  "output": "pdf-integrated-ci-internals-in-copy.log.gz",
+  "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

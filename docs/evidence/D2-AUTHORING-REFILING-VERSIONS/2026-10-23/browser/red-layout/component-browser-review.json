@@ -1,0 +1,825 @@
+{
+  "at": "2026-10-23T17:42:09Z",
+  "scope": "Serialized actual mounted FileToVaultDialog form and linked receipt with all qualified built CSS in index, V2App, then other-chunk order. Local Chromium layout and screenshots only; events, live app shell/backend, web-font delivery and human acceptance are not exercised. External requests aborted.",
+  "sourceHead": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "sourceCaptures": {
+    "form": "00e4a3bd5027c5973f74597786dd0a13f0e86b58244c17b75a5b84e9a88236c4",
+    "receipt": "134d924342891ffcee2bfa7d2715068e837a4eddc6ae4dca02e8a6bf70532b4e"
+  },
+  "cssFiles": [
+    {
+      "name": "index-CQkeOtwt.css",
+      "sha256": "1121dc817dbf0ab774046f13777dde03848f803c0206e68f8b9e7e0788bbdde7"
+    },
+    {
+      "name": "V2App-B1Ncx2Ue.css",
+      "sha256": "9c18e26ecd6d9823f9169839b2af9ae3fc5af9eed0d09e40210d2bdfc1863b82"
+    },
+    {
+      "name": "AdminAccess-xhPEI8Z8.css",
+      "sha256": "81148c9f7926be9f9b55394f1469d6e27103aa9fcd1849c84987955080cc2cf1"
+    },
+    {
+      "name": "ClientPortal-Df7niGAt.css",
+      "sha256": "9a81e351a624fb3ae840e72036c26c0896565bc2724efae3e5ff1d42dd9f61e8"
+    },
+    {
+      "name": "EctdCoauthor-WxR4wiGp.css",
+      "sha256": "77d4ff9516b79a6c49ddb8f873f2f81d846f4891ff19fffd94c71da8596decbb"
+    },
+    {
+      "name": "EsignModal-DY4l-xU8.css",
+      "sha256": "41b6eba0e8277c02f5e375ce711b2833e1e0b6d245152b0b497fc135229fc249"
+    },
+    {
+      "name": "GovernedConfirmDialog-BAvPP0yZ.css",
+      "sha256": "f4973efb81a35803e67bc811c949ecba69be67cd826edb5944230f04626f2783"
+    },
+    {
+      "name": "Insights-DugMOhtx.css",
+      "sha256": "b97e6c58608a599cb86214dd9a0ecc01d3da4e10fe3219beef2e434ff0f32798"
+    },
+    {
+      "name": "Intelligence-Cn63MxwQ.css",
+      "sha256": "c9bbcb0afd15636786dbe6c5c962c552ff6a6574dae546447a1145eb1c60f8a9"
+    },
+    {
+      "name": "MasterLicensing-CSgZ4t6r.css",
+      "sha256": "e4271d0122480eac6299b178cc83a1da85f1eb516b0351aa8ba05e60ae2901c4"
+    },
+    {
+      "name": "MdxSurfaceHost-B03qnq2W.css",
+      "sha256": "e7ae1a8b21db9c138714489c56abbfe3ea41429c25e67babaebbe3a66982f5cb"
+    },
+    {
+      "name": "Onboarding-1aQVXd4a.css",
+      "sha256": "e229a234f04a02504d41d6a06de0ca24074558f41f8a23d7119344fd1683b02e"
+    },
+    {
+      "name": "OnboardingIngest--f7BZU_h.css",
+      "sha256": "b78da74a0cef983e192a839bb1eb6bff71d8eb63aafaf52b5b0837d4a7ec97ce"
+    },
+    {
+      "name": "PdevRoute-BvTaZFQ6.css",
+      "sha256": "54e70f1c9a747e2dd8593d2e308ecf96ed5e0e58e24d1f7cae818a1d3c04f630"
+    },
+    {
+      "name": "ProtocolDev-CzvCduh-.css",
+      "sha256": "2f3b8258a4e713c1c25bc87fe4df064b5c19c1d2b97ff5ec3854b7e7765b6d4b"
+    },
+    {
+      "name": "Pyramid-CbR3Xx2c.css",
+      "sha256": "3563f341dfdbed84cb830e5dcd20cd7258d63399dc18684359441e3b77a90f61"
+    },
+    {
+      "name": "QualityModule-7idVffPF.css",
+      "sha256": "74eb26166ad94784a5c5fa27495eb2deecf39c67095318ca307574f4df9b5f62"
+    },
+    {
+      "name": "Rbm-BfE-ugYt.css",
+      "sha256": "6a9801993d0f1027d9de7e377483669e8b27ff06b6a99a5b16dfe6644becb73e"
+    },
+    {
+      "name": "RedlineText-DBgVI_xu.css",
+      "sha256": "808b96578ca90405a1f5bb29a0347ff0eee0e1069ea0cb2006dd15e340fb9e3a"
+    },
+    {
+      "name": "Review-CGMT1O2r.css",
+      "sha256": "bc51beba0a431f03d0d941a12da80b1281674871bdd9dbada7f3cdaabf5e6af5"
+    },
+    {
+      "name": "RichSectionEditor-CsLGNfpk.css",
+      "sha256": "63acf2c486ae2285f3bb3368a35b428d2d4d7e1fb07bcec18eb052c6a2b24c00"
+    },
+    {
+      "name": "SessionPolicySetting-DlIRNv18.css",
+      "sha256": "a61872019c59da104ea971993869c3b4d54d65f1a80bc096965b1d223e6e442f"
+    },
+    {
+      "name": "SubmissionCenter-DK_y2NA8.css",
+      "sha256": "68f16be8765d4faf99494919732f62f70d4caa4a14c13429d0b6f4a764988a1c"
+    },
+    {
+      "name": "VaultLibraryResults-CxNxo8qK.css",
+      "sha256": "5cd125f11eda09f20749cf58df3847d7adddacd7c116f329354aa45336d8c566"
+    },
+    {
+      "name": "ZenRouter-BbLT-fZv.css",
+      "sha256": "a7497d679da763df659cca84360638c75933dabbefc008795ea22b7689f209e0"
+    },
+    {
+      "name": "ana-skills-Gc2BKvST.css",
+      "sha256": "6969b50e3fb6330b0d6e5e626030cfe8ee22947f329dd09033d554804a37a5dd"
+    },
+    {
+      "name": "ana-v2-B_qTrbu9.css",
+      "sha256": "3669b5f6b8318929f43db3b2940228e8a1cec7d01342118dddc11791c16667f4"
+    },
+    {
+      "name": "commcenter-v2-DdJzkzwC.css",
+      "sha256": "e89d3737f2afd5c5a14c4e7255fe196ad10ca7137d401b9da2663635a1237644"
+    },
+    {
+      "name": "company-documents-ozlLbCYb.css",
+      "sha256": "99d18df1e60ad4f2f12d8e079214add5c27ee63a586ba50f06e30cefc84a8c38"
+    },
+    {
+      "name": "project-home-v2-BRi5JHo-.css",
+      "sha256": "1f8ba33d2169dcc4f56af973ff7f328cdafa7178e885b102285a4f85f542a5b5"
+    },
+    {
+      "name": "workDock-Dq695-ka.css",
+      "sha256": "cdfd082a5bdb249215e20308ce742ab418ec17bfd9eda6d2edba72960d2c4964"
+    }
+  ],
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "dialog": {
+        "box": {
+          "left": 920,
+          "top": 0,
+          "right": 1440,
+          "bottom": 900,
+          "width": 520,
+          "height": 900
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 921,
+          "top": 118,
+          "right": 1440,
+          "bottom": 823.5,
+          "width": 519,
+          "height": 705.5
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "clientHeight": 706,
+        "scrollHeight": 706,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 399.75,
+          "bodyBottom": 823.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 921,
+          "top": 823.5,
+          "right": 1440,
+          "bottom": 900,
+          "width": 519,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Cancel",
+            "box": {
+              "left": 941,
+              "top": 840.5,
+              "right": 1176.5,
+              "bottom": 884,
+              "width": 235.5,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          },
+          {
+            "text": "File as PDF",
+            "box": {
+              "left": 1186.5,
+              "top": 840.5,
+              "right": 1420,
+              "bottom": 884,
+              "width": 233.5,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(250, 249, 245)",
+        "textColor": "rgb(104, 102, 96)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": null,
+        "wrapperTheme": null
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nCancel\nFile as PDF",
+      "component": "form",
+      "theme": "light",
+      "screenshot": "form-light-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "dialog": {
+        "box": {
+          "left": 23.40625,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 366.59375,
+          "height": 844
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 24.40625,
+          "top": 118,
+          "right": 390,
+          "bottom": 767.5,
+          "width": 365.59375,
+          "height": 649.5
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "clientHeight": 650,
+        "scrollHeight": 650,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 468.75,
+          "bodyBottom": 767.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 24.40625,
+          "top": 767.5,
+          "right": 390,
+          "bottom": 844,
+          "width": 365.59375,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Cancel",
+            "box": {
+              "left": 44.40625,
+              "top": 784.5,
+              "right": 203.203125,
+              "bottom": 828,
+              "width": 158.796875,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          },
+          {
+            "text": "File as PDF",
+            "box": {
+              "left": 213.203125,
+              "top": 784.5,
+              "right": 370,
+              "bottom": 828,
+              "width": 156.796875,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(250, 249, 245)",
+        "textColor": "rgb(104, 102, 96)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": null,
+        "wrapperTheme": null
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nCancel\nFile as PDF",
+      "component": "form",
+      "theme": "light",
+      "screenshot": "form-light-390.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "dialog": {
+        "box": {
+          "left": 920,
+          "top": 0,
+          "right": 1440,
+          "bottom": 900,
+          "width": 520,
+          "height": 900
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 921,
+          "top": 118,
+          "right": 1440,
+          "bottom": 823.5,
+          "width": 519,
+          "height": 705.5
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "clientHeight": 706,
+        "scrollHeight": 706,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 399.75,
+          "bodyBottom": 823.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 921,
+          "top": 823.5,
+          "right": 1440,
+          "bottom": 900,
+          "width": 519,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Cancel",
+            "box": {
+              "left": 941,
+              "top": 840.5,
+              "right": 1176.5,
+              "bottom": 884,
+              "width": 235.5,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          },
+          {
+            "text": "File as PDF",
+            "box": {
+              "left": 1186.5,
+              "top": 840.5,
+              "right": 1420,
+              "bottom": 884,
+              "width": 233.5,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(38, 38, 36)",
+        "textColor": "rgb(176, 174, 165)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": "dark",
+        "wrapperTheme": "dark"
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nCancel\nFile as PDF",
+      "component": "form",
+      "theme": "dark",
+      "screenshot": "form-dark-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "dialog": {
+        "box": {
+          "left": 23.40625,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 366.59375,
+          "height": 844
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 24.40625,
+          "top": 118,
+          "right": 390,
+          "bottom": 767.5,
+          "width": 365.59375,
+          "height": 649.5
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "clientHeight": 650,
+        "scrollHeight": 650,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 468.75,
+          "bodyBottom": 767.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 24.40625,
+          "top": 767.5,
+          "right": 390,
+          "bottom": 844,
+          "width": 365.59375,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Cancel",
+            "box": {
+              "left": 44.40625,
+              "top": 784.5,
+              "right": 203.203125,
+              "bottom": 828,
+              "width": 158.796875,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          },
+          {
+            "text": "File as PDF",
+            "box": {
+              "left": 213.203125,
+              "top": 784.5,
+              "right": 370,
+              "bottom": 828,
+              "width": 156.796875,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(38, 38, 36)",
+        "textColor": "rgb(176, 174, 165)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": "dark",
+        "wrapperTheme": "dark"
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nCancel\nFile as PDF",
+      "component": "form",
+      "theme": "dark",
+      "screenshot": "form-dark-390.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "dialog": {
+        "box": {
+          "left": 920,
+          "top": 0,
+          "right": 1440,
+          "bottom": 900,
+          "width": 520,
+          "height": 900
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 921,
+          "top": 118,
+          "right": 1440,
+          "bottom": 823.5,
+          "width": 519,
+          "height": 705.5
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "clientHeight": 706,
+        "scrollHeight": 706,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 623.75,
+          "bodyBottom": 823.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 921,
+          "top": 823.5,
+          "right": 1440,
+          "bottom": 900,
+          "width": 519,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Close",
+            "box": {
+              "left": 941,
+              "top": 840.5,
+              "right": 1420,
+              "bottom": 884,
+              "width": 479,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(250, 249, 245)",
+        "textColor": "rgb(104, 102, 96)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": null,
+        "wrapperTheme": null
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nFiled as PDF under module-3. Vault id 22222222-2222-4222-8222-222222222222. Vault version 2.0. Supersedes Vault id 44444444-4444-4444-8444-444444444444. SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\nThe Authoring approval carried to this file (reviewed by Rae Reviewer, approved by Abe Approver). The Vault shows the version as approved.\nNext: open it in the Vault and use \u201cPlace into filing\u2026\u201d on its record.\nOpen in Vault\nClose",
+      "component": "receipt",
+      "theme": "light",
+      "screenshot": "receipt-light-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "dialog": {
+        "box": {
+          "left": 23.40625,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 366.59375,
+          "height": 844
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 24.40625,
+          "top": 118,
+          "right": 390,
+          "bottom": 767.5,
+          "width": 365.59375,
+          "height": 649.5
+        },
+        "clientWidth": 366,
+        "scrollWidth": 473,
+        "clientHeight": 650,
+        "scrollHeight": 662,
+        "bottom": {
+          "scrollTop": 12,
+          "lastContentBottom": 734.75,
+          "bodyBottom": 767.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 24.40625,
+          "top": 767.5,
+          "right": 390,
+          "bottom": 844,
+          "width": 365.59375,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Close",
+            "box": {
+              "left": 44.40625,
+              "top": 784.5,
+              "right": 370,
+              "bottom": 828,
+              "width": 325.59375,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(250, 249, 245)",
+        "textColor": "rgb(104, 102, 96)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": null,
+        "wrapperTheme": null
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nFiled as PDF under module-3. Vault id 22222222-2222-4222-8222-222222222222. Vault version 2.0. Supersedes Vault id 44444444-4444-4444-8444-444444444444. SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\nThe Authoring approval carried to this file (reviewed by Rae Reviewer, approved by Abe Approver). The Vault shows the version as approved.\nNext: open it in the Vault and use \u201cPlace into filing\u2026\u201d on its record.\nOpen in Vault\nClose",
+      "component": "receipt",
+      "theme": "light",
+      "screenshot": "receipt-light-390.png",
+      "failures": [
+        "dialog body horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "dialog": {
+        "box": {
+          "left": 920,
+          "top": 0,
+          "right": 1440,
+          "bottom": 900,
+          "width": 520,
+          "height": 900
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 921,
+          "top": 118,
+          "right": 1440,
+          "bottom": 823.5,
+          "width": 519,
+          "height": 705.5
+        },
+        "clientWidth": 519,
+        "scrollWidth": 519,
+        "clientHeight": 706,
+        "scrollHeight": 706,
+        "bottom": {
+          "scrollTop": 0,
+          "lastContentBottom": 623.75,
+          "bodyBottom": 823.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 921,
+          "top": 823.5,
+          "right": 1440,
+          "bottom": 900,
+          "width": 519,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Close",
+            "box": {
+              "left": 941,
+              "top": 840.5,
+              "right": 1420,
+              "bottom": 884,
+              "width": 479,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(38, 38, 36)",
+        "textColor": "rgb(176, 174, 165)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": "dark",
+        "wrapperTheme": "dark"
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nFiled as PDF under module-3. Vault id 22222222-2222-4222-8222-222222222222. Vault version 2.0. Supersedes Vault id 44444444-4444-4444-8444-444444444444. SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\nThe Authoring approval carried to this file (reviewed by Rae Reviewer, approved by Abe Approver). The Vault shows the version as approved.\nNext: open it in the Vault and use \u201cPlace into filing\u2026\u201d on its record.\nOpen in Vault\nClose",
+      "component": "receipt",
+      "theme": "dark",
+      "screenshot": "receipt-dark-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "dialog": {
+        "box": {
+          "left": 23.40625,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 366.59375,
+          "height": 844
+        },
+        "clientWidth": 366,
+        "scrollWidth": 366,
+        "withinViewport": true
+      },
+      "body": {
+        "box": {
+          "left": 24.40625,
+          "top": 118,
+          "right": 390,
+          "bottom": 767.5,
+          "width": 365.59375,
+          "height": 649.5
+        },
+        "clientWidth": 366,
+        "scrollWidth": 473,
+        "clientHeight": 650,
+        "scrollHeight": 662,
+        "bottom": {
+          "scrollTop": 12,
+          "lastContentBottom": 734.75,
+          "bodyBottom": 767.5,
+          "canReachBottom": true
+        }
+      },
+      "footer": {
+        "box": {
+          "left": 24.40625,
+          "top": 767.5,
+          "right": 390,
+          "bottom": 844,
+          "width": 365.59375,
+          "height": 76.5
+        },
+        "withinViewport": true,
+        "buttons": [
+          {
+            "text": "Close",
+            "box": {
+              "left": 44.40625,
+              "top": 784.5,
+              "right": 370,
+              "bottom": 828,
+              "width": 325.59375,
+              "height": 43.5
+            },
+            "withinViewport": true,
+            "visibleAtCenter": true
+          }
+        ]
+      },
+      "overflowingText": [],
+      "styles": {
+        "dialogBackground": "rgb(38, 38, 36)",
+        "textColor": "rgb(176, 174, 165)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        "bodyTheme": "dark",
+        "wrapperTheme": "dark"
+      },
+      "text": "AUTHORING \u2192 VAULT\nFile to vault\nExports \u201cStability summary\u201d and files the file into the BX-301 vault, with its SHA-256 recorded.\nThis document is frozen; the export is taken from the sealed content and its hash. Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.\nFormat\nPDF\nWord (.docx)\nOne governed action: export, ingest and filing are recorded together in the audit trail. The first filing uses the project\u2019s filing rules; later versions keep the recorded Vault filing. PDF and Word are versioned separately. Filing edited content adds a version in the selected format; earlier bytes are preserved. Existing sequence placements stay pinned to the version they name; replace them explicitly to use the new version.\nFiled as PDF under module-3. Vault id 22222222-2222-4222-8222-222222222222. Vault version 2.0. Supersedes Vault id 44444444-4444-4444-8444-444444444444. SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\nThe Authoring approval carried to this file (reviewed by Rae Reviewer, approved by Abe Approver). The Vault shows the version as approved.\nNext: open it in the Vault and use \u201cPlace into filing\u2026\u201d on its record.\nOpen in Vault\nClose",
+      "component": "receipt",
+      "theme": "dark",
+      "screenshot": "receipt-dark-390.png",
+      "failures": [
+        "dialog body horizontal overflow"
+      ]
+    }
+  ]
+}

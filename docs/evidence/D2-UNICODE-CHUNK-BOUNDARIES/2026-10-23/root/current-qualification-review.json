@@ -1,0 +1,25 @@
+{
+  "verdict": "CLEAR",
+  "reviewer": "unicode_regression_inventory",
+  "scope": "Current source/test/evidence review before normal push completed; push success independently checked by root/code-verification.json",
+  "checks": {
+    "selectedInputs": 82,
+    "currentTests": 25,
+    "frozenTests": 3,
+    "passedTests": 331,
+    "propertyCases": 2688,
+    "propertyChunks": 8080,
+    "propertyViolations": 0,
+    "semanticRedCases": 19,
+    "passingBaselineControls": 14,
+    "lintErrors": 0,
+    "existingWarnings": 1,
+    "newTestWarnings": 0
+  },
+  "limitsVerified": [
+    "PGlite owner/minimal schema; no native RLS/provider claim",
+    "New ingestion/reindex only, no automatic historicalrepair",
+    "Read-window/receipt defect left separate",
+    "No agency/deployment claim"
+  ]
+}
