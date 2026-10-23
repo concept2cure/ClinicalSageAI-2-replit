@@ -1,5 +1,7 @@
 # Vault passage freshness correction — D2 / W2
 
+Current published code and qualification: [PUBLICATION.md](PUBLICATION.md). Earlier sections below preserve the chronological evidence, including rejected pushes.
+
 ## What already exists
 
 The canonical AdvancedRAGPipeline, Vault row mapper, candidate revalidation fences, actor/source guards, exact context verifier and Data Room/AnA consumers already exist. This increment extends their freshness checks for same-original-file re-extraction and same-ID chunk replacement. [INVENTORY.md](INVENTORY.md) records discovery and [CONTRACT.md](CONTRACT.md) defines the proposed behavior and its limits.
@@ -49,3 +51,7 @@ The production size correction consolidates the repeated tenant-refusal history 
 The normal release push at merge c0f535753 passed every preceding gate, then whole-project TypeScript refused two TS18048 errors: optional mock-call params in the mapping test. Complete output remains in `root/release-push*`. The correction adds exactly two erased non-null assertions to those already-selected calls. No fixture, assertion, value or production code changed. The original frozen source is retained in `root/test-typing-original.ts.txt`; its exact diff, TypeScript 5.6.3 ES2022/ESNext transpilation proof and independent CLEAR review are beside it. Emitted JavaScript is byte-identical (SHA-256 803412963a4cd732e120e52983727eeac287ddd3f633dd9c6b8ec56035303878).
 
 The original freeze and manifests remain historical. `frozen-tests-typed.json` and `qualification-source-manifest-typed.json` explicitly record the one corrected test-source hash; runtime fail-first meaning remains unchanged, without rerunning baseline against changed production. Current `root/typed*` again passes **269 tests in 27 files**, all 55 new cases, zero failures/skips. `root/lint-typed.json` has zero errors, nine existing production warnings and zero test warnings. `root/typed-qualification.json` is current. No gate or baseline was changed. The incoming 22 canonical commits were preserved by normal merge c0f535753; all 65 selected inputs stayed qualified and there were no conflicts. Final normal TypeScript retry/publication is pending.
+
+## Accepted publication
+
+Normal typed retry cc4b81bef succeeded directly on the canonical branch. All mandatory gates passed, with actual whole-project TypeScript zero errors / exit 0 and no gate/baseline relaxation. [PUBLICATION.md](PUBLICATION.md), `root/published-qualification.json` and `root/code-verification.json` are authoritative for current qualification; the historical pending statuses above are superseded. The final evidence manifest pins the complete publication set; remote verification follows its normal push.
