@@ -134,8 +134,9 @@ function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome = 'failed
 // DT3 integration: an authoritative stop wins over a concurrent context refusal.
 function assertStoppedCarrier(events: SseEvent[], reason: 'cancelled' | 'admin_cancelled'): void {
   expect.soft(errorOf(events)).toBeUndefined();
-  expect.soft(events.find(event => event.type === 'done')).toMatchObject({ stoppedReason: reason, rounds: 1 });
-  expect.soft(events.find(event => event.type === 'post_done')?.turnRecord).toMatchObject({ status: 'recorded', id: 'synthetic-context-record' });
+  // The executor throws before returning its aggregate round counter to this host.
+  expect.soft(events.at(-2)).toMatchObject({ type: 'done', stoppedReason: reason, rounds: 0 });
+  expect.soft(events.at(-1)).toMatchObject({ type: 'post_done', turnRecord: { status: 'recorded', id: 'synthetic-context-record' } });
   expect.soft(h.state.post, 'stopped refusal does not enter normal answer post-processing').toBeNull();
   expect.soft(seam.filedOutcome).toBe('stopped');
   expect.soft(seam.sealed?.body.turn.outcome).toBe('stopped');
