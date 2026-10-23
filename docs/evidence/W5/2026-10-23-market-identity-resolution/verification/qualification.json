@@ -2,7 +2,7 @@
   "sourceCommit": "b0beb9392ef1fd2afb68ed5652ef6747f54c084d",
   "qualifiedHead": "8a4893fea3c925dfe578e76332ef82d8efa77332",
   "integrated": {
-    "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run <12 named files from integrated.txt>",
+    "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts server/services/ectd/__tests__/recorded-applicant-identity.test.ts server/services/ectd/__tests__/run-package-identity.test.ts server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts server/services/submission-service/__tests__/market-application-number.pglite.test.ts server/routes/__tests__/submissions-market-number-route.test.ts tests/regulatory/region-identity.test.ts client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx",
     "files": 12,
     "passed": 221,
     "exitCode": 0
@@ -34,7 +34,31 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "pending normal hook; no baseline or bypass permitted",
+  "fullCompilerAndPush": "Normal gates pending on the final merged candidate; first full compiler already passed0 with unchanged baseline.",
   "humanWitness": "unexecuted",
-  "agencyQualification": "unexecuted"
+  "agencyQualification": "unexecuted",
+  "firstFullCompilerAndPush": {
+    "candidate": "1a6397d0f839359f605d276f3cbdad68e65189af",
+    "fullCompilerErrors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Canonical advanced while full compiler ran; ordinary merge required.",
+    "receipt": "push-first-ref-race.txt.gz"
+  },
+  "catchup": {
+    "head": "6c7235f227d452c10ac4178a3e87f62d52a5fda8",
+    "incoming": "7184fb1fd",
+    "laneInputsChanged": [],
+    "tests": {
+      "files": 5,
+      "passed": 161,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ectd/__tests__/market-application-number.pglite.test.ts server/services/ectd/__tests__/export-application-identity.pglite.test.ts tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 30,
+    "changedInputs": []
+  }
 }

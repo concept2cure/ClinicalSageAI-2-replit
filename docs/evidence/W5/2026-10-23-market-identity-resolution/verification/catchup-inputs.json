@@ -1,0 +1,127 @@
+{
+  "head": "6c7235f227d452c10ac4178a3e87f62d52a5fda8",
+  "scope": "all lane source/test, incoming source/test, shared resolver and root build config; earlier broad pins retained as historical test/build source",
+  "laneInputsChanged": [],
+  "inputs": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+      "sha256": "7890cb3044931f96a2df63c0e989aab3fa6401a5e2777f3bcf3edcc960f8b01b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx",
+      "sha256": "9e4ab28ad160d5993785cbb7dc74abb88c48165a6b115846fcfaeaef66d05188"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringRefileSavedText.tsx",
+      "sha256": "e9a28f54de8083ff3c2fa77414c2e0b6b3a4fd91684195512cc67758d9d876c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "5af1f81162e7852beae2147439138888edbb470705b08ae4971f7c768a5d82b3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+      "sha256": "7a9f22993072df269b2acf7e3ed0d054658d93f23af0c81c9618df1ee973c68c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+      "sha256": "63798a3d3cfbc5287864b25cf566f80fb8f4791c0a20a3c3a40314ee86f78578"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringRefileSavedTextState.ts",
+      "sha256": "da64e9b34f3dca70e129372aceaf1d2cf9939aeb0ab32a35e672f1d4d45dcb60"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+      "sha256": "ecf7d2eb7abf847e243b219479da9e12810618bb215540a8675e2d8a458250ba"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "d240a2893312b2433fc5a6951fdc7feef7db188c1b1c71882e5c7069ed0901e6"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts",
+      "sha256": "f02b353383705299c8ac882f89e346160392115bf2dc264478b62346039d0490"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "sha256": "ea8ed3f84ef67eda0db12efd687ae7a75482b9580b60fc9cbd8a2bca5b90e7f4"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts",
+      "sha256": "48a9bedc63155fb495dfef54eb721e338129387d338fe3128de90b9e4b1ed2ae"
+    },
+    {
+      "path": "server/services/authoring/authoring-refile-saved-section.ts",
+      "sha256": "6bd7bb6596cc66d3bc8f021c884aa5595357f819885097189d33e9176655fbe4"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "2546cb75045df016318d39135169506cf32044b177b58763f71ed12c59caccbc"
+    },
+    {
+      "path": "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+      "sha256": "19d706ffeaf75ffa80efcccd5c34ff56b333bd02f8b388c62d7ecdd6aa972910"
+    },
+    {
+      "path": "server/services/c2c/filing-section-target.ts",
+      "sha256": "77a86e725ab70fbdd10270f814aacc374efaef1b16ca3afa3742acaa41288d9e"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage-integrity.ts",
+      "sha256": "7b2d6c1af0b51b49c770396c1f5a6bd54b3bf03bc5cb5910d7aa7a8e4c93ff52"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "sha256": "001c0e1d4e544e4dd92b9191ed670ee6e88cc0a5d0a05f2f2100d3864c5ea689"
+    },
+    {
+      "path": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "ecb992dd4e8f6ce3333cd801b958688e1b23738f73883beb1a1b158b1e29bab7"
+    },
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "fae0672f55d7ff7342a3a4adf0371de18f5634c7845688bb82d860005104cfbb"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "b47c391f5a409ccc8390d0b4dc483e540fa744d95a4c923638cf3b14a585e44f"
+    },
+    {
+      "path": "server/services/submission-service/market-application-number.ts",
+      "sha256": "53abf2d8f8927706a3d943e377143092f71d968d0e10098e91f8a345562b7b10"
+    },
+    {
+      "path": "shared/regulatory/region-identity.ts",
+      "sha256": "7c596268954c5c65e48280a354539bd368acc6af77df6bba6976057e411dabe2"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+      "sha256": "34ceea845fd0b749a222f398afbb6588bbb1e3afb56da3d1670d7e1e489565ff"
+    },
+    {
+      "path": "tests/schema-contract/authoring-unchanged-refiling.contract-cases.ts",
+      "sha256": "61464ea31d60fc5ccbacbee5feea9983a1de7c1645b11f8e4f072b6d9866acb6"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26"
+    },
+    {
+      "path": "vite.config.ts",
+      "sha256": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4"
+    }
+  ]
+}

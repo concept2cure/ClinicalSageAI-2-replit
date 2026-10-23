@@ -86,3 +86,20 @@ the same path/hash values were expressed as explicit row fields and rescanned,
 without an exception or baseline change (`hash-format-correction.json`).
 Normal compiler and direct-push gates still must pass before publication is
 reported. No overall CI, production deployment or human acceptance is claimed.
+
+
+## Later canonical Authoring catch-up
+
+The first normal push passed every gate and the full compiler reported
+**zero errors (tsc exit 0, baseline 0)**. The remote advanced during compilation,
+so Git refused the ref update. Its receipt is retained in
+`verification/push-first-ref-race.txt.gz`. No force or bypass was used.
+
+Ordinary merge `6c7235f22` preserves incoming deliberate saved-section refiling
+and its qualification through `7184fb1fd`. The eight differing original broad
+source pins are explicitly listed in `catchup-broad-input-diff.json`; the
+earlier 221-check/build receipt stays bound to `8a4893fea`. All ten lane
+source/test inputs remain unchanged. A focused five-file Authoring/package
+cohort passed **161 checks**, and a fresh production build passed on the merged
+tree, with all thirty catch-up inputs unchanged. These overlapping results
+are not summed. Final normal push/compiler gates are pending on that tree.
