@@ -11,6 +11,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 const auth = vi.hoisted(() => ({ canWrite: true }));
 vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: auth.canWrite ? ['governed:write'] : [] } }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 7 }, currentClientWorkspace: { id: '21', organizationId: '7' } }) }));
 import { TaskBoard } from '../surfaces/TaskBoard';
 import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 const TASK = {
@@ -40,6 +41,11 @@ beforeEach(() => {
     }
     if (path === '/api/projects') return ok([{ id: 12, name: 'BX-1' }]);
     if (path === '/api/task-management/assignees') return ok({ data: [{ id: 2, name: 'Rae' }] });
+    if (path === `/api/task-management/assignees?taskId=${TASK.taskId}`) return ok({ success: true,
+      data: [{ id: '2', name: 'Rae', label: 'Rae' }], total: 1,
+      meta: { taskId: TASK.taskId, organizationId: 7, actorUserId: 7, projectId: 12, clientWorkspaceId: 21,
+        status: 'pending', canAssign: true, assigneeId: board[0].assignee ? Number(board[0].assignee) : null,
+        assignmentVersion: (board[0].assignee ? 'b' : 'a').repeat(64) } });
     return ok({ data: [] });
   });
 });
@@ -59,9 +65,10 @@ describe('saved task assignment recovery', () => {
   it('reuses the saved task id, re-reads its assignee and creates no replacement', async () => {
     mount(); const detail = await open();
     fireEvent.click(within(detail).getByRole('button', { name: 'Auto-assign task' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/tasks/tasks/auto-assign', { taskIds: [TASK.taskId] },
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/tasks/tasks/auto-assign', { taskIds: [TASK.taskId],
+      expectedAssignments: [{ taskId: TASK.taskId, expectedAssigneeId: null, expectedVersion: 'a'.repeat(64) }] },
       expect.objectContaining({ Authorization: expect.any(String), 'x-organization-id': '7' })));
-    await within(detail).findByText('Rae');
+    await waitFor(() => expect(detail.textContent).toContain('Current assignee: Rae'));
     expect(apiRequest.mock.calls.some(([method, path]) => method === 'POST' && path === '/api/tasks/tasks')).toBe(false);
   });
   it('shows a shortfall in the open detail and permits retry', async () => {

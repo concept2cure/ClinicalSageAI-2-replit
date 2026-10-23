@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:37:22.844876+00:00",
+  "purpose": "Read-only integration qualification for task assignment changes that arrived during the final publishing race. Counts are separate from company-document and earlier concurrent AnA qualification.",
+  "upstreamRange": {
+    "from": "8e050baf61d9964ca540561d737186a02e425f15",
+    "to": "ee3089b5afa5ecb10fa6192fd56e023875573fd6"
+  },
+  "checkedOutCommit": "3acbbda655c9a53e675e7ffa5b1acdeb3a4d76e6",
+  "whatAlreadyExists": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "responsibility": "Existing task board/detail and automatic saved-task assignment; named handoff now reaches the same detail and existing write endpoints."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx",
+      "responsibility": "Shared handoff form reads eligible candidates and current assignment before a reasoned compare-and-set write; terminal/read-only/invalidactor states do not offer assignment."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+      "responsibility": "Canonical authenticated request/error readers plus capturedactorheaders are reused for roster/manual/automatic paths, with current actor/task/workspace ownership and receipt guards."
+    },
+    {
+      "path": "shared/task-assignment.ts",
+      "responsibility": "Shared roster/receipt contract validates exact org/actor/task/project, recorded workspace, expectedassignee/version, servercanAssign and bounded distinct candidate identities."
+    }
+  ],
+  "verification": {
+    "command": "vitest run [four exact test paths below] --maxWorkers=1 --reporter=verbose --reporter=json",
+    "nodeMajor": 22,
+    "suiteFiles": 4,
+    "passed": 48,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "files": [
+      {
+        "file": "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx",
+        "passed": 12,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+        "passed": 14,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx",
+        "passed": 1,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+        "passed": 21,
+        "failed": 0,
+        "pending": 0
+      }
+    ],
+    "runnerJsonSha256": "6d180f084cbeeb311c776b8501ef2d736b3a7e598ce9ffdcac345c4019f82232",
+    "runnerLogSha256": "3dda1d51b4e29daa8439e5a5b49d806a50bf0cd039b103edb4dfbd32438e29cf"
+  },
+  "crossIntegration": {
+    "companySourcePinsInManifest": 291,
+    "incomingTaskPathsIntersectingCompanySourcePins": [],
+    "sharedCssAddedRules": 6,
+    "allAddedSelectorsScopedToTaskAssignment": true,
+    "companySettingsSelectorsOrBaseControlRulesChangedByIncomingTaskDiff": false,
+    "productionEditsByThisReview": false,
+    "review": [
+      "Task/account/organization handlers and late receipts are retired when captured ownership changes; selectedworkspace is carried in the existing x-client-id header and serverrecorded scope is retained for writes.",
+      "Manual handoff requires eligiblecandidate, boundedhumanreason, expectedassignee and assignmentversion. Automatic handoff sends fresh expectedassignment to the existing endpoint.",
+      "Unconfirmed network/5xx/malformedwrite results do not become success; writes require a fresh rosterread before retry. TaskDetail advancement/archive controls are blocked while the assignment flow is open.",
+      "Assignment declares no new projectaccess, reviewassignment or electronicsigning authority; servercanAssign and scopednativeauthorization remain authoritative.",
+      "Global stylesheet changes are six .c2c-v2 .tb-assignment-prefixed rules. They do not target CompanyDocumentSettings or change shared .c2c-input, button or form base rules."
+    ]
+  },
+  "qualificationLimits": [
+    "These four suites exercise the existing component/request harnesses, including mocked HTTP results; they do not establish live backend commit, audit durability or production deployment.",
+    "Backend assignment/authorization qualification, final fullbuild/typecheck, companysourcepin refresh and normalpushhooks are owned by the controller and the backend agent.",
+    "No production files, tests, dependencies or companysourcepins were edited by this read-onlyreview."
+  ],
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx",
+      "sha256": "260c8c83b81a03551818f264d40031df56a3b2b03ada5b29fa51967625d2bcd0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+      "sha256": "7f3c15f3df261dee4793bf16b36f92957ed28adc1ee128a6005d85d5b5168250"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx",
+      "sha256": "c96042bc9c8d11ac1185d71cb6af0c0e81691859fa6a60d2885dadba56368d4e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+      "sha256": "dd5d4f8afc90335de3e2e7c46ff16df06b2747c7c13f4aca78377bdff4d3030c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx",
+      "sha256": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "sha256": "f241f832d8314beeae08be032b0217b35d76c4bc4fb67721963be2b78999e23a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+      "sha256": "6c3f3779eb701eeefbde88ffc8eb63327ecacb4b0aa0f30a1f6bfc241228170f"
+    },
+    {
+      "path": "shared/task-assignment.ts",
+      "sha256": "f21f8113f3d34e81250f8889b88e35d64e4616f476816dd83a9a3016dfe3b3f7"
+    }
+  ]
+}

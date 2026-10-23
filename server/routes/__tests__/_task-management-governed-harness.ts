@@ -36,6 +36,7 @@ export const h = {
   /** The Nth transaction (1-based) whose COMMIT is lost — its outcome unknown. */
   failCommit: 0,
   transactions: 0,
+  rawQueries: [] as string[],
   /** The owned ledger branch cannot open its connection. */
   connectFails: false,
 };
@@ -175,6 +176,7 @@ export function appFactory(taskManagementRoutes: express.Router) {
       (req as any).user = { organizationId: 2, ...(userId ? { id: userId } : {}), ...(role ? { role } : {}) };
       if (role) (req as any).userRole = role;
       if (tenantContext) (req as any).tenantContext = tenantContext;
+      (req as any).dbClient = pinnedAssignmentClient(role);
       next();
     });
     app.use('/api/task-management', taskManagementRoutes);
@@ -201,6 +203,7 @@ export function resetHarness() {
   h.fail = null;
   h.failCommit = 0;
   h.transactions = 0;
+  h.rawQueries = [];
   h.connectFails = false;
   vi.clearAllMocks();
   spies.cascadeUnblockOnCompletionInTx.mockResolvedValue({ ledger: [], notices: [] });
@@ -208,4 +211,55 @@ export function resetHarness() {
   spies.createNotification.mockResolvedValue(1);
   spies.getOptimalAssignee.mockResolvedValue(null);
   spies.requireTaskSignoff.mockResolvedValue({ required: false });
+}
+
+/** The real assignment engine and canonical task-audit execute over this
+ * recording SQL client; only the ledger primitive and planning pick are mocked. */
+function pinnedAssignmentClient(role: string | null) {
+  const tasks = new Map<string, Record<string, unknown>>();
+  return { discard: async () => undefined, async query(statement: string, params: unknown[] = []) {
+    h.rawQueries.push(statement);
+    const transaction = assignmentTransaction(statement);
+    if (transaction) return transaction;
+    if (statement.includes('SELECT ou.role')) return { rows: [{ role: params[1] === 9 ? 'member' : role }] };
+    const task = assignmentTaskFixture(tasks, statement, params);
+    if (task) return task;
+    if (statement.includes('task-assignment:roster')) return { rows: [{ id: 9, name: 'Ana', email: 'ana@example.test', role: 'member' }] };
+    if (statement.startsWith('SELECT id,name,email FROM users')) return { rows: [{ id: params[0], name: 'Ana', email: 'ana@example.test' }] };
+    if (statement.includes('task-assignment:update')) {
+      h.log.push('tx:update');
+      const error = h.fail?.('tx', 'update'); if (error) throw error;
+      if (!h.updated.length) return { rows: [] };
+      const before = [...tasks.values()].find(row => row.id === params[3])!;
+      const change = { assignee_id: params[0], assignee_name: params[1], assigned_by: params[2], assigned_at: new Date(), last_modified_by: params[2], row_version: '2', exact_updated_at: '2026-01-02 00:00:00' };
+      h.sets.push(change);
+      return { rows: [{ ...before, ...change }] };
+    }
+    if (statement === 'INSERT INTO audit_logs') { h.log.push('tx:execute'); return { rows: [] }; }
+    throw new Error(`Unexpected assignment fixture SQL: ${statement}`);
+  } };
+}
+
+function assignmentTaskFixture(tasks: Map<string, Record<string, unknown>>, statement: string, params: unknown[]) {
+  if (!statement.includes('task-assignment:task')) return undefined;
+  const taskId = String(params[1]);
+  if (!statement.includes('FOR UPDATE')) {
+    h.log.push('db:select');
+    const row = h.selects.shift()?.[0];
+    if (!row) return { rows: [] };
+    tasks.set(taskId, { id: 1, task_id: row.taskId, organization_id: 2,
+      client_workspace_id: null, project_id: null, status: 'pending', assignee_id: null, assigned_by: null,
+      assigned_at: null, row_version: '1', exact_updated_at: '2026-01-01 00:00:00', ...row });
+  }
+  return { rows: tasks.has(taskId) ? [tasks.get(taskId)!] : [] };
+}
+
+function assignmentTransaction(statement: string): { rows: never[] } | undefined {
+  if (statement === 'BEGIN') { h.log.push('BEGIN'); h.transactions++; return { rows: [] }; }
+  if (statement === 'ROLLBACK') { h.log.push('ROLLBACK'); return { rows: [] }; }
+  if (statement === 'COMMIT') {
+    if (h.transactions === h.failCommit) { h.log.push('COMMIT-LOST'); throw new Error('Connection terminated unexpectedly'); }
+    h.log.push('COMMIT'); return { rows: [] };
+  }
+  return undefined;
 }

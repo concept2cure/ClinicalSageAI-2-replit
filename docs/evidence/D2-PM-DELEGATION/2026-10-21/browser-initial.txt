@@ -1,0 +1,14 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.selectOption: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('New assignee', { exact: true })[22m
+
+    at /workspace/ClinicalSageAI-2-replit/docs/evidence/D2-PM-DELEGATION/2026-10-21/browser-check.mjs:68:56 {
+  log: [ "  - waiting for getByLabel('New assignee', { exact: true })" ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.3

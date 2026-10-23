@@ -1,0 +1,122 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/task-assignment-delegation.dbtest.ts tests/db/project-sharing-team-setup.dbtest.ts tests/db/project-team-responsibility.dbtest.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-21T02:23:33.023Z","pid":27815,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T02:23:33.025Z","pid":27815,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T02:23:33.025Z","pid":27815,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-assignment-delegation.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-assignment-delegation.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T02:23:34.853Z","pid":27815,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > scopes real active candidates by project and disambiguates duplicate names 122ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > atomically saves assignment, both ledger rows and exact human reason while preserving task history 145ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > can assign a genuinely unassigned saved task 106ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 8 123ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 12 117ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 10 without creating access or lineage 131ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 11 without creating access or lineage 104ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 12 without creating access or lineage 93ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 13 without creating access or lineage 111ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses another claimed client and a corrupt recorded task/client link 142ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal completed task and lets bulk auto report a genuine skip 148ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal cancelled task and lets bulk auto report a genuine skip 131ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rejects an old version even after A to B to A returns to the old assignee 183ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > retains a recorded client-wide task scope without inventing a project 92ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > does not stamp the selected client onto an organization-wide task 105ms
+stderr | tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > rolls the task and first ledger insert back when the second ledger insert fails
+{
+  "timestamp": "2026-10-21T02:23:38.536Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "TASK-DELEGATE",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"synthetic_ledger_failure\""
+  }
+}
+
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > rolls the task and first ledger insert back when the second ledger insert fails 128ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > reports lost actual COMMIT acknowledgement as unknown, discards once and permits a safe reread 159ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > allows only one concurrent independent HTTP writer for the same observed version 118ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > verifies the real sequenced chain and HMAC seals after two native assignment transactions 187ms
+{"level":30,"time":"2026-10-21T02:23:40.275Z","pid":27916,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T02:23:40.276Z","pid":27916,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T02:23:40.276Z","pid":27916,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-team-responsibility.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-team-responsibility.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T02:23:40.524Z","pid":27916,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > keeps lead, project owner, creator provenance and sharing separate on the unique anchor 62ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > disambiguates accounts and never links recorded names to matching account names 54ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > reads current contact objects as unlinked names without trusting their identity or role claims 57ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > withholds inactive/foreign account details and excludes revoked sharing-only members 49ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > retains a departed lead reference without treating it as a current account 40ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > does not confirm an account with duplicate membership 41ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > identity-backed team read through native HTTP and tenant SQL > does not confirm an account with blank role 36ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals unassigned before roster queries 35ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals foreign before roster queries 33ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals revoked actor before roster queries 32ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals inactive actor before roster queries 32ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals inactive organization before roster queries 33ms
+stderr | tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > refuses a duplicate live anchor before roster queries
+{
+  "timestamp": "2026-10-21T02:23:44.225Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > conceals deleted program before roster queries 32ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > refuses a missing live anchor before roster queries 29ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > refuses a duplicate live anchor before roster queries 36ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > reports a missing roster store as unavailable without an empty-success fallback or SQL details 36ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > withholds the loaded roster after mid-read sharing revocation 37ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > withholds the loaded roster after mid-read actor revocation 39ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > withholds the loaded roster after mid-read anchor replacement 36ms
+ ✓ tests/db/project-team-responsibility.dbtest.ts > current admission before and after roster loading > does not fall back to a shared pool when the request client is absent 26ms
+{"level":30,"time":"2026-10-21T02:23:45.553Z","pid":27948,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T02:23:45.555Z","pid":27948,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T02:23:45.555Z","pid":27948,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-sharing-team-setup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T02:23:46.317Z","pid":27948,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+stdout | tests/db/project-sharing-team-setup.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-10-21T02:23:47.757Z","pid":27948,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792549427736_0f709161e5d4d1b4","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+{"level":20,"time":"2026-10-21T02:23:47.847Z","pid":27948,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792549427842_272da905626bfc8b","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reaches actual same-name accounts for the current owner and persists an audited Edit grant 149ms
+{"level":20,"time":"2026-10-21T02:23:47.937Z","pid":27948,"hostname":"c9501410c5f6","context":{"auditId":"audit_1792549427934_3a6724c651b26ad2","action":"UPDATE","entityType":"project","entityId":"11"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > revokes the durable share, retains provenance and removes future private program reads 114ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > can clean up a departed account’s share without erasing its identity or original grant 63ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > does not mistake a claimed admin role or a read-only owner for current management rights 99ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 10 without a grant 59ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses inactive/foreign recipient 11 without a grant 55ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses a mismatched program/anchor and a second client owned by another current member 69ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > rejects an explicit different client workspace even when the UUID and integer anchor match 69ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > protects implicit owner/creator access and archived projects 73ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > reports a lost COMMIT acknowledgement as unconfirmed while the actual saved grant can be re-read 96ms
+ ✓ tests/db/project-sharing-team-setup.dbtest.ts > existing sharing routes with native PostgreSQL tenant enforcement > refuses unverified member-store reads instead of returning a verified empty state 55ms
+
+ Test Files  3 passed (3)
+      Tests  50 passed (50)
+   Start at  02:23:28
+   Duration  20.35s (transform 7.59s, setup 202ms, import 621ms, tests 18.62s, environment 0ms)

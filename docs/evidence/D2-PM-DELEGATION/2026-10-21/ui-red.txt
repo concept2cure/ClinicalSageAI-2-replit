@@ -1,0 +1,202 @@
+Command: node node_modules/vitest/vitest.mjs run client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx
+Baseline: existing TaskDetail before named assignment controls.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx > TaskBoard named handoff in the existing detail > chooses a real account with a human reason and preserves its approval/progress fields 546ms
+   → Unable to find an accessible element with the role "button" and name "Change assignee"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review the evidence package":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close"[39m
+    [33mclass[39m=[32m"tb-detail-x"[39m
+  [36m/>[39m
+
+  --------------------------------------------------emphasis:
+
+  Name "":
+  [36m<em[39m
+    [33mstyle[39m=[32m"color: var(--text-400);"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Auto-assign task":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Archive "Review the evidence package"":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Archive \"Review the evidence package\""[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Move back":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Advance":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Task detail"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"tb-detail"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"tb-detail-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+        [33mstyle[39m=[32m"font-size: 10.5px; color: var(--text-400);"[39m
+      [36m>[39m
+        [0mTASK-HANDOFF[0m
+      [36m</span>[39m
+      [36m<h3>[39m
+        [0mReview the evidence package[0m
+      [36m</h3>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"tb-detail-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx > TaskBoard named handoff in the existing detail > chooses a real account with a human reason and preserves its approval/progress fields
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Change assignee"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review the evidence package":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close"[39m
+    [33mclass[39m=[32m"tb-detail-x"[39m
+  [36m/>[39m
+
+  --------------------------------------------------emphasis:
+
+  Name "":
+  [36m<em[39m
+    [33mstyle[39m=[32m"color: var(--text-400);"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Auto-assign task":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Ask AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Archive "Review the evidence package"":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Archive \"Review the evidence package\""[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Move back":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Advance":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Task detail"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"tb-detail"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"tb-detail-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"mono"[39m
+        [33mstyle[39m=[32m"font-size: 10.5px; color: var(--text-400);"[39m
+      [36m>[39m
+        [0mTASK-HANDOFF[0m
+      [36m</span>[39m
+      [36m<h3>[39m
+        [0mReview the evidence package[0m
+      [36m</h3>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"tb-detail-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx:52:36
+     50|     mount(); fireEvent.click(await screen.findByRole('button', { name:…
+     51|     const detail = await screen.findByRole('dialog', { name: 'Task det…
+     52|     fireEvent.click(within(detail).getByRole('button', { name: 'Change…
+       |                                    ^
+     53|     const person = await within(detail).findByLabelText('New assignee'…
+     54|     expect(person.textContent).toContain('Alex · Account #9');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:15:53
+   Duration  2.57s (transform 856ms, setup 203ms, import 1.04s, tests 549ms, environment 611ms)
+
+
+Exit code: 1

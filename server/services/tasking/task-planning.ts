@@ -8,6 +8,7 @@
  */
 import { and, eq, or, inArray, isNull, count, sql } from 'drizzle-orm';
 import { db } from '../../db';
+import type { RequestSqlClient } from '../../db/requestDb';
 import {
   unifiedTasks,
   taskDependencies,
@@ -110,7 +111,20 @@ export async function calculateCriticalPath(projectId: number, organizationId: n
 }
 
 // Helper function for workload balancing
-export async function getOptimalAssignee(organizationId: number, _taskData: any) {
+export async function getOptimalAssignee(organizationId: number, _taskData: any,
+  options?: { executor: RequestSqlClient; eligibleUserIds: readonly number[] }) {
+  if (options) {
+    if (!options.eligibleUserIds.length) return null;
+    // The assignment engine has admitted these current accounts. This read is
+    // enlisted; a failed workload read must not look like an empty roster.
+    const { rows } = await options.executor.query(`SELECT u.id,u.name,u.email,count(t.id)::int AS "activeTaskCount",
+      coalesce(sum(coalesce(t.estimated_hours,8)) FILTER (WHERE t.id IS NOT NULL),0) AS "totalHours"
+      FROM users u LEFT JOIN unified_tasks t ON t.assignee_id=u.id AND t.organization_id=$1
+        AND t.status IN ('pending','in-progress') AND t.deleted_at IS NULL
+      WHERE u.id=ANY($2::int[]) AND u.status='active' GROUP BY u.id,u.name,u.email`, [organizationId, [...options.eligibleUserIds]]);
+    return lowestWorkload(rows.map(row => ({ id: Number(row.id), name: row.name as string | null,
+      email: row.email as string | null, activeTaskCount: Number(row.activeTaskCount), totalHours: Number(row.totalHours) })));
+  }
   try {
     // Get all users in the organization and their current active workload.
     // Users belong to an org via organizationUsers; the left join to
@@ -137,17 +151,14 @@ export async function getOptimalAssignee(organizationId: number, _taskData: any)
       .groupBy(users.id, users.name, users.email);
 
     // Sort by workload (ascending)
-    const sortedByWorkload = workloadQuery.sort((a, b) => {
-      const aHours = Number(a.totalHours || 0);
-      const bHours = Number(b.totalHours || 0);
-      return aHours - bHours;
-    });
-
-    // Return user with lowest workload
-    return sortedByWorkload[0];
+    return lowestWorkload(workloadQuery);
   } catch (error) {
     console.error('Error finding optimal assignee:', error);
     return null;
   }
+}
+
+function lowestWorkload<T extends { id: number; totalHours: unknown }>(rows: T[]): T | undefined {
+  return rows.sort((a, b) => Number(a.totalHours || 0) - Number(b.totalHours || 0) || a.id - b.id)[0];
 }
 

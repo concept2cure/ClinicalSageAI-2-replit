@@ -1,0 +1,321 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:12:40.155Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:12:40.646Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:12:40.647Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:12:40.647Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels
+{
+  "timestamp": "2026-10-21T02:12:45.415Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 96ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader
+{
+  "timestamp": "2026-10-21T02:12:45.492Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access
+{
+  "timestamp": "2026-10-21T02:12:45.540Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 6ms
+   → invalid message format
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 54ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 1ms
+   → invalid message format
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 37ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 1ms
+   → invalid message format
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access
+{
+  "timestamp": "2026-10-21T02:12:45.580Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots
+{
+  "timestamp": "2026-10-21T02:12:45.611Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks
+{
+  "timestamp": "2026-10-21T02:12:45.648Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+{
+  "timestamp": "2026-10-21T02:12:45.674Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 38ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 1ms
+   → invalid message format
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 31ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 1ms
+   → invalid message format
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 33ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 1ms
+   → invalid message format
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape
+{
+  "timestamp": "2026-10-21T02:12:45.714Z",
+  "level": "error",
+  "message": "[task-board-routes] task assignees error",
+  "context": {
+    "err": "Failed query: select \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" from \"users\" inner join \"organization_users\" on \"organization_users\".\"user_id\" = \"users\".\"id\" where \"organization_users\".\"organization_id\" = $1 order by \"users\".\"name\" asc\nparams: 7"
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 27ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 1ms
+   → invalid message format
+ × server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 38ms
+   → {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 1ms
+   → invalid message format
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:86:46
+     84|   it('returns the exact current scope and only eligible already-admitt…
+     85|     const r = await request(app(5, 'viewer')).get(rosterPath);
+     86|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+     87|     expect(r.body.meta).toMatchObject({ taskId: 'T1', organizationId: …
+     88|     expect(r.body.meta.assignmentVersion).toMatch(/^[a-f0-9]{64}$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason
+error: invalid message format
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 81, severity: 'ERROR', code: '08P01', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pqformat.c', routine: 'pq_getmsgend', query: 'TRUNCATE unified_tasks,project_members,project_visibility_settings,projects,organization_users,users,organizations,client_workspaces,audit_logs,c2c_ana_actions RESTART IDENTITY;\n    INSERT INTO organizations VALUES(7,\'active\'),(8,\'active\'); INSERT INTO client_workspaces VALUES(71,7),(72,7);\n    INSERT INTO users VALUES(5,\'Owner\',\'owner@example.test\',\'active\'),(6,\'Same Name\',\'one@example.test\',\'active\'),(7,\'Same Name\',\'two@example.test\',\'active\'),\n      (8,\'Inactive secret\',\'inactive@example.test\',\'inactive\'),(9,\'Foreign secret\',\'foreign@example.test\',\'active\'),(10,\'Read only\',\'viewer@example.test\',\'active\'),(11,\'No access\',\'private@example.test\',\'active\');\n    INSERT INTO organization_users(organization_id,user_id,role) VALUES(7,5,\'member\'),(7,6,\'member\'),(7,7,\'member\'),(7,8,\'member\'),(8,9,\'member\'),(7,10,\'viewer\'),(7,11,\'member\');\n    INSERT INTO projects VALUES(101,7,71,5,5,\'active\',\'{}\'),(202,7,72,5,5,\'active\',\'{}\');\n    INSERT INTO project_visibility_settings VALUES(101,7,\'private\'),(202,7,\'private\');\n    INSERT INTO project_members(organization_id,project_id,user_id,role,status) VALUES(7,101,6,\'use\',\'active\'),(7,101,7,\'edit\',\'active\'),(7,101,10,\'edit\',\'active\');\n    INSERT INTO unified_tasks(task_id,organization_id,project_id,title,status,assignee_id,assignee_name,assigned_by,assigned_at,updated_at,created_at,progress,approval_history,approval_status,estimated_hours)\n      VALUES(\'T1\',7,101,\'Review evidence\',\'blocked\',6,\'Same Name\',5,\'2026-01-01\',\'2026-01-02 01:02:03.123456\',\'2025-01-01\',40,\'[{"meaning":"prior evidence"}]\',\'pending\',8);', params: undefined, queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:110:22
+    108|   it('returns no candidate directory to a project reader', async () =>…
+    109|     const r = await request(app(6)).get(rosterPath);
+    110|     expect(r.status).toBe(200); expect(r.body.meta.canAssign).toBe(fal…
+       |                      ^
+    111|   });
+    112| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ snapshot server/routes/__tests__/task-assignment.pglite.test.ts:41:44
+     39| async function snapshot() {
+     40|   const r = await request(app()).get(rosterPath);
+     41|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     42|   return r.body.meta;
+     43| }
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:116:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ snapshot server/routes/__tests__/task-assignment.pglite.test.ts:41:44
+     39| async function snapshot() {
+     40|   const r = await request(app()).get(rosterPath);
+     41|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     42|   return r.body.meta;
+     43| }
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:128:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ snapshot server/routes/__tests__/task-assignment.pglite.test.ts:41:44
+     39| async function snapshot() {
+     40|   const r = await request(app()).get(rosterPath);
+     41|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     42|   return r.body.meta;
+     43| }
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:135:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ snapshot server/routes/__tests__/task-assignment.pglite.test.ts:41:44
+     39| async function snapshot() {
+     40|   const r = await request(app()).get(rosterPath);
+     41|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     42|   return r.body.meta;
+     43| }
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:144:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape
+AssertionError: {"success":false,"error":"Failed to load assignees"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ snapshot server/routes/__tests__/task-assignment.pglite.test.ts:41:44
+     39| async function snapshot() {
+     40|   const r = await request(app()).get(rosterPath);
+     41|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     42|   return r.body.meta;
+     43| }
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:166:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed (16)
+   Start at  02:12:35
+   Duration  10.28s (transform 2.68s, setup 190ms, import 5.16s, tests 4.09s, environment 0ms)
