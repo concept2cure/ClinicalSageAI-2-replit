@@ -1,0 +1,25 @@
+{
+  "disposition": "CLEAR; independent code-only incoming review and root manifest verification",
+  "incomingCommit": "aef1b6a15456b9d3911753790a610a23487fa4c5",
+  "mergedCommit": "38ed4c587ab5b29519640c34bd94b8b5ab81217a",
+  "reviewScope": "Existing catalog movement/guidance and navigation integration; stable apps destinations, original governed group indices, access verdicts and toggle request/confirmation handling retained; no server/schema/dependency/grant or contributor-ownership expansion.",
+  "upstreamPinsVerified": 71,
+  "upstreamArtifactsVerified": 75,
+  "upstreamCounts": "502/46 and upstream browser results are historical evidence only, not root reruns.",
+  "rootChecks": {
+    "navigation": {
+      "passed": 195,
+      "files": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "auditPath": {
+      "passed": 10,
+      "files": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "build": "exit0 at merged38ed4c587 with stable selected inputs"
+  },
+  "recommendationCoverage": "All 11 changed test files plus appMentions, railLicenseGating and anaOperatesAuditTrail were actually run; additional registry/navigation consumers included in the20-file cohort."
+}

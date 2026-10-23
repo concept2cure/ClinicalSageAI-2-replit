@@ -1,0 +1,98 @@
+{
+  "base": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "sourceCommit": "073f4d5f86c88f21abf6b6d773942ec320d54870",
+  "method": "ESLint lintText using existing original file paths; historical text in memory, no temporary TypeScript source",
+  "beforeWarnings": 0,
+  "afterWarnings": 3,
+  "warningDelta": 3,
+  "afterErrors": 0,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "sha256": "062f4c8e3734150463c0bb0c8d7d2a34469c712bfb9bd5ba555b398692b2ad5c",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx",
+      "sha256": "5eb940dc17f4c7cd92d6e41979fe32e310591667ba26a210ea0de5d809ebe48a",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx",
+      "sha256": "2c9b4f52bb9f58f74ad9858d42ca5140fef34e2f0c2ef3a2d8acdc916795374a",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 26,
+          "column": 40,
+          "messageId": "complex",
+          "endLine": 26,
+          "endColumn": 42
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx",
+      "sha256": "fb8bf0afcf2284e8c6f42be21b0b7d2090dfb37a6a8c08f32311a1612a5276ef",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'PagedCompanyLegalPicker' has a complexity of 27. Maximum allowed is 15.",
+          "line": 25,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 25,
+          "endColumn": 40
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+      "sha256": "9d43c868c6ea6c0b6f9e8863fb1a1e65c86199976a75a78162cf2692ddbfe681",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+      "sha256": "016436123ae6043ccb8fc73c391a3e6e65ea852780098e6364ecaf236f88f8d3",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (104). Maximum allowed is 100.",
+          "line": 62,
+          "column": 78,
+          "messageId": "exceed",
+          "endLine": 62,
+          "endColumn": 80
+        }
+      ]
+    }
+  ]
+}

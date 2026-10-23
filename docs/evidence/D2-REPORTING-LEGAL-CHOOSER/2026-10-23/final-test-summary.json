@@ -1,0 +1,12 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx server/services/company-documents/__tests__/legal-inventory.pglite.test.ts server/services/report-os/__tests__/report-package-legal.test.ts server/routes/__tests__/report-os-report-pack-export.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/final-results.json",
+  "startedAt": "2026-10-23T20:38:05.036801+00:00",
+  "finishedAt": "2026-10-23T20:38:51.416003+00:00",
+  "exitCode": 0,
+  "files": 13,
+  "passed": 231,
+  "failed": 0,
+  "pending": 0,
+  "unchangedInputs": true,
+  "failures": []
+}

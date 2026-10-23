@@ -1,0 +1,29 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/final-owned-results.json",
+  "startedAt": "2026-10-23T20:36:34.008199+00:00",
+  "finishedAt": "2026-10-23T20:36:42.021533+00:00",
+  "exitCode": 0,
+  "passed": 41,
+  "failed": 0,
+  "skipped": 0,
+  "files": 3,
+  "changedInputs": [],
+  "perFile": [
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+      "passed": 10,
+      "failed": 0
+    }
+  ],
+  "failures": []
+}

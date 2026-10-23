@@ -1,0 +1,8 @@
+{
+  "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx": "f252f04e30737871df8542adbc7d431805584d25d237ff0e08e7214e35860a46",
+  "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx": "9d43c868c6ea6c0b6f9e8863fb1a1e65c86199976a75a78162cf2692ddbfe681",
+  "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx": "062f4c8e3734150463c0bb0c8d7d2a34469c712bfb9bd5ba555b398692b2ad5c",
+  "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx": "64e9791421b46760305b2a46aadd7a515e2e6da55d89d810a03b758a13309362",
+  "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx": "2c9b4f52bb9f58f74ad9858d42ca5140fef34e2f0c2ef3a2d8acdc916795374a",
+  "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx": "fb8bf0afcf2284e8c6f42be21b0b7d2090dfb37a6a8c08f32311a1612a5276ef"
+}

@@ -1,0 +1,116 @@
+{
+  "incomingCommit": "aef1b6a15456b9d3911753790a610a23487fa4c5",
+  "mergedCommit": "38ed4c587ab5b29519640c34bd94b8b5ab81217a",
+  "files": {
+    "client/src/concept2cure/v2/Shell.tsx": {
+      "sha256": "8b51a162f7f4538959e2d1b8171ce427b4ad86777f93727d1efa59234efb1da3",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx": {
+      "sha256": "8a6011bdab8cd12f8af3b02461c7b957d4e96dbcfdc79b74abef3014ef417aa8",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx": {
+      "sha256": "79329ecfd4c5854e84af98116cd60d823214c576258c0bd45b1aeb3221ed64a8",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx": {
+      "sha256": "458b97c33174d3a0e0aa25b70821f8a1c39a723a8b8b1a5ab5e93d2a8d648817",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/appsLive.test.tsx": {
+      "sha256": "279793f747e7f85f65870fcd7520e9a7a8c62d31e6ae603deae252d2165d6332",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx": {
+      "sha256": "a2745680af16b9bb8aa76389d167dabb1a4bf2012c646b49cef7d932ecadb16f",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx": {
+      "sha256": "60f0e470ba99d4b255eecd6d7a8e0894877b386be2488d1ef3e94144d79fb3ea",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx": {
+      "sha256": "c88638092720d978055b2caa290e0a3fc6aa9842f2c10ec3dde3680a0610df92",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx": {
+      "sha256": "5b465782448616331a782f8765007f4e247f250b420e0a518111ec874f2313e0",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": {
+      "sha256": "50b09c99367d0ed46f51731f3865602cd4293c29f99b1c41f872820868bddb32",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx": {
+      "sha256": "441a1231ebc9658d2d5ff80150d6cdbb542b3082c8fbd8514970155c602cac6e",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx": {
+      "sha256": "3c806c431581d575472dfabeafe8fa556ca36afeaf572443970c1860fd250b35",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/appMentions.tsx": {
+      "sha256": "95dc38000ae5e43d7dfc9de2f066f0ef1d35fabf56d5230e45a02a16bcc6e31a",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/catalogWorkflows.ts": {
+      "sha256": "e4ed0f3c463d57ebe6ebe273664440a095af97c35b059f9688829e0d6af46a9d",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/navEntitlements.tsx": {
+      "sha256": "fb27293457be5e8e0c60c70160f63530f4c17c8f2593d3710a24b78e78ba7349",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/registryModel.ts": {
+      "sha256": "3903b0172f5b4b8328406c32b3065697ad08cdc4f299e94aa3301bad429bcf45",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/styles/workflows-v2.css": {
+      "sha256": "a75ed4dcfe3eae52a7e3d25c98293f4db808817bdeb7dee59dbaba2f5fcb0979",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/surfaces/AccessRequests.tsx": {
+      "sha256": "57c35dd58d9a0f2ddb0849c913e9ce7fdf4061ec16310f84f84df6f4dbc73600",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx": {
+      "sha256": "b6ef55d17f8b86de6ab74d49ebfab2330ce83f2495acd2f98a14a2b1fdb9422c",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx": {
+      "deleted": true,
+      "replacement": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx"
+    },
+    "client/src/concept2cure/v2/surfaces/Onboarding.tsx": {
+      "sha256": "e3e0e6983d896ebaf6f7521c7480dc7f625f706b648e659bf6074dfa1130eeec",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/surfaces/Surfaces.tsx": {
+      "sha256": "b3b421dae3c0915ede583951131fa95e54dc9d8fdcf0ffe7194a26707dd84ef5",
+      "matchesIncoming": true
+    },
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": {
+      "sha256": "f1afed53b86559e22009b3383cf08d936193c0e4b6503adafc06c2f40883fbf1",
+      "matchesIncoming": true
+    },
+    "shared/constants/ui-surface-registry.ts": {
+      "sha256": "71c5c490b81e6977087c837a59db22a71527ac2e0d1728ce903c4f2f3f95ee58",
+      "matchesIncoming": true
+    },
+    "shared/navigation/demo-scripts.ts": {
+      "sha256": "55a49a2303baaa80070d2ead387ef61d859cc3f6e99e22e449604f77e113bcf3",
+      "matchesIncoming": true
+    },
+    "shared/navigation/index.ts": {
+      "sha256": "f7c7a02c1bc41a32421e169a26ab349484ae5ac6232afffff380ef4e4970d391",
+      "matchesIncoming": true
+    },
+    "shared/navigation/surface-actions.ts": {
+      "sha256": "9442088ffdab90df203f211635b3ce1130b42a6805943ca70ef6b8ff9e231800",
+      "matchesIncoming": true
+    }
+  },
+  "changedPathCount": 27,
+  "allSurvivingInputsMatch": true
+}

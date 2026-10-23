@@ -1,0 +1,12 @@
+{
+  "scope": "Incoming searchable assembly templates and direct existing build/source consumers on final merged source",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx"
+  ]
+}

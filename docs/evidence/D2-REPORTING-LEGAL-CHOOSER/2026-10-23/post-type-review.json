@@ -1,0 +1,9 @@
+{
+  "disposition": "CLEAR: independent read-only review of single ref declaration correction",
+  "path": "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx",
+  "sha256": "f6943e48292ce2d4539856a7e846bef82b14740e794fbe0c41a453981d742032",
+  "change": "useRef<string>() \u2192 useRef<string | undefined>(undefined)",
+  "semantics": "Same runtime initial/reset value, optional variant payload and all captured owner/visit/pending guards retained.",
+  "finalChecks": "41/3direct tests0fail; separate157/7template integration0fail; mergedbuild0; lint34files0errors with37\u219236pre-existing warnings, no net growth.",
+  "compiler": "Final normal push still required; previous rejected3errors retained in type-refusal-*."
+}

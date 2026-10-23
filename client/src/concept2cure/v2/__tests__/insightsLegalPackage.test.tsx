@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { CompanyLegalDocument } from '@shared/company-documents';
+import { seedCompanySession } from './_company-session-fixture';
 const apiRequest = vi.hoisted(() => vi.fn());
 const downloadBlob = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -14,7 +15,8 @@ const document: CompanyLegalDocument = { id: 'legal-one', title: 'Signed company
   programId: '11111111-1111-4111-8111-111111111111', vaultDocumentId: '22222222-2222-4222-8222-222222222222',
   contentHash: 'a'.repeat(64), version: '3', agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en',
   effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: '7', transmitRefusal: null };
-const library = (documents = [document]) => ({ ok: true, json: async () => ({ data: { legalDocuments: documents } }) });
+const library = (documents = [document]) => ({ ok: true, status: 200, json: async () => ({ data: documents,
+  page: { total: documents.length, availableTotal: documents.length, offset: 0, limit: 25, hasMore: false, nextOffset: null } }) });
 const blob = new Blob(['actual-server-zip'], { type: 'application/zip' });
 const zipResponse = () => ({ ok: true, blob: async () => blob });
 const posts = () => apiRequest.mock.calls.filter(([method]) => method === 'POST');
@@ -23,8 +25,12 @@ async function choose() {
   fireEvent.click(screen.getByRole('button', { name: /Choose legal companions/ }));
   const checkbox = await screen.findByRole('checkbox'); fireEvent.click(checkbox);
 }
-beforeEach(() => { apiRequest.mockReset().mockImplementation(async method => method === 'GET' ? library() : zipResponse()); downloadBlob.mockReset().mockReturnValue(true); });
-afterEach(() => { cleanup(); authService.endSession(null); });
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); seedCompanySession();
+  apiRequest.mockReset().mockImplementation(async method => method === 'GET' ? library() : zipResponse());
+  downloadBlob.mockReset().mockReturnValue(true);
+});
+afterEach(() => { cleanup(); authService.endSession(null); vi.unstubAllGlobals(); });
 
 describe('explicit legal companions for a report archive', () => {
   it('loads only on request and selects nothing automatically', async () => {
@@ -42,7 +48,8 @@ describe('explicit legal companions for a report archive', () => {
     await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
     expect(posts()).toEqual([['POST', `/api/report-os/bundles/${bundleId}/export.zip`, { legalDocumentIds: ['legal-one'] }]]);
     expect(downloadBlob).toHaveBeenCalledWith('report-package-33333333.zip', blob);
-    expect(screen.getByRole('status').textContent).toContain('Keep this ZIP and its manifest');
+    expect(screen.getByText(/Keep this ZIP and its manifest/).textContent).toContain('Keep this ZIP and its manifest');
+    expect(screen.getByText(/Keep this ZIP and its manifest/).getAttribute('role')).toBe('status');
   });
   it('shows expiry and approval refusals and disables those originals', async () => {
     apiRequest.mockResolvedValue(library([{ ...document, expiresOn: '2000-01-01' }, { ...document, id: 'unapproved', title: 'Draft legal document', transmitRefusal: 'Not approved' }]));
@@ -57,11 +64,22 @@ describe('explicit legal companions for a report archive', () => {
     expect((screen.getByRole('button', { name: /Download reports and 0/ }) as HTMLButtonElement).disabled).toBe(true);
   });
   it('shows a library failure with refresh available and no selectable cached originals', async () => {
-    apiRequest.mockRejectedValue(new Error('Library unavailable'));
+    apiRequest.mockResolvedValue({ ok: false, status: 503, json: async () => ({ message: 'Library unavailable' }) });
     render(<InsightsLegalPackage bundleId={bundleId} disabled={false} />);
     fireEvent.click(screen.getByRole('button', { name: /Choose legal companions/ }));
     expect(await screen.findByText('Library unavailable')).toBeTruthy(); expect(screen.queryByRole('checkbox')).toBeNull();
     expect((screen.getByRole('button', { name: /Refresh legal companions/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+  it('reports a library transport failure through the canonical generic alert and allows retry', async () => {
+    apiRequest.mockRejectedValue(new TypeError('Private transport failure details'));
+    render(<InsightsLegalPackage bundleId={bundleId} disabled={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /Choose legal companions/ }));
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/could not|didn't reach the server/i);
+    expect(screen.queryByText(/Private transport failure details/)).toBeNull();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect((screen.getByRole('button', { name: 'Retry legal version search' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(posts()).toHaveLength(0);
   });
   it('reports a current server approval refusal without claiming a saved ZIP', async () => {
     await choose(); apiRequest.mockResolvedValue({ ok: false, json: async () => ({ error: { message: 'Approval withdrawn' } }) });
@@ -93,14 +111,14 @@ it('lets the reader explicitly choose published organization-wide stationery wit
   const variantId = '77777777-7777-4777-8777-777777777777';
   apiRequest.mockImplementation(async (method, url) => method === 'POST' ? zipResponse() : url.includes('/designs?')
     ? { ok: true, json: async () => ({ data: [
-      { id: variantId, name: 'Published company design', publishedRevision: 17, scope: { programId: null, market: null, language: null, subsidiary: null } },
-      { id: 'restricted', name: 'French language design', publishedRevision: 18, scope: { programId: null, market: null, language: 'fr', subsidiary: null } },
+      { id: variantId, name: 'Published company design', state: 'published', publishedRevision: 17, scope: { programId: null, market: null, language: null, subsidiary: null } },
+      { id: 'restricted', name: 'French language design', state: 'published', publishedRevision: 18, scope: { programId: null, market: null, language: 'fr', subsidiary: null } },
     ], nextBefore: null }) } : library());
   fireEvent.click(screen.getByRole('button', { name: /Choose published stationery/ }));
   await screen.findByRole('option', { name: /Published company design/ });
   expect((screen.getByRole('option', { name: /French language design/ }) as HTMLOptionElement).disabled).toBe(true);
-  expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('');
-  fireEvent.change(screen.getByRole('combobox'), { target: { value: variantId } });
+  expect((screen.getByRole('combobox', { name: 'Report stationery' }) as HTMLSelectElement).value).toBe('');
+  fireEvent.change(screen.getByRole('combobox', { name: 'Report stationery' }), { target: { value: variantId } });
   fireEvent.click(screen.getByRole('button', { name: /Download reports and 1/ }));
   await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
   expect(posts()[0][2]).toEqual({ legalDocumentIds: ['legal-one'], variantId });
