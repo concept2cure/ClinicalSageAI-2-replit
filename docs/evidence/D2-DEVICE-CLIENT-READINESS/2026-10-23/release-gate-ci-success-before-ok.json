@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:success-before-ok"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.378,
+  "output": "release-gate-ci-success-before-ok.log.gz",
+  "outputSha256": "868edda81f70fdb076a6143fcd0fe0c17efac6e466889eeef65f2f5f00b1d1be",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}

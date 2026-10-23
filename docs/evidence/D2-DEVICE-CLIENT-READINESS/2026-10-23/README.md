@@ -145,6 +145,24 @@ Historical hash-labelled versions require an explicit migration/replacement
 policy; no predecessor is guessed and no retained version is silently renamed.
 This feature is not counted as complete or passed by this increment.
 
+## Publication qualification
+
+A final clean merge preserved the concurrent project-scoped task-delegation work
+at `ee3089b5a` (merge `19bd19242`). None of the previous frozen functional
+inputs changed. `source-freeze-release.json`, `qualification-release.json` and
+`independent-review-release.json` qualify this latest combined tree:
+**1,040 passed, 0 failed, 1 existing TODO across 47 files**; all **16 selected
+gates passed**, TypeScript **0 errors**, build passed, ESLint **0 errors**, and
+zero source drift. The incoming eight tasking suites join the 39-file run;
+these totals overlap earlier epochs and are not added to them. The native
+multi-connection tasking database test was not run in this environment.
+
+The generated contrast ramp remains current. The added TaskBoard CSS selectors
+do not alter the tested ProjectMarkets states. All eight component renders were
+repeated after the latest successful build. Normal commit/push hooks are used;
+no hook, warning baseline or production gate is bypassed. No app deployment,
+live model request or agency transmission was performed.
+
 ## Human acceptance and remaining qualification
 
 Cases 62–67 in

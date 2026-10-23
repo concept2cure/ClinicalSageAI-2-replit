@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 12.88,
+  "output": "release-build.log.gz",
+  "outputSha256": "76335e57e0eb8e4bde19efd9b5c6f5f3f162ae9eaa7497e964c182dc41761e5a",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}

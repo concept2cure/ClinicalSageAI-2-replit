@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.547,
+  "output": "release-gate-ci-class-vocabulary.log.gz",
+  "outputSha256": "910610a3814d167556272f7ecb7f1157fab211daf159110f31e1631a03333a9c",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": []
+}
