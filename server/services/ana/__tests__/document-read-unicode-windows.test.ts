@@ -31,7 +31,7 @@ vi.mock('../document-tools-shared.js', async original => {
   const gates = (await vaultModule()).gatesMock(await original<Record<string, unknown>>());
   return { ...gates, requireDocumentAccess: async (context: Parameters<typeof gates.requireDocumentAccess>[0], tool: string) => {
     const admitted = await gates.requireDocumentAccess(context, tool);
-    return 'svc' in admitted ? { ...admitted, svc: readService(admitted.svc) } : admitted;
+    return 'svc' in admitted ? { ...admitted, svc: readService(admitted.svc!) } : admitted;
   } };
 });
 vi.mock('../read-receipts.js', async original => {

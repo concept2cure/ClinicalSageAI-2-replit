@@ -1,0 +1,35 @@
+{
+  "scope": "Current selected local-code qualification after erased test-only assertion correction; original qualification.json remains historical at c116cae",
+  "productionFiles": {
+    "server/services/ana/document-catalog-tools.ts": "7b2713e2f101ad86e97e8f26f31c3cbf614f8a9ff8767628300e254edb0e9f25",
+    "server/services/ana/document-catalog-tool-defs.ts": "229febe0bbcb7cc489d536177d3d1fc8d800c6c260b5a9f409507024cca0b1f0"
+  },
+  "selectedInputFiles": 92,
+  "testFiles": 26,
+  "testsPassed": 517,
+  "failed": 0,
+  "skipped": 0,
+  "newTests": 45,
+  "baselineSemanticFailures": 25,
+  "baselinePassingControls": 20,
+  "publicApiPropertyCorpusWindows": 180,
+  "propertyCaseStatus": "passed all180windows",
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "warningGrowth": 0
+  },
+  "normalPush": "Firstpush c116 rejected by one test-wrapper TS2345; corrected retry and whole-project TypeScript pending.",
+  "currentRecordedHashesMatch": true,
+  "originalFrozenAssertionsAndFixturesUnchanged": true,
+  "testTypingCorrection": {
+    "runtimeJavaScriptByteIdentical": true,
+    "source": "test-typing-correction.json",
+    "equivalence": "test-typing-runtime-equivalence.json",
+    "originalFreeze": "frozen-tests.json",
+    "currentFreeze": "frozen-tests-current.json"
+  },
+  "currentCommand": "verified-command.json",
+  "currentResult": "verified.results.json",
+  "currentLint": "lint-verified.json"
+}

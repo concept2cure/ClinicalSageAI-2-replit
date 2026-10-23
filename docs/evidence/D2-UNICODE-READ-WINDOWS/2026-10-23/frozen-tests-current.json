@@ -1,0 +1,40 @@
+{
+  "scope": "Current qualification after one erased test-only assertion correction; original frozen test and baseline failures remain historical at e3fb63771",
+  "baselineHead": "26d85015640a87dc06fda9209f4eef678970c279",
+  "runHead": "332bbbbcefca819dec45206d9fa6f44bed70cb46",
+  "files": {
+    "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts": "af3876cf8321b2267fb69ebd6636b479e61d15ed6b7b563b0f137f9e2285c962",
+    "server/services/ana/__tests__/document-read-unicode-executor.test.ts": "e18899e5e13cf94e8ce7376050ed397992a0681baeec773a4fec0af9af0e317b",
+    "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe",
+    "server/services/ana/__tests__/document-read-unicode-windows.test.ts": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7"
+  },
+  "baselineSelectedInputsUnchanged": 17,
+  "existingRegressionFilesUnchanged": 22,
+  "results": {
+    "tests": 45,
+    "semanticFailures": 25,
+    "passingControls": 20,
+    "skipped": 0,
+    "files": 4
+  },
+  "classification": {
+    "stream-read-unicode-windows.test.ts": {
+      "semanticFailures": 5,
+      "passingControls": 3
+    },
+    "document-read-unicode-executor.test.ts": {
+      "semanticFailures": 6,
+      "passingControls": 2
+    },
+    "document-read-unicode-receipt-writer.test.ts": {
+      "semanticFailures": 3,
+      "passingControls": 6
+    },
+    "document-read-unicode-windows.test.ts": {
+      "semanticFailures": 11,
+      "passingControls": 9
+    }
+  },
+  "propertyCorpus": "180 valid source windows, fully traversed only when the property case passes; baseline stops on its first violation.",
+  "typingCorrection": "root/test-typing-correction.json"
+}

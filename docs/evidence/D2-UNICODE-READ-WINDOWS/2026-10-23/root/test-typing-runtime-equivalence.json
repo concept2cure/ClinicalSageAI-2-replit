@@ -1,0 +1,11 @@
+{
+  "typescript": "5.6.3",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "sourceMap": false
+  },
+  "runtimeJavaScriptByteIdentical": true,
+  "originalJavaScriptSha256": "db801cd38bc450a26dd74b0e03617b6ba8317825b122371f331612c7a1379dd3",
+  "currentJavaScriptSha256": "db801cd38bc450a26dd74b0e03617b6ba8317825b122371f331612c7a1379dd3"
+}
