@@ -1,0 +1,18 @@
+{
+  "before": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "incoming": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "preservedFiles": [
+    "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+    "server/services/authoring/authoring-file-to-vault.ts",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/services/ectd/assemble-from-core.ts",
+    "server/services/ectd/core-to-packager.ts",
+    "server/services/ectd/leaf-source-resolver.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+    "server/services/vault/vault-version-checkin.ts"
+  ],
+  "patchSha256": "3fd3e625ad720e0db7c5c8dad03039bc33f55f7556bd8d9682f306d8ec949eee",
+  "archiveSha256": "5511a8c148b9467f2c34bb275023cc13b6aefaa327e5445df2451ec6d5e9a3bb",
+  "strategy": "Preserve task-owned tracked changes as compressed evidence, restore exactly those paths, fast-forward canonical, reapply preserved patch with three-way context. Untracked task work remains in place."
+}

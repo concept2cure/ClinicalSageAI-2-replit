@@ -183,6 +183,33 @@ describe('canonical ingest admission identity over actual PostgreSQL INSERT / ON
       .toEqual([{ id: first.document.id, deleted_at: null }]);
   });
 
+  it('offers a conflict check-in hint only while the scoped code has one live head', async () => {
+    const args = admissionArgs();
+    const first = await ingestVaultDocument(args);
+    if (!first.ok) throw new Error(JSON.stringify(first));
+    const conflictingBytes = Buffer.from(`%PDF-1.7\nconflicting-${args.documentCode}`);
+    const conflictArgs = { ...args, fileBuffer: conflictingBytes };
+    h.discard.mockClear();
+    expect(await ingestVaultDocument(conflictArgs)).toMatchObject({
+      ok: false, code: 'VERSION_CONTENT_CONFLICT', headDocumentId: first.document.id, headVersion: '1.0',
+    });
+    const otherBytes = Buffer.from(`%PDF-1.7\nindependent-${args.documentCode}`);
+    const other = await ingestVaultDocument({ ...args, version: '9.0', fileBuffer: otherBytes });
+    if (!other.ok) throw new Error(JSON.stringify(other));
+    const ambiguous = await ingestVaultDocument(conflictArgs);
+    expect(ambiguous).toMatchObject({ ok: false, code: 'VERSION_CONTENT_CONFLICT' });
+    expect(ambiguous).not.toHaveProperty('headDocumentId');
+    expect(ambiguous).not.toHaveProperty('headVersion');
+    expect(await q('SELECT id FROM vault.documents WHERE program_id=$1 AND document_code=$2 AND deleted_at IS NULL ORDER BY version',
+      [PROGRAM, args.documentCode])).toEqual([{ id: first.document.id }, { id: other.document.id }]);
+    expect(h.objects.get(`ver-${sha(args.fileBuffer)}`)).toEqual(args.fileBuffer);
+    expect(h.objects.get(`ver-${sha(otherBytes)}`)).toEqual(otherBytes);
+    expect(h.objects.has(`ver-${sha(conflictingBytes)}`)).toBe(false);
+    expect(h.discard.mock.calls.map(call => call[0])).toEqual([
+      `ver-${sha(conflictingBytes)}`, `ver-${sha(conflictingBytes)}`,
+    ]);
+  });
+
   it.each(['COMMIT', 'ROLLBACK'])('retains bytes and reports an unknown ingest outcome after lost %s acknowledgement', async lostReply => {
     const args = admissionArgs();
     h.discard.mockClear();
@@ -326,6 +353,7 @@ async function pdfFacts(bytes: Buffer) {
 }
 
 describe('step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version', () => {
+  let sourceDocId: string;
   let A: Awaited<ReturnType<typeof placeAsCoauthorCopy>>;
   let B: Awaited<ReturnType<typeof placeAsVaultVersion>>;
   let cA: Awaited<ReturnType<typeof compile>>;
@@ -334,6 +362,7 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
   beforeAll(async () => {
     h.engine = 'stand-in';
     const docId = await authoringDocument('Clinical Overview parity', true);
+    sourceDocId = docId;
     A = await placeAsCoauthorCopy(docId);
     B = await placeAsVaultVersion(docId);
     cA = await compile(A.leaf);
@@ -389,11 +418,30 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
     expect(gA.release && gA.transmitClear).toBe(true);
   });
 
-  it('OPEN GAP: a vault leaf carries no authoring lineage into the governance manifest', () => {
+  it('carries the verified filing derivation separately from alias identity', () => {
     expect(cA.staged.lineage).toMatchObject({ available: true, store: 'coauthor_documents', source: { store: 'authoring_documents' } });
-    // vault branch (leaf-source-resolver.ts:722-727) sets no `lineage`. Invert when fixed.
     expect(cB.staged.lineage).toBeUndefined();
+    expect(cB.staged.derivation).toMatchObject({
+      status: 'recorded', programId: PROGRAM, artifactSha256: B.filed.sha256,
+      source: { store: 'authoring_documents', nativeId: sourceDocId, sectionsSha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
+      receipt: { id: expect.any(String), chain: 'linked', seal: expect.stringMatching(/^(valid|no-key)$/) },
+    });
   });
+});
+
+it('keeps a retained draft filing receipt after the editable source changes', async () => {
+  h.engine = 'stand-in';
+  const docId = await authoringDocument('Historical working draft receipt', false);
+  const filed = await placeAsVaultVersion(docId);
+  const before = await compile(filed.leaf);
+  expect(before.staged.derivation).toMatchObject({ status: 'recorded', source: { nativeId: docId } });
+  const editableHashBefore = await computeDocHash(jdb.pool as never, docId, ORG);
+  await q(`UPDATE authoring_sections SET content = content || '<p>Subsequent editable source change.</p>' WHERE doc_id = $1`, [docId]);
+  const after = await compile(filed.leaf);
+  expect(after.staged.derivation).toEqual(before.staged.derivation);
+  expect(await computeDocHash(jdb.pool as never, docId, ORG)).not.toBe(editableHashBefore);
+  expect(after.staged.sha256).toBe(filed.filed.sha256);
+  expect(after.unfinalized).toBeGreaterThan(0);
 });
 
 describe('step 4 safety net: refusals agree, and where they do not', () => {

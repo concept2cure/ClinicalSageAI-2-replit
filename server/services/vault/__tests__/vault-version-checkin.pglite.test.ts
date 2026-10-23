@@ -106,3 +106,44 @@ describe('currentVersionOfCode: the head a new version is offered against (QA-20
     expect(await currentVersionOfCode(q, at('CUR-NONE.pdf'))).toBeNull();
   });
 });
+
+describe('currentVersionOfCode does not guess among live heads', () => {
+  const at = (documentCode: string) => ({ organizationId: ORG, programId: PROGRAM, documentCode });
+
+  it.each([
+    ['legacy roots', 'draft-aaaaaaaa', 'draft-bbbbbbbb'],
+    ['numeric roots', '1.0', '9.0'],
+  ])('omits a hint for two independent %s despite different creation dates', async (name, first, second) => {
+    const code = `AMB-${name}`;
+    const older = await version(code, first, H('9'));
+    const newer = await version(code, second, H('a'));
+    await pg.query(`UPDATE vault.documents SET created_at = CASE WHEN id = $1::uuid
+      THEN '2020-01-01'::timestamptz ELSE '2030-01-01'::timestamptz END WHERE id IN ($1::uuid, $2::uuid)`,
+    [older, newer]);
+    expect(await currentVersionOfCode(q, at(code))).toBeNull();
+  });
+
+  it('omits a hint for a legacy fork with two live successor heads', async () => {
+    const parent = await version('AMB-FORK', '1.0', H('b'));
+    await version('AMB-FORK', '2.0', H('c'), parent);
+    await version('AMB-FORK', '3.0', H('d'), parent);
+    expect(await currentVersionOfCode(q, at('AMB-FORK'))).toBeNull();
+  });
+
+  it('counts only live heads in the exact organization and program', async () => {
+    const head = await version('AMB-SCOPE', '1.0', H('e'));
+    const tombstone = await version('AMB-SCOPE', '9.0', H('f'));
+    await pg.query('UPDATE vault.documents SET deleted_at = now() WHERE id = $1', [tombstone]);
+    await version('AMB-SCOPE', '11.0', H('0'), null, 99);
+    await pg.query(`INSERT INTO vault.documents (program_id, organization_id, document_code, version, content_hash)
+      VALUES ($1, $2, 'AMB-SCOPE', '1.0', $3)`, ['22222222-2222-4222-8222-222222222222', ORG, H('1')]);
+    expect(await currentVersionOfCode(q, at('AMB-SCOPE'))).toEqual({ id: head, version: '1.0' });
+  });
+
+  it('still plans an explicit numeric UUID check-in when a code has independent roots', async () => {
+    const selected = await version('AMB-EXPLICIT', '1.0', H('2'));
+    await version('AMB-EXPLICIT', '9.0', H('3'));
+    expect(await planCheckIn(q, { ...at('AMB-EXPLICIT'), headId: selected, contentHash: H('4') }))
+      .toMatchObject({ ok: true, head: { id: selected }, version: '2.0' });
+  });
+});

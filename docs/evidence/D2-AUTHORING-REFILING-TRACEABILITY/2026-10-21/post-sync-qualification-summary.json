@@ -1,0 +1,109 @@
+{
+  "checks": [
+    {
+      "label": "post-sync-incoming-green",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  6 passed (6)",
+        "Tests  81 passed (81)",
+        "Duration  24.15s (transform 11.92s, setup 259ms, import 21.64s, tests 682ms, environment 496ms)"
+      ]
+    },
+    {
+      "label": "post-sync-typecheck",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-build",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-single-native-canvas",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-canvas-path",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-check-editor-integrity",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-design-system",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-token-cascade",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-token-contrast",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-check-phantom-tokens",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-gateway-bypass",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-sql-interpolation",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-set-order",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-guard-order",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-reachability",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-deploy-path",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-drop-safety",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-migration-prefix-collisions",
+      "exitCode": 0,
+      "testSummary": []
+    },
+    {
+      "label": "post-sync-gate-repo-health",
+      "exitCode": 0,
+      "testSummary": []
+    }
+  ],
+  "inputPins": 100,
+  "original90QualifiedPinsUnchanged": true,
+  "typecheckErrors": 0,
+  "productionBuildPassed": true,
+  "safetyGatesPassed": 16,
+  "noAdditionalHumanAcceptance": true
+}

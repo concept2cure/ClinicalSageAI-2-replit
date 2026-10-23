@@ -1,0 +1,5 @@
+{
+  "source": "docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/run-check.py",
+  "copy": "run-check.py",
+  "reason": "Reuse the previous increment's deterministic evidence capture unchanged; no production code or dependency is involved."
+}
