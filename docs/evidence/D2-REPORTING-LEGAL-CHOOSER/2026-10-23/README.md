@@ -91,6 +91,16 @@ source snapshots. The merged production build exited zero with stable inputs
 106-input selected union, all verified at the merged commit. It is not a full
 dependency closure.
 
+The first normal push attempt at `8b01b1072` was **rejected** by whole TypeScript:
+three errors came from the same `useRef<string>()` declaration. Current React
+types require an initializer and the slot is also cleared to `undefined`.
+`type-refusal-*` retain the actual rejection and unchanged before/after inputs;
+that attempt published no source. The declaration is corrected to
+`useRef<string | undefined>(undefined)`. Independent read-only review confirms
+the same runtime initial/reset value and optional payload behavior, with no
+guard or policy change. Earlier counts remain bound to their original sources;
+post-correction qualification and a fresh normal push are pending.
+
 Normal push gates remain pending. Local mounted checks do not establish
 production deployment or agency acceptance. The separate
 [reader check](reader-check.md) is not run. Separate correspondence form ownership

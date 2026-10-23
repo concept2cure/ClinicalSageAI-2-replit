@@ -33,7 +33,7 @@ function LegalPackageSelection({ bundleId, disabled, owner }: { bundleId: string
   const [selected, setSelected] = useState<string[]>([]), [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const lease = useCompanyLease(owner, `chooser:${visit}`);
-  const generation = useRef(0), selectedIds = useRef<string[]>([]), variantId = useRef<string>();
+  const generation = useRef(0), selectedIds = useRef<string[]>([]), variantId = useRef<string | undefined>(undefined);
   const pending = useRef<object | null>(null), latestDisabled = useRef(disabled);
   latestDisabled.current = disabled;
   const captured = generation.current;
