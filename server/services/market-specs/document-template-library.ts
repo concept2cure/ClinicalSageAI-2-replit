@@ -31,7 +31,7 @@ import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/reg
 import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
 import { PBRER_TEMPLATE } from './pbrer-outline.js';
 import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
-import { GLOBAL_REGISTRY, isDeviceRegistryEntry, getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry, isSharedPlanningRegistryEntry, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
@@ -528,9 +528,9 @@ export interface RegistryDocumentTemplateCoverage {
   reason?: 'existing_blueprint_requires_regional_review' | 'no_dedicated_existing_outline';
 }
 
-/** Every active medicinal/device/IVD type, including gaps; no guessed CTD fallback. */
+/** Existing medicinal/device/IVD and shared planning outlines, including gaps; no guessed CTD fallback. */
 export async function registryDocumentTemplateCoverage(): Promise<RegistryDocumentTemplateCoverage[]> {
-  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e))).map(async (entry) => {
+  return Promise.all(GLOBAL_REGISTRY.filter((e) => e.active && (e.segment === 'pharma_biotech' || isDeviceRegistryEntry(e) || isSharedPlanningRegistryEntry(e))).map(async (entry) => {
     const outline = await getRegistryDocumentTemplate(entry.id);
     // The row names the outline actually served: a filing whose outline is a
     // lifecycle record no longer reports the blueprint it was once read from

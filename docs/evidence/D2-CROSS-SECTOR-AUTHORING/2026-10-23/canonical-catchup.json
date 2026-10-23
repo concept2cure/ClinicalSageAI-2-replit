@@ -1,0 +1,6 @@
+{
+  "from": "b66c6108dc3d7a6f0107fb5fd3ef7ecc9a49ecef",
+  "to": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "strategy": "Clean fast-forward; 1335 changed paths; no instruction, dependency manifest/lock, compiler or Vitest configuration change.",
+  "at": "2026-10-23T17:22:22.798176+00:00"
+}

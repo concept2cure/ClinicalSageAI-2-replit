@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "0ef71516c9efe22960a752a485b89ec208471bbc"
+  ],
+  "exitCode": 0,
+  "head": "b61c1f03b46c1e423ac95984f08055fa5ec3ee2f",
+  "scope": "Only8 separate incoming publication-doc paths; no frozen input overlap.",
+  "rawOutput": "retry-3-merge.log.gz",
+  "rawGzipSha256": "b2c8ee49e78af7cae065cdb86017b59113b5d41ef6617c977111161bcff3b17f"
+}

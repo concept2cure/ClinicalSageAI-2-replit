@@ -1,7 +1,7 @@
 /** Canonical JWT/HTTP and PGlite fixture shared by IND and regional editor template evaluations. */
 import { afterAll, beforeAll, expect, vi } from 'vitest';
 import request from 'supertest';
-import type express from 'express';
+import express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import type { IndAuthoringTemplate } from '../../services/authoring/ind-template-types';
 import { AUTHOR, AUTHORING_ACCESS_DDL, PREREQ, PROGRAM, asToken, makeApp, mint } from './_authoring-canvas-fixture';
@@ -24,7 +24,11 @@ export function templateEditorFixture(migrations: string[]): void {
     h.db = db.db; h.pool = db.pool;
     author = asToken(await mint(AUTHOR));
     const { default: router } = await import('../authoring.router');
-    app = makeApp(router);
+    // Model the deployed request-owned connection; production reads must not
+    // fall back to a shared pool. PGlite remains a single-connection seam.
+    app = express();
+    app.use((req, _res, next) => { Object.assign(req, { dbClient: db.pool }); next(); });
+    app.use(makeApp(router));
   }, 180_000);
   afterAll(async () => { await db?.close(); });
 }

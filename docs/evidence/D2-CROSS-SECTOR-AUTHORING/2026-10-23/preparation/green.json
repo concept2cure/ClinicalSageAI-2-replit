@@ -1,0 +1,36 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+    "server/services/ana/__tests__/document-template-preparation.test.ts",
+    "server/services/ana/__tests__/document-template-description.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-23T17:32:23.408654+00:00",
+  "elapsedSeconds": 16.729,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourcesBefore": {
+    "server/services/market-specs/document-preparation.ts": "4c0bece7828eaf6fbafa135c1e20aac5c4596f06ebf120a7d324d91b2f8cc628",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourcesAfter": {
+    "server/services/market-specs/document-preparation.ts": "4c0bece7828eaf6fbafa135c1e20aac5c4596f06ebf120a7d324d91b2f8cc628",
+    "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+    "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "ac85790012d16b84a4d91606848780b28fc6ba34096e371a24f85c89e74fa2d4",
+  "testSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  65 passed (65)",
+    "Duration  16.18s (transform 7.97s, setup 96ms, import 11.67s, tests 3.85s, environment 0ms)"
+  ]
+}

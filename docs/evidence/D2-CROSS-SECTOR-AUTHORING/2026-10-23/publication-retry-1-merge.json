@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-10-23T18:23:21.450200+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "332bbbbcefca819dec45206d9fa6f44bed70cb46"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.322,
+  "head": "f5f685a87faea1fd5197bfac362249aefec3481f",
+  "rawOutput": "publication-retry-1-merge.log.gz",
+  "rawGzipSha256": "a113c3d96743e993b5c7d46d560a55d5cc12b90268bf9a21db5bc28ae2edac5b",
+  "verifiedInputCount": 140,
+  "hooks": "Normal configured hooks; no force, bypass or amend"
+}

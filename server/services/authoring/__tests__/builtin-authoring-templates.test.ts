@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
+import { GLOBAL_REGISTRY, isDeviceRegistryEntry, isSharedPlanningRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
 import {
   DOCUMENT_TEMPLATES, getRegistryDocumentTemplate, getDocumentTemplate, componentTemplateIdForRegistry,
   type DocumentTemplateStructure,
@@ -12,7 +12,7 @@ import {
   getBuiltinAuthoringTemplate, getBuiltinAuthoringTemplates, type BuiltinAuthoringTemplate,
 } from '../builtin-authoring-templates';
 
-const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry))
+const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry))
   && ['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 let all: BuiltinAuthoringTemplate[];

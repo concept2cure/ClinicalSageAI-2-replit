@@ -1,0 +1,9 @@
+{
+  "frozenAt": "2026-10-23T17:49:49.135483+00:00",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879"
+  },
+  "productionFilesChanged": false,
+  "focusedGreen": "25 tests passed, one suite; exit 0",
+  "strictLint": "zero warnings/errors; exit 0"
+}

@@ -1,0 +1,23 @@
+{
+  "qualifiedAt": "2026-10-23T18:19:52.046701+00:00",
+  "sourceFreeze": "unicode-source-freeze.json",
+  "pinnedInputs": 140,
+  "checks": [
+    {
+      "receipt": "unicode-source-regressions.json",
+      "testSummary": [
+        "Test Files  9 passed (9)",
+        "Tests  105 passed (105)",
+        "Duration  22.68s (transform 5.13s, setup 245ms, import 5.84s, tests 14.65s, environment 1ms)"
+      ],
+      "exitCode": 0
+    },
+    {
+      "receipt": "unicode-build.json",
+      "testSummary": [],
+      "exitCode": 0
+    }
+  ],
+  "prior131Inputs": "Unchanged; prior212tests, zero-errorcompiler/build/18gates remain retained. Finalnormalpushhook recheckscompileragainst combinedsource.",
+  "limits": "Cohorts overlap; no human/provider/nativeDB/agency/deployment qualification. Legacy malformed chunks require the existing reindex path."
+}

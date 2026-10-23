@@ -2,11 +2,12 @@
  * no client files read, no evidence certified, no readiness verdict minted.
  * Discussion markers avoid repeat questions; they are never proof of an answer.
  */
-import { getApplicationType, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
+import { getApplicationType, isDeviceRegistryEntry, isSharedPlanningRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { componentTemplateIdForRegistry, getDocumentTemplate } from './document-template-library';
 import { buildDeviceDocumentPreparation } from './device-document-preparation';
+import { buildSharedPlanningPreparation, SHARED_PLANNING_AUTHORING_GUIDANCE } from './shared-planning-preparation';
 
 export const PREPARATION_MARKETS = ['US', 'EU', 'CA', 'JP'] as const;
 export type PreparationMarket = typeof PREPARATION_MARKETS[number];
@@ -45,7 +46,9 @@ Read current project documents and prior client answers first. Ask one to three 
 EU trials use CTIS Part I/II; Canada CTA is not a full marketing dossier; Japan trial notifications differ from marketing approval. Establish local evidence, language, consent and disclosure requirements, and verify current guidance, adoption/effective dates and technical versions. Dedicated safety-message, dataset and package engines remain necessary.
 For an incomplete draft, write supported portions with clearly marked unresolved facts. Keep preparation questions outside the formal document. Save through draft_authoring_document. An outline, draft, saved file, scientific review, approval and technically validated package are distinct; none alone proves filing readiness.
 
-${DEVICE_AUTHORING_GUIDANCE}`;
+${DEVICE_AUTHORING_GUIDANCE}
+
+${SHARED_PLANNING_AUTHORING_GUIDANCE}`;
 
 /** Section drafting has no conversation channel and may have no tools enabled.
  * Its contract is supported prose plus explicit gaps, not a promised interview. */
@@ -264,8 +267,18 @@ export function resolveDocumentPreparationScope(input: PreparationInput): Docume
   const entry = exactRegistryEntry(input.registryId);
   const market = preparationMarket(entry, input.market);
   const templateId = preparationTemplateId(input);
+  const scope = { entry, market, templateId };
+  sharedPlanningScope(scope, input.family);
   assertRegionalComponentScope(templateId, market);
-  return { entry, market, templateId };
+  return scope;
+}
+
+function sharedPlanningScope(scope: DocumentPreparationScope, family: string | undefined): boolean {
+  if (!scope.entry || !isSharedPlanningRegistryEntry(scope.entry)) return false;
+  if (scope.templateId || family) {
+    throw new Error('The shared planning identity cannot be combined with another component or package family. Use its exact internal document scope.');
+  }
+  return true;
 }
 
 const DEVICE_FAMILIES = ['estar', 'eu_mdr', 'eu_ivdr'];
@@ -278,6 +291,7 @@ export function isDeviceDocumentScope(scope: DocumentPreparationScope): boolean 
 function isMedicinalRegistryEntry(entry: RegulatoryApplicationType): boolean {
   return entry.segment === 'pharma_biotech'
     || (entry.region === 'GLOBAL' && entry.segment === 'cross_cutting'
+      && entry.category !== 'regulatory_intelligence'
       && ['clinical_document', 'dossier_module', 'safety_report', 'quality_cmc'].includes(entry.applicationFamily));
 }
 
@@ -307,6 +321,7 @@ function assertDeviceComponentFiling(scope: DocumentPreparationScope): void {
 }
 
 export function assertPreparationScope(scope: DocumentPreparationScope, family: string | undefined): void {
+  if (sharedPlanningScope(scope, family)) return;
   const template = scope.templateId ? getDocumentTemplate(scope.templateId) : undefined;
   const device = isDeviceDocumentScope(scope);
   const entryDevice = scope.entry && isDeviceDocumentScope({ entry: scope.entry });
@@ -354,6 +369,7 @@ export function buildDocumentPreparation(input: PreparationInput) {
   assertPreparationScope(scope, input.family);
   const { entry, market } = scope;
   const discussedTopics = discussedPreparationTopics(input);
+  if (entry && isSharedPlanningRegistryEntry(entry)) return buildSharedPlanningPreparation(entry, market, discussedTopics);
   if (isDeviceDocumentScope(scope)) return buildDeviceDocumentPreparation(scope, discussedTopics);
   const japaneseMarketingApplication = market === 'JP' && entry?.applicationFamily === 'marketing_authorization';
   const remaining = preparationTopics(scope).filter(t => !discussedTopics.includes(t));
