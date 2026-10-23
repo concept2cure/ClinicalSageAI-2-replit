@@ -30,7 +30,23 @@ present byte-identically in incoming `server/db.ts` and two CI test helpers.
 The authored diff against incoming passes whitespace checking; unrelated incoming
 source is preserved. Raw `.txt` transcripts retain their exact bytes.
 
-Actual normal push, whole-tree TypeScript and fresh remote Git-byte/ancestry
-verification will be recorded below after those operations finish. No force,
-hook bypass, alternate branch, PR, live provider acceptance, deployment or agency
-acceptance is part of this qualification.
+## Successful code publication
+
+Normal direct push of `264560f40a3d984289d5fb3311d0986094735410` succeeded to
+`concept2cure-v2`. Every pre-push gate passed, including the whole-tree TypeScript
+check with **zero errors**. The exact push command, transcript and result are
+retained in `root/resume-code-push*`.
+
+A fresh fetch confirmed local and remote at that commit. Remote Git bytes matched
+all **682 selected inputs**, **97 tests**, **four production files** and **134
+qualification artifacts**. All **44 retained ancestors** were present, tracked
+files were clean and no merge conflicts remained. Historical 96-artifact and
+104-source manifests matched their recorded `a8d76dce...` Git head, including
+original qualification and frozen-test evidence. See
+[remote verification](root/resume-code-verification.json).
+
+The following commit adds publication proof only. Its manifest covers current
+evidence bytes, excluding itself; a final fresh-fetch synchronization check is
+reported in the tool transcript. No force, hook bypass, alternate branch or PR
+was used. Live provider acceptance, deployment and agency acceptance remain
+outside this qualification.
