@@ -513,7 +513,7 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
   // This file
   // qualifies the actual authoring/ingest/leaf services and approval gates.
   it('new numeric refiling links the successor while the old leaf stays pinned and blocked', async () => {
-    h.engine = 'stand-in';
+    h.engine = 'fixture';
     const docId = await authoringDocument('Editable device clinical overview', false);
     const first = await placeAsVaultVersion(docId);
     await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, async () => {
@@ -550,7 +550,7 @@ describe('step 4 safety net: refusals agree, and where they do not', () => {
   }, T);
 
   it('new numeric PDF and Word renditions keep separate version families', async () => {
-    h.engine = 'stand-in';
+    h.engine = 'fixture';
     const docId = await authoringDocument('Separate device renditions', false);
     const pdf = await placeAsVaultVersion(docId);
     const word = await placeAsVaultVersion(docId, 'docx');

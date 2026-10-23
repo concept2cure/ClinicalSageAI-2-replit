@@ -3,27 +3,28 @@
   "workstream": "W1",
   "launchRow": "D2",
   "branch": "concept2cure-v2",
-  "sourceFreeze": "final-source-freeze.json",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
   "regressions": {
-    "report": "final-regressions-tests.json",
-    "files": 23,
-    "passed": 384,
+    "report": "pdf-integrated-regressions-tests.json",
+    "files": 32,
+    "passed": 489,
     "failed": 0,
     "todo": 0
   },
-  "checks": "final-checks.json",
+  "checks": "pdf-integrated-checks.json",
   "staticGates": 16,
   "typecheck": {
-    "report": "final-typecheck.json",
+    "report": "pdf-integrated-typecheck.json",
     "errors": 0,
     "baselineUnchanged": true
   },
-  "build": "final-build.json",
+  "build": "pdf-integrated-build.json",
   "lint": {
     "report": "final-eslint.json",
     "errors": 0,
     "existingWarnings": 23,
-    "warningGrowth": 0
+    "warningGrowth": 0,
+    "integrationDelta": "pdf-integrated-eslint.json"
   },
   "browser": {
     "report": "browser/component-browser-review.json",
@@ -52,5 +53,21 @@
     "buildPassed": true,
     "authoringSourceHashesUnchanged": true,
     "countsAreSeparate": true
+  },
+  "earlierRegressions": {
+    "report": "final-regressions-tests.json",
+    "files": 23,
+    "passed": 384,
+    "failed": 0,
+    "todo": 0
+  },
+  "pdfIntegration": {
+    "mergeHead": "64e668e35",
+    "incomingHead": "121eadf05",
+    "review": "pdf-integration-review.json",
+    "conflictResolution": "Retain version-lineage and legal-registry migrations",
+    "fixtureDelta": "Align two existing refiling cases to canonical converter fixture mode",
+    "firstPushHooksPassed": true,
+    "firstPushRejected": "Concurrent canonical advancement; retained canonical-push.json"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:action-overclaim"
+  ],
+  "startedAt": "2026-10-23T17:55:17Z",
+  "elapsedSeconds": 0.376,
+  "exitCode": 0,
+  "output": "pdf-integrated-ci-action-overclaim.log.gz",
+  "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

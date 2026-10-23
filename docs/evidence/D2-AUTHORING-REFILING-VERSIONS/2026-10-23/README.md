@@ -125,6 +125,29 @@ compiler and production build receipts in `merged-checks.json` against
 `merged-source-freeze.json`. The original 384-test count retains its original
 source freeze and is not relabelled as a repeated merged run.
 
+The first normal push passed every hook, including zero-error compilation,
+but Git rejected the remote compare-and-swap because canonical advanced during
+the hooks (`canonical-push.json` and compressed output). Incoming `121eadf05`
+includes strict formatted Authoring PDF conversion through the existing Word
+converter, which touches this filing path. Merge `64e668e35` retains that work
+and refiling. The only conflict was the approval fixture's migration list;
+both version-lineage and legal-registry migrations are retained. Two added
+parity cases were aligned to the incoming converter fixture's mode names.
+
+`pdf-integrated-regressions-tests.json` repeats the combined filing, approval,
+source, export/recovery and PDF checks: **489 passed, zero failed across 32
+files**. `pdf-integrated-checks.json` pins the repeated static gates, lint,
+build and compiler on `pdf-integrated-source-freeze.json`. These counts overlap
+the earlier 384 tests and are separate from the seven-file AnA regression run.
+`pdf-integration-review.json` retains the backend/UI review and hashes proving
+the three filing render functions are unchanged; the earlier eight-layout
+proof remains a layout observation, with its original whole-file source pin.
+
+The integrated PDF fixture converts the real Word input through an explicit
+test seam; it does not establish native LibreOffice typography or deployment
+availability in this environment. Incoming native converter artifacts retain
+their own source pins and qualification scope.
+
 ## Human handoff and limits
 
 The existing [human testing guide](../../../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md)

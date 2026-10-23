@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:class-vocabulary"
+  ],
+  "startedAt": "2026-10-23T17:55:16Z",
+  "elapsedSeconds": 0.601,
+  "exitCode": 0,
+  "output": "pdf-integrated-ci-class-vocabulary.log.gz",
+  "outputSha256": "b8ddc546d1c5628945b1caf75c8a73c7d1b1cb7339b5f0f6eda3fc0f8d51fbc2",
+  "sourceFreeze": "pdf-integrated-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}
