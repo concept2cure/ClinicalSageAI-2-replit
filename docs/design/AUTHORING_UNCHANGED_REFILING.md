@@ -150,3 +150,23 @@ bodies and unknown outcome aliases. Confirmed presentation belongs to the
 originating current review/visit; bookkeeping for pending/unknown attempts
 survives ordinary close/reopen and source navigation independently of display.
 The confirmation discloses that combined sections file their saved text together.
+
+## Concurrent canonical update
+
+The discovery inventory above records base `0a7abf314`. Before publication,
+upstream `26d850156` was reviewed and merged cleanly at `90facc53e`. Its separate
+Vault rendition-version completion is described in
+`docs/design/AUTHORING_REFILING_VERSIONS_2026-10-23.md`; new supported PDF/Word
+filings use canonical numeric Vault successors, while historical hash-labelled
+families still refuse automatic renumbering. This section-to-filing completion
+neither implements nor replaces that work. The prior parity TODO has been
+replaced upstream with actual versioned-PDF placement proof. A sealed authored
+document's editing revision remains a separate policy.
+
+The concurrent Unicode change preserves surrogate pairs through UTF-8 storage.
+Combined qualification includes its three dedicated suites, Vault version and
+filing/derivation suites, existing PDF/working-copy flows and this completion.
+Of the original 14 boundary pins, 11 remain unchanged: the canonical membership
+extraction is this completion's one approved change, and the filer/version
+check-in files exactly match the incoming update. Renderer, converter, rich
+editor, generic mutation policy and company-original packaging remain unchanged.

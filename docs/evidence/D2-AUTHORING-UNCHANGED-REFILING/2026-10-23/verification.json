@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T18:35:49.141872+00:00",
+  "qualifiedCombinedSourceCommit": "90facc53e10a8047627b54c11583864a8a966cee",
+  "implementationCommit": "848fa68e3",
+  "incomingUpstreamCommit": "26d850156",
+  "workstream": "W1 / D2, existing saved-section to filing repair",
+  "status": "Locally qualified; publication uses mandatory repository push hooks. No production deployment or remote CI observation claimed.",
+  "tests": {
+    "files": 32,
+    "passed": 595,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "selection": "test-files.json",
+    "results": "tests.json",
+    "oneCompletedCombinedRun": true,
+    "earlierCompanyPdfOrWorkerCountsNotAdded": true
+  },
+  "checks": {
+    "productionBuildPassed": true,
+    "buildTranscriptSha256": "746874025e46e7c2da2e9104740dcff181d68cbdac54cf414d049881a36db5ff",
+    "fullTypecheckErrors": 0,
+    "typecheckProcessExit": 0,
+    "typecheckTranscriptSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "changedLintFiles": 13,
+    "lintErrors": 0,
+    "newLintWarnings": 0,
+    "qualifiedSourcePins": 71,
+    "sourcePinsAllMatch": true,
+    "unchangedBoundaryPins": 11,
+    "reviewedBoundaryDifferences": 3,
+    "sectionContentTimestampRevisionsAndAuthorshipPreserved": true,
+    "parentReservationTimestampTouchRetained": true,
+    "canonicalWholeCurrentReadBeforePrivateProvenance": true,
+    "currentEmailAndRoleRechecked": true,
+    "qmsAndSourceReservationsPreserved": true,
+    "canonicalAssemblyAndApprovalWithdrawalPreserved": true,
+    "unknownCommitAndRollbackHoldAgainstReplay": true,
+    "ordinarySaveAndRendererUnchanged": true,
+    "independentReviewNoRemainingSourceBlocker": true
+  },
+  "qualificationNotes": [
+    "The original foreground compiler command session ended without a completion result; a non-sessioned background attempt also did not complete. Neither is counted as a passing check. The canonical CLI was completed in a separate process session with an explicit exit record; no source correction was required."
+  ],
+  "publication": {
+    "canonicalBranch": "concept2cure-v2",
+    "mandatoryPushHooksRequired": true,
+    "forcedPushAllowed": false
+  },
+  "limits": [
+    "HTTP/SQL proof uses PGlite; no multiple-connection native PostgreSQL concurrency claim.",
+    "UI proof uses mounted real editor/shared confirmation over synthetic transport; no live browser re-filing claim.",
+    "Unknown outcomes remain held within the mounted host; no new reconciliation engine or persistent cross-reload idempotency protocol.",
+    "No provider call, production deployment, remote CI result or agency acceptance claimed."
+  ]
+}

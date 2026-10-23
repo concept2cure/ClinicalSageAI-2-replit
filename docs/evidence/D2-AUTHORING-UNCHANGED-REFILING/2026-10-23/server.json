@@ -1,0 +1,95 @@
+{
+  "files": [
+    {
+      "path": "server/services/authoring/authoring-refile-saved-section.ts",
+      "sha256": "6bd7bb6596cc66d3bc8f021c884aa5595357f819885097189d33e9176655fbe4"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "sha256": "0253a253dedc446fdd695e13cb0842fb50b6d056abbf8321a4270d324f23cd0c"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "2546cb75045df016318d39135169506cf32044b177b58763f71ed12c59caccbc"
+    },
+    {
+      "path": "server/services/c2c/filing-section-target.ts",
+      "sha256": "77a86e725ab70fbdd10270f814aacc374efaef1b16ca3afa3742acaa41288d9e"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+      "sha256": "c69d8871a8428cede80813c4fa018eb43c1df6a28febb8ba6f3a05bd2eb7adf3"
+    },
+    {
+      "path": "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+      "sha256": "19d706ffeaf75ffa80efcccd5c34ff56b333bd02f8b388c62d7ecdd6aa972910"
+    }
+  ],
+  "green": {
+    "report": "server-qualified.json",
+    "transcript": "server-qualified.txt",
+    "passed": 182,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      {
+        "path": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+        "passed": 93
+      },
+      {
+        "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+        "passed": 28
+      },
+      {
+        "path": "server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts",
+        "passed": 7
+      },
+      {
+        "path": "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+        "passed": 18
+      },
+      {
+        "path": "server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts",
+        "passed": 36
+      }
+    ]
+  },
+  "functionalRed": {
+    "server-red.json": {
+      "passed": 0,
+      "failed": 1,
+      "method": "Mounted old PATCH without filing-only implementation"
+    },
+    "server-admission-red.json": {
+      "passed": 0,
+      "failed": 2,
+      "method": "Mounted HTTP functional regression against the retained pre-hardening helper/gate omission, immediately restored"
+    },
+    "server-current-identity-red.json": {
+      "passed": 0,
+      "failed": 1,
+      "method": "Mounted HTTP functional regression against the retained pre-hardening helper/gate omission, immediately restored"
+    }
+  },
+  "lint": {
+    "transcript": "server-lint-final.txt",
+    "errors": 0,
+    "warnings": 25,
+    "newHelperWarnings": 0
+  },
+  "fixtureCorrections": [
+    "Applied existing provenance, controlled-QMS, CSR and review migrations plus honest canonical project/member prerequisites.",
+    "Assembled fixture creates its subsection code through canonical create/save rather than reclassifying a saved bound code (existing409 is retained).",
+    "Creator has both OWNER and AUTHOR grants; the section-only fixture revokes OWNER and scopes AUTHOR.",
+    "Current canonical read masks revoked object access as404 AUTHORING_DOCUMENT_NOT_FOUND.",
+    "Existing node-status refusal-copy expectation now names Re-file saved text."
+  ],
+  "limits": [
+    "PGlite native SQL fixtures plus HTTP requests; acknowledgment-loss seams wrap actual COMMIT/ROLLBACK, not multiple PostgreSQL connections.",
+    "No Git, full TypeScript, build or global ratchet performed by this worker. Parent owns combined release gates."
+  ]
+}

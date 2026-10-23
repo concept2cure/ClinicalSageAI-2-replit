@@ -1,0 +1,73 @@
+{
+  "scope": "Functional failures and intentional gate-omission verification; filtered-out cases are not final skipped cases or additional passes.",
+  "runs": [
+    {
+      "report": "client-red.json",
+      "sha256": "ab2a3abd065a219f3ee546b8c875985b1b408665b35588f3f0ebebc0e5ca561d",
+      "passed": 4,
+      "failed": 1,
+      "excludedBySelectionFilter": 0,
+      "method": "Original mounted Workbench lacks the deliberate unchanged-text action; ordinary saves still pass.",
+      "failedCases": [
+        "deliberately re-filing unchanged saved text offers a deliberate filing action without making an arbitrary edit or ordinary save"
+      ]
+    },
+    {
+      "report": "client-boundary-red.json",
+      "sha256": "d7b6b0cbeac6a9b255c7d8d8b8f76327c88dc679eaa52e09049951ed6fd9e263",
+      "passed": 10,
+      "failed": 2,
+      "excludedBySelectionFilter": 0,
+      "method": "Review regressions for a bare-module ancestor receipt and a retired-visit success claim, before correction.",
+      "failedCases": [
+        "saved-section receipt agrees with canonical filing identity rejects bare module ancestor",
+        "unchanged filing retains one attempt and its exact reviewed owner does not show an old success when A is revisited before its reply"
+      ]
+    },
+    {
+      "report": "client-array-red.json",
+      "sha256": "7a52937a90cbfa73c203c35a8d58e471f5070d103489a4c279567a7fd966660c",
+      "passed": 0,
+      "failed": 1,
+      "excludedBySelectionFilter": 25,
+      "method": "Review regression for a contradictory positive result nested in an array, before bounded traversal correction.",
+      "failedCases": [
+        "uncertain or contradictory filing replies never permit blind replay holds 'nested result array' across close/reopen and A \u2192 B \u2192 A"
+      ]
+    },
+    {
+      "report": "server-red.json",
+      "sha256": "909977ec6487dab2e5953bb52a4b10135ce8f69f927e2bb8fcf2d3b6be006082",
+      "passed": 0,
+      "failed": 1,
+      "excludedBySelectionFilter": 54,
+      "method": "Original mounted section PATCH returns ordinary metadata success without repairing the filing.",
+      "failedCases": [
+        "a freeze refuses a document whose filed copy is not its text re-files unchanged saved text without an Authoring content revision"
+      ]
+    },
+    {
+      "report": "server-admission-red.json",
+      "sha256": "88758d188547a51471fdf11ac35c08544a48512cc083c4a09d246195c69a830c",
+      "passed": 0,
+      "failed": 2,
+      "excludedBySelectionFilter": 88,
+      "method": "Gate verification against retained pre-hardening helper with only full-view/QMS checks omitted; current helper immediately restored.",
+      "failedCases": [
+        "deliberate unchanged filing retains current locked governance requires full-document view even when the selected section remains editable",
+        "deliberate unchanged filing retains current locked governance rechecks current QMS control inside the filing transaction"
+      ]
+    },
+    {
+      "report": "server-current-identity-red.json",
+      "sha256": "be7328c5b139987fa94901f6343dde9450863395f528a03a060fc3b41188051b",
+      "passed": 0,
+      "failed": 1,
+      "excludedBySelectionFilter": 92,
+      "method": "Gate verification against retained pre-hardening helper using stale session email; canonical current-read helper immediately restored.",
+      "failedCases": [
+        "deliberate unchanged filing rechecks current write access uses the current account email when a stale JWT still matches an old email-only document grant"
+      ]
+    }
+  ]
+}
