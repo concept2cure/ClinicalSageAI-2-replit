@@ -81,3 +81,10 @@ this context recovery. The dated [contract amendment](CONTRACT.md#integration-am
 documents the superseded stop-carrier assertion and retained original bytes.
 Historical 970-test results qualify the pre-merge implementation only; fresh
 merged-tree results and publication checks are recorded separately.
+
+Fresh merged-tree qualification passed **1,183 tests / 97 suites**, with zero
+failures or skips. Included lint across all ten changed TypeScript files has
+zero errors and the same 80 existing warnings (zero growth). All 682 selected
+source/test/config inputs are pinned; this selection is not an exhaustive
+dependency graph. See [merged qualification](root/resume-qualification.json)
+and [publication](PUBLICATION.md) for normal push and remote verification.
