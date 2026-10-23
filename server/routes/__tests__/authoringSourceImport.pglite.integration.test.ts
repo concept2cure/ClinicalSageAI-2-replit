@@ -8,12 +8,13 @@ import { SignJWT } from 'jose';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, ImageRun } from 'docx';
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
-import type express from 'express';
+import express from 'express';
 import type { Pool } from 'pg';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { PREREQ, VAULT_DDL, AUTHOR, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, JWT_SECRET, makeApp, asToken } from './_authoring-canvas-fixture';
 import type { DocumentProvenance } from '../../services/authoring/authoring-from-draft';
 import type { CreateContext } from '../../services/authoring/authoring-documents';
+import { registerSourceImportRecoveryCases, sourceFaultPool } from './_source-import-recovery-qualification';
 
 type CountRow = { n: number };
 type ProvenanceRow = { provenance: DocumentProvenance };
@@ -33,6 +34,7 @@ let author: (r: request.Test) => request.Test;
 let viewer: (r: request.Test) => request.Test;
 let bytes: Buffer;
 let sha256: string;
+const importFault = { mode: 'none', committed: false, statements: [] as string[], release: vi.fn() };
 
 beforeAll(async () => {
   db = await createJourneyDb({ prereqSql: PREREQ + VAULT_DDL, migrations: [
@@ -58,6 +60,7 @@ beforeAll(async () => {
   ], testOnlySql: `
     ALTER TABLE users ADD COLUMN status text NOT NULL DEFAULT 'active';
     ALTER TABLE organizations ADD COLUMN status text NOT NULL DEFAULT 'active';
+    ALTER TABLE projects ADD COLUMN status text NOT NULL DEFAULT 'planning';
     ALTER TABLE projects ADD COLUMN client_workspace_id integer;
     ALTER TABLE projects ADD COLUMN owner_id integer;
     ALTER TABLE projects ADD COLUMN created_by_id integer;
@@ -75,12 +78,21 @@ beforeAll(async () => {
       source_type text, title text, checksum text, provenance jsonb, metadata jsonb, is_current boolean,
       deleted_at timestamptz, previous_version_id integer);
   ` });
-  h.db = db.db; h.pool = db.pool;
+  h.db = db.db; h.pool = sourceFaultPool(() => db, importFault);
   const token = (role: string) => new SignJWT({ userId: AUTHOR.id, email: AUTHOR.email, organizationId: ORG, role })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(JWT_SECRET));
   author = asToken(await token('member')); viewer = asToken(await token('viewer'));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  const requestRouter = express.Router();
+  // Supply the existing request-client contract against this test's PGlite
+  // connection. Production's tenant middleware owns this binding and RLS.
+  requestRouter.use((req, _res, next) => {
+    Object.assign(req, { dbClient: { query: (sql: string, values?: unknown[]) =>
+      (h.pool as { query: (text: string, params?: unknown[]) => Promise<unknown> }).query(sql, values) } });
+    next();
+  });
+  requestRouter.use(router);
+  app = makeApp(requestRouter);
   bytes = await Packer.toBuffer(new Document({ sections: [{ children: [
     new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun('3.2.S.4.1 Specification')] }),
     new Table({ rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('Assay')] }), new TableCell({ children: [new Paragraph('99.2 %')] })] })] }),
@@ -466,4 +478,7 @@ describe('intake keeps the exact currently eligible Vault version', () => {
     expect(await importEvidenceCounts()).toEqual(before);
     expect(await fs.readFile(source.filePath)).toEqual(source.sourceBytes);
   });
+
+  registerSourceImportRecoveryCases({ current: () => ({ db, app, author }), versionedSource, fault: importFault });
+
 });

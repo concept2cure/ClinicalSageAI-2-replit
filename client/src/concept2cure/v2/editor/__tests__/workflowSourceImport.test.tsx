@@ -11,6 +11,9 @@ import { readWorkflowImportResult, readWorkflowPreview } from '../../authoringHa
 import { clearEditorTarget, peekEditorTarget } from '../../editorTarget';
 import type { AuthoringSourceImportPreviewData, WorkflowImportSource } from '@shared/authoring/source-import';
 import { GOVERNED_REASON_MAX } from '@shared/constants/governed-reason';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
+import { clearShellProject, publishShellProject } from '../../shellProject';
 const PID = '11111111-1111-4111-8111-111111111111';
 const source: WorkflowImportSource = { kind: 'csr', jobId: 14, sectionNumbers: ['11'] };
 const hash = 'ab'.repeat(32);
@@ -21,15 +24,23 @@ const preview: AuthoringSourceImportPreviewData = { preview: true, fingerprint: 
     sectionOrigins: [{ code: 'CSR_11', sourceRowId: '31', contentSha256: hash, originalAuthorship: 'machine', model: null, modelEvidence: 'unrecorded' }] },
   sections: [{ code: 'CSR_11', title: 'Efficacy', contentSha256: hash }], gaps: ['Section 12 was not stored.'], warnings: [],
   target: { programId: PID, projectId: 2 }, association: { mode: 'explicit', required: true, reasonRequired: true, sourceProgramId: null, sourceProjectId: null, targetProgramId: PID } };
-const created = { doc: { id: '22222222-2222-4222-8222-222222222222', title: 'CSR working copy', client_program_id: PID },
-  sections: [{ id: 'section-11', code: 'CSR_11', title: 'Efficacy' }], origin: preview.origin, warnings: [], reused: false };
+const DOC = '22222222-2222-4222-8222-222222222222';
+const created = { doc: { id: DOC, title: 'CSR working copy', client_program_id: PID, tenant_id: 12, created_by: 7, status: 'DRAFT',
+    provenance: { source: 'import', importSource: { ...preview.origin, reason: 'Review saved clinical output', warnings: [] } } },
+  sections: [{ id: '33333333-3333-4333-8333-333333333333', doc_id: DOC, tenant_id: 12, code: 'CSR_11', title: 'Efficacy', content: 'Recorded efficacy', order_index: 0 }],
+  origin: preview.origin, warnings: [], reused: false };
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data }) });
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
 function reason() { fireEvent.change(screen.getByLabelText('Reason for creating a working copy'), { target: { value: 'Review saved clinical output' } }); }
 function associate() { fireEvent.change(screen.getByLabelText('Reason for associating this source with the target project'), { target: { value: 'This study belongs to our selected program' } }); }
 function dialog(props = {}) { return <SourceImportDialog programId={PID} source={source} title="CSR" onClose={() => {}} {...props} />; }
-beforeEach(() => { apiRequest.mockReset(); });
-afterEach(() => { cleanup(); clearEditorTarget(); });
+beforeEach(() => {
+  authService.endSession(null); clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`,
+    { id: '7', organizationId: '12', roles: ['admin'], permissions: ['governed:write'] }, 'fixture-refresh', 3600);
+  publishShellProject({ id: PID }); apiRequest.mockReset();
+});
+afterEach(() => { cleanup(); clearEditorTarget(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('stored workflow intake', () => {
   it('previews an exact saved IVD document and opens only the confirmed Authoring document id', async () => {
@@ -37,7 +48,8 @@ describe('stored workflow intake', () => {
     const origin={...preview.origin,kind:'ivd-document' as const,id:savedSource.documentId,selection:savedSource,conversion:'ivd-document-snapshot' as const,
       sectionOrigins:[{code:'ivd.document',sourceRowId:`ivd_generated_documents:${savedSource.documentId}`,contentSha256:hash,originalAuthorship:'unknown' as const,model:null,modelEvidence:'unrecorded' as const}]};
     const sourcePreview={...preview,origin,sections:[{code:'ivd.document',title:'Saved notice payload',contentSha256:hash}]};
-    const copy={...created,origin,sections:[{id:'real-authoring-section',code:'ivd.document',title:'Saved notice payload'}]};
+    const copy={...created,origin,doc:{...created.doc,provenance:{source:'import',importSource:{...origin,reason:'Review saved clinical output',warnings:[]}}},
+      sections:[{...created.sections[0],code:'ivd.document',title:'Saved notice payload'}]};
     apiRequest.mockResolvedValueOnce(ok(sourcePreview)).mockResolvedValueOnce(ok(copy));
     const onOpenDocument=vi.fn();render(dialog({source:savedSource,title:'Saved notice',onOpenDocument}));
     await screen.findByTestId('workflow-import-preview');reason();associate();fireEvent.click(screen.getByRole('button',{name:'Create working copy'}));
@@ -72,7 +84,9 @@ describe('stored workflow intake', () => {
     await act(async () => { pending.resolve(ok({ ...created, origin: { ...created.origin, fingerprint: 'cd'.repeat(32) } })); await pending.promise; });
     expect(screen.queryByRole('button', { name: 'Open working copy' })).toBeNull();
     expect(screen.getByRole('alert')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Reload source preview' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check working documents' })).toBeTruthy();
+    const reload = screen.queryByRole('button', { name: 'Reload source preview' });
+    if (reload) expect((reload as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('invalidates an old preview when a different CSR selection is requested', async () => {
