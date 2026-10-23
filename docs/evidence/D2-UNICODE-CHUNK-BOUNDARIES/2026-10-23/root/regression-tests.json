@@ -1,0 +1,27 @@
+{
+  "scope": "22 selected existing regression suites; not the whole repository suite",
+  "files": {
+    "server/services/vault/__tests__/document-chunking.service.test.ts": "3cca57a1b00a89089dd7dce54f306eb09569b42bf7204fef3b54fc32b392476c",
+    "server/services/vault/__tests__/document-chunking.tenancy.test.ts": "14a33ee3325c8017cd1fd7e153830152c10fd5f22037541f123b4edcac133523",
+    "server/services/vault/__tests__/document-chunking-backfill.service.test.ts": "43f0fe3d9cf45334adfc7c801924c27adc3b582c7ffba74ca719ef0098da1e94",
+    "server/services/ocr/__tests__/page-offsets.test.ts": "ec0d969fa4620d5488c345c441389feb7176faea8bd6cdc0419b9252a0b58369",
+    "server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts": "8138098b891d14884ee27f37f85067b11f00e5bab36e3839e1a4be4c32dc8aa7",
+    "server/services/vault/__tests__/passage-context-span.test.ts": "2af83c90cc7b3c3f0591ba48d3751f3f55e7268d5791ddd2290b0c76ba591643",
+    "server/services/vault/__tests__/passage-context-span-nested.test.ts": "32d2c58064ce97bd412a65eab4d34a8f95e7b026b2dea4cd260825d546782ace",
+    "server/services/__tests__/rag-context-expansion-span.test.ts": "b1dd53009605995aa7d4f320ce80925cb038c069451c6aef3c285e86d1077461",
+    "server/services/__tests__/rag-vault-span.pglite.integration.test.ts": "94987ecc12e78d29ece45a22be7b76bd241457f94e1599e3a34c12b34c022eb5",
+    "server/services/__tests__/rag-context-expansion.test.ts": "c4915be3f43a120fac3b63b3f81d71f02b0c4f88f54ca88ffb11fd9313f4e21f",
+    "server/services/vault/__tests__/document-passage-search-context.test.ts": "483784665c5b8e0791d3d6d2a4f22a6682174e6b824a11f4db54f2d045fd7fd7",
+    "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts": "8bc46364e4b49322d4bc3a5911a776bf0a4a2a9f3b4ea8513e9008dba549a2b6",
+    "server/services/vault/__tests__/retrieval-actor-filter.test.ts": "6f8e10809fea653db4ee20b978c67191771b40bce3355a30427241808530de5b",
+    "server/services/ana/__tests__/document-passage-tools.test.ts": "6decf98134e4c7aee161ab3c87a4826620dc14cd75ff4ce7152108a176cce597",
+    "server/services/ana/__tests__/document-passage-tools-budget.test.ts": "a7212ef3dbad3803b506bc93f143b363111fd69cada455d968e58f9240c15076",
+    "server/services/ana/__tests__/document-passage-result-references.test.ts": "ce0e392385c17eb328bccbf1c433afeb2fbdaaf41c11c26f9107f00e4604a836",
+    "server/services/ana/__tests__/draft-source-identity.test.ts": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854",
+    "server/services/ana/__tests__/draft-source-window.test.ts": "21c11c174af99311e570f9b16963d60fa81ec172573b00711d144619094278cf",
+    "server/services/ana/__tests__/draft-source-window-japanese.test.ts": "4d1a1b29780c56fe7899a7202e419695a5944bc5cf6babdb0f8a7f2c1454a2c2",
+    "server/services/ana/__tests__/draft-project-sources.test.ts": "038050c181347aa4cef241eb7f0f569e900d3ea3714391f03409730189c550c6",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": "6683ecea3bc34d4e769e8fac77a1a866ffda1fea376e86a13c4f262a52fa4b3d",
+    "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c"
+  }
+}
