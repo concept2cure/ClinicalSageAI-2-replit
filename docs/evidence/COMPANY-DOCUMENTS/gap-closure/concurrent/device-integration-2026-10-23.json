@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:50:35.304794+00:00",
+  "sourceCommit": "20f646d4ff3b8bad73fb3e8b20b38f5cf5d728ab",
+  "upstream": "d8082acfaddf2ff8a93c4be4de55ef45eacd84f7",
+  "whatAlreadyExists": [
+    "Canonical project intake and add-market transactions still bind organization, program, submission and actual sequence IDs.",
+    "Existing company settings and submission companion entry points are unchanged; company memberships and declarations inside shared CSS text-ramp groups are unchanged.",
+    "Existing domain product classification and device preparation admission are refined without claiming unsupported sequence/package/transmission paths."
+  ],
+  "checks": {
+    "runs": [
+      {
+        "report": "race-device-backend-oct23.json",
+        "files": 4,
+        "passed": 175,
+        "sha256": "d5dae4e83e50e0e8da6afa874ae8ee040557a848d12a8d32e503c0076c191607"
+      },
+      {
+        "report": "race-device-ui-oct23.json",
+        "files": 3,
+        "passed": 60,
+        "sha256": "f25cc76d95c7b49c4046a2ddd9cd104104ac36c7365e3f9e66da61fb3f31ab2e"
+      }
+    ],
+    "uniqueFiles": 7,
+    "uniqueCaseResults": {
+      "passed": 235
+    },
+    "companySourcePinsUnchanged": 298,
+    "combinedBuildPassed": true,
+    "buildTranscriptSha256": "29a6a002c1aaf46156cd7e3884dd8b50c266f510b7d78b56b53fbdca2a87df36",
+    "companyCountsNotInflated": true
+  },
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx",
+      "sha256": "acbd753a94f1fb51fc2fec36b50e354f1184a1e98d103a0121433e1af7dad198"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+      "sha256": "1902a44afd029bf03b2134ccf278de55e37885dbb7d1b002b05a443e4380199d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+      "sha256": "a3fcd9b4277fc9dc611c05429e768fc987c03e8508c6b72e9a65a3b0112be0ba"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+      "sha256": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "sha256": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+      "sha256": "bf721715007ca12a9fbd0b3e3c5b78dad99d496c57c842dbcf79f448af960396"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+      "sha256": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-intake-class.test.ts",
+      "sha256": "151fb6b77a46c71259a5d08ecf382075c55613593af0a6a89a11c8ed8c6d2190"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create-eu-device-classes.test.ts",
+      "sha256": "37977deea9bd23572c03025cdb5cc751e1bb511a214531dcc043081bcdcb6d05"
+    },
+    {
+      "path": "server/routes/c2c/project-intake.ts",
+      "sha256": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364"
+    },
+    {
+      "path": "server/services/ana/tool-authorization.register.json",
+      "sha256": "7da272972a2c1e26ee3730e54f1114ab259449234efe150dd06f730d0df7b54e"
+    },
+    {
+      "path": "server/services/c2c/__tests__/add-project-market.pglite.test.ts",
+      "sha256": "400a41b6ae659ba767d29457614a0ebe80da67e310946c05f465a06f2e2db228"
+    },
+    {
+      "path": "server/services/c2c/add-project-market.ts",
+      "sha256": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49"
+    },
+    {
+      "path": "shared/constants/domain/__tests__/product-types.test.ts",
+      "sha256": "d6795dcbff29fcf9a78527adf732f7c9a8affb932e607f30df56715779196c95"
+    },
+    {
+      "path": "shared/constants/domain/product-types.ts",
+      "sha256": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b"
+    }
+  ],
+  "limits": [
+    "Project-record identity/admission and component behavior use the selected actual SQL/component test fixtures.",
+    "Fresh full-app browser evidence is recorded separately.",
+    "Mandatory full push checks must pass before publication."
+  ]
+}

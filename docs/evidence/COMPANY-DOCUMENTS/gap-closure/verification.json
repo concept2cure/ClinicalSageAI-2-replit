@@ -23,7 +23,7 @@
     "newEslintWarnings": 0,
     "prepushTranscriptSha256": "2302107697e6cb54b5108a903af04106e73673716d53aaa88aabd9fc3d3168a7",
     "buildTranscriptSha256": "f8fe9e462c070f7e28f5d50748aaec187391c1d54235c38b5d17623acdaab260",
-    "liveBrowser": "browser/2026-10-23-updated/README.md",
+    "liveBrowser": "browser/2026-10-23-final-updated/README.md",
     "realHistoricalWordAndPdf": "correspondence/2026-10-23-updated/verification.json",
     "database": "database/verification-2026-10-23.json",
     "environment": "environment/verification-2026-10-21.json",
@@ -84,5 +84,17 @@
     "failed": 0,
     "companySourcePinsUnchanged": 298,
     "combinedBuildPassed": true
+  },
+  "postDeviceIntegration": {
+    "evidence": "concurrent/device-integration-2026-10-23.json",
+    "sourceCommit": "20f646d4ff3b8bad73fb3e8b20b38f5cf5d728ab",
+    "upstream": "d8082acfaddf2ff8a93c4be4de55ef45eacd84f7",
+    "focusedPassed": 235,
+    "focusedFiles": 7,
+    "failed": 0,
+    "companySourcePinsUnchanged": 298,
+    "combinedBuildPassed": true,
+    "actualFinalBrowser": "browser/2026-10-23-final-updated/README.md",
+    "profileRevisionUnchanged": 2
   }
 }

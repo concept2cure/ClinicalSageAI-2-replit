@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:49:09.446411+00:00",
+  "purpose": "Read-only focused integration qualification for five device-client commits arriving during final publication. These results are separate from the company-document and other concurrent qualified test totals.",
+  "upstreamRange": {
+    "from": "ee3089b5afa5ecb10fa6192fd56e023875573fd6",
+    "to": "d8082acfaddf2ff8a93c4be4de55ef45eacd84f7"
+  },
+  "checkedOutCommit": "20f646d4ff3b8bad73fb3e8b20b38f5cf5d728ab",
+  "whatAlreadyExists": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+      "responsibility": "Canonical project-scoped readiness reads and action links. Regional preparation-only classes now use the existing not-sequenced state and cannot claim a dispatch verdict."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "responsibility": "Existing Project home lifecycle stages and per-market facts. Loading/error/staleproject admission is retained; family and exactfiling type distinguish document preparation from supported filing paths."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+      "responsibility": "Existing market listing/addition and shared authored/not-sequenced explanation. Device families cannot add medicinal eCTD markets; supported existing submissions still list while exact regional preparation classes state their preparation limit."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+      "responsibility": "Existing registry-based project wizard. Supported product subtype refinement is retained in review/create, and filing changes retire hidden prior classification."
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "responsibility": "Existing admitted sequence workspace mounts CompanySubmissionDocuments only with a submission and successfully read leaves; this reachability is unchanged by this incoming diff."
+    }
+  ],
+  "verification": {
+    "command": "vitest run [three exact paths below] --maxWorkers=1 --reporter=verbose --reporter=json",
+    "nodeMajor": 22,
+    "suiteFiles": 3,
+    "passed": 60,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "files": [
+      {
+        "file": "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx",
+        "passed": 10,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+        "passed": 17,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+        "passed": 33,
+        "failed": 0,
+        "pending": 0
+      }
+    ],
+    "runnerJsonSha256": "f25cc76d95c7b49c4046a2ddd9cd104104ac36c7365e3f9e66da61fb3f31ab2e",
+    "runnerLogSha256": "5086bc4bdfaf8aaf419bce963cd4e252c8ca08f0503f35bb67eef41687958a66"
+  },
+  "crossIntegration": {
+    "companySourcePinsInManifest": 298,
+    "incomingPathsIntersectingCompanySourcePins": [],
+    "companySelectorsInSharedTextRampUnchanged": true,
+    "companyDeclarationBodiesInSharedTextRampUnchanged": true,
+    "companyContainingCssDeclarationGroupsCompared": 6,
+    "companySettingsAndSubmissionMountPathsUnchanged": [
+      "client/src/concept2cure/v2/surfaces/AdminAccess.tsx",
+      "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "client/src/concept2cure/v2/CompanyDocumentsAccountSection.tsx",
+      "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx"
+    ],
+    "review": [
+      "Admin Settings and Account still reach the same company identity/logo/letterhead/legal settings. Incoming device changes do not modify those entry points.",
+      "Company submission companions remain mounted from the admitted sequence workspace with the same submission and leaves-read guards. Supported medicinal market paths and recorded device submissions retain their existing navigation.",
+      "Exact preparation-only regional device applications remain authored projects with an explicit refusal to create sequences/package/transmit; company assets do not imply a newly supported regulatory gateway.",
+      "Shared text-ramp regeneration adds skill and Vault staging selectors. The six declaration groups containing company selectors retain identical company selector membership and declaration bodies."
+    ],
+    "productionEditsByThisReview": false
+  },
+  "qualificationLimits": [
+    "The three existing UI suites use their existing mocked request/component harnesses. This is not a fresh live browser or agency transmission qualification.",
+    "Backend projectintake/addmarket/producttype checks, fullbuild/typecheck, finalsourcepins and normalpushhooks are owned by the controller and backend agent.",
+    "No production files, tests, dependencies or companysourcepins were edited by this review."
+  ],
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/CompanyDocumentsAccountSection.tsx",
+      "sha256": "7065d713750dda801997cc26682847dbc3fc9260d3d482d31d42d122b5cdf3d8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx",
+      "sha256": "acbd753a94f1fb51fc2fec36b50e354f1184a1e98d103a0121433e1af7dad198"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx",
+      "sha256": "1902a44afd029bf03b2134ccf278de55e37885dbb7d1b002b05a443e4380199d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+      "sha256": "a3fcd9b4277fc9dc611c05429e768fc987c03e8508c6b72e9a65a3b0112be0ba"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminAccess.tsx",
+      "sha256": "bc8ac17e251b4a837387a5d03cdad251691138d0be215f1b13ccd1a69241ce77"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "sha256": "b3b650b7f511ba84826131937d5f37de41233377a14aac131128c0969cf55d4d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+      "sha256": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "sha256": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+      "sha256": "bf721715007ca12a9fbd0b3e3c5b78dad99d496c57c842dbcf79f448af960396"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+      "sha256": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "sha256": "ec56e7281ab93cd0edf6edd6e9b5890dbae7d73e8fe2bc0f6b3e52a96c1bef88"
+    }
+  ]
+}
