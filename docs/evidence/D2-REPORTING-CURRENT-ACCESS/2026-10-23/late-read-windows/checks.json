@@ -1,0 +1,116 @@
+{
+  "recordedAt": "2026-10-23T18:40:50.467767+00:00",
+  "incomingCanonical": "3b16fc98c",
+  "mergedHead": "005045533ba0650c2211d94c1d33477e0d53978f",
+  "sourceDelta": {
+    "from": "56a076306",
+    "to": "3b16fc98c",
+    "runtimeFiles": [
+      "server/services/ana/document-catalog-tool-defs.ts",
+      "server/services/ana/document-catalog-tools.ts"
+    ],
+    "changedSuites": 4,
+    "incomingTargets": 6,
+    "applicationSourceEditsMadeDuringReview": false
+  },
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+      "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+      "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+      "server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-read-windows/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-read-windows/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 4,
+    "passed": 45,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 24.1,
+    "execution": {
+      "startedAt": "2026-10-23T18:39:25.009023+00:00",
+      "completedAt": "2026-10-23T18:39:50.256100+00:00",
+      "exitCode": 0,
+      "wallSeconds": 25.25
+    }
+  },
+  "sourceBefore": {
+    "head": "005045533ba0650c2211d94c1d33477e0d53978f",
+    "files": {
+      "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts": "af3876cf8321b2267fb69ebd6636b479e61d15ed6b7b563b0f137f9e2285c962",
+      "server/services/ana/__tests__/document-read-unicode-executor.test.ts": "e18899e5e13cf94e8ce7376050ed397992a0681baeec773a4fec0af9af0e317b",
+      "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe",
+      "server/services/ana/__tests__/document-read-unicode-windows.test.ts": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7",
+      "server/services/ana/document-catalog-tool-defs.ts": "229febe0bbcb7cc489d536177d3d1fc8d800c6c260b5a9f409507024cca0b1f0",
+      "server/services/ana/document-catalog-tools.ts": "7b2713e2f101ad86e97e8f26f31c3cbf614f8a9ff8767628300e254edb0e9f25"
+    },
+    "snapshotQualification": "The actual four-suite execution began after the completed merge; all six working-tree source/test hashes match the before and after snapshots."
+  },
+  "sourceFinal": {
+    "head": "005045533ba0650c2211d94c1d33477e0d53978f",
+    "files": {
+      "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts": "af3876cf8321b2267fb69ebd6636b479e61d15ed6b7b563b0f137f9e2285c962",
+      "server/services/ana/__tests__/document-read-unicode-executor.test.ts": "e18899e5e13cf94e8ce7376050ed397992a0681baeec773a4fec0af9af0e317b",
+      "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe",
+      "server/services/ana/__tests__/document-read-unicode-windows.test.ts": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7",
+      "server/services/ana/document-catalog-tool-defs.ts": "229febe0bbcb7cc489d536177d3d1fc8d800c6c260b5a9f409507024cca0b1f0",
+      "server/services/ana/document-catalog-tools.ts": "7b2713e2f101ad86e97e8f26f31c3cbf614f8a9ff8767628300e254edb0e9f25"
+    },
+    "sourceDrift": [],
+    "qualification": "All six tested working-tree hashes match the completed merged source."
+  },
+  "priorPins": {
+    "client": {
+      "targetPinCount": 36,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    },
+    "backend": {
+      "targetPinCount": 20,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    },
+    "late-native": {
+      "targetPinCount": 12,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    },
+    "late-refiling": {
+      "targetPinCount": 18,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    },
+    "late-unicode": {
+      "targetPinCount": 4,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    },
+    "late-planning": {
+      "targetPinCount": 16,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged, not rerun or added to this result."
+    }
+  },
+  "review": {
+    "finding": "No blocker. Exact UTF-16 source slicing, budget fitting, private deferred receipt/settlement and existing guarded writer are retained. Intact actual bounds replace nominal fitter size only.",
+    "boundaries": "A requested start inside a surrogate pair moves backward; max_chars 1 may deliver a complete two-unit supplementary character. Minimal metadata-heavy results can still be rejected by unchanged host-budget admission. Prospective legacy coverage is not current-actor/extraction-specific or provider-served proof.",
+    "coverage": "Exactly four changed suites cover registered handler, executor dispatch, stream host and guarded PGlite receipt INSERT. Actor/source admission and provider/network seams are synthetic; no native RLS, concurrent PostgreSQL, live provider, durable V2 receipt or historical chunk migration is qualified.",
+    "rootOwned": "Root owns refreshed production build, complete compiler, normal push gates and canonical publication."
+  }
+}

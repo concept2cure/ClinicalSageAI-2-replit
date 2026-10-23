@@ -1,0 +1,331 @@
+{
+  "sourceBase": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "whatAlreadyExists": "README.md",
+  "initialSetup": {
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/initial-red.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/initial-red.txt"
+    },
+    "passed": 0,
+    "failed": 13,
+    "qualification": "Setup-only; unsupported paragraph fixture and shadowed DOM document helper corrected before the product RED reproduction."
+  },
+  "productRed": {
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/corrected-red.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/corrected-red.txt"
+    },
+    "passed": 1,
+    "failed": 12,
+    "files": 1,
+    "durationSeconds": 13.9,
+    "sourcePins": {
+      "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+      "files": {
+        "client/src/concept2cure/v2/surfaces/Insights.tsx": "18ec406437a1462411376e6c8199cca8ac78980c09d478d6b565f7682227dd68",
+        "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+        "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx": "2db70bf0ab3b40ccc10569d2bcc965e14fa4df3d6bfc0314390702446ae145bb"
+      },
+      "result": {
+        "correctedRed": {
+          "passed": 1,
+          "failed": 12,
+          "suites": 1,
+          "durationSeconds": 13.9
+        },
+        "firstSetupRun": {
+          "passed": 0,
+          "failed": 13,
+          "note": "Retained setup-only run: unsupported paragraph fixture and shadowed document helper corrected before the product RED reproduction."
+        }
+      }
+    },
+    "executedTestSource": "corrected-red-test-source.tsx.gz"
+  },
+  "intermediateFirstSuccessor": {
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/first-successor.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/first-successor.txt"
+    },
+    "passed": 12,
+    "failed": 1,
+    "qualification": "Ambiguous getByRole(status) assertion; multiple truthful status elements. The exact recovery notice was subsequently selected."
+  },
+  "expandedFocusedSuccessor": {
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/expanded-successor.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/expanded-successor.txt"
+    },
+    "passed": 19,
+    "failed": 0,
+    "durationSeconds": 4.31
+  },
+  "boundedIntegration": {
+    "files": 8,
+    "passed": 125,
+    "failed": 0,
+    "durationSeconds": 27.98,
+    "qualification": "Before strict positive-response id, expanded ownership cases and final layout refinements.",
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/regressions.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/regressions.txt"
+    }
+  },
+  "preLayoutFullReporting": {
+    "command": "pre-layout-command.json.gz",
+    "sourcePins": "pre-layout-source-start.json.gz",
+    "files": 31,
+    "passed": 272,
+    "failed": 0,
+    "durationSeconds": 48.67
+  },
+  "final": {
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts",
+        "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts",
+        "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts",
+        "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts",
+        "client/src/concept2cure/v2/__tests__/insightsUnreadPlanIsNotAHigherPlan.test.tsx",
+        "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+        "client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/all-reporting.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/all-reporting.txt"
+    },
+    "files": 31,
+    "focusedCases": 29,
+    "passed": 277,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 69.43,
+    "sourcePinCount": 36,
+    "sourcePinsRecord": "finalPins"
+  },
+  "lint": {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+      "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx",
+      "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+      "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx"
+    ],
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 7,
+    "qualification": "Existing sites; comparative warning gate belongs to root."
+  },
+  "sourceChanges": [
+    "client/src/concept2cure/v2/surfaces/Insights.tsx"
+  ],
+  "testChanges": [
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx"
+  ],
+  "finalPins": {
+    "head": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+    "files": {
+      "client/src/concept2cure/v2/surfaces/Insights.tsx": "eb06070042fca50f66008f1920fbf80073c575e86b51f56e39ed474b5dcdab57",
+      "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx": "55994b3043d114430ad785dc344fc5818cdc005fa5f612e55a7bd5157e3c6540",
+      "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx": "08ab5b13bab2331605a5e6275a1be75946d2a9a193c98d14e314ddd69c786273",
+      "client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx": "8310ccdbfb9748fc000c584c004d9dceb71e4f7105c23a203b8508dcacc0c770",
+      "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx": "643ce4a59ae3248f5ca524313ab62dbb76ab14b1d5161e9ffba9bfdd14ec8330",
+      "client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx": "dd51025449190070b0a884c51d4efe1a81fd85c0a86ea2a6a37e5f89a1db57f1",
+      "client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx": "3b7a65db2697817a2928300856294121ea09a5b3bc4a5dc28c416be48b350d67",
+      "client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx": "1c2eba79417e0bdaf0395afa1e1dfb1265bd879eb81542a6de9b97c5eea185aa",
+      "client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts": "12d86facec7e7bf32e0e681276468b86f47ee6eab705c998f5152a108dd34296",
+      "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx": "6f35aa6dcd2b2e2f448a5a3e308f49caa028f9dca6db9644431465bb4c1aedfd",
+      "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx": "a99f9b4bbe5461b7aecb7385c74a1c37de718ba3f00bacf8d151572c91719253",
+      "client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts": "ead45386c6848095bafb3b56844f9ec78ae789a73bc15990b54c14beabda3596",
+      "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts": "298ed9320b4513d59e05748ee083bb923f5875c591066459af02e9635d677314",
+      "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx": "2b93a04dd295752b5d0e825a67e42211f94ccdcfb4841bcece20af9ec5f5be87",
+      "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx": "9574b363a32ef8aec3cd3e65b253c3d10b459f34a226177d6fa7169a04d851f4",
+      "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f",
+      "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx": "df530808d3111b0bffbb50f02272475900bdeb90eceee11aabcecb53603e6ee2",
+      "client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx": "df6538a822d40db8bdaae8a4ee698b5f05b9e4b8aa56311892c056bcaf28f136",
+      "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx": "8994d0f6cbd68754de7fecd54c7710d3a05d5cedbcbbb7b87ada35f0b76a169d",
+      "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx": "62729ba118911fc69fe962bbe619a69955bb37893e007fb46c0237a481b4709b",
+      "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx": "0bac397d77056aa346fa4f0b2edb92c7ebac235ee2ac273d64a793188d8e3a29",
+      "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx": "ce01c9ad796a210eca1f54b6fa36d34b166623a2752a75f50efa3c85c2a2de6b",
+      "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx": "ea11462dc8d3a222724fab591cd121b0c6e8523da3e27f7bbe354870a92abb45",
+      "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx": "3dcee4f350c4ac337a0f7aa55b4b969c5ef2185c6ac4b2d84c268bf62b41ca73",
+      "client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx": "b009ab8d58b18261dc7b776958f1aaa963f4ead23076b43025e34b1020895818",
+      "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx": "ba5c3bbc06105c5f09519eacf7fc401550fbe212a9002ae6a78038034cf55a2e",
+      "client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx": "b9fb0b36a6ad1b5f4f583ab3d0f3cbe9146a0ef2ee0e3ad8ccc940b9e5449400",
+      "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx": "d5a36ffa955a43d88370b5ea395ccc5edd649ce171783cfc00a6fb79840c99e6",
+      "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx": "74c7980e6968d78fb1405cfbfc1779b2eeb778932f9b402c210cbe6c8b4f537f",
+      "client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts": "a690c2f68f384a08f3dadad4a811757ba0bb4541c8c44caa033c740b76db0350",
+      "client/src/concept2cure/v2/__tests__/insightsUnreadPlanIsNotAHigherPlan.test.tsx": "7e862eac63da211e37122f238f3c7623d52996df652714fb0fae6ef174e5ff18",
+      "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx": "eabb32ed1c47bd31791a009bf8a3d14838dc882831e2a4f66306c928603ae505",
+      "client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx": "bc4ee8539ce6e0587e78edf83d9a0cba96a2294c059877c6018e9b64c0469c6d",
+      "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx": "3de2f19fdf2705ce109cd8e885e02112d5836171e2d1b356e060f08213edbaae"
+    },
+    "sourceDrift": [],
+    "boundary": "Targeted final runtime/auth-helper/legal-package and test inputs; no claim of whole-program or transitive source coverage."
+  },
+  "recordedAt": "2026-10-23T17:48:30.404160+00:00",
+  "preUncertaintyFullReporting": {
+    "files": 31,
+    "passed": 272,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "focusedCases": 24,
+    "durationSeconds": 54.08,
+    "command": "pre-uncertainty-command.json.gz",
+    "sourcePins": "pre-uncertainty-source-pins.json.gz",
+    "qualification": "Historical fully green snapshot before generic status-zero/5xx outcome classification."
+  },
+  "lateUncertaintyRed": {
+    "files": 1,
+    "passed": 5,
+    "failed": 3,
+    "selectionSkipped": 21,
+    "durationSeconds": 2.75,
+    "command": {
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+        "-t",
+        "uncertain|known recorded rollback",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/client/late-uncertainty-red.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/client/late-uncertainty-red.txt"
+    },
+    "sourcePins": "late-uncertainty-red-pins.json.gz",
+    "executedTestSource": "late-uncertainty-red-test-source.tsx.gz",
+    "qualification": "Only the eight directly relevant cases selected before the final classifier; the final complete run has no skipped cases."
+  }
+}

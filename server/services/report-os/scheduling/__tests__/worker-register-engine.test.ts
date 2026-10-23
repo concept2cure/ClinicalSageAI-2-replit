@@ -56,6 +56,26 @@ vi.mock('../configuration', () => ({
   },
 }));
 vi.mock('../../persistence', () => ({ persistReportRun: vi.fn() }));
+// Engine-dispatch tests supply the admitted actor/scope at their boundary.
+// Real late membership, sharing and rollback are covered by SQL-backed suites.
+vi.mock('../../../c2c/current-program-access', async original => ({
+  ...await original<typeof import('../../../c2c/current-program-access')>(),
+  readCurrentProgramActor: async (_client: unknown, input: { organizationId: number; userId: number }) => {
+    if (input.organizationId !== 3 || input.userId !== 1) throw new Error('Unexpected scheduled actor fixture');
+    return { userId: 1, role: 'member' };
+  },
+}));
+vi.mock('../../scope-ownership', async original => ({
+  ...await original<typeof import('../../scope-ownership')>(),
+  resolveOwnedReportScope: async (input: { organizationId: number; scopeId: string }) => {
+    if (input.organizationId !== 3 || input.scopeId !== '11') throw new Error('Unexpected scheduled scope fixture');
+    return { projectId: 11 };
+  },
+}));
+vi.mock('../../project-access', async original => ({
+  ...await original<typeof import('../../project-access')>(),
+  canAccessReportScope: async (org: number, actor: { userId: number }) => org === 3 && actor.userId === 1,
+}));
 
 import { generateAndDeliver } from '../worker-register';
 

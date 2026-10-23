@@ -6,6 +6,26 @@ vi.mock('../../compute-run', () => ({ computeRunForType: mocks.compute }));
 vi.mock('../../persistence', () => ({ persistReportRun: mocks.persist }));
 vi.mock('../../../notifications/notification-service', () => ({ createNotification: mocks.notification }));
 vi.mock('../../../auditService', () => ({ writeChainedAuditRow: mocks.audit }));
+// This suite isolates dispatch/cursor/delivery. Actual current-actor and source
+// policy SQL are exercised in project-access-integration and the PGlite suite.
+vi.mock('../../../c2c/current-program-access', async original => ({
+  ...await original<typeof import('../../../c2c/current-program-access')>(),
+  readCurrentProgramActor: async (_client: unknown, input: { organizationId: number; userId: number }) => {
+    if (input.organizationId !== 11 || input.userId !== 42) throw new Error('Unexpected scheduled actor fixture');
+    return { userId: 42, role: 'member' };
+  },
+}));
+vi.mock('../../scope-ownership', async original => ({
+  ...await original<typeof import('../../scope-ownership')>(),
+  resolveOwnedReportScope: async (input: { organizationId: number; scopeId: string }) => {
+    if (input.organizationId !== 11 || input.scopeId !== '100') throw new Error('Unexpected scheduled scope fixture');
+    return { projectId: 100 };
+  },
+}));
+vi.mock('../../project-access', async original => ({
+  ...await original<typeof import('../../project-access')>(),
+  canAccessReportScope: async (org: number, actor: { userId: number }) => org === 11 && actor.userId === 42,
+}));
 import { generateAndDeliver, subscriptionRunUuid } from '../generate-deliver';
 import type { ReportSubscriptionRow } from '@shared/schema/report-os';
 const sub = { id: 10, organizationId: 11, createdBy: 42, clientWorkspaceId: null, persona: null, reportTypeId: 'readiness.executive_digest', scopeType: 'project', scopeId: '100', schedule: { cadence: 'daily', hour: 9 }, channel: 'platform', format: 'in_app', recipients: [], enabled: true, nextRunAt: new Date('2026-10-10T09:00:00Z'), lastRunAt: null, createdAt: new Date('2026-10-09T10:00:00Z'), updatedAt: new Date('2026-10-09T10:00:00Z') } as ReportSubscriptionRow;
