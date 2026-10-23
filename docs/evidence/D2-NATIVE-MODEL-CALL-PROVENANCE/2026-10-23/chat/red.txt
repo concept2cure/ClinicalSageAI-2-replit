@@ -1,0 +1,507 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:04.535Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:05.090Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:29:05.091Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts
+{
+  "timestamp": "2026-10-23T17:29:05.091Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+[AnA] Tool result handoff refused: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+[AnA] AI Gateway call failed: PRIVATE_LATE_PROVIDER_DIAGNOSTIC
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stderr | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model
+[AnA] AI Gateway call failed: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-small). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] Sending through AI Gateway (0 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation
+[AnA] AI Gateway response via anthropic/claude-opus-5-5 (1ms, req=gateway-final)
+
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model 537ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ { provider: 'anthropic', …(1) } ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deep equally contain ObjectContaining{…}
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification 11ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+   → expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author 7ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed 6ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call 22ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [] to have a length of 2 but got +0
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call 7ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [] to have a length of 2 but got +0
+ × server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call 5ms
+   → expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+   → expected [] to have a length of 2 but got +0
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: a first-call context failure records no guessed requested model 5ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an executor that reports no model observations retains the existing fallback and limitation 16ms
+ ✓ server/routes/chat/__tests__/send-message-model-calls.test.ts > existing classic carrier and legacy observation controls > CONTROL: an invalid message opens neither an executor nor a turn record 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-final",
+-     "round": 0,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ assertCalls server/routes/chat/__tests__/send-message-model-calls.test.ts:100:43
+     98| }
+     99| function assertCalls(expected: ModelCall[]): void {
+    100|   expect.soft(written().body.model.calls).toEqual(expected.map((who, i…
+       |                                           ^
+    101| }
+    102| function assertRawTool(): void {
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:126:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ { provider: 'anthropic', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": "claude-opus-5-5",
++     "model": "anthropic/claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:129:55
+    127|     expect.soft(result.body.model).toBe('anthropic/claude-opus-5-5');
+    128|     expect.soft(written().body.model.model).toBe('anthropic/claude-opu…
+    129|     expect.soft(servedModelsOf(written().body.model)).toEqual([{ provi…
+       |                                                       ^
+    130|     expect.soft(result.body.turnRecord.servedBy).toContainEqual(expect…
+    131|     expect.soft(written().body.turn).toMatchObject({ organizationId: 7…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > records the no-tools first call with raw model identity while retaining the composite display model
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "approvedForHighRisk": true,
+  "model": "claude-opus-5-5",
+}
+
++ Received:
+[
+  {
+    "approvedForHighRisk": null,
+    "model": "anthropic/claude-opus-5-5",
+    "pq": null,
+    "provider": "anthropic",
+    "qualified": false,
+  },
+]
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:130:50
+    128|     expect.soft(written().body.model.model).toBe('anthropic/claude-opu…
+    129|     expect.soft(servedModelsOf(written().body.model)).toEqual([{ provi…
+    130|     expect.soft(result.body.turnRecord.servedBy).toContainEqual(expect…
+       |                                                  ^
+    131|     expect.soft(written().body.turn).toMatchObject({ organizationId: 7…
+    132|     expect.soft(io.execute).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-first",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-middle",
+-     "round": 1,
+-     "sent": null,
+-   },
+-   {
+-     "call": 3,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-final",
+-     "round": 2,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ assertCalls server/routes/chat/__tests__/send-message-model-calls.test.ts:100:43
+     98| }
+     99| function assertCalls(expected: ModelCall[]): void {
+    100|   expect.soft(written().body.model.calls).toEqual(expected.map((who, i…
+       |                                           ^
+    101| }
+    102| function assertRawTool(): void {
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+AssertionError: expected [ { provider: 'anthropic', …(1) } ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-   },
+-   {
+-     "model": "claude-opus-5-5",
++     "model": "anthropic/claude-opus-5-5",
+      "provider": "anthropic",
+    },
+  ]
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:147:55
+    145|     expect.soft(result.status).toBe(200);
+    146|     assertCalls([{ round: 0, ...FIRST }, { round: 1, ...FINAL, request…
+    147|     expect.soft(servedModelsOf(written().body.model)).toEqual([
+       |                                                       ^
+    148|       { provider: FIRST.provider, model: FIRST.model }, { provider: FI…
+    149|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains repeated-model requests in chronological order and exposes each distinct author to qualification
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "approvedForHighRisk": false,
+-     "model": "claude-sonnet-5",
++     "approvedForHighRisk": null,
++     "model": "anthropic/claude-opus-5-5",
++     "pq": null,
++     "provider": "anthropic",
+      "qualified": false,
+-   },
+-   ObjectContaining {
+-     "approvedForHighRisk": true,
+-     "model": "claude-opus-5-5",
+    },
+  ]
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:150:50
+    148|       { provider: FIRST.provider, model: FIRST.model }, { provider: FI…
+    149|     ]);
+    150|     expect.soft(result.body.turnRecord.servedBy).toEqual([
+       |                                                  ^
+    151|       expect.objectContaining({ model: FIRST.model, qualified: false, …
+    152|       expect.objectContaining({ model: FINAL.model, approvedForHighRis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": null,
+-     "provider": "anthropic",
+-     "requestId": "gateway-unknown",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ assertCalls server/routes/chat/__tests__/send-message-model-calls.test.ts:100:43
+     98| }
+     99| function assertCalls(expected: ModelCall[]): void {
+    100|   expect.soft(written().body.model.calls).toEqual(expected.map((who, i…
+       |                                           ^
+    101| }
+    102| function assertRawTool(): void {
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:167:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > keeps an unknown early author instead of replacing it with the later known author
+AssertionError: expected [ { provider: 'anthropic', …(4) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "model": null,
++     "approvedForHighRisk": null,
++     "model": "anthropic/claude-opus-5-5",
++     "pq": null,
+      "provider": "anthropic",
+      "qualified": false,
+-   },
+-   ObjectContaining {
+-     "approvedForHighRisk": true,
+-     "model": "claude-opus-5-5",
+    },
+  ]
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:168:50
+    166|     expect.soft(result.status).toBe(200);
+    167|     assertCalls([{ round: 0, provider: 'anthropic', model: null, reque…
+    168|     expect.soft(result.body.turnRecord.servedBy).toEqual([
+       |                                                  ^
+    169|       expect.objectContaining({ provider: 'anthropic', model: null, qu…
+    170|       expect.objectContaining({ model: FINAL.model, approvedForHighRis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > copies reported metadata before a response object is subsequently changed
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-first",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ assertCalls server/routes/chat/__tests__/send-message-model-calls.test.ts:100:43
+     98| }
+     99| function assertCalls(expected: ModelCall[]): void {
+    100|   expect.soft(written().body.model.calls).toEqual(expected.map((who, i…
+       |                                           ^
+    101| }
+    102| function assertRawTool(): void {
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:187:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+AssertionError: expected [] to deeply equal [ { call: 1, round: +0, …(4) }, …(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "call": 1,
+-     "model": "claude-sonnet-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-first",
+-     "round": 0,
+-     "sent": null,
+-   },
+-   {
+-     "call": 2,
+-     "model": "claude-opus-5-5",
+-     "provider": "anthropic",
+-     "requestId": "gateway-final",
+-     "round": 1,
+-     "sent": null,
+-   },
+- ]
++ []
+
+ ❯ assertCalls server/routes/chat/__tests__/send-message-model-calls.test.ts:100:43
+     98| }
+     99| function assertCalls(expected: ModelCall[]): void {
+    100|   expect.soft(written().body.model.calls).toEqual(expected.map((who, i…
+       |                                           ^
+    101| }
+    102| function assertRawTool(): void {
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:206:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late context failure without inventing a served failed call
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late raw body failure without inventing a served failed call
+ FAIL  server/routes/chat/__tests__/send-message-model-calls.test.ts > mounted classic chat records every returned model call > retains earlier calls and exact tool bytes through a late provider failure without inventing a served failed call
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ server/routes/chat/__tests__/send-message-model-calls.test.ts:212:50
+    210|     expect.soft(written().body.turn.outcome).toBe('failed');
+    211|     expect.soft(written().body.model.model).toBeNull();
+    212|     expect.soft(result.body.turnRecord.servedBy).toHaveLength(2);
+       |                                                  ^
+    213|     expect.soft(result.text).not.toContain('PRIVATE_LATE_PROVIDER_DIAG…
+    214|     assertRawTool();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)
+   Start at  17:29:00
+   Duration  5.14s (transform 2.65s, setup 87ms, import 4.16s, tests 624ms, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/chat/red-results.json

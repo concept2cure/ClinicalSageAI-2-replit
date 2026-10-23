@@ -14,7 +14,8 @@ import {
 } from '../../services/document-data-disposition/__tests__/disposition-fixture';
 
 const h = vi.hoisted(() => ({ pool: null as unknown, sql: [] as string[], audit: vi.fn(),
-  clients: [] as unknown[], auditSqlOffsets: [] as number[] }));
+  convert: vi.fn(), clients: [] as unknown[], auditSqlOffsets: [] as number[] }));
+vi.mock('../../services/pdf-converter', () => ({ convertDocxToPdf: h.convert }));
 vi.mock('../../db', () => ({
   get pool() { return h.pool; }, getPool: () => h.pool, db: {},
   query: (sql: string, params?: unknown[]) =>
@@ -99,6 +100,9 @@ beforeAll(async () => {
 afterAll(async () => { await harness?.close(); });
 beforeEach(() => {
   h.sql.length = 0; h.clients.length = 0; h.auditSqlOffsets.length = 0;
+  h.convert.mockReset();
+  h.convert.mockImplementation(async (word: Buffer) =>
+    (await import('./_authoring-pdf-converter-fixture')).convertedPdfFixture(word));
   h.audit.mockReset();
   h.audit.mockImplementation(async () => { h.auditSqlOffsets.push(h.sql.length); });
 });
@@ -128,12 +132,12 @@ async function sourceFixture() {
   return f;
 }
 
-async function exportDoc(f: DispositionFixture, docId: string) {
+async function exportDoc(f: DispositionFixture, docId: string, format: 'xml' | 'pdf' = 'xml') {
   const token = await new SignJWT({ sub: '42', organizationId: f.org, email: 'author@example.test' })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('5m')
     .sign(new TextEncoder().encode(process.env.JWT_SECRET_DEV ?? process.env.JWT_SECRET));
   return request(app).post(`/api/authoring/docs/${docId}/export`)
-    .set('Authorization', `Bearer ${token}`).send({ format: 'xml' });
+    .set('Authorization', `Bearer ${token}`).send({ format });
 }
 
 async function expectNoExportRecord(f: DispositionFixture, docId: string) {
@@ -142,6 +146,31 @@ async function expectNoExportRecord(f: DispositionFixture, docId: string) {
 }
 
 describe('sealed source-linked /export uses persisted source receipts', () => {
+  it('rolls back the source reservation when strict conversion fails before export audit or history', async () => {
+    const f = await sourceFixture();
+    const docId = await sealed(f);
+    h.convert.mockRejectedValueOnce(new Error('private strict converter detail /tmp/source.docx'));
+    const result = await exportDoc(f, docId, 'pdf');
+    expect(result.status).toBe(503);
+    expect(result.body.code).toBe('PDF_RENDERER_UNAVAILABLE');
+    expect(JSON.stringify(result.body)).not.toMatch(/private|\/tmp|source\.docx/);
+    await expectNoExportRecord(f, docId);
+    expect(h.sql.some(sql => /^BEGIN/.test(sql))).toBe(true);
+    expect(h.sql.some(sql => /^ROLLBACK/.test(sql))).toBe(true);
+    expect(h.sql.some(sql => /^COMMIT/.test(sql))).toBe(false);
+  });
+
+  it('refuses a withdrawn PDF source before conversion and retains its own source-refusal code', async () => {
+    const f = await sourceFixture();
+    await f.apply('remove_data');
+    const docId = await sealed(f);
+    const result = await exportDoc(f, docId, 'pdf');
+    expect(result.status).toBe(409);
+    expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(h.convert).not.toHaveBeenCalled();
+    await expectNoExportRecord(f, docId);
+  });
+
   it('reads actual saved provenance and refuses withdrawn data before audit/history', async () => {
     const f = await sourceFixture();
     await f.apply('remove_data');

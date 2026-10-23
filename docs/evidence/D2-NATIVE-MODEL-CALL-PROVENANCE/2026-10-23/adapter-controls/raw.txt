@@ -1,0 +1,189 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:27:03.596Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:03.597Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:27:03.597Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-23T17:27:03.933Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:27:10.475Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:10.475Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:27:10.476Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-23T17:27:10.477Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds 6ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes 3ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before 31ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before 1ms
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:27:11.337Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:11.338Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:27:11.338Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/context-window-executor-carry.test.ts
+{
+  "timestamp": "2026-10-23T17:27:11.430Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves an initial canonical refusal without running a tool, staging results or writing receipts 15ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > preserves a follow-up refusal after exact framed staging, raw callbacks and an admitted source receipt 8ms
+ ✓ server/services/ana/__tests__/context-window-executor-carry.test.ts > existing context refusal propagates through the native classic loop > CONTROL: a fitting follow-up still completes normally with its exact source receipt 2ms
+stdout | server/services/ana/__tests__/turn-record-served-models.test.ts
+{
+  "timestamp": "2026-10-23T17:27:13.831Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T17:27:13.832Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-served-models.test.ts
+{
+  "timestamp": "2026-10-23T17:27:13.832Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record-served-models.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record-served-models.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-served-models.test.ts
+{
+  "timestamp": "2026-10-23T17:27:13.856Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > is each distinct model in the order it first served, not the first call alone 3ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > keeps a call whose model the gateway did not report: an unknown author is still an author 1ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > falls back to the turn's one model where the door records no calls, and is empty where it names none 1ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > outside production: approved for high-risk work, whatever its PQ, and the facts it rests on 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > in production: only a passed PQ, so a PQ-pending approved model is not qualified 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > tolerates a `calls` that is not an array 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > falls back to the turn’s own model when `calls` is unusable 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > skips a call that is not an object instead of throwing on it 0ms
+ ✓ server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > a call whose model the gateway did not report still counts as an unknown author 0ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  17:27:01
+   Duration  12.85s (transform 6.32s, setup 93ms, import 12.06s, tests 127ms, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/results.json

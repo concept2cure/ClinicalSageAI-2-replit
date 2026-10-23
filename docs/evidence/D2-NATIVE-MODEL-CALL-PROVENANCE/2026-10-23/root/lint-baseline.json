@@ -1,0 +1,356 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/services/ana/turn-record-loop.ts",
+    "server/routes/chat/send-message.ts",
+    "server/routes/ana-intelligence.ts",
+    "server/services/ana/ana-realtime.ts"
+  ],
+  "exitCode": 0,
+  "stdoutSha256": "a6a485331eda94f4100f166bbe1e424816e0f69f83b77aa9b5289c4dccecff87",
+  "stderr": "",
+  "sourceHashes": {
+    "server/services/ana/turn-record-loop.ts": "4eeb4745467edce0117c1e844f8ecefc56c6daa70f5fc69458bed1d23e649ada",
+    "server/routes/chat/send-message.ts": "8b207088e548ee52e32f876f599b7ea0f40817a2e63ae37de82addfcd3eee45f",
+    "server/routes/ana-intelligence.ts": "b9cb44bc33b1690f2d83027113688e1e99bdc00e9f9edb5c7f0731d2e98c906c",
+    "server/services/ana/ana-realtime.ts": "44107fbc94f03402b1a381b2d283ae6c90bebb065301d5fcc1b123463a829255"
+  },
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/ana-intelligence.ts",
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'framework' is assigned a value but never used.",
+          "line": 542,
+          "column": 21,
+          "messageId": "unusedVar",
+          "endLine": 542,
+          "endColumn": 30
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 607,
+          "column": 11,
+          "messageId": "limited",
+          "endLine": 607,
+          "endColumn": 22,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  23495,
+                  23563
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 2,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/chat/send-message.ts",
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (1004). Maximum allowed is 100.",
+          "line": 102,
+          "column": 71,
+          "messageId": "exceed",
+          "endLine": 102,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 237. Maximum allowed is 15.",
+          "line": 102,
+          "column": 71,
+          "messageId": "complex",
+          "endLine": 102,
+          "endColumn": 73
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 173,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 173,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 386,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 386,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 390,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 390,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 414,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 414,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 425,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 425,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 571,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 571,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  25803,
+                  26078
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1081). Maximum allowed is 500.",
+          "line": 660,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1390,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 689,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 689,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 752,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 752,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  34062,
+                  34151
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 926,
+          "column": 7,
+          "messageId": "limited",
+          "endLine": 926,
+          "endColumn": 18,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  43581,
+                  43697
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1120,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1120,
+          "endColumn": 14
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 1122,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1122,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1142,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1142,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1165,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1165,
+          "endColumn": 13
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+          "line": 1168,
+          "column": 13,
+          "messageId": "tooDeeply",
+          "endLine": 1168,
+          "endColumn": 16
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+          "line": 1190,
+          "column": 11,
+          "messageId": "tooDeeply",
+          "endLine": 1190,
+          "endColumn": 13
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 18,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/ana-realtime.ts",
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 222,
+          "column": 20,
+          "messageId": "complex",
+          "endLine": 222,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 303,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 303,
+          "endColumn": 10
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 2,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/turn-record-loop.ts",
+      "messages": [],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 0,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": []
+    }
+  ],
+  "note": "ESLint JSON duplicated source field omitted; raw stdout SHA retained; actual file paths included with --no-ignore before any production changes."
+}

@@ -1,0 +1,2572 @@
+{
+  "method": "Latest completed result per exact test-file path; corrected/final runs replace overlapping outcomes. Earlier failed fixture runs remain identified, never renamed as passing.",
+  "files": 38,
+  "counts": {
+    "passed": 522,
+    "todo": 1
+  },
+  "runs": [
+    {
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "2cc6955017b1d56c81895c20167f37e31821c888985dbe785b05622ba06343af",
+      "reportedPassed": 294,
+      "reportedFailed": 0,
+      "files": 20
+    },
+    {
+      "report": "gap-closure/authoring-pdf-http-green.json",
+      "sha256": "f7ce8880c1e9134bfec573ace8e2c392f1f89024d1e7fe3a3c9de73a5bad404f",
+      "reportedPassed": 24,
+      "reportedFailed": 0,
+      "files": 3
+    },
+    {
+      "report": "gap-closure/authoring-pdf-filing-green.json",
+      "sha256": "56a0b052bc9910b010bec24c8e463e64a8bcf13eb34230d79963de29646c8844",
+      "reportedPassed": 58,
+      "reportedFailed": 10,
+      "files": 4
+    },
+    {
+      "report": "gap-closure/authoring-pdf-carry-fixture-correction.json",
+      "sha256": "679872a61d0a1f5d4bcd205a5172830af38c97b6258f6a8d93f6c7c0f4c32756",
+      "reportedPassed": 10,
+      "reportedFailed": 0,
+      "files": 1
+    },
+    {
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "92353e1bed1b1362854ca8ad4d5212ff16b575c54a7270aa2cf8d564b2d6be39",
+      "reportedPassed": 70,
+      "reportedFailed": 1,
+      "files": 9
+    },
+    {
+      "report": "gap-closure/authoring-pdf-signature-fixture-correction.json",
+      "sha256": "b32f6f2766f40f8417f1b47c51f1c8f5b0c7831a413293fe5a621cf60df68181",
+      "reportedPassed": 12,
+      "reportedFailed": 0,
+      "files": 1
+    },
+    {
+      "report": "gap-closure/authoring-pdf-ui-final.json",
+      "sha256": "77c08bf85d7b90c2ba67826eb1cf25428687382d80b370f8f3799717ab4cfca8",
+      "reportedPassed": 66,
+      "reportedFailed": 0,
+      "files": 3
+    }
+  ],
+  "latestPerFile": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringExports.test.tsx",
+      "endTime": 1792776676975.298,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "f88b07cf33302301463721e94793e06ac005ba65ab1ccba6b6db48715e5f70aa",
+      "counts": {
+        "passed": 13
+      },
+      "tests": [
+        {
+          "name": "describeStaleness reports \"cannot be checked\" \u2014 never \"unchanged\" \u2014 when there is nothing to compare",
+          "status": "passed"
+        },
+        {
+          "name": "describeStaleness says the exported file is not this document when the text drifted",
+          "status": "passed"
+        },
+        {
+          "name": "describeStaleness states what the match actually covers, rather than implying the whole record",
+          "status": "passed"
+        },
+        {
+          "name": "describeStaleness never-exported is its own state, not a stale one",
+          "status": "passed"
+        },
+        {
+          "name": "formatSize returns null for unknown \u2014 never \"0 B\", which is a real size",
+          "status": "passed"
+        },
+        {
+          "name": "formatSize scales to KB and MB",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports treats a MISSING content_changed field as unknown, not as unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports renders a drifted document as drifted",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports a failed read is a failure to READ \u2014 never \"never exported\"",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports an honest empty history is an empty, not an error",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports keeps citation drift visibly separate from the text comparison",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports accepts the drift endpoint\u2019s response, which carries no success field",
+          "status": "passed"
+        },
+        {
+          "name": "AuthoringExports re-reads when the host reports a save or an export",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx",
+      "endTime": 1792776684008.6543,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "044962680a2bc87644efc3de44171fd5fa216f39c54bd985641c7518657f8063",
+      "counts": {
+        "passed": 1
+      },
+      "tests": [
+        {
+          "name": "carries the returned Vault UUID through Open in Vault and the existing vault_documents leaf write",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx",
+      "endTime": 1792776664685.6152,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "e308938866d4bcf018b4b2df725f074cda39420a8c18a1bf1b89c1876d842720",
+      "counts": {
+        "passed": 17
+      },
+      "tests": [
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a draft offers both working copies, each marked as an uncontrolled copy",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed Working copy (PDF) asks for a PDF",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a refusal is said in the server\u2019s words, beside the control and in a toast, and nothing downloads",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a draft shows the controlled export disabled, with its reason visible and read with each item",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a FROZEN document offers the controlled export, through the export route",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a APPROVED document offers the controlled export, through the export route",
+          "status": "passed"
+        },
+        {
+          "name": "One Download menu: a working copy at any status, a controlled export only when sealed a approved document offers the controlled export, through the export route",
+          "status": "passed"
+        },
+        {
+          "name": "The Download menu is a real menu button names what it opens, and says whether it is open",
+          "status": "passed"
+        },
+        {
+          "name": "The Download menu is a real menu button opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus",
+          "status": "passed"
+        },
+        {
+          "name": "The Download menu is a real menu button choosing an item closes the menu and returns focus to the button",
+          "status": "passed"
+        },
+        {
+          "name": "What the control says belongs to one document a refusal for one document is not shown beside the next one the control is handed",
+          "status": "passed"
+        },
+        {
+          "name": "What the control says belongs to one document an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control",
+          "status": "passed"
+        },
+        {
+          "name": "The menu opens outside the toolbar that scrolls where the browser has a top layer, the menu opens in it as a manual popover, placed from its button",
+          "status": "passed"
+        },
+        {
+          "name": "The menu opens outside the toolbar that scrolls near the top of the screen it opens below its button, right edges aligned, in fixed coordinates",
+          "status": "passed"
+        },
+        {
+          "name": "The menu opens outside the toolbar that scrolls with room above it opens above; aligned left where right-aligned would run off the screen",
+          "status": "passed"
+        },
+        {
+          "name": "The menu opens outside the toolbar that scrolls taller than the room below, it scrolls inside itself rather than running off the screen",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx",
+      "endTime": 1792777030084.48,
+      "report": "gap-closure/authoring-pdf-ui-final.json",
+      "sha256": "ac95fc3ce7a6421157b8d75834f098d1f2dba5d63b8c25735155b401e910ceba",
+      "counts": {
+        "passed": 51
+      },
+      "tests": [
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with non-UUID Vault identity for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with empty Vault identity for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with missing project for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with another project for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with non-UUID project for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with missing content hash for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with short content hash for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with non-hex content hash for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with missing format for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with another requested format for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with unsupported format for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with explicit false success for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with contradictory error envelope for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds a successful HTTP answer with missing record for review without replay",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds lost reply through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds unreadable body through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds bodyless 204 through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds null body through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds HTTP 500 through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds outcome unknown through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation holds existing version through ordinary close and reopen",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation retains a definite HTTP 401 refusal and allows a deliberate retry",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation retains a definite HTTP 403 refusal and allows a deliberate retry",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation retains a definite HTTP 409 refusal and allows a deliberate retry",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation retains a definite HTTP 422 refusal and allows a deliberate retry",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault receipt confirmation retains a definite HTTP 429 refusal and allows a deliberate retry",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals keeps a definite PDF_RENDERER_UNAVAILABLE response refusal retryable and permits an explicit Word filing",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals keeps a definite PDF_RENDERER_UNAVAILABLE throw refusal retryable and permits an explicit Word filing",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals keeps a definite CONVERTER_BUSY response refusal retryable and permits an explicit Word filing",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals keeps a definite CONVERTER_BUSY throw refusal retryable and permits an explicit Word filing",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals retains uncertainty for a PDF code with a missing body",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals retains uncertainty for a PDF code with an uncertain nested code",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals retains uncertainty for a PDF code with a returned record",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals retains uncertainty for a PDF code with contradictory success",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault definite converter refusals retains uncertainty for a PDF code with another failure status",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault retained result identity keeps the request project and UUID for navigation and never invents missing approval",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault retained result identity keeps older data-envelope compatibility without inventing approval",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not file a retained document from another existing shell project",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership keeps the standalone dialog usable when no shell project is selected",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not toast in a context retired by the synchronous filing callback",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership accepts a pending result across a genuine same-account bearer refresh",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing document",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing document project",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing shell project",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing shell round trip",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing account",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing organization",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old result after changing logout",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership does not publish an old rejection after changing the source document",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership retires a confirmed navigation after leaving and returning to the shell project",
+          "status": "passed"
+        },
+        {
+          "name": "File to vault current request ownership posts once when the submit action is activated twice before the reply",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts",
+      "endTime": 1792777030900.2817,
+      "report": "gap-closure/authoring-pdf-ui-final.json",
+      "sha256": "d80ea0735cc4a86d91f4dd7aa31be5c1019d5902292117d2939297611235e589",
+      "counts": {
+        "passed": 12
+      },
+      "tests": [
+        {
+          "name": "preserves confirmed refusal at 400",
+          "status": "passed"
+        },
+        {
+          "name": "preserves confirmed refusal at 401",
+          "status": "passed"
+        },
+        {
+          "name": "preserves confirmed refusal at 403",
+          "status": "passed"
+        },
+        {
+          "name": "preserves confirmed refusal at 404",
+          "status": "passed"
+        },
+        {
+          "name": "preserves confirmed refusal at 409",
+          "status": "passed"
+        },
+        {
+          "name": "preserves confirmed refusal at 422",
+          "status": "passed"
+        },
+        {
+          "name": "marks a missing or uncertain reply at 408 as unknown",
+          "status": "passed"
+        },
+        {
+          "name": "marks a missing or uncertain reply at 500 as unknown",
+          "status": "passed"
+        },
+        {
+          "name": "marks a missing or uncertain reply at 502 as unknown",
+          "status": "passed"
+        },
+        {
+          "name": "marks a missing or uncertain reply at undefined as unknown",
+          "status": "passed"
+        },
+        {
+          "name": "a success whose JSON was lost is unconfirmed",
+          "status": "passed"
+        },
+        {
+          "name": "an explicit unknown code overrides a status commonly used for refusal",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx",
+      "endTime": 1792777027996.5327,
+      "report": "gap-closure/authoring-pdf-ui-final.json",
+      "sha256": "60dbf36718a9edbd140bd68c1af49ccc560c1185465d85f6a0c7c16bebf7b123",
+      "counts": {
+        "passed": 3
+      },
+      "tests": [
+        {
+          "name": "recovers a recorded export through the existing history without creating another export",
+          "status": "passed"
+        },
+        {
+          "name": "keeps a definite PDF_RENDERER_UNAVAILABLE refusal retryable without export reconciliation",
+          "status": "passed"
+        },
+        {
+          "name": "keeps a definite CONVERTER_BUSY refusal retryable without export reconciliation",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "endTime": 1792776662564.7417,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "7a60af4b407816bf4df689f86a3c381469ee77074f1aaadce114dc6ba3388240",
+      "counts": {
+        "passed": 16
+      },
+      "tests": [
+        {
+          "name": "DocumentWorkbench \u2014 File to vault calls the route with the chosen format and renders the server\u2019s folder, hash and id",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c))",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault says the approval did not carry, with the server\u2019s reason and what to do next",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault claims no approval when the server reported none",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault renders the server\u2019s refusal as a refusal, with nothing claimed",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault a 2xx without a vault record is not a success",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault with no program the dialog says so and offers no submit",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault \"Open in Vault\" names the filed document for the Vault to open on, and says the next step",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault a Word copy is said to be unplaceable into a submission, not offered as the next step",
+          "status": "passed"
+        },
+        {
+          "name": "DocumentWorkbench \u2014 File to vault an unapproved filing is told to approve first, not to place",
+          "status": "passed"
+        },
+        {
+          "name": "canvas current-access refusal preserves a sent vault outcome keeps the existing workbench writer through a host refusal without retaining private document text",
+          "status": "passed"
+        },
+        {
+          "name": "canvas current-access refusal preserves a sent vault outcome does not remount an expanded editor\u2019s sent writer when its canvas read is refused",
+          "status": "passed"
+        },
+        {
+          "name": "canvas current-access refusal preserves a sent vault outcome checks the canonical session immediately before a prepared filing confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "canvas current-access refusal preserves a sent vault outcome keeps the unsent dialog generic and blocks new confirmation after a refused current read",
+          "status": "passed"
+        },
+        {
+          "name": "canvas current-access refusal preserves a sent vault outcome keeps the pending dialog generic and blocks new confirmation after a refused current read",
+          "status": "passed"
+        },
+        {
+          "name": "keeps an uncertain filing held when the workbench closes and reopens the existing dialog",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-captions.test.ts",
+      "endTime": 1792776466860.6765,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "b613dc238b5227472b9a5e9ba1319788cf6d063e00139450a7afe10b070c3d51",
+      "counts": {
+        "passed": 19
+      },
+      "tests": [
+        {
+          "name": "caption parsing carries the object\u2019s identity and its words, and no ordinal anywhere",
+          "status": "passed"
+        },
+        {
+          "name": "caption parsing recognises a table by its caption and a figure by its alt text",
+          "status": "passed"
+        },
+        {
+          "name": "caption parsing does not make an UNCAPTIONED table a numbered object",
+          "status": "passed"
+        },
+        {
+          "name": "caption parsing offers only the objects that can be pointed at as reference targets",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering prints the number in the caption position, tables and figures counted separately",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering leaves the figure\u2019s alt text as the author\u2019s words, without the number",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering makes the caption the anchor a reference to the object lands on",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering resolves a cross-reference to a TABLE through the same mechanism as a section",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering prints the caption words alongside the number for a code-title reference",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering INSERTING A TABLE EARLIER RENUMBERS THE REST, with the stored content untouched",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering an uncaptioned table consumes no ordinal, so the numbers have no gap",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering states a reference to a DELETED table, and never a plausible number",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering still files the author\u2019s caption when the caller supplied no numbering",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering does not number a figure that sits inside a table cell",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering files the numbered caption, and bookmarks it so a REF field can cite it",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering emits a real Word REF field from a reference to a table",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering INSERTING A TABLE EARLIER RENUMBERS THE FILED WORD DOCUMENT",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering states a reference to a deleted table, and emits no field for it",
+          "status": "passed"
+        },
+        {
+          "name": "the two filed formats agree numbers the same object the same way in DOCX and in HTML",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-citations.test.ts",
+      "endTime": 1792776465281.081,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "ad358be944b383ed3b622f5af46823d2b8996845935beb294003f59102ad2bb4",
+      "counts": {
+        "passed": 25
+      },
+      "tests": [
+        {
+          "name": "citation parsing keeps the source id off the run, never a number",
+          "status": "passed"
+        },
+        {
+          "name": "citation parsing leaves an ordinary anchor alone \u2014 a link is not a citation",
+          "status": "passed"
+        },
+        {
+          "name": "citation parsing does not merge two citations of DIFFERENT sources into one run",
+          "status": "passed"
+        },
+        {
+          "name": "citation parsing does not merge two citations of the SAME source at different pinpoints",
+          "status": "passed"
+        },
+        {
+          "name": "citation parsing keeps a block whose only content is a citation",
+          "status": "passed"
+        },
+        {
+          "name": "citation parsing lists the cited source ids so an export knows what to look up",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering prints a number derived from position and links it to the reference list",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering assembles the reference list from the citations actually used, in first-appearance order",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering gives a source cited three times ONE number and ONE entry",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering leaves an UNCITED source out of the reference list entirely",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering emits no reference list at all when nothing is cited",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering INSERTING A CITATION EARLIER RENUMBERS THE REST, with the stored content untouched",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources never prints the editor\u2019s cached name in place of a number",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources states an unknown source rather than printing a number or nothing",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources an unresolved citation consumes NO number, so the list has no gap",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources treats a source with nothing printable as unresolved, not as an empty entry",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources resolves a citation written inside a table cell",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering \u2014 unresolved and renamed sources does not silently drop a citation when no registry is supplied",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering emits the number as a real Word internal hyperlink into the reference list",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering files a reference list built from the citations actually used",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering INSERTING A CITATION EARLIER RENUMBERS THE WORD TEXT, stored content untouched",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering states an unknown source in the filed document, and emits no link for it",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering does not silently drop a citation when no registry is supplied",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering carries a citation out of a TABLE CELL",
+          "status": "passed"
+        },
+        {
+          "name": "the two filed formats agree numbers the same sources identically in DOCX and in HTML",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-cross-references.test.ts",
+      "endTime": 1792776474060.0825,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "00de661c8272d0d128fa72b5fc7d09de72d59121452367f69d026248019208ee",
+      "counts": {
+        "passed": 15
+      },
+      "tests": [
+        {
+          "name": "cross-reference parsing keeps the target id off the run, not the printed number",
+          "status": "passed"
+        },
+        {
+          "name": "cross-reference parsing leaves an ordinary anchor alone \u2014 a link is not a cross-reference",
+          "status": "passed"
+        },
+        {
+          "name": "cross-reference parsing does not merge two references to DIFFERENT sections into one run",
+          "status": "passed"
+        },
+        {
+          "name": "cross-reference parsing keeps a block whose only content is a reference",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering prints the target\u2019s CURRENT code and title, and links to it",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering RENUMBERING THE TARGET CHANGES THE RENDERED TEXT, with the stored content untouched",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering never prints the editor\u2019s cached number, even when it is stale",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering states a dangling reference rather than printing a number or nothing",
+          "status": "passed"
+        },
+        {
+          "name": "HTML/PDF rendering resolves a reference written inside a table cell",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering emits a real Word REF field pointing at the target\u2019s bookmark",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering writes the bookmark the field cites onto the section heading",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering RENUMBERING THE TARGET CHANGES THE WORD TEXT, with the stored content untouched",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering states a dangling reference in the filed document, and emits no field for it",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX rendering does not silently drop the reference when no directory is supplied",
+          "status": "passed"
+        },
+        {
+          "name": "the two filed formats agree renders the same resolved text in DOCX and in HTML",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-footnotes-docx.test.ts",
+      "endTime": 1792776491589.7925,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "f54dccc5ef0208d5e0d4dbd38406a1b3c28c56850f126edcd73949c1ef3260c1",
+      "counts": {
+        "passed": 4
+      },
+      "tests": [
+        {
+          "name": "footnotes in a packed .docx emits a real w:footnoteReference, not a superscript run",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes in a packed .docx writes the note text into footnotes.xml under the id that cites it",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes in a packed .docx carries a footnote out of a TABLE CELL \u2014 the case the feature exists for",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes in a packed .docx degrades to text rather than vanishing when no sink is supplied",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-footnotes.test.ts",
+      "endTime": 1792776495909.6816,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "6aeeb2e6d5b55a6e8c7427bd327115d44b4e2352e1d198c68b89d1b90a7daf2f",
+      "counts": {
+        "passed": 6
+      },
+      "tests": [
+        {
+          "name": "footnotes parses a note off its reference rather than dropping it",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes leaves ordinary superscript alone \u2014 cm\u00b2, t\u00bd are not footnotes",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes letters the markers by position and collects the notes after the content",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes gives the same note text ONE letter, however often it is cited",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes emits no notes block at all when nothing cites one",
+          "status": "passed"
+        },
+        {
+          "name": "footnotes does not merge two references to DIFFERENT notes into one run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-heading-depth.test.ts",
+      "endTime": 1792776497318.604,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "531b5ca53daf6e660181f0f4dbf28823c7f2f227214583fab23f8717878248df",
+      "counts": {
+        "passed": 3
+      },
+      "tests": [
+        {
+          "name": "heading depth \u2014 CTD nests deeper than three keeps every level through the parse instead of clamping at 3",
+          "status": "passed"
+        },
+        {
+          "name": "heading depth \u2014 CTD nests deeper than three renders each level as its own rank in HTML, offset below the section title",
+          "status": "passed"
+        },
+        {
+          "name": "heading depth \u2014 CTD nests deeper than three never emits a heading above h6, whatever the input claims",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-image-export.test.ts",
+      "endTime": 1792776493008.93,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "e794030650281351aa51113caad5d4c5ce8f7bc5d986a8063bd449909d046597",
+      "counts": {
+        "passed": 8
+      },
+      "tests": [
+        {
+          "name": "the parser keeps figures an <img> becomes an image block instead of vanishing (the old failure)",
+          "status": "passed"
+        },
+        {
+          "name": "the parser keeps figures image-only content is not dropped by the whitespace filter (the trap)",
+          "status": "passed"
+        },
+        {
+          "name": "collectImageSrcs finds and deduplicates refs across sections",
+          "status": "passed"
+        },
+        {
+          "name": "sniffImageDimensions reads PNG, GIF and JPEG headers; refuses garbage",
+          "status": "passed"
+        },
+        {
+          "name": "PDF print HTML embeds the resolved figure as a data URI with its caption",
+          "status": "passed"
+        },
+        {
+          "name": "PDF print HTML states an unresolved figure instead of dropping it",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX the figure is REALLY in the filed .docx \u2014 a drawing plus its media part",
+          "status": "passed"
+        },
+        {
+          "name": "DOCX an unresolved figure files a stated placeholder, never silence",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-images-figure-rule.test.ts",
+      "endTime": 1792776481887.2632,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "5b9ad8f6ef6a566c41ce6b0089e9e8e128b9d22867acb3800fa148be69f5dabd",
+      "counts": {
+        "passed": 40
+      },
+      "tests": [
+        {
+          "name": "an image outside the figure rule is never fetched and never filed a dot segment after a real id: the loader is not called and nothing resolves",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed a query after a real id: the loader is not called and nothing resolves",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed an id the store never minted: the loader is not called and nothing resolves",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed percent-encoded dot segments: the loader is not called and nothing resolves",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed a reference padded with spaces: the loader is not called and nothing resolves",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed inline an upper-case type: not decoded, not filed",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed inline WebP, which Word cannot hold: not decoded, not filed",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed inline SVG, a script container: not decoded, not filed",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed inline TIFF: not decoded, not filed",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed inline a PNG whose payload holds a newline: not decoded, not filed",
+          "status": "passed"
+        },
+        {
+          "name": "an image outside the figure rule is never fetched and never filed the PDF of a section holding an inline WebP states it instead of embedding it",
+          "status": "passed"
+        },
+        {
+          "name": "a figure resolves under the src its image block carries reads srcs the way the export parser does: character references, unquoted and upper-case",
+          "status": "passed"
+        },
+        {
+          "name": "a figure resolves under the src its image block carries still files a governed reference and an inline PNG (guard)",
+          "status": "passed"
+        },
+        {
+          "name": "a figure resolves under the src its image block carries files an inline JPEG and GIF under their own types (guard)",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel the author's alt text, as written",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel an inline WebP, in words",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel an upper-case PNG type, in words",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel an inline PNG whose bytes did not decode, in words",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel an external address, in words",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel a path out of the image route, in words",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel an upload that did not resolve, by its reference",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel no src at all",
+          "status": "passed"
+        },
+        {
+          "name": "unfiledFigureLabel never carries a data: payload, whatever its length",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one a duplicated src: the browser shows the first, the parser files the last: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one the same, where the second is also shown elsewhere in the section: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one inside a bogus comment: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one inside a processing-instruction-shaped comment: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one inside a textarea: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one inside an xmp: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one inside a template: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one in a table but in no cell: nothing from the section is filed",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one a governed reference behind a duplicated src is not even loaded",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one a source hidden or swapped in one section is filed for no other section of the export",
+          "status": "passed"
+        },
+        {
+          "name": "the export files an image only where a browser shows the same one a section both readers read alike still files every figure (guard)",
+          "status": "passed"
+        },
+        {
+          "name": "a typeless data: URI is named without its payload 0",
+          "status": "passed"
+        },
+        {
+          "name": "a typeless data: URI is named without its payload 1",
+          "status": "passed"
+        },
+        {
+          "name": "a typeless data: URI is named without its payload 2",
+          "status": "passed"
+        },
+        {
+          "name": "a typeless data: URI is named without its payload 3",
+          "status": "passed"
+        },
+        {
+          "name": "a <pre> is read as markup by the export a figure inside one is a figure: filed, and its payload never printed",
+          "status": "passed"
+        },
+        {
+          "name": "a <pre> is read as markup by the export a <code> inside one prints its text, not its tags",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-list-depth-export.test.ts",
+      "endTime": 1792776475841.6965,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "9088a70aa1946e8474b534c34b4ff38829643c1dc8e3d9974f1f64bf79632819",
+      "counts": {
+        "passed": 19
+      },
+      "tests": [
+        {
+          "name": "a nested procedure keeps its ranks through the parse records the depth of every item instead of flattening them",
+          "status": "passed"
+        },
+        {
+          "name": "a nested procedure keeps its ranks through the parse keeps the kind of each rank, so notes under a step stay bulleted",
+          "status": "passed"
+        },
+        {
+          "name": "a nested procedure keeps its ranks through the parse leaves a flat list exactly as it was \u2014 the fix adds nothing to it",
+          "status": "passed"
+        },
+        {
+          "name": "a nested procedure keeps its ranks through the parse treats an li with no list around it as a top-level item, not a drop",
+          "status": "passed"
+        },
+        {
+          "name": "the DOCX files the sub-steps at their own rank emits w:ilvl 1 for the sub-steps and 0 for the steps",
+          "status": "passed"
+        },
+        {
+          "name": "the DOCX files the sub-steps at their own rank declares a numbering format for every rank it can emit",
+          "status": "passed"
+        },
+        {
+          "name": "the DOCX files the sub-steps at their own rank clamps a depth beyond the declared ranks rather than emitting an unnumbered step",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch nests the same ranks, and numbers them the same way opens the sub-list inside the step it belongs to",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch nests the same ranks, and numbers them the same way closes every list and item it opens, at any depth",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch nests the same ranks, and numbers them the same way numbers each rank as the DOCX does, so the two renditions agree",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch nests the same ranks, and numbers them the same way does not wrap a flat list in anything new",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch nests the same ranks, and numbers them the same way starts a new list when the kind changes at the same rank",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted parses to a table that keeps both figures (the old failure returned nothing)",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted files a real w:tbl with both images embedded as media parts",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted states an unresolvable figure in the cell rather than filing an empty one",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted renders the figures into the PDF branch cells too",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted survives with NO text anywhere \u2014 two photographs side by side",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted keeps a genuinely empty table out \u2014 emptiness is having no cells",
+          "status": "passed"
+        },
+        {
+          "name": "a table whose cells hold figures is not deleted leaves an all-text table exactly as it was",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-table-export.test.ts",
+      "endTime": 1792776486694.3083,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "7e1930a1b6317cad51d0c6ac19f43f660a53bd22d41cef5fbc8c835423b34aba",
+      "counts": {
+        "passed": 18
+      },
+      "tests": [
+        {
+          "name": "a table authored in the editor survives export to Word parses to a table block rather than tab-separated paragraphs",
+          "status": "passed"
+        },
+        {
+          "name": "a table authored in the editor survives export to Word emits a real w:tbl with every row, cell and value intact",
+          "status": "passed"
+        },
+        {
+          "name": "a table authored in the editor survives export to Word is falsifiable: prose with no table produces no w:tbl",
+          "status": "passed"
+        },
+        {
+          "name": "a table authored in the editor survives export to Word carries merged header cells rather than silently unmerging them",
+          "status": "passed"
+        },
+        {
+          "name": "a table authored in the editor survives export to Word keeps a caption with its table",
+          "status": "passed"
+        },
+        {
+          "name": "a Module 3.2.P.8.3 stability table \u2014 the biopharma wave gate round-trips 10 rows x 7 columns into the .docx as a real table",
+          "status": "passed"
+        },
+        {
+          "name": "a Module 3.2.P.8.3 stability table \u2014 the biopharma wave gate keeps every cell reachable as text, so nothing is lost to consumers that only read text",
+          "status": "passed"
+        },
+        {
+          "name": "ordered lists keep their numbers marks ol items ordered and ul items not",
+          "status": "passed"
+        },
+        {
+          "name": "ordered lists keep their numbers exports an ordered list against a real numbering definition, not as a bullet",
+          "status": "passed"
+        },
+        {
+          "name": "ordered lists keep their numbers counts unresolved suggestions inside table cells",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch emits a real HTML table with header cells and every value",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch groups consecutive items into one real ol or ul, not a run of paragraphs",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch escapes text and never passes stored markup through raw",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch carries a pending suggestion into the PDF as redline, not as a settled edit",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch agrees with the DOCX branch on table shape \u2014 the two formats cannot drift",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch superscript and subscript reach the DOCX as vertical alignment, not flattened text (BP-W1-1)",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch superscript and subscript survive the HTML/PDF branch too",
+          "status": "passed"
+        },
+        {
+          "name": "the PDF branch renders the same structure as the DOCX branch sup/sub inside a table cell keep their alignment in the DOCX",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/authoring-tracked-changes-export.test.ts",
+      "endTime": 1792776490062.1628,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "61c00cca0099631faf0a21c1ca036834d7c26eabbd91872c9a08b4a1b53b9ac5",
+      "counts": {
+        "passed": 6
+      },
+      "tests": [
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept emits w:ins for an insertion, attributed to its author and time",
+          "status": "passed"
+        },
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept emits w:del with delText for a deletion",
+          "status": "passed"
+        },
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept does not fall back to colouring the text",
+          "status": "passed"
+        },
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept gives every revision a unique id, as Word requires",
+          "status": "passed"
+        },
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept falls back to a named-but-unattributed revision when the mark carries no author",
+          "status": "passed"
+        },
+        {
+          "name": "tracked changes reach Word as revisions a reviewer can accept leaves settled text alone \u2014 no revision markup on an ordinary paragraph",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/export/__tests__/inline-marks-to-text.test.ts",
+      "endTime": 1792776494558.3044,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "08d81d0b2970732f59a473c8af7840293f3b0333dd0317452d47b78c3d648b82",
+      "counts": {
+        "passed": 13
+      },
+      "tests": [
+        {
+          "name": "inlineMarksToText keeps a superscript as a magnitude, not a concatenated digit",
+          "status": "passed"
+        },
+        {
+          "name": "inlineMarksToText marks both sides of an unresolved change",
+          "status": "passed"
+        },
+        {
+          "name": "inlineMarksToText tolerates the attributes the editor actually writes",
+          "status": "passed"
+        },
+        {
+          "name": "inlineMarksToText leaves subscript alone \u2014 dropping it changes nothing a reader misreads",
+          "status": "passed"
+        },
+        {
+          "name": "inlineMarksToText leaves every other tag untouched for the caller to handle",
+          "status": "passed"
+        },
+        {
+          "name": "inlineMarksToText changes nothing when there are no marks",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the eCTD leaf PDF renderer does not fuse a pending change",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the eCTD leaf PDF renderer does not drop an exponent",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the eCTD leaf PDF renderer does not accept a proposed deletion",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the master DOCX builder does not fuse a pending change",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the master DOCX builder does not drop an exponent",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the master DOCX builder does not accept a proposed deletion",
+          "status": "passed"
+        },
+        {
+          "name": "both pipelines actually call it the master DOCX builder still builds ordinary settled prose unchanged",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportDocx.test.ts",
+      "endTime": 1792776686830.7258,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "e9db6879aa0db0baf32d4a5b9ae87e301ce8f38d0ed6d0fc3c499fd37d0389b0",
+      "counts": {
+        "passed": 1
+      },
+      "tests": [
+        {
+          "name": "BP-W0-6 \u2014 authoring export, Word branch returns 200 and a real .docx whose XML carries the section content",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportHistory.test.ts",
+      "endTime": 1792776679391.5503,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "d373d8b6cda1d30fc2771e6573cc2257f90ecb925c091004eeadd6a2bf9685e0",
+      "counts": {
+        "passed": 7
+      },
+      "tests": [
+        {
+          "name": "GET /docs/:docId/diff-since-export 404s an unknown document rather than answering \"no baseline\"",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/diff-since-export answers with a null baseline for a real document never exported",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/exports 404s an unknown or cross-tenant document instead of hashing the empty string",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/exports reports null \u2014 not false \u2014 when there is no export to compare against",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/exports reports null when the stored export carried no content hash",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/exports reports drift when the last export hash differs from the document now",
+          "status": "passed"
+        },
+        {
+          "name": "GET /docs/:docId/exports reports no drift when the last export hash IS the document now",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportPdf.test.ts",
+      "endTime": 1792776598783.156,
+      "report": "gap-closure/authoring-pdf-http-green.json",
+      "sha256": "ff1a540cb2e277defaefce7cba5180f980bebcd736432172b46a2ca25df2d445",
+      "counts": {
+        "passed": 8
+      },
+      "tests": [
+        {
+          "name": "authoring controlled PDF export delivers strict-converter PDF bytes and records their exact hash, never a plain-text fallback",
+          "status": "passed"
+        },
+        {
+          "name": "authoring controlled PDF export refuses a failed strict converter with safe 503 and no export record or success audit",
+          "status": "passed"
+        },
+        {
+          "name": "authoring controlled PDF export does not record an EXPORT success audit when rendering fails before recording starts",
+          "status": "passed"
+        },
+        {
+          "name": "authoring controlled PDF export retains the canonical busy-converter retry response without an export record",
+          "status": "passed"
+        },
+        {
+          "name": "controlled export outcomes keep recording and delivery distinct reports the ledger failure at its actual stage",
+          "status": "passed"
+        },
+        {
+          "name": "controlled export outcomes keep recording and delivery distinct reports the delivery failure at its actual stage",
+          "status": "passed"
+        },
+        {
+          "name": "controlled export outcomes keep recording and delivery distinct does not turn a ledger uncertainty into a definite renderer refusal",
+          "status": "passed"
+        },
+        {
+          "name": "controlled export outcomes keep recording and delivery distinct does not turn a delivery uncertainty into a definite renderer refusal",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringExportSignatureManifest.test.ts",
+      "endTime": 1792776743567.1057,
+      "report": "gap-closure/authoring-pdf-signature-fixture-correction.json",
+      "sha256": "a247052e18aa86373c130d4ffba120b03bf0f8a757279e8edb4277dc2e7060f1",
+      "counts": {
+        "passed": 12
+      },
+      "tests": [
+        {
+          "name": "\u00a711.50(b) \u2014 DOCX carries the manifestation prints the printed name, the meaning and the executed time",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 DOCX carries the manifestation says so plainly when a document carries no signatures",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 DOCX carries the manifestation does not print an email where the printed name goes",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 XML carries the manifestation, and is well-formed includes a signature element with the required lines",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 XML carries the manifestation, and is well-formed escapes the document title, which it never did",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 XML carries the manifestation, and is well-formed is parseable by a real XML parser",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.50(b) \u2014 PDF carries the manifestation passes the complete manifestation to the strict Word converter and delivers its PDF",
+          "status": "passed"
+        },
+        {
+          "name": "the dead renderer is gone buildDocx no longer exists to be mistaken for the live path",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.70 \u2014 a printed hash is now a verified one states, per signature, that it covers the exported content",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.70 \u2014 a printed hash is now a verified one refuses the export when NO signature covers the content being filed",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.70 \u2014 a printed hash is now a verified one still exports, and marks the stale one, when a LATER signature covers it",
+          "status": "passed"
+        },
+        {
+          "name": "\u00a711.70 \u2014 a printed hash is now a verified one an unsigned document is unaffected \u2014 nothing to verify, nothing to refuse",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts",
+      "endTime": 1792776642399.482,
+      "report": "gap-closure/authoring-pdf-filing-green.json",
+      "sha256": "21dd1e17ef1a7ac4072d8aef2c793da94c276582a48ee2406561123a8df1b71e",
+      "counts": {
+        "passed": 10
+      },
+      "tests": [
+        {
+          "name": "POST /docs/:docId/file-to-vault renders, ingests, files and records ONE governed action \u2014 the vault row carries the export bytes\u2019 SHA-256",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document \u2014 nothing filed",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault refuses 403 to a viewer, and files nothing \u2014 the Vault service checks the role this route does not",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault refuses 400 on a format it does not file",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault files a DOCX too \u2014 real docx bytes, the same folder",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault refuses a strict converter failure: 503, nothing filed or recorded; DOCX is unaffected",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault never leaves a partial write: a failure after ingest reverts the vault row and answers 500",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault \u2014 handed-off items #9 and #13 a placement that throws reverts the vault row it admitted \u2014 nothing is left behind (#9)",
+          "status": "passed"
+        },
+        {
+          "name": "POST /docs/:docId/file-to-vault \u2014 handed-off items #9 and #13 an AnA draft with no module is not filed by the assumed M2 \u2014 it waits for a filing decision (#13)",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "endTime": 1792776693440.8796,
+      "report": "gap-closure/authoring-pdf-carry-fixture-correction.json",
+      "sha256": "9795d7c865b2a213a6a7762237301a26d66c301e4ad14aab6d1e50ee283a34ca",
+      "counts": {
+        "passed": 10
+      },
+      "tests": [
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy a working draft: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy approved with no review: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy approved by its author: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        },
+        {
+          "name": "FD5 (c): a sealed Authoring approval carries to its Vault copy an approval of other content: nothing carries, the editor is told why, and the version is not reviewed",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+      "endTime": 1792776596145.6416,
+      "report": "gap-closure/authoring-pdf-http-green.json",
+      "sha256": "b3a71971b3f49b7c3e77a01606454b39c10eb434bb8bd06a7208dd863fc3d123",
+      "counts": {
+        "passed": 8
+      },
+      "tests": [
+        {
+          "name": "sealed source-linked /export uses persisted source receipts rolls back the source reservation when strict conversion fails before export audit or history",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts refuses a withdrawn PDF source before conversion and retains its own source-refusal code",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts reads actual saved provenance and refuses withdrawn data before audit/history",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts refuses a noncurrent source version without inventing a disposition",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts refuses recorded extraction failure before audit/history",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts exports valid current evidence with retained-original=false",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts exports valid current evidence with retained-original=true",
+          "status": "passed"
+        },
+        {
+          "name": "sealed source-linked /export uses persisted source receipts refuses malformed persisted groups without treating them as manually authored",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+      "endTime": 1792776676025.5894,
+      "report": "gap-closure/authoring-pdf-regressions-green.json",
+      "sha256": "2c8b7769611aecfd6ffeb86ddb30ee0b74a6c2ab8b8b2d4db1c61508f3e6ed55",
+      "counts": {
+        "passed": 3
+      },
+      "tests": [
+        {
+          "name": "F2 \u2014 POST /docs/:id/sign auto-freezes when the final step approves the document writes a frozen_documents row on the transaction client, between BEGIN and COMMIT",
+          "status": "passed"
+        },
+        {
+          "name": "F3 \u2014 POST /docs/:id/export gates on the record being sealed REFUSES with 409 when the document is a DRAFT \u2014 no unapproved artifact, no manifest",
+          "status": "passed"
+        },
+        {
+          "name": "F3 \u2014 POST /docs/:id/export gates on the record being sealed ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/routes/__tests__/authoringWorkingCopy.test.ts",
+      "endTime": 1792776601151.6548,
+      "report": "gap-closure/authoring-pdf-http-green.json",
+      "sha256": "9849f7bd064e8c0e0d5c69855e9e286a5aa56a8318c62e9c195b2cf4cbe2e3d9",
+      "counts": {
+        "passed": 8
+      },
+      "tests": [
+        {
+          "name": "a working copy of a draft PDF: strict conversion receives Word with the running uncontrolled-copy banner and no signature manifestation",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft DOCX: the banner is in the page header and footer parts; no signature manifestation",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft is recorded once, with the delivered bytes' hash, and writes no export-history row",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft is not sent when it cannot be recorded",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft is DOCX or PDF only",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft refuses converter failure safely before recording or delivering a working copy",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft preserves the existing converter-capacity retry response",
+          "status": "passed"
+        },
+        {
+          "name": "a working copy of a draft leaves the controlled export as it was: the same draft is still refused",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "endTime": 1792776480766.0188,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "bc8544a570c80a7c4f5c4163e72570fd68ade06b62dfdee2a2d798c037fd1169",
+      "counts": {
+        "passed": 13
+      },
+      "tests": [
+        {
+          "name": "new canonical grounding and refresh use current same-project data refuses normal source retirement before creating or re-affirming a citation",
+          "status": "passed"
+        },
+        {
+          "name": "new canonical grounding and refresh use current same-project data refuses refresh of a retired source without changing its recorded checksum",
+          "status": "passed"
+        },
+        {
+          "name": "new canonical grounding and refresh use current same-project data refuses refreshing a legacy same-organization cross-project citation",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association pasted unregistered own-project markers take no number or reference entry",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association pasted unregistered other-project markers take no number or reference entry",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association an association elsewhere in the document cannot legitimize an earlier pasted marker",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association withdrawn recorded data cannot lend its name to a new bibliography",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association eligible registered frozen history remains resolvable after ordinary supersession",
+          "status": "passed"
+        },
+        {
+          "name": "bibliographies resolve only the exact section association valid retained citations resolve through the supplied render executor, with no global-pool read",
+          "status": "passed"
+        },
+        {
+          "name": "bibliography enrichment requires current source admission keeps another uploader\u2019s unbound recorded citation unresolved without its private bibliography metadata",
+          "status": "passed"
+        },
+        {
+          "name": "bibliography enrichment requires current source admission refuses a revoked actor before bibliography metadata and preserves the recorded citation",
+          "status": "passed"
+        },
+        {
+          "name": "bibliography enrichment requires current source admission NULL-org global_public source metadata obeys explicit public visibility",
+          "status": "passed"
+        },
+        {
+          "name": "bibliography enrichment requires current source admission NULL-org tenant_private source metadata obeys explicit public visibility",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-export-xml-figures.test.ts",
+      "endTime": 1792776472129.7964,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "3fa02e2d5de82f91abeacd375354825c327922a215ae0f640976ed704adfc340",
+      "counts": {
+        "passed": 3
+      },
+      "tests": [
+        {
+          "name": "the XML export carries only the figures the other formats file an external image URL is not in the file; its placeholder is",
+          "status": "passed"
+        },
+        {
+          "name": "the XML export carries only the figures the other formats file a WebP payload is not printed into the file",
+          "status": "passed"
+        },
+        {
+          "name": "the XML export carries only the figures the other formats file a figure is kept as written: a governed reference and an inline PNG",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "endTime": 1792776636624.5593,
+      "report": "gap-closure/authoring-pdf-filing-green.json",
+      "sha256": "3f4dee11f69dceae484b8c6cc82a06969a18e7c55d1fc2a3907b0cc9acd78aa0",
+      "counts": {
+        "passed": 32
+      },
+      "tests": [
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered preserves admitted filing and immutable company revision on the existing Vault handoff receipt",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered uses signing order for duplicate section indices in the rendered and retained full snapshot",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered refuses unchanged-status content drift during ingestion and compensates admission",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered refuses unchanged-status title drift during ingestion and compensates admission",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered refuses unchanged-status order drift during ingestion and compensates admission",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault records the same section snapshot it rendered refuses unchanged-status added section drift during ingestion and compensates admission",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status title header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status module header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status project header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status version header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status author header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status creation timestamp header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status provenance header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status locale header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status product header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status template header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status governed binding header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity refuses unchanged-status lock timestamp header drift before history or approval",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not manipulate a reused or unverified admission: false",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not manipulate a reused or unverified admission: \"missing\"",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not manipulate a reused or unverified admission: null",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not manipulate a reused or unverified admission: {}",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not manipulate a reused or unverified admission: {\"created\":\"true\"}",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity reports an unknown outcome when the real compensation transaction rolls back on audit failure",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not confirm compensation for a missing row",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not confirm compensation for a different tenant",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity retains its own committed record when the final COMMIT reply is lost",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault preserves current document and admission identity does not compensate after an unacknowledged recording rollback",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault retains the saved filing agreement records on the filed rendition that the filing holds other text, without refusing the draft",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault retains the saved filing agreement says nothing on the record when the document is bound to no filing",
+          "status": "passed"
+        },
+        {
+          "name": "file-to-Vault retains the saved filing agreement files a stable working snapshot with its canonical digest and locks sections before the final read/history",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts",
+      "endTime": 1792776469443.1672,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "e041949ca36c67d326903c2a2897593b508b23f91626c24507a4448fd65f2f3e",
+      "counts": {
+        "passed": 7
+      },
+      "tests": [
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter supplies real rich Word to the strict converter and hashes the actual returned PDF",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter carries repeated working-copy banners and its signature disclaimer in the converted Word input",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter retains pending insertions and deletions as genuine Word revisions at the converter boundary",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter returns a safe definite conversion refusal while keeping the original failure private",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter preserves the canonical capacity refusal and retry delay",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter does not relabel a Word-building failure as a converter failure",
+          "status": "passed"
+        },
+        {
+          "name": "ordinary Authoring PDFs share the rich Word converter keeps source refusals ahead of rendering and leaves Word/XML independent of PDF availability",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "endTime": 1792776488432.5618,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b",
+      "counts": {
+        "passed": 21
+      },
+      "tests": [
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence null",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"20000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"Exact study evidence\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\",\"extractionMethod\":\"pdf-text\"},\"disposition\":\"remove_data\"}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"20000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"Exact study evidence\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\",\"extractionMethod\":\"pdf-text\"},\"disposition\":\"supersede\"}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"20000000-0000-4000-8000-000000000001\",\"contentHash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"Exact study evidence\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\",\"extractionMethod\":\"pdf-text\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"10000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"Exact study evidence\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\",\"extractionMethod\":\"pdf-text\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"20000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"Exact study evidence\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extraction_failed\",\"extractionMethod\":\"pdf-text\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses unavailable or changed saved evidence {\"id\":\"10000000-0000-4000-8000-000000000001\",\"programId\":\"20000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"fileName\":\"validated-tlf.pdf\",\"documentTitle\":\"Study TLFs\",\"extractedText\":\"shorter\",\"catalog\":{\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"extracted\",\"extractionMethod\":\"pdf-text\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence keeps valid retained data usable and verifies through the caller executor",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence does not invent source qualification for legacy or manually authored documents",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence does not discard malformed persisted source groups or a conflicting saved source scope",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence fails closed when the current source read fails",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses a same-length extraction correction inside or outside the excerpt: Xxact study evidence",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses a same-length extraction correction inside or outside the excerpt: Exact study evidencX",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence retains untouched V2 and eligible original-unavailable text without storing a second text copy",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence a marked V2 group cannot downgrade by stripping version",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence a marked V2 group cannot downgrade by stripping extractedTextSha256",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence a marked V2 group cannot downgrade by stripping spanSha256",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses a missing/unknown group marker while any V2 reference identity remains",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence preserves legacy original-byte/length semantics without manufacturing extraction identity",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence privately snapshots direct verifier input and actor before its first asynchronous source load",
+          "status": "passed"
+        },
+        {
+          "name": "new source-linked Authoring renditions reverify their saved evidence refuses a forged slice digest on direct typed verifier calls",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "endTime": 1792776463749.7715,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "0d70805e7bd05ca9accd1919a6dbd0270651827e37b1d9e9048559dccda2153f",
+      "counts": {
+        "passed": 28
+      },
+      "tests": [
+        {
+          "name": "workflow release needs current explicit full-document human adoption refuses new reviewer adoption after that reviewer became a historical content contributor",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption refuses legacy unbound approval before explicit adoption",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption refuses a verdict on earlier prose before explicit adoption of an edited copy",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption refuses a verdict on an earlier title before explicit adoption",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption refuses a copy when a current fingerprint and unknown/template metadata are its only evidence",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption a review verdict and an unchecked REVIEWER signature are not explicit adoption",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption allows unknown source after a current full-hash signed assigned adoption",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption allows template source after a current full-hash signed assigned adoption",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption a signature and editable audit-shaped metadata without the chained act do not release",
+          "status": "passed"
+        },
+        {
+          "name": "workflow release needs current explicit full-document human adoption rejects the author adopting their own copy and an unassigned reviewer",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review holds retained known machine content with model null even after explicit adoption",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review holds retained known machine content with model a-model-name even after explicit adoption",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review immutable genesis and current source facts win over relabeling the displayed origin",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review moving copied machine prose to another section cannot launder it as a local human save",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review formatting and whitespace changes are not replacement by human words",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review punctuation-only edits do not clear a positive machine source hold",
+          "status": "passed"
+        },
+        {
+          "name": "positive machine origin never becomes model qualification by review a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release retains historical signature facts but holds release after its reviewer becomes a content contributor",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release does not infer release adoption from a verdict that loses its retained binding",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release requires the adopting reviewer to retain current membership in this tenant",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release fails closed when source access or fingerprint verification fails, including a previously adopted copy",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release a title change invalidates adoption even when signature prose hash is unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release a reopened review assignment invalidates its earlier signed adoption",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release a signature with an invalid recomputable digest is not adoption",
+          "status": "passed"
+        },
+        {
+          "name": "source identity and current content stay verified at release refuses a write whose present text no longer matches its live lineage",
+          "status": "passed"
+        },
+        {
+          "name": "uncontrolled review copies retain the real qualification hold renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses",
+          "status": "passed"
+        },
+        {
+          "name": "IVD saved-source copies use the existing human review and signature lifecycle retains ivd-assessment genesis and releases only after an assigned reviewer signs the current complete copy",
+          "status": "passed"
+        },
+        {
+          "name": "IVD saved-source copies use the existing human review and signature lifecycle retains ivd-document genesis and releases only after an assigned reviewer signs the current complete copy",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence-rendering.test.ts",
+      "endTime": 1792776485167.5952,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "02185f2f304a09c5f613dc2a88d9ea0bf8f210fdaad5a94fcba3f66ba45d1513",
+      "counts": {
+        "passed": 10
+      },
+      "tests": [
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports renders actual Word with the historical logo/header/footer, rich body and mandatory signature statement",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports keeps the working-copy banner and excludes signature manifestation while retaining stationery",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports keeps a covering internal signature manifestation alongside historical company stationery",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports loads an explicitly selected published variant by its immutable key even when automatic application is disabled",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports converts the same rich historical Word artifact through strict LibreOffice without a fallback",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports fails closed when the strict converter is unavailable instead of dropping the letterhead",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports refuses hash mismatches before rendering instead of substituting current branding",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports refuses tenant mismatches before rendering instead of substituting current branding",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports refuses project mismatches before rendering instead of substituting current branding",
+          "status": "passed"
+        },
+        {
+          "name": "correspondence uses its retained presentation through canonical Authoring exports refuses missing revision mismatches before rendering instead of substituting current branding",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "endTime": 1792776470144.6345,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "5407e8eca488f1829713f6468dc76c07003ee226fbf4e08b130af34961248152",
+      "counts": {
+        "passed": 28
+      },
+      "tests": [
+        {
+          "name": "original PDF signature structure preserves valid ordinary unsigned bytes and ignores text that merely names signature keys",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure detects indirect signature fields with compressed objects=false without claiming crypto validity",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure detects indirect signature fields with compressed objects=true without claiming crypto validity",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure does not classify an unfilled signature field as an embedded signature",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses a malformed signature hidden entirely inside a compressed object stream",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure does not miss lowercase escaped signature keys that pdf-lib leaves noncanonical",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 0 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 1 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 2 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 3 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 4 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 5 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 6 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 7 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 8 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses malformed signature structure 9 with an actionable named error",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses ByteRange segments excluding an unrelated token",
+          "status": "passed"
+        },
+        {
+          "name": "original PDF signature structure refuses parser failures rather than treating malformed PDFs as unsigned",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation requires an explicit veraPDF compliance result for a byte-identical temporary original",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 0",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 1",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 2",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 3",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 4",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses absent, wrong-profile or noncompliant validation evidence 5",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses a failed validator even when its stdout contains a passing report",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses a validator that changed the temporary file and keeps caller bytes intact",
+          "status": "passed"
+        },
+        {
+          "name": "original-byte PDF/A validation refuses when veraPDF is unavailable",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "endTime": 1792776631791.4563,
+      "report": "gap-closure/authoring-pdf-filing-green.json",
+      "sha256": "fe46636df74a407fc1669e7034fb1d6612ba8233941ed84c29d70e44c82cdb47",
+      "counts": {
+        "passed": 16,
+        "todo": 1
+      },
+      "tests": [
+        {
+          "name": "canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT proves a new row once and retains the original row on an ordinary same-byte re-upload",
+          "status": "passed"
+        },
+        {
+          "name": "canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT offers a conflict check-in hint only while the scoped code has one live head",
+          "status": "passed"
+        },
+        {
+          "name": "canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT retains bytes and reports an unknown ingest outcome after lost COMMIT acknowledgement",
+          "status": "passed"
+        },
+        {
+          "name": "canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT retains bytes and reports an unknown ingest outcome after lost ROLLBACK acknowledgement",
+          "status": "passed"
+        },
+        {
+          "name": "canonical ingest admission identity over actual PostgreSQL INSERT / ON CONFLICT proves a raced existing row was reused even when the pre-read missed it",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version both compile to a materialized PDF leaf with nothing unresolved or unfinalized",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version the bytes differ \u2014 by construction, not by timestamps \u2014 and every authored section body is in both",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version (a) is deterministic across compiles; (b) is the stored bytes themselves",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version PIN SEMANTICS DIFFER: the coauthor pin is the copy TEXT, the vault pin is the emitted PDF bytes",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version dispatch readiness, release (freeze/dispatch/transmit) and the transmit blocker rule give the same verdict",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version carries the verified filing derivation separately from alias identity",
+          "status": "passed"
+        },
+        {
+          "name": "keeps a retained draft filing receipt after the editable source changes",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: refusals agree, and where they do not a working draft blocks release on both paths, each naming why",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: refusals agree, and where they do not an ordinary rich-Word PDF files and places through the native Vault path without an HTML engine",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: refusals agree, and where they do not an unavailable strict converter refuses before Vault admission and export recording",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: refusals agree, and where they do not a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)",
+          "status": "passed"
+        },
+        {
+          "name": "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "endTime": 1792776483352.5908,
+      "report": "authoring-pdf/service-regressions.json",
+      "sha256": "456824383e699e316a400c6ba2cbf77202d42de5cde6ee12be2d0dac997cad93",
+      "counts": {
+        "passed": 8
+      },
+      "tests": [
+        {
+          "name": "final eCTD ZIP retains legal and signed originals preserves an admitted registered legal version despite a toolchain that would change it, retaining proof through the persisted manifest",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals independently preserves an unregistered PDF with compressed embedded-signature fields without claiming signature trust",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals continues normalizing an ordinary unsigned PDF and makes no original-preservation claim",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals refuses staged bytes that no longer match the admitted original before invoking conversion",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals fails closed when an embedded signature dictionary is malformed",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals requires actual validation of the original under mandatory PDF/A, with no preservation exemption",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals retains actionable failure evidence for an organization PDF/A policy checked later at transmission",
+          "status": "passed"
+        },
+        {
+          "name": "final eCTD ZIP retains legal and signed originals verifies extracted final ZIP bytes, refusing a missing or overwritten preserved original",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

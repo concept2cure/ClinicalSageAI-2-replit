@@ -5,12 +5,10 @@
  * ships without a second renderer. The route keeps the HTTP: the sealed-record
  * gate, the audit event, the headers. This module renders.
  *
- * Byte-for-byte: the XML, DOCX and PDF branches are the route's own, with the
- * same shared parse (one citation registry, one caption directory, one figure
- * map) so the two filed formats cannot disagree. The only addition is an
- * optional `notice` line rendered ahead of the content — used by the vault
- * filing of an UNSEALED document to say so on page one, and absent on the
- * export route, whose output is unchanged.
+ * DOCX and PDF share the rich Word document and strict canonical converter,
+ * with one citation registry, caption directory and figure map. XML retains
+ * its existing representation. An optional `notice` ahead of the content says
+ * when a Vault rendition is an unsealed working draft.
  */
 
 import crypto from 'crypto';
@@ -24,6 +22,7 @@ import type { CompanyDocumentProfile } from '../../../shared/company-documents';
 import { correspondenceTemplate, readCorrespondencePresentation } from '../company-documents/correspondence-rendering';
 import type { DocxStyle } from '../docx/docxFactory';
 import type { ISectionOptions, Paragraph as WordParagraph, Table as WordTable } from 'docx';
+import { isConversionCapacityError } from '../conversion-slots';
 // Preserve this service's public API while keeping workflow release checks
 // independent of the renderer's async initialization (production boot).
 export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
@@ -56,16 +55,26 @@ export interface RenderedExport {
   /** §11.10(b): a hash of the DELIVERED ARTIFACT BYTES. */
   artifactSha256: string;
   /**
-   * How the file was rendered. 'plain-text-fallback' is a PDF made without
-   * the document styling (no PDF engine in this deployment; the file's first
-   * page says so). QA 2026-10-08 (j4): the export reported success and the
-   * export record said nothing, so the person filing it was not told.
+   * How the file was rendered. 'plain-text-fallback' remains readable for old
+   * records and defensive admission checks; new Authoring PDFs use the rich
+   * Word converter or refuse before delivery and filing.
    */
   rendering: ExportRendering;
 }
 
 /** 'formatted' for every DOCX and XML, and for a PDF the PDF engine rendered. */
 export type ExportRendering = 'formatted' | 'plain-text-fallback';
+
+/** A definite conversion refusal; internal converter details remain in cause. */
+export class AuthoringPdfRenderingError extends Error {
+  readonly status = 503;
+  readonly code = 'PDF_RENDERER_UNAVAILABLE';
+
+  constructor(cause: unknown) {
+    super('The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.', { cause });
+    this.name = 'AuthoringPdfRenderingError';
+  }
+}
 
 export interface RenderExportArgs {
   /** Internal: loaded from the immutable company revision, never the HTTP body. */
@@ -530,74 +539,18 @@ async function renderPdf(
   shared: SharedRender,
 ): Promise<{ content: Buffer; fileName: string; contentType: string; rendering: ExportRendering }> {
   const { doc } = args;
-  if (args.companyPresentation) {
-    // One rich Authoring DOCX, then the production converter's strict backend.
-    // Never flatten the letterhead, citations or signature statement into a fallback PDF.
-    const source = await renderDocx(args, shared);
+  // Preserve Word-building/source refusals; only conversion failures get the
+  // safe PDF refusal. Ordinary and historical company documents use one path.
+  const source = await renderDocx(args, shared);
+  try {
     const { convertDocxToPdf } = await import('../pdf-converter');
     const converted = await convertDocxToPdf(source.content, { backend: 'libreoffice' });
     return { content: converted.pdf, fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
       contentType: 'application/pdf', rendering: 'formatted' };
+  } catch (error) {
+    if (isConversionCapacityError(error)) throw error;
+    throw new AuthoringPdfRenderingError(error);
   }
-  // Real PDF via the platform's HTML→PDF renderer (the same engine the
-  // template render path uses). Tracked, so a plain-text fallback is reported
-  // on the export record and to the person exporting, not only on page one.
-  const { renderHtmlToPdfTracked } = await import('../../export/renderers');
-  const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
-    await import('../../export/authoring-blocks-to-html.js');
-  /* Section content parsed to typed runs and re-emitted as a WHITELISTED
-     structure with every text node escaped — stored markup never reaches the
-     renderer raw. Same parse and SAME citation registry as the DOCX branch. */
-  const pdfCaptions = shared.makeCaptionNumbering();
-  const pdfSections = shared.parsedSections.map(({ section: s, blocks }) => {
-    const body = blocksToHtml(blocks, shared.exportImages, {
-      crossRefs: shared.crossRefs,
-      citations: shared.citationsForSection(String(s.id)),
-      captions: pdfCaptions,
-    });
-    // The heading is the anchor a resolved cross-reference links to.
-    return `<h2 id="${esc(shared.crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
-  });
-  const referenceListHtml = renderReferenceListHtml(shared.citations);
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-          body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
-          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
-          p { white-space: pre-wrap; } p.li { margin: 0 0 0 1.2em; }
-          ${PRINT_STYLES}
-          ins { color: #067647; text-decoration: underline; }
-          del { color: #b42318; text-decoration: line-through; }
-          .redline-note { font-style: italic; }
-        </style></head><body>
-        <h1>${esc(doc.title)}</h1>${args.notice ? `\n        <p class="redline-note"><strong>${esc(args.notice)}</strong></p>` : ''}
-        ${
-          shared.pendingIns + shared.pendingDel > 0
-            ? `<p class="redline-note">This document contains unresolved tracked changes (${shared.pendingIns} proposed insertion(s), ${shared.pendingDel} proposed deletion(s)), rendered below as redline.</p>`
-            : ''
-        }
-        ${pdfSections.join('\n')}
-        ${referenceListHtml}
-        <h2>Electronic signatures</h2>
-        ${args.workingCopy
-          ? `<p>${esc(WORKING_COPY_SIGNATURE_STATEMENT)}</p>`
-          : shared.manifest.length === 0
-          ? '<p>No electronic signatures are recorded against this document.</p>'
-          : shared.manifest
-              .map((lines) => `<p>${lines.map(esc).join('<br/>')}</p>`)
-              .join('\n')}
-        </body></html>`;
-  /* The working-copy banner is stamped by the PDF engine on every page
-     (header and footer), not by CSS: the plain-text fallback that renders
-     where Puppeteer is absent applies no stylesheet. */
-  const { buffer, usedFallback } = await renderHtmlToPdfTracked(
-    html,
-    args.workingCopy ? { pageBanner: args.workingCopy.banner } : {},
-  );
-  return {
-    content: buffer,
-    fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
-    contentType: 'application/pdf',
-    rendering: usedFallback ? 'plain-text-fallback' : 'formatted',
-  };
 }
 
 /** Render one authoring document in one format. Throws on a renderer failure. */

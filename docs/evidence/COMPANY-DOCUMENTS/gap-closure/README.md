@@ -2,6 +2,8 @@
 
 The company stationery and legal-document workflows are connected inside Concept2Cure V2. This record distinguishes verified local behavior from deployment and agency acceptance.
 
+Subsequent ordinary Authoring PDF completion is qualified separately in `docs/evidence/D2-AUTHORING-PDF/2026-10-23/`. The source pins and counts below retain this earlier company qualification. The later work converges ordinary PDFs onto the same Word converter and confirms that the historical company PDF remains byte-for-byte identical; it does not relabel these earlier runs as current tests.
+
 ## What already exists
 
 The October 18 implementation inventory and October 21/23 merge reviews extend these canonical paths. The limitations below describe the starting behavior, before this completion.

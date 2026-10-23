@@ -20,10 +20,12 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import JSZip from 'jszip';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { convertedPdfFixture, wordBody, wordPart } from './_authoring-pdf-converter-fixture';
+import { ConversionCapacityError } from '../../services/conversion-slots';
 
-const { mockQuery, renderHtmlToPdf } = vi.hoisted(() => ({
+const { mockQuery, convertDocxToPdf } = vi.hoisted(() => ({
   mockQuery: vi.fn(),
-  renderHtmlToPdf: vi.fn(async (_html: string, _opts?: unknown) => Buffer.from('%PDF-1.7 rendered')),
+  convertDocxToPdf: vi.fn(),
 }));
 
 vi.mock('../../db', () => {
@@ -35,11 +37,7 @@ vi.mock('../../db', () => {
     db: {},
   };
 });
-vi.mock('../../export/renderers', () => ({
-  renderHtmlToPdf,
-  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
-  renderHtmlToPdfTracked: async (html: string, opts?: unknown) => ({ buffer: await renderHtmlToPdf(html, opts as never), usedFallback: false }),
-}));
+vi.mock('../../services/pdf-converter', () => ({ convertDocxToPdf }));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-export';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
@@ -76,7 +74,8 @@ let failAudit = false;
 beforeEach(() => {
   writes = [];
   failAudit = false;
-  renderHtmlToPdf.mockClear();
+  convertDocxToPdf.mockReset();
+  convertDocxToPdf.mockImplementation(convertedPdfFixture);
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: unknown, args: unknown[] = []) => {
     const s = String(sql);
@@ -96,17 +95,23 @@ beforeEach(() => {
 const auditRows = () => writes.filter((w) => w.sql.includes('INSERT INTO authoring_audit_trail'));
 
 describe('a working copy of a draft', () => {
-  it('PDF: every page carries the uncontrolled-copy banner; no signature manifestation', async () => {
+  it('PDF: strict conversion receives Word with the running uncontrolled-copy banner and no signature manifestation', async () => {
     const res = await binary(
       request(app()).post('/api/authoring/docs/D1/working-copy').set('Authorization', await bearer()).send({ format: 'pdf' }),
     );
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('application/pdf');
     expect(res.headers['content-disposition']).toContain('working_copy.pdf');
-    const [html, opts] = renderHtmlToPdf.mock.calls[0] as [string, { pageBanner?: string }];
-    expect(opts?.pageBanner).toMatch(/^DRAFT — uncontrolled copy · not a controlled record · D1 · v3 · DRAFT · downloaded .+Z by author@test\.co$/);
-    expect(html).toContain(WORKING_COPY_SIGNATURE_STATEMENT);
-    expect(html).not.toContain('No electronic signatures are recorded');
+    const [word, options] = convertDocxToPdf.mock.calls[0] as [Buffer, unknown];
+    expect(options).toEqual({ backend: 'libreoffice' });
+    const zip = await JSZip.loadAsync(word);
+    const running = Object.keys(zip.files).filter(name => /word\/(header|footer)\d*\.xml$/.test(name));
+    expect(running).toHaveLength(2);
+    for (const part of running) expect(await wordPart(word, part)).toContain('DRAFT — uncontrolled copy');
+    const text = await wordBody(word);
+    expect(text).toContain(WORKING_COPY_SIGNATURE_STATEMENT);
+    expect(text).not.toContain('No electronic signatures are recorded');
+    expect(res.body).toEqual((await convertDocxToPdf.mock.results[0].value).pdf);
   });
 
   it('DOCX: the banner is in the page header and footer parts; no signature manifestation', async () => {
@@ -155,6 +160,26 @@ describe('a working copy of a draft', () => {
     const res = await request(app()).post('/api/authoring/docs/D1/working-copy').set('Authorization', await bearer()).send({ format: 'xml' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('WORKING_COPY_FORMAT');
+  });
+
+  it('refuses converter failure safely before recording or delivering a working copy', async () => {
+    convertDocxToPdf.mockRejectedValueOnce(new Error('private LibreOffice process detail /tmp/working-source.docx'));
+    const res = await request(app()).post('/api/authoring/docs/D1/working-copy').set('Authorization', await bearer()).send({ format: 'pdf' });
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('PDF_RENDERER_UNAVAILABLE');
+    expect(JSON.stringify(res.body)).not.toMatch(/private|\/tmp|working-source|%PDF/);
+    expect(auditRows()).toEqual([]);
+    expect(writes.some(write => write.sql.includes('authoring_export_history'))).toBe(false);
+    expect(res.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('preserves the existing converter-capacity retry response', async () => {
+    convertDocxToPdf.mockRejectedValueOnce(new ConversionCapacityError('libreoffice', 120000, 2));
+    const res = await request(app()).post('/api/authoring/docs/D1/working-copy').set('Authorization', await bearer()).send({ format: 'pdf' });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('CONVERTER_BUSY');
+    expect(res.headers['retry-after']).toBe('30');
+    expect(auditRows()).toEqual([]);
   });
 
   it('leaves the controlled export as it was: the same draft is still refused', async () => {

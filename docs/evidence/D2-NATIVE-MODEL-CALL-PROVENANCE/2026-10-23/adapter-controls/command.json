@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts",
+    "server/services/ana/__tests__/turn-record-served-models.test.ts",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/adapter-controls/results.json"
+  ],
+  "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+  "NODE_OPTIONS": "--max-old-space-size=4096",
+  "nodeVersion": "v22.23.3",
+  "startedAt": "2026-10-23T17:27:00.521049+00:00",
+  "baseline": "dd749f3e56f1d9055b19067e90680d70bf9a9fb9",
+  "headAtStart": "f158bf3f00a7fc898e78ed376787eb523458e36d",
+  "purpose": "Unchanged existing adapter and canonical author-reader compatibility controls, not fail-first red evidence. Scripted gateway/tool seams; no live provider or production DB.",
+  "testHashes": {
+    "server/services/ana/__tests__/executor-agentic-loop-options.test.ts": "0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6",
+    "server/services/ana/__tests__/turn-record-served-models.test.ts": "2e131cb902fa8cf0f181ec35acc07f1b01253fde07fb4fe7af8c31f27ee7e0bb",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0"
+  }
+}
