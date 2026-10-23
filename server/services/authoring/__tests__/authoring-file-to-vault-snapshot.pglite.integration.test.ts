@@ -187,6 +187,8 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     expect(after.history[0].metadata?.companyCorrespondence).toEqual(companyCorrespondence);
     const receipt = (await d.f.pg.query<{ entry: { details: { companyCorrespondence: unknown } } }>('SELECT entry FROM test_filing_audit WHERE tenant_id=$1 AND operation=\'authoring.document.file_to_vault\'', [d.f.org])).rows[0];
     expect(receipt.entry.details.companyCorrespondence).toEqual(companyCorrespondence);
+    expect(receipt.entry.details).toMatchObject({ sourceVersion: '1.0', sourceSectionsSha256: sectionsDigest(d.sections) });
+    expect(after.history[0].metadata).toMatchObject({ sourceVersion: '1.0', sourceSectionsSha256: sectionsDigest(d.sections) });
   });
   it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
     const d = await workingDraft();

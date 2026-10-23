@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-21T02:14:30.058448+00:00",
+  "elapsedSeconds": 3.178,
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 1,
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourcesBefore": {
+    "server/services/vault/vault-version-checkin.ts": "fd91f94deedf9ea3030f00b84092314f4ec1f6f73c5b6bd858a18898956383de",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+  },
+  "sourcesAfter": {
+    "server/services/vault/vault-version-checkin.ts": "fd91f94deedf9ea3030f00b84092314f4ec1f6f73c5b6bd858a18898956383de",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+  },
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "e6f1b8c758c4e904cef62521eb46bcbbc9239e5dc47a6b079c6e8f35a76f7674"
+}

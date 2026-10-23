@@ -130,6 +130,8 @@ export interface ResolvedFile {
   lineage?: LeafLineage;
   /** Exact admitted Vault source; registered legal originals must never be normalized. */
   sourceIntegrity?: LeafSourceIntegrity;
+  /** Audited rendition derivation, separate from alias identity and approval. */
+  derivation?: import('../authoring/authoring-vault-filing-receipt').VaultFilingDerivation;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */

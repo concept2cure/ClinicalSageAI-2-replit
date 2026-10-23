@@ -66,6 +66,7 @@ import type { LegalDocumentContext } from '../../../shared/company-documents';
 import { vaultLeafSourceIntegrity } from './original-pdf-preservation';
 import type { VaultOriginalPdfSourceRow } from './original-pdf-contract';
 import { readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
+import { readAuthoringVaultFilingReceipt } from '../authoring/authoring-vault-filing-receipt';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -631,12 +632,7 @@ export async function materializeLeafSources(
       // storage_path is a server-generated multer disk path; read it via the
       // shared safe reader (returns null when unreadable/missing). Any read
       // failure → unresolved (fail closed).
-      let buf: Buffer | null = null;
-      try {
-        buf = await readLocalUploadBuffer(doc.storagePath);
-      } catch {
-        buf = null;
-      }
+      const buf = await readLocalUploadBuffer(doc.storagePath).catch(() => null);
       if (!buf || buf.length === 0) {
         miss('uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf');
         continue;
@@ -694,7 +690,7 @@ export async function materializeLeafSources(
       }
 
       const vaultRes = await queryableFromDrizzle(db).query(
-        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name, d.program_id
+        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name, d.program_id::text AS program_id
            FROM vault.documents d
            JOIN organizations o ON o.id=$2
           WHERE d.id = $1::uuid
@@ -760,6 +756,9 @@ export async function materializeLeafSources(
         md5: createHash('md5').update(got.bytes).digest('hex'),
         sha256: vaultSha,
         sourceIntegrity: vaultLeafSourceIntegrity(legalOriginals, documentUuid, vaultSha, vaultRow.program_id),
+        derivation: await readAuthoringVaultFilingReceipt(queryableFromDrizzle(db), {
+          organizationId, programId: vaultRow.program_id, vaultDocumentId: documentUuid, artifactSha256: vaultSha,
+        }),
       });
       materialized++;
       // VR-14 (D7, 2026-10-01): staged is not approved. Until now this branch

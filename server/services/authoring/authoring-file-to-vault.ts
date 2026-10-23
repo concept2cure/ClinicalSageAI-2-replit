@@ -314,6 +314,8 @@ async function recordFiling(
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
       documentStatus: doc.status,
+      sourceVersion: doc.version,
+      sourceSectionsSha256: sectionsDigest(sections),
       ...(filingDiverged.length > 0 ? { filingDiverged } : {}),
       // The exact original dependency survives the new bytes' identity. This
       // receipt is how withdrawal finds a source-derived Vault rendition.
@@ -326,7 +328,7 @@ async function recordFiling(
     await logExport(client, {
       docId,
       format: args.format,
-      docSha256: sectionsDigest(sections),
+      docSha256: details.sourceSectionsSha256,
       exportedBy: actor.email ?? actor.id,
       fileName: rendered.fileName,
       fileSize: rendered.fileContent.length,

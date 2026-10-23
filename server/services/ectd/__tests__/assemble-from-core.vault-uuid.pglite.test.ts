@@ -17,11 +17,14 @@ import JSZip from 'jszip';
 import { plainPdfFixture } from './support/signed-pdf-fixture';
 import { syncCompanyLegalRegistry } from '../../company-documents/legal-registry';
 import type { CompanyLegalDocument } from '../../../../shared/company-documents';
-import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { AUDIT_LOGS_PGLITE_DDL, createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; }, pool: { query: async () => ({ rows: [] }) } }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
+vi.mock('../../auditService', async original => ({
+  ...(await original<typeof import('../../auditService')>()),
+  default: { logAction: vi.fn(async () => ({ persisted: true })) },
+}));
 let PDF: Buffer;
 vi.mock('../pdfa-pipeline', () => ({ finalizePdfA: vi.fn(async (bytes: Uint8Array) => ({
   pdfBytes: Buffer.concat([Buffer.from(bytes), Buffer.from('\n% toolchain converted')]), converted: true, pdfaPart: '1', warnings: [],
@@ -44,12 +47,14 @@ vi.mock('../../storage', () => ({
 
 import { assembleSequence, assembledTransmitBlockers } from '../assemble-from-core';
 import { finalizePdfA } from '../pdfa-pipeline';
+import { writeChainedAuditRow } from '../../auditService';
 
 let harness: IndPgliteDb;
 const ORG = 7;
 const USER = 3;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const VAULT_DOC = '33333333-3333-4333-8333-333333333333';
+const SOURCE_DOC = '44444444-4444-4444-8444-444444444444';
 
 beforeAll(async () => {
   PDF = await plainPdfFixture('Clinical study report');
@@ -102,6 +107,18 @@ beforeAll(async () => {
     CREATE TABLE IF NOT EXISTS vault.legal_holds (organization_id INTEGER, lifted_at TIMESTAMPTZ);`);
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
+  await harness.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20260921_audit_logs_chain_seq.sql', import.meta.url), 'utf8'));
+  await harness.pglite.exec('BEGIN');
+  await writeChainedAuditRow(harness.pglite, {
+    tenantId: ORG, userId: USER, action: 'authoring.document.file_to_vault',
+    resourceType: 'authoring_document', resourceId: SOURCE_DOC,
+    details: { vaultDocumentId: VAULT_DOC, programId: PROGRAM,
+      artifactSha256: createHash('sha256').update(PDF).digest('hex'),
+      exportId: '55555555-5555-4555-8555-555555555555',
+      sourceVersion: '1.0', sourceSectionsSha256: 'a'.repeat(64) },
+  });
+  await harness.pglite.exec('COMMIT');
 });
 
 afterAll(async () => {
@@ -120,6 +137,13 @@ describe('assembleSequence — vault leaf by uuid, and what transmit must refuse
       const pdfs = Object.keys(zip.files).filter((f) => !zip.files[f].dir && f.endsWith('.pdf'));
       expect(pdfs.some((f) => f.startsWith('m5/'))).toBe(true);
       expect(pdfs.some((f) => f.startsWith('m2/'))).toBe(true);
+      const governance = JSON.parse(await fs.readFile(r.governanceManifestPath, 'utf8'));
+      expect(governance.sources.find((s: { key: string }) => s.key === `vault_documents:${VAULT_DOC}`)).toMatchObject({
+        lineage: null,
+        derivation: { status: 'recorded', programId: PROGRAM,
+          source: { store: 'authoring_documents', nativeId: SOURCE_DOC, version: '1.0', sectionsSha256: 'a'.repeat(64) },
+          artifactSha256: createHash('sha256').update(PDF).digest('hex') },
+      });
     } finally {
       await r.cleanup();
     }
