@@ -73,5 +73,15 @@
     "decodedBytes": 13977,
     "decodedSha256": "fb3a3b7c652a8d39a66aae6d4d2dd1c2906e0e2b347c55ee5c610167e63c1eda",
     "archiveSha256": "3de2a9401b6ec8855585a20db921a278cd4d55b3610ea5c0ce997c81beebf66f"
+  },
+  "build-release-identity-reconciled.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "f3fc82f7231b74de78ca81d690c00c94aad50a3ec19c14d93c961c7ed8fe43d3",
+    "archiveSha256": "6cdeb2761c2b709f8139afdda72e871da004127ab84a7638c759dfe0528c687e"
+  },
+  "push-attempt-8.txt.gz": {
+    "decodedBytes": 14178,
+    "decodedSha256": "7cfafb25457853d2724120e8cfeebd2f50a07e9215c8773bc08fa5a9c18ce9b2",
+    "archiveSha256": "37aa2ca163f6ec67039a875e111f4163eda14a116e8654d5dab478412ce54ed6"
   }
 }
