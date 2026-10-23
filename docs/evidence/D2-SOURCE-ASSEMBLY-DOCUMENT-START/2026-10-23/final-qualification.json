@@ -1,283 +1,231 @@
 {
-  "at": "2026-10-23T19:14:45.124265+00:00",
-  "scope": "Final local qualification after normal canonical Vault freshness fast-forward; direct Git publication follows.",
+  "at": "2026-10-23T19:26:10.946423+00:00",
+  "scope": "Final combined source-start and canonical unchanged saved-section refiling qualification on merged code92dbe0c6; earlier epochs remain historical.",
+  "implementationCommit": "58e10011677f47dbfb9ee43d305976bdbd3790db",
+  "codeCommit": "92dbe0c6b63e407267efb881c67e66094384c265",
+  "sourceFreeze": "merged-source-freeze.json",
+  "sourceFreezeSha256": "89d65c0a936f6738b17999aea1204204f782d5780bc24d069090fa618c50fffa",
+  "sourceCount": 623,
+  "sourceDrift": [],
   "checks": [
     {
-      "receipt": "qualified-ui.json",
-      "sha256": "c3532297d5af11c7a3066b62f08ce9aec2b9e425c30f8bf3685ec6b49fb46241",
-      "rawGzipSha256": "1d5bb0a0e20e764e147a4ca479f934cf4399b9ee27766fb200c7a7c181e6d29f",
+      "receipt": "merged-ui.json",
+      "sha256": "29e4bcdaa411d078edd67c2f75b67ad93b314df936c5a6cf2276cd438d9b8aa3",
+      "rawGzipSha256": "8e938013348a92c5bf124152627a011f5bde1d9bc9dda87e40264999f9adc8e5",
       "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": [
+        "Test Files  23 passed (23)",
+        "Tests  503 passed (503)",
+        "Duration  99.24s (transform 4.45s, setup 1.42s, import 11.27s, tests 74.46s, environment 9.12s)"
+      ]
+    },
+    {
+      "receipt": "merged-backend.json",
+      "sha256": "9be4cdc46bfc94857bef31eae0d7911f9325d399fadc1c4c3e57d134130c43c8",
+      "rawGzipSha256": "0075c98df6cb98511c627fadf60f65181129451c1cb57ed44f3203579848f99a",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": [
         "Test Files  20 passed (20)",
-        "Tests  447 passed (447)",
-        "Duration  88.46s (transform 4.37s, setup 1.29s, import 9.95s, tests 66.92s, environment 7.81s)"
+        "Tests  465 passed (465)",
+        "Duration  81.25s (transform 10.78s, setup 269ms, import 27.58s, tests 50.85s, environment 2ms)"
       ]
     },
     {
-      "receipt": "qualified-backend.json",
-      "sha256": "23ae67e5255fadb68189dd8c2e6a084451eaebd314ac83f7b9c707f41a6fe268",
-      "rawGzipSha256": "a18f6dd1101cb9396877635acacdd3d836b501e46a6a234f84f9756b523e6e4d",
+      "receipt": "merged-vault-freshness.json",
+      "sha256": "eacaf7f0ece2c67e942260ce13208318fd95140a473b508983707c73566d3042",
+      "rawGzipSha256": "dce3c0a77cd143d7485e3899d7851cffb6d9274a4bc7a8bfe0d80bd74749617a",
       "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": [
-        "Test Files  15 passed (15)",
-        "Tests  283 passed (283)",
-        "Duration  55.22s (transform 9.88s, setup 205ms, import 23.72s, tests 29.38s, environment 1ms)"
-      ]
-    },
-    {
-      "receipt": "qualified-strict-lint.json",
-      "sha256": "20b2aebe1dfefc9d72b4f084134475293a8136cdde8bbfd9c08429f7a555c02a",
-      "rawGzipSha256": "278b0a5f0d06fe2a9f2e0d5eae4a444d562e1e2c6d6da5f798ad310c1608703e",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-warning-ratchet.json",
-      "sha256": "978bb61862e2f7418c2c4840d3c2dbc5ede9616089473b3cb750f41fb1fd469b",
-      "rawGzipSha256": "568ba48fbb5d82f256e296cc2bc12cebe47bb50879bb3740eae9d9cfb641022b",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-typecheck.json",
-      "sha256": "34be07e0f2c290666147752f1c827eb89dd1b1aa09c981e3742bb32c95e0802d",
-      "rawGzipSha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-build.json",
-      "sha256": "c21bd08d9ffff446d49b3504034934f1f28798968f8293a298b956ea2629c003",
-      "rawGzipSha256": "65d84d3a134f35c40ca78f7b33dc3f7096e075d1d602e904edc93250ec14e1f4",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-single-native-canvas.json",
-      "sha256": "6cd0a13c0742804fa301f1fcc4f59c7a3e880c820b09adb9deb5aa609f05aaa7",
-      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-canvas-path.json",
-      "sha256": "6007259ce21ad63a3c2443b956faa3e4e8ecd5b10a9d33e7a00373372b123a1d",
-      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-check-editor-integrity.json",
-      "sha256": "139f13a1a2a9560e3996d1b47915bfed3bd6c119e4c6b7bc66271385da177106",
-      "rawGzipSha256": "b7a993cd73d629f6558a17882dc5ba1ea3dfe2449bec3d4fc7b7e560e1838e00",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-design-system.json",
-      "sha256": "d04892d57360a65125fa207ab8681acf0bc12d6bce41fb1b0dc38dfe5c987f48",
-      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-token-cascade.json",
-      "sha256": "3a990ddc18e7f2cf55974219b0c54e3f43ea48a786724c63ff0bc4cc6490f681",
-      "rawGzipSha256": "cc310265ddc138f9ba8cb27f192981f46c4a313f61494d7c52bf968f1ecc8f03",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-token-contrast.json",
-      "sha256": "b74b3cac724493d2ccf193fce61199bf5ad7f721db9d49884df42e20c73d8e0f",
-      "rawGzipSha256": "7d333575781f3e54e19532554f0141775d0a0468b28d2e2f4f19725291ce86e7",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-check-phantom-tokens.json",
-      "sha256": "2b572e3bf30311417d46f6073406d16b0cd0213c50fe4b30cb782f37de16ec84",
-      "rawGzipSha256": "1eb90f201e0b292f588261ba9be5a03840c59e96c9c1498793a157788d045f25",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-gateway-bypass.json",
-      "sha256": "302756a60e3af893deb999220769c8d9fb17b78fb52f4805d1e780980be64aca",
-      "rawGzipSha256": "069f5061bfb08b4b26e5f693a3accd235de0de30d709817a7fe49c35c56488ce",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-sql-interpolation.json",
-      "sha256": "2864e89199b1b68b9c97168553f4dbc0805bb29428cc03a7b434d823727b898e",
-      "rawGzipSha256": "e2864ed4e9f07655113290982e0d67c18c12d37415e8db165d81d86577a79df7",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-set-order.json",
-      "sha256": "44300e3c5a4536a1508ea6ef155a5f77b33ad12774d9cdf15c34c3d9b0516f13",
-      "rawGzipSha256": "0893de38d9bcbff37c3fd2772998a7750ca84587268f6719828cc6974e96844c",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-guard-order.json",
-      "sha256": "33382fc3f84fee060614777e2be881db5c6bfb2f883cdd16dc966d01e0ca2e1c",
-      "rawGzipSha256": "25a98c9259eb4143115d7b87c8cee1ab893d538001b350975b1854aafc66d069",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-reachability.json",
-      "sha256": "6fc67d128978045139ba66a47c330ee2b7ad8e4cec7f45481f02e5dfabaa48da",
-      "rawGzipSha256": "d1f0659c8a6f9409891977a0370ed4564fe318fd075ce40b20bc60c08f7180cb",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-deploy-path.json",
-      "sha256": "42ec53adbc1080dff978fbd9197ed4fb6551fd4b0a8be5c23ec3e0daa500c336",
-      "rawGzipSha256": "073b0f29852b97b9570820a0773234e3770c0a0ff76891b9f7e510afeb1575a4",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-drop-safety.json",
-      "sha256": "052c082a86d41309ae15e8c4da6f6200ed7a98c7f6b33d8af4a6ba85577e3962",
-      "rawGzipSha256": "7fdce1e58e01ffa5a7e518a77c01aaf6fc8c2466db7653d15cda6377a5e623f8",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-migration-prefix-collisions.json",
-      "sha256": "6eda7df343494af0660315dc5bdef495c94655c2c8c4a353dabc9d8a73b8f267",
-      "rawGzipSha256": "4d08ff99c8f7670b884b5c44d4527ac03eb47f03977b2f1ad02b9f19e73b47ca",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-repo-health.json",
-      "sha256": "acbca792b3e767716870053076b519d87cb0a3b2bd3a7c51c4d1cef913fa64ff",
-      "rawGzipSha256": "17507a183bfc2e4874501b7cb6e9fbb3cc11fc1dbc421336c73754e3b7b12b4d",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-surface-text-ramp.json",
-      "sha256": "2c9db7b0f2e2cb1b1c334f23ba1bc17aa2c8d25047691bad0b4012fde90badf9",
-      "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "qualified-gate-shell-css-collisions.json",
-      "sha256": "6698cb72b892fca310b376404825d518b844f2053d97c11ad60c726a4180a1d7",
-      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
-      "exitCode": 0,
-      "sourceFreeze": "source-freeze.json",
-      "testSummary": []
-    },
-    {
-      "receipt": "publication-vault-freshness.json",
-      "sha256": "c0b57d4299b7dcb92bbbe177e974575c34804cfd9ff9eab6f5e6ee6995f1ab14",
-      "rawGzipSha256": "3d086496622dd339faae8c5d1704e545e7b76b6efab918dfa68ca747042138e2",
-      "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": [
         "Test Files  8 passed (8)",
         "Tests  84 passed (84)",
-        "Duration  15.19s (transform 1.88s, setup 155ms, import 8.02s, tests 5.85s, environment 1ms)"
+        "Duration  13.93s (transform 1.27s, setup 149ms, import 6.99s, tests 5.60s, environment 1ms)"
       ]
     },
     {
-      "receipt": "publication-warning-ratchet.json",
-      "sha256": "6a6a735bd83f7f678891c680a01198b9f1557ee33f96c8230ff3510568dc1fb2",
-      "rawGzipSha256": "af9afdabbac3245f918f3c37350eecc04627096a17315a831da093a68d0a5a1d",
+      "receipt": "merged-warning-full.json",
+      "sha256": "f3306ccedfeda843f21ec6a44ac0a1cccfd056c90e8ee746e88c6aae4f4f04db",
+      "rawGzipSha256": "1ae68eb88dc25ab98678c1455e940b87593820c6641d18081cc95a4e90917eaf",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     },
     {
-      "receipt": "publication-typecheck.json",
-      "sha256": "e737e16aec56831b5c3af45d705591b417feeb92a97ce185ee739b89e1ce83fd",
+      "receipt": "merged-typecheck.json",
+      "sha256": "031c966d8415c40897079c72785d2fcc237f22e6748c33494f7af044ac847162",
       "rawGzipSha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     },
     {
-      "receipt": "publication-build.json",
-      "sha256": "b9a3d9104ec2de1d2db79a9e3d3775d50f60e18fb508a90eac3652321aaad633",
-      "rawGzipSha256": "75eb57b34eaec981598b287a6bd4bf77e76dbd32413e690f46af16866fd5da20",
+      "receipt": "merged-build.json",
+      "sha256": "fd7c94f9e619ef82504bd7bb53dd0001828f32802e13c2f568606e4ba0b6c48f",
+      "rawGzipSha256": "0e6e47c74df82d1197355bdec0a1b1ff877463f2609a3af376c20a276b968b86",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     },
     {
-      "receipt": "publication-gate-gateway-bypass.json",
-      "sha256": "4ee13ed752acc905c7737109031c39da572c0ed7d6aa119837822d8a83c8d25c",
+      "receipt": "merged-gate-single-native-canvas.json",
+      "sha256": "3d5c43b0f08cec927c083c19871872f607d70096b274e078f63baed428c1c5fc",
+      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-canvas-path.json",
+      "sha256": "8319cd25c56ea5a7458bbe18541ecfa93cc35bfc3346cf56be7691685680c6ac",
+      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-check-editor-integrity.json",
+      "sha256": "71fc883a5fa6d9bde8bde8e918c25c478a9f029a9e87b2b69d735f262975526e",
+      "rawGzipSha256": "7b36c3a871006c0b53b696a49034703a55cb9488f9192797e45c22e73aa4c574",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-design-system.json",
+      "sha256": "538372f221a4e571cae87174f9501cb6e398f2e8e6c3cdf5793105156d0ebc18",
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-token-cascade.json",
+      "sha256": "bf6f2c0b2625da82a79b4c7425416558c8b21dfa7491709a5db4b6ea127bd055",
+      "rawGzipSha256": "cc310265ddc138f9ba8cb27f192981f46c4a313f61494d7c52bf968f1ecc8f03",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-token-contrast.json",
+      "sha256": "6b98a621b28d1c58b05f661ff1e68634077bf01c381f01d9d481c65ee8dbce8c",
+      "rawGzipSha256": "7d333575781f3e54e19532554f0141775d0a0468b28d2e2f4f19725291ce86e7",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-check-phantom-tokens.json",
+      "sha256": "83ff908e3b7746c36a38770ad19d0f7b08f3295e608f07e8b85f0baa72ba7eae",
+      "rawGzipSha256": "1eb90f201e0b292f588261ba9be5a03840c59e96c9c1498793a157788d045f25",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-gateway-bypass.json",
+      "sha256": "5c30a687ace2ac538f8bfa846002d249c3a1a4ad2801e3daaae9569a1ec40e3e",
       "rawGzipSha256": "069f5061bfb08b4b26e5f693a3accd235de0de30d709817a7fe49c35c56488ce",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     },
     {
-      "receipt": "publication-gate-sql-interpolation.json",
-      "sha256": "1ef7a0036b627b4b48b31ec7addbff9eb9a35aabb026ac57fd84871d4293ce56",
+      "receipt": "merged-gate-sql-interpolation.json",
+      "sha256": "21033367defa36f9189cac7cc48d4a11f0f8a654c46b3c59a4c3ac0d52dee8ca",
       "rawGzipSha256": "e2864ed4e9f07655113290982e0d67c18c12d37415e8db165d81d86577a79df7",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     },
     {
-      "receipt": "publication-gate-repo-health.json",
-      "sha256": "d073667836baa1c25e59405686ecd006183b246027ca3be55b0d88d9c3771402",
-      "rawGzipSha256": "2c1e16ea2aa9ad72c09bb381b7b200042c84b95f4ea55d43842bb597102d1a71",
+      "receipt": "merged-gate-migration-set-order.json",
+      "sha256": "c774988cb93fc3bd96ed166d495cfb712ea037319a9562c2b3ecac99083d7a32",
+      "rawGzipSha256": "0893de38d9bcbff37c3fd2772998a7750ca84587268f6719828cc6974e96844c",
       "exitCode": 0,
-      "sourceFreeze": "publication-source-freeze.json",
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-migration-guard-order.json",
+      "sha256": "d44f3b2141546a348b55a1517403e0ac636197aef542bd1fc8e5eac968716b7e",
+      "rawGzipSha256": "25a98c9259eb4143115d7b87c8cee1ab893d538001b350975b1854aafc66d069",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-migration-reachability.json",
+      "sha256": "1b3297743e5d157425849354239deee38c5fe6d0801b25cdd6b769fc208118ae",
+      "rawGzipSha256": "d1f0659c8a6f9409891977a0370ed4564fe318fd075ce40b20bc60c08f7180cb",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-migration-deploy-path.json",
+      "sha256": "44468f5af147f3797ac003817e9ba902819c92d192b2e6e2e4e3c535fae55b9b",
+      "rawGzipSha256": "073b0f29852b97b9570820a0773234e3770c0a0ff76891b9f7e510afeb1575a4",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-migration-drop-safety.json",
+      "sha256": "48929f1ca79187268222b35cdbb46bdd4c52502927e23bb9098d0bcec7640696",
+      "rawGzipSha256": "7fdce1e58e01ffa5a7e518a77c01aaf6fc8c2466db7653d15cda6377a5e623f8",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-migration-prefix-collisions.json",
+      "sha256": "a87fde87d2067a3774aa6226509a5fdccdc93ed8b18afe33550c67a0cd4e64ea",
+      "rawGzipSha256": "4d08ff99c8f7670b884b5c44d4527ac03eb47f03977b2f1ad02b9f19e73b47ca",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-repo-health.json",
+      "sha256": "5dad9ab9eef711134a5aa985bf41e668143acf11aea46798f0c4ccca07295380",
+      "rawGzipSha256": "8ce33af8f68c94950d98593d2419103e2d0c03bde038201efac770ce5fb7b805",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-surface-text-ramp.json",
+      "sha256": "63e72aeaf864b2224ebf838b40a48e106fea0012e81e5c64147426aaa551537a",
+      "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "receipt": "merged-gate-shell-css-collisions.json",
+      "sha256": "6521d37370526c792bbcd141d3b3b5f67aef5e372305d9ae4b905eaf90ebb947",
+      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
+      "exitCode": 0,
+      "sourceFreeze": "merged-source-freeze.json",
       "testSummary": []
     }
   ],
+  "distinctSelectedTests": 1052,
+  "distinctSelectedSuites": 51,
+  "passedRepositoryGates": 18,
+  "typeScriptErrors": 0,
+  "warningGrowth": 0,
+  "dependencyChanges": false,
+  "baselineChanges": false,
   "humanCases": 83,
   "humanStatus": "All Not run",
-  "baselineChanges": false,
-  "dependencyChanges": false,
-  "sourceFreeze": "publication-source-freeze.json",
-  "sourceFreezeSha256": "5163bdbd5bd2ce57ff0d3e2fb193c85498f7194f99e88d81e5d429edcd820673",
-  "sourceCount": 607,
-  "sourceDrift": [],
-  "distinctSelectedTests": 814,
-  "distinctSelectedSuites": 43,
-  "typeScriptErrors": 0,
-  "originalPassedGateCount": 18,
-  "affectedGatesReplayed": [
-    "gateway-bypass",
-    "sql-interpolation",
-    "repo-health"
+  "unchangedStrictLintReceipt": "qualified-strict-lint.json",
+  "limits": [
+    "Synthetic client HTTP/auth seams; selected backend suites declare their PGlite/mock boundaries.",
+    "No live provider, agency transmission, deployment or human acceptance.",
+    "No durable creation idempotency across remount/reload/another tab."
   ]
 }

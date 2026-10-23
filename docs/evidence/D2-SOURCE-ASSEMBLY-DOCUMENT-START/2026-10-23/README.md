@@ -131,13 +131,13 @@ sector/regional completeness and GLP/GCP/GMP source-outline review remain open.
 Known/unknown creation recovery remains mounted-component scoped; this change
 adds no durable backend idempotency across reload or another tab.
 
-## Final qualification epochs
+## Qualification epochs
 
-The final editor-owned bytes pass **447 tests / 20 client suites** and **283 tests /
+Before the saved-section re-filing merge, the editor-owned bytes passed **447 tests / 20 client suites** and **283 tests /
 15 backend suites**, strict lint of the eleven other changed TypeScript files,
 and the changed-file warning ratchet (existing Workbench warnings do not grow).
-The compiler reports **zero errors against the unchanged zero baseline**, the
-build passes, and all **18** repository gates pass on the 598-input freeze.
+At that epoch the compiler reported **zero errors against the unchanged zero baseline**, the
+build passed, and all **18** repository gates passed on the 598-input freeze.
 
 During qualification, eight more canonical commits landed. The normal fast-
 forward in `vault-freshness-catchup.json` changed no previously pinned input.
@@ -147,6 +147,37 @@ found its current-passage fences compatible with editor/AnA source ownership.
 and the eight changed suites: **84 tests / 8 suites** pass. The publication
 warning ratchet also passes; publication compiler/build and affected gateway,
 SQL-inspection and repository-size gates are captured separately on that 607-
-input freeze. This is 814 tests in 43 distinct selected files; worker and earlier
+input freeze. Those selections counted 814 tests in 43 distinct files before the later merge; worker and earlier
 repeated cohorts are not added again. Final Git-object verification identifies
 which exact source bytes reached the canonical remote.
+
+
+A later normal canonical merge (`saved-refiling-merge.json`) integrates the
+concurrently completed unchanged saved-section re-filing action. Implementation
+commit `58e10011` was recorded with normal hooks before this merge. The incoming
+change touched the Workbench toolbar/metadata and the authoring PATCH dispatch;
+its new governed act is explicit and remains unavailable to unbound, dirty or
+unverified records. It does not change document creation or automatically file
+source-start documents. Shared lineage/filing helpers retain their owning gates.
+Read-only review found no compatibility blocker, and the merge preserved both
+sets of code without conflict. Previously declared Workbench/router pins changed
+explicitly; `merged-source-freeze.json` records the new 623-input epoch. Earlier
+qualification stays historical and is not silently relabelled as testing this
+merge. `merged-*` receipts and the updated final qualification identify the
+actual combined code and replayed tests/checks used for direct publication.
+
+
+On the merged 623-input epoch, **503 tests / 23 client suites** and **465 tests /
+20 backend suites** pass with no declared source drift. These include the new
+re-file UI/access/save cases and shared unchanged-refiling/workflow/lineage/
+filing-lock/node-status contracts. `merged-vault-freshness`, `merged-typecheck`,
+`merged-build`, `merged-warning-full` and the eighteen `merged-gate-*` receipts
+complete the final combined qualification before publication. The final
+qualification file lists their actual results; earlier cohorts remain preserved.
+
+
+Final combined qualification passes **1,052 tests / 51 distinct suites**, zero
+TypeScript errors, the full warning ratchet, build and all eighteen repository
+gates on the 623-input merged freeze. No baseline or dependency changed. All
+source-start production/test bytes and incoming filing repairs are represented
+in the final Git-object verification. The human handoff remains 83 Not run cases.
