@@ -129,6 +129,14 @@ refusal/remedy evidence; `size-split-tests.json` keeps these runs separate from
 the earlier 595/32, 499/14 and 244/8 qualifications. Publication still requires the
 entire mandatory push hook to pass.
 
+Latest reporting-access work at `b3e5746f6` merged cleanly at `784db6fff`.
+All 143 post-split source pins remain unchanged. A separate **91-case,
+five-suite reporting/Authoring check** and fresh production build pass.
+`reporting-integration.json` records the final input manifest, compatible
+source-bound upstream reporting cohorts and required combined TypeScript/push
+gates. Earlier counts and full compiler results keep their exact source scope;
+nothing is added across overlapping runs.
+
 ## Reproduction and limits
 
 ```sh

@@ -92,5 +92,14 @@
     "typecheckProcessExit": 0,
     "sizeGatePassed": true,
     "ceilingsUnchanged": true
+  },
+  "finalPublicationInputs": {
+    "supplement": "reporting-integration.json",
+    "sourceCommit": "784db6fff7baf0dafd2bf8d9384c27730d01e21e",
+    "all143PostSplitPinsUnchanged": true,
+    "reportingIntegrationTestsPassed": 91,
+    "reportingIntegrationFiles": 5,
+    "freshProductionBuildPassed": true,
+    "mandatoryCombinedPushAndTypecheckRequired": true
   }
 }
