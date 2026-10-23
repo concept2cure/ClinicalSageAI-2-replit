@@ -1,0 +1,7 @@
+
+> concept2cure-riai@1.0.0 ci:typecheck:no-regression
+> node scripts/ci/typecheck-no-regression.mjs
+
+[ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.

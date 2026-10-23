@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:16:32.956Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:16:33.167Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:16:33.168Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:16:33.169Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape
+ ↓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason

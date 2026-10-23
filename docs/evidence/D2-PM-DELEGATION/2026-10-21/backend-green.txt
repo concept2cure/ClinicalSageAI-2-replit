@@ -1,0 +1,162 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:20:15.129Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:20:15.377Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:20:15.378Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:20:15.379Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 77ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying
+{
+  "timestamp": "2026-10-21T02:20:19.544Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "T1",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"c2c_ana_actions_command_check\""
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 101ms
+   → {"success":false,"error":"AUDIT_WRITE_FAILED","message":"The assignment could not be recorded in the audit trail, so nothing was changed. Try again."}: expected 500 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 31ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 59ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 50ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 56ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 49ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 67ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 83ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 61ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+{
+  "timestamp": "2026-10-21T02:20:20.155Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "T1",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"c2c_ana_actions_command_check\""
+  }
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 66ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 21ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 61ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement
+{
+  "timestamp": "2026-10-21T02:20:20.211Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "T1",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"c2c_ana_actions_command_check\""
+  }
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 53ms
+   → expected 'AUDIT_WRITE_FAILED' to be 'OUTCOME_UNKNOWN' // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 69ms
+   → expected { success: true, data: [], count: +0 } to match object { count: 1, data: [ { …(3) } ] }
+(1 matching property omitted from actual)
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying
+AssertionError: {"success":false,"error":"AUDIT_WRITE_FAILED","message":"The assignment could not be recorded in the audit trail, so nothing was changed. Try again."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:97:46
+     95|     const before = (await pg.query<Record<string, unknown>>('SELECT * …
+     96|     const r = await request(app(5, 'viewer')).patch(taskPath).send(bod…
+     97|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+     98|     expect(r.body.data).toMatchObject({ taskId: 'T1', assigneeId: 7, a…
+     99|     const after = (await pg.query<Record<string, unknown>>('SELECT * F…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement
+AssertionError: expected 'AUDIT_WRITE_FAILED' to be 'OUTCOME_UNKNOWN' // Object.is equality
+
+Expected: "OUTCOME_UNKNOWN"
+Received: "AUDIT_WRITE_FAILED"
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:157:54
+    155|     const meta = await snapshot(); loseCommit = true;
+    156|     const r = await request(app()).patch(taskPath).send(body(meta));
+    157|     expect(r.status).toBe(500); expect(r.body.error).toBe('OUTCOME_UNK…
+       |                                                      ^
+    158|     expect((await pg.query('SELECT assignee_id FROM unified_tasks')).r…
+    159|     expect(h.notifications).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape
+AssertionError: expected { success: true, data: [], count: +0 } to match object { count: 1, data: [ { …(3) } ] }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "count": 1,
+-   "data": [
+-     {
+-       "assignedTo": "Same Name",
+-       "assigneeId": 7,
+-       "taskId": "T1",
+-     },
+-   ],
++   "count": 0,
++   "data": [],
+  }
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:170:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  02:20:11
+   Duration  9.23s (transform 2.87s, setup 183ms, import 4.64s, tests 3.91s, environment 0ms)

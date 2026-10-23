@@ -1,0 +1,51 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/task-assignment-delegation.dbtest.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-21T02:19:37.586Z","pid":26209,"hostname":"c9501410c5f6","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-21T02:19:37.589Z","pid":26209,"hostname":"c9501410c5f6","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-21T02:19:37.589Z","pid":26209,"hostname":"c9501410c5f6","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-assignment-delegation.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-assignment-delegation.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-21T02:19:45.245Z","pid":26209,"hostname":"c9501410c5f6","context":{"error":"[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.","stack":"Error: [AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the database OWNER. The runtime role is deliberately append-only on the audit schema and cannot create it. Run the deploy migration.\n    at TamperProofAuditLog.initialize (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:405:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at ensureInitialized (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:182:5)"},"msg":"[audit-service] Failed to initialize tamper-proof audit table (non-fatal):"}
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > scopes real active candidates by project and disambiguates duplicate names 236ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > atomically saves assignment, both ledger rows and exact human reason while preserving task history 230ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > can assign a genuinely unassigned saved task 137ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 8 155ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 12 127ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 10 without creating access or lineage 132ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 11 without creating access or lineage 143ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 12 without creating access or lineage 216ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 13 without creating access or lineage 174ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses another claimed client and a corrupt recorded task/client link 159ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal completed task and lets bulk auto report a genuine skip 156ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal cancelled task and lets bulk auto report a genuine skip 149ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rejects an old version even after A to B to A returns to the old assignee 194ms
+stderr | tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rolls the task and first ledger insert back when the second ledger insert fails
+{
+  "timestamp": "2026-10-21T02:19:49.089Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "TASK-DELEGATE",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"synthetic_ledger_failure\""
+  }
+}
+
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rolls the task and first ledger insert back when the second ledger insert fails 175ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > reports lost actual COMMIT acknowledgement as unknown, discards once and permits a safe reread 193ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > allows only one concurrent independent HTTP writer for the same observed version 261ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > verifies the real sequenced chain and HMAC seals after two native assignment transactions 324ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  02:19:01
+   Duration  48.10s (transform 23.05s, setup 1.15s, import 7.60s, tests 36.16s, environment 0ms)

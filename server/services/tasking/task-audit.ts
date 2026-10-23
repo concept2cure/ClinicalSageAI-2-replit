@@ -239,18 +239,19 @@ export class TaskAuditNotRecordedError extends Error {
  * Record the lineage row on the SAME transaction as the task write it describes,
  * or throw so that transaction rolls back.
  *
- * `tx` is the Drizzle transaction the route holds; it is adapted, not escaped
- * (queryableFromDrizzle), so recordGovernedAction's chain lock and both INSERTs
- * run on the write's own connection. NOT_ATTRIBUTABLE throws too: a governed
+ * `tx` is the caller's Drizzle runner or already-pinned raw transaction client.
+ * Only Drizzle is adapted (queryableFromDrizzle); the raw client is retained,
+ * so the canonical recordGovernedAction chain lock and both INSERTs run on the
+ * write's own connection. NOT_ATTRIBUTABLE throws too: a governed
  * write whose actor cannot be named must not commit silently unrecorded.
  */
 export async function auditTaskActionInTx(
-  tx: DrizzleRunner,
+  tx: DrizzleRunner | Queryable,
   params: AuditTaskActionParams,
 ): Promise<void> {
   let outcome: TaskAuditOutcome;
   try {
-    outcome = await auditTaskAction(params, queryableFromDrizzle(tx));
+    outcome = await auditTaskAction(params, 'execute' in tx ? queryableFromDrizzle(tx) : tx);
   } catch (err: any) {
     // The store's message stays in the log, never in the thrown error.
     logger.error('Task lineage write failed; rolling back the task write', {

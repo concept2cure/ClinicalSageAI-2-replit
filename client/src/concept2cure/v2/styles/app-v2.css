@@ -974,6 +974,12 @@
 .c2c-v2 .tb-dep-row .ico{font-size:12px;color:var(--text-400);}
 .c2c-v2 .tb-dep-row.dn svg{color:var(--warning);}
 .c2c-v2 .tb-detail-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
+.c2c-v2 .tb-assignment-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.c2c-v2 .tb-assignment-form{display:grid;gap:10px;margin-top:12px;}
+.c2c-v2 .tb-assignment-form label{display:grid;gap:5px;font-size:12px;min-width:0;}
+.c2c-v2 .tb-assignment-form select,.c2c-v2 .tb-assignment-form textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+.c2c-v2 .tb-assignment-form textarea{border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;background:var(--bg-000);color:var(--text-100);font:inherit;}
+.c2c-v2 .tb-assignment .tb-detail-note{overflow-wrap:anywhere;}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
 /* New-task intake (reuses .tb-detail modal shell) */
 .c2c-v2 .tb-form{display:flex;flex-direction:column;gap:13px;margin-top:6px;}

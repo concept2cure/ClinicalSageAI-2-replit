@@ -1,0 +1,275 @@
+Read-only HEAD baseline 30afd3bd17a90c8de4a44098354d9de3a34cb4bc with corrected PGlite node-pg query bridge and actual command-vocabulary migration.
+Only the two task route modules are loaded from HEAD via a temporary Vite load plugin; working source and Git index are unchanged.
+Node22 command: npx vitest run --config /tmp/pm04b-baseline.config.mts server/routes/__tests__/task-assignment.pglite.test.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:23.997Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:24.171Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:22:24.172Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:24.172Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 100ms
+   → expected undefined to match object { taskId: 'T1', …(7) }
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 50ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 47ms
+   → Cannot read properties of undefined (reading 'canAssign')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 41ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 24ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 26ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 26ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 25ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 35ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 31ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 26ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 26ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 38ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason
+Error auto-assigning tasks: TypeError: Cannot read properties of null (reading 'select')
+    at autoAssignOne (/workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:1198:6)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:1274:13
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:594:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+
+ × server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 32ms
+   → Cannot read properties of undefined (reading 'assigneeId')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 38ms
+   → Cannot read properties of undefined (reading 'assignmentVersion')
+ × server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 57ms
+   → expected 500 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels
+AssertionError: expected undefined to match object { taskId: 'T1', …(7) }
+
+- Expected:
+{
+  "actorUserId": 5,
+  "assigneeId": 6,
+  "canAssign": true,
+  "clientWorkspaceId": 71,
+  "organizationId": 7,
+  "projectId": 101,
+  "status": "blocked",
+  "taskId": "T1",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:89:25
+     87|     const r = await request(app(5, 'viewer')).get(rosterPath);
+     88|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+     89|     expect(r.body.meta).toMatchObject({ taskId: 'T1', organizationId: …
+       |                         ^
+     90|     expect(r.body.meta.assignmentVersion).toMatch(/^[a-f0-9]{64}$/);
+     91|     expect(r.body.data.map((m: { id: string }) => m.id)).toEqual(['5',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:97:68
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader
+TypeError: Cannot read properties of undefined (reading 'canAssign')
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:112:52
+    110|   it('returns no candidate directory to a project reader', async () =>…
+    111|     const r = await request(app(6)).get(rosterPath);
+    112|     expect(r.status).toBe(200); expect(r.body.meta.canAssign).toBe(fal…
+       |                                                    ^
+    113|   });
+    114| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:118:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:124:56
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:131:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:138:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:143:59
+    141|   it('reports roster verification failure instead of an empty success'…
+    142|     failRoster = true;
+    143|     expect((await request(app()).get(rosterPath)).status).toBe(503);
+       |                                                           ^
+    144|   });
+    145|   it('rolls back the row and both lineage rows if the second ledger IN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:148:59
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement
+TypeError: Cannot read properties of undefined (reading 'assigneeId')
+ ❯ body server/routes/__tests__/task-assignment.pglite.test.ts:46:28
+     44| }
+     45| const body = (meta: { assigneeId: number | null; assignmentVersion: st…
+     46|   expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmen…
+       |                            ^
+     47|
+     48| beforeAll(async () => {
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:157:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape
+TypeError: Cannot read properties of undefined (reading 'assignmentVersion')
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:169:180
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/task-assignment.pglite.test.ts:175:107
+    173|   });
+    174|   it('denies a project reader and skips terminal work without inventin…
+    175|     expect((await request(app(6)).post('/api/tasks/tasks/auto-assign')…
+       |                                                                                                           ^
+    176|     await pg.exec("UPDATE unified_tasks SET status='completed'");
+    177|     const r = await request(app()).post('/api/tasks/tasks/auto-assign'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed (16)
+   Start at  02:22:21
+   Duration  6.81s (transform 1.94s, setup 100ms, import 3.20s, tests 3.25s, environment 0ms)
