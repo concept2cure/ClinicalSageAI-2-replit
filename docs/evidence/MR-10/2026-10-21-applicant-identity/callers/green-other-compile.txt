@@ -1,0 +1,222 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-10-21T01:32:08.523Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 3407ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 10ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 2ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-10-21T01:32:19.248Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 2154ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 18ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 19ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 7ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 6ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 11ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 2ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 7ms
+stderr | tests/routes/ectd-compile-ident.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-ident.test.ts
+{
+  "timestamp": "2026-10-21T01:32:24.516Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it
+[eCTD Compile] Project 7: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T01:32:25.325Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T01:32:25.326Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-10-21T01:32:25.327Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > keeps the numeric legacy path: sections load by project id, org-scoped 10ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program UUID org-scoped and reports the unlinked section store honestly 6ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program CODE ident (non-UUID, non-numeric) 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 404s an ident outside the caller org without leaking data 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 401s without an org context before any resolution 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/validate — program idents get the unlinked-store finding > prepends SECTION_STORE_UNLINKED as a blocking error 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/history — program idents filter by the program label > reads history org-scoped with the resolved label 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'compile' resolves the real tenant anchor then refuses without writes 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'status' resolves the real tenant anchor then refuses without writes 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'status' resolves the real tenant anchor then refuses without writes 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'compile' resolves the real tenant anchor then refuses without writes 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > imported validator reports cannot bypass the regional-device refusal 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'status' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'status' checks the actual bridge before refusing without writes 5ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'validate' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'validate' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'a foreign or missing project' 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'an unresolved, foreign or deleted lin…' 0ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 23ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 5ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 1ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 40ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 5ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 4ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 11ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 4ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 1ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+
+ Test Files  6 passed (6)
+      Tests  96 passed (96)
+   Start at  01:32:03
+   Duration  27.90s (transform 8.53s, setup 355ms, import 19.04s, tests 5.90s, environment 1ms)
+

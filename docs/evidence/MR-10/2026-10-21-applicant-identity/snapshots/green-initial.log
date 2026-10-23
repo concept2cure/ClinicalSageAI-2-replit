@@ -1,0 +1,144 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 4ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 0ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 4ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 393ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports the exact recorded applicant snapshot the signature binds 6ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > refuses an applicant contact altered inside an otherwise intact frozen record 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run
+{
+  "timestamp": "2026-10-21T01:23:12.529Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read
+{
+  "timestamp": "2026-10-21T01:23:12.540Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] sequence leaf read failed; coverage cannot be determined",
+  "context": {
+    "err": "connection terminated",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an identical manifest, and says how much the index-md5 corroborated 3ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a leaf the sequence now holds that nobody signed — the Module 3 placement case 2ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses a signed leaf the sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > refuses the same leaves when the bytes under one of them changed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > is case- and vocabulary-insensitive about the section code, on both sides 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > counts leaves, so dropping one of two identical leaves is caught 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > matches a leaf with no recorded checksum on its identity, and does NOT count it as corroborated 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > does not invent a mismatch when only one side recorded a checksum 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 0ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 2ms
+ × server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 7ms
+   → no release signature covers sequence 0001 as it now stands — 1 run(s) signed it over different content. run run-a: the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts. Sign this sequence for release, which binds the leaf manifest that would be transmitted.; and no dispatch-intent signature: expected 'unsigned' to be 'signed' // Object.is equality
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 1ms
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 1ms
+ × server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 1ms
+   → no release signature covers sequence 0001 as it now stands — 2 run(s) signed it over different content. run run-newest-stale: the signed package's leaf manifest is not this sequence's: 2 leaf/leaves the sequence now holds were not signed (1.us.cover, 2.3); 1 signed leaf/leaves are no longer in the sequence (5.3.5.1); run run-covering: the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts. Sign this sequence for release, which binds the leaf manifest that would be transmitted.; and no dispatch-intent signature: expected 'unsigned' to be 'signed' // Object.is equality
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 1ms
+stderr | server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read
+{
+  "timestamp": "2026-10-21T01:23:12.830Z",
+  "level": "warn",
+  "message": "[signed-manifest-covers-sequence] recorded applicant read failed; coverage cannot be determined",
+  "context": {
+    "err": "database unavailable",
+    "sequenceId": 3,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > keeps a historical signature intact but refuses coverage without its applicant snapshot 4ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > covers identical leaves and the identical current recorded identity 4ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicationNumber 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantName 0ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantId 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed applicantSponsorId 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not cover changed contact details 1ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > reports unknown when the current identity cannot be read 3ms
+ ✓ server/services/ectd/__tests__/applicant-snapshot-coverage.test.ts > FDA signed manifest coverage includes recorded applicant facts > does not require an FDA identity snapshot for an EU sequence 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it
+AssertionError: no release signature covers sequence 0001 as it now stands — 1 run(s) signed it over different content. run run-a: the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts. Sign this sequence for release, which binds the leaf manifest that would be transmitted.; and no dispatch-intent signature: expected 'unsigned' to be 'signed' // Object.is equality
+
+Expected: "signed"
+Received: "unsigned"
+
+ ❯ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts:269:51
+    267|     });
+    268|
+    269|     expect(status.verdict, String(status.detail)).toBe('signed');
+       |                                                   ^
+    270|     expect(status.runId).toBe('run-a');
+    271|     expect(String(status.detail)).toMatch(/2 leaf\/leaves/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not
+AssertionError: no release signature covers sequence 0001 as it now stands — 2 run(s) signed it over different content. run run-newest-stale: the signed package's leaf manifest is not this sequence's: 2 leaf/leaves the sequence now holds were not signed (1.us.cover, 2.3); 1 signed leaf/leaves are no longer in the sequence (5.3.5.1); run run-covering: the signed package has no recorded applicant identity snapshot; sign this sequence over its current applicant facts. Sign this sequence for release, which binds the leaf manifest that would be transmitted.; and no dispatch-intent signature: expected 'unsigned' to be 'signed' // Object.is equality
+
+Expected: "signed"
+Received: "unsigned"
+
+ ❯ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts:370:51
+    368|     });
+    369|
+    370|     expect(status.verdict, String(status.detail)).toBe('signed');
+       |                                                   ^
+    371|     expect(status.runId).toBe('run-covering');
+    372|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 60 passed (62)
+   Start at  01:23:00
+   Duration  12.78s (transform 4.04s, setup 182ms, import 11.07s, tests 483ms, environment 0ms)
+

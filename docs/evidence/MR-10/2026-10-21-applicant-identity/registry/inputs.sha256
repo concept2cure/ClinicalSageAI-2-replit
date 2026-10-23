@@ -1,0 +1,6 @@
+5e4ee7f28ae98c65d619cc4a75e77b2d809891e71ff52be729ac7a10d99cda7a  server/routes/ind-master-data.routes.ts
+79cb1c0927b73a072ea3988fc8cf53e58623df07e0828ad751b6121ad2bc1b7c  server/services/ind-master-data/ind-master-data-service.ts
+70e446b18279e072fcf6dc621b1185af8fb7ad5354365f2f35dfc5a349d5de2e  server/services/ind-master-data/sponsor-input.ts
+ba6f18b71a2b589ee74c7c9620c448af99e82daa4021ef6cd5fd38100f2d559d  server/routes/__tests__/ind-master-data.contract.integration.test.ts
+b6ff25ba3ac64edc1e6d7b10535d486fcd408550324ab23720093388e91efba5  server/services/ind-master-data/__tests__/ind-master-data.test.ts
+7116baf6cda210527252ab08a0e580f2547e41f1cc78974516ada1f4697b1133  server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts

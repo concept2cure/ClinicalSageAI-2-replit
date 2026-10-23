@@ -1,0 +1,182 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false
+[Orchestrator] run failed: Error: package not gateway-ready: 1 structural error(s), 1 regional error(s), 0 sequence error(s); hardenedScore=40
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:2018:17
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1971:7)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:270:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 382ms
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 170ms
+   → expected 'skipped' to be 'awaiting-signature' // Object.is equality
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 126ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 13ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 3ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 4ms
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 100ms
+   → expected 'skipped' to be 'awaiting-signature' // Object.is equality
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > preserves the exact paused Module 3 narrative on async resume without repeating AI or enqueue 101ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 2ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 1ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 91ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 91ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 80ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 4ms
+stderr | tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all
+[Orchestrator] run failed: ValidationError: Cannot build the FDA regional backbone: no application type was supplied, and "510(k)" is not one. The eCTD Module 1 application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master files; device pathways (510(k), De Novo, PMA) and non-US pathways (MAA, CTA) have no code in it and must not be filed on this backbone. Pass fda.applicationType. Defaulting to fdaat1 would declare this package a New Drug Application, which is a statement about the filing, not a formatting detail.
+    at buildFdaBackbone (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:581:11)
+    at Object.fda (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1270:17)
+    at packageEctdSubmission (/workspace/concept2cure/server/services/submission-gateways/regional-packager.ts:1287:46)
+    at assembleRealPackage (/workspace/concept2cure/server/services/ectd/orchestrator-real-package.ts:191:20)
+    at assembleForValidation (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:648:16)
+    at /workspace/concept2cure/server/services/submission-package-orchestrator.ts:1937:42
+    at runStep (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1443:22)
+    at Module.runOrchestrator (/workspace/concept2cure/server/services/submission-package-orchestrator.ts:1936:5)
+    at /workspace/concept2cure/tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:768:21
+    at file:///workspace/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  findings: [],
+  errorClass: 'validation'
+}
+
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 61ms
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 101ms
+   → expected 'skipped' to be 'awaiting-signature' // Object.is equality
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 93ms
+   → expected 'partial' to be 'awaiting-signature' // Object.is equality
+ × tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 104ms
+   → expected 'partial' to be 'awaiting-signature' // Object.is equality
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys 4ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof 5ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 558ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 4ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > exports the exact recorded applicant snapshot the signature binds 10ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > refuses an applicant contact altered inside an otherwise intact frozen record 3ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 8ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 3ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned" 3ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify 141ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed 113ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted 108ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path)
+AssertionError: expected 'skipped' to be 'awaiting-signature' // Object.is equality
+
+Expected: "awaiting-signature"
+Received: "skipped"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:303:29
+    301|     // Validate completes; sign step suspends.
+    302|     const signStep = run.steps.find(s => s.key === 'package.sign')!;
+    303|     expect(signStep.status).toBe('awaiting-signature');
+       |                             ^
+    304|     expect(run.status).toBe('awaiting-signature');
+    305|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete
+AssertionError: expected 'skipped' to be 'awaiting-signature' // Object.is equality
+
+Expected: "awaiting-signature"
+Received: "skipped"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:539:75
+    537|
+    538|     // §C.11: the resumed IND hits the same e-signature gate as a fres…
+    539|     expect(resumed.run.steps.find(s => s.key === 'package.sign')!.stat…
+       |                                                                           ^
+    540|     expect(resumed.run.status).toBe('awaiting-signature');
+    541|     // validateEctdPackageHardened ran once during resume (not during …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB)
+AssertionError: expected 'skipped' to be 'awaiting-signature' // Object.is equality
+
+Expected: "awaiting-signature"
+Received: "skipped"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:783:29
+    781|
+    782|     const signStep = run.steps.find(s => s.key === 'package.sign')!;
+    783|     expect(signStep.status).toBe('awaiting-signature');
+       |                             ^
+    784|     // Run-level status mirrors the step.
+    785|     expect(run.status).toBe('awaiting-signature');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists
+AssertionError: expected 'partial' to be 'awaiting-signature' // Object.is equality
+
+Expected: "awaiting-signature"
+Received: "partial"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:799:32
+    797|     const inputs = baseInputs({ submissionType: 'IND' });
+    798|     const initial = await runOrchestrator(inputs);
+    799|     expect(initial.run.status).toBe('awaiting-signature');
+       |                                ^
+    800|     const signStep = initial.run.steps.find(s => s.key === 'package.si…
+    801|     const persistedPayload = JSON.parse(signStep.outputRef!) as { payl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet
+AssertionError: expected 'partial' to be 'awaiting-signature' // Object.is equality
+
+Expected: "awaiting-signature"
+Received: "partial"
+
+ ❯ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts:850:32
+    848|     const inputs = baseInputs({ submissionType: 'IND' });
+    849|     const initial = await runOrchestrator(inputs);
+    850|     expect(initial.run.status).toBe('awaiting-signature');
+       |                                ^
+    851|
+    852|     const runRow = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  5 failed | 56 passed (61)
+   Start at  01:29:40
+   Duration  19.02s (transform 5.03s, setup 294ms, import 14.65s, tests 2.55s, environment 1ms)
+

@@ -1,0 +1,14 @@
+{
+  "change": "Use the canonical GovernedBinding members with existing open string basis; no runtime behavior or basis restriction changed.",
+  "tests": {
+    "passed": 13,
+    "files": 1,
+    "log": "compiler-correction.log.gz"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 1,
+    "warningPreExisting": true
+  },
+  "compilerRefusal": "../verification/source-push-compiler-refusal.log.gz"
+}

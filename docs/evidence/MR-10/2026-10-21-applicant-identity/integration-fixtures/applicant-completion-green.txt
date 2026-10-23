@@ -1,0 +1,222 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-21T01:48:39.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > a never-signed NDA: the sequence decides, dispatch-on-signing is open, dispatch-now is not 35ms
+ ✓ server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > the dispatch signature the click records is the release: dispatch-now clears once it is on record 52ms
+ ✓ server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > a FREEZE signature is not the release: dispatch-on-signing stays the only way through 22ms
+ ✓ server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts > P11-28b on the real schema: the Dispatch click supplies the release it is gated on > content changed after the dispatch signature: invalid, and nothing is offered over it 29ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 69ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent 5ms
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-10-21T01:49:20.497Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-10-21T01:49:20.509Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-10-21T01:49:20.510Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal 6687ms
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-10-21T01:49:23.915Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-10-21T01:49:23.916Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-10-21T01:49:23.916Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts 1678ms
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-10-21T01:49:25.003Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-10-21T01:49:25.005Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+{
+  "timestamp": "2026-10-21T01:49:25.006Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed 1078ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so 11ms
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-10-21T01:49:28.322Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-10-21T01:49:28.335Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+{
+  "timestamp": "2026-10-21T01:49:28.336Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-10-21T01:49:28.587Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-10-21T01:49:28.594Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+{
+  "timestamp": "2026-10-21T01:49:28.597Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 3501ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 106ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  01:48:26
+   Duration  62.43s (transform 11.26s, setup 290ms, import 24.23s, tests 36.95s, environment 2ms)
+

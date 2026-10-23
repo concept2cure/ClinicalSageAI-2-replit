@@ -147,6 +147,20 @@ This is the root of stages 4–7, 9, 10 and 11. Nothing downstream can be proved
 
 ### Stage 4 — A conformant FDA us-regional.xml on the sequence path (Phase 1 · M · engineering) — closes CAT2-02
 
+**2026-10-21 identity integration:** the existing deployed IND sponsor registry
+is the recorded home for DUNS, regulatory contact and authorized representative.
+The original step 3 below is superseded for these facts by an explicit same-tenant
+`regulatory_programs.applicant_sponsor_id` binding to that registry, avoiding a
+second store. The existing Module 1 forms panel reaches its CRUD and program
+binding; compile, export, AnA and transmit use the captured recorded identity,
+and signatures bind it. An unsent dispatched FDA sequence can renew through
+its existing governed dispatch action after an identity edit. See the
+[identity integration evidence](../evidence/MR-10/2026-10-21-applicant-identity/README.md)
+and [contract](../design/APPLICANT_IDENTITY_COMPLETION_2026-10-21.md).
+This is the identity/contact portion of Stage 4, not full CAT2-02 closure:
+telephone vocabulary, DTD-derived nesting/forms, actual agency corpus
+qualification and human witnessing remain open. No enforcement default changed.
+
 1. Re-confirm CAT2-02 at the current head (statuses here are from 94b4f9238).
 2. Failing first: add `server/services/submission-gateways/__tests__/fda-us-regional-dtd-valid.test.ts`. It builds an FDA package through `buildPackagerInputFromCore` and runs `xmllint --valid` on `m1/us/us-regional.xml`. Commit its red output (missing `applicant-contacts`, `telephone-number-type`, `m1-3` nesting).
 3. Migration `migrations/<date>_regulatory_programs_fda_applicant_identity.sql`: `ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS` for `applicant_duns`, `regulatory_contact_name`, `regulatory_contact_phone`, `regulatory_contact_phone_type`, `regulatory_contact_email` (all `TEXT NULL`), with a house-style header stating Rule 1 replay safety. Register it in `C2C_MIGRATION_FILES` (`scripts/db/migration-set.mjs`) before the final tenant-sweep pair; run `npm run ci:migration-set-order` and `npm run ci:migration-drop-safety`; mirror the columns in `shared/schema/programs.ts`. (`regulatory_programs` is already public with `organization_id INTEGER NOT NULL`.)

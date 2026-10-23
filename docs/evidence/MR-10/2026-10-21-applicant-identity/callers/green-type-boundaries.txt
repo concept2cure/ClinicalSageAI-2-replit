@@ -1,0 +1,67 @@
+Complete execution output: green-type-boundaries.txt.gz. Concise final output follows.
+
+stdout | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T02:19:11.757Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:19:11.758Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T02:19:11.758Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+{
+  "timestamp": "2026-10-21T02:19:12.100Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > asks the sign step's check, for this sequence, organization and user 45ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "author" through unchanged 10ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "independent" through unchanged 8ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unresolved" through unchanged 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unverified" through unchanged 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > still returns the assessment it was always answering with 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for null 5ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for pending 9ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for rejected 10ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for transmitting 13ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for sent 7ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for acknowledged 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for undefined 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 17ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 3ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 2ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  02:18:51
+   Duration  25.48s (transform 6.24s, setup 166ms, import 13.54s, tests 10.96s, environment 0ms)
+

@@ -1,0 +1,9 @@
+
+> concept2cure-riai@1.0.0 ci:program-ownership-single-source
+> node scripts/ci/check-program-ownership-single-source.mjs
+
+[ci:program-ownership-single-source] 1 copy(ies) of the program-ownership check outside server/services/c2c/program-access.ts:
+  server/services/ind-forms/program-form-facts.ts:248  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id=$1 AND organization_id=$2
+
+Call programInOrganization(db, programId, organizationId) instead. It is the one definition of a program
+the organization may act on: live, theirs, in regulatory_programs. A copy drifts — see this script's header.

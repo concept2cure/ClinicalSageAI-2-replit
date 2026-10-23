@@ -1,0 +1,15 @@
+
+/workspace/concept2cure/server/routes/submissions.ts
+  631:1  warning  File has too many lines (1664). Maximum allowed is 500  max-lines
+
+/workspace/concept2cure/server/services/submission-service/submission-service.ts
+   748:1  warning  File has too many lines (2601). Maximum allowed is 500                                        max-lines
+   934:1  warning  Async function 'governedSignatureVerdict' has a complexity of 33. Maximum allowed is 15       complexity
+  2198:8  warning  Function 'transmitRouteFor' has a complexity of 22. Maximum allowed is 15                     complexity
+  2631:1  warning  Async function 'transmitDispatchedSequence' has too many lines (209). Maximum allowed is 100  max-lines-per-function
+  2631:1  warning  Async function 'transmitDispatchedSequence' has a complexity of 38. Maximum allowed is 15     complexity
+  3548:8  warning  Async function 'upsertLeaf' has too many lines (235). Maximum allowed is 100                  max-lines-per-function
+  3548:8  warning  Async function 'upsertLeaf' has a complexity of 57. Maximum allowed is 15                     complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+

@@ -1,0 +1,14 @@
+{
+  "observedAtUtc": "2026-10-21T02:22:21.706577+00:00",
+  "ownedBrowserHost": {
+    "port": 5198,
+    "stopped": true
+  },
+  "ownedPostgresFixture": {
+    "container": "c2c-applicant-identity-20261021",
+    "running": false,
+    "stopped": true,
+    "removed": false
+  },
+  "otherContainersOrServicesTouched": false
+}

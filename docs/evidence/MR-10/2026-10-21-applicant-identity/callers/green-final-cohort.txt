@@ -1,0 +1,47 @@
+Full execution output is retained in green-final-cohort.txt.gz.
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'a foreign or missing project' 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'an unresolved, foreign or deleted lin…' 8ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > assembles only the claim-captured DUNS and contact, ignoring a caller override 14ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed while waiting for the transmit claim, before assembly 4ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses identity changed during assembly and releases the pre-wire claim 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses wrong assembly identity proof before gateway entry 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses missing assembly identity proof before gateway entry 1ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (undefined), never borrowing the FDA DUNS 2ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > keeps the non-FDA regional id contract (PMDA-42), never borrowing the FDA DUNS 11ms
+ ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > transmit binds approved recorded FDA identity to the assembled package > refuses a supplied non-FDA id that cannot be carried safely, and releases its claim 1ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 17ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing 1309ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable 3ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well 1ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 7ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 3ms
+
+ Test Files  19 passed (19)
+      Tests  259 passed (259)
+   Start at  01:38:28
+   Duration  156.44s (transform 22.08s, setup 687ms, import 65.33s, tests 84.08s, environment 3ms)
+

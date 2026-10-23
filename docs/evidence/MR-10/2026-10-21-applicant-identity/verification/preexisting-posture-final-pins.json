@@ -1,0 +1,26 @@
+{
+  "anchor": "3c93f44f9cba7f9caf5e3d2e6829de70c3b3e912",
+  "checks": [
+    {
+      "path": "server/services/ectd/__tests__/submission-gate-posture.test.ts",
+      "sha256": "6f51195c60116d573cc9b1ffecd0b7abdd9a864475a32c60a8f1247b2a176017",
+      "matchesArchivedBaseline": true
+    },
+    {
+      "path": "assets/estar-templates/PreSTAR-q-sub.pdf",
+      "sha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3",
+      "matchesArchivedBaseline": true
+    },
+    {
+      "path": "assets/estar-templates/checksums.txt",
+      "sha256": "5f00228ff0147ed7a0a47f4121433bae77a124d5f0de88d0d00c50c4fa372b68",
+      "matchesArchivedBaseline": true
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-template-registry.ts",
+      "sha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "matchesArchivedBaseline": true
+    }
+  ],
+  "allMatchArchivedBaseline": true
+}

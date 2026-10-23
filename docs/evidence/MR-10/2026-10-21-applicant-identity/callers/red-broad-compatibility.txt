@@ -1,0 +1,47 @@
+Full execution output is retained in red-broad-compatibility.txt.gz.
+
+
+ FAIL  server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > asks the assembler for a dry run and supplies no identity of its own
+AssertionError: expected [Function] to throw error matching /no state change expected/ but got 'Refusing to freeze: the sequence does…'
+
+- Expected:
+/no state change expected/
+
++ Received:
+"Refusing to freeze: the sequence does not assemble into a package (The FDA signature binding has no recorded application/applicant identity.). Fix it while the leaves can still be changed."
+
+ ❯ server/services/submission-service/__tests__/packageability-dry-run.test.ts:91:49
+     89| describe('the governed packageability check is a dry run (P-27)', () =…
+     90|   it('asks the assembler for a dry run and supplies no identity of its…
+     91|     await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no …
+       |                                                 ^
+     92|     expect(state.calls).toHaveLength(1);
+     93|     expect(state.calls[0]).toMatchObject({ sequenceId: 1, organization…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > discards the dry-run bundle whether or not the check passes
+AssertionError: expected [Function] to throw error matching /no state change expected/ but got 'Refusing to freeze: the sequence does…'
+
+- Expected:
+/no state change expected/
+
++ Received:
+"Refusing to freeze: the sequence does not assemble into a package (The FDA signature binding has no recorded application/applicant identity.). Fix it while the leaves can still be changed."
+
+ ❯ server/services/submission-service/__tests__/packageability-dry-run.test.ts:100:49
+     98|
+     99|   it('discards the dry-run bundle whether or not the check passes', as…
+    100|     await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no …
+       |                                                 ^
+    101|     expect(state.cleaned).toBe(1);
+    102|     state.blockers = ['m2.5'];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 5 passed (8)
+   Start at  01:53:28
+   Duration  7.29s (transform 3.40s, setup 277ms, import 4.12s, tests 2.13s, environment 0ms)
+

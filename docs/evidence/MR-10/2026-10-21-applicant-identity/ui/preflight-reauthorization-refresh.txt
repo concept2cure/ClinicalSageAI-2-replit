@@ -1,0 +1,381 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified"
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one
+ ↓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new release verdict after a confirmed dispatched to dispatched act 891ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved verdict when the governed act has no confirmed receipt 5264ms
+   → expected 'The dispatch was not applied.' to contain 'The release renewal could not be conf…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp sc-page"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-head"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-eyebrow"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"sp-title"[39m
+            [36m>[39m
+              [0mSubmission center[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"sp-state"[39m
+            [36m>[39m
+              [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Submission to work on"[39m
+            [33mclass[39m=[32m"sc-subpick"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"7"[39m
+            [36m>[39m
+              [0mZX-9 First-in-Human[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhere ZX-9 First-in-Human stands[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mZX-9 First-in-Human[0m
+            [0m (Zexanib)[0m
+            [0m — [0m
+            [0mIND[0m
+            [0m · [0m
+            [0mFDA (US)[0m
+            [0m, at the [0m
+            [36m<b>[39m
+              [0moriginal[0m
+            [36m</b>[39m
+            [0m stage.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m eCTD [0m
+            [0msequence[0m
+            [0m [0m
+            [0mtracked[0m
+            [0m. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved verdict when the governed act has no confirmed receipt
+AssertionError: expected 'The dispatch was not applied.' to contain 'The release renewal could not be conf…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp sc-page"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-head"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-eyebrow"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"sp-title"[39m
+            [36m>[39m
+              [0mSubmission center[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"sp-state"[39m
+            [36m>[39m
+              [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Submission to work on"[39m
+            [33mclass[39m=[32m"sc-subpick"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"7"[39m
+            [36m>[39m
+              [0mZX-9 First-in-Human[0m
+              [0m · [0m
+              [0mIND[0m
+              [0m · [0m
+              [0mFDA (US)[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhere ZX-9 First-in-Human stands[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mZX-9 First-in-Human[0m
+            [0m (Zexanib)[0m
+            [0m — [0m
+            [0mIND[0m
+            [0m · [0m
+            [0mFDA (US)[0m
+            [0m, at the [0m
+            [36m<b>[39m
+              [0moriginal[0m
+            [36m</b>[39m
+            [0m stage.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m eCTD [0m
+            [0msequence[0m
+            [0m [0m
+            [0mtracked[0m
+            [0m. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>...
+
+Expected: "The release renewal could not be confirmed."
+Received: "The dispatch was not applied."
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx:391:71
+    389|     fireEvent.click(await screen.findByRole('button', { name: /Re-sign…
+    390|     await screen.findByRole('dialog'); await sign();
+    391|     await waitFor(() => expect(screen.getByRole('alert').textContent).…
+       |                                                                       ^
+    392|     expect(calledWith('GET', '/api/submissions/sequences/21/dispatch-r…
+    393|     expect(screen.queryByText('Signature applied')).toBeNull();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 13 skipped (15)
+   Start at  01:40:53
+   Duration  11.79s (transform 3.33s, setup 450ms, import 3.87s, tests 6.16s, environment 1.01s)
+

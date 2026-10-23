@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys 18ms
+   → expected '1944538f2894587aa4b96dc4a254d8532d797…' to be '1c9bffd825019521bd4be5b5dd96209d4ba0b…' // Object.is equality
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > binds the recorded FDA applicant snapshot while preserving the historical absent-field recipe 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > carries the assembled recorded identity into the bound digest wrapper 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ × server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof 9ms
+   → expected 'complete' to be 'failed' // Object.is equality
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > hydrates and verifies a frozen recorded applicant snapshot without re-reading mutable master data 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 523ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 3ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > keeps recorded applicant binding stable when storage reorders object keys
+AssertionError: expected '1944538f2894587aa4b96dc4a254d8532d797…' to be '1c9bffd825019521bd4be5b5dd96209d4ba0b…' // Object.is equality
+
+Expected: "1c9bffd825019521bd4be5b5dd96209d4ba0bf478ea553531bb4d22489060ddf"
+Received: "1944538f2894587aa4b96dc4a254d8532d7977974d574d4817d61afd5e5d3509"
+
+ ❯ server/services/__tests__/sign-payload-snapshot.test.ts:194:8
+    192|     const components = { leaves: [makeLeaf('m3.2.S.1', 'a'.repeat(32))…
+    193|     expect(computeBoundPayloadDigestFromComponents({ ...components, re…
+    194|       .toBe(computeBoundPayloadDigestFromComponents({ ...components, r…
+       |        ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > refuses newly completing an awaiting FDA release whose historical snapshot has no applicant proof
+AssertionError: expected 'complete' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "complete"
+
+ ❯ server/services/__tests__/sign-payload-snapshot.test.ts:304:26
+    302|     const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId…
+    303|     const step = run.steps.find((candidate) => candidate.key === 'pack…
+    304|     expect(step?.status).toBe('failed');
+       |                          ^
+    305|     expect(step?.error).toMatch(/reassemble.*recorded applicant/i);
+    306|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 passed (17)
+   Start at  01:28:08
+   Duration  8.86s (transform 4.82s, setup 154ms, import 7.85s, tests 580ms, environment 0ms)
+

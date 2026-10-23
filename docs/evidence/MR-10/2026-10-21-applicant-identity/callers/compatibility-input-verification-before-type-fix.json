@@ -1,0 +1,16 @@
+{
+  "kind": "post-run input verification",
+  "headAtVerification": "f165afe1fd17e4c8fd59db5823d1fe520799f851",
+  "result": {
+    "files": 2,
+    "passed": 12,
+    "exitCode": 0,
+    "lintWarnings": 0,
+    "lintErrors": 0
+  },
+  "files": {
+    "server/services/submission-service/__tests__/governed-transition-cas.test.ts": "d2b7b09176edd28960e8e57fe4e12224bda8be8cb4802c003f50f35012de3c55",
+    "server/services/submission-service/__tests__/packageability-dry-run.test.ts": "c2d96351412ec23d398147b52046f93b78b0566a16481c9c9c54c4251bd1f04d",
+    "server/services/submission-service/submission-service.ts": "c7f3a285dffa12cd87dd4f1d09c1743365a6e0929c7ddd8f3e88fdf62024c4ba"
+  }
+}

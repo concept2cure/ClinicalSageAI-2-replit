@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the lookup fails
+{
+  "timestamp": "2026-10-21T01:33:43.231Z",
+  "level": "warn",
+  "message": "[sequence-release-signature] sequence release-signature lookup failed; reporting undetermined",
+  "context": {
+    "err": "connection reset",
+    "sequenceId": 5150,
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the manifest cannot be re-derived
+{
+  "timestamp": "2026-10-21T01:33:43.233Z",
+  "level": "warn",
+  "message": "[sequence-release-signature] sequence manifest re-derivation failed; reporting undetermined",
+  "context": {
+    "err": "sequence read failed",
+    "target": "ectd-sequence:5150",
+    "organizationId": 42
+  }
+}
+
+ × server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > allows fresh authorization for an intact historical FDA leaf-only signature 16ms
+   → expected 'invalid' to be 'unsigned' // Object.is equality
+ × server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > allows fresh authorization when only the recorded applicant identity changed 2ms
+   → expected 'invalid' to be 'unsigned' // Object.is equality
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > still refuses changed leaves even when applicant identity also changed 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > does not accept damaged attributed proof as identity-only staleness 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > does not accept a malformed captured identity 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > requires the attributed bound digest to match the signature row 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > keeps a same-identity digest mismatch invalid 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > does not treat malformed modern proof as a legacy signature 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that counts > is signed when the digest still binds the current leaf manifest 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that counts > re-derives the manifest for THIS target and organization 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is invalid when the sequence changed after signing 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > never papers over a failing newest signature with an older passing one 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when the signature was superseded 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when verification_status says so 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when the row is no longer valid 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is unsigned when the sequence carries no dispatch-intent signature 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the lookup fails 3ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the manifest cannot be re-derived 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the derivation falls back to the ledger basis 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > refuses a leaf-manifest signature that carries no digest at all 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > rejects a nonsense sequence id or organization without querying 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > is scoped to this organization and this sequence target 2ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > accepts only a leaf-manifest binding — a ledger-basis signature binds no content 3ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > accepts only a DISPATCH-intent signature — freeze is not release 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > requires an executed sign action, and excludes revocation rows 3ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > takes the newest signature, not an arbitrary one 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > allows fresh authorization for an intact historical FDA leaf-only signature
+AssertionError: expected 'invalid' to be 'unsigned' // Object.is equality
+
+Expected: "unsigned"
+Received: "invalid"
+
+ ❯ server/services/ectd/__tests__/sequence-release-signature.test.ts:101:37
+     99|   it('allows fresh authorization for an intact historical FDA leaf-onl…
+    100|     changedIdentity(); rowsAre(signatureRow({ bound_payload_digest: CO…
+    101|     expect((await probe()).verdict).toBe('unsigned');
+       |                                     ^
+    102|   });
+    103|   it('allows fresh authorization when only the recorded applicant iden…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ectd/__tests__/sequence-release-signature.test.ts > FDA identity staleness preserves the existing content-tamper refusal > allows fresh authorization when only the recorded applicant identity changed
+AssertionError: expected 'invalid' to be 'unsigned' // Object.is equality
+
+Expected: "unsigned"
+Received: "invalid"
+
+ ❯ server/services/ectd/__tests__/sequence-release-signature.test.ts:105:37
+    103|   it('allows fresh authorization when only the recorded applicant iden…
+    104|     changedIdentity(); rowsAre(modernRow());
+    105|     expect((await probe()).verdict).toBe('unsigned');
+       |                                     ^
+    106|   });
+    107|   it('still refuses changed leaves even when applicant identity also c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed (26)
+   Start at  01:33:41
+   Duration  1.63s (transform 607ms, setup 224ms, import 745ms, tests 46ms, environment 0ms)
+

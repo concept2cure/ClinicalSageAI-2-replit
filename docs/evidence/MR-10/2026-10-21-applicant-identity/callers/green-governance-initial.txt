@@ -1,0 +1,47 @@
+Full execution output is retained in green-governance-initial.txt.gz.
+
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+AssertionError: a sequence was frozen without a leaf the gate judged: expected SubmissionError: Sequence 2's leaves or r… { code: '…' } to match object { code: 'INVALID_STATE', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ SubmissionError {
+    "code": "INVALID_STATE",
+-   "message": StringMatching /leaves changed while this freeze was being checked/,
+  }
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:192:73
+    190|     holder.duringAssembly = async () => { await removeLeaf(2002, 2, ct…
+    191|     const err = await outcome(freezeSequence(2, ctx, sig));
+    192|     expect(err, 'a sequence was frozen without a leaf the gate judged'…
+       |                                                                         ^
+    193|       code: 'INVALID_STATE',
+    194|       message: expect.stringMatching(/leaves or recorded application\/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes
+SubmissionError: Refusing to freeze: the sequence does not assemble into a package (A package names its application and its applicant from the record, never a placeholder, and the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project); and its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms); and the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry); and FDA’s us-regional backbone names a regulatory contact for the application: record the contact’s name, telephone and e-mail.. Nothing can be frozen or dispatched.). Fix it while the leaves can still be changed. The signature given for this freeze is now void; sign again for a new attempt.
+ ❯ voidingSignatureOnRefusal server/services/submission-service/submission-service.ts:1201:47
+    1199|     const sentence = voidedSignatureSentence(outcome, sig.step);
+    1200|     if (!sentence) throw err;
+    1201|     if (err instanceof SubmissionError) throw new SubmissionError(err.…
+       |                                               ^
+    1202|     if (err instanceof Error) err.message = `${err.message}${sentence}…
+    1203|     throw err;
+ ❯ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts:180:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'DISPATCH_BLOCKED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 8 passed (10)
+      Tests  3 failed | 117 passed (120)
+   Start at  01:26:49
+   Duration  83.88s (transform 4.78s, setup 425ms, import 29.39s, tests 50.59s, environment 1ms)
+
