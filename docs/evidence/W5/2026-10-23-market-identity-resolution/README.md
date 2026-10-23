@@ -1,6 +1,6 @@
 # W5 / D7 — fail-closed market identity resolution
 
-Status: implementation and scoped verification complete; final canonical build/compiler/publication pending. Baseline `526e86cba`.
+Status: integrated 221 checks and production build passed after canonical catch-up; normal compiler/push gates pending. Baseline `526e86cba`.
 Contract: `docs/design/MARKET_IDENTITY_RESOLUTION_2026-10-23.md`.
 
 ## What already exists
@@ -67,3 +67,22 @@ These cohorts overlap and are not a full-suite or agency-conformance total.
 qualification, witnessed human testing, production deployment and D7 acceptance
 are separate. This packet closes the P-44 unknown-market engineering handoff;
 EMA slash handling and other P-44 handoffs remain outside it.
+
+
+## Canonical catch-up and final source checks
+
+Source commit `b0beb9392` was merged normally with incoming reporting and Vault
+passage-freshness work at `8a4893fea`. All ten changed lane source/test files
+were unchanged across that merge. The combined twelve-file cohort passed
+**221 checks** on that tree. The production client, server and audit-chain
+verifier build passed; the existing chunk-size advisory remains. All **10,123**
+pinned tracked source/config inputs matched after tests and build. These are
+source/config pins, not qualification of every agency asset. Exact receipts and
+the reproducible pinning helper are under `verification/`.
+
+The packet secret scan passed with zero findings. Its first scan mistook
+content hashes keyed by credential-related source filenames for credentials;
+the same path/hash values were expressed as explicit row fields and rescanned,
+without an exception or baseline change (`hash-format-correction.json`).
+Normal compiler and direct-push gates still must pass before publication is
+reported. No overall CI, production deployment or human acceptance is claimed.

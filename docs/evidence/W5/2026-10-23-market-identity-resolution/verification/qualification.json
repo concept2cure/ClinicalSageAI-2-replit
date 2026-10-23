@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "b0beb9392ef1fd2afb68ed5652ef6747f54c084d",
+  "qualifiedHead": "8a4893fea3c925dfe578e76332ef82d8efa77332",
+  "integrated": {
+    "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run <12 named files from integrated.txt>",
+    "files": 12,
+    "passed": 221,
+    "exitCode": 0
+  },
+  "build": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "exitCode": 0,
+    "node": "22.23.3",
+    "outputs": [
+      "Vite client",
+      "server",
+      "audit-chain verifier"
+    ],
+    "existingWarnings": [
+      "chunk-size advisory"
+    ]
+  },
+  "inputVerification": {
+    "sourceConfigFiles": 10123,
+    "changed": []
+  },
+  "browser": {
+    "scenarios": 7,
+    "pageErrors": 0,
+    "syntheticApi": true
+  },
+  "gitleaks": {
+    "finalExitCode": 0,
+    "findings": 0,
+    "initialContentHashFormattingCorrection": "hash-format-correction.json"
+  },
+  "fullCompilerAndPush": "pending normal hook; no baseline or bypass permitted",
+  "humanWitness": "unexecuted",
+  "agencyQualification": "unexecuted"
+}
