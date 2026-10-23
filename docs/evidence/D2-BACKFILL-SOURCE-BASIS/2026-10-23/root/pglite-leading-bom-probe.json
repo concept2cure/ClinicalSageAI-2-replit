@@ -1,0 +1,43 @@
+{
+  "sql": "SELECT $1::text AS value, encode(convert_to($1::text, 'UTF8'), 'hex') AS utf8_hex",
+  "cases": [
+    {
+      "inputCodeUnits": [
+        65279,
+        97,
+        98,
+        99
+      ],
+      "returnedCodeUnits": [
+        97,
+        98,
+        99
+      ],
+      "storedUtf8Hex": "efbbbf616263",
+      "expectedUtf8Hex": "efbbbf616263",
+      "roundTripEqual": false
+    },
+    {
+      "inputCodeUnits": [
+        13,
+        10,
+        65279,
+        97,
+        98,
+        99
+      ],
+      "returnedCodeUnits": [
+        13,
+        10,
+        65279,
+        97,
+        98,
+        99
+      ],
+      "storedUtf8Hex": "0d0aefbbbf616263",
+      "expectedUtf8Hex": "0d0aefbbbf616263",
+      "roundTripEqual": true
+    }
+  ],
+  "note": "Owner-mode PGlite text result decoding drops an initial BOM although SQL UTF-8 hex retains it; a BOM behind CRLF round-trips. Initial-BOM handoff remains separately tested with controlled SQL/provider seams."
+}

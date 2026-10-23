@@ -1,0 +1,1131 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span
+{
+  "timestamp": "2026-10-23T19:45:01.222Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks
+{
+  "timestamp": "2026-10-23T19:45:01.241Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger
+{
+  "timestamp": "2026-10-23T19:45:01.263Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider
+{
+  "timestamp": "2026-10-23T19:45:01.273Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write
+{
+  "timestamp": "2026-10-23T19:45:01.283Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 3,
+    "indexed": 0,
+    "skipped": 3,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:45:01.301Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:45:01.308Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows
+{
+  "timestamp": "2026-10-23T19:45:01.310Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains BOM, CRLF, NBSP and edge whitespace in one exact scientific/Japanese source span 29ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > preserves the raw UTF-16 basis and supplementary boundary across multiple stored chunks 24ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > applied backfill preserves the actual stored source through SQL and verification > retains unchanged plain text, keyless metadata and the real chunk ledger 13ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > a dry run changes neither chunks, source nor catalog and asks no embedding provider 10ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > NULL, empty and BOM/whitespace-only sources remain named skips without a ledger write 12ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row
+{
+  "timestamp": "2026-10-23T19:45:01.318Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL
+{
+  "timestamp": "2026-10-23T19:45:01.336Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:45:01.347Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied
+{
+  "timestamp": "2026-10-23T19:45:01.356Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > uses the bounded oldest-first candidate set, then resumes without reindexing completed rows 22ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > does not silently repair an already-chunked historical trimmed-basis row 9ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > selects only the requested organization and excludes a deleted document through real SQL 19ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts > source preservation keeps the existing sweep controls > retries a previously failed candidate only when the existing retry flag is supplied 18ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:45:02.029Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant
+{
+  "timestamp": "2026-10-23T19:45:02.034Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS
+{
+  "timestamp": "2026-10-23T19:45:02.038Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider
+{
+  "timestamp": "2026-10-23T19:45:02.039Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set
+{
+  "timestamp": "2026-10-23T19:45:02.040Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing
+{
+  "timestamp": "2026-10-23T19:45:02.042Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > refuses the entire raw source when edge whitespace puts it above MAX_CHUNKS 11ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > sends the exact single-chunk source to the embedding seam under the owning tenant 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > still indexes every chunk when an unchanged source is exactly at MAX_CHUNKS 4ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a selected candidate whose current eligibility disappeared away from the provider 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > keeps a writer failure named and ledgered without committing a partial chunk set 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts > raw backfill source respects the existing writer boundaries > preserves the raw source when an embedding refusal falls back to keyless indexing 2ms
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly
+{
+  "timestamp": "2026-10-23T19:45:02.636Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly
+{
+  "timestamp": "2026-10-23T19:45:02.639Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly
+{
+  "timestamp": "2026-10-23T19:45:02.640Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly
+{
+  "timestamp": "2026-10-23T19:45:02.641Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention
+{
+  "timestamp": "2026-10-23T19:45:02.642Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged
+{
+  "timestamp": "2026-10-23T19:45:02.643Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.645Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.645Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.646Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.646Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.647Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.647Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.648Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes
+{
+  "timestamp": "2026-10-23T19:45:02.649Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction
+{
+  "timestamp": "2026-10-23T19:45:02.649Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run
+{
+  "timestamp": "2026-10-23T19:45:02.650Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves leading ASCII whitespace exactly 4ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves trailing whitespace exactly 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves BOM and CRLF exactly 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > preserves NBSP, Japanese and supplementary characters exactly 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > gives an uncatalogued source to the real outcome builder without changing its count convention 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > applied backfill hands the complete stored source to the canonical writer > leaves ordinary text and the existing report/ledger behavior unchanged 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps NULL skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps empty skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps ASCII whitespace skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > keeps BOM/NBSP/ideographic whitespace skipped in both apply and dry-run modes 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > retains the distinct extraction-failed explanation for whitespace-only failed extraction 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts > source preservation retains blank skips and report-only behavior > never sends a nonblank edge-preserving source or uncatalogued outcome to a writer on dry-run 1ms
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T19:45:03.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:03.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T19:45:03.500Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > pins the extraction hash and UTF-16 coordinates in actual lexical mapper output 52ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-original-file re-extraction after initial selection 27ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects a changed extraction even when the complete hit still occurs in it 24ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects an already-stale stored chunk absent from the current extraction 20ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects same-ID chunk text replacement without replacing candidate text silently 18ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL pins and rechecks extraction currency > rejects in-place coordinate replacement under unchanged text and extraction 21ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > retains an unchanged literal Unicode/regex-like hit without normalization 18ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves NULL-offset hits with unavailable context rather than fabricating spans 21ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > preserves trimmed-backfill own text without inventing corrected coordinates 24ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > allows an unchanged NULL extraction only as legacy own text without context 20ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction appearance after a NULL extraction was selected 19ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > real Vault SQL preserves honest legacy hit-only behavior > rejects extraction disappearance after source text was selected 21ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > refuses a valid current candidate under another organization UUID 36ms
+ ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts > freshness extends existing access and disposition SQL > keeps retained extracted data clearly labelled, then refuses later withdrawal 167ms
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T19:45:07.081Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:07.082Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-23T19:45:07.082Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > expandedContent is extracted_text.slice(span) read from the same row set, never joined chunk text 51ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > reports the context as available with a reference the existing identity helper re-derives 22ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > legacy chunks with NULL offsets: no_offsets, and no expandedContent at all 18ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a backfill-style basis (chunked from the trimmed text, stored untrimmed): basis_mismatch, not approximated 19ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > a re-chunked document (the hit id is gone, its neighbours are not): chunk_set_changed 18ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > NEW: the vault window is one exact span of the stored extracted text > the hit's own content hash pins the read even without a source read scope 23ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > another organization's document of the same shape, asked for under this organization's uuid 37ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a document whose data was withdrawn (remove_data), while keep_data retains it 166ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a superseded version 20ms
+ ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts > FENCES (controls, unchanged by the change): the candidate is dropped > a content hash that is not the stored version, under a source read scope 18ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains a Japanese supplementary character across the default hard end 25ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > retains the complete overlap character and attributes the adjusted start to its actual page 10ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > replaces the old chunk set through the existing writer and verifies the new Unicode text 16ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > keeps keyless BMP text, token counts and absent page/vector metadata intact 12ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a legacy chunk whose split character was replaced in UTF-8 storage 5ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses malformed original text instead of issuing a verified identity 3ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still refuses a foreign organization without replacing the existing chunks 13ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts > Vault Unicode chunks survive actual SQL storage and source verification > still honors the existing binary-disposition fence before replacing chunks 11ms
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T19:45:12.770Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:12.772Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+{
+  "timestamp": "2026-10-23T19:45:12.772Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+[database] Database connection successful
+
+stdout | server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases
+Unicode chunk property census {"cases":2688,"totalChunks":8080,"violations":{},"examples":[]}
+
+ ✓ server/services/vault/__tests__/document-chunking-unicode-properties.test.ts > canonical chunker Unicode property corpus > preserves exact UTF-16 coverage and UTF-8 text across 2,688 deterministic cases 431ms
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T19:45:13.945Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:13.946Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking-unicode.test.ts
+{
+  "timestamp": "2026-10-23T19:45:13.946Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-unicode.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > scientific symbol at minimum hard end 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > supplementary Japanese at default hard end 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > mathematical letter at odd hard end 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > moves an overlap start past the whole character without increasing overlap 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > reduces a one-unit overlap to zero instead of repeating half a character 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing half-size overlap clamp 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps negative overlap clamped to zero while retaining the boundary character 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > protects the default 400-unit overlap start 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 500 and overlap 0 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 0 2ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 501 and overlap 1 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > covers dense supplementary text with max 999 and overlap 499 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > keeps the existing 500-unit minimum chunk size 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault chunks retain supplementary characters and exact coordinates > continues reporting UTF-16 offsets rather than code-point indices 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred paragraph cut 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred sentence cut 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the preferred word cut 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > retains paragraph priority over a later sentence and word boundary 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the exact existing ASCII chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > preserves the exact existing BMP chunks 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > does not normalize malformed source unit "\ud800" into verified evidence 1ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > does not normalize malformed source unit "\udc00" into verified evidence 0ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > is deterministic and gap-free across mixed scientific text and option combinations 5ms
+ ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts > Vault Unicode chunks preserve existing source and separator behavior > keeps an empty source empty and preserves a short BOM/whitespace source verbatim 0ms
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-23T19:45:14.762Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:14.763Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-result-references.test.ts
+{
+  "timestamp": "2026-10-23T19:45:14.764Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-result-references.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\"quoted\" \\ path" 8ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "\u0000\u0001\n\t" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "結果🧬有害事象" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > keeps immutable source fields and exact text for "</data><script>text</script>" 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references when a long escaped query echo must be omitted 2ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > retains useful exact references and coverage counts when diagnostic reasons are enormous 2ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (0) 3ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > omits a whole ranked prefix rather than slicing an oversized leading locator (1) 5ms
+ ✓ server/services/ana/__tests__/document-passage-result-references.test.ts > exact ranked references under mixed serialization pressure > CONTROL: a genuine miss stays distinct from matched-but-omitted evidence and keeps unknown outside coverage 1ms
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-23T19:45:15.608Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:15.609Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/passage-context-span.test.ts
+{
+  "timestamp": "2026-10-23T19:45:15.609Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/passage-context-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > passage context constants > extends 1000 characters on each side and caps at the 12000-character identity span 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > fixture: the real chunker splits them into chunks 4, 5 and 6 with real overlap 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > the context is T.slice of the window: overlap once, no invented seam, verified identity 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > split result: header, result and denominator across three overlapping chunks > keeps a paragraph break only where the source has one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > chunk_set_changed: the hit id is gone, sits at another index, or nothing came back 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > no_offsets: no extracted text, or any chunk (neighbour or hit) without offsets 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets cut from backfill-trimmed text never shift onto the raw text 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: same-hash re-extraction changed the text under a chunk 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 1 to 3) > basis_mismatch: offsets that slice() would quietly accept are still refused 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > not_contiguous: a missing index, a duplicate index, a gap, or a start that does not advance 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > touching chunks (start equal to the previous end) are contiguous 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > budget: a hit chunk longer than the cap is refused with its own hitSpan 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons (checks 4 and 5) > a hit of exactly the cap is the whole context, clipped 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > chunk_set_changed beats no_offsets 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > no_offsets beats basis_mismatch 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > basis_mismatch beats not_contiguous 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > not_contiguous beats budget, and leaves hitSpan null 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > unavailable reasons: the first failing check decides > budget beats encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > extends at most SIDE characters on each side of the hit 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > a hit at the start of the document extends only to the right 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > the hit alone is its own unclipped context 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trims the side farther from the hit first 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming that reaches both sides keeps the hit whole and the farther side no longer farther 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > span clipping > MAX trimming with equal sides keeps the hit whole 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a left edge that splits a pair moves outward by one 2ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a right edge that splits a pair moves outward by one 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the first chunk start cannot move outward: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a split pair at the last chunk end cannot move outward: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a lone surrogate anywhere in the text is refused by the identity helper: encoding 0ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > surrogate-safe edges > a MAX cut inside an astral run never yields an over-budget or split-pair span 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > returns the same result for any input order, without reordering the caller array 1ms
+ ✓ server/services/vault/__tests__/passage-context-span.test.ts > order independence and determinism > is deterministic 1ms
+stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone
+{
+  "timestamp": "2026-10-23T19:45:15.815Z",
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "5b1f0d1e-0000-4000-8000-00000000abcd",
+    "error": "Document is not in the caller's organization; refusing to index it."
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing 10ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a foreign document before any embedding call 1ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > embeds an owned document under that organization's tenant scope 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > every statement that touches vault.document_chunks is bound to the organization 1ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > the ledger write for an owned document is bound to the organization too 0ms
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-23T19:45:16.490Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:16.491Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/rag-context-expansion-span.test.ts
+{
+  "timestamp": "2026-10-23T19:45:16.491Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/rag-context-expansion-span.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > the SELECT fixture maps complete literal columns > retains a terminal cast, case-insensitive column name and output alias 2ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > the SELECT fixture maps complete literal columns > does not treat a longer column or computed expression as the selected column 0ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > selects chunk ids, indices and offsets, and the extracted text on the hit row only 5ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the statement > pins the content hash when the hit carries one, even without a source read scope 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > is the exact source span: the overlap once, no invented seam, an identity that verifies 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > legacy chunks without offsets keep the hit text alone and say why 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > offsets that do not address the current text are refused, never shifted 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext vault branch: the expanded text > a re-chunked document contributes no neighbours from the new chunk set 1ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > drops a vault candidate whose neighbour query returns no rows 0ms
+ ✓ server/services/__tests__/rag-context-expansion-span.test.ts > expandContext: unchanged behaviour (controls) > rag_chunk expansion still joins its window and gains no passage context 1ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > hashes the entire exact extraction and its original nonzero UTF-16 slice 2ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > distinguishes same-length changes inside and outside the excerpt 1ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > preserves Unicode spelling rather than normalizing canonically equivalent source text 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: undefined 1ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: null 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"end":1,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":"0","end":1,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":"1","totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":1,"totalChars":"24"} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":-1,"end":1,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":0,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":1,"end":0,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":25,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0.5,"end":1,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":null,"end":1,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":null,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":1,"totalChars":25} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses malformed or coerced coordinates: {"start":0,"end":9007199254740992,"totalChars":24} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > enforces a relative 12,000-unit width without capping absolute coordinates 3ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an ill-formed full extraction "\ud800" 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an ill-formed full extraction "\ud801" 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an ill-formed full extraction "\udc00" 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an ill-formed full extraction "\udfff" 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an ill-formed full extraction "valid 🧬 text \ud800" 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an excerpt that splits a valid surrogate pair {"start":0,"end":1,"totalChars":2} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > refuses an excerpt that splits a valid surrogate pair {"start":1,"end":2,"totalChars":2} 0ms
+ ✓ server/services/ana/__tests__/draft-source-identity.test.ts > exact selected-source extraction identity > does not mutate input spans and permits an intact astral pair 0ms
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-23T19:45:17.648Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:17.649Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-23T19:45:17.649Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable 14ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > states how much of the vault is NOT indexed, and refuses to call it absence 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > gives the RECORDED reason a document failed to index, not just a count 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > does not invent a reason when none was recorded 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says the coverage is unknown rather than implying it searched everything 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says plainly when the vault holds no documents at all 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > will not claim full coverage while chat uploads sit outside the corpus 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > marks the count as a floor when there are more than it probed for 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > says nothing extra when there is nothing outside 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > an uncounted probe is reported as unchecked, never as zero 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > covers an EMPTY vault too — no documents filed is not "nothing to search" 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > reports an unavailable index as unavailable, not as zero passages 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > turns an unexpected failure into a stated error, never a silent empty 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > refuses a query too short to retrieve on 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > requires an organization context 0ms
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > writes nothing and spends no embeddings
+{
+  "timestamp": "2026-10-23T19:45:17.909Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > still reports what cannot be indexed, so the report is actionable
+{
+  "timestamp": "2026-10-23T19:45:17.912Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > indexes documents that have text and counts the chunks written
+{
+  "timestamp": "2026-10-23T19:45:17.914Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a document with no text is skipped with its reason, never counted as indexed
+{
+  "timestamp": "2026-10-23T19:45:17.915Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 1,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a failure is named and ledgered, not folded into the total
+{
+  "timestamp": "2026-10-23T19:45:17.915Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > is bound to the organization and skips already-indexed documents
+{
+  "timestamp": "2026-10-23T19:45:17.918Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > takes previously failed documents only when a retry is asked for
+{
+  "timestamp": "2026-10-23T19:45:17.918Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus
+{
+  "timestamp": "2026-10-23T19:45:17.919Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus
+{
+  "timestamp": "2026-10-23T19:45:17.919Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > writes nothing and spends no embeddings 4ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > still reports what cannot be indexed, so the report is actionable 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > indexes documents that have text and counts the chunks written 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a document with no text is skipped with its reason, never counted as indexed 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a failure is named and ledgered, not folded into the total 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > is bound to the organization and skips already-indexed documents 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > takes previously failed documents only when a retry is asked for 0ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an available context through with its hit span and content hash 4ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > a hit that was never expanded says not_expanded, with no span 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits carry the verified context > passes an unavailable reason through unchanged, with the hit span when the expansion had one 1ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > text stays the hit chunk content, never the expanded window 0ms
+ ✓ server/services/vault/__tests__/document-passage-search-context.test.ts > passage hits: unchanged mapping (controls) > keeps the existing locator fields 1ms
+stdout | server/services/vault/__tests__/document-chunking.service.test.ts
+{
+  "timestamp": "2026-10-23T19:45:19.410Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T19:45:19.411Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking.service.test.ts
+{
+  "timestamp": "2026-10-23T19:45:19.411Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > returns nothing for empty text and one chunk for short text 2ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > every chunk is exactly its span of the source text 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > spans jointly cover the whole text — no tail is silently dropped 1ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > consecutive chunks overlap so boundary-straddling facts survive 1ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > prefers paragraph boundaries when one is available 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > still advances on pathological text with no boundaries at all 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > is deterministic 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > maps pages joined by a separator, and the spans point at the real text 2ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > survives a leading trim, which is where naive arithmetic goes wrong 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > keeps the page numbering true across a blank page 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > honours the page numbers the extractor reports, not the array index 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > REFUSES the whole map when one page cannot be located 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > refuses out-of-order pages rather than re-finding an earlier one 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > returns null for empty input rather than an empty map that reads as success 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > finds the page a chunk starts on 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes a chunk starting between pages to the page it runs into 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes an offset past the end to the last page, not to nothing 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > is null without a map — no map means no page, not page 1 0ms
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > refuses a following chunk that ends before the hit chunk does 2ms
+ ✓ server/services/vault/__tests__/passage-context-span-nested.test.ts > nested chunks > never returns an available context that does not contain the whole hit 2ms
+
+ Test Files  19 passed (19)
+      Tests  219 passed (219)
+   Start at  19:44:57
+   Duration  21.80s (transform 1.83s, setup 273ms, import 10.01s, tests 9.02s, environment 2ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-BACKFILL-SOURCE-BASIS/2026-10-23/root/final.results.json
