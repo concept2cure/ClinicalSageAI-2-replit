@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-23T18:43:51.232012+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "acceptedSourceCommit": "4cd0215a5152ea813c68d1d0b2cd341ae7abca3f",
+  "directPush": true,
+  "pullRequestUsed": false,
+  "forcePushUsed": false,
+  "acceptedPushExitCode": 0,
+  "fullTypeScriptErrors": 0,
+  "baseline": 0,
+  "normalPushGates": "all passed without bypass or baseline change",
+  "productionBuild": {
+    "exitCode": 0,
+    "sourceCommit": "4cd0215a5152ea813c68d1d0b2cd341ae7abca3f",
+    "inputs": 40,
+    "allInputHashesMatch": true
+  },
+  "identityLaneInputs": {
+    "count": 44,
+    "allMatch": true
+  },
+  "incomingCanonicalWork": "Preserved by ordinary merges, including Authoring PDF/refiling, Unicode chunk/read windows, native model provenance and shared planning templates.",
+  "ciSnapshot": "15 checks observed: 10 queued and 5 skipped; no overall remote CI green claim.",
+  "humanWitnessed": false,
+  "agencyAcceptance": false,
+  "productionDeploymentClaimed": false,
+  "priorInterruptedAttempt": "Environment restart interrupted 88fdf6918 compiler before a result; resumed normal validation.",
+  "priorPublicationRaces": "Normal zero-error gates passed but GitHub canonical ref advanced; ordinary catch-up merges and normal retries used."
+}

@@ -1,7 +1,25 @@
 # W5 / D7 — complete non-US release identity coverage
 
-Status: implemented and scoped automated verification passed; normal canonical push gates pending.
+Status: published directly to `concept2cure-v2` at `4cd0215a5152ea813c68d1d0b2cd341ae7abca3f`; normal gates and full TypeScript passed with zero errors. Human/agency qualification remains open.
 Baseline `dd749f3e56f1d9055b19067e90680d70bf9a9fb9`. Contract `docs/design/NONUS_RELEASE_IDENTITY_COMPLETION_2026-10-23.md`.
+
+## Final publication
+
+The source is accepted directly on the canonical branch. No PR, force push,
+hook bypass or baseline relaxation was used. The final production build passed
+on the accepted source, with every pinned build input unchanged. All 44 final
+identity-lane source/config inputs also match across the catch-up merges.
+`verification/publication.json` and `push-accepted.txt.gz` are the publication
+receipt; `build-published*` records the final build. Later CI was observed as
+queued/skipped and is not claimed globally green. Human acceptance, live agency
+qualification and production deployment are unexecuted.
+
+The sections below retain the executed development history and its exact input
+pins, including warning/type corrections, rejected ref races, interrupted
+validation, and earlier cohorts. Incoming Unicode/read-window and shared planning
+editor changes were preserved by ordinary merges; they did not alter this lane's
+44 qualified inputs. The existing controls are connected, without a second
+approval engine, UI or identifier store.
 
 ## What already exists
 
