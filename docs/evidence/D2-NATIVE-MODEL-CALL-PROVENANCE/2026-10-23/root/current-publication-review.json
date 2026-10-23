@@ -1,0 +1,17 @@
+{
+  "reviewedAt": "2026-10-23T17:46:56.957227+00:00",
+  "acceptedCodeHead": "4718e17cb1224022684829a0e45f92f5048b5850",
+  "normalPushExit": 0,
+  "wholeTreeTypeScriptErrors": 0,
+  "currentQualification": {
+    "passed": 330,
+    "files": 34,
+    "failed": 0,
+    "skipped": 0,
+    "lintErrors": 0,
+    "warningGrowth": 0
+  },
+  "independentReview": "context_resume_evidence_review cleared the erased-only cast correction, preserved assertions/fixtures/runtime JavaScript, current input/test/production/freeze/lint hashes, and 70 historical artifacts at a362.",
+  "remoteVerification": "551 current inputs, 34 tests, four production files, three freeze pins and 86 tracked evidence files verified; 70 artifacts and 551 sources verified at historical a362; all 52 retained ancestors verified.",
+  "publicationScope": "Evidence only; source/tests/config/dependencies/hooks and qualification baselines unchanged after accepted code push."
+}
