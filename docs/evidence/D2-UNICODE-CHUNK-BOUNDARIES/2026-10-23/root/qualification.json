@@ -1,0 +1,30 @@
+{
+  "scope": "Local selected-code qualification; no deployment/RLS/liveprovider/agency acceptance claim",
+  "productionSha256": "be3c168333f00d315050b5a4f46bfc17919bb81af2c62cce9d36923dc27674ca",
+  "testFiles": 25,
+  "testsPassed": 331,
+  "failed": 0,
+  "skipped": 0,
+  "newTests": 33,
+  "baselineSemanticFailures": 19,
+  "baselinePassingControls": 14,
+  "propertyCorpus": {
+    "cases": 2688,
+    "chunks": 8080,
+    "violations": 0
+  },
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 1,
+    "warningGrowth": 0,
+    "newTestWarnings": 0
+  },
+  "selectedInputs": 82,
+  "frozenTestHashesUnchanged": true,
+  "sourceSha256MatchesQualification": true,
+  "independentReviews": [
+    "unicode_read_inventory final codePointAt range and erasedassertion review CLEAR",
+    "unicode_source_safety actualproductiondiff and storagechain review CLEAR"
+  ],
+  "normalPush": "Not yet attempted for implementation; contract-only push already passed all hooks. Whole-tree typecheck awaited normal implementation push."
+}

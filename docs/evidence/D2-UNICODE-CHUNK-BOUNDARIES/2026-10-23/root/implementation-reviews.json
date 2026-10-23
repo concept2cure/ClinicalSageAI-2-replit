@@ -1,0 +1,4 @@
+{
+  "unicode_read_inventory": "CLEAR: exact pair detection, max/progress/coverage, original lone units preserved; only canonical chunker changed",
+  "unicode_source_safety": "CLEAR: actual diff matches contract; writerSQL/tenant/disposition/embedding/page/MAX_CHUNKS unchanged"
+}
