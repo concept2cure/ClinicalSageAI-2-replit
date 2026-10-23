@@ -1,7 +1,7 @@
 # Reporting legal chooser completion — W1 / D2
 
 Discovery source: `9f8cae7f0` on `concept2cure-v2`. Status: implementation,
-component/canonical qualification and build complete; normal push gates/publication pending.
+component/canonical qualification and build complete; **published at `75d277264`** with zero-error whole TypeScript and all normal push gates.
 Contract:
 `docs/design/REPORTING_LEGAL_CHOOSER_COMPLETION_2026-10-23.md`.
 
@@ -120,9 +120,28 @@ separate earlier scope. No warning baseline or gate was relaxed.
 
 `qualified-source.json` now pins the final **159-input selected union**. The
 earlier 106-input snapshot remains separately retained. Neither is a complete
-dependency closure. A new normal push/whole compiler result is still pending.
+dependency closure. The corrected source subsequently passed whole TypeScript and normal push gates; see publication below.
 
-Normal push gates remain pending. Local mounted checks do not establish
+Normal push gates passed on the accepted corrected source. Local mounted checks do not establish
 production deployment or agency acceptance. The separate
 [reader check](reader-check.md) is not run. Separate correspondence form ownership
 and live deployment qualification remain outside this bounded completion.
+
+## Published
+
+Accepted code: **`75d277264e4d8dbae42d955fb9b98225d010dae9`**, pushed directly
+to **`concept2cure-v2`**. `code-push.txt` records the actual successful push,
+zero-error whole TypeScript (compiler exit 0), zero added pushed lint warnings
+and all normal gates. No force push, bypass, alternate branch or baseline
+relaxation was used. The rejected earlier attempt remains separately retained.
+
+The final incoming `1eca721b1` was a documentation receipt only; its work-order
+conflict was resolved by preserving this lane and the updated template lane.
+All 159 selected source inputs stayed unchanged after the final build/test freeze.
+`code-publication.json` verifies local/fresh remote equality at the accepted
+commit, all 159 source pins locally and remotely, clean worktree and zero unmerged
+paths. This final evidence-only receipt is a descendant with the same source;
+its normal docs-only push may legitimately skip TypeScript.
+
+See [PUBLICATION.md](PUBLICATION.md) for the delivered behavior and qualification
+limits. Live deployment and authenticated browser acceptance are not established.
