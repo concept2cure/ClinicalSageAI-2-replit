@@ -1,0 +1,35 @@
+{
+  "baseline": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "purpose": "Passing qualification controls against unchanged executor and existing gateway admission. This is not red evidence for the route/classifier/client changes.",
+  "exitCode": 0,
+  "tests": {
+    "files": 3,
+    "passed": 15,
+    "failed": 0,
+    "newNative": 3,
+    "newPureEstimate": 9,
+    "existingActualGateway": 3
+  },
+  "testSha256": {
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0",
+    "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts": "769fb1bbae6d8ea3b3c34b8e4610e6aed92b0dbb26ee5c8fc7072cf35721a116"
+  },
+  "testsUnchangedSinceFreeze": true,
+  "baselineInputsUnchangedAfterRun": true,
+  "baselineTranscriptSha256": "8181b1d5cfc00340ab166e52cd86f92118dd8d58f10a18974575f45ec700dba4",
+  "lintBeforeFreezeExitCode": 0,
+  "commandFile": "baseline-command.txt",
+  "qualification": [
+    "Native executor initial canonical error propagates by identity with no tool/staging/receipt",
+    "Native executor follow-up canonical error propagates after exact framed bodies, full history/operator turns/raw callbacks and existing in-memory source receipt; no third gateway call",
+    "Native executor fitting read/ordinary control still completes",
+    "Existing approximate estimator includes framing/header/escape, history, narration, operator turns, tool schema, structured-output schema, text blocks and output reserve",
+    "Existing real gateway admission refuses oversized request before SDK spy, routes to fitting fallback without provider health penalty, and preserves fitting path"
+  ],
+  "limitations": [
+    "Scripted gateway in executor tests qualifies carrier propagation, not live admission or provider delivery",
+    "Synthetic source scope and in-memory legacy receipts do not qualify live access/database persistence",
+    "Pure cost boundaries are approximate estimator behavior, not exact tokenizer or serialized provider payload claims"
+  ],
+  "noFurtherTestEdits": true
+}

@@ -1,0 +1,540 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}}
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy undefined
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy ""
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "   "
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Failed query: select \"id\" from private_sources"
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Provider failed at /home/agent/private.ts:12"
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "HTTP 413: hidden proxy response"
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > retains an explicit not-recorded outcome rather than inventing a successful record
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"} 38ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}} 12ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy undefined 10ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "" 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "   " 5ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Failed query: select \"id\" from private_sources" 5ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Provider failed at /home/agent/private.ts:12" 9ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "HTTP 413: hidden proxy response" 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > keeps the exact partial text and adds the specific recovery warning and record
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > uses safe fallback beside a partial response when server copy is internal
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","details":{"turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}}
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains an explicitly not-recorded nested outcome
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from undefined
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"partial-record"}
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"bad-hash","sha256":"not-a-hash"}
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"maybe"}
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message undefined
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message ""
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "relation \"private_context\" does not exist"
+[useAnaChat] stream failed: Stream request failed: 413
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."}
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"UNRELATED_FAILURE"}
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"ANA_TOOL_RESULT_BUDGET_EXCEEDED","status":422}
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 401 for { Object (error) }
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 403 for { Object (error) }
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 429 for { Object (error) }
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 429 for { code: 'WEEKLY_LIMIT_EXCEEDED', …(1) }
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 422 for { …(2) }
+[useAnaChat] stream failed: Stream request failed: 422
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves partial generic recovery rather than exposing arbitrary server copy
+[useAnaChat] stream failed: The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves the independent audit warning alongside specific context recovery
+[useAnaChat] stream failed: Stream request failed: 413
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > retains an explicit not-recorded outcome rather than inventing a successful record 24ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > keeps the exact partial text and adds the specific recovery warning and record 6ms
+   → expected [ Array(1) ] to include 'The request is about 51,000 tokens (≈…'
+   → expected 'Review the partial text before asking…' not to match /try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > uses safe fallback beside a partial response when server copy is internal 3ms
+   → expected [ Array(1) ] to include 'This conversation is too large for on…'
+   → expected 'Review the partial text before asking…' not to match /secret_context|try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}} 7ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","details":{"turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}} 5ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains an explicitly not-recorded nested outcome 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'not_recorded', …(1) }
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from undefined 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"partial-record"} 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"bad-hash","sha256":"not-a-hash"} 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"maybe"} 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message undefined 3ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_context|try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "" 4ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_context|try again/i
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "relation \"private_context\" does not exist" 3ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+   → expected 'AnA couldn\'t complete this request. …' not to match /private_context|try again/i
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."} 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"UNRELATED_FAILURE"} 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > does not display arbitrary or newly unapproved copy from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"ANA_TOOL_RESULT_BUDGET_EXCEEDED","status":422} 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 401 for { Object (error) } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 403 for { Object (error) } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 429 for { Object (error) } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 429 for { code: 'WEEKLY_LIMIT_EXCEEDED', …(1) } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves HTTP recovery at status 422 for { …(2) } 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves partial generic recovery rather than exposing arbitrary server copy 1ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves the independent audit warning alongside specific context recovery 3ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+   → expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}}
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:53:28
+     51|     const { turn } = await send(stream([{ type: 'run_started', runId: …
+     52|       { type: 'error', ...envelope, turnRecord: RECORD }]));
+     53|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+     54|     expect.soft(turn.refusalCode).toBe(CODE);
+     55|     expect.soft(turn.turnRecord).toEqual(RECORD);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > keeps the canonical sanitized sentence and valid server record for {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED"}}
+AssertionError: expected 'AnA couldn\'t complete this request. …' not to match /try again/i
+
+- Expected:
+/try again/i
+
++ Received:
+"AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:58:32
+     56|     expect.soft(turn.recordConfirming).not.toBe(true);
+     57|     expect.soft(turn.interruptedWithPartialResponse).toBe(false);
+     58|     expect.soft(turn.text).not.toMatch(/try again/i);
+       |                                ^
+     59|     // A valid error-event record prevents the existing run-record loo…
+     60|     // being started, and there is no automatic POST resubmission.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy ""
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "   "
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Failed query: select \"id\" from private_sources"
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Provider failed at /home/agent/private.ts:12"
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "HTTP 413: hidden proxy response"
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+
+Expected: "This conversation is too large for one AI request. Reduce the input or start a new conversation with a smaller selection. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:67:28
+     65|     'Provider failed at /home/agent/private.ts:12', 'HTTP 413: hidden …
+     66|     const { turn } = await send(stream([{ type: 'error', code: CODE, e…
+     67|     expect.soft(turn.text).toBe(FALLBACK);
+       |                            ^
+     68|     expect.soft(turn.refusalCode).toBe(CODE);
+     69|     expect.soft(turn.turnRecord).toEqual({ status: 'unconfirmed' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy ""
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "   "
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Failed query: select \"id\" from private_sources"
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "Provider failed at /home/agent/private.ts:12"
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > uses fixed safe guidance for unusable server copy "HTTP 413: hidden proxy response"
+AssertionError: expected 'AnA couldn\'t complete this request. …' not to match /private_sources|private\.ts|proxy re…/i
+
+- Expected:
+/private_sources|private\.ts|proxy response|try again/i
+
++ Received:
+"AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:70:32
+     68|     expect.soft(turn.refusalCode).toBe(CODE);
+     69|     expect.soft(turn.turnRecord).toEqual({ status: 'unconfirmed' });
+     70|     expect.soft(turn.text).not.toMatch(/private_sources|private\.ts|pr…
+       |                                ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal on an empty SSE reply > retains an explicit not-recorded outcome rather than inventing a successful record
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:77:28
+     75|     const { turn } = await send(stream([{ type: 'run_started', runId: …
+     76|       { type: 'error', error: CANONICAL, code: CODE, turnRecord: recor…
+     77|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+     78|     expect.soft(turn.turnRecord).toEqual(record);
+     79|     expect.soft(turn.recordConfirming).not.toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > keeps the exact partial text and adds the specific recovery warning and record
+AssertionError: expected [ Array(1) ] to include 'The request is about 51,000 tokens (≈…'
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:90:32
+     88|       { type: 'text', content: partial }, { type: 'error', error: CANO…
+     89|     expect.soft(turn.text).toBe(partial);
+     90|     expect.soft(turn.warnings).toContain(CANONICAL);
+       |                                ^
+     91|     expect.soft(turn.warnings?.join('\n')).not.toMatch(/try again/i);
+     92|     expect.soft(turn.interruptedWithPartialResponse).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > keeps the exact partial text and adds the specific recovery warning and record
+AssertionError: expected 'Review the partial text before asking…' not to match /try again/i
+
+- Expected:
+/try again/i
+
++ Received:
+"Review the partial text before asking AnA to try again."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:91:48
+     89|     expect.soft(turn.text).toBe(partial);
+     90|     expect.soft(turn.warnings).toContain(CANONICAL);
+     91|     expect.soft(turn.warnings?.join('\n')).not.toMatch(/try again/i);
+       |                                                ^
+     92|     expect.soft(turn.interruptedWithPartialResponse).toBe(true);
+     93|     expect.soft(turn.refusalCode).toBe(CODE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > uses safe fallback beside a partial response when server copy is internal
+AssertionError: expected [ Array(1) ] to include 'This conversation is too large for on…'
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:103:32
+    101|       { type: 'error', code: CODE, error: 'relation "secret_context" d…
+    102|     expect.soft(turn.text).toBe('Retain this text.');
+    103|     expect.soft(turn.warnings).toContain(FALLBACK);
+       |                                ^
+    104|     expect.soft(turn.warnings?.join('\n')).not.toMatch(/secret_context…
+    105|     expect.soft(turn.turnRecord).toEqual({ status: 'unconfirmed' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > context refusal beside an existing partial reply > uses safe fallback beside a partial response when server copy is internal
+AssertionError: expected 'Review the partial text before asking…' not to match /secret_context|try again/i
+
+- Expected:
+/secret_context|try again/i
+
++ Received:
+"Review the partial text before asking AnA to try again."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:104:48
+    102|     expect.soft(turn.text).toBe('Retain this text.');
+    103|     expect.soft(turn.warnings).toContain(FALLBACK);
+    104|     expect.soft(turn.warnings?.join('\n')).not.toMatch(/secret_context…
+       |                                                ^
+    105|     expect.soft(turn.turnRecord).toEqual({ status: 'unconfirmed' });
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","details":{"turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}}
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:115:28
+    113|   ])('retains sanctioned copy and the valid record from %j', async env…
+    114|     const { turn } = await send(http(envelope));
+    115|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+    116|     expect.soft(turn.refusalCode).toBe(CODE);
+    117|     expect.soft(turn.turnRecord).toEqual(RECORD);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains sanctioned copy and the valid record from {"error":{"message":"The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.","code":"TOKEN_LIMIT_EXCEEDED","details":{"turnRecord":{"status":"recorded","id":"context-record-1","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}}
+AssertionError: expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "id": "context-record-1",
+-   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-   "status": "recorded",
++   "status": "unconfirmed",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:117:34
+    115|     expect.soft(turn.text).toBe(CANONICAL);
+    116|     expect.soft(turn.refusalCode).toBe(CODE);
+    117|     expect.soft(turn.turnRecord).toEqual(RECORD);
+       |                                  ^
+    118|     expect.soft(turn.recordConfirming).not.toBe(true);
+    119|     expect.soft(turn.interruptedWithPartialResponse).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains an explicitly not-recorded nested outcome
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:126:28
+    124|     const record = { status: 'not_recorded', reason: 'The record was n…
+    125|     const { turn } = await send(http({ error: { code: CODE, message: C…
+    126|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+    127|     expect.soft(turn.turnRecord).toEqual(record);
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > retains an explicitly not-recorded nested outcome
+AssertionError: expected { status: 'unconfirmed' } to deeply equal { status: 'not_recorded', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "reason": "The record was not written.",
+-   "status": "not_recorded",
++   "status": "unconfirmed",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:127:34
+    125|     const { turn } = await send(http({ error: { code: CODE, message: C…
+    126|     expect.soft(turn.text).toBe(CANONICAL);
+    127|     expect.soft(turn.turnRecord).toEqual(record);
+       |                                  ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"partial-record"}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"recorded","id":"bad-hash","sha256":"not-a-hash"}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > never fabricates a record from {"status":"maybe"}
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:133:28
+    131|     { status: 'recorded', id: 'bad-hash', sha256: 'not-a-hash' }, { st…
+    132|     const { turn } = await send(http({ error: { code: CODE, message: C…
+    133|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+    134|     expect.soft(turn.turnRecord).toEqual({ status: 'unconfirmed' });
+    135|     expect.soft(turn.recordConfirming).not.toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message ""
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "relation \"private_context\" does not exist"
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'This conversation is too large for on…' // Object.is equality
+
+Expected: "This conversation is too large for one AI request. Reduce the input or start a new conversation with a smaller selection. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:140:28
+    138|   it.each([undefined, '', 'relation "private_context" does not exist']…
+    139|     const { turn } = await send(http({ error: { code: CODE, message, d…
+    140|     expect.soft(turn.text).toBe(FALLBACK);
+       |                            ^
+    141|     expect.soft(turn.turnRecord).toEqual(RECORD);
+    142|     expect.soft(turn.text).not.toMatch(/private_context|try again/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message ""
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "relation \"private_context\" does not exist"
+AssertionError: expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "id": "context-record-1",
+-   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-   "status": "recorded",
++   "status": "unconfirmed",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:141:34
+    139|     const { turn } = await send(http({ error: { code: CODE, message, d…
+    140|     expect.soft(turn.text).toBe(FALLBACK);
+    141|     expect.soft(turn.turnRecord).toEqual(RECORD);
+       |                                  ^
+    142|     expect.soft(turn.text).not.toMatch(/private_context|try again/i);
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message undefined
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message ""
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > pre-header context refusal over HTTP > uses fixed fallback for unusable HTTP message "relation \"private_context\" does not exist"
+AssertionError: expected 'AnA couldn\'t complete this request. …' not to match /private_context|try again/i
+
+- Expected:
+/private_context|try again/i
+
++ Received:
+"AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:142:32
+    140|     expect.soft(turn.text).toBe(FALLBACK);
+    141|     expect.soft(turn.turnRecord).toEqual(RECORD);
+    142|     expect.soft(turn.text).not.toMatch(/private_context|try again/i);
+       |                                ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves the independent audit warning alongside specific context recovery
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'The request is about 51,000 tokens (≈…' // Object.is equality
+
+Expected: "The request is about 51,000 tokens (≈50,000 of input plus 1,000 reserved for the answer). The largest context window available to it is 50,000 tokens (test/model). Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:184:28
+    182|       turnRecord: RECORD, auditTrail: { persisted: false, code: 'AUDIT…
+    183|     } } }));
+    184|     expect.soft(turn.text).toBe(CANONICAL);
+       |                            ^
+    185|     expect.soft(turn.turnRecord).toEqual(RECORD);
+    186|     expect.soft(turn.warnings).toContain('The request was refused, but…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/42]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts > existing generic, budget, access and rate recovery stays unchanged > preserves the independent audit warning alongside specific context recovery
+AssertionError: expected { status: 'unconfirmed' } to deeply equal { status: 'recorded', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "id": "context-record-1",
+-   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-   "status": "recorded",
++   "status": "unconfirmed",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts:185:34
+    183|     } } }));
+    184|     expect.soft(turn.text).toBe(CANONICAL);
+    185|     expect.soft(turn.turnRecord).toEqual(RECORD);
+       |                                  ^
+    186|     expect.soft(turn.warnings).toContain('The request was refused, but…
+    187|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/42]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 9 passed (31)
+   Start at  02:15:01
+   Duration  1.28s (transform 310ms, setup 143ms, import 351ms, tests 183ms, environment 460ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/baseline-vitest.json

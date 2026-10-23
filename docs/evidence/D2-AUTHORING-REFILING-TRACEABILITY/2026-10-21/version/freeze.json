@@ -1,0 +1,16 @@
+{
+  "frozenAt": "2026-10-21T02:16:58.077625+00:00",
+  "nodeVersionObservedAtFreeze": "v22.23.3",
+  "ownedSources": {
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+  },
+  "executedUnchangedRegressionTestHashesObservedAtFreeze": {
+    "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "88c8c1591838315d0e38b892f4062f9a0c206ebeb18eca99cb7dd45b4507d244",
+    "server/services/vault/__tests__/vault-ingest-storage.test.ts": "dc3ef7fbfecb0e07715cf8fb1c1d832e8614d790b54b076d1742b428357db09a",
+    "server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts": "9fe983057d764f78a985f3e192c7ec33759923dfc149dea0f1176e0a930dc6c8"
+  },
+  "green": "green.json",
+  "lint": "lint.json",
+  "scope": "Unique head hint only; explicit UUID check-in unchanged; root qualifies actual PGlite ingest mapping."
+}

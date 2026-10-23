@@ -1,0 +1,198 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-23T14:58:47.363Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T14:58:47.364Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+{
+  "timestamp": "2026-10-23T14:58:47.364Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > caps a 20-call ordinary floor-overflow round without dropping calls or grounding on raw output 128ms
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+stderr | server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses irreducible passage replacement totals before recording, grounding or another model call 97ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the guard seam after allocation 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > refuses size growth injected at the settlement seam after allocation 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > native SSE hard aggregate raw-body handoff > rejects excessive redirected bodies at the actual stage boundary without running replaced tools 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > uses the accepted ordinary envelope rather than a raw zero-result statement in adaptation guidance 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > stages accepted raw bodies exactly without a second cap after recorder and corpus admission 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: a fitting ordinary result retains its raw body, corpus and existing miss guidance 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-strict-round-body.test.ts > SSE accepted-body and truthful guidance controls > CONTROL: fitting protected passage strings remain complete with locators and escaped framing 12ms
+stdout | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+{
+  "timestamp": "2026-10-23T14:58:56.698Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T14:58:56.699Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+{
+  "timestamp": "2026-10-23T14:58:56.699Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > retains partial text and raw/staged tool bytes when a later gateway call refuses context
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: plain error keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: private generic diagnostic
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied context class name
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied code keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied token code
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal 110ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > retains partial text and raw/staged tool bytes when a later gateway call refuses context 50ms
+ × server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal 19ms
+   → expected undefined to match object { type: 'error', …(2) }
+   → expected undefined to match object { status: 'recorded', …(1) }
+   → expected true to be false // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: plain error keeps the existing generic event without exposing raw diagnostics 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name keeps the existing generic event without exposing raw diagnostics 10ms
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name and code keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied context identity
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: provider token error keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: maximum context length token limit exceeded
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: the existing typed raw-body refusal keeps its code and message exactly
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied code keeps the existing generic event without exposing raw diagnostics 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name and code keeps the existing generic event without exposing raw diagnostics 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: provider token error keeps the existing generic event without exposing raw diagnostics 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: the existing typed raw-body refusal keeps its code and message exactly 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+AssertionError: expected undefined to match object { type: 'error', …(2) }
+
+- Expected:
+{
+  "code": "TOKEN_LIMIT_EXCEEDED",
+  "error": "The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.",
+  "type": "error",
+}
+
++ Received:
+undefined
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:126:22
+    124| function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome…
+    125|   const error = errorOf(events);
+    126|   expect.soft(error).toMatchObject({ type: 'error', code: 'TOKEN_LIMIT…
+       |                      ^
+    127|   expect.soft(error?.turnRecord).toMatchObject({ status: 'recorded', i…
+    128|   expect.soft(h.state.post, 'refused call does not enter normal answer…
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:176:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+AssertionError: expected undefined to match object { status: 'recorded', …(1) }
+
+- Expected:
+{
+  "id": "synthetic-context-record",
+  "status": "recorded",
+}
+
++ Received:
+undefined
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:127:34
+    125|   const error = errorOf(events);
+    126|   expect.soft(error).toMatchObject({ type: 'error', code: 'TOKEN_LIMIT…
+    127|   expect.soft(error?.turnRecord).toMatchObject({ status: 'recorded', i…
+       |                                  ^
+    128|   expect.soft(h.state.post, 'refused call does not enter normal answer…
+    129|   expect.soft(seam.filedOutcome).toBe(outcome);
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:176:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:131:60
+    129|   expect.soft(seam.filedOutcome).toBe(outcome);
+    130|   expect.soft(seam.sealed?.body.turn.outcome).toBe(outcome);
+    131|   expect.soft(events.some(event => event.type === 'done')).toBe(false);
+       |                                                            ^
+    132| }
+    133|
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:176:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 18 passed (19)
+   Start at  14:58:42
+   Duration  15.96s (transform 7.76s, setup 87ms, import 14.81s, tests 573ms, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-stop-before-results.json

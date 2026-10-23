@@ -63,6 +63,7 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 import type { LegalDocumentContext } from '../../../shared/company-documents';
+import { readAuthoringVaultFilingReceipt } from '../authoring/authoring-vault-filing-receipt';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -691,7 +692,7 @@ export async function materializeLeafSources(
       }
 
       const vaultRes = await queryableFromDrizzle(db).query(
-        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name
+        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name, d.program_id::text AS program_id
            FROM vault.documents d
           WHERE d.id = $1::uuid
             AND d.deleted_at IS NULL
@@ -706,12 +707,8 @@ export async function materializeLeafSources(
         [documentUuid, organizationId],
       );
       const vaultRow = vaultRes.rows[0] as
-        | {
-            storage_version_id: string | null;
-            storage_provider: string | null;
-            content_hash: string | null;
-            file_name: string | null;
-          }
+        | (Record<'storage_version_id' | 'storage_provider' | 'content_hash' | 'file_name', string | null>
+          & { program_id: string })
         | undefined;
       if (!vaultRow) {
         miss('vault document not found in this organization');
@@ -761,6 +758,9 @@ export async function materializeLeafSources(
         sourcePath: vaultPath,
         md5: createHash('md5').update(got.bytes).digest('hex'),
         sha256: vaultSha,
+        derivation: await readAuthoringVaultFilingReceipt(queryableFromDrizzle(db), {
+          organizationId, programId: vaultRow.program_id, vaultDocumentId: documentUuid, artifactSha256: vaultSha,
+        }),
       });
       materialized++;
       // VR-14 (D7, 2026-10-01): staged is not approved. Until now this branch

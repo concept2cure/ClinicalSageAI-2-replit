@@ -1,0 +1,70 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3316 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 76a3b75b7] Freeze context-refusal carry failures and native controls
+ 63 files changed, 4704 insertions(+)
+ create mode 100644 client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/README.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/baseline-after.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/baseline-before.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/baseline-results.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/baseline-run.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/frozen.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/lint-before-freeze.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/prefreeze-initial-baseline-results.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/prefreeze-initial-baseline-run.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/chat/prefreeze-initial-lint-before-freeze.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/SUMMARY.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/baseline-post.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/baseline-pre.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/frozen-hashes.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.argv.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.command.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.exit-code.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/lint.raw.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/node-version.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.argv.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.command.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.exit-code.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.raw.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.report.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/README.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/baseline-vitest.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/baseline-vitest.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/frozen.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/initial-baseline-vitest.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/initial-baseline-vitest.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/pre-freeze-lint-included.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/pre-freeze-lint.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/client/pre-run-pins.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/README.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/baseline-command.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/baseline-summary.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/baseline.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/freeze.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/lint-before-freeze-command.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/executor/lint-before-freeze.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/frozen-tests.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/contract-commit.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-client-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-client-baseline.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-client-baseline.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/timeline-baseline.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/README.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-eslint.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-vitest.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-vitest.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/earlier-attempt-vitest.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/earlier-attempt-vitest.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/freeze.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/inputs-after.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/inputs-before.json
+ create mode 100644 server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+ create mode 100644 server/routes/chat/__tests__/send-message-context-window.test.ts
+ create mode 100644 server/services/ai-gateway/__tests__/context-refusal-carry.test.ts
+ create mode 100644 server/services/ai-gateway/__tests__/context-window-round-cost.test.ts
+ create mode 100644 server/services/ana/__tests__/context-window-executor-carry.test.ts

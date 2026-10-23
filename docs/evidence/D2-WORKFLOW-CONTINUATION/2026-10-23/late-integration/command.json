@@ -1,0 +1,26 @@
+{
+  "node": "22.22.0",
+  "heapMb": 4096,
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts",
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts",
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+    "tests/lineage/founder-path-lineage.pglite.test.ts"
+  ],
+  "suites": 10,
+  "phase": {
+    "localCheckpoint": "944735c720e0b75b393b22ed8e830da51a6c98c3",
+    "canonical": "b66c6108dc3d7a6f0107fb5fd3ef7ecc9a49ecef"
+  }
+}

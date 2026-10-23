@@ -1,0 +1,20 @@
+{
+  "baseline": "30afd3bd17a90c8de4a44098354d9de3a34cb4bc",
+  "tests": {
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts": "fd5ec0fc4e3130510500e7dd3ec4ea248e5b26e0b12855e8f8e5b986295cb226",
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0",
+    "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts": "769fb1bbae6d8ea3b3c34b8e4610e6aed92b0dbb26ee5c8fc7072cf35721a116",
+    "server/routes/chat/__tests__/send-message-context-window.test.ts": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e",
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts": "e5dccf948320ab3cbba9aa0deda6dccbbb05f150d9e0f9c88b8745d7dde279ac",
+    "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts": "32241c9cc91241fab9911a51c47d98c8178b05a4e6acf91e55131d9bc8f06f1b"
+  },
+  "newTests": 80,
+  "intendedFailures": 33,
+  "passingNewControls": 47,
+  "additionalExistingAdmissionControls": 3,
+  "skips": 0,
+  "all24SelectedBaselineInputsUnchangedBeforeProduction": true,
+  "lintBeforeFreeze": "All6files included:0errors0warnings; client explicit --no-ignore. Earlier attempts retained/labeled.",
+  "note": "Nativeexecutor/roundcost are passing controls, not claimed red. Root production edits follow this freeze.",
+  "eofOnlyRefreeze": "whitespace-review/refrozen.json"
+}

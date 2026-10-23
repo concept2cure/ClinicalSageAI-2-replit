@@ -1,0 +1,439 @@
+Updating bd24ecb4c..30afd3bd1
+Fast-forward
+ .../v2/__tests__/ProjectTeamSharing.test.tsx       |  178 ++
+ .../__tests__/authoringVaultPlacementFlow.test.tsx |   75 +
+ .../__tests__/documentCanvasFilingBinding.test.tsx |    3 +-
+ .../v2/__tests__/fileToVaultContinuity.test.tsx    |  208 ++
+ .../v2/__tests__/projectHomeTeamSetup.test.tsx     |  122 +
+ .../v2/__tests__/projectSharingRequest.test.ts     |   79 +
+ .../v2/__tests__/workbenchFileToVault.test.tsx     |   25 +-
+ .../src/concept2cure/v2/editor/DocumentCanvas.tsx  |    3 +-
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |    3 +-
+ .../concept2cure/v2/editor/FileToVaultDialog.tsx   |  181 +-
+ client/src/concept2cure/v2/styles/app-v2.css       |   10 +
+ .../src/concept2cure/v2/surfaces/ProjectHome.tsx   |   12 +-
+ .../v2/surfaces/ProjectTeamResponsibilities.tsx    |   13 +-
+ .../v2/surfaces/ProjectTeamSharing.tsx             |  163 ++
+ .../v2/surfaces/projectSharingRequest.ts           |   61 +
+ .../AUTHORING_VAULT_CONTINUITY_2026-10-21.md       |  172 ++
+ .../2026-10-21/README.md                           |  119 +
+ .../2026-10-21/artifact-manifest.json              |  163 ++
+ .../2026-10-21/build.json                          |  180 ++
+ .../2026-10-21/build.log.gz                        |  Bin 0 -> 4502 bytes
+ .../2026-10-21/canonical-catchup.json              |  293 ++
+ .../2026-10-21/changed-file-lint-summary.json      |   23 +
+ .../2026-10-21/changed-file-lint.json              |  195 ++
+ .../2026-10-21/changed-file-lint.log.gz            |  Bin 0 -> 229291 bytes
+ .../2026-10-21/client/README.md                    |   79 +
+ .../2026-10-21/client/binding-fixture/README.md    |   19 +
+ .../2026-10-21/client/binding-fixture/freeze.json  |   10 +
+ .../2026-10-21/client/binding-fixture/green.json   |   44 +
+ .../2026-10-21/client/binding-fixture/green.log.gz |  Bin 0 -> 319 bytes
+ .../client/binding-fixture/lint-strict.json        |   43 +
+ .../client/binding-fixture/lint-strict.log.gz      |  Bin 0 -> 20 bytes
+ .../2026-10-21/client/freeze-before-envelope.json  |   18 +
+ .../2026-10-21/client/freeze.json                  |   18 +
+ .../2026-10-21/client/green-envelope-final.json    |   48 +
+ .../2026-10-21/client/green-envelope-final.log.gz  |  Bin 0 -> 3662 bytes
+ .../2026-10-21/client/green-final.json             |   48 +
+ .../2026-10-21/client/green-final.log.gz           |  Bin 0 -> 3600 bytes
+ .../2026-10-21/client/green.json                   |   48 +
+ .../2026-10-21/client/green.log.gz                 |  Bin 0 -> 3532 bytes
+ .../2026-10-21/client/independent-review.md        |   78 +
+ .../2026-10-21/client/initial/red.json             |   43 +
+ .../2026-10-21/client/initial/red.log.gz           |  Bin 0 -> 13222 bytes
+ .../2026-10-21/client/lint-envelope-final.json     |   44 +
+ .../2026-10-21/client/lint-envelope-final.log.gz   |  Bin 0 -> 662 bytes
+ .../2026-10-21/client/lint-envelope-strict.json    |   44 +
+ .../2026-10-21/client/lint-envelope-strict.log.gz  |  Bin 0 -> 20 bytes
+ .../2026-10-21/client/lint-final.json              |   44 +
+ .../2026-10-21/client/lint-final.log.gz            |  Bin 0 -> 662 bytes
+ .../2026-10-21/client/lint-strict.json             |   44 +
+ .../2026-10-21/client/lint-strict.log.gz           |  Bin 0 -> 20 bytes
+ .../2026-10-21/client/lint.json                    |   44 +
+ .../2026-10-21/client/lint.log.gz                  |  Bin 0 -> 766 bytes
+ .../2026-10-21/client/red-envelope.json            |   44 +
+ .../2026-10-21/client/red-envelope.log.gz          |  Bin 0 -> 3606 bytes
+ .../2026-10-21/client/red-host.json                |   44 +
+ .../2026-10-21/client/red-host.log.gz              |  Bin 0 -> 2196 bytes
+ .../2026-10-21/client/red-review.json              |   44 +
+ .../2026-10-21/client/red-review.log.gz            |  Bin 0 -> 1525 bytes
+ .../2026-10-21/client/red.json                     |   43 +
+ .../2026-10-21/client/red.log.gz                   |  Bin 0 -> 9962 bytes
+ .../2026-10-21/evidence-check.json                 |   78 +
+ .../2026-10-21/gate-canvas-path.json               |  180 ++
+ .../2026-10-21/gate-canvas-path.log.gz             |  Bin 0 -> 215 bytes
+ .../2026-10-21/gate-check-editor-integrity.json    |  180 ++
+ .../2026-10-21/gate-check-editor-integrity.log.gz  |  Bin 0 -> 332 bytes
+ .../2026-10-21/gate-check-phantom-tokens.json      |  180 ++
+ .../2026-10-21/gate-check-phantom-tokens.log.gz    |  Bin 0 -> 159 bytes
+ .../2026-10-21/gate-design-system.json             |  180 ++
+ .../2026-10-21/gate-design-system.log.gz           |  Bin 0 -> 173 bytes
+ .../2026-10-21/gate-gateway-bypass.json            |  180 ++
+ .../2026-10-21/gate-gateway-bypass.log.gz          |  Bin 0 -> 149 bytes
+ .../2026-10-21/gate-migration-deploy-path.json     |  180 ++
+ .../2026-10-21/gate-migration-deploy-path.log.gz   |  Bin 0 -> 155 bytes
+ .../2026-10-21/gate-migration-drop-safety.json     |  180 ++
+ .../2026-10-21/gate-migration-drop-safety.log.gz   |  Bin 0 -> 268 bytes
+ .../2026-10-21/gate-migration-guard-order.json     |  180 ++
+ .../2026-10-21/gate-migration-guard-order.log.gz   |  Bin 0 -> 160 bytes
+ .../gate-migration-prefix-collisions.json          |  180 ++
+ .../gate-migration-prefix-collisions.log.gz        |  Bin 0 -> 159 bytes
+ .../2026-10-21/gate-migration-reachability.json    |  180 ++
+ .../2026-10-21/gate-migration-reachability.log.gz  |  Bin 0 -> 204 bytes
+ .../2026-10-21/gate-migration-set-order.json       |  180 ++
+ .../2026-10-21/gate-migration-set-order.log.gz     |  Bin 0 -> 178 bytes
+ .../2026-10-21/gate-repo-health.json               |  188 ++
+ .../2026-10-21/gate-repo-health.log.gz             |  Bin 0 -> 239 bytes
+ .../2026-10-21/gate-single-native-canvas.json      |  180 ++
+ .../2026-10-21/gate-single-native-canvas.log.gz    |  Bin 0 -> 139 bytes
+ .../2026-10-21/gate-sql-interpolation-final.json   |  180 ++
+ .../2026-10-21/gate-sql-interpolation-final.log.gz |  Bin 0 -> 552 bytes
+ .../2026-10-21/gate-sql-interpolation.json         |  180 ++
+ .../2026-10-21/gate-sql-interpolation.log.gz       |  Bin 0 -> 849 bytes
+ .../2026-10-21/gate-token-cascade.json             |  180 ++
+ .../2026-10-21/gate-token-cascade.log.gz           |  Bin 0 -> 788 bytes
+ .../2026-10-21/gate-token-contrast.json            |  180 ++
+ .../2026-10-21/gate-token-contrast.log.gz          |  Bin 0 -> 217 bytes
+ .../2026-10-21/merged-regressions.json             |  233 ++
+ .../2026-10-21/merged-regressions.log.gz           |  Bin 0 -> 37007 bytes
+ .../2026-10-21/pre-publication-remote.json         |   14 +
+ .../2026-10-21/pre-verification-remote.json        |  209 ++
+ .../2026-10-21/publication-qualification.json      |   35 +
+ .../2026-10-21/publication-source-freeze.json      |   87 +
+ .../2026-10-21/publication-whitespace-note.json    |   10 +
+ .../2026-10-21/qualified-source-freeze.json        |   86 +
+ .../2026-10-21/regression-selection.json           |   53 +
+ .../2026-10-21/release-changed-file-lint.json      |  198 ++
+ .../2026-10-21/release-changed-file-lint.log.gz    |  Bin 0 -> 229305 bytes
+ .../2026-10-21/release-lint-summary.json           |    7 +
+ .../2026-10-21/release-regressions.json            |  235 ++
+ .../2026-10-21/release-regressions.log.gz          |  Bin 0 -> 35391 bytes
+ .../2026-10-21/release-source-freeze.json          |   87 +
+ .../2026-10-21/release-warning-ratchet.json        |  184 ++
+ .../2026-10-21/release-warning-ratchet.log.gz      |  Bin 0 -> 145 bytes
+ .../2026-10-21/repo-health-report.json             | 2988 ++++++++++++++++++++
+ .../2026-10-21/run-check.py                        |   54 +
+ .../2026-10-21/server/README.md                    |   68 +
+ .../server/ambiguity-red-production.sha256         |    2 +
+ .../2026-10-21/server/ambiguity-red.exit           |    1 +
+ .../2026-10-21/server/ambiguity-red.raw.log.gz     |  Bin 0 -> 5163 bytes
+ .../2026-10-21/server/ambiguity-red.receipt.json   |   31 +
+ .../2026-10-21/server/final-green.exit             |    1 +
+ .../2026-10-21/server/final-green.raw.log.gz       |  Bin 0 -> 17014 bytes
+ .../2026-10-21/server/final-green.receipt.json     |   40 +
+ .../2026-10-21/server/final-source.sha256          |    7 +
+ .../2026-10-21/server/fixture-failure.exit         |    1 +
+ .../2026-10-21/server/fixture-failure.raw.log.gz   |  Bin 0 -> 18389 bytes
+ .../2026-10-21/server/fixture-failure.receipt.json |   40 +
+ .../2026-10-21/server/freeze.json                  |   48 +
+ .../2026-10-21/server/green.exit                   |    1 +
+ .../2026-10-21/server/green.raw.log.gz             |  Bin 0 -> 6560 bytes
+ .../2026-10-21/server/green.receipt.json           |   32 +
+ .../2026-10-21/server/independent-client-review.md |   34 +
+ .../server/independent-client-review.sha256        |    6 +
+ .../2026-10-21/server/ingest-commit-red.exit       |    1 +
+ .../2026-10-21/server/ingest-commit-red.raw.log.gz |  Bin 0 -> 3632 bytes
+ .../server/ingest-commit-red.receipt.json          |   30 +
+ .../2026-10-21/server/ingest-lint.exit             |    1 +
+ .../2026-10-21/server/ingest-lint.raw.log.gz       |  Bin 0 -> 230 bytes
+ .../2026-10-21/server/ingest-lint.receipt.json     |  100 +
+ .../2026-10-21/server/lint-final.exit              |    1 +
+ .../2026-10-21/server/lint-final.raw.log.gz        |  Bin 0 -> 252 bytes
+ .../2026-10-21/server/lint-final.receipt.json      |   24 +
+ .../2026-10-21/server/lint-initial.exit            |    1 +
+ .../2026-10-21/server/lint-initial.raw.log.gz      |  Bin 0 -> 346 bytes
+ .../2026-10-21/server/lint-initial.receipt.json    |   23 +
+ .../2026-10-21/server/lint-second.exit             |    1 +
+ .../2026-10-21/server/lint-second.raw.log.gz       |  Bin 0 -> 301 bytes
+ .../2026-10-21/server/lint-second.receipt.json     |   24 +
+ .../2026-10-21/server/log-inventory.json           |   86 +
+ .../2026-10-21/server/red-production.sha256        |    2 +
+ .../2026-10-21/server/red.exit                     |    1 +
+ .../2026-10-21/server/red.raw.log.gz               |  Bin 0 -> 7951 bytes
+ .../2026-10-21/server/red.receipt.json             |   32 +
+ .../2026-10-21/server/runner-attempt.exit          |    1 +
+ .../2026-10-21/server/runner-attempt.raw.log.gz    |  Bin 0 -> 65 bytes
+ .../2026-10-21/server/runner-attempt.receipt.json  |   23 +
+ .../2026-10-21/server/strict-lint.exit             |    1 +
+ .../2026-10-21/server/strict-lint.raw.log.gz       |  Bin 0 -> 20 bytes
+ .../2026-10-21/server/strict-lint.receipt.json     |  100 +
+ .../2026-10-21/source-freeze.json                  |   81 +
+ .../2026-10-21/sql-interpolation-ratchet.json      |   10 +
+ .../2026-10-21/static-gates-selection.json         |  138 +
+ .../2026-10-21/static-gates.json                   |   86 +
+ .../2026-10-21/typecheck-final.json                |  180 ++
+ .../2026-10-21/typecheck-final.log.gz              |  Bin 0 -> 146 bytes
+ .../2026-10-21/typecheck.json                      |  172 ++
+ .../2026-10-21/typecheck.log.gz                    |  Bin 0 -> 146 bytes
+ .../2026-10-21/warning-ratchet.json                |  182 ++
+ .../2026-10-21/warning-ratchet.log.gz              |  Bin 0 -> 144 bytes
+ .../evidence/D2-PM-TEAM-SETUP/2026-10-21/README.md |   53 +
+ .../2026-10-21/backend-archive-green.txt           |   49 +
+ .../2026-10-21/backend-archive-red.txt             |   59 +
+ .../2026-10-21/backend-final-focused.txt           |  211 ++
+ .../2026-10-21/backend-green-initial.txt           |  123 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/backend-green.txt  |  219 ++
+ .../2026-10-21/backend-integration.txt             |  532 ++++
+ .../D2-PM-TEAM-SETUP/2026-10-21/backend-lint.txt   |   11 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/backend-red.txt    |  335 +++
+ .../2026-10-21/backend-sql-gate.txt                |   18 +
+ .../2026-10-21/backend-type-fix-green.txt          |   53 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/browser-check.mjs  |  103 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/browser-final.txt  |    0
+ .../2026-10-21/browser-first-integration.txt       |   27 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/browser-green.txt  |    0
+ .../2026-10-21/browser-result.json                 |   73 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/build-final.txt    |  218 ++
+ .../evidence/D2-PM-TEAM-SETUP/2026-10-21/build.txt |  218 ++
+ .../D2-PM-TEAM-SETUP/2026-10-21/contract.md        |   43 +
+ .../2026-10-21/incoming-source-bindings.json       |   21 +
+ .../2026-10-21/incoming-vault-tests.txt            | 2059 ++++++++++++++
+ .../D2-PM-TEAM-SETUP/2026-10-21/lint-errors.txt    |    5 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/lint-warnings.txt  |    9 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/native-final.txt   |   77 +
+ .../2026-10-21/native-first-integration.txt        |  133 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/native-green.txt   |   32 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/native-initial.txt |  175 ++
+ .../D2-PM-TEAM-SETUP/2026-10-21/node-version.txt   |    1 +
+ .../2026-10-21/root-lint-initial.txt               |    0
+ .../2026-10-21/sharing-manager-1280.png            |  Bin 0 -> 64116 bytes
+ .../2026-10-21/sharing-manager-390.png             |  Bin 0 -> 58566 bytes
+ .../2026-10-21/sharing-reader-1280.png             |  Bin 0 -> 26721 bytes
+ .../2026-10-21/sharing-reader-390.png              |  Bin 0 -> 23095 bytes
+ .../2026-10-21/source-bindings.json                |   25 +
+ .../2026-10-21/typecheck-initial.txt               |    8 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/typecheck.txt      |    3 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/ui-green.txt       |  105 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/ui-integration.txt |  679 +++++
+ .../D2-PM-TEAM-SETUP/2026-10-21/ui-red.txt         |  282 ++
+ .../D2-PM-TEAM-SETUP/2026-10-21/verification.json  |   99 +
+ .../D2-PM-TEAM-SETUP/2026-10-21/verify-tests.txt   |    4 +
+ docs/reports/repo-health-scan-latest.json          |  101 +-
+ docs/reports/repo-health-scan-latest.md            |   12 +-
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    7 +
+ scripts/ci/sql-interpolation-baseline.json         |    1 -
+ ...ToVaultApprovalCarry.pglite.integration.test.ts |    1 +
+ .../o01-core-project-audits.pglite.test.ts         |    1 +
+ .../project-sharing-team-setup.pglite.test.ts      |  193 ++
+ server/routes/authoring.router.ts                  |    7 +-
+ server/routes/c2c/project-access.ts                |   84 +-
+ server/routes/c2c/project-sharing.ts               |  209 ++
+ server/routes/concept2cure.ts                      |  374 +--
+ ...le-to-vault-snapshot.pglite.integration.test.ts |  123 +-
+ .../services/authoring/authoring-file-to-vault.ts  |  108 +-
+ .../placement-vault-leaf-parity.pglite.test.ts     |   78 +-
+ .../vault/__tests__/vault-ingest-storage.test.ts   |   40 +-
+ server/services/vault/vault-ingest-types.ts        |   97 +
+ server/services/vault/vault-ingest.service.ts      |  137 +-
+ shared/__tests__/project-sharing.test.ts           |   55 +
+ shared/project-sharing.ts                          |   78 +
+ tests/db/project-sharing-team-setup.dbtest.ts      |  210 ++
+ 229 files changed, 19720 insertions(+), 669 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts
+ create mode 100644 client/src/concept2cure/v2/surfaces/ProjectTeamSharing.tsx
+ create mode 100644 client/src/concept2cure/v2/surfaces/projectSharingRequest.ts
+ create mode 100644 docs/design/AUTHORING_VAULT_CONTINUITY_2026-10-21.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/README.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/build.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/build.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/canonical-catchup.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/changed-file-lint-summary.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/changed-file-lint.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/changed-file-lint.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/README.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/README.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/green.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/green.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/lint-strict.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/binding-fixture/lint-strict.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/freeze-before-envelope.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green-envelope-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green-envelope-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/green.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/independent-review.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/initial/red.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/initial/red.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-envelope-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-envelope-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-envelope-strict.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-envelope-strict.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-strict.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint-strict.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/lint.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-envelope.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-envelope.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-host.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-host.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-review.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red-review.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/client/red.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/evidence-check.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-canvas-path.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-check-editor-integrity.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-check-phantom-tokens.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-design-system.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-design-system.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-deploy-path.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-drop-safety.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-guard-order.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-prefix-collisions.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-reachability.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-reachability.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-set-order.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-migration-set-order.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-repo-health.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-sql-interpolation-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-sql-interpolation-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-token-cascade.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-token-contrast.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/gate-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/merged-regressions.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/merged-regressions.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/pre-publication-remote.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/pre-verification-remote.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/publication-qualification.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/publication-whitespace-note.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/qualified-source-freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/regression-selection.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-changed-file-lint.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-changed-file-lint.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-lint-summary.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-regressions.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-regressions.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-source-freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/release-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/repo-health-report.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/run-check.py
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/README.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ambiguity-red-production.sha256
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ambiguity-red.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ambiguity-red.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ambiguity-red.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/final-green.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/final-green.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/final-green.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/final-source.sha256
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/fixture-failure.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/fixture-failure.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/fixture-failure.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/green.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/green.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/green.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/independent-client-review.md
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/independent-client-review.sha256
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-commit-red.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-commit-red.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-commit-red.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-lint.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-lint.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/ingest-lint.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-final.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-final.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-final.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-initial.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-initial.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-initial.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-second.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-second.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/lint-second.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/log-inventory.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/red-production.sha256
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/red.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/red.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/red.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/runner-attempt.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/runner-attempt.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/runner-attempt.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/strict-lint.exit
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/strict-lint.raw.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/server/strict-lint.receipt.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/source-freeze.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/sql-interpolation-ratchet.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/static-gates-selection.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/static-gates.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/typecheck-final.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/typecheck-final.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/typecheck.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/typecheck.log.gz
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/warning-ratchet.json
+ create mode 100644 docs/evidence/D2-AUTHORING-VAULT-CONTINUITY/2026-10-21/warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/README.md
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-archive-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-archive-red.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-final-focused.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-green-initial.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-integration.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-lint.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-red.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-sql-gate.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/backend-type-fix-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-check.mjs
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-final.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-first-integration.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/browser-result.json
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/build-final.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/build.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/contract.md
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/incoming-source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/incoming-vault-tests.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/lint-errors.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/lint-warnings.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/native-final.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/native-first-integration.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/native-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/native-initial.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/node-version.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/root-lint-initial.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/sharing-manager-1280.png
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/sharing-manager-390.png
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/sharing-reader-1280.png
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/sharing-reader-390.png
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/source-bindings.json
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/typecheck-initial.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/typecheck.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/ui-green.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/ui-integration.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/ui-red.txt
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/verification.json
+ create mode 100644 docs/evidence/D2-PM-TEAM-SETUP/2026-10-21/verify-tests.txt
+ create mode 100644 server/routes/__tests__/project-sharing-team-setup.pglite.test.ts
+ create mode 100644 server/routes/c2c/project-sharing.ts
+ create mode 100644 server/services/vault/vault-ingest-types.ts
+ create mode 100644 shared/__tests__/project-sharing.test.ts
+ create mode 100644 shared/project-sharing.ts
+ create mode 100644 tests/db/project-sharing-team-setup.dbtest.ts

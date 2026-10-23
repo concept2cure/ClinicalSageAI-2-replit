@@ -1,0 +1,17 @@
+{
+  "build-final.txt.gz": {
+    "decodedBytes": 16123,
+    "decodedSha256": "db0375d88a82fc8fd15d9963b3903835702957f2fc3998eef5f22bfe85c4c9f8",
+    "archiveSha256": "51cfa7becd540bc55026c1359f632667ff45a07365a1c02ba4638162ed8312e5"
+  },
+  "retained-warning-gate-green.txt.gz": {
+    "decodedBytes": 754,
+    "decodedSha256": "db83d6a087c640661fc2c2d30aa48e0d7bc00e364fa008250b254b016220f749",
+    "archiveSha256": "3d36337a70f1a78a4bd3913631d437d3044838a26b6dc5b6687eaf0b7438a7ab"
+  },
+  "final-warning-gate.txt.gz": {
+    "decodedBytes": 754,
+    "decodedSha256": "8bb1d03ef32eb345ff54082129c534bccf1b9bf7f19164b6e50444942dbbc4eb",
+    "archiveSha256": "2f35e7fac62afd6e462b22538fc56c6bbed87d0b029a34eb31d36ed83ec3a046"
+  }
+}

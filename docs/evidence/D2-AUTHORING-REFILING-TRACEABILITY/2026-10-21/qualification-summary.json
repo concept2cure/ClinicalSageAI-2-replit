@@ -1,0 +1,150 @@
+{
+  "checkedAt": "2026-10-23T15:12:01.522896+00:00",
+  "checks": [
+    {
+      "label": "merged-regressions",
+      "exitCode": 0,
+      "sourceFreeze": "source-freeze.json",
+      "testSummary": [
+        "Test Files  62 passed (62)",
+        "Tests  849 passed | 1 todo (850)",
+        "Duration  206.90s (transform 15.18s, setup 2.06s, import 64.91s, tests 120.30s, environment 10.14s)"
+      ]
+    },
+    {
+      "label": "qualified-focused-green",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": [
+        "Test Files  4 passed (4)",
+        "Tests  56 passed | 1 todo (57)",
+        "Duration  26.05s (transform 6.39s, setup 118ms, import 8.95s, tests 16.15s, environment 0ms)"
+      ]
+    },
+    {
+      "label": "qualified-changed-file-lint",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "qualified-warning-ratchet",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "typecheck-final",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "build",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-single-native-canvas",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-canvas-path",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-check-editor-integrity",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-design-system",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-token-cascade",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-token-contrast",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-check-phantom-tokens",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-gateway-bypass",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-sql-interpolation",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-set-order",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-guard-order",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-reachability",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-deploy-path",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-drop-safety",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-migration-prefix-collisions",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    },
+    {
+      "label": "gate-repo-health",
+      "exitCode": 0,
+      "sourceFreeze": "release-qualified-source-freeze.json",
+      "testSummary": []
+    }
+  ],
+  "safetyGates": 16,
+  "typecheckErrors": 0,
+  "unchangedTypecheckBaseline": 0,
+  "humanAcceptancePerformed": false,
+  "historicalSupersessionTodoOpen": true
+}

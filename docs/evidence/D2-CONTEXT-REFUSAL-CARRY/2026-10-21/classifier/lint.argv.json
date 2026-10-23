@@ -1,0 +1,6 @@
+[
+  "npx",
+  "eslint",
+  "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+  "--max-warnings=0"
+]

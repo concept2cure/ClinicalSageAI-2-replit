@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "git",
+    "commit",
+    "-m",
+    "fix(authoring): retain verified Vault filing derivation",
+    "-m",
+    "Complete existing authoring filing receipts through Vault staging and package governance. Withhold ambiguous same-code version hints; preserve native pointers, approval gates and the single editor. Retain RED/GREEN, integrated regression, compiler/build and local human-testing evidence."
+  ],
+  "before": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "after": "d25ef1a5b043170cc5d8ea67e75d6077ad8acf89",
+  "exitCode": 0,
+  "elapsedSeconds": 2.876,
+  "normalHooksEnabled": true,
+  "rawOutput": "git-commit.log.gz",
+  "rawGzipSha256": "06baa396d94b22b0b1114effc07ad637f2c06b5e1d09612439cb183e3c11c2cc"
+}

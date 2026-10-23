@@ -1,0 +1,19 @@
+{
+  "incoming": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "historicalCode": "a8d76dcece377f6c347ead2f9185681fb832b40d",
+  "originalTestSha256": "e5dccf948320ab3cbba9aa0deda6dccbbb05f150d9e0f9c88b8745d7dde279ac",
+  "change": "One live cancellation transport expectation superseded explicitly by incoming DT3 authoritative stop behavior; all prior partial-answer/record assertions retained, raw-byte and timeline checks added, plus administrator row-before-abort case. No skip or production exception.",
+  "reviews": [
+    "context_resume_source_review: four merged production files clear, context fallback and serverSent union retained",
+    "context_resume_evidence_review: historical evidence audit clear, authoritative stop applies to context race",
+    "context_resume_stop_review: independent upstream stop-contract review agrees; raw-budget suite unchanged"
+  ],
+  "productionHashes": {
+    "server/services/ai-gateway/gateway-error-map.ts": "fb162287a12defca16c65b997464c519bc0a8d0b9b20a08755c7caa285d4120c",
+    "server/routes/chat/send-message.ts": "7f97b3b5fdd7adcbd759072933733c484a8dfd02eaedc8e6540ca6a404af16f1",
+    "server/routes/ana-ri/stream.ts": "d35e5775faa1004c603052f9f2898b4eaa3b530539fd22a479232402e6a2d45a",
+    "client/src/concept2cure/components/ana/useAnaChat.ts": "1ae18f34277d318de67a93feb85aff18c5178390c2fc361e799ec264d6eabca1"
+  },
+  "reviewedTestSha256AtMerge": "8715a55a55e0bb185fbdbd5a87887b8f6d650d29c1cbe55479dd7eb9de9ad8fd",
+  "finalTestCorrection": "resume-test-correction.json"
+}
