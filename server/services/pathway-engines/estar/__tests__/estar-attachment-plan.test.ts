@@ -10,7 +10,12 @@
  * rules are exercised without a database, so they run on every commit rather
  * than only where a program's governed document happens to exist.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+// Current actor authorization is qualified with real SQL in the adjacent
+// estar-vault-attachment-access PGlite fixture; these cases own content rules.
+vi.mock('../../../c2c/current-program-access',async original=>({
+  ...(await original<object>()),requireCurrentProgramAccess:async()=>({actor:{userId:7,role:'member'}}),
+}));
 import { promises as fs } from 'fs';
 import fsSync from 'fs';
 import path from 'path';
@@ -403,6 +408,7 @@ for (const t of TEMPLATES) {
  * injection — these run on every commit rather than only where a program's
  * governed document happens to exist.
  */
+const contentResolver=(input:Parameters<typeof createDeviceAttachmentResolver>[0])=>createDeviceAttachmentResolver({...input,userId:7});
 describe('createDeviceAttachmentResolver', () => {
   const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 
@@ -444,7 +450,7 @@ describe('createDeviceAttachmentResolver', () => {
 
   it('renders a finalized governed section to a real PDF', async () => {
     const client = fakeClient([FINAL]);
-    const resolve = createDeviceAttachmentResolver({
+    const resolve = contentResolver({
       organizationId: 2,
       programUuid: PROGRAM,
       client,
@@ -463,7 +469,7 @@ describe('createDeviceAttachmentResolver', () => {
        unreviewed machine draft into a named CDRH slot. `drafting` is what
        write_kit_section defaults to, and it rejects bodies under 40 characters
        — the same floor — so every AI draft would otherwise pass on length. */
-    const resolve = createDeviceAttachmentResolver({
+    const resolve = contentResolver({
       organizationId: 2,
       programUuid: PROGRAM,
       client: fakeClient([{ ...FINAL, status: 'drafting' }]),
@@ -476,7 +482,7 @@ describe('createDeviceAttachmentResolver', () => {
   });
 
   it('refuses a section that has no authored content', async () => {
-    const resolve = createDeviceAttachmentResolver({
+    const resolve = contentResolver({
       organizationId: 2,
       programUuid: PROGRAM,
       client: fakeClient([FINAL]),
@@ -489,7 +495,7 @@ describe('createDeviceAttachmentResolver', () => {
 
   it('loads the section set ONCE however many attachments ask for it', async () => {
     const client = fakeClient([FINAL]);
-    const resolve = createDeviceAttachmentResolver({
+    const resolve = contentResolver({
       organizationId: 2,
       programUuid: PROGRAM,
       client,
@@ -512,7 +518,7 @@ describe('createDeviceAttachmentResolver', () => {
        CER, or scaffolding a De Novo beside a 510(k), would change which
        document a named CDRH slot is filled from, with a clean 200. */
     const client = fakeClient([FINAL]);
-    const resolve = createDeviceAttachmentResolver({
+    const resolve = contentResolver({
       organizationId: 2,
       programUuid: PROGRAM,
       docTypes: ['k510'],
@@ -527,7 +533,7 @@ describe('createDeviceAttachmentResolver', () => {
   });
 
   it('says plainly that a legacy project has no governed document or vault', async () => {
-    const resolve = createDeviceAttachmentResolver({ organizationId: 2, programUuid: null });
+    const resolve = contentResolver({ organizationId: 2, programUuid: null });
     const out = await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
     expect(out.ok).toBe(false);
     if (out.ok) return;

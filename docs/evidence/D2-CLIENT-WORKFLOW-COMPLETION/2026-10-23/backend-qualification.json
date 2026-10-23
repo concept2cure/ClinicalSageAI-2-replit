@@ -1,0 +1,95 @@
+{
+  "task": "D2 official eSTAR Vault attachment completion backend",
+  "date": "2026-10-23",
+  "baseHeadAtFreeze": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "node": "v22.23.4",
+  "status": "owned production and test sources frozen",
+  "ownedSources": [
+    {
+      "path": "server/routes/510k-estar-routes.ts",
+      "sha256": "33763121ae1f072968cd759d78681ff222cc1fc14763082eb9fbd354e0ac02de",
+      "bytes": 95994
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-plan.ts",
+      "sha256": "de83df87d1a0aae956d09fbb5f22eca495d618113706b2410e13bb33b1eda687",
+      "bytes": 27020
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-source-access.ts",
+      "sha256": "c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be",
+      "bytes": 4146
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-catalog.ts",
+      "sha256": "bd70a0f2e83a51de1e255fd59193aad13609ef37101c3d22ce411611c0dabc99",
+      "bytes": 2412
+    },
+    {
+      "path": "server/routes/__tests__/510k-estar-attachment-slots.test.ts",
+      "sha256": "106f3dc1d4a303245937c648ffb68331bba5bf7896a9ccec64178d55a2a941e1",
+      "bytes": 4313
+    },
+    {
+      "path": "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts",
+      "sha256": "318b60645dc45d7bb1eb4f9509a7508b3c9360b0d32fd7bb39cc518c58b98dbc",
+      "bytes": 8570
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts",
+      "sha256": "435e2c95048998a869c582072ff4b1c0a544d1f6a29748964d1e262c12d411d3",
+      "bytes": 7272
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+      "sha256": "de8aba43a8ebd3ebde3c8856e7c3af28505469e0dd1efc854d2836206def4c9b",
+      "bytes": 23148
+    }
+  ],
+  "sharedDependencyReadOnlyPin": {
+    "path": "shared/regulatory/estar-attachment-manifest.ts",
+    "sha256": "cad704de9438f0251cd39d482562701fff6c732180ba5e1e5519a26555a7c633",
+    "bytes": 372
+  },
+  "qualifiedRed": {
+    "report": "backend-red-qualified.json",
+    "log": "backend-red-qualified.log.gz",
+    "passed": 2,
+    "failed": 21
+  },
+  "finalFocusedTests": {
+    "report": "backend-green-final.json",
+    "log": "backend-green-final.log.gz",
+    "passed": 79,
+    "failed": 0,
+    "command": "PATH=/workspace/.tooling/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=6144 node node_modules/vitest/vitest.mjs run server/routes/__tests__/510k-estar-attachment-slots.test.ts server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts --reporter=json --outputFile=docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/backend-green-final.json"
+  },
+  "lint": {
+    "report": "backend-eslint-after.json",
+    "errors": 0,
+    "warnings": 8,
+    "existingRouteWarnings": 7,
+    "existingPlanFixtureWarnings": 1,
+    "addedWarnings": 0,
+    "baselineReports": [
+      "backend-eslint-before-route.json",
+      "backend-eslint-before-plan-test.json"
+    ]
+  },
+  "diffCheck": {
+    "command": "git diff --check -- <owned paths>",
+    "exitCode": 0
+  },
+  "contract": {
+    "catalog": "GET /api/510k-estar/attachment-slots?type=510k|de_novo|pma&variant=device|ivd returns authenticated exact verified-template catalog; refusal is never an empty success.",
+    "sourceGate": "Canonical current actor/program access, current writer role at action checkpoints, current/version/hash approval, legal target applicability and binary disposition composed with existing services; actual bytes hashed and checked around storage.",
+    "delivery": "Attachment-bearing actual filled success returns officialEstarPdf:true; pre-persistence known refusal is definite; late revalidation failure after persistence begins returns 503 OUTCOME_UNKNOWN and withholds PDF.",
+    "templatePolicy": "Catalog and attachment-bearing POST require integrity verified. Existing zero-attachment template policy preserved."
+  },
+  "limits": [
+    "PGlite with explicit storage/producer/persistence seams does not prove native PostgreSQL concurrency.",
+    "Checkpoints do not serialize arbitrary concurrent mutations; retained historical artifacts may remain after a withheld late delivery and require human review.",
+    "No Acrobat/applicant review, agency submission, deployment, full compiler or build performed by backend agent. Root owns combined qualification.",
+    "A final test matrix as-const type annotation was applied after final focused test start; it has no runtime effect and root combined qualification will cover the frozen source."
+  ]
+}

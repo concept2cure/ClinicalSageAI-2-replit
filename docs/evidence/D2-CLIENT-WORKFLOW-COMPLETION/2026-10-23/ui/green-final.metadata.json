@@ -1,0 +1,30 @@
+{
+  "phase": "green-final",
+  "startedAt": "2026-10-23T18:34:54.015274+00:00",
+  "sourceHead": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "sourceSha256": {
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "b3e9e70bc8923330d60683eed820cb8f067ecf71ec13c77dfa5a7bd063b6dda6",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx": "551a1ad30b1eb26353e5796644c20a1900f27c95dd7bc5e919c7234dda4a090c",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx": "19e861c11f065613883b16e15e819d5adf686ca4fa2a9dc8ba5af269b5a51ffb",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx": "756a402ce3d00160c50fd3cb3a04640a670ebba9eea7d0c346348164365f26ea"
+  },
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/green-final.results.json"
+  ],
+  "finishedAt": "2026-10-23T18:34:58.825446+00:00",
+  "exitCode": 0,
+  "rawLogSha256": "29090bc38aff656cfa90b7b3b2a507c6fab374720d034244b3808c9a3c6ec319",
+  "counts": {
+    "numTotalTests": 66,
+    "numPassedTests": 66,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  }
+}

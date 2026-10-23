@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-10-23T18:22:55.223029+00:00",
+  "baseCommit": "0ef71516c9efe22960a752a485b89ec208471bbc",
+  "branch": "concept2cure-v2",
+  "node": "v22.23.4",
+  "runtimeNetwork": "unrestricted policy observed; no secret values read or real provider calls",
+  "sourceFiles": {
+    "AGENTS.md": "ae66be9d8a0211b4af6f4de859581c30eb95f536b929bd356c1eb58119941ef4",
+    "CLAUDE.md": "d88a0f27b7d1b89acdb924984e1dae200ec4e36cd1de8ce8127fa27c1bdf5c37",
+    ".claude/skills/ui-standards.md": "7bb0d7c4e8d3ffd7467914a6a5ba962ebe495249c7cd9a7b828c3f47fd9b204b",
+    ".claude/skills/claude-ui-design-principles.md": "14431e6cb9a83141200bbcff569ff9a889ceaf0e568711cf6f1a3a621b4ddf43",
+    "docs/LAUNCH_DEFINITION_OF_DONE.md": "6cd0ee75f309eb85d52587539375de667eadedfdef78187e116fdf33dd00294c",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "ac43ed077d4f0d44d03795a978a2cebf1cfc1260ae1bfbb6d0716adeb1ffbc3c",
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts": "8eddc689a638b3972f9a95db52e65f3fd7099535cffa4cee4e3cf33084543b95",
+    "server/routes/510k-estar-routes.ts": "25e99e8a9577815679843cf69ad2536ef89730fdeae21affc23b63095be18a48",
+    "server/services/pathway-engines/estar/estar-attachment-plan.ts": "779a0af16f2021f7f6ead8c7e3ebc513ea1c0f4536d0377afaa7acef2ba362e8",
+    "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx": "9d72e1f77429470f7e31be75299350c50104b03cf359dcc1ac1a4eda24f7139f"
+  },
+  "humanAcceptance": "Not run"
+}

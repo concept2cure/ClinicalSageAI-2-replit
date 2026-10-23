@@ -55,8 +55,10 @@
  */
 
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
+import { ATTACHMENT_MANIFEST_SEED, PRESTAR_ATTACHMENT_MANIFEST_SEED } from '../../../../shared/regulatory/estar-attachment-manifest';
+export { ATTACHMENT_MANIFEST_SEED, PRESTAR_ATTACHMENT_MANIFEST_SEED } from '../../../../shared/regulatory/estar-attachment-manifest';
 
-import { pool } from '../../../db';
 import { readVerifiedVaultBytes } from '../../../routes/c2c/project-vault';
 import { renderStructuredLeafPdf } from '../../ectd/leaf-pdf-renderer';
 import { assessLeafPdfSecurity } from '../../ectd/leaf-pdf-security';
@@ -72,6 +74,8 @@ import {
   resolveAttachmentSlot,
   type EstarAttachmentSlot,
 } from './estar-attachment-slots';
+import { ProgramReadAccessError } from '../../c2c/current-program-access';
+import { admitVaultAttachmentSource, assertDeviceAttachmentAccess, type DeviceAttachmentAccessInput } from './estar-attachment-source-access';
 
 function sha256Of(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex');
@@ -84,10 +88,8 @@ export const ATTACHMENT_MANIFEST_DATA_PATH = 'root.AttachmentManifest';
  * The eleven-character marketing seed; the explicit PreSTAR seed is below.
  * The planner accepts only these pristine values. See `indexOf("<<") > 0`.
  */
-export const ATTACHMENT_MANIFEST_SEED = '***Start***';
 /** The pinned PreSTAR 3.1 datasets ships this distinct pristine seed. Both
  * eleven-character seeds preserve FDA's indexOf("<<") > 0 validator rule. */
-export const PRESTAR_ATTACHMENT_MANIFEST_SEED = '***Begin***';
 
 /**
  * Every datasets value the plan reads out of the template.
@@ -420,8 +422,7 @@ function toAscii(value: string): string {
     .replace(/[^\x20-\x7e]/g, ' ');
 }
 
-export interface DeviceAttachmentResolverInput {
-  organizationId: number;
+export interface DeviceAttachmentResolverInput extends DeviceAttachmentAccessInput {
   /** The regulatory program whose governed sections and vault are readable. */
   programUuid: string | null;
   /**
@@ -466,38 +467,7 @@ async function resolveVaultAttachment(
      readVerifiedVaultBytes — the ONE reader that proves a stored file is the
      file the row recorded. Filing an altered document under a governed
      document's identity is the failure that check exists for. */
-  const docRes = await pool.query(
-    `SELECT id, file_name, document_title, mime_type, s3_key,
-            storage_version_id, storage_provider, content_hash
-       FROM vault.documents
-      WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
-        AND EXISTS (
-          SELECT 1 FROM regulatory_programs rp
-           WHERE rp.id = vault.documents.program_id
-             AND rp.organization_id = $3
-             AND rp.deleted_at IS NULL
-        )
-      LIMIT 1`,
-    [documentId, input.programUuid, input.organizationId],
-  );
-  const doc = docRes.rows[0] as
-    | {
-        id: string;
-        file_name: string | null;
-        document_title: string | null;
-        mime_type: string | null;
-        s3_key: string | null;
-        storage_version_id: string | null;
-        storage_provider: string | null;
-        content_hash: string | null;
-      }
-    | undefined;
-  if (!doc) {
-    return {
-      ok: false,
-      reason: `No vault document ${documentId} in this program.`,
-    };
-  }
+  const doc = await admitVaultAttachmentSource(input,documentId);
   // NEITHER address: dual-read, so a new upload carries a provider version id
   // and no s3_key while an older row carries the reverse. Testing only the old
   // one would refuse every new upload as "catalogued without content".
@@ -522,6 +492,9 @@ async function resolveVaultAttachment(
   if (!read.ok) {
     return { ok: false, reason: `Vault document ${documentId}: ${read.message ?? read.error}` };
   }
+  const actualHash = sha256Of(read.bytes);
+  await admitVaultAttachmentSource(input,documentId,actualHash);
+  if (actualHash !== doc.content_hash) return {ok:false,reason:'The selected Vault version’s retrieved bytes do not match its recorded hash.'};
   const proposed = doc.file_name?.trim() || doc.document_title?.trim() || `document-${doc.id}`;
   const dot = proposed.lastIndexOf('.');
   const extension = dot > 0 ? proposed.slice(dot) : '';
@@ -544,23 +517,19 @@ async function resolveVaultAttachment(
  */
 export function createDeviceAttachmentResolver(
   input: DeviceAttachmentResolverInput,
-): EstarAttachmentResolver {
+): EstarAttachmentResolver & { assertCurrent(): Promise<void> } {
   let sections: Awaited<ReturnType<typeof loadAuthoredDeviceSections>> | null = null;
+  const resolvedVault = new Map<string,string>();
+  const resolvedSections = new Map<string,unknown>();
 
-  return async (source) => {
-    if (!input.programUuid) {
-      return {
-        ok: false,
-        reason:
-          'This export is anchored to a legacy project row with no regulatory program, so there is ' +
-          'no governed document and no program vault to attach from.',
-      };
-    }
-
+  const resolve: EstarAttachmentResolver = async (source) => {
+    try {
+      await assertDeviceAttachmentAccess(input);
     if (source.kind === 'authored_section') {
       if (sections === null) {
         sections = await loadAuthoredDeviceSections(input.organizationId, {
-          programId: input.programUuid,
+          // assertDeviceAttachmentAccess above refuses a missing program.
+          programId: input.programUuid!,
           docTypes: input.docTypes,
           client: input.client,
         });
@@ -589,10 +558,12 @@ export function createDeviceAttachmentResolver(
             'attachment slot.',
         };
       }
+      resolvedSections.set(source.sectionCode,section);
       const bytes = await renderStructuredLeafPdf(
         [{ heading: section.title, body: section.content, sectionCode: section.sectionCode }],
         { title: section.title, sectionCode: section.sectionCode },
       );
+      await assertDeviceAttachmentAccess(input);
       return {
         ok: true,
         bytes,
@@ -603,8 +574,25 @@ export function createDeviceAttachmentResolver(
       };
     }
 
-    return resolveVaultAttachment(input, source.documentId);
+    const result = await resolveVaultAttachment(input, source.documentId);
+    if (result.ok) resolvedVault.set(source.documentId,sha256Of(result.bytes));
+    return result;
+    } catch (error) {
+      if (error instanceof ProgramReadAccessError) return {ok:false,reason:error.message};
+      throw error;
+    }
   };
+  return Object.assign(resolve,{async assertCurrent() {
+    await assertDeviceAttachmentAccess(input,true);
+    for (const [id,hash] of resolvedVault) await admitVaultAttachmentSource(input,id,hash);
+    if (resolvedSections.size) {
+      const current=await loadAuthoredDeviceSections(input.organizationId,{programId:input.programUuid!,docTypes:input.docTypes,client:input.client});
+      for (const [code,section] of resolvedSections) if (!isDeepStrictEqual(current.find(s=>s.sectionCode===code),section)) {
+        throw new ProgramReadAccessError(409,'ESTAR_ATTACHMENT_SOURCE_CHANGED','An authored attachment changed while the export was being prepared.');
+      }
+    }
+    await assertDeviceAttachmentAccess(input,true);
+  }});
 }
 
 export default {

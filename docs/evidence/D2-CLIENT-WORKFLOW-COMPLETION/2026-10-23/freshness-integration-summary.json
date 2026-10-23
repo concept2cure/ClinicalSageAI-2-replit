@@ -1,0 +1,106 @@
+{
+  "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+  "incomingRange": "b3e5746f6...7184fb1fd",
+  "runtimePaths": [
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "server/routes/authoring.router.ts",
+    "server/services/advancedRAGPipeline.ts",
+    "server/services/authoring/authoring-refile-saved-section.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "server/services/c2c/filing-section-target.ts",
+    "server/services/clinical-regulatory-evidence/span-lineage-integrity.ts",
+    "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+    "client/src/concept2cure/v2/editor/AuthoringRefileSavedText.tsx",
+    "client/src/concept2cure/v2/editor/authoringRefileSavedTextState.ts"
+  ],
+  "testFiles": [
+    "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "server/services/__tests__/rag-actor-programme-scope.test.ts",
+    "server/services/__tests__/rag-disposition-revalidation.test.ts",
+    "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+    "server/services/__tests__/rag-generation-request.test.ts",
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+    "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts"
+  ],
+  "implementationSource": {
+    "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts": "3ea4cfa7774bbbbbb443c7dfd18adcff70918b726f0fb086a0cfe4422baec9eb",
+    "client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts": "5dfa2a24a68f280a517620eda0fad529dd49c6b07bec64abc7c5e07946fd2299",
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts": "4fdb9c519129772009ec74875bc4c0bb34559699525d4ea093c2f25e3c3c44b5",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx": "551a1ad30b1eb26353e5796644c20a1900f27c95dd7bc5e919c7234dda4a090c",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "54df4ec621610566b47e837c3d92b7e02331857f2d5171afe701be9ffac27f9f",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx": "6423a6dbb1d05d99d98065dc40e428fe274f521ea57c8fcc2ed18a54025c62a6",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx": "bb7fa9f719e50c39abf52839a124e3cfd206a3afd6a55b579b593c308392ae0b",
+    "client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx": "aa7be21b7d75d953dc6e1287103d9ec61838c02e932fa54bb5a4d059fb461943",
+    "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx": "426a70ff792f2d3995bbf5380ae89dbc600f0835a3a59295d58a6ad7d1172f9c",
+    "client/src/concept2cure/v2/mutationOutcome.ts": "18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86",
+    "client/src/concept2cure/v2/styles/vault-picker.css": "79729c51f8f46fb7b4588607db86105cbba30561aeb2b8f6f07a2f447d60a0d3",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "1e1daef689d794b0db316d4001d2981c9940352e43fc8d9950e454ed87893ae9",
+    "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx": "590a587bf07e6cd6f3cca56234c65f2dd97af129bb511239722a1c096bc4de4b",
+    "server/routes/510k-estar-routes.ts": "33763121ae1f072968cd759d78681ff222cc1fc14763082eb9fbd354e0ac02de",
+    "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts": "318b60645dc45d7bb1eb4f9509a7508b3c9360b0d32fd7bb39cc518c58b98dbc",
+    "server/routes/__tests__/510k-estar-attachment-slots.test.ts": "106f3dc1d4a303245937c648ffb68331bba5bf7896a9ccec64178d55a2a941e1",
+    "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts": "de8aba43a8ebd3ebde3c8856e7c3af28505469e0dd1efc854d2836206def4c9b",
+    "server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts": "435e2c95048998a869c582072ff4b1c0a544d1f6a29748964d1e262c12d411d3",
+    "server/services/pathway-engines/estar/estar-attachment-catalog.ts": "bd70a0f2e83a51de1e255fd59193aad13609ef37101c3d22ce411611c0dabc99",
+    "server/services/pathway-engines/estar/estar-attachment-plan.ts": "e4757caa794b8012b0adf528459eb062192ec4e2494b02eb3c8b0571fa2954c9",
+    "server/services/pathway-engines/estar/estar-attachment-slots.ts": "2291cdb0637cf3888f92074db4132a3c4820bb763dd5a2eedb2e0800e253da04",
+    "server/services/pathway-engines/estar/estar-attachment-source-access.ts": "c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be",
+    "shared/regulatory/estar-attachment-manifest.ts": "cad704de9438f0251cd39d482562701fff6c732180ba5e1e5519a26555a7c633"
+  },
+  "checks": [
+    {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+        "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+        "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+        "server/services/__tests__/rag-actor-programme-scope.test.ts",
+        "server/services/__tests__/rag-disposition-revalidation.test.ts",
+        "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+        "server/services/__tests__/rag-generation-request.test.ts",
+        "server/services/__tests__/rag-vault-freshness-boundaries.test.ts",
+        "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+        "server/services/__tests__/rag-vault-freshness-mapping.test.ts",
+        "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+        "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-test-results.json"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 22.286,
+      "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+      "implementationPinsUnchanged": true,
+      "output": "freshness-integration-tests.log.gz",
+      "outputSha256": "02859653763e46dbf003a7d7edf0c7eeb50fad8d2a00df8056f17bc1b671c5ef"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 13.403,
+      "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+      "implementationPinsUnchanged": true,
+      "output": "freshness-integration-build.log.gz",
+      "outputSha256": "d935ccd53e4cf9885ca5ad7c87ef44ad3a20a666f6ca80eea0609bf3096bb4cf"
+    }
+  ],
+  "typescript": "normal pre-push gate still required",
+  "publicationTypecheck": {
+    "sourceHead": "a873595f75c6ee6ca9e14c12203a40ca5938afa9",
+    "errors": 0,
+    "normalGate": true,
+    "receipt": "canonical-push-4.json",
+    "all23ImplementationPinsUnchanged": true
+  }
+}

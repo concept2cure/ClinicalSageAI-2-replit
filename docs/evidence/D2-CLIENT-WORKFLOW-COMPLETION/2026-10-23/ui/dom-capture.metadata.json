@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/mdx/surfaces/__tests__/_estarVisual.capture.test.tsx",
+    "-t",
+    "captures actual mounted",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/ui/dom-capture.results.json"
+  ],
+  "exitCode": 0,
+  "sourceHead": "4c5f2745fa95327721276b85bc8f1a63b8883152",
+  "sourceFiles": {
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "54df4ec621610566b47e837c3d92b7e02331857f2d5171afe701be9ffac27f9f",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx": "551a1ad30b1eb26353e5796644c20a1900f27c95dd7bc5e919c7234dda4a090c",
+    "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx": "590a587bf07e6cd6f3cca56234c65f2dd97af129bb511239722a1c096bc4de4b"
+  },
+  "captures": {
+    "receipt.html": "7dadae3ee5d0c886de7fc1404d3ea16cf25c733b3975bbf680471a0ff69b0dc2",
+    "picker.html": "5c143bb08e75df9436a999d917e4dcdf0530cfcd6a7d9434e6b97102858e86a5",
+    "selected.html": "dd27dea39394fd7c9e821d18dced563a870d34c197ef40c025820a8a6e801f6e"
+  }
+}

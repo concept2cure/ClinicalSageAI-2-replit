@@ -33,9 +33,12 @@
  */
 
 import * as React from 'react';
+import { isIvdFamily } from '@shared/constants/domain/product-types';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import { I } from '../icons';
 import type { Program } from '../data/programs';
+import { useSubmissionReadSession } from '../../v2/surfaces/submissionScopedRead';
+import { OfficialEstarAttachments, OfficialEstarAttachmentOutcome, useOfficialEstarAttachments } from './OfficialEstarAttachments';
 import { useEstarReadiness } from '../hooks/useK510';
 import {
   notSetWords,
@@ -88,7 +91,7 @@ export function officialEstarTypeFor(
 }
 
 /**
- * Which official template a program files on. An IVD program that files a
+ * Which official template a program files on. An IVD or CDx program that files a
  * 510(k) reaches the 510(k) surface (its pathway is k510), so the variant is
  * decided by the program's product type, never by the surface it is on.
  * Absent product type (the kit's sample rows) reads as a device.
@@ -96,7 +99,7 @@ export function officialEstarTypeFor(
 export function officialEstarVariantFor(
   program: Pick<Program, 'productType'> | null | undefined,
 ): OfficialEstarVariant {
-  return (program?.productType ?? '').toLowerCase() === 'ivd' ? 'ivd' : 'device';
+  return isIvdFamily(program?.productType) ? 'ivd' : 'device';
 }
 
 /** The disabled-control title for a plan that does not unlock the export. */
@@ -160,12 +163,23 @@ function captionOf(fields: OfficialFieldView[] | undefined, key: string): string
 }
 
 export function OfficialEstarPanel({ program, variant, type = '510k' }: OfficialEstarPanelProps) {
+  const session = useSubmissionReadSession();
+  const context = JSON.stringify([program?.id, type, variant, session.key]);
+  const visit = React.useRef({ context });
+  if (visit.current.context !== context) visit.current = { context };
+  const captured = visit.current;
+  const current = () => visit.current === captured && session.sameRevision();
+  return <OfficialEstarPanelForContext key={context} {...{ program, variant, type, current }} />;
+}
+
+function OfficialEstarPanelForContext({ program, variant, type = '510k', current }: OfficialEstarPanelProps & { current: () => boolean }) {
   const prestar = type === 'q_sub' || type === 'ide' || type === '513g';
   const ident = program?.id ?? null;
   const readiness = useEstarReadiness(type, variant);
   const official = useEstarOfficialFields(ident, type, variant);
-  const estarExport = useEstarExport();
+  const estarExport = useEstarExport(current);
   const entitlement = useEstarEntitlement();
+  const attachments = useOfficialEstarAttachments(ident, type, variant);
 
   /* Values typed for THIS export only. Re-seeded empty on a program or variant
      switch so nothing typed under one device travels to the next — and the last
@@ -218,7 +232,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
     blockers,
     busy: estarExport.busy,
     fieldsError,
-  });
+  }) ?? attachments.problem;
 
   const headerLine = !program
     ? 'The administrative data is read from the open program'
@@ -234,11 +248,11 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   const report = estarExport.outcome?.ok ? estarExport.outcome.fieldReport : null;
 
   function onGenerate() {
-    if (!program || disabledReason) return;
+    if (!program || disabledReason || !current()) return;
     void estarExport.exportOfficialEstar(
       { id: program.id, code: program.code, title: program.title },
       variant,
-      { type, useProgramData: true, data: typed },
+      { type, useProgramData: true, data: typed, ...(attachments.requests.length ? { attachments: attachments.requests } : {}) },
     );
   }
 
@@ -253,6 +267,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
         </div>
         <button
           className="section-more"
+          style={{ minHeight: 44 }}
           disabled={disabledReason !== null}
           title={
             disabledReason ??
@@ -357,6 +372,11 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
           ) : null}
         </div>
       ) : null}
+
+      {!prestar && <OfficialEstarAttachments plan={attachments} programId={ident} busy={estarExport.busy} />}
+      <OfficialEstarAttachmentOutcome catalog={attachments.catalog}
+        attachments={!estarExport.busy && estarExport.outcome?.ok ? estarExport.outcome.attachments : undefined}
+        refusals={estarExport.busy ? undefined : estarExport.outcome?.attachmentRefusals} />
 
       <div className="panel" style={{ marginTop: 8 }}>
         <div className="panel-hdr">

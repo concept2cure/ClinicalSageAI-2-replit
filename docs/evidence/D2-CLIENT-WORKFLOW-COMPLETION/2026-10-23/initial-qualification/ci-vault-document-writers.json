@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:vault-document-writers"
+  ],
+  "startedAt": "2026-10-23T18:43:08Z",
+  "elapsedSeconds": 0.294,
+  "exitCode": 0,
+  "output": "ci-vault-document-writers.log.gz",
+  "outputSha256": "36ff550d2ef40fb1213fc6cd1544d2ef3b07361ba158ee7daf21a420e58e5b3e",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

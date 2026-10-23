@@ -1,0 +1,17 @@
+{
+  "sourceHead": "e646830ca0efb65311b5e1171c2199c943babde4",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/c2c/__tests__/program-project-anchor-strict.test.ts",
+    "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/intake-attachment-control-test-results.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 5.124,
+  "output": "intake-attachment-control.log.gz",
+  "outputSha256": "b98b0f3bd12c3512defeb997d74693d35b4c7888694d0a1e1023effc1bf182ac"
+}

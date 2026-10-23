@@ -246,7 +246,8 @@ export const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value i
   const read = value as Partial<VaultSearchShape>;
   return Array.isArray(read.results) && Number.isSafeInteger(read.total) &&
     typeof read.total === 'number' && read.total >= read.results.length &&
-    read.results.every(hit => hit && typeof hit.id === 'string' && typeof hit.title === 'string');
+    read.results.every(hit => hit && typeof hit.id === 'string' && typeof hit.title === 'string' &&
+      typeof hit.current === 'boolean');
 };
 
 /** A version's sha256 as the server pins it (lower(btrim(content_hash))), or null when none is recorded. */
@@ -302,7 +303,7 @@ function usePickerSearch(request: PickerRequest, programId: string | undefined, 
   const program = useLiveData<VaultSearchShape>(programPath, [programPath, attempt, owner], isVaultSearchShape);
   if (programId) {
     const hits: PickedVaultVersion[] = (program.data?.results ?? []).map((h) => ({
-      id: h.id, title: h.title, version: h.version ?? null, current: h.current !== false, programId, programName: null, contentHash: pinnedSha256(h.contentHash),
+      id: h.id, title: h.title, version: h.version ?? null, current: h.current === true, programId, programName: null, contentHash: pinnedSha256(h.contentHash),
     }));
     return { loading: program.loading, error: program.error, read: program.data !== null, hits, total: program.data?.total ?? 0 };
   }

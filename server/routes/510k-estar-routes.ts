@@ -1,4 +1,4 @@
-import { Router, type Request } from 'express';
+import { Router, type Request, type Response } from 'express';
 import archiver from 'archiver';
 import { PassThrough } from 'stream';
 import { z } from 'zod';
@@ -72,11 +72,13 @@ import {
 } from '../services/pathway-engines/estar/estar-content-leaves';
 import { PMA_SUBMISSION_TYPES } from '../services/pathway-engines/pma/pma-mapper';
 import { and, eq } from 'drizzle-orm';
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
-import { requireEditorAccess } from '../middleware/orgMembership';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { EstarAttachmentCatalogError, readEstarAttachmentCatalog, readVerifiedEstarAttachmentTemplate } from '../services/pathway-engines/estar/estar-attachment-catalog';
 import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import { ProjectAdmissionRefusal, requireCurrentProjectActor, requireProjectAdmission } from './c2c/project-access';
 import {
@@ -1055,12 +1057,35 @@ function withOfficialExtras<T extends object>(
   const { attachmentReport, fieldMapCapability } = extras;
   return {
     ...body,
+    officialEstarPdf: true,
     ...(fieldReport ? { fieldReport } : {}),
     erasedFields: [...erasedFields],
     ...(attachmentReport ? { attachmentReport } : {}),
     retention,
     ...(fieldMapCapability ? { fieldMapCapability, applicantCompletionRequired: fieldMapCapability.applicantCompletionRequired } : {}),
   };
+}
+
+function officialAttachmentResolver(req: Request, anchor: ProjectAnchor, type: z.infer<typeof officialSchema>['type']) {
+  const executor=requestPgClient(req);
+  return createDeviceAttachmentResolver({
+    organizationId:getOrganizationId(req),programUuid:anchor.programUuid,userId:governedActorId(req),executor,submissionType:type,
+    docTypes:ESTAR_TYPE_DOC_CLASS[type] ? [ESTAR_TYPE_DOC_CLASS[type]!] : [],
+    // Adapt the request's real SQL client, never Drizzle's relational .query namespace.
+    client:{query:async <T = Record<string,unknown>>(text:string,params?:unknown[])=>({rows:(await executor.query(text,params)).rows as T[]})},
+  });
+}
+
+function sendAttachmentExportFailure(error: unknown,res: Response,persistenceStarted: boolean): boolean {
+  if (error instanceof EstarAttachmentCatalogError) {
+    res.status(error.status).json({error:error.code,officialEstarPdf:false,message:error.message});return true;
+  }
+  if (!(error instanceof ProgramReadAccessError)) return false;
+  if (persistenceStarted) {
+    res.status(503).json({error:'OUTCOME_UNKNOWN',code:'OUTCOME_UNKNOWN',officialEstarPdf:false,
+      message:'Attachment eligibility changed after export persistence started. The PDF was not delivered. Review current Vault and export records before trying again.'});
+  } else res.status(error.status).json({error:error.code,officialEstarPdf:false,message:error.message});
+  return true;
 }
 
 /**
@@ -1097,6 +1122,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
   }
 
   const { meta, type, variant, data, flatten, useProgramData, attachments } = validation.data;
+  let attachmentPersistenceStarted=false;
 
   try {
     const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
@@ -1105,6 +1131,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     }
 
     const templateVariant = templateVariantFor(type, variant);
+    const attachmentResolver=attachments?.length ? officialAttachmentResolver(req,anchor,type) : null;
+    await attachmentResolver?.assertCurrent();
+    const verifiedTemplate=attachmentResolver ? await readVerifiedEstarAttachmentTemplate(type,templateVariant) : null;
     const { resolved, fillData } = await resolveRequestedOfficialFields(req, getOrganizationId(req), anchor, {
       descriptorId: descriptorFor(type, templateVariant)?.id,
       data,
@@ -1116,35 +1145,13 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       variant: templateVariant,
       data: fillData,
       flatten,
+      ...(verifiedTemplate ? {templateBytes:verifiedTemplate.templateBytes} : {}),
       /* The producer is told the ceiling the deliverer enforces, so an
          oversized submission is a sentence naming the documents rather than a
          500 after the work is done. One function answers for both. */
       maxOutputBytes: getMaxGovernedExportBytes(),
-      ...(attachments?.length
-        ? {
-            attachments,
-            /* The resolver is built per request and used once. It carries the
-               organization and the program, and both branches re-assert them in
-               their own query — a document is never reached by id alone. */
-            /* No `client`: the resolver's governed-section reads default to
-               the shared pool, which is what every other caller of
-               loadAuthoredDeviceSections in this file does (/build at :533,
-               /assemble, /filing-readiness). `requestDb(req)` is a DRIZZLE
-               instance for `.select().from(...)` — its `.query` is the
-               relational-query namespace, not the `(text, params)` function
-               DeviceContentClient wants — so passing it here threw at runtime
-               and typechecked only until the next tsc run. If the shared pool
-               becomes wrong under RLS enforcement it becomes wrong for all four
-               callers at once, and the fix belongs to all four rather than to a
-               fifth, divergent path here. */
-            attachmentResolver: createDeviceAttachmentResolver({
-              organizationId: getOrganizationId(req),
-              programUuid: anchor.programUuid,
-              /* THIS export's own document class, never "the newest device
-                 document" — see ESTAR_TYPE_DOC_CLASS. */
-              docTypes: ESTAR_TYPE_DOC_CLASS[type] ? [ESTAR_TYPE_DOC_CLASS[type]!] : [],
-            }),
-          }
+      ...(attachmentResolver
+        ? { attachments, attachmentResolver }
         : {}),
     });
 
@@ -1163,6 +1170,8 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         ...(result.attachmentReport ? { attachmentReport: result.attachmentReport } : {}),
       });
     }
+
+    await attachmentResolver?.assertCurrent();
 
     const filename = `${sanitizeFilename(meta.id)}_eSTAR.pdf`;
     const pdfBuffer = Buffer.from(result.pdfBytes);
@@ -1202,6 +1211,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
        idempotent and different bytes never overwrite the record. A retention
        that should have happened and did not THROWS: an unretained submission
        artifact is not handed over. */
+    attachmentPersistenceStarted=!!attachmentResolver;
     const retention = await retainOfficialEstar({
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
@@ -1212,6 +1222,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       pdfBytes: pdfBuffer,
       ctdSection: meta.ctdSection || 'm1.5',
     });
+    await attachmentResolver?.assertCurrent();
     // The retention record travels into the artifact registry / audit row too,
     // so the governed record names the vault document, not just its hash.
     Object.assign(officialMetadata, { retention });
@@ -1236,6 +1247,8 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
+      await attachmentResolver?.assertCurrent();
+
       return res.status(200).json(
         withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, { attachmentReport: result.attachmentReport, fieldMapCapability: result.fieldMapCapability }),
       );
@@ -1258,10 +1271,13 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       metadata: officialMetadata,
     });
 
+    await attachmentResolver?.assertCurrent();
+
     return res.status(200).json(
       withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, { attachmentReport: result.attachmentReport, fieldMapCapability: result.fieldMapCapability }),
     );
   } catch (error: any) {
+    if (sendAttachmentExportFailure(error,res,attachmentPersistenceStarted)) return;
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
     });
@@ -1382,6 +1398,19 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
 const readinessSchema = z.object({
   type: z.enum(ESTAR_TYPES).default('510k'),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
+});
+
+/** Read-only destinations; no program values, bytes or export are returned. */
+router.get('/attachment-slots',authMiddleware,async (req,res)=>{
+  const validation=readinessSchema.safeParse(req.query);
+  if (!validation.success) return res.status(400).json({error:'Invalid query',details:validation.error.flatten()});
+  try {
+    return res.json(await readEstarAttachmentCatalog(validation.data.type,validation.data.variant));
+  } catch(error) {
+    if (error instanceof EstarAttachmentCatalogError) return res.status(error.status).json({error:error.code,message:error.message});
+    logger.error('eSTAR attachment catalog read failed',{err:error instanceof Error ? error.message : String(error)});
+    return res.status(500).json({error:'ESTAR_ATTACHMENT_CATALOG_FAILED',message:'The official attachment destinations could not be read. Try again after the template service is available.'});
+  }
 });
 
 /**

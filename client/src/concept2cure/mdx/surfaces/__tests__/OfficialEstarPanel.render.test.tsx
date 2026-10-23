@@ -12,6 +12,7 @@ import {
 import { DeviceProfilePanel } from '../DeviceProfilePanel';
 import { EstarFilingPanel } from '../EstarFilingPanel';
 import type { Program } from '../../data/programs';
+import { productTypeForFilingType } from '@shared/constants/domain/product-types';
 
 describe('PreSTAR administrative preparation uses the native governed field flow', () => {
   it.each(['q_sub', 'ide', '513g'] as const)('labels %s preparation and applicant completion before and after export', async type => {
@@ -812,6 +813,20 @@ describe('OfficialEstarPanel — which template family', () => {
     expect(officialEstarVariantFor({ productType: 'device' })).toBe('device');
     expect(officialEstarVariantFor({ productType: undefined })).toBe('device');
     expect(officialEstarVariantFor(null)).toBe('device');
+  });
+
+  it.each([
+    ['cdx', 'ivd'], ['CDx', 'ivd'], ['CDX', 'ivd'],
+    ['samd', 'device'], ['SaMD', 'device'], ['device', 'device'],
+    ['ivd', 'ivd'],
+  ] as const)('canonical product type %s chooses the %s template family', (productType, variant) => {
+    expect(officialEstarVariantFor({ productType })).toBe(variant);
+  });
+
+  it('keeps the complementary diagnostic filing in its canonical IVD family', () => {
+    const productType = productTypeForFilingType('ivd', 'diagnostics', 'US_COMPLEMENTARY_DX');
+    expect(productType).toBe('ivd');
+    expect(officialEstarVariantFor({ productType: productType ?? undefined })).toBe('ivd');
   });
 
   it('the header names the family, and the reads carry the variant', async () => {

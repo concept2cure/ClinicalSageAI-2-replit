@@ -27,6 +27,7 @@ import { PID, DOC_ID, ok, vaultPayload, props } from './_vault-surface-fixtures'
 const OTHER = '33333333-3333-4333-8333-333333333333';
 
 const hit = (id: string, title: string) => ({
+  version: '1.0', current: true,
   id, title, fileName: `${title}.pdf`, documentType: 'REPORT', size: '1.0 MB',
   folderId: 'module-3', ctdSection: '3.2.P.8', placementStatus: 'suggested', snippet: null,
 });

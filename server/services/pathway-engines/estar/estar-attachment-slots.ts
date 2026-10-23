@@ -35,6 +35,8 @@
  */
 
 import { listXfaPackets } from '../../forms/fill-official-pdf';
+import { ESTAR_CHAPTER_PATH } from '../../../../shared/regulatory/estar-attachment-manifest';
+export { ESTAR_CHAPTER_PATH } from '../../../../shared/regulatory/estar-attachment-manifest';
 
 export interface EstarAttachmentSlot {
   /**
@@ -199,7 +201,7 @@ export function resolveAttachmentSlot(
  * them: there is a `/CHAPTER 6A/CH6A.03/CH6A.03.01/`, and the deepest run four
  * levels (`/CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.01/`). Measured, not assumed.
  */
-export const ESTAR_CHAPTER_PATH = /^\/CHAPTER \d+[A-Z]?\/(CH[0-9A-Z.]+\/)+$/;
+// The writer and browser receipt reader use this same template-derived syntax.
 
 /** Every open/close/self-closing tag, for the nesting scan. */
 const XML_TAG = /<(\/?)([A-Za-z][\w:.-]*)([^>]*?)(\/?)>/g;

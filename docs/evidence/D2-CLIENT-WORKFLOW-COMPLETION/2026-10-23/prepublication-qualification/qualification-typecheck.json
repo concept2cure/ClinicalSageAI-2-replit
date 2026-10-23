@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "startedAt": "2026-10-23T18:48:23Z",
+  "elapsedSeconds": 24.222,
+  "exitCode": 0,
+  "output": "qualification-typecheck.log.gz",
+  "outputSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

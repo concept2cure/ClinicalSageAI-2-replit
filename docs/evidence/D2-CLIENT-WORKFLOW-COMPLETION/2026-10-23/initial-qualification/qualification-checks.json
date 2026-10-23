@@ -1,0 +1,413 @@
+[
+  {
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts",
+      "client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx",
+      "client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts",
+      "client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts",
+      "client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx",
+      "client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unassessed.test.tsx",
+      "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+      "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
+      "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+      "client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts",
+      "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
+      "server/routes/__tests__/510k-device-profile-estar-fields.test.ts",
+      "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts",
+      "server/routes/__tests__/510k-estar-attachment-slots.test.ts",
+      "server/routes/__tests__/510k-estar-entitlement.test.ts",
+      "server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-administrative-data.governed-homes.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-administrative-data.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-attachment-acceptance.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-attachment-slots.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-declaration-entity.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-fill.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-registration-service.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-registration.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-versions.test.ts",
+      "server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts",
+      "server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts",
+      "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
+      "server/services/vault/__tests__/company-legal-validity.test.ts",
+      "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/qualification-regressions-tests.json"
+    ],
+    "startedAt": "2026-10-23T18:42:02Z",
+    "elapsedSeconds": 63.715,
+    "exitCode": 0,
+    "output": "qualification-regressions.log.gz",
+    "outputSha256": "8086eedec2dc18801e6ea3f821f25d51745fe1b18976c4323a2e313fa8955fe8",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:single-native-canvas"
+    ],
+    "startedAt": "2026-10-23T18:43:06Z",
+    "elapsedSeconds": 0.106,
+    "exitCode": 0,
+    "output": "ci-single-native-canvas.log.gz",
+    "outputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:canvas-path"
+    ],
+    "startedAt": "2026-10-23T18:43:06Z",
+    "elapsedSeconds": 0.125,
+    "exitCode": 0,
+    "output": "ci-canvas-path.log.gz",
+    "outputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "startedAt": "2026-10-23T18:43:06Z",
+    "elapsedSeconds": 0.32,
+    "exitCode": 0,
+    "output": "ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:class-vocabulary"
+    ],
+    "startedAt": "2026-10-23T18:43:06Z",
+    "elapsedSeconds": 0.583,
+    "exitCode": 0,
+    "output": "ci-class-vocabulary.log.gz",
+    "outputSha256": "0fb079f2fd63482d083c30bd2790ad0b727bb564661e158b020b28d61d1f8ff0",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:filing-exit-agreement"
+    ],
+    "startedAt": "2026-10-23T18:43:06Z",
+    "elapsedSeconds": 0.416,
+    "exitCode": 0,
+    "output": "ci-filing-exit-agreement.log.gz",
+    "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:internals-in-copy"
+    ],
+    "startedAt": "2026-10-23T18:43:07Z",
+    "elapsedSeconds": 0.589,
+    "exitCode": 0,
+    "output": "ci-internals-in-copy.log.gz",
+    "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:empty-state-honesty"
+    ],
+    "startedAt": "2026-10-23T18:43:07Z",
+    "elapsedSeconds": 0.616,
+    "exitCode": 0,
+    "output": "ci-empty-state-honesty.log.gz",
+    "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:action-overclaim"
+    ],
+    "startedAt": "2026-10-23T18:43:07Z",
+    "elapsedSeconds": 0.328,
+    "exitCode": 0,
+    "output": "ci-action-overclaim.log.gz",
+    "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:success-before-ok"
+    ],
+    "startedAt": "2026-10-23T18:43:07Z",
+    "elapsedSeconds": 0.293,
+    "exitCode": 0,
+    "output": "ci-success-before-ok.log.gz",
+    "outputSha256": "b529e879a6806ab1c0e8b1c586beecc88a09ed3d6ac1f47e7363c64ecb525a73",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.133,
+    "exitCode": 0,
+    "output": "ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.113,
+    "exitCode": 0,
+    "output": "ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.138,
+    "exitCode": 0,
+    "output": "ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.27,
+    "exitCode": 0,
+    "output": "ci-surface-text-ramp.log.gz",
+    "outputSha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:check-shell-css-collisions"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.205,
+    "exitCode": 0,
+    "output": "ci-check-shell-css-collisions.log.gz",
+    "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:vault-document-writers"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.294,
+    "exitCode": 0,
+    "output": "ci-vault-document-writers.log.gz",
+    "outputSha256": "36ff550d2ef40fb1213fc6cd1544d2ef3b07361ba158ee7daf21a420e58e5b3e",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "audit:repo-health:ceiling"
+    ],
+    "startedAt": "2026-10-23T18:43:08Z",
+    "elapsedSeconds": 0.687,
+    "exitCode": 0,
+    "output": "audit-repo-health-ceiling.log.gz",
+    "outputSha256": "bc006650bac33421593d4c6dc620fbd7811a731fdcd343594639a1259aa2dde7",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "node_modules/eslint/bin/eslint.js",
+      "client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts",
+      "client/src/concept2cure/mdx/hooks/estarAttachmentReceipt.ts",
+      "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+      "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx",
+      "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+      "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+      "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx",
+      "client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx",
+      "client/src/concept2cure/v2/mutationOutcome.ts",
+      "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx",
+      "server/routes/510k-estar-routes.ts",
+      "server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts",
+      "server/routes/__tests__/510k-estar-attachment-slots.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+      "server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts",
+      "server/services/pathway-engines/estar/estar-attachment-catalog.ts",
+      "server/services/pathway-engines/estar/estar-attachment-plan.ts",
+      "server/services/pathway-engines/estar/estar-attachment-slots.ts",
+      "server/services/pathway-engines/estar/estar-attachment-source-access.ts",
+      "shared/regulatory/estar-attachment-manifest.ts",
+      "--no-ignore",
+      "--format=json"
+    ],
+    "startedAt": "2026-10-23T18:43:09Z",
+    "elapsedSeconds": 1.231,
+    "exitCode": 0,
+    "output": "qualification-eslint.log.gz",
+    "outputSha256": "18fdf74d592698f741a3182dc08e85ed682f7618fefe7738cb899c8dd2b8d0a5",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "--since",
+      "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+      "--gate"
+    ],
+    "startedAt": "2026-10-23T18:43:10Z",
+    "elapsedSeconds": 2.057,
+    "exitCode": 0,
+    "output": "qualification-warning-ratchet.log.gz",
+    "outputSha256": "a38c7c30a03fa35aa7695a6cc8ee4465e8ef896487d6f76c8b16d02d255d97bd",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "startedAt": "2026-10-23T18:43:13Z",
+    "elapsedSeconds": 13.098,
+    "exitCode": 0,
+    "output": "qualification-build.log.gz",
+    "outputSha256": "139361090867f980a355d4e9330835f2f5a8770095e5f19a779266bc297b2676",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  },
+  {
+    "argv": [
+      "node",
+      "scripts/ci/typecheck-no-regression.mjs",
+      "--incremental"
+    ],
+    "startedAt": "2026-10-23T18:43:26Z",
+    "elapsedSeconds": 187.059,
+    "exitCode": 1,
+    "output": "qualification-typecheck.log.gz",
+    "outputSha256": "158226831e002a7a7f8548f77c050b3fe82be8ef7a1f588e7191d30a67f69b87",
+    "sourceFreeze": "qualification-source-freeze.json",
+    "matchesFreezeBefore": true,
+    "matchesFreezeAfter": true
+  }
+]
