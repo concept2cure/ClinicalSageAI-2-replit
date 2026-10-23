@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { getAuthToken } from '@/utils/authToken';
 import { COMPANY_LEGAL_KINDS, type CompanyDocumentProfile, type CompanyDocumentsResponse, type CompanyLegalKind } from '@shared/company-documents';
 import type { CompanyLegalRequirement, CompanyLegalReadinessResponse } from '@shared/company-legal-workflows';
 import { CompanyScopePicker } from './CompanyScopePicker';
-import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalAction } from './useCompanyLegalResource';
+import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalAction, useCompanyLegalSession } from './useCompanyLegalResource';
 import { PagedCompanyLegalPicker } from './PagedCompanyLegalPicker';
+import { companySetter, useCompanyLease } from './companySession';
 
 export interface LegalRequirementsEditorProps {
   profile: CompanyDocumentProfile; token: string; canManage: boolean; onSaved: (result: CompanyDocumentsResponse) => void;
@@ -45,8 +45,10 @@ function RequirementReviewFooter({ action, title, rationale, save, onCancel }: {
   </>;
 }
 export function CompanyLegalRequirementForm({ profile, token, canManage, onSaved, requirement, target, onCancel }: RequirementFormProps) {
-  const [draft, setDraft] = useRequirementDraft(requirement, target);
-  const action = useCompanyLegalAction(token, `${requirement?.id ?? 'new'}:${target?.sequenceId ?? 'library'}`, onSaved);
+  const session = useCompanyLegalSession(token);
+  const [draft, updateDraft] = useRequirementDraft(requirement, target);
+  const action = useCompanyLegalAction(token, `${requirement?.id ?? 'new'}:${target?.sequenceId ?? 'library'}:${profile.revision}`, onSaved);
+  const setDraft = companySetter(action.current, updateDraft);
   const regional = requirement?.source === 'regional';
   const change = <K extends keyof typeof draft>(key: K, value: typeof draft[K]) => setDraft(previous => ({ ...previous, [key]: value }));
   const csv = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
@@ -57,9 +59,9 @@ export function CompanyLegalRequirementForm({ profile, token, canManage, onSaved
         regionalCode: requirement?.regionalCode ?? null, kind: draft.kind, agencies: csv(draft.agencies), countries: csv(draft.countries), submissionTypes: csv(draft.submissionTypes),
         language: draft.language.trim() || null, sectionCode: draft.sectionCode.trim() || null, applicability: draft.applicability, rationale: draft.rationale.trim(), legalDocumentIds: draft.legalDocumentIds,
         requiresAuthority: draft.requiresAuthority, requiresSignatureEvidence: draft.requiresSignatureEvidence, requiresCertifiedTranslation: draft.requiresCertifiedTranslation } });
-    if (result) onCancel?.();
+    if (result && action.current()) onCancel?.();
   };
-  if (!canManage || token !== getAuthToken()) return null;
+  if (!canManage || !session.current()) return null;
   return <div className="company-fields">
     <label className="company-field company-wide"><span>Requirement title</span><input value={draft.title} maxLength={500} disabled={regional || action.busy} onChange={event => change('title', event.target.value)} /></label>
     <label className="company-field"><span>Required document kind</span><select value={draft.kind} disabled={action.busy || regional} onChange={event => setDraft(previous => ({ ...previous, kind: event.target.value as CompanyLegalKind, legalDocumentIds: [] }))}>{COMPANY_LEGAL_KINDS.map(kind => <option key={kind} value={kind}>{label(kind)}</option>)}</select></label>
@@ -82,8 +84,11 @@ export function CompanyLegalRequirementForm({ profile, token, canManage, onSaved
   </div>;
 }
 export function LegalRequirementsEditor(props: LegalRequirementsEditorProps) {
-  const [editing, setEditing] = useState<string | null>(null);
-  if (props.token !== getAuthToken()) return null;
+  const session = useCompanyLegalSession(props.token);
+  const lease = useCompanyLease(session, String(props.profile.revision));
+  const [editing, updateEditing] = useState<string | null>(null);
+  const setEditing = companySetter(lease.current, updateEditing);
+  if (!lease.current()) return null;
   const requirements = props.profile.legalRequirements ?? [];
   return <section aria-label="Reviewed legal requirements"><h3>Legal companion requirements</h3>
     <p className="company-hint">Maintain sponsor requirements here. Review the regional checklist against an actual filing in Submission Center; unknown applicability remains unresolved.</p>
@@ -92,9 +97,9 @@ export function LegalRequirementsEditor(props: LegalRequirementsEditorProps) {
       <p>{requirement.rationale}</p><small>{requirement.reviewedBy && requirement.reviewedAt ? `Reviewed ${requirement.reviewedAt.slice(0, 10)}` : 'No legal review recorded'}{requirement.language ? ` · ${requirement.language}` : ''}</small>
       {requirement.sequenceId && <p className="company-hint">Bound to sequence {requirement.sequenceId}. Changes are checked against that filing’s current access and recorded target.</p>}
       {props.canManage && <button type="button" className="btn ghost small" onClick={() => setEditing(requirement.id)}>Review requirement</button>}
-      {editing === requirement.id && <CompanyLegalRequirementForm key={companyLegalOwner(props.token, `${requirement.id}:${props.profile.revision}`)} {...props} requirement={requirement} onCancel={() => setEditing(null)} />}
+      {editing === requirement.id && <CompanyLegalRequirementForm key={companyLegalOwner(session, `${requirement.id}:${props.profile.revision}`)} {...props} requirement={requirement} onCancel={() => setEditing(null)} />}
     </article>)}
     {props.canManage && <button type="button" className="btn ghost small" onClick={() => setEditing('new')}>Add customer legal requirement</button>}
-    {editing === 'new' && <CompanyLegalRequirementForm key={companyLegalOwner(props.token, `new:${props.profile.revision}`)} {...props} onCancel={() => setEditing(null)} />}
+    {editing === 'new' && <CompanyLegalRequirementForm key={companyLegalOwner(session, `new:${props.profile.revision}`)} {...props} onCancel={() => setEditing(null)} />}
   </section>;
 }

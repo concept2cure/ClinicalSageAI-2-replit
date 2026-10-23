@@ -1,0 +1,52 @@
+{
+  "productionFrozen": true,
+  "testSourcesFrozen": true,
+  "ownedManifest": "owned-files.json",
+  "ownedPaths": 25,
+  "finalLint": {
+    "report": "owned-final-lint.json",
+    "errors": 0,
+    "warnings": 0
+  },
+  "reports": [
+    {
+      "name": "admission-final.json",
+      "passed": 44,
+      "failed": 0,
+      "files": 5,
+      "scope": "Final adapter source plus all four new mounted boundaries; exact owner/prop refresh, withdrawal, retention, body and private-state scenarios."
+    },
+    {
+      "name": "parent-final.json",
+      "passed": 11,
+      "failed": 0,
+      "files": 1,
+      "scope": "Final library query/private masking boundary; precedes final admission-only adapter correction."
+    },
+    {
+      "name": "final-focused.json",
+      "passed": 69,
+      "failed": 0,
+      "files": 7,
+      "scope": "Earlier focused combined cohort; precedes final library query-owner and admission-visit corrections. Not final-source union qualification."
+    },
+    {
+      "name": "correspondence-caller.json",
+      "passed": 7,
+      "failed": 0,
+      "files": 1,
+      "scope": "Unchanged correspondence caller regression; distinct ownership was not migrated."
+    }
+  ],
+  "functionalRed": {
+    "settings": "functional-red.json: 2 observed intended failures before production correction; final test file later gained recovery coverage; no pre-edit test hash manifest.",
+    "parent": "parent-red.json: 9 observed failures before parent correction; Retry assertion later refined to avoid conflating legitimate new-owner rereads. Do not count Retry as qualifying functional RED.",
+    "privacy": "parent-mask.json: 9 pass/1 observed actual layout/private-draft failure before canonical query-owner reset correction.",
+    "admission": "admission-red.json: 0 pass/2 intended retained-action/pending-receipt failures; exact same test hash and before-source pins in admission-before.json."
+  },
+  "limits": [
+    "No global build/TSC/Git performed by this worker; root owns final combined gates.",
+    "No auth/server/generic mutation policy changes; apiCall is the sole shared-boundary exception.",
+    "Distinct CompanyCorrespondenceDraft, CompanyCorrespondenceVariants, CompanyFilingIdentityReview ownership remains outside this completion."
+  ]
+}

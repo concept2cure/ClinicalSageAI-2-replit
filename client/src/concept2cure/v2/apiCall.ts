@@ -52,15 +52,30 @@ async function parseBody(res: Response): Promise<any> {
   return res.json().catch(() => null);
 }
 
+export function apiCall<T = any>(
+  method: ApiRequestMethod, url: string, body?: unknown,
+): Promise<ApiResult<T>>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload preserves the existing non-null three-argument contract.
+export function apiCall<T = any>(
+  method: ApiRequestMethod, url: string, body: unknown, current: () => boolean,
+): Promise<ApiResult<T> | null>;
+/** An optional owner guard discards obsolete handoffs; existing calls retain
+ * exactly their normalized result and never acquire a retry policy. */
+// eslint-disable-next-line no-redeclare -- Implementation of the two TypeScript call signatures above.
 export async function apiCall<T = any>(
   method: ApiRequestMethod,
   url: string,
   body?: unknown,
-): Promise<ApiResult<T>> {
+  current?: () => boolean,
+): Promise<ApiResult<T> | null> {
+  if (current && !current()) return null;
   try {
     const res = await apiRequest(method, url, body);
-    return { ok: res.ok, status: res.status, body: await parseBody(res), networkError: false };
+    if (current && !current()) return null;
+    const parsed = await parseBody(res);
+    return current && !current() ? null : { ok: res.ok, status: res.status, body: parsed, networkError: false };
   } catch (err) {
+    if (current && !current()) return null;
     if (isApiRequestError(err)) {
       // The server answered — surface its status and payload verbatim.
       return {

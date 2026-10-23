@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import type { CompanyDocumentProfile, CompanyDocumentsResponse } from '@shared/company-documents';
 import type { CompanyLegalReadinessResponse, CompanyLegalRequirement } from '@shared/company-legal-workflows';
 import { CompanyLegalRequirementForm } from './LegalRequirementsEditor';
-import { COMPANY_LEGAL_PATH, companyLegalOwner, companyLegalSessionCurrent, useCompanyLegalResource } from './useCompanyLegalResource';
+import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalSession, useCompanyLegalResource } from './useCompanyLegalResource';
+import { companySetter, useCompanyLease } from './companySession';
 
 export interface CompanyLegalReadinessProps {
   sequenceId: number; profile: CompanyDocumentProfile; token: string; canManage: boolean;
@@ -14,13 +15,16 @@ function validReadiness(value: unknown): value is CompanyLegalReadinessResponse 
 }
 export function CompanyLegalReadiness(props: CompanyLegalReadinessProps) {
   const { sequenceId, profile, token, canManage, onSaved } = props;
+  const session = useCompanyLegalSession(token);
+  const lease = useCompanyLease(session, `${sequenceId}:${profile.revision}`);
   const resource = useCompanyLegalResource<CompanyLegalReadinessResponse>(`${COMPANY_LEGAL_PATH}/legal-workflows/readiness?sequenceId=${sequenceId}`, token, `sequence:${sequenceId}:${profile.revision}`);
-  const [editing, setEditing] = useState<string | null>(null);
-  if (!companyLegalSessionCurrent(token)) return null;
+  const [editing, updateEditing] = useState<string | null>(null);
+  const setEditing = companySetter(lease.current, updateEditing);
+  if (!lease.current()) return null;
   const data = validReadiness(resource.data) && resource.data.target.sequenceId === sequenceId ? resource.data : null;
-  const save = (result: CompanyDocumentsResponse) => { setEditing(null); onSaved(result); resource.retry(); };
+  const save = (result: CompanyDocumentsResponse) => { if (lease.current()) { setEditing(null); onSaved(result); resource.retry(); } };
   const editor = (requirement?: CompanyLegalRequirement) => data && <CompanyLegalRequirementForm
-    key={companyLegalOwner(token, `${sequenceId}:${requirement?.id ?? 'new'}:${profile.revision}`)} profile={profile} token={token} canManage={canManage}
+    key={companyLegalOwner(session, `${sequenceId}:${requirement?.id ?? 'new'}:${profile.revision}`)} profile={profile} token={token} canManage={canManage}
     onSaved={save} requirement={requirement} target={data.target} onCancel={() => setEditing(null)} />;
   return <section aria-label="Company legal companion readiness"><h4>Legal companion completeness</h4>
     <p className="company-hint">Requirements are evaluated against this sequence’s recorded program, agency and filing type. A library entry alone does not count as a placed companion.</p>

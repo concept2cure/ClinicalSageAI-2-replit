@@ -24,6 +24,10 @@ Evidence: `docs/evidence/D2-COMPANY-SETTINGS-SESSION/2026-10-23/`.
   current account-object identity, subscribe to auth events and deliberately
   survive ordinary bearer refresh. `authService.captureSessionReadGuard` is the
   underlying session authority. Reporting already reuses these helpers.
+- `v2/apiCall.ts` already owns JSON response normalization, including typed HTTP
+  refusals and transport errors. It has no owner checkpoints around response/body
+  awaits. Extend this canonical normalizer for owned calls; do not keep a second
+  company-only implementation of its status/body/error mapping.
 - Existing company-settings, designs, governance, legal and account tests cover
   ordinary workflows and token/org replacements; Reporting's
   `reportingCurrentSessionOwnership.test.tsx` demonstrates actual canonical auth
@@ -31,6 +35,12 @@ Evidence: `docs/evidence/D2-COMPANY-SETTINGS-SESSION/2026-10-23/`.
 - Company settings is reached from Account and Settings. Its existing APIs,
   capabilities, revision conflicts, governed receipt rules, current Vault/legal
   admission, signature ceremonies and export audit remain canonical.
+- `CompanySubmissionDocuments.tsx` and `useCompanySubmissionLibrary.ts` already
+  own the legal-readiness panel's other parent. Their raw bearer-derived parent
+  identity does not reread on a same-bearer account/role refresh. Include their
+  minimal canonical-owner migration so the shared legal hook can recover from a
+  fresh parent read, rather than silently rebinding stale token props. Preserve
+  the existing paged library, selected filing scope and placement/copy receipts.
 
 Searches covered company session/token/owner/draft/refresh in components, hooks,
 routes/services, auth and report consumers; current work-order claims; and
@@ -60,7 +70,7 @@ separate needs and are outside this completion.
    ownership and unmount/request-generation guards as well.
 5. Preserve existing exact receipt, revision-conflict, unknown-outcome and
    governed reason behavior. No automatic replay of a sent write or invention of
-   success. No idempotency/reconciliation engine, API contract, server access
+   success. No idempotency/reconciliation engine, server API contract, server access
    policy, logo format, PDF/Word renderer or original-byte change.
 
 ## Ownership and verification
@@ -81,3 +91,50 @@ test-only auth fallback. Run affected company and auth-consumer regressions,
 lint with no warning growth, build, whole TypeScript and mandatory push hooks.
 Record exact source inputs and distinguish local mounted proof from a live
 browser, hosted CI or production deployment.
+
+### Reviewed canonical API-helper exception
+
+Independent review found that the initial company-only response wrapper would
+duplicate `apiCall`. Instead add a narrowly optional fourth owner callback to
+that existing helper. Preserve its three-argument overload and result contract
+exactly; the four-argument overload may return `null` only when its owner has
+retired. Check before dispatch, after the response, after body parsing and before
+projecting a caught error. Keep status, payload, network-error, 204 and parsing
+semantics; add no retries or mutation verdicts. Remove the parallel company JSON
+normalizer. Existing local blob handling remains local.
+
+The client worker additionally owns `apiCall.ts` and its focused tests. This is
+the sole approved exception to the initial 14 unchanged-boundary pins; compare
+the other 13 exactly and record this helper difference with its regression
+proof. The existing API error/refusal tests remain unchanged assertions, with
+meaningful owned-response checkpoint cases added separately.
+
+### Shared legal-parent integration
+
+The client worker may also change the existing company submission panel/library
+and their focused tests. Reuse the same captured canonical owner and filing-scope
+lease for the parent read, retained setters and its existing actions/downloads;
+do not rely only on a post-render owner string. Actual owner replacement hides
+the prior library and legal panel, rereads current capabilities, then mounts the
+new form. Ordinary refresh preserves the same parent and forms. No generic
+Submission Center, leaf writer, copy service or correspondence engine changes.
+
+Mask withdrawn library state, search/draft fields and notices synchronously in
+the existing hook, before passive resets. Qualify that first-render boundary
+with a layout-effect snapshot. The separate `CompanyCorrespondenceDraft`,
+`CompanyCorrespondenceVariants` and `CompanyFilingIdentityReview` ownership
+implementations are outside this slice; parent continuity tests isolate those
+components and do not qualify all correspondence forms.
+
+### Incoming canonical consumer fixture
+
+Canonical catch-up runs the existing
+`__tests__/authoringCreationHostRecovery.test.tsx` against the real canvas and
+working-list hosts. That fixture seeds the real auth service but omits the
+React auth provider those hosts require; all 38 cases fail during setup. Both
+native hosts are byte-identical to discovery. Correct only the fixture using
+the real auth provider and controlled bootstrap transport, mounting the host
+after bootstrap completes. Preserve every existing case and ownership/header/
+recovery assertion. This is validation of an existing consumer, with no new
+auth implementation or production-host change. Retain the failed report and
+original fixture for review.

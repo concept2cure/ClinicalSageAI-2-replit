@@ -1,0 +1,59 @@
+{
+  "recordedAt": "2026-10-23T20:04:55.332836+00:00",
+  "sourceCommit": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+  "scope": "Reviewed incoming unresolved-market correction, exact changed suites plus real export identity and company identity/correspondence consumers",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/marketApplicationNumber.test.tsx",
+      "sha256": "9e4ab28ad160d5993785cbb7dc74abb88c48165a6b115846fcfaeaef66d05188"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+      "sha256": "ecf7d2eb7abf847e243b219479da9e12810618bb215540a8675e2d8a458250ba"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "d240a2893312b2433fc5a6951fdc7feef7db188c1b1c71882e5c7069ed0901e6"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-home-market.test.ts",
+      "sha256": "f02b353383705299c8ac882f89e346160392115bf2dc264478b62346039d0490"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "sha256": "ea8ed3f84ef67eda0db12efd687ae7a75482b9580b60fc9cbd8a2bca5b90e7f4"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts",
+      "sha256": "48a9bedc63155fb495dfef54eb721e338129387d338fe3128de90b9e4b1ed2ae"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/correspondence.test.ts",
+      "sha256": "0c201d86735541522b8635b8f899534e8969706b13413d0b951cb1cf60ae3a1e"
+    },
+    {
+      "path": "server/services/company-documents/__tests__/identity.pglite.test.ts",
+      "sha256": "788240e4b0067c5e9733e8716949fde3b1969d5835a93de32200dcf0b1518f90"
+    },
+    {
+      "path": "server/services/ectd/__tests__/export-application-identity.pglite.test.ts",
+      "sha256": "a58c078d694d1ac8cebc87b64fe3efeedf5f43096aca89c06cbf6c8f013d46f2"
+    },
+    {
+      "path": "server/services/ectd/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "ecb992dd4e8f6ce3333cd801b958688e1b23738f73883beb1a1b158b1e29bab7"
+    },
+    {
+      "path": "server/services/ectd/package-identity.ts",
+      "sha256": "fae0672f55d7ff7342a3a4adf0371de18f5634c7845688bb82d860005104cfbb"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/market-application-number.pglite.test.ts",
+      "sha256": "b47c391f5a409ccc8390d0b4dc483e540fa744d95a4c923638cf3b14a585e44f"
+    },
+    {
+      "path": "server/services/submission-service/market-application-number.ts",
+      "sha256": "53abf2d8f8927706a3d943e377143092f71d968d0e10098e91f8a345562b7b10"
+    }
+  ]
+}

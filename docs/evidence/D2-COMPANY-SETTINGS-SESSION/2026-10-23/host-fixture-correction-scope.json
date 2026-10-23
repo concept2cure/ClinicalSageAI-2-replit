@@ -1,0 +1,27 @@
+{
+  "sourceCommit": "fc6f213ab0630c8b0640bb9acfac6a56cfe9e142",
+  "historicalFirstRun": {
+    "passed": 391,
+    "failed": 38,
+    "files": 14,
+    "report": "source-start-first-results.json.gz",
+    "rawReportSha256": "06ab3300c4976856ed6ef9bab8a6c4482ddddaabd3555d56bb33099bd58b7ab2",
+    "failures": "All38 fail at setup: real DocumentCanvas/DocumentAuthoring useAuth mounts have no AuthProvider. This is not a functional RED or final passing qualification."
+  },
+  "originalFixture": {
+    "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+    "sha256": "0e7c9d35bfdc7ad805666c66e25a615e17ef21ccef3cbb09093fb479d0f9ca8f",
+    "archive": "original-authoring-host-fixture.tsx.txt"
+  },
+  "nativeHostsUnchangedToDiscovery": [
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "sha256": "7248a5ed64e46d2540012f8e508bb5bfb15c894638b06d7d5643079db4f4b2a4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "sha256": "af32a5c8260500739d2ed270f8d2a2efe27936ed78f6b31c6c2100908f55dfd7"
+    }
+  ],
+  "scope": "Correct existing host fixture context only; preserve canonical real session logic and all assertions. No production changes."
+}

@@ -7,13 +7,14 @@ import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 import { CompanyLetterheadPreview, stationeryContrast } from '../surfaces/company-documents/CompanyLetterheadPreview';
 import { CompanyLegalInventory } from '../surfaces/company-documents/CompanyLegalInventory';
 import { VaultVersionPicker, type PickedVaultVersion } from '../surfaces/VaultLibraryResults';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 1, companyName: 'Readable Company', address: 'A long office address', contact: 'regulatory@example.invalid', registrationDetails: 'Reg-42', letterhead: normalizeTemplateSpec({ header: { text: 'Review every header line' }, footer: { text: 'Review every footer line' } }), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [] });
 const document = (index: number, patch: Partial<CompanyLegalDocument> = {}): CompanyLegalDocument => ({ id: `legal-${index}`, title: `Document ${String(index).padStart(2, '0')}`, kind: 'authorization', programId: 'project', vaultDocumentId: `vault-${index}`, contentHash: 'hash', version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en', effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-01-01', registeredBy: 'Owner', transmitRefusal: null, ...patch });
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-beforeEach(() => { apiRequest.mockReset(); localStorage.clear(); sessionStorage.clear(); });
-afterEach(cleanup);
+beforeEach(() => { apiRequest.mockReset(); localStorage.clear(); sessionStorage.clear(); seedCompanySession(); });
+afterEach(() => { cleanup(); endCompanySession(); });
 
 describe('Accessible company letterhead review', () => {
   it('supports keyboard-addressable scroll, zoom and a readable text view without editing the design', () => {

@@ -7,13 +7,14 @@ import type { CompanyDocumentProfile } from '@shared/company-documents';
 import type { CompanyDocumentSettingsModel } from '../surfaces/useCompanyDocumentSettings';
 import { CompanyPermissionsPanel } from '../surfaces/company-documents/CompanyPermissionsPanel';
 import { CompanyPresentationHistory } from '../surfaces/company-documents/CompanyPresentationHistory';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 const PATH = '/api/client-branding/company-documents';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 3, companyName: 'Current Company', address: 'Current office', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: true, applyToSubmissionCorrespondence: false, legalDocuments: [] });
-beforeEach(() => { apiRequest.mockReset(); localStorage.clear(); sessionStorage.clear(); });
-afterEach(cleanup);
+beforeEach(() => { apiRequest.mockReset(); localStorage.clear(); sessionStorage.clear(); seedCompanySession(); });
+afterEach(() => { cleanup(); endCompanySession(); });
 
 describe('Delegated company-document responsibilities', () => {
   it('loads only on request and changes explicit rights with a reason, preserving inherited owner rights', async () => {
