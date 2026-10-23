@@ -298,3 +298,50 @@ which is shallow; older deletions are not visible from here.
   source-pinning test (`appMentions.test.tsx`) are extended, not forked.
 
 Verification for this change: `docs/evidence/ANA-SKILLS/2026-10-22/skills-in-use/README.md`.
+
+## 11. Expand and enhance (2026-10-23)
+
+The founder's direction: expand and enhance. Two parts.
+
+### 11.1 Expand: the second and third waves of the library
+
+**What already exists** (counted from the built library before this change): 114 authored skills and 25
+therapeutic-area skills. By market, 102 authored skills were for every market, 9 were US-specific and 3 EU-specific;
+there was nothing for the other ten regions the platform supports (`shared/regulatory/region-identity.ts`: JP, CA,
+UK, CN, AU, CH, BR, IN, KR, SG), although the launch tools already serve them (`lookup_regulatory_pathway`,
+`get_market_submission_spec`, `validate_market_formatting`, `compare_global_pathways`,
+`global_ri_reliance_pathways`, `package_ectd_for_region`, `search_eu_ctis`), and so do the pathways corpus
+(`server/services/ana-ri/regulatory-pathways-corpus.ts`, 24 expedited and orphan programs across nine agencies)
+and the market specs. By use case, the thinnest were lifecycle-change (12), agency-interaction (14) and
+submission-assembly (18). There was no US NDA/BLA marketing-application skill, no post-approval-changes skill, and
+nothing on non-inferiority margins, trial transparency, UDI or complaint handling.
+
+- **Second wave: markets.** Two new modules, `library/markets-europe.ts` and `library/markets-international.ts`,
+  hold one skill per market as a child of `regulatory-strategy.global-planning`, which keeps sequencing and
+  reliance across markets. Each market skill is the method for working one regulator: its routes, its dossier
+  (through the market spec and the regional backbone, whose placeholder status it relays rather than calling a
+  package conformant), its trials and, where the same agency regulates them, its devices. Every date and
+  transition goes through `check_regulatory_currency`; where the registry holds none (the UK and Switzerland
+  today), the skill says the date is not held.
+- **Third wave: depth.** Sub-skills in submissions, labeling, nonclinical, safety, biostatistics, clinical, device
+  and quality systems, each checked against its siblings so it adds what is missing rather than repeating them.
+- A library test now requires every region the platform supports to have at least one skill written for it.
+
+The waves were written by agents under the same contract as the first (validate.ts, library.test.ts, golden
+questions run against the whole library). Every skill is marked unreviewed; the review decision (§7) still
+stands.
+
+### 11.2 Enhance: how often AnA used each skill
+
+**What already exists:** every turn's sealed record (`ana_turn_records.record_text`, canonical JSON) already names
+the skills its model call carried, by key, with whether the person picked it, a project deployed it or AnA chose
+it (`context.skills`, §10.2). Nothing read it back by skill.
+
+- `server/services/ana/skills/usage.ts` counts, from the organization's own turn records over a window (default
+  30 days, at most 365), how many turns carried each skill, how many of those were picks and deployments, and
+  when each was last used. It reads at most 5,000 records, newest first, and says when the window held more
+  (`capped`) rather than presenting a partial count as the whole. Nothing is stored for it.
+- `GET /api/ana-skills/usage` is for administrators: it describes the organization's activity.
+- Admin and access → Skills says how many turns followed skills, marks each library skill "used N×" or "not
+  used", explains a skill's use in its drawer, and filters by use and by the market a skill is written for. A
+  failed use read says so and marks no skill unused.

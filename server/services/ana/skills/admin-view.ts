@@ -185,6 +185,7 @@ export function availableSkills(
       disciplines: l.disciplines,
       useCases: l.useCases,
       segments: l.segments,
+      regions: l.regions,
       projectOnly: false,
       projectState: projectState(l.key),
     });
@@ -200,6 +201,7 @@ export function availableSkills(
       disciplines: r.disciplines as AvailableSkillDto['disciplines'],
       useCases: r.useCases as AvailableSkillDto['useCases'],
       segments: r.segments as AvailableSkillDto['segments'],
+      regions: r.regions as AvailableSkillDto['regions'],
       projectOnly: project !== null && r.projectId === project.id,
       projectState: projectState(key),
     });

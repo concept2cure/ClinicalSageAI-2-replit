@@ -275,3 +275,36 @@ describe('reading and testing', () => {
     expect(writes(client)).toEqual([]);
   });
 });
+
+describe('how often AnA used each skill', () => {
+  it('is for administrators: it describes the organization\u2019s activity', async () => {
+    const client = fakeClient();
+    const res = await request(appAs(MEMBER, client)).get('/api/ana-skills/usage');
+    expect(res.status).toBe(403);
+    expect(client.seen).toEqual([]);
+  });
+
+  it('counts the caller\u2019s own turn records, bounded, and says what it read', async () => {
+    const client = fakeClient(sql => {
+      if (sql.includes('AS in_window')) return [{ in_window: 41, turns_read: 41, turns_with_skills: 9 }];
+      if (sql.includes('jsonb_array_elements')) return [{ key: 'cmc.stability', turns: 4, picked: 1, deployed: 2, last_used_at: '2026-10-22T09:00:00Z' }];
+      return [];
+    });
+    const res = await request(appAs(ADMIN, client)).get('/api/ana-skills/usage?days=30');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ days: 30, turnsRead: 41, turnsWithSkills: 9, capped: false });
+    expect(res.body.skills[0]).toEqual({ key: 'cmc.stability', turns: 4, picked: 1, deployed: 2, lastUsedAt: '2026-10-22T09:00:00Z' });
+    expect(client.seen.every(q => q.params[0] === 42 && q.params[1] === 30)).toBe(true);
+  });
+
+  it('says when the window held more records than one read counts', async () => {
+    const client = fakeClient(sql => (sql.includes('AS in_window') ? [{ in_window: 5001, turns_read: 5000, turns_with_skills: 4000 }] : []));
+    const res = await request(appAs(ADMIN, client)).get('/api/ana-skills/usage?days=365');
+    expect(res.body.capped).toBe(true);
+  });
+
+  it('refuses a window that is not a whole number of days', async () => {
+    const res = await request(appAs(ADMIN, fakeClient())).get('/api/ana-skills/usage?days=a%20week');
+    expect(res.status).toBe(400);
+  });
+});

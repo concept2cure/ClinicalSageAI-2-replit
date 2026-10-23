@@ -292,6 +292,8 @@ export interface AvailableSkillDto {
   disciplines: SkillDiscipline[];
   useCases: SkillUseCase[];
   segments: ClientSegmentId[];
+  /** The markets it is written for; empty for every market. */
+  regions: CanonicalRegion[];
   /** Written for the project being asked about. */
   projectOnly: boolean;
   /** The project's setting for it; null outside a project or when the project has none. */
@@ -325,6 +327,16 @@ export interface SkillHistoryEntryDto {
   version: number | null;
   instructions: string | null;
   status: string | null;
+}
+
+/** How often AnA used each skill over a window, from the turn records (GET /api/ana-skills/usage). */
+export interface SkillUsageDto {
+  days: number;
+  turnsRead: number;
+  turnsWithSkills: number;
+  /** True when the window held more turn records than one read counts. */
+  capped: boolean;
+  skills: Array<{ key: string; turns: number; picked: number; deployed: number; lastUsedAt: string | null }>;
 }
 
 export interface SkillSelectionEntryDto {

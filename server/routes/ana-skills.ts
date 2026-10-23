@@ -17,6 +17,9 @@
  *   POST /projects/:project/skills    Write a skill for the project. Body: the skill and a reason.
  *   PUT  /projects/:project/skills/:id
  *                                     Change one of the project's skills.
+ *   GET  /usage                       How often AnA used each skill (?days=30), from the turn
+ *                                     records. Administrators only: it describes the organization's
+ *                                     activity.
  *   POST /test                        Which skills AnA would load for a question, and why;
  *                                     with `draft`, as if an unsaved skill were active (tuning);
  *                                     with `project`, as in that project.
@@ -58,6 +61,7 @@ import { libraryDetail, librarySummary, orgSkillDto, selectionDto } from '../ser
 import { fieldsOf, firstIssue, orgSkillBody } from '../services/ana/skills/org-skill-input';
 import { PROJECT_ALWAYS_MAX, orgSkillKey } from '@shared/ana/skills';
 import { readOrgSkillHistory } from '../services/ana/skills/history';
+import { readSkillUsage } from '../services/ana/skills/usage';
 import { readProjectSkillSettings, setProjectSkillState } from '../services/ana/skills/project-skills';
 import { orgSkillsForProject } from '../services/ana/skills/turn-skills';
 import { availableSkills, projectSettingsDto } from '../services/ana/skills/admin-view';
@@ -228,6 +232,20 @@ router.get('/organization/:id/history', async (req: Request, res: Response) => {
     return res.json({ history });
   } catch (err) {
     return failed(res, err, 'The skill\u2019s history could not be read.');
+  }
+});
+
+// ─── Use ─────────────────────────────────────────────────────────────────────
+
+router.get('/usage', writeGuard, async (req: Request, res: Response) => {
+  const orgId = orgOf(req, res);
+  if (orgId === null) return;
+  const days = positiveInt(req.query.days ?? '30');
+  if (days === null) return res.status(400).json({ error: { code: 'INVALID', message: 'Say how many days to count, as a whole number.' } });
+  try {
+    return res.json(await readSkillUsage(requestPgClient(req), orgId, days));
+  } catch (err) {
+    return failed(res, err, 'Skill use could not be read.');
   }
 });
 

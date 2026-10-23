@@ -1,0 +1,42 @@
+Mutation: client/src/concept2cure/v2/surfaces/AdminSkills.tsx
+- (usage.data ? new Map(usage.data.skills.map((r) => [r.key, r])) : null)
++ (usage.data ? new Map(usage.data.skills.map((r) => [r.key, r])) : new Map<string, UsageRow>())
+Test: client/src/concept2cure/v2/__tests__/adminSkills.test.tsx
+Exit: 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > says a failed library read failed, and never shows it as an empty library 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > turns a skill off only with a stated reason, and sends that reason 238ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > sends the change with the reason when one is stated 103ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > shows which skills a question would load and why 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says how many turns followed skills, marks each skill’s use, and explains it in the drawer 53ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > filters to the skills AnA did not use, and to those written for a market 52ms
+ × client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says use could not be read, and never shows every skill as unused 39ms
+   → expected 'Stability programs and shelf lifecmc.…' not to contain 'not used'
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:17:53
+   Duration  1.42s (transform 264ms, setup 100ms, import 334ms, tests 593ms, environment 304ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says use could not be read, and never shows every skill as unused
+AssertionError: expected 'Stability programs and shelf lifecmc.…' not to contain 'not used'
+
+Expected: "not used"
+Received: "Stability programs and shelf lifecmc.stabilityPharmaceutical, Biotechnology · not usedOn"
+
+ ❯ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx:162:39
+    160|     await screen.findByText(/Couldn't read how often AnA used each ski…
+    161|     const stability = await screen.findByRole('button', { name: /Stabi…
+    162|     expect(stability.textContent).not.toContain('not used');
+       |                                       ^
+    163|     expect((screen.getByLabelText('Use') as HTMLSelectElement).disable…
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

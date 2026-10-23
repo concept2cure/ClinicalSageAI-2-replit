@@ -1,6 +1,7 @@
 import type { C2CFormConfig, C2CFormField, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { THERAPEUTIC_AREAS } from '@shared/constants/domain/therapeutic-areas';
+import { REGION_IDENTITY } from '@shared/regulatory/region-identity';
 import {
   SKILL_DISCIPLINES,
   SKILL_DISCIPLINE_LABELS,
@@ -24,6 +25,11 @@ import {
 export const SEGMENT_OPTIONS: C2CFormFieldOption[] = [
   { value: '', label: 'Every client segment' },
   ...SKILL_SEGMENT_IDS.map((s) => ({ value: s, label: SKILL_SEGMENT_LABELS[s] })),
+];
+/** The markets a skill can be written for: the platform's twelve regions, each with its agency. */
+export const MARKET_OPTIONS: C2CFormFieldOption[] = [
+  { value: '', label: 'Every market' },
+  ...Object.values(REGION_IDENTITY).map((r) => ({ value: r.code, label: `${r.code} · ${r.agency.replace(/_/g, ' ')}` })),
 ];
 export const DISCIPLINE_OPTIONS: C2CFormFieldOption[] = SKILL_DISCIPLINES.map((d) => ({ value: d, label: SKILL_DISCIPLINE_LABELS[d] }));
 export const USE_CASE_OPTIONS: C2CFormFieldOption[] = SKILL_USE_CASES.map((u) => ({ value: u, label: SKILL_USE_CASE_LABELS[u] }));
