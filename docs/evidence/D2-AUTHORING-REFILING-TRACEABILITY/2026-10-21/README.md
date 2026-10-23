@@ -118,6 +118,27 @@ checks retain `release-source-freeze.json`, and combined checks retain
 `source-freeze.json`. `integrated-review.md` records two independent read-only
 reviews and the resolved correlation/hash-policy clarifications.
 
+## Late canonical synchronization
+
+All normal pre-push hooks passed on the initial attempt, including a fresh
+zero-error compiler check, but Git rejected publication because canonical
+advanced to `264560f40` during those hooks. `git-push-race.json` retains the
+failed remote compare-and-swap result; no force push or hook bypass was used.
+The incoming change improves AnA context-limit recovery in its existing chat
+and stream paths. Four production paths and six tests are disjoint from the
+90 qualified inputs for this increment. Normal merge `63169e3aa` preserves both
+sets of work; `git-race-merge.json` records it.
+
+`post-sync-incoming-green.json` passes **81 tests across six incoming suites**.
+`post-sync-typecheck.json` completes with **zero errors**;
+`post-sync-build.json` and all **16** repeated static safety gates pass.
+These checks pin the 100 combined source/config/test inputs in
+`post-sync-source-freeze.json`. The original 849-pass run and final focused
+receipt tests retain their original qualification scope and pins; they were
+not silently relabelled as a repeated 849-test run after this merge. See
+`post-sync-qualification-summary.json`. No editor/Vault production change was
+required by this late catch-up.
+
 ## Limits and human handoff
 
 This is W1 / D2 progress, not all-product launch acceptance. The

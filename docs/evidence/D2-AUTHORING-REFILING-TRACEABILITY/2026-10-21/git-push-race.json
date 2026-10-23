@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "startedAt": "2026-10-23T15:13:22.398023+00:00",
+  "elapsedSeconds": 76.49,
+  "exitCode": 1,
+  "normalHooksEnabled": true,
+  "head": "d25ef1a5b043170cc5d8ea67e75d6077ad8acf89",
+  "originTracking": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "rawOutput": "git-push-race.log.gz",
+  "rawGzipSha256": "f834d97eea5db2561c5a0f66bdd69a220991c92ec183c39fb51549099a6765d3"
+}
