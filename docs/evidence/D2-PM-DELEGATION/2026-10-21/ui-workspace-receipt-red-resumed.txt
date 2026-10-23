@@ -1,0 +1,86 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > accepts verified candidates and genuine empty eligible rosters 4ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"taskId":"TASK-OTHER"} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"projectId":13} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"organizationId":5} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"actorUserId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"clientWorkspaceId":22} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assignmentVersion":"today"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assigneeId":0} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"canAssign":"yes"} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"cancelled"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"09"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"unknown"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"2147483648"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"label":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"name":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses duplicate identities or labels, partial counts and directory disclosure to denied actors 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > keeps organization-wide work unanchored instead of inventing a workspace 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > accepts only the exact saved account, actor, scope, new version and recorded timestamp 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedBy":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":"not recorded"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"taskId":"TASK-OTHER"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"projectId":99} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"actorUserId":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"organizationId":5} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":22} 0ms
+ × shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":null} 7ms
+   → expected true to be false // Object.is equality
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeName":42} 0ms
+ × shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > does not confirm an organization-wide assignment as saved under a client workspace 1ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":null}
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ shared/__tests__/task-assignment.test.ts:60:78
+     58|     { actorUserId: 9 }, { organizationId: 5 }, { clientWorkspaceId: 22…
+     59|   ])('rejects ambiguous or changed receipt %j', over => {
+     60|     expect(isTaskAssignmentResult({ ...result(), ...over }, scope, com…
+       |                                                                              ^
+     61|   });
+     62|   it('does not confirm an organization-wide assignment as saved under …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > does not confirm an organization-wide assignment as saved under a client workspace
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ shared/__tests__/task-assignment.test.ts:65:121
+     63|     const organizationScope = { ...scope, projectId: null, clientWorks…
+     64|     expect(isTaskAssignmentResult({ ...result(), projectId: null, clie…
+     65|     expect(isTaskAssignmentResult({ ...result(), projectId: null, clie…
+       |                                                                                                                         ^
+     66|   });
+     67| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 33 passed (35)
+   Start at  15:02:00
+   Duration  637ms (transform 159ms, setup 158ms, import 34ms, tests 23ms, environment 0ms)

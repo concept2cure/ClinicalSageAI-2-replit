@@ -1,0 +1,18 @@
+
+> concept2cure-riai@1.0.0 ci:typecheck:no-regression
+> node scripts/ci/typecheck-no-regression.mjs
+
+[ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+[ci:typecheck-no-regression] errors found: 7 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 7 exceeds baseline 0 (+7).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    server/routes/__tests__/task-assignment.pglite.test.ts(107,12): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(110,12): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(122,12): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(152,14): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(153,14): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(161,12): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/task-assignment.pglite.test.ts(180,70): error TS2571: Object is of type 'unknown'.

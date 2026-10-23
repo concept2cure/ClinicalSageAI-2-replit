@@ -1,0 +1,13 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/TaskBoard.tsx
+   438:1   warning  Function 'TaskBoardSession' has too many lines (710). Maximum allowed is 100  max-lines-per-function
+   438:1   warning  Function 'TaskBoardSession' has a complexity of 60. Maximum allowed is 15     complexity
+   580:5   warning  Method 'tasking.filter' has a complexity of 18. Maximum allowed is 15         complexity
+   734:1   warning  File has too many lines (1604). Maximum allowed is 500                        max-lines
+  1097:32  warning  Arrow function has a complexity of 21. Maximum allowed is 15                  complexity
+  1449:1   warning  Function 'TaskDetail' has too many lines (176). Maximum allowed is 100        max-lines-per-function
+  1449:1   warning  Function 'TaskDetail' has a complexity of 45. Maximum allowed is 15           complexity
+  1910:1   warning  Function 'WorkflowStart' has too many lines (129). Maximum allowed is 100     max-lines-per-function
+  1910:1   warning  Function 'WorkflowStart' has a complexity of 17. Maximum allowed is 15        complexity
+
+✖ 9 problems (0 errors, 9 warnings)

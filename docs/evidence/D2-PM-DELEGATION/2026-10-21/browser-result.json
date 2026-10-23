@@ -1,0 +1,117 @@
+{
+  "fixture": "actual component/request helper/product CSS; synthetic tenant/auth/API",
+  "results": [
+    {
+      "width": 1280,
+      "lazyRead": true,
+      "namedHandoff": true,
+      "realReason": true,
+      "rereadSaved": true,
+      "readerControlsHidden": true,
+      "emptyHonest": true,
+      "readRetry": true,
+      "unknownBlocksReplay": true,
+      "automaticUsesScopedVersion": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "lazyRead": true,
+      "namedHandoff": true,
+      "realReason": true,
+      "rereadSaved": true,
+      "readerControlsHidden": true,
+      "emptyHonest": true,
+      "readRetry": true,
+      "unknownBlocksReplay": true,
+      "automaticUsesScopedVersion": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "writes": [
+    {
+      "method": "PATCH",
+      "body": {
+        "action": "assign",
+        "assigneeId": 9,
+        "expectedAssigneeId": 8,
+        "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Cover the validation handoff"
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    },
+    {
+      "method": "PATCH",
+      "body": {
+        "action": "assign",
+        "assigneeId": 9,
+        "expectedAssigneeId": 8,
+        "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Cover the validation handoff"
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    },
+    {
+      "method": "POST",
+      "body": {
+        "taskIds": [
+          "TASK-DELEGATE"
+        ],
+        "expectedAssignments": [
+          {
+            "taskId": "TASK-DELEGATE",
+            "expectedAssigneeId": 8,
+            "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ]
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    },
+    {
+      "method": "PATCH",
+      "body": {
+        "action": "assign",
+        "assigneeId": 9,
+        "expectedAssigneeId": 8,
+        "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Cover the validation handoff"
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    },
+    {
+      "method": "PATCH",
+      "body": {
+        "action": "assign",
+        "assigneeId": 9,
+        "expectedAssigneeId": 8,
+        "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Cover the validation handoff"
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    },
+    {
+      "method": "POST",
+      "body": {
+        "taskIds": [
+          "TASK-DELEGATE"
+        ],
+        "expectedAssignments": [
+          {
+            "taskId": "TASK-DELEGATE",
+            "expectedAssigneeId": 8,
+            "expectedVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ]
+      },
+      "workspaceBound": true,
+      "actorBound": true
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+Command: node node_modules/vitest/vitest.mjs run shared/__tests__/task-assignment.test.ts client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > saved task assignment recovery > reuses the saved task id, re-reads its assignee and creates no replacement 419ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > saved task assignment recovery > shows a shortfall in the open detail and permits retry 162ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > saved task assignment recovery > reports an expired assignment request without claiming the saved task was created 114ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > saved task assignment recovery > does not offer assignment to a viewer 77ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > refuses supplied blank, malformed or partial handoff scope without copied-link fallback: 0 75ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > refuses supplied blank, malformed or partial handoff scope without copied-link fallback: 1 77ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > refuses supplied blank, malformed or partial handoff scope without copied-link fallback: 2 181ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > opens the exact authorized task from a copied task URL under StrictMode 327ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > refuses a copied URL task absent from the authorized board 183ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > reports an unread board rather than treating a copied URL task as missing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > does not select a malformed or ambiguous task query: TASK-RECOVERY%2Fother 212ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > does not select a malformed or ambiguous task query: TASK-RECOVERY&taskId=TASK-SECOND 185ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > does not select a malformed or ambiguous task query: OTHER-RECOVERY 182ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > prefers a new navigation handoff over the copied URL without StrictMode replay 220ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > does not reopen the initial URL task after unrelated navigation events 192ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > opens the exact saved task after the authorized board loads 72ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > opens a notification while the board is already mounted 151ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > keeps the one-shot notification target through StrictMode rendering 88ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > preserves an archive justification, refuses replacement and requires an explicit notification retry 300ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > says a missing task is unavailable, never opens another task 126ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx > notification target > does not call an unread board a missing task 39ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > loads lazily, disambiguates accounts, prevents no-op/invalid reasons and records exact saved facts 480ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > keeps an unresolved assignee account reference distinct from Unassigned 41ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > distinguishes a verified empty directory and denied reassignment 95ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > renders unread or wrong-task metadata as unavailable instead of empty candidates 35ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > blocks overlapping named/automatic saves and requires a read after an unknown outcome 203ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > does not send an old handler after the token changes 158ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > discards a late old-task save without changing the newly selected task 57ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > does not carry an automatic assignment intent into a different selected workspace 49ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"status":"completed"} 6ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"status":"cancelled"} 3ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"readOnly":true} 2ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"actorScope":null} 5ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the confirmation shows the signature the server recorded: its printed name and its time 563ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > a success that does not carry the recorded signature is not shown as one, and closing re-reads the board 224ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the board holds no ceremony of its own: one task sign-off, imported from the editor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > writes only assignment fields with its exact optimistic token and captured scope 6ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > treats lost transport/COMMIT as unconfirmed and sends no blind retry 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > treats lost transport/COMMIT as unconfirmed and sends no blind retry 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > retains the atomic audit-failure refusal rather than claiming a saved assignment 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > keeps read failure distinct from an empty eligible roster 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > sends no request from a stale task/account/organization handler 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > discards a late old-task receipt 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > reaches the existing automatic endpoint with the fresh scoped expected assignment 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > does not turn an empty batch or a different task receipt into assignment success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx > TaskBoard named handoff in the existing detail > chooses a real account with a human reason and preserves its approval/progress fields 590ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > offers a viewer no task write, and says why 410ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > offers a writer every control 161ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > keeps the controls when the session says nothing about permissions — the server still decides 41ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > accepts verified candidates and genuine empty eligible rosters 2ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"taskId":"TASK-OTHER"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"projectId":13} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"organizationId":5} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"actorUserId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"clientWorkspaceId":22} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assignmentVersion":"today"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assigneeId":0} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"canAssign":"yes"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"cancelled"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"09"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"unknown"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"2147483648"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"label":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"name":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses duplicate identities or labels, partial counts and directory disclosure to denied actors 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > keeps organization-wide work unanchored instead of inventing a workspace 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > accepts only the exact saved account, actor, scope, new version and recorded timestamp 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedBy":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":"not recorded"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"taskId":"TASK-OTHER"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"projectId":99} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"actorUserId":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"organizationId":5} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":22} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeName":42} 0ms
+
+ Test Files  7 passed (7)
+      Tests  86 passed (86)
+   Start at  02:23:26
+   Duration  16.70s (transform 1.78s, setup 852ms, import 3.35s, tests 6.61s, environment 4.25s)
+
+
+Exit code: 0

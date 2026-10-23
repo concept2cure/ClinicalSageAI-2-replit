@@ -1,0 +1,484 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:25.751Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:25.962Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:22:25.962Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-10-21T02:22:25.963Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 85ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 115ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 40ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 57ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 58ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 60ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 61ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 67ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 87ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 63ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 78ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 21ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+{
+  "timestamp": "2026-10-21T02:22:31.150Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "T1",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"fail_assignment\""
+  }
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 73ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 62ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 82ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 47ms
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > rolls the create back and answers 500 AUDIT_WRITE_FAILED when the ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.467Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1792549352467-a8675acd",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > never commits a signed completion whose ledger row did not land
+{
+  "timestamp": "2026-10-21T02:22:32.478Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > rolls back a late signature whose ledger row did not land
+{
+  "timestamp": "2026-10-21T02:22:32.501Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > DELETE /tasks/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.518Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.delete",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/dependencies rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.523Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/auto-assign rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.530Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > writes the create and its lineage on ONE transaction, then commits 32ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > rolls the create back and answers 500 AUDIT_WRITE_FAILED when the ledger row fails 10ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > never commits a signed completion whose ledger row did not land 8ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > commits the signed completion with its manifestation in the ledger payload 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a stale double-completion writes nothing and answers 409 CONFLICT_STALE 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a late signature on a completed-but-unapproved task commits WITH its ledger row 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > rolls back a late signature whose ledger row did not land 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a progress-only update in the same status is written with its ledger row 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a same-status request that changes nothing is refused as stale, not re-written 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > DELETE /tasks/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/dependencies rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/from-template/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.536Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1792549352536-8c958446",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/bulk-create rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-21T02:22:32.541Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1792549352541-057503b8",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > a notification that was sent but not recorded is reported as a failure, not a success
+[tasking] audit lineage write failed (non-fatal): audit_logs: connection reset
+
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/auto-assign rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/from-template/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/bulk-create rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > a notification that was sent but not recorded is reported as a failure, not a success 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > refuses a write with no attributable actor before anything is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks is 403 for a viewer, and nothing is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > PATCH /tasks/:id is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > DELETE /tasks/:id is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/dependencies is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/auto-assign is 403 for a viewer, and nothing is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/from-template/:id is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/bulk-create is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /templates is 403 for a viewer, and nothing is written 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /automation is 403 for a viewer, and nothing is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a member still creates a task 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a viewer still reads 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no body with 400 and writes nothing 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no reason with 400 and writes nothing 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a blank reason with 400 and writes nothing 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a reason shorter than three characters once trimmed with 400 and writes nothing 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > records the trimmed reason on the archive’s ledger row 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > a reason over 1000 characters is told the maximum, not the minimum 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > a short reason is told the minimum 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > exactly 1000 characters is accepted 4ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened
+Error updating task: Error: Connection terminated unexpectedly
+    at Object.transaction (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:104:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:519:21
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown
+Error updating task: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:124:66)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task
+Error bulk creating tasks: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:152:70)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task
+Error bulk creating tasks: Error: roster read failed
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:165:80
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not
+Error bulk creating tasks: Error: fk violation
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:176:70)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created
+Error bulk creating tasks: Error: Connection terminated unexpectedly
+    at Object.transaction (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:104:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at bulkCreateOne (/workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:670:19)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:730:7
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure
+[tasking] audit lineage write failed (non-fatal): connect ETIMEDOUT 10.0.0.5:5432
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > POST /tasks/dependencies blocks the successor before writing either ledger row 33ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened 11ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C10 — PATCH never completes a task archived after it was read > its compare-and-set UPDATE matches only a row that is not archived 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure 4ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 0 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": false,
+    "exact": false,
+    "message": "Number must be greater than 0",
+    "path": [
+      "assigneeId"
+    ]
+  }
+]
+    at Object.get error [as error] (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:39:31)
+    at ZodObject.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:114:22)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:248:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:594:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11) {
+  issues: [
+    {
+      code: 'too_small',
+      minimum: 0,
+      type: 'number',
+      inclusive: false,
+      exact: false,
+      message: 'Number must be greater than 0',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee -1 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": false,
+    "exact": false,
+    "message": "Number must be greater than 0",
+    "path": [
+      "assigneeId"
+    ]
+  }
+]
+    at Object.get error [as error] (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:39:31)
+    at ZodObject.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:114:22)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:248:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:594:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11) {
+  issues: [
+    {
+      code: 'too_small',
+      minimum: 0,
+      type: 'number',
+      inclusive: false,
+      exact: false,
+      message: 'Number must be greater than 0',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 1.5 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "integer",
+    "received": "float",
+    "message": "Expected integer, received float",
+    "path": [
+      "assigneeId"
+    ]
+  }
+]
+    at Object.get error [as error] (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:39:31)
+    at ZodObject.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:114:22)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:248:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:594:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11) {
+  issues: [
+    {
+      code: 'invalid_type',
+      expected: 'integer',
+      received: 'float',
+      message: 'Expected integer, received float',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 9007199254740992 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "code": "too_big",
+    "maximum": 9007199254740991,
+    "type": "number",
+    "inclusive": true,
+    "exact": false,
+    "message": "Number must be less than or equal to 9007199254740991",
+    "path": [
+      "assigneeId"
+    ]
+  }
+]
+    at Object.get error [as error] (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:39:31)
+    at ZodObject.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/zod/v3/types.js:114:22)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:248:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:594:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11) {
+  issues: [
+    {
+      code: 'too_big',
+      maximum: 9007199254740991,
+      type: 'number',
+      inclusive: true,
+      exact: false,
+      message: 'Number must be less than or equal to 9007199254740991',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > reads and updates only rows that are not archived 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > an UPDATE that matched no row writes no ledger row and is not reported as assigned 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > refuses a non-integer actor id with 401 before anything is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > writes the task and its ledger row under the organization the gate checked 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > bulk-create records each edge with the transaction that inserts it 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > from-template records every template edge on the workflow’s transaction 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > single task creation receipt > reports a lost create COMMIT as unknown and sends no assignment notification 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 0 before task or audit writes 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee -1 before task or audit writes 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 1.5 before task or audit writes 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 9007199254740992 before task or audit writes 3ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null 34ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null 5ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a stated reason records it, trimmed 4ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task 6ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null 6ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary 6ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary 8ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template 5ms
+ ✓ server/routes/__tests__/task-management-assignment-record.test.ts > POST /tasks records the assignment it makes > a named assignee who is a member: their name, the assigner and the time are written with the task 36ms
+ ✓ server/routes/__tests__/task-management-assignment-record.test.ts > POST /tasks records the assignment it makes > an assignee who is not a member of the organization is refused, and nothing is written 10ms
+ ✓ server/routes/__tests__/task-management-assignment-record.test.ts > POST /tasks records the assignment it makes > an unassigned task is unchanged: no assigner is recorded for an assignment nobody made 5ms
+stderr | server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > ROLLs BACK rather than leaving half a pair when the chain write fails
+[tasking] audit lineage write failed (non-fatal): chain lock timeout
+
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > brackets recordGovernedAction in BEGIN … COMMIT on one client 3ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > hands recordGovernedAction the TRANSACTION client, never the pool 1ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > ROLLs BACK rather than leaving half a pair when the chain write fails 3ms
+ ✓ server/services/tasking/__tests__/task-audit-transaction.test.ts > auditTaskAction — the chain write owns a transaction > enlists in the CALLER’s transaction when one is supplied, and propagates 2ms
+stdout | server/routes/__tests__/taskBoard-assignees-labels.test.ts
+{
+  "timestamp": "2026-10-21T02:22:37.147Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:22:37.148Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/taskBoard-assignees-labels.test.ts
+{
+  "timestamp": "2026-10-21T02:22:37.148Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/taskBoard-assignees-labels.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/taskBoard-assignees-labels.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/taskBoard-assignees-labels.test.ts
+{
+  "timestamp": "2026-10-21T02:22:37.229Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/taskBoard-assignees-labels.test.ts > GET /assignees > two members with one name have two different labels; a unique name is left as it is 23ms
+ ✓ server/routes/__tests__/taskBoard-assignees-labels.test.ts > GET /assignees > keeps name as it was, for the readers that show it 15ms
+
+ Test Files  7 passed (7)
+      Tests  90 passed (90)
+   Start at  02:22:23
+   Duration  14.36s (transform 2.57s, setup 208ms, import 8.49s, tests 4.52s, environment 1ms)

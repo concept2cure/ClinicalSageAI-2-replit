@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > accepts verified candidates and genuine empty eligible rosters 5ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"taskId":"TASK-OTHER"} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"projectId":13} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"organizationId":5} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"actorUserId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"clientWorkspaceId":22} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assignmentVersion":"today"} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"assigneeId":0} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"canAssign":"yes"} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":null} 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses stale or malformed task metadata {"status":"cancelled"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"09"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"unknown"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"id":"2147483648"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"label":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses malformed candidate identity {"name":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > refuses duplicate identities or labels, partial counts and directory disclosure to denied actors 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > task-specific assignment roster > keeps organization-wide work unanchored instead of inventing a workspace 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > accepts only the exact saved account, actor, scope, new version and recorded timestamp 1ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeId":8} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedBy":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignmentVersion":""} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assignedAt":"not recorded"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"taskId":"TASK-OTHER"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"projectId":99} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"actorUserId":9} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"organizationId":5} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":22} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"clientWorkspaceId":null} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"status":"completed"} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > rejects ambiguous or changed receipt {"assigneeName":42} 0ms
+ ✓ shared/__tests__/task-assignment.test.ts > confirmed named task assignment receipt > does not confirm an organization-wide assignment as saved under a client workspace 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > writes only assignment fields with its exact optimistic token and captured scope 9ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > treats lost transport/COMMIT as unconfirmed and sends no blind retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > treats lost transport/COMMIT as unconfirmed and sends no blind retry 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > retains the atomic audit-failure refusal rather than claiming a saved assignment 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > does not confirm an ambiguous successful body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > scoped task assignment transport > keeps read failure distinct from an empty eligible roster 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > sends no request from a stale task/account/organization handler 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > discards a late old-task receipt 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > reaches the existing automatic endpoint with the fresh scoped expected assignment 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts > assignment ownership and existing automatic path > does not turn an empty batch or a different task receipt into assignment success 1ms
+
+ Test Files  2 passed (2)
+      Tests  49 passed (49)
+   Start at  15:03:42
+   Duration  2.09s (transform 398ms, setup 374ms, import 314ms, tests 52ms, environment 739ms)
