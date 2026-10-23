@@ -199,10 +199,19 @@ const finiteNumber = (v: unknown): number | null => (typeof v === 'number' && Nu
  * it until the serialized result fits (fitReadWindow). The window was 30,000
  * by default and 80,000 at most, which the model never received whole.
  */
-function readWindowBounds(input: Record<string, unknown>, charCount: number) {
-  const offset = Math.max(0, Math.floor(finiteNumber(input.offset) ?? 0));
+function readWindowBounds(input: Record<string, unknown>, text: string) {
+  let offset = Math.max(0, Math.floor(finiteNumber(input.offset) ?? 0));
+  // A requested low surrogate must include its preceding high surrogate.
+  if (offset > 0 && offset < text.length && text.codePointAt(offset - 1)! > 0xffff) offset--;
   const asked = Math.min(RESULT_BUDGET, Math.max(1, Math.floor(finiteNumber(input.max_chars) ?? RESULT_BUDGET)));
-  return { offset, asked: Math.min(asked, charCount - offset) };
+  return { offset, asked: Math.min(asked, text.length - offset) };
+}
+
+/** Keep UTF-16 coordinates while delivering at least one complete character. */
+function readWindowSpan(text: string, offset: number, size: number): ReadWindow['span'] {
+  let end = offset + size;
+  if (text.codePointAt(end - 1)! > 0xffff) end += size === 1 ? 1 : -1;
+  return { start: offset, end };
 }
 
 /**
@@ -352,13 +361,13 @@ function fitDocumentReadWindow(catalog: Catalog, render: (size: number, comprehe
   return comprehensionOf(catalog) && fit.size < Math.min(asked, COMPREHENSION_GIVES_WAY_BELOW)
     ? fitReadWindow(size => render(size, 'withheld'), asked) : fit;
 }
-function deferDocumentWindow(ctx: ToolContext | undefined, doc: LoadedDocument, window: { extractedTextSha256: string; charCount: number; offset: number; size: number; result: string }): void {
-  const { extractedTextSha256, charCount, offset, size, result } = window;
+function deferDocumentWindow(ctx: ToolContext | undefined, doc: LoadedDocument, window: { extractedTextSha256: string; charCount: number; span: ReadWindow['span']; result: string }): void {
+  const { extractedTextSha256, charCount, span, result } = window;
   deferReadReceipt(ctx, {
     sourceSnapshot: { organizationId: doc.admittedScope.organizationId, userId: doc.admittedScope.userId,
       programId: doc.programId, documentId: doc.id, contentHash: doc.contentHash, extractedTextSha256, totalChars: charCount,
-      span: { start: offset, end: offset + size }, threadId: ctx?.threadId ?? null },
-    documentId: doc.id, contentHash: doc.contentHash, span: { start: offset, end: offset + size },
+      span, threadId: ctx?.threadId ?? null },
+    documentId: doc.id, contentHash: doc.contentHash, span,
     readBy: doc.admittedScope.userId, result,
   });
 }
@@ -394,7 +403,7 @@ async function handleReadProjectDocument(
 
   const catalog = doc.catalog!;
   const charCount = text.length;
-  const { offset, asked } = readWindowBounds(input, charCount);
+  const { offset, asked } = readWindowBounds(input, text);
   if (offset >= charCount) {
     return JSON.stringify({
       ok: false,
@@ -409,7 +418,7 @@ async function handleReadProjectDocument(
   const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount, scope.executor);
   const recorded = doc.sourceAccess.receiptEligible && canDeferReadReceipt(ctx);
   const window = (size: number, comprehension: ReadWindow['comprehension']): string => {
-    const span = { start: offset, end: offset + size };
+    const span = readWindowSpan(text, offset, size);
     const coverage = recorded ? coverageAfter(before, span, charCount) : before;
     return readResult(doc, catalog, { span, text: text.slice(span.start, span.end), charCount, coverage, recorded, comprehension, extractedTextSha256 });
   };
@@ -420,7 +429,11 @@ async function handleReadProjectDocument(
   }
   await svc.revalidateActorSourceScope(actor, doc.admittedScope);
   await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId: scope.programId }, scope.accessibleScope);
-  if (recorded) deferDocumentWindow(ctx, doc, { extractedTextSha256, charCount, offset, ...fit });
+  // The selected nominal size can differ from the actual intact span. The
+  // fitter may also have rendered a rejected candidate last; recompute it.
+  if (recorded) deferDocumentWindow(ctx, doc, {
+    extractedTextSha256, charCount, span: readWindowSpan(text, offset, fit.size), result: fit.result,
+  });
   return fit.result;
 }
 

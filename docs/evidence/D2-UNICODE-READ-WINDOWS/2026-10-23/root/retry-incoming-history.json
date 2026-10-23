@@ -1,0 +1,25 @@
+{
+  "remoteHead": "56a076306c6dbbaa8455526d56db825cbddaa1f6",
+  "mergeBase": "f5f685a87faea1fd5197bfac362249aefec3481f",
+  "incomingCommits": [
+    "56a076306c6dbbaa8455526d56db825cbddaa1f6"
+  ],
+  "changedPaths": [
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/README.md",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-prepush-fetch.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-push.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/canonical-push.log.gz",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-artifact-manifest.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-fetch.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-merge.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-merge.log.gz",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-push.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-retry-1-push.log.gz",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication-source-verification.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/publication.md",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/successful-push-reference.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-evidence-commit.json",
+    "docs/evidence/D2-CROSS-SECTOR-AUTHORING/2026-10-23/unicode-evidence-commit.log.gz"
+  ],
+  "selectedInputOverlap": []
+}

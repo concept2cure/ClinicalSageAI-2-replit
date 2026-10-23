@@ -37,15 +37,18 @@ export async function deriveEctdSequenceBinding(
       LIMIT 1`, [id, organizationId],
   )).rows[0];
   if (!sequence) return context.ledgerFallback('sequence row not readable at signing time');
+  const region = canonicalRegionOf(sequence.region);
+  if (!region) return context.ledgerFallback('sequence region is not recognized at signing time');
   const leaves = await sequenceLeaves(client, id, organizationId);
   const legacyDigest = context.hashPayload({ sequence, leaves });
-  const recordedPackageIdentity = canonicalRegionOf(sequence.region) === 'US'
-    ? recordedPackageIdentitySnapshot(await readSubmissionPackageIdentity(client, organizationId, Number(sequence.submission_id), { region: sequence.region }))
-    : undefined;
+  const recordedPackageIdentity = recordedPackageIdentitySnapshot(
+    await readSubmissionPackageIdentity(client, organizationId, Number(sequence.submission_id), { region: sequence.region }),
+    { region },
+  );
   return {
-    digest: recordedPackageIdentity ? context.hashPayload({ sequence, leaves, recordedPackageIdentity }) : legacyDigest,
+    digest: context.hashPayload({ sequence, leaves, recordedPackageIdentity }),
     basis: context.basis,
-    note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata)${recordedPackageIdentity ? ', plus version 1 of its recorded FDA application and applicant identity' : ''} at signing time.`,
-    ...(recordedPackageIdentity ? { recordedPackageIdentity, sequenceContentDigest: legacyDigest } : {}),
+    note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid, content pin and non-null study metadata), plus version 1 of its recorded ${region === 'US' ? 'FDA' : region} application and applicant identity at signing time.`,
+    recordedPackageIdentity, sequenceContentDigest: legacyDigest,
   };
 }

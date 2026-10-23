@@ -55,6 +55,7 @@ import {
   type SpineLeafRow,
 } from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
+import { canonicalRegionOf } from '../../shared/regulatory/region-identity';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
@@ -1131,7 +1132,9 @@ async function compileFromSpine(
     // of another region, never compiles under the project's home number.
     const identity = await readSubmissionPackageIdentity(pool, orgId, spine.submissionId, { region: seq.region });
     packagedNumber = identity.applicationNumber;
-    const fda = toPackagerRegion(seq.region) === 'fda';
+    const region = canonicalRegionOf(seq.region);
+    if (!region) throw new Error('The sequence region is not recognized, so its recorded package identity cannot be established. Nothing was assembled.');
+    const fda = region === 'US';
     const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
     if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
@@ -1141,7 +1144,8 @@ async function compileFromSpine(
       applicationId: identity.applicationNumber as string,
       sponsorId: fda ? identity.applicantId as string : '',
       sponsorName: identity.applicantName as string,
-      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity), recordedPackageIdentity: recordedPackageIdentitySnapshot(identity) } : {}),
+      recordedPackageIdentity: recordedPackageIdentitySnapshot(identity, { region }),
+      ...(fda ? { contacts: fdaContactsForPackageIdentity(identity) } : {}),
       priorState,
     });
     auditTrail = assembled.auditTrail;

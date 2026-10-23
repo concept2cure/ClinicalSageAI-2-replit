@@ -1,0 +1,266 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > uses only verified persisted inputs and the original run id, then releases the claim 44ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not run any downstream effect if another connection already holds the run 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > returns an already finished run after the claim without repeating its effects 5ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > releases the claim even when downstream persistence fails 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > allows only one of two overlapping continuation requests to execute the driver 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed snapshot before any effect 9ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed hash before any effect 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed seal before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed identity before any effect 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a changed program before any effect 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > collapses a foreign or missing run before loading any source inputs 0ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > rechecks current program authority, ignoring the original actor role 4ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a program lead downgraded to viewer before build/resume effects 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > does not guess original inputs for older asynchronous work 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > hydrates an older frozen signature record using its scoped submission identity 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a forged frozen release before creating any signature 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > waits for async jobs without running downstream work, then resumes with exact paused outputs 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses closed CMC approval/source records before assembling an async continuation 2ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses changed CMC approval/source records before assembling an async continuation 1ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses replacing the paused job id with another same-organization job 4ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > refuses a CSR job whose persisted project has changed from the original program anchor 3ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > guarded persisted continuation > continues dependent work on CSR completion using only its stored tenant and original actor 6ms
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting EU record 46ms
+   → promise resolved "'0d5af5d528e1987540f73cd721424fef13cc2…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting JP record 12ms
+   → promise resolved "'d144b9c69a45e067bc59219c816a3413c568d…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting US record 14ms
+   → promise resolved "'7082a8d0c44f363f760e0436e50080b8ab9be…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 10ms
+   → promise resolved "'50ec7d671a857deb305dd1c2b0a9120dcd936…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 6ms
+   → promise resolved "'d10a811620cadfb3be71f2d41fa9217def50d…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 6ms
+   → promise resolved "'15f429a3cd7b6534ab00be0106b4d408508dd…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 104ms
+   → promise resolved "'659c8d3bcbe8a3c44126bbd91f97a408f1309…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal 42ms
+   → promise resolved "'60e5177b75e700d4cd227f98c484d0da0c13b…'" instead of rejecting
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a proof-bearing unknown region before a ceremony can be prepared 10ms
+   → promise resolved "'4611d42646846ea797768ae2b715ea535a3df…'" instead of rejecting
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > prepares complete captured EU facts without FDA DUNS/contact 9ms
+ ✓ server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > prepares complete captured JP facts without FDA DUNS/contact 4ms
+ × server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a legacy proof-free record before source lookup or continuation 14ms
+   → promise resolved "'0d5af5d528e1987540f73cd721424fef13cc2…'" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting EU record
+AssertionError: promise resolved "'0d5af5d528e1987540f73cd721424fef13cc2…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"0d5af5d528e1987540f73cd721424fef13cc28f6b46d9d5b3041df517e228fe9"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:177:51
+    175|   it.each(['EU', 'JP', 'US'])('refuses an intact hash/seal on a proof-…
+    176|     await captureRegionalRelease(region, undefined);
+    177|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    178|     expect(m.kms).toHaveBeenCalled();
+    179|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting JP record
+AssertionError: promise resolved "'d144b9c69a45e067bc59219c816a3413c568d…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"d144b9c69a45e067bc59219c816a3413c568dc8f6911ce57936c16aad901f61f"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:177:51
+    175|   it.each(['EU', 'JP', 'US'])('refuses an intact hash/seal on a proof-…
+    176|     await captureRegionalRelease(region, undefined);
+    177|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    178|     expect(m.kms).toHaveBeenCalled();
+    179|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses an intact hash/seal on a proof-free awaiting US record
+AssertionError: promise resolved "'7082a8d0c44f363f760e0436e50080b8ab9be…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"7082a8d0c44f363f760e0436e50080b8ab9be3cc08500b8d78ba8f41941cae90"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:177:51
+    175|   it.each(['EU', 'JP', 'US'])('refuses an intact hash/seal on a proof-…
+    176|     await captureRegionalRelease(region, undefined);
+    177|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    178|     expect(m.kms).toHaveBeenCalled();
+    179|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal
+AssertionError: promise resolved "'50ec7d671a857deb305dd1c2b0a9120dcd936…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"50ec7d671a857deb305dd1c2b0a9120dcd93634c43d9d141016a0dc49073d6f3"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:189:51
+    187|   ])('refuses malformed or unprojected proof despite a valid hash and …
+    188|     await captureRegionalRelease('EU', captured);
+    189|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal
+AssertionError: promise resolved "'d10a811620cadfb3be71f2d41fa9217def50d…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"d10a811620cadfb3be71f2d41fa9217def50df20671321fa36d402dc23832832"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:189:51
+    187|   ])('refuses malformed or unprojected proof despite a valid hash and …
+    188|     await captureRegionalRelease('EU', captured);
+    189|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal
+AssertionError: promise resolved "'15f429a3cd7b6534ab00be0106b4d408508dd…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"15f429a3cd7b6534ab00be0106b4d408508ddfc7a1fe4148befd458058efd537"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:189:51
+    187|   ])('refuses malformed or unprojected proof despite a valid hash and …
+    188|     await captureRegionalRelease('EU', captured);
+    189|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal
+AssertionError: promise resolved "'659c8d3bcbe8a3c44126bbd91f97a408f1309…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"659c8d3bcbe8a3c44126bbd91f97a408f1309faa2e756d1f7e4b648a0c36cde8"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:189:51
+    187|   ])('refuses malformed or unprojected proof despite a valid hash and …
+    188|     await captureRegionalRelease('EU', captured);
+    189|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses malformed or unprojected proof despite a valid hash and seal
+AssertionError: promise resolved "'60e5177b75e700d4cd227f98c484d0da0c13b…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"60e5177b75e700d4cd227f98c484d0da0c13b35b55187b25880c3665a28c56e8"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:189:51
+    187|   ])('refuses malformed or unprojected proof despite a valid hash and …
+    188|     await captureRegionalRelease('EU', captured);
+    189|     await expect(verifyAwaitingReleasePayload(run)).rejects.toMatchObj…
+       |                                                   ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a proof-bearing unknown region before a ceremony can be prepared
+AssertionError: promise resolved "'4611d42646846ea797768ae2b715ea535a3df…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"4611d42646846ea797768ae2b715ea535a3df1eff6a22b717e7f32587bcf9acc"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:194:55
+    192|   it('refuses a proof-bearing unknown region before a ceremony can be …
+    193|     await captureRegionalRelease('unknown-agency', proof);
+    194|     await expect(prepareOrchestratorRelease(run, USER)).rejects.toMatc…
+       |                                                       ^
+    195|     expect(m.resume).not.toHaveBeenCalled();
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/__tests__/submission-orchestrator-continuation.test.ts > release preparation reuses the canonical captured identity sign boundary > refuses a legacy proof-free record before source lookup or continuation
+AssertionError: promise resolved "'0d5af5d528e1987540f73cd721424fef13cc2…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"0d5af5d528e1987540f73cd721424fef13cc28f6b46d9d5b3041df517e228fe9"
+
+ ❯ server/services/__tests__/submission-orchestrator-continuation.test.ts:206:55
+    204|     await captureRegionalRelease('EU', undefined);
+    205|     receipt = null;
+    206|     await expect(prepareOrchestratorRelease(run, USER)).rejects.toMatc…
+       |                                                       ^
+    207|     expect(m.query.mock.calls.some(call => String(call[0]).includes('F…
+    208|     expect(m.resume).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 24 passed (34)
+   Start at  17:36:29
+   Duration  15.62s (transform 9.43s, setup 197ms, import 13.99s, tests 386ms, environment 0ms)
+

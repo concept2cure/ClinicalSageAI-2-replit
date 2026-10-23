@@ -1,0 +1,26 @@
+{
+  "mergeCommit": "f466464c7c465c9a8a14fa3fc373bf649fc245c5",
+  "upstreamHead": "0a7abf314",
+  "localBeforeMerge": "596025c4d",
+  "incomingCommits": [
+    "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+    "121eadf0578d24da5a46e4aa9b700f13fae4c0cb",
+    "e16979e64b73744762a9a232ec820e198fa1cf69",
+    "2148660b951a857b288c6b438de51153932abfe1",
+    "70d112b8d8fb03857423011ccbe1e99f8d7d9c16",
+    "0f0606b72241c8f7b9202bd02003e74a8562d1fd",
+    "4718e17cb1224022684829a0e45f92f5048b5850",
+    "07617e6b3cef1232115051084a9c690c5eeb523b",
+    "34942873dbc19830c5af0e1b1f7a2b5ef38c8358",
+    "a36245bc48c865fdb3ca5cd5d238ac52ba06043b",
+    "8aaefa580e6525cb85d06a9e52aaacd6d360bc67",
+    "544cfcbf0de079494fdb95fa8e8fbafd7a12aa58",
+    "f158bf3f00a7fc898e78ed376787eb523458e36d"
+  ],
+  "qualifiedInputsUnchangedAcrossMerge": 44,
+  "incomingRelevantTest": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+  "build": "verification/build-merged.txt",
+  "compatibility": "verification/merged-packaging.txt",
+  "humanWitnessed": false,
+  "agencyAcceptance": false
+}

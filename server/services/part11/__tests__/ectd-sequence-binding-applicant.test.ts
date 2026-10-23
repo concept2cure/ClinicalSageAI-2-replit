@@ -4,9 +4,9 @@ const state = vi.hoisted(() => ({
   identity: {} as Record<string, unknown>,
   read: vi.fn(),
 }));
-vi.mock('../../ectd/package-identity', () => ({
+vi.mock('../../ectd/package-identity', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../../ectd/package-identity')>(),
   readSubmissionPackageIdentity: (...args: unknown[]) => state.read(...args),
-  recordedPackageIdentitySnapshot: (identity: unknown) => ({ version: 1, identity }),
 }));
 
 import { BINDING_BASIS, deriveGovernedTargetBinding, sha256CanonicalJson } from '../signature-persistence';
@@ -74,10 +74,41 @@ describe('FDA sequence approval covers the recorded applicant', () => {
     expect((await binding()).digest).not.toBe(absent.digest);
   });
 
-  it('does not change the non-FDA binding recipe', async () => {
-    region = 'ema';
+  it.each(['ema', 'pmda', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'])(
+    'captures %s proof alongside the unchanged sequence-content digest', async (knownRegion) => {
+    region = knownRegion;
+    state.identity.applicationNumber = 'MARKET-000512';
     const result = await binding();
-    expect(result.digest).toBe(sha256CanonicalJson({ sequence: { ...sequence, region }, leaves: [leaf] }));
+    const recordedPackageIdentity = { version: 1, identity: { ...state.identity,
+      applicantId: null, contact: { name: null, phone: null, email: null } } };
+    expect(state.read).toHaveBeenCalledWith(client, 7, 9, { region });
+    expect(result).toMatchObject({ recordedPackageIdentity,
+      sequenceContentDigest: sha256CanonicalJson({ sequence: { ...sequence, region }, leaves: [leaf] }) });
+    expect(result.digest).toBe(sha256CanonicalJson({ sequence: { ...sequence, region }, leaves: [leaf], recordedPackageIdentity }));
+  });
+
+  it.each(['programId', 'applicationNumber', 'applicantName', 'applicantSponsorId'])(
+    'requires renewed non-US approval when %s changes', async (field) => {
+      region = 'ema';
+      const before = await binding();
+      state.identity[field] = `${String(state.identity[field])}-changed`;
+      expect((await binding()).digest).not.toBe(before.digest);
+    });
+
+  it('does not make non-US approval stale for FDA-only DUNS or contact changes', async () => {
+    region = 'pmda';
+    const before = await binding();
+    state.identity.applicantId = '987654321';
+    state.identity.contact = { name: 'Another contact', phone: '+1 212 555 0199', email: 'changed@example.test' };
+    expect((await binding()).digest).toBe(before.digest);
+    expect(before).toHaveProperty('recordedPackageIdentity.identity.applicantId', null);
+  });
+
+  it('refuses unknown regional semantics through the honest ledger fallback', async () => {
+    region = 'unknown-agency';
+    const result = await binding();
+    expect(result).toMatchObject({ digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER });
+    expect(result.note).toMatch(/region/i);
     expect(state.read).not.toHaveBeenCalled();
     expect(result).not.toHaveProperty('recordedPackageIdentity');
   });

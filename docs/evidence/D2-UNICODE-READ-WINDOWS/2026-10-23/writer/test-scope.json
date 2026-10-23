@@ -1,0 +1,35 @@
+{
+  "testFile": "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+  "sha256": "e9c6360d85ada81945bea19febe1df53bd0c15750cffa0fbf57d171d471865fe",
+  "cases": 9,
+  "status": "Authored; root owns baseline execution and final qualification. No test/compiler/lint/Git commands run by author.",
+  "realComponents": [
+    "registered read_project_document handler",
+    "private deferReadReceipt identity and immutable source snapshot",
+    "settleReadReceipts unchanged-payload check",
+    "writeGuardedReadReceipt legacy path and real payload/source checks",
+    "PGlite BEGIN/LOCK/tenant set_config/INSERT/COMMIT SQL",
+    "Actual persisted legacy receipt spans read from SQL"
+  ],
+  "syntheticPremises": [
+    "actor/program admission through existing explicit read-delivery fixture",
+    "source document loaded through synthetic admitted-source dependency",
+    "PGlite owner-mode minimal tables; no deployed migrations/native RLS/concurrency proof"
+  ],
+  "caseScope": [
+    "three split-start/tiny-wholepair/split-end cases",
+    "escaped-fitter boundary corpus with four prefix variants and persisted actual spans",
+    "ordinary ASCII receipt control",
+    "changed extraction before settlement refusal",
+    "amended and withheld host payload controls",
+    "genuine private deferral with mismatched payload/span rejected by actual guarded writer"
+  ],
+  "limits": [
+    "No live provider or gateway delivery proof",
+    "No native PostgreSQL/RLS/concurrent locking qualification",
+    "No durable V2 ledger qualification; test selects existing legacy path",
+    "Source admission is synthetic; only receipt transaction/INSERT uses real SQL",
+    "Source read/text is not persisted in this fixture; receipt spans are"
+  ],
+  "lintRefinement": "Before freeze, converted six-argument it.each callback to an object case parameter, preserving all fixture values/assertions."
+}

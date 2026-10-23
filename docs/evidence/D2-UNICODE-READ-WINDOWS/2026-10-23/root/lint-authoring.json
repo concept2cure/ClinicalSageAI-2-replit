@@ -1,0 +1,51 @@
+{
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+    "server/services/ana/__tests__/document-read-unicode-windows.test.ts"
+  ],
+  "exit": 0,
+  "results": [
+    {
+      "filePath": "/workspace/Concept2Cure/server/routes/ana-ri/__tests__/stream-read-unicode-windows.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-executor.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-receipt-writer.test.ts",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "message": "Async arrow function has too many parameters (6). Maximum allowed is 5.",
+          "line": 122,
+          "column": 71,
+          "messageId": "exceed",
+          "endLine": 122,
+          "endColumn": 73
+        }
+      ]
+    },
+    {
+      "filePath": "/workspace/Concept2Cure/server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

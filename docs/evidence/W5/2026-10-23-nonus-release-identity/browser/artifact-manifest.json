@@ -1,0 +1,64 @@
+{
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 2691,
+      "sha256": "71dcd13fea6c7358ad55c3f90ebb5954087bf9f14ff17e5a5d943a0d87c66d01"
+    },
+    {
+      "path": "check.mjs",
+      "bytes": 7396,
+      "sha256": "4ee2478cf00f6013153a4ef2033616b161600f433381ddcf3145fec47eedaed3"
+    },
+    {
+      "path": "execution.txt",
+      "bytes": 8967,
+      "sha256": "695751f463f1f8719ff458def86ce60c4005c95c1e37eddf47e8ff0e5ab6db33"
+    },
+    {
+      "path": "index.html",
+      "bytes": 287,
+      "sha256": "535bf71f5d8ebcb5cd5eeef007c2b00358832b47a82749ebe7c99a0d0e9890e1"
+    },
+    {
+      "path": "probe.tsx",
+      "bytes": 3071,
+      "sha256": "1b3d302285af56d3046cedcd99dae1a4543c9f4457e8a1411a03b26adba08b77"
+    },
+    {
+      "path": "result/ema-attempted-held.png",
+      "bytes": 123300,
+      "sha256": "c1614d624fd1d94a52f170a442695f2145381fae03ff8141ff86cec8964d7450"
+    },
+    {
+      "path": "result/eu-renewal-reachable.png",
+      "bytes": 128319,
+      "sha256": "4bd99528a9b630ced4ee460765b853628b098a153d9067c0c0ae9883e29f5161"
+    },
+    {
+      "path": "result/jp-outage-held.png",
+      "bytes": 70726,
+      "sha256": "c66f3a3574779cd6498192d3fd430bfd538e8bd507dd9f77b75d789ff5b03551"
+    },
+    {
+      "path": "result/jp-renewal-reachable.png",
+      "bytes": 128384,
+      "sha256": "1ea8c5e43a7a21ad995721797ac3ebe60b774a1aaefd5411e8a81ce70f68411f"
+    },
+    {
+      "path": "result/result.json",
+      "bytes": 8967,
+      "sha256": "695751f463f1f8719ff458def86ce60c4005c95c1e37eddf47e8ff0e5ab6db33"
+    },
+    {
+      "path": "result/unknown-unknown-region-held.png",
+      "bytes": 124924,
+      "sha256": "7550a0ce2e0468c681455f2335efda6a7f1f6af47a6f92ac9f20e4543b862a74"
+    },
+    {
+      "path": "server.mjs",
+      "bytes": 749,
+      "sha256": "69ff534f88d745ef95ae4de25979d589ffbee41e3a48921918045646ebe3724f"
+    }
+  ]
+}

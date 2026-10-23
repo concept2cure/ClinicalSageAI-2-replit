@@ -524,3 +524,50 @@ describe('POST /:projectIdent/compile — the assembly\'s audit-row outcome reac
     expect(payload.auditTrail).toEqual(LOST);
   });
 });
+
+/** Complete the same recorded-facts projection already used by FDA compile. */
+describe('POST /:projectIdent/compile — recorded regional release identity', () => {
+  const regionalSpine = (region: string, marketNumber: string | null = 'MARKET-42') => {
+    mockSpine({ identity: { primary_agency: 'FDA', duns: null, contact_name: null, contact_phone: null, contact_email: null } });
+    const fallback = poolQuery.getMockImplementation()!;
+    poolQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (/FROM ectd_sequences/i.test(sql)) return { rows: [{ id: 9, sequence_number: '0000', region }] };
+      if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind', anchored: true,
+        program_id: UUID, primary_region: region, market_number: marketNumber }] };
+      return fallback(sql, params);
+    });
+  };
+
+  it.each(['jp', 'ema'])('passes %s captured market facts through the existing assembler without FDA identifiers', async region => {
+    regionalSpine(region);
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ applicationId: 'MARKET-42', sponsorName: SPONSOR, sponsorId: '',
+      recordedPackageIdentity: { version: 1, identity: { programId: UUID, applicationNumber: 'MARKET-42',
+        applicantSponsorId: '11111111-1111-4111-8111-111111111111', applicantName: SPONSOR,
+        applicantId: null, contact: { name: null, phone: null, email: null } } } }));
+    expect(assembleSequenceMock.mock.calls[0][0]).not.toHaveProperty('contacts');
+    expect(res.json.mock.calls[0][0].status).toBe('completed');
+  });
+
+  it('refuses a missing recorded market number before assembly', async () => {
+    regionalSpine('jp', null);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0]).toMatchObject({ status: 'failed', submissionReady: false });
+    expect(res.json.mock.calls[0][0].submissionBlockers.join(' ')).toMatch(/number of its own/);
+  });
+
+  it('refuses an unrecognized actual sequence region before assembly', async () => {
+    regionalSpine('unrecognized');
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    const body = res.json.mock.calls[0][0];
+    expect(body.submissionReady).not.toBe(true);
+    expect(JSON.stringify(body)).toMatch(/region/i);
+  });
+});

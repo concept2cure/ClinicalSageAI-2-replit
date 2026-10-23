@@ -1,8 +1,6 @@
 /**
- * The existing packageability gate discards every temporary bundle. Non-FDA
- * checks retain the explicit dry-run contract; FDA checks assess the recorded
- * identity captured by the governed signature so contact gates see the facts
- * the person is approving (MR-10 identity completion, 2026-10-21).
+ * The existing packageability gate discards every temporary bundle and judges
+ * the recorded facts captured by the governed signature for every known region.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -48,7 +46,7 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => (
 vi.mock('../../part11/signature-persistence', async (orig) => ({
   ...(await orig<any>()),
   deriveGovernedTargetBinding: async () => ({ digest: 'd', basis: 'ectd-sequence-leaf-manifest-sha256', note: '',
-    ...(state.region === 'fda' && state.captureAvailable ? { recordedPackageIdentity: { version: 1, identity: state.identity } } : {}),
+    ...(state.captureAvailable ? { recordedPackageIdentity: { version: 1, identity: state.region === 'fda' ? state.identity : { ...state.identity, applicantId: null, contact: { name: null, phone: null, email: null } } } } : {}),
   }),
   isSignatureWithdrawn: () => false,
 }));
@@ -89,25 +87,39 @@ beforeEach(() => {
   state.calls.length = 0;
 });
 
-describe('the non-FDA governed packageability check retains its explicit dry run (P-27)', () => {
-  it('asks the assembler for a dry run and supplies no identity of its own', async () => {
+describe('known non-US governed packageability judges captured recorded facts', () => {
+  it.each(['jp', 'eu', 'ca'])('assembles %s captured facts without FDA DUNS or contact, never a placeholder dry run', async region => {
+    state.region = region;
     await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no state change expected/);
     expect(state.calls).toHaveLength(1);
-    expect(state.calls[0]).toMatchObject({ sequenceId: 1, organizationId: 7, dryRun: true });
-    expect(state.calls[0]).not.toHaveProperty('applicationId');
-    expect(state.calls[0]).not.toHaveProperty('sponsorId');
-    expect(state.calls[0]).not.toHaveProperty('sponsorName');
+    expect(state.calls[0]).toMatchObject({ sequenceId: 1, organizationId: 7, applicationId: '123456', sponsorId: '',
+      sponsorName: 'Recorded Sponsor', recordedPackageIdentity: { version: 1, identity: { applicationNumber: '123456',
+        applicantId: null, contact: { name: null, phone: null, email: null } } } });
+    expect(state.calls[0]).not.toHaveProperty('dryRun');
+    expect(state.calls[0]).not.toHaveProperty('contacts');
+    expect(state.cleaned).toBe(1);
   });
 
-  it('discards the dry-run bundle whether or not the check passes', async () => {
+  it('discards the captured temporary bundle whether or not its leaves are approved', async () => {
     await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toThrow(/no state change expected/);
     expect(state.cleaned).toBe(1);
     state.blockers = ['m2.5'];
     await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED' });
     expect(state.cleaned).toBe(2);
   });
-});
 
+  it('refuses missing captured identity for a known non-US region', async () => {
+    state.captureAvailable = false;
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED', message: expect.stringMatching(/no recorded application\/applicant identity/) });
+    expect(state.calls).toHaveLength(0); expect(state.writes).toBe(0);
+  });
+
+  it('refuses an unknown region even if a proof was supplied', async () => {
+    state.region = 'unrecognized';
+    await expect(freezeSequence(1, ctx, 'sig-1')).rejects.toMatchObject({ code: 'DISPATCH_BLOCKED', message: expect.stringMatching(/region/i) });
+    expect(state.calls).toHaveLength(0); expect(state.writes).toBe(0);
+  });
+});
 
 describe('the FDA governed packageability check uses the signature-captured recorded facts', () => {
   it('supplies the captured DUNS and regulatory contact, then discards the temporary package', async () => {
