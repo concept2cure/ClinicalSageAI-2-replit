@@ -53,11 +53,19 @@ That combined production build passed in **21.85 seconds**, including server and
 
 The second normal push of `7e0a8332c` again passed every gate and the full compiler with zero errors, then received a fetch-first rejection because canonical advanced through `70e5ea3bb`. Normal merge `41c39279a` preserves its small Vault chunk-boundary repair: cuts and overlap starts keep surrogate pairs intact across UTF-8 storage. No reporting, native or previously qualified refiling source pin changed. The [late-unicode packet](late-unicode/README.md) retains independent review and **33 passing tests across three suites**, zero failures, pending cases or TODOs, in 9.53 seconds. The property census covers 2,688 deterministic inputs and 8,080 chunks with zero violations. All four new before/after inputs and all prior reporting/native/refiling selected pins remain unchanged.
 
-The latest combined production build passed in **20.27 seconds**, including server and audit verifier. All 98 selected build input hashes remain unchanged. `release/checks.json` and lossless archives preserve this build and the second checked-but-rejected publication attempt. The fix does not claim migration of historical chunks, complete grapheme segmentation or resolution of separate retrieval defects.
+That combined production build passed in **20.27 seconds**, including server and audit verifier. All 98 selected build input hashes remain unchanged. `release/checks.json` and lossless archives preserve this build and the second checked-but-rejected publication attempt. The fix does not claim migration of historical chunks, complete grapheme segmentation or resolution of separate retrieval defects.
 
 ## Final documentation reconciliation
 
 The third normal push of `47c812f26` passed every gate and full compilation with zero errors, then canonical advanced with publication documentation at `26d850156`. Its 14 changed paths are documentation only. Normal merge preserves those records; all 98 selected application/test/helper hashes remain unchanged. The latest build and tests above retain their original pins and are not relabelled as rerun. `release/checks.json` and `release/push-attempt-3.txt.gz` retain the exact checked-but-rejected attempt separately from publication.
+
+## Preserve shared internal planning in the editor
+
+Further normal push checks passed full compilation with zero errors. Documentation-only updates and then the independently delivered shared-planning completion advanced canonical during publication. One transport attempt failed with GitHub HTTP 503 before hooks; it is retained separately from checked-but-rejected attempts. `release/checks.json` and lossless attempt 4–6 logs state the distinct outcomes.
+
+Normal merge `2fe39a16a` preserves shared planning through `f5f685a87`. Existing strategy, gap analysis, competitive landscape and meeting-minute outlines now reach the same editor/preparation flow through an exact internal four-ID predicate. Existing registry records and earlier builtin snapshots remain unchanged. Internal planning supplies no agency route, readiness approval or permission to submit. The [late-planning packet](late-planning/README.md) retains independent review and **339 passing tests in six suites**, zero failures, pending cases or TODOs, in 100.24 seconds. The environment-interrupted attempt retains its original output separately and is neither a RED nor a passed result. All 16 selected incoming and 90 prior selected source/test/helper pins remain unchanged.
+
+The latest combined production build passed in **23.68 seconds**, including server and audit verifier. All 114 selected build inputs remain unchanged. Earlier reporting/native/refiling/Unicode selected pins remain unchanged; their results retain their original commands and scopes. No new reporting engine or UI surface is introduced.
 
 ## Remaining acceptance
 
