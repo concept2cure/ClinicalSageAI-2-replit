@@ -1175,7 +1175,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                   </div>
                   <div className="scaf-note" style={{ marginBottom: 10 }}>
                     Once the plan is active, {org.name || 'your organization'} is
-                    receives the features its tier qualifies for. Your apps remain
+                    receives the features its tier qualifies for. These features remain
                     subject to the supported launch scope and organization entitlements.
                     This is a plan preview; activation and payment results are reported separately.
                   </div>

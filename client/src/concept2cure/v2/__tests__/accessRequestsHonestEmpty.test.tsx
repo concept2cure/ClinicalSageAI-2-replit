@@ -98,7 +98,7 @@ function ContextProbe() {
 }
 
 const ANSWERED_CLAIM = /everything asked for so far has been answered/i;
-const NEVER_ASKED = /nobody has asked for an app yet/i;
+const NEVER_ASKED = /nobody has asked for a feature yet/i;
 
 beforeEach(() => {
   cleanup();

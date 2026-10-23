@@ -1,0 +1,709 @@
+Merge made by the 'ort' strategy.
+ .../__tests__/useEstarExport.refreshOwner.test.ts  |  122 +
+ .../src/concept2cure/mdx/hooks/useEstarExport.ts   |   27 +-
+ .../authoringSourceDocumentStart.test.tsx          |  221 ++
+ .../v2/__tests__/taskDrawerCreationGuard.test.tsx  |   11 +-
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |  125 +-
+ .../v2/editor/SourceAssemblyDialog.tsx             |   22 +-
+ .../editor/__tests__/sourceAssemblyEntry.test.tsx  |    8 +-
+ .../__tests__/sourceDocumentStartChannel.test.tsx  |  200 ++
+ .../__tests__/sourceDocumentStartFlow.test.tsx     |  295 ++
+ .../concept2cure/v2/editor/assemblySourceIntent.ts |   16 +-
+ .../concept2cure/v2/editor/useAuthoringCreation.ts |   54 +-
+ .../concept2cure/v2/editor/workbenchLeaveTarget.ts |   10 +
+ client/src/concept2cure/v2/editorTarget.ts         |   56 +-
+ .../v2/surfaces/AuthoringCreateExport.tsx          |   62 +-
+ .../SOURCE_ASSEMBLY_DOCUMENT_START_2026-10-23.md   |  198 ++
+ .../2026-10-23/README.md                           |  273 ++
+ .../2026-10-23/artifact-manifest.json              | 1369 +++++++++
+ .../2026-10-23/bounded-cohorts.json                |   49 +
+ .../2026-10-23/canonical-catchup.json              |   13 +
+ .../2026-10-23/canonical-catchup.log.gz            |  Bin 0 -> 6211 bytes
+ .../2026-10-23/channel/README.md                   |   67 +
+ .../2026-10-23/channel/artifact-manifest.json      |   22 +
+ .../2026-10-23/channel/freeze.json                 |   29 +
+ .../2026-10-23/channel/freeze.sha256               |    1 +
+ .../2026-10-23/channel/initial-green-freeze.json   |   21 +
+ .../2026-10-23/channel/initial-green.json          |   61 +
+ .../2026-10-23/channel/initial-green.log.gz        |  Bin 0 -> 2108 bytes
+ .../2026-10-23/channel/initial-lint.json           |   60 +
+ .../2026-10-23/channel/initial-lint.log.gz         |  Bin 0 -> 20 bytes
+ .../2026-10-23/channel/ownership-check.json        |   59 +
+ .../2026-10-23/channel/ownership-check.log.gz      |  Bin 0 -> 1539 bytes
+ .../2026-10-23/channel/ownership-freeze.json       |   21 +
+ .../2026-10-23/channel/qualified-freeze.json       |   21 +
+ .../2026-10-23/channel/qualified-green.json        |   61 +
+ .../2026-10-23/channel/qualified-green.log.gz      |  Bin 0 -> 2434 bytes
+ .../2026-10-23/channel/red-freeze.json             |   21 +
+ .../2026-10-23/channel/red.json                    |   59 +
+ .../2026-10-23/channel/red.log.gz                  |  Bin 0 -> 4125 bytes
+ .../2026-10-23/creation/README.md                  |   66 +
+ .../2026-10-23/creation/final-freeze.json          |   27 +
+ .../2026-10-23/creation/focused-green.json         |   55 +
+ .../2026-10-23/creation/focused-green.log.gz       |  Bin 0 -> 749 bytes
+ .../2026-10-23/creation/green-final.json           |   79 +
+ .../2026-10-23/creation/green-final.log.gz         |  Bin 0 -> 6513 bytes
+ .../2026-10-23/creation/green-freeze.json          |   19 +
+ .../2026-10-23/creation/green-qualified-final.json |   79 +
+ .../creation/green-qualified-final.log.gz          |  Bin 0 -> 4570 bytes
+ .../2026-10-23/creation/lint-final.json            |   69 +
+ .../2026-10-23/creation/lint-final.log.gz          |  Bin 0 -> 20 bytes
+ .../2026-10-23/creation/lint-initial.json          |   53 +
+ .../2026-10-23/creation/lint-initial.log.gz        |  Bin 0 -> 405 bytes
+ .../2026-10-23/creation/lint-qualified-final.json  |   70 +
+ .../creation/lint-qualified-final.log.gz           |  Bin 0 -> 20 bytes
+ .../2026-10-23/creation/lint-qualified.json        |   53 +
+ .../2026-10-23/creation/lint-qualified.log.gz      |  Bin 0 -> 232 bytes
+ .../2026-10-23/creation/owned-freeze.json          |   15 +
+ .../creation/qualified-final-freeze.json           |   27 +
+ .../2026-10-23/creation/qualified-freeze.json      |   19 +
+ .../2026-10-23/creation/red-freeze.json            |   19 +
+ .../2026-10-23/creation/red.json                   |   55 +
+ .../2026-10-23/creation/red.log.gz                 |  Bin 0 -> 3203 bytes
+ .../2026-10-23/creation/regression-selection.json  |   13 +
+ .../2026-10-23/creation/run-check.py               |   54 +
+ .../2026-10-23/dirty-creation-red-freeze.json      |   19 +
+ .../dirty-creation-red-test-source.tsx.gz          |  Bin 0 -> 5230 bytes
+ .../2026-10-23/dirty-creation-red.json             |   58 +
+ .../2026-10-23/dirty-creation-red.log.gz           |  Bin 0 -> 2604 bytes
+ .../2026-10-23/estar-backend-source-freeze.json    |   37 +
+ .../2026-10-23/estar-backend.json                  |   96 +
+ .../2026-10-23/estar-backend.log.gz                |  Bin 0 -> 5066 bytes
+ .../2026-10-23/estar-canonical-merge.json          |   22 +
+ .../2026-10-23/estar-canonical-merge.log.gz        |  Bin 0 -> 174 bytes
+ .../2026-10-23/estar-legacy-fixture-first.json     |   50 +
+ .../2026-10-23/estar-legacy-fixture-first.log.gz   |  Bin 0 -> 3835 bytes
+ .../2026-10-23/estar-legacy-fixture-freeze.json    |   16 +
+ .../2026-10-23/estar-legacy-qualified-freeze.json  |   16 +
+ .../2026-10-23/estar-legacy-qualified.json         |   50 +
+ .../2026-10-23/estar-legacy-qualified.log.gz       |  Bin 0 -> 2767 bytes
+ .../2026-10-23/estar-owner/README.md               |   22 +
+ .../estar-owner/expanded-red-freeze.json           |   19 +
+ .../estar-owner/expanded-red-test-source.ts.gz     |  Bin 0 -> 2609 bytes
+ .../2026-10-23/estar-owner/expanded-red.json       |   55 +
+ .../2026-10-23/estar-owner/expanded-red.log.gz     |  Bin 0 -> 1118 bytes
+ .../2026-10-23/estar-owner/focused-green.json      |   57 +
+ .../2026-10-23/estar-owner/focused-green.log.gz    |  Bin 0 -> 578 bytes
+ .../2026-10-23/estar-owner/forced-lint-before.json |   53 +
+ .../estar-owner/forced-lint-before.log.gz          |  Bin 0 -> 9362 bytes
+ .../2026-10-23/estar-owner/forced-lint-final.json  |   55 +
+ .../estar-owner/forced-lint-final.log.gz           |  Bin 0 -> 9681 bytes
+ .../2026-10-23/estar-owner/freeze.json             |   20 +
+ .../2026-10-23/estar-owner/lint-before.json        |   52 +
+ .../2026-10-23/estar-owner/lint-before.log.gz      |  Bin 0 -> 334 bytes
+ .../2026-10-23/estar-owner/packet-files.json       |   34 +
+ .../2026-10-23/estar-owner/qualified-freeze.json   |   22 +
+ .../2026-10-23/estar-owner/qualified-hooks.json    |   63 +
+ .../2026-10-23/estar-owner/qualified-hooks.log.gz  |  Bin 0 -> 2700 bytes
+ .../2026-10-23/estar-owner/qualified-lint.json     |   59 +
+ .../2026-10-23/estar-owner/qualified-lint.log.gz   |  Bin 0 -> 9645 bytes
+ .../estar-owner/qualified-production-source.ts.gz  |  Bin 0 -> 9293 bytes
+ .../estar-owner/qualified-test-lint.json           |   60 +
+ .../estar-owner/qualified-test-lint.log.gz         |  Bin 0 -> 205 bytes
+ .../estar-owner/qualified-test-source.ts.gz        |  Bin 0 -> 2609 bytes
+ .../2026-10-23/estar-owner/red-freeze.json         |   19 +
+ .../estar-owner/red-production-source.ts.gz        |  Bin 0 -> 9008 bytes
+ .../2026-10-23/estar-owner/red-test-source.ts.gz   |  Bin 0 -> 2382 bytes
+ .../2026-10-23/estar-owner/red.json                |   55 +
+ .../2026-10-23/estar-owner/red.log.gz              |  Bin 0 -> 909 bytes
+ .../2026-10-23/estar-owner/run-check.py            |   49 +
+ .../2026-10-23/estar-source-freeze.json            |  678 +++++
+ .../2026-10-23/estar-sql-proof.json                |   86 +
+ .../2026-10-23/estar-sql-proof.log.gz              |  Bin 0 -> 1488 bytes
+ .../2026-10-23/estar-sql-selftest.json             |   86 +
+ .../2026-10-23/estar-sql-selftest.log.gz           |  Bin 0 -> 1072 bytes
+ .../2026-10-23/final-backfill-integration.json     | 1387 +++++++++
+ .../2026-10-23/final-backfill-integration.log.gz   |  Bin 0 -> 1936 bytes
+ .../2026-10-23/final-build.json                    | 1370 +++++++++
+ .../2026-10-23/final-build.log.gz                  |  Bin 0 -> 4682 bytes
+ .../2026-10-23/final-canonical-fetch.json          | 1371 +++++++++
+ .../2026-10-23/final-canonical-fetch.log.gz        |  Bin 0 -> 144 bytes
+ .../2026-10-23/final-design-system.json            | 1370 +++++++++
+ .../2026-10-23/final-design-system.log.gz          |  Bin 0 -> 173 bytes
+ .../final-documentation-merge-resolution.json      | 1370 +++++++++
+ .../final-documentation-merge-resolution.log.gz    |  Bin 0 -> 162 bytes
+ .../2026-10-23/final-documentation-merge.json      | 1371 +++++++++
+ .../2026-10-23/final-documentation-merge.log.gz    |  Bin 0 -> 145 bytes
+ .../2026-10-23/final-estar-ui.json                 | 1383 +++++++++
+ .../2026-10-23/final-estar-ui.log.gz               |  Bin 0 -> 5662 bytes
+ .../2026-10-23/final-evidence-review.json          |   13 +
+ .../final-export-integration-commit.json           | 1371 +++++++++
+ .../final-export-integration-commit.log.gz         |  Bin 0 -> 915 bytes
+ .../2026-10-23/final-incoming-reviews.json         |    6 +
+ .../final-publication-qualification.json           |  196 ++
+ .../final-publication-source-freeze.json           |  680 +++++
+ .../2026-10-23/final-qualification.json            |  231 ++
+ .../2026-10-23/final-readonly-review.json          |   12 +
+ .../2026-10-23/final-vault-picker-css.json         | 1370 +++++++++
+ .../2026-10-23/final-vault-picker-css.log.gz       |  Bin 0 -> 190 bytes
+ .../2026-10-23/final-warning-ratchet.json          | 1372 +++++++++
+ .../2026-10-23/final-warning-ratchet.log.gz        |  Bin 0 -> 169 bytes
+ .../2026-10-23/fourth-retry-fetch.json             | 1397 +++++++++
+ .../2026-10-23/fourth-retry-fetch.log.gz           |  Bin 0 -> 144 bytes
+ .../2026-10-23/fourth-retry-merge.json             | 1397 +++++++++
+ .../2026-10-23/fourth-retry-merge.log.gz           |  Bin 0 -> 340 bytes
+ .../2026-10-23/implementation-commit.json          | 1237 ++++++++
+ .../2026-10-23/implementation-commit.log.gz        |  Bin 0 -> 1493 bytes
+ .../implementation-push-documentation-sync.json    | 1397 +++++++++
+ .../implementation-push-documentation-sync.log.gz  |  Bin 0 -> 4412 bytes
+ .../2026-10-23/implementation-push-final.json      | 1379 +++++++++
+ .../2026-10-23/implementation-push-final.log.gz    |  Bin 0 -> 4512 bytes
+ .../implementation-push-market-merge.json          | 1397 +++++++++
+ .../implementation-push-market-merge.log.gz        |  Bin 0 -> 4610 bytes
+ .../2026-10-23/implementation-push-retry.json      | 1371 +++++++++
+ .../2026-10-23/implementation-push-retry.log.gz    |  Bin 0 -> 4611 bytes
+ .../2026-10-23/implementation-push.json            | 1269 ++++++++
+ .../2026-10-23/implementation-push.log.gz          |  Bin 0 -> 4564 bytes
+ .../2026-10-23/implementation-sync.json            |    7 +
+ .../2026-10-23/intake-compatibility-commit.json    | 1321 +++++++++
+ .../2026-10-23/intake-compatibility-commit.log.gz  |  Bin 0 -> 404 bytes
+ .../2026-10-23/integration-feature-red-freeze.json |   18 +
+ .../2026-10-23/integration-feature-red.json        |   55 +
+ .../2026-10-23/integration-feature-red.log.gz      |  Bin 0 -> 2899 bytes
+ .../2026-10-23/integration-fifth-freeze.json       |   19 +
+ .../2026-10-23/integration-fifth.json              |   56 +
+ .../2026-10-23/integration-fifth.log.gz            |  Bin 0 -> 447 bytes
+ .../2026-10-23/integration-first-freeze.json       |   19 +
+ .../2026-10-23/integration-first.json              |   55 +
+ .../2026-10-23/integration-first.log.gz            |  Bin 0 -> 2928 bytes
+ .../2026-10-23/integration-fourth-freeze.json      |   19 +
+ .../2026-10-23/integration-fourth.json             |   56 +
+ .../2026-10-23/integration-fourth.log.gz           |  Bin 0 -> 2705 bytes
+ .../integration-guards-green-freeze.json           |   19 +
+ .../2026-10-23/integration-guards-green.json       |   56 +
+ .../2026-10-23/integration-guards-green.log.gz     |  Bin 0 -> 848 bytes
+ .../2026-10-23/integration-guards-red-freeze.json  |   19 +
+ .../2026-10-23/integration-guards-red.json         |   56 +
+ .../2026-10-23/integration-guards-red.log.gz       |  Bin 0 -> 2607 bytes
+ .../integration-qualified-red-freeze.json          |   18 +
+ .../2026-10-23/integration-qualified-red.json      |   55 +
+ .../2026-10-23/integration-qualified-red.log.gz    |  Bin 0 -> 3247 bytes
+ .../2026-10-23/integration-red-freeze.json         |   18 +
+ .../2026-10-23/integration-red.json                |   55 +
+ .../2026-10-23/integration-red.log.gz              |  Bin 0 -> 3411 bytes
+ .../2026-10-23/integration-second-freeze.json      |   19 +
+ .../2026-10-23/integration-second.json             |   55 +
+ .../2026-10-23/integration-second.log.gz           |  Bin 0 -> 2706 bytes
+ .../2026-10-23/integration-third-debug.log.gz      |  Bin 0 -> 2163 bytes
+ .../2026-10-23/integration-third-freeze.json       |   19 +
+ .../2026-10-23/integration-third.json              |   56 +
+ .../2026-10-23/integration-third.log.gz            |  Bin 0 -> 2707 bytes
+ .../2026-10-23/market-integration-build.json       | 1396 +++++++++
+ .../2026-10-23/market-integration-build.log.gz     |  Bin 0 -> 4678 bytes
+ .../market-integration-source-freeze.json          |  707 +++++
+ .../2026-10-23/market-integration-tests.json       | 1408 +++++++++
+ .../2026-10-23/market-integration-tests.log.gz     |  Bin 0 -> 2970 bytes
+ .../2026-10-23/merged-backend.json                 | 1293 ++++++++
+ .../2026-10-23/merged-backend.log.gz               |  Bin 0 -> 28829 bytes
+ .../2026-10-23/merged-build.json                   | 1268 ++++++++
+ .../2026-10-23/merged-build.log.gz                 |  Bin 0 -> 4684 bytes
+ .../2026-10-23/merged-gate-canvas-path.json        | 1268 ++++++++
+ .../2026-10-23/merged-gate-canvas-path.log.gz      |  Bin 0 -> 215 bytes
+ .../merged-gate-check-editor-integrity.json        | 1268 ++++++++
+ .../merged-gate-check-editor-integrity.log.gz      |  Bin 0 -> 330 bytes
+ .../merged-gate-check-phantom-tokens.json          | 1268 ++++++++
+ .../merged-gate-check-phantom-tokens.log.gz        |  Bin 0 -> 159 bytes
+ .../2026-10-23/merged-gate-design-system.json      | 1268 ++++++++
+ .../2026-10-23/merged-gate-design-system.log.gz    |  Bin 0 -> 173 bytes
+ .../2026-10-23/merged-gate-gateway-bypass.json     | 1268 ++++++++
+ .../2026-10-23/merged-gate-gateway-bypass.log.gz   |  Bin 0 -> 149 bytes
+ .../merged-gate-migration-deploy-path.json         | 1268 ++++++++
+ .../merged-gate-migration-deploy-path.log.gz       |  Bin 0 -> 155 bytes
+ .../merged-gate-migration-drop-safety.json         | 1268 ++++++++
+ .../merged-gate-migration-drop-safety.log.gz       |  Bin 0 -> 269 bytes
+ .../merged-gate-migration-guard-order.json         | 1268 ++++++++
+ .../merged-gate-migration-guard-order.log.gz       |  Bin 0 -> 160 bytes
+ .../merged-gate-migration-prefix-collisions.json   | 1268 ++++++++
+ .../merged-gate-migration-prefix-collisions.log.gz |  Bin 0 -> 159 bytes
+ .../merged-gate-migration-reachability.json        | 1268 ++++++++
+ .../merged-gate-migration-reachability.log.gz      |  Bin 0 -> 203 bytes
+ .../merged-gate-migration-set-order.json           | 1268 ++++++++
+ .../merged-gate-migration-set-order.log.gz         |  Bin 0 -> 177 bytes
+ .../2026-10-23/merged-gate-repo-health.json        | 1276 ++++++++
+ .../2026-10-23/merged-gate-repo-health.log.gz      |  Bin 0 -> 246 bytes
+ .../merged-gate-shell-css-collisions.json          | 1268 ++++++++
+ .../merged-gate-shell-css-collisions.log.gz        |  Bin 0 -> 190 bytes
+ .../merged-gate-single-native-canvas.json          | 1268 ++++++++
+ .../merged-gate-single-native-canvas.log.gz        |  Bin 0 -> 139 bytes
+ .../2026-10-23/merged-gate-sql-interpolation.json  | 1268 ++++++++
+ .../merged-gate-sql-interpolation.log.gz           |  Bin 0 -> 674 bytes
+ .../2026-10-23/merged-gate-surface-text-ramp.json  | 1268 ++++++++
+ .../merged-gate-surface-text-ramp.log.gz           |  Bin 0 -> 157 bytes
+ .../2026-10-23/merged-gate-token-cascade.json      | 1268 ++++++++
+ .../2026-10-23/merged-gate-token-cascade.log.gz    |  Bin 0 -> 802 bytes
+ .../2026-10-23/merged-gate-token-contrast.json     | 1268 ++++++++
+ .../2026-10-23/merged-gate-token-contrast.log.gz   |  Bin 0 -> 217 bytes
+ .../2026-10-23/merged-repo-health-report.json      | 3084 ++++++++++++++++++++
+ .../2026-10-23/merged-source-freeze.json           |  629 ++++
+ .../2026-10-23/merged-typecheck.json               | 1268 ++++++++
+ .../2026-10-23/merged-typecheck.log.gz             |  Bin 0 -> 146 bytes
+ .../2026-10-23/merged-ui.json                      | 1296 ++++++++
+ .../2026-10-23/merged-ui.log.gz                    |  Bin 0 -> 13973 bytes
+ .../2026-10-23/merged-vault-freshness.json         | 1281 ++++++++
+ .../2026-10-23/merged-vault-freshness.log.gz       |  Bin 0 -> 3544 bytes
+ .../2026-10-23/merged-warning-full.json            | 1270 ++++++++
+ .../2026-10-23/merged-warning-full.log.gz          |  Bin 0 -> 169 bytes
+ .../2026-10-23/merged-warning-ratchet.json         | 1270 ++++++++
+ .../2026-10-23/merged-warning-ratchet.log.gz       |  Bin 0 -> 170 bytes
+ .../2026-10-23/peer-review.json                    |   35 +
+ .../2026-10-23/pre-commit-fetch.json               |    7 +
+ .../2026-10-23/pre-extraction-qualified-ui.json    | 1243 ++++++++
+ .../2026-10-23/pre-extraction-qualified-ui.log.gz  |  Bin 0 -> 12080 bytes
+ .../pre-extraction-qualified-warning-ratchet.json  | 1220 ++++++++
+ ...pre-extraction-qualified-warning-ratchet.log.gz |  Bin 0 -> 463 bytes
+ .../2026-10-23/pre-extraction-source-freeze.json   |  604 ++++
+ .../2026-10-23/pre-publication-qualification.json  |  238 ++
+ .../pre-refiling-final-qualification.json          |  283 ++
+ .../2026-10-23/project-intake-merge.json           |   16 +
+ .../2026-10-23/project-intake-merge.log.gz         |  Bin 0 -> 2099 bytes
+ .../2026-10-23/publication-build.json              | 1236 ++++++++
+ .../2026-10-23/publication-build.log.gz            |  Bin 0 -> 4679 bytes
+ .../2026-10-23/publication-commit.json             | 1269 ++++++++
+ .../2026-10-23/publication-commit.log.gz           |  Bin 0 -> 715 bytes
+ .../publication-gate-gateway-bypass.json           | 1236 ++++++++
+ .../publication-gate-gateway-bypass.log.gz         |  Bin 0 -> 149 bytes
+ .../2026-10-23/publication-gate-repo-health.json   | 1244 ++++++++
+ .../2026-10-23/publication-gate-repo-health.log.gz |  Bin 0 -> 248 bytes
+ .../publication-gate-sql-interpolation.json        | 1236 ++++++++
+ .../publication-gate-sql-interpolation.log.gz      |  Bin 0 -> 674 bytes
+ .../2026-10-23/publication-repo-health-report.json | 3084 ++++++++++++++++++++
+ .../2026-10-23/publication-source-freeze.json      |  613 ++++
+ .../2026-10-23/publication-typecheck.json          | 1236 ++++++++
+ .../2026-10-23/publication-typecheck.log.gz        |  Bin 0 -> 146 bytes
+ .../2026-10-23/publication-vault-freshness.json    | 1249 ++++++++
+ .../2026-10-23/publication-vault-freshness.log.gz  |  Bin 0 -> 3525 bytes
+ .../2026-10-23/publication-verification-fetch.json | 1397 +++++++++
+ .../publication-verification-fetch.log.gz          |  Bin 0 -> 112 bytes
+ .../2026-10-23/publication-warning-ratchet.json    | 1238 ++++++++
+ .../2026-10-23/publication-warning-ratchet.log.gz  |  Bin 0 -> 169 bytes
+ .../2026-10-23/publication.json                    |   28 +
+ .../2026-10-23/published-source-freeze.json        |  684 +++++
+ .../2026-10-23/push-retry-fetch.json               |    7 +
+ .../2026-10-23/qualification-commands.json         |  545 ++++
+ .../2026-10-23/qualification-fetch.json            |    7 +
+ .../2026-10-23/qualified-backend.json              | 1238 ++++++++
+ .../2026-10-23/qualified-backend.log.gz            |  Bin 0 -> 9158 bytes
+ .../2026-10-23/qualified-build.json                | 1218 ++++++++
+ .../2026-10-23/qualified-build.log.gz              |  Bin 0 -> 4690 bytes
+ .../2026-10-23/qualified-flow-test-source.tsx.gz   |  Bin 0 -> 5253 bytes
+ .../2026-10-23/qualified-gate-canvas-path.json     | 1218 ++++++++
+ .../2026-10-23/qualified-gate-canvas-path.log.gz   |  Bin 0 -> 215 bytes
+ .../qualified-gate-check-editor-integrity.json     | 1218 ++++++++
+ .../qualified-gate-check-editor-integrity.log.gz   |  Bin 0 -> 332 bytes
+ .../qualified-gate-check-phantom-tokens.json       | 1218 ++++++++
+ .../qualified-gate-check-phantom-tokens.log.gz     |  Bin 0 -> 159 bytes
+ .../2026-10-23/qualified-gate-design-system.json   | 1218 ++++++++
+ .../2026-10-23/qualified-gate-design-system.log.gz |  Bin 0 -> 173 bytes
+ .../2026-10-23/qualified-gate-gateway-bypass.json  | 1218 ++++++++
+ .../qualified-gate-gateway-bypass.log.gz           |  Bin 0 -> 149 bytes
+ .../qualified-gate-migration-deploy-path.json      | 1218 ++++++++
+ .../qualified-gate-migration-deploy-path.log.gz    |  Bin 0 -> 155 bytes
+ .../qualified-gate-migration-drop-safety.json      | 1218 ++++++++
+ .../qualified-gate-migration-drop-safety.log.gz    |  Bin 0 -> 269 bytes
+ .../qualified-gate-migration-guard-order.json      | 1218 ++++++++
+ .../qualified-gate-migration-guard-order.log.gz    |  Bin 0 -> 160 bytes
+ ...qualified-gate-migration-prefix-collisions.json | 1218 ++++++++
+ ...alified-gate-migration-prefix-collisions.log.gz |  Bin 0 -> 159 bytes
+ .../qualified-gate-migration-reachability.json     | 1218 ++++++++
+ .../qualified-gate-migration-reachability.log.gz   |  Bin 0 -> 203 bytes
+ .../qualified-gate-migration-set-order.json        | 1218 ++++++++
+ .../qualified-gate-migration-set-order.log.gz      |  Bin 0 -> 177 bytes
+ .../2026-10-23/qualified-gate-repo-health.json     | 1226 ++++++++
+ .../2026-10-23/qualified-gate-repo-health.log.gz   |  Bin 0 -> 241 bytes
+ .../qualified-gate-shell-css-collisions.json       | 1218 ++++++++
+ .../qualified-gate-shell-css-collisions.log.gz     |  Bin 0 -> 190 bytes
+ .../qualified-gate-single-native-canvas.json       | 1218 ++++++++
+ .../qualified-gate-single-native-canvas.log.gz     |  Bin 0 -> 139 bytes
+ .../qualified-gate-sql-interpolation.json          | 1218 ++++++++
+ .../qualified-gate-sql-interpolation.log.gz        |  Bin 0 -> 674 bytes
+ .../qualified-gate-surface-text-ramp.json          | 1218 ++++++++
+ .../qualified-gate-surface-text-ramp.log.gz        |  Bin 0 -> 157 bytes
+ .../2026-10-23/qualified-gate-token-cascade.json   | 1218 ++++++++
+ .../2026-10-23/qualified-gate-token-cascade.log.gz |  Bin 0 -> 802 bytes
+ .../2026-10-23/qualified-gate-token-contrast.json  | 1218 ++++++++
+ .../qualified-gate-token-contrast.log.gz           |  Bin 0 -> 217 bytes
+ .../2026-10-23/qualified-strict-lint.json          | 1232 ++++++++
+ .../2026-10-23/qualified-strict-lint.log.gz        |  Bin 0 -> 336 bytes
+ .../2026-10-23/qualified-typecheck.json            | 1218 ++++++++
+ .../2026-10-23/qualified-typecheck.log.gz          |  Bin 0 -> 146 bytes
+ .../2026-10-23/qualified-ui.json                   | 1243 ++++++++
+ .../2026-10-23/qualified-ui.log.gz                 |  Bin 0 -> 12058 bytes
+ .../2026-10-23/qualified-warning-ratchet.json      | 1220 ++++++++
+ .../2026-10-23/qualified-warning-ratchet.log.gz    |  Bin 0 -> 169 bytes
+ .../2026-10-23/repo-health-report.json             | 3084 ++++++++++++++++++++
+ .../2026-10-23/retry-build.json                    | 1320 +++++++++
+ .../2026-10-23/retry-build.log.gz                  |  Bin 0 -> 4686 bytes
+ .../2026-10-23/retry-intake-guards.json            | 1327 +++++++++
+ .../2026-10-23/retry-intake-guards.log.gz          |  Bin 0 -> 1521 bytes
+ .../2026-10-23/retry-pre-push-fetch.json           |    7 +
+ .../2026-10-23/retry-project-intake.json           | 1331 +++++++++
+ .../2026-10-23/retry-project-intake.log.gz         |  Bin 0 -> 4951 bytes
+ .../2026-10-23/retry-source-freeze.json            |  655 +++++
+ .../2026-10-23/root-initial-lint.log.gz            |  Bin 0 -> 88355 bytes
+ .../2026-10-23/root-initial-warning-ratchet.log.gz |  Bin 0 -> 404 bytes
+ .../2026-10-23/run-check.py                        |   54 +
+ .../2026-10-23/saved-refiling-merge.json           |   18 +
+ .../2026-10-23/saved-refiling-merge.log.gz         |  Bin 0 -> 1063 bytes
+ .../2026-10-23/second-retry-fetch.json             | 1371 +++++++++
+ .../2026-10-23/second-retry-fetch.log.gz           |  Bin 0 -> 144 bytes
+ .../2026-10-23/second-retry-merge.json             | 1371 +++++++++
+ .../2026-10-23/second-retry-merge.log.gz           |  Bin 0 -> 949 bytes
+ .../2026-10-23/source-freeze.json                  |  604 ++++
+ .../2026-10-23/source-git-verification.json        |  707 +++++
+ .../2026-10-23/third-retry-fetch.json              | 1379 +++++++++
+ .../2026-10-23/third-retry-fetch.log.gz            |  Bin 0 -> 142 bytes
+ .../2026-10-23/third-retry-merge.json              | 1381 +++++++++
+ .../2026-10-23/third-retry-merge.log.gz            |  Bin 0 -> 1821 bytes
+ .../2026-10-23/vault-freshness-catchup.json        |   15 +
+ .../2026-10-23/vault-freshness-catchup.log.gz      |  Bin 0 -> 1634 bytes
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |   14 +-
+ docs/work-orders/README.md                         |    1 +
+ tests/routes/estar-official-pdf.test.ts            |   30 +-
+ 360 files changed, 136934 insertions(+), 94 deletions(-)
+ create mode 100644 client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx
+ create mode 100644 docs/design/SOURCE_ASSEMBLY_DOCUMENT_START_2026-10-23.md
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/bounded-cohorts.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/canonical-catchup.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/canonical-catchup.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/artifact-manifest.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/freeze.sha256
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/initial-green-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/initial-green.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/initial-green.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/initial-lint.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/initial-lint.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/ownership-check.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/ownership-check.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/ownership-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/qualified-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/qualified-green.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/qualified-green.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/channel/red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/final-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/focused-green.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/focused-green.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/green-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/green-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/green-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/green-qualified-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/green-qualified-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-initial.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-initial.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-qualified-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-qualified-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-qualified.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/lint-qualified.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/owned-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/qualified-final-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/qualified-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/regression-selection.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/creation/run-check.py
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/dirty-creation-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/dirty-creation-red-test-source.tsx.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/dirty-creation-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/dirty-creation-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-backend-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-backend.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-backend.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-canonical-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-canonical-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-fixture-first.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-fixture-first.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-fixture-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-qualified-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-qualified.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-legacy-qualified.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/README.md
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/expanded-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/expanded-red-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/expanded-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/expanded-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/focused-green.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/focused-green.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/forced-lint-before.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/forced-lint-before.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/forced-lint-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/forced-lint-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/lint-before.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/lint-before.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/packet-files.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-hooks.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-hooks.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-lint.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-lint.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-production-source.ts.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-test-lint.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-test-lint.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/qualified-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/red-production-source.ts.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/red-test-source.ts.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-owner/run-check.py
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-sql-proof.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-sql-proof.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-sql-selftest.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/estar-sql-selftest.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-backfill-integration.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-backfill-integration.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-canonical-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-canonical-fetch.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-design-system.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-design-system.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-documentation-merge-resolution.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-documentation-merge-resolution.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-documentation-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-documentation-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-estar-ui.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-estar-ui.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-evidence-review.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-export-integration-commit.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-export-integration-commit.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-incoming-reviews.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-publication-qualification.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-qualification.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-readonly-review.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-vault-picker-css.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-vault-picker-css.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/final-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/fourth-retry-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/fourth-retry-fetch.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/fourth-retry-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/fourth-retry-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-commit.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-commit.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-documentation-sync.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-documentation-sync.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-final.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-final.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-market-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-market-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-retry.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push-retry.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-push.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/implementation-sync.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/intake-compatibility-commit.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/intake-compatibility-commit.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-feature-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-feature-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-feature-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fifth-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fifth.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fifth.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-first-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-first.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-first.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fourth-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fourth.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-fourth.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-green-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-green.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-green.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-guards-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-qualified-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-qualified-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-qualified-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-red-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-red.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-red.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-second-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-second.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-second.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-third-debug.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-third-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-third.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/integration-third.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/market-integration-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/market-integration-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/market-integration-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/market-integration-tests.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/market-integration-tests.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-backend.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-backend.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-canvas-path.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-check-editor-integrity.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-check-phantom-tokens.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-design-system.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-design-system.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-deploy-path.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-drop-safety.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-guard-order.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-prefix-collisions.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-reachability.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-reachability.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-set-order.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-migration-set-order.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-repo-health.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-token-cascade.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-token-contrast.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-gate-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-repo-health-report.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-typecheck.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-ui.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-ui.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-vault-freshness.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-vault-freshness.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-warning-full.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-warning-full.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/merged-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/peer-review.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-commit-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-extraction-qualified-ui.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-extraction-qualified-ui.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-extraction-qualified-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-extraction-qualified-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-extraction-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-publication-qualification.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/pre-refiling-final-qualification.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/project-intake-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/project-intake-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-commit.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-commit.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-repo-health.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-repo-health-report.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-typecheck.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-vault-freshness.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-vault-freshness.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-verification-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-verification-fetch.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/publication.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/published-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/push-retry-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualification-commands.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualification-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-backend.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-backend.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-flow-test-source.tsx.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-canvas-path.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-canvas-path.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-check-editor-integrity.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-check-phantom-tokens.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-design-system.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-design-system.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-gateway-bypass.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-deploy-path.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-deploy-path.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-drop-safety.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-drop-safety.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-guard-order.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-guard-order.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-prefix-collisions.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-prefix-collisions.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-reachability.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-reachability.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-set-order.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-migration-set-order.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-repo-health.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-repo-health.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-shell-css-collisions.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-shell-css-collisions.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-single-native-canvas.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-sql-interpolation.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-surface-text-ramp.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-surface-text-ramp.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-token-cascade.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-token-cascade.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-token-contrast.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-gate-token-contrast.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-strict-lint.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-strict-lint.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-typecheck.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-ui.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-ui.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-warning-ratchet.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/qualified-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/repo-health-report.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-build.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-build.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-intake-guards.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-intake-guards.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-pre-push-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-project-intake.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-project-intake.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/retry-source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/root-initial-lint.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/root-initial-warning-ratchet.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/run-check.py
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/saved-refiling-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/saved-refiling-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/second-retry-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/second-retry-fetch.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/second-retry-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/second-retry-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/source-freeze.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/source-git-verification.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/third-retry-fetch.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/third-retry-fetch.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/third-retry-merge.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/third-retry-merge.log.gz
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/vault-freshness-catchup.json
+ create mode 100644 docs/evidence/D2-SOURCE-ASSEMBLY-DOCUMENT-START/2026-10-23/vault-freshness-catchup.log.gz
