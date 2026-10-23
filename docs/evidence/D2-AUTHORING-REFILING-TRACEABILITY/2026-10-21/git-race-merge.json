@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "--quiet",
+    "origin/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.293,
+  "head": "63169e3aa8004b92dff03435463fd902427403d1",
+  "rawOutput": "git-race-merge.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+}

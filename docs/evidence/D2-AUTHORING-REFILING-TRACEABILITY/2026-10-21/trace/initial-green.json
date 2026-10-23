@@ -1,0 +1,47 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-21T02:24:12.462208+00:00",
+  "elapsedSeconds": 22.564,
+  "exitCode": 0,
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourcesBefore": {
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "6ef2d81cd38c7c17a3457fa3162626723e986b0d1530ff512333d62c68ebd2de",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/ectd/core-to-packager.ts": "7d0a7fff243c702533fa04e95406c061c4041b9e64782c1f1303d8977292e3db",
+    "server/services/ectd/leaf-source-resolver.ts": "f2ad407c6b3dac4a751d5d492db9fd7bb49a120c2b2393e96bb143a6f3ceb55d",
+    "server/services/ectd/assemble-from-core.ts": "803373e5507497cf4e1bb38e2f0ae3cdd405f4a796923e8b626b48f6492e223f",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": "8a8271c0f8acf1c0eb4d0cbe9a1fe59c7bb403f2f68055c6c36eadd2a719e898",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "ee532bb15b155a1ebf7a719582970f886bb8d64f5f6da7798ab0e89b1b39d621",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "6ef2d81cd38c7c17a3457fa3162626723e986b0d1530ff512333d62c68ebd2de",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/ectd/core-to-packager.ts": "7d0a7fff243c702533fa04e95406c061c4041b9e64782c1f1303d8977292e3db",
+    "server/services/ectd/leaf-source-resolver.ts": "f2ad407c6b3dac4a751d5d492db9fd7bb49a120c2b2393e96bb143a6f3ceb55d",
+    "server/services/ectd/assemble-from-core.ts": "803373e5507497cf4e1bb38e2f0ae3cdd405f4a796923e8b626b48f6492e223f",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": "8a8271c0f8acf1c0eb4d0cbe9a1fe59c7bb403f2f68055c6c36eadd2a719e898",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "ee532bb15b155a1ebf7a719582970f886bb8d64f5f6da7798ab0e89b1b39d621",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90"
+  },
+  "rawOutput": "initial-green.log.gz",
+  "rawGzipSha256": "97ccef3c52e33eaee99270214714bf9f07ef220007f968457ab41ce55ef8c261",
+  "summary": [
+    "Test Files  3 passed (3)",
+    "Tests  42 passed | 1 todo (43)",
+    "Duration  21.90s (transform 5.58s, setup 113ms, import 8.45s, tests 12.69s, environment 0ms)"
+  ]
+}

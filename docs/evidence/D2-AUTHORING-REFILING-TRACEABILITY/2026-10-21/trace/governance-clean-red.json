@@ -1,0 +1,45 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "startedAt": "2026-10-21T02:21:29.545990+00:00",
+  "elapsedSeconds": 7.965,
+  "exitCode": 1,
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourcesBefore": {
+    "server/services/authoring/authoring-vault-filing-receipt.ts": null,
+    "server/services/authoring/authoring-file-to-vault.ts": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e",
+    "server/services/ectd/core-to-packager.ts": "20331233bbad1f34b3c515d803e7151f75a1a3960bbb092159f37c1d13644dba",
+    "server/services/ectd/leaf-source-resolver.ts": "9c6d815fabfb4b9e36a8b72e756fe14b8bf2707ae19d97cee71d05c9211cb1ea",
+    "server/services/ectd/assemble-from-core.ts": "2583b28f92611bcbb659ec7efb2636f452856fb42d2da3c92026e3e35161b7fd",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": null,
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "4ba7259b8d87046a81ab114d89e124a382865facef5633568ad90744e5f18ab9",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/authoring-vault-filing-receipt.ts": null,
+    "server/services/authoring/authoring-file-to-vault.ts": "d45dc46f3a6eb7d414da89eb22340cc309ed33c3b9c65905a34903c9b93ce43e",
+    "server/services/ectd/core-to-packager.ts": "20331233bbad1f34b3c515d803e7151f75a1a3960bbb092159f37c1d13644dba",
+    "server/services/ectd/leaf-source-resolver.ts": "9c6d815fabfb4b9e36a8b72e756fe14b8bf2707ae19d97cee71d05c9211cb1ea",
+    "server/services/ectd/assemble-from-core.ts": "2583b28f92611bcbb659ec7efb2636f452856fb42d2da3c92026e3e35161b7fd",
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": null,
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "4ba7259b8d87046a81ab114d89e124a382865facef5633568ad90744e5f18ab9",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts": "3820e09a7220d4eb444d1cfe53b131c1292bf327e9bed928792dfebebfab4f90"
+  },
+  "rawOutput": "governance-clean-red.log.gz",
+  "rawGzipSha256": "042c9a390f50edc8ae160096623ba1fa91b8189565038a2ce6aa727803b7ba2e",
+  "summary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 4 passed (5)",
+    "Duration  7.40s (transform 2.19s, setup 91ms, import 3.87s, tests 3.15s, environment 1ms)"
+  ]
+}

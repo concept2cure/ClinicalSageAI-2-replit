@@ -190,7 +190,7 @@ export async function planCheckIn(
  * program and organization: the end of its successor chain, which is the one a
  * new version is added to (planCheckIn refuses any other). Used when an upload
  * conflicts with a recorded version, so the refusal can name what to add to.
- * Null when no document of the caller's holds that code.
+ * Null when no live head holds that code, or multiple heads make it ambiguous.
  *
  * Read-only. A conflict that names another document's version is no offer.
  */
@@ -209,11 +209,10 @@ export async function currentVersionOfCode(
              AND s.program_id = d.program_id AND s.organization_id = d.organization_id
              AND s.document_code IS NOT DISTINCT FROM d.document_code
         )
-      ORDER BY d.created_at DESC
-      LIMIT 1`,
+      LIMIT 2`,
     [p.programId, p.organizationId, p.documentCode],
   );
-  return (rows[0] as { id: string; version: string } | undefined) ?? null;
+  return rows.length === 1 ? (rows[0] as { id: string; version: string }) : null;
 }
 
 /**

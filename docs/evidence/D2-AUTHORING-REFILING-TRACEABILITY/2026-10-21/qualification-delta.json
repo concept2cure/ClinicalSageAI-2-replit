@@ -1,0 +1,11 @@
+{
+  "previousFreeze": "release-source-freeze.json",
+  "qualifiedFreeze": "release-qualified-source-freeze.json",
+  "changedInputs": {
+    "server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts": {
+      "previous": "e5aae50ff1ef524264387fbbbdc9d4bac2a835d1154beb6151675bb728d492c0",
+      "qualified": "cfa95683463b6fc6d2f55908467bbe496a622be08741a455d4cae242aefec3eb"
+    }
+  },
+  "reason": "Initial full compiler found fourteen repeated PoolClient argument errors from one unknown-row test adapter. The adapter now validates records before exposing them. No production/baseline change. Focused tests, lint, warning ratchet, compiler and subsequent gates rerun on qualified pins."
+}

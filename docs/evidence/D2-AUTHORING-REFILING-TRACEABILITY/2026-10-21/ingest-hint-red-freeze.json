@@ -1,0 +1,8 @@
+{
+  "head": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+  "files": {
+    "server/services/vault/vault-version-checkin.ts": "fd91f94deedf9ea3030f00b84092314f4ec1f6f73c5b6bd858a18898956383de",
+    "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "88a7a4d18062919d2ebd7109d3e3911cac70d05f933bb347b75feb49aeb3b97c",
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829"
+  }
+}

@@ -127,6 +127,8 @@ export interface ResolvedFile {
   sha256?: string;
   /** Identity lineage, recorded in the governance manifest — never in the backbone. */
   lineage?: LeafLineage;
+  /** Audited rendition derivation, separate from alias identity and approval. */
+  derivation?: import('../authoring/authoring-vault-filing-receipt').VaultFilingDerivation;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */
