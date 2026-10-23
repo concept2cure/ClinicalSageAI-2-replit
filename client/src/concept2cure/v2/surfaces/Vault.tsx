@@ -37,7 +37,7 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
+import { VaultLibraryResults, facetCounts, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -604,18 +604,25 @@ function noMatchText(searching: boolean, hasText: boolean, filtering: boolean): 
   return filtering ? ' match your search and filters' : ' match your search';
 }
 
-type FilterOption = { value: string; label: string };
+type FilterOption = { value: string; label: string; covers?: readonly string[] };
 
-/** One filter: "Any", or a single value of the dimension. */
-function FindFilterSelect({ label, value, options, onChange }: {
+/**
+ * One filter: "Any", or a single value of the dimension. With counts from a
+ * verified read, each value says how many documents choosing it selects, under
+ * the other filters and the text (the server counts without this dimension's own
+ * filter). Without them, no number is shown: an absent count is not zero.
+ */
+function FindFilterSelect({ label, value, options, onChange, counts }: {
   label: string; value: string; options: readonly FilterOption[]; onChange: (value: string) => void;
+  counts?: Map<string, number> | null;
 }) {
+  const countOf = (o: FilterOption) => (o.covers ?? [o.value]).reduce((n, v) => n + (counts?.get(v) ?? 0), 0);
   return (
     <label className="vd-filter">
       <span className="vd-filter-l">{label}</span>
       <select className="c2c-input" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">Any</option>
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        {options.map((o) => <option key={o.value} value={o.value}>{counts ? `${o.label} (${countOf(o)})` : o.label}</option>)}
       </select>
     </label>
   );
@@ -625,7 +632,7 @@ const TYPE_OPTIONS: FilterOption[] = VAULT_INGEST_DOCUMENT_TYPES.map((t) => ({ v
 const FILING_OPTIONS: FilterOption[] = (['unfiled', 'suggested', 'confirmed'] as const).map((s) => ({ value: s, label: vaultStatus(s).label }));
 const CLASSIFICATION_OPTIONS: FilterOption[] = VAULT_CLASSIFICATIONS.map((c) => ({ value: c, label: VAULT_CLASSIFICATION_LABELS[c] }));
 const KIND_OPTIONS: FilterOption[] = VAULT_DOC_KINDS.map((k) => ({ value: k.value, label: k.one }));
-const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label }));
+const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label, covers: c.stages }));
 
 /**
  * The find view's metadata filters (VR-18): type, filing status,
@@ -634,9 +641,12 @@ const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c
  * field is left, and only once it reads as a section code; until then the row
  * says it is not applied, rather than filtering by something else.
  */
-function VaultFindFilterRow({ value, onChange, onClear }: {
+function VaultFindFilterRow({ value, onChange, onClear, facets }: {
   value: VaultFindFilters; onChange: (next: VaultFindFilters) => void; onClear: () => void;
+  /** The verified read's facet counts, or null when there are none to show. */
+  facets?: unknown;
 }) {
+  const counts = (key: keyof VaultFindFilters) => (facets ? facetCounts(facets, key) : null);
   const [ctd, setCtd] = useState(value.ctdSection?.[0] ?? '');
   const [ctdRefused, setCtdRefused] = useState<string | null>(null);
   const set = (key: keyof VaultFindFilters, values: readonly string[] | null) => {
@@ -657,14 +667,15 @@ function VaultFindFilterRow({ value, onChange, onClear }: {
   const active = Object.keys(value).length > 0;
   return (
     <div className="vd-filters" role="group" aria-label="Filter documents">
-      <FindFilterSelect label="Type" value={one('documentType')} options={TYPE_OPTIONS} onChange={(v) => set('documentType', v ? [v] : null)} />
-      <FindFilterSelect label="Filing" value={one('placementStatus')} options={FILING_OPTIONS} onChange={(v) => set('placementStatus', v ? [v] : null)} />
-      <FindFilterSelect label="Classification" value={one('classification')} options={CLASSIFICATION_OPTIONS} onChange={(v) => set('classification', v ? [v] : null)} />
-      <FindFilterSelect label="Evidence kind" value={one('evidenceKind')} options={KIND_OPTIONS} onChange={(v) => set('evidenceKind', v ? [v] : null)} />
+      <FindFilterSelect label="Type" value={one('documentType')} options={TYPE_OPTIONS} counts={counts('documentType')} onChange={(v) => set('documentType', v ? [v] : null)} />
+      <FindFilterSelect label="Filing" value={one('placementStatus')} options={FILING_OPTIONS} counts={counts('placementStatus')} onChange={(v) => set('placementStatus', v ? [v] : null)} />
+      <FindFilterSelect label="Classification" value={one('classification')} options={CLASSIFICATION_OPTIONS} counts={counts('classification')} onChange={(v) => set('classification', v ? [v] : null)} />
+      <FindFilterSelect label="Evidence kind" value={one('evidenceKind')} options={KIND_OPTIONS} counts={counts('evidenceKind')} onChange={(v) => set('evidenceKind', v ? [v] : null)} />
       <FindFilterSelect
         label="Review"
         value={stageValue}
         options={STAGE_OPTIONS}
+        counts={counts('lifecycleStage')}
         onChange={(v) => set('lifecycleStage', VAULT_STAGE_CHOICES.find((c) => c.value === v)?.stages ?? null)}
       />
       <label className="vd-filter">
@@ -1172,7 +1183,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const searchPath =
     projectId && searching && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
       '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
-      (includeEarlier ? '&includeSuperseded=true' : '') + filterParams : null;
+      (includeEarlier ? '&includeSuperseded=true' : '') + filterParams + '&facets=true' : null;
   /** What is narrowing the list, in words, for AnA: "filtered to N by …" and "the search for …". */
   const findLabel = trimmedQ ? `the search "${trimmedQ}"${filtering ? ' and the filters' : ''}` : 'the filters';
   const findSubject = trimmedQ ? `"${trimmedQ}"${filtering ? ' with the filters' : ''}` : 'the filters';
@@ -1759,7 +1770,13 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 Accessible projects
               </label>
             </div>
-            <VaultFindFilterRow key={filterReset} value={findFilters} onChange={setFindFilters} onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }} />
+            <VaultFindFilterRow
+              key={filterReset}
+              value={findFilters}
+              onChange={setFindFilters}
+              onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
+              facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+            />
             {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
                  "no documents match your search", which is a different and

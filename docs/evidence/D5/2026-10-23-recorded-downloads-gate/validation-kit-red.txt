@@ -1,0 +1,17 @@
+# trunk's validation-kit.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > records the exact bytes it delivers, under the caller 32ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > delivers nothing when the record cannot be written 12ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > refuses a caller with no organisation or no user, and records nothing 9ms
+   → expected 200 to be 401 // Object.is equality
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > a document not in the catalog is 404, and nothing is recorded 4ms
+ FAIL  server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > records the exact bytes it delivers, under the caller
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > delivers nothing when the record cannot be written
+AssertionError: expected 200 to be 503 // Object.is equality
+ FAIL  server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > refuses a caller with no organisation or no user, and records nothing
+AssertionError: expected 200 to be 401 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

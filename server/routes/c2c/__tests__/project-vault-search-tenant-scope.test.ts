@@ -144,6 +144,27 @@ describe('vault search carries the org predicate in-statement', () => {
     expect(whereOf(counted.sql)).toBe(whereOf(rows.sql));
   });
 
+  // VR-18 facet counts: every count statement is its own tenant-bound read.
+  it('facet counts bind the org first and the programs third in every statement, and run on the first page only', async () => {
+    const res = await search('stability', { classification: 'INTERNAL', facets: 'true' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.facets.classification).toEqual([{ value: 'INTERNAL', count: 1 }]);
+    const reads = vaultReads();
+    // count, page, then one GROUP BY per dimension (folder included within a project).
+    expect(reads).toHaveLength(8);
+    for (const { sql, params } of reads) {
+      expect(sql).toMatch(/rp\.organization_id = \$1/);
+      expect(sql).toMatch(/d\.organization_id = \$1/);
+      expect(sql).toMatch(/d\.program_id = ANY\(\$3::uuid\[\]\)/);
+      expect(params[0]).toBe(ORG);
+      expect(params[2]).toEqual([PROGRAM]);
+    }
+    queries.length = 0;
+    const later = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}/search`).query({ q: 'stability', facets: 'true', offset: '25' });
+    expect(later.body.data.facets).toBeUndefined();
+    expect(vaultReads()).toHaveLength(2);
+  });
+
   it('verifies access but does not search the corpus for an empty query', async () => {
     const res = await search('');
     expect(res.body.data.reason).toBe('EMPTY_QUERY');

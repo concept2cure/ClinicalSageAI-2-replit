@@ -149,6 +149,49 @@ describe('the find view filters by metadata on the server', () => {
   });
 });
 
+describe('facet counts in the options', () => {
+  const optionText = (row: HTMLElement, label: string) =>
+    [...(within(row).getByLabelText(label) as HTMLSelectElement).options].map((o) => o.textContent);
+
+  it('asks for counts, and shows each value\'s count from the verified read; a stage choice sums its stages', async () => {
+    onSearch = () => ok({ success: true, data: {
+      query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()],
+      facets: {
+        documentType: [{ value: 'MODULE_3', count: 4 }, { value: 'CSR', count: 2 }, { value: 'report', count: 1 }],
+        lifecycleStage: [{ value: 'approved', count: 3 }, { value: 'submitted', count: 2 }, { value: 'none', count: 5 }, { value: 'authoring', count: 1 }],
+      },
+    } });
+    const row = await open();
+    choose(row, 'Type', 'Module 3 · quality');
+    await waitFor(() => expect(optionText(row, 'Type')).toContain('Module 3 · quality (4)'));
+    expect(params(searchUrls().at(-1)!).get('facets')).toBe('true');
+    expect(optionText(row, 'Type')).toContain('Clinical study report (2)');
+    // A value the read did not count selects nothing under the other filters.
+    expect(optionText(row, 'Type')).toContain('Protocol (0)');
+    expect(optionText(row, 'Review')).toContain('Approved (5)');
+    expect(optionText(row, 'Review')).toContain('Not sent for review (6)');
+    // A dimension the read did not count shows no number at all, not zero.
+    expect(optionText(row, 'Classification')).toContain('Controlled');
+  });
+
+  it('a failed read shows no counts', async () => {
+    onSearch = () => { throw new ApiRequestError('Failed', 500, { error: 'SEARCH_FAILED' }, 'SEARCH_FAILED'); };
+    const row = await open();
+    choose(row, 'Type', 'Clinical study report');
+    await screen.findByRole('alert');
+    expect(optionText(row, 'Type').some((t) => /\(\d+\)$/.test(t ?? ''))).toBe(false);
+  });
+
+  it('malformed counts are not shown as counts', async () => {
+    onSearch = () => ok({ success: true, data: { query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()],
+      facets: { documentType: [{ value: 'CSR', count: -1 }] } } });
+    const row = await open();
+    choose(row, 'Type', 'Clinical study report');
+    await screen.findByText('Batch analysis report');
+    expect(optionText(row, 'Type').some((t) => /\(\d+\)$/.test(t ?? ''))).toBe(false);
+  });
+});
+
 describe('vaultFilterParams', () => {
   it('is empty with no filter, and encodes repeated values in a stable order', () => {
     expect(vaultFilterParams({})).toBe('');

@@ -79,7 +79,7 @@ import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../service
 import { countDataRoomStages, fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
-import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql } from '../../services/vault/vault-document-filter.js';
+import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql, wantsFacets } from '../../services/vault/vault-document-filter.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -1157,12 +1157,12 @@ export default function createProjectVaultRoutes(): Router {
       }
       const found = await searchVaultDocuments(pool, {
         organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded, filters,
-        allowedProgramIds: narrowed.allowedProgramIds,
+        allowedProgramIds: narrowed.allowedProgramIds, facets: wantsFacets(req.query, offset),
       }, currentScope);
       return res.json({
         success: true,
         data: {
-          query: q, mode: found.mode, filters, programIds: narrowed.programIds,
+          query: q, mode: found.mode, filters, programIds: narrowed.programIds, facets: found.facets,
           total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
           results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
         },
@@ -1640,13 +1640,14 @@ export default function createProjectVaultRoutes(): Router {
 
       // The one search query (vault-search.ts), here scoped to this program; the
       // library search below asks the same query across the organisation.
-      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: res.locals.currentProgramAccess.actor.userId, programId: id, q, limit, offset, includeSuperseded, filters });
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, userId: res.locals.currentProgramAccess.actor.userId, programId: id, q, limit, offset, includeSuperseded, filters, facets: wantsFacets(req.query, offset) });
       return res.json({
         success: true,
         data: {
           query: q,
           mode: found.mode,
           filters,
+          facets: found.facets,
           total: found.total,
           limit,
           offset,

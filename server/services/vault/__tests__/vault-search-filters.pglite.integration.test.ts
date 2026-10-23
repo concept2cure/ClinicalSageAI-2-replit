@@ -166,3 +166,42 @@ describe('the SQL form of "within a CTD section" is ctdCodeWithin', () => {
     expect(Boolean((rows[0] as { within: boolean | null }).within)).toBe(expected);
   });
 });
+
+describe('facet counts (VR-18 "with counts")', () => {
+  const bucket = (facets: Record<string, Array<{ value: string | null; count: number }>> | undefined, key: string) =>
+    Object.fromEntries((facets?.[key] ?? []).map((b) => [String(b.value), b.count]));
+
+  it('are absent unless asked', async () => {
+    expect((await run({ documentTypes: ['CSR'] })).facets).toBeUndefined();
+  });
+
+  it('count each value over the other filters, so a chosen type still shows the other types', async () => {
+    const r = await run({ documentTypes: ['CSR'], classifications: ['INTERNAL'] }, { facets: true });
+    // Type is counted without its own filter, so over INTERNAL alone: doc 6 (CSR) and doc 2 (SAR).
+    expect(bucket(r.facets, 'documentType')).toEqual({ CSR: 1, SAR: 1 });
+    // Classification is counted without its own filter (CSR only): docs 1 and 6.
+    expect(bucket(r.facets, 'classification')).toEqual({ CONFIDENTIAL: 1, INTERNAL: 1 });
+    expect(r.total).toBe(1);
+  });
+
+  it('each bucket equals COUNT(*) over the same predicate with that value chosen', async () => {
+    const r = await run({ placementStatuses: ['unfiled', 'suggested', 'confirmed'] }, { facets: true });
+    for (const [key, dimension] of [['documentType', 'documentTypes'], ['evidenceKind', 'evidenceKinds'], ['lifecycleStage', 'lifecycleStages'], ['folderId', 'folderIds']] as const) {
+      for (const b of r.facets?.[key] ?? []) {
+        if (b.value === null) continue;
+        const chosen = await run({ placementStatuses: ['unfiled', 'suggested', 'confirmed'], [dimension]: [b.value] });
+        expect(chosen.total, `${key}=${b.value}`).toBe(b.count);
+      }
+    }
+    expect(bucket(r.facets, 'placementStatus')).toEqual({ unfiled: 2, suggested: 1, confirmed: 2 });
+    expect(bucket(r.facets, 'lifecycleStage')).toEqual({ none: 3, approved: 1, in_review: 1 });
+  });
+
+  it('keep scope: the library counts no folder, and nothing from another program or organisation', async () => {
+    const lib = await run({ documentTypes: ['CSR'] }, { programId: null, facets: true });
+    expect(lib.facets?.folderId).toBeUndefined();
+    expect(bucket(lib.facets, 'evidenceKind')).toEqual({ csr: 3 });
+    const one = await run({ documentTypes: ['CSR'] }, { facets: true });
+    expect(bucket(one.facets, 'evidenceKind')).toEqual({ csr: 2 });
+  });
+});
