@@ -1,0 +1,98 @@
+[
+ {
+  "index": 8,
+  "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+  "line": 1411,
+  "why": "Step 1 passes. The quoted text is in an issueChecks message string, which users see (file line 1411, no_qtc_monitoring_check). But the same message is already qualified in its next sentence: \"Provide scientific justification if QTc monitoring is not applicable (e.g., biologics with no known cardiac risk).\" That covers the large-molecule exception the claim says is missing.\n\nStep 2: what is left is an imprecision, not a factual error. \"Requires\" is strong wording for an ICH guideline. \"All new molecular entities\" is broader than E14's \"new drugs with systemic bioavailability\". Still, E14 does expect a clinical QT/QTc evaluation for essentially every new systemically available drug unless the sponsor justifies an exception, and the message says exactly that once its qualifier is read. Saying a missing cardiac-safety assessment \"may\" lead to a clinical hold or Refuse to File is hedged, and at the marketing-application stage it is plausible. A regulator would read this as compressed guidance language, not a misstatement of E14. The task says not to flag something only for being imprecise, so this is not a real error."
+ },
+ {
+  "index": 21,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/csr-auditor.ts",
+  "line": 768,
+  "why": "The quote is at line 768. It is client-facing: it is the remediation argument passed to makeFinding for the missing-data CSR finding, not a comment or a key. The claim reads it correctly, since the parenthetical labels estimands by strategy name. The substance is imprecise but not a factual error. Calling an estimand by its strategy (\"treatment-policy estimand\", \"hypothetical estimand\", \"composite estimand\", \"principal stratum estimand\") is standard shorthand. Statisticians, FDA reviewers and the E9(R1) literature all use it, and a regulator would read the phrase as \"which strategy defines the estimand\", not as a misstatement of E9(R1). The list leaves out while-on-treatment, which makes it incomplete, but it prompts the sponsor to describe their estimand and does not claim to define E9(R1)'s full taxonomy. Nothing in it is false, and the guidance is not misattributed. This is imprecision, not an error a regulator would flag, so real=false. An optional improvement, not a correction: add \"while on treatment\" and write \"intercurrent-event strategy\"."
+ },
+ {
+  "index": 27,
+  "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "line": 1889,
+  "why": "The quote is real. It sits in the client-facing helpText of the 'rems_considerations' select field at line 1889, and the claim reads it correctly. The substance holds, though: FDAAA 2007 (section 901) did create REMS authority by adding section 505-1 to the FD&C Act (21 U.S.C. 355-1), and the standard (FDA determines a REMS is necessary to ensure benefits outweigh risks) is stated correctly. The parenthetical \"(Section 505-1)\" is shorthand that names the statutory section FDAAA created, and industry writing uses it all the time (\"FDAAA section 505-1 REMS\"). It attributes the section loosely, but it does not misstate the authority, the standard or the statute. A regulator would see an imprecise citation, not a factual error. That is below the bar, so this is not flagged."
+ },
+ {
+  "index": 38,
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1185,
+  "why": "Step 1 passes. The quote is in the client-facing `guidance` string of the `ind_review` node, and it comes right after the sentence on the 21 CFR 312.40 30-day review. Step 2 fails. The sentence does not say the SPA extends or delays the 30-day IND clock. It says an SPA brings an additional 45 days of FDA review, done for protocol agreement. That is true: under the PDUFA goals, FDA answers an SPA request within 45 days, and the sponsor normally waits for that agreement before starting the protocol under the SPA, so the review does add time before that trial starts. The candidate's reading (\"adds to the IND's 30-day review\") is one possible inference, not what the text says. At most the wording is loose about the SPA being a separate, parallel request. That is imprecision, not a factual error a regulator would flag. The statute cited (505(b)(5)(B)) and the SPA guidance (finalized 2018) are correct. The firmer wording the candidate also points to, \"adds 45 days to the FDA review timeline\", is a different string (the spa_timeline_impact issueCheck at about line 1253) and is not the quote under review."
+ },
+ {
+  "index": 40,
+  "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+  "line": 1068,
+  "why": "The quote is in the client-facing `guidance` string of the prior_submissions question, and the claim reads it correctly. The substance is still sound: a Pre-IND meeting is Type B, 21 CFR 312.82 covers early consultation, and Type A/B/C minutes should be included. A guidance with this exact title was issued in December 2017 as a draft, so the citation names a real document. Its year is just out of date. The claim's own correction is not reliable. As far as I recall, the September 2023 PDUFA VII document, which added Type D and INTERACT meetings, was a revised draft guidance, not a final one. Calling it 'final, September 2023' could put a new error into the text. A stale year on an otherwise accurate draft-guidance title is imprecise, not a factual error a regulator would flag. A safe update, if wanted, is to cite the guidance by title without a year."
+ },
+ {
+  "index": 68,
+  "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+  "line": 603,
+  "why": "The quote does exist at line 603. It is inside the client-facing `message` of the issueCheck 'genotox_battery_required'. But it is not a factual error, only an incomplete one. What it lists (Ames, plus an in vitro chromosomal aberration or micronucleus test, plus an in vivo micronucleus test) is ICH S2(R1) Option 1, the battery most often described as \"the standard battery.\" Every test it names belongs to that option. The sentence says the battery \"includes\" these tests and does not say Option 1 is the only acceptable approach. It leaves out the mouse lymphoma TK alternative and Option 2 (Ames plus an in vivo assessment in two tissues). Leaving those out makes the sentence imprecise, but a regulator would not read it as a wrong statement of S2(R1). Calling Option 1 the standard battery is common practice in nonclinical summaries. Under the instruction not to flag text merely for being imprecise, this candidate is refuted."
+ },
+ {
+  "index": 87,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts",
+  "line": 656,
+  "why": "The quote is in a client-facing recommendation string at line 656: the remediation argument of the no_ectd_format finding. Part 1 holds: the text is there, it is not a comment, test or key, and the claim reads it correctly. Part 2 fails. The string does not say v4.0 is mandatory. The rationale string next to it says eCTD format in general is mandatory. It is true that FDA has accepted eCTD v4.0 for new applications since September 2024 alongside v3.2.2, and that v4.0 is not mandated. Even so, telling an applicant with a paper or non-eCTD NDA to rebuild it as a new eCTD v4.0 submission is valid, compliant advice. It is a prescriptive choice, not a false statement of the requirement. At most it is imprecise because it does not mention v3.2.2 as an alternative, and a regulator would not see it as a factual error. The other sentences of the finding were not checked here: the May 5, 2017 date, citing 21 CFR 314.50(l) for the eCTD requirement (which comes from FD&C Act 745A(a)), and the term 'granule structure'."
+ },
+ {
+  "index": 106,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/cmc-auditor.ts",
+  "line": 690,
+  "why": "The quote is real and client-facing: it is the recommendation argument passed to finding() for the 'Stability Protocol Document Not Included' check, not a comment. But the substance does not hold up as an error. ICH M4Q defines 3.2.S.7.1 / 3.2.P.8.1 'Stability Summary and Conclusions' as the place where 'the types of studies conducted, protocols used, and the results of the studies should be summarized'. So the protocol behind the primary or registration stability studies does belong in S.7.1 / P.8.1. Sections 3.2.S.7.2 / 3.2.P.8.2 are specifically the 'Post-approval Stability Protocol and Stability Commitment'. This check is in a US IND, pre-approval context about the protocol for the stability design under evaluation, so 7.2 / 8.2 would be the wrong home. The proposed correction is itself questionable. At most the string is imprecise, because it could also mention 7.2 / 8.2 for a post-approval commitment protocol. That does not make it a factual error a regulator would flag."
+ },
+ {
+  "index": 110,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/bla-auditor.ts",
+  "line": 116,
+  "why": "The quote is real. It sits at line 116, in the regulatory-reference argument of a client-facing finding ('No Viral Safety Evaluation'), and the same string appears in the TSE/BSE finding near line 811. 9 CFR Part 113 is USDA's standard requirements for veterinary biologics, and it does not govern a human BLA. But the string does not say it governs one. It is a list of references. In human-biologics practice, 9 CFR 113 (113.47 on detecting extraneous viruses by fluorescent antibody, and 113.53 on ingredients of animal origin) is the accepted test standard for animal-derived raw materials such as bovine serum and porcine trypsin. FDA's cell-substrate guidance recommends testing to it, and BLA Module 3 adventitious-agent sections routinely cite it. Both places that use it here are about adventitious agents or animal-origin materials, which is exactly that context. A regulator would read it as a normal supporting reference, not as a factual error. At most it is imprecise: it names the whole Part rather than 113.47/113.53, and it could be read as a governing regulation. That does not meet the bar."
+ },
+ {
+  "index": 128,
+  "file": "server/services/ana/intelligence-questions/flows/cmc-specification-container-closure-stability.ts",
+  "line": 127,
+  "why": "The quoted text is at line 127. It sits in the client-facing `guidance` string of the 'stability_program' question, and the claim reads it correctly. The substance does not hold up as a real error. \"Q1A(R2)–Q1F\" is common shorthand for the ICH Q1 stability family. The point it supports is correct: defined storage conditions are needed to set the retest period and shelf life, with long-term, accelerated and intermediate conditions, and photostability per Q1B. All of that comes from Q1A(R2) and Q1B, which are both in force. It is true that Q1F was withdrawn in 2006, so including it in the range is imprecise. But the text never cites Q1F for anything, and the instructions say not to flag imprecision. A regulator would read this as the stability guideline series, not as a false statement of requirements. The suggested fix would also add Zone III/IV material the string never mentions. Separately, ICH has been consolidating Q1A–Q1F into one revised Q1, and I am not sure of its status today. That makes any precise replacement wording I could give unreliable."
+ },
+ {
+  "index": 137,
+  "file": "server/services/ana/intelligence-questions/flows/stability-study.ts",
+  "line": 448,
+  "why": "The quoted text is at line 448. It is the `reference` field of a client-facing deficiency rule ('No In-Use Stability Data'), and the claim reads it correctly. But the substance is imprecise, not wrong. FDA does have a current guidance for industry whose title contains 'Stability Testing': its adoption of ICH Q1A(R2), 'Q1A(R2) Stability Testing of New Drug Substances and Products'. So 'FDA Guidance for Industry: Stability Testing' reads as a shortened citation of a real FDA-issued guidance, not as a made-up title or the withdrawn 1998 draft. Q1A(R2) also covers testing after constitution or dilution where it applies. The EMA citation (CPMP/QWP/2934/99) is correct. The message itself says only that FDA and EMA expect in-use data for multi-dose or reconstituted products, which is accurate (see also 21 CFR 211.166(a)(5)). The citation could be more specific, but a regulator would not treat it as a factual error."
+ },
+ {
+  "index": 156,
+  "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+  "line": 1065,
+  "why": "The quote exists at line 1065. It sits in the client-facing `guidance` string of the `clinical_results` question, and the claim reads it correctly: that string does not qualify it. On substance it is an overstatement, not a factual error. No regulation literally requires statistical significance; 21 CFR 860.7 and 814.45 rest on reasonable assurance from valid scientific evidence. But FDA review practice does expect a pivotal study to meet its pre-specified primary success criterion. In a frequentist superiority, non-inferiority or performance-goal (OPC) design, that means a statistically significant hypothesis test. In a Bayesian design it means a posterior-probability threshold, which is commonly described as the Bayesian counterpart of statistical significance. The sentence comes right after a statement that the decision turns on reasonable assurance, and the flow's own check at line 1126 says that missing the endpoint is a major obstacle and that FDA weighs the totality of evidence. So a reviewer would read this as practical guidance put a little strongly, not as a misstatement of a requirement. Under the instruction not to flag a string merely for being imprecise, this does not reach the level of a genuine regulatory error."
+ },
+ {
+  "index": 161,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts",
+  "line": 279,
+  "why": "The quote is real and client-facing. It is the `reference` field of the 'Indications for Use Insufficiently Detailed' finding at lines 278-279, and the claim reads it in the right context. But calling it a fabricated citation goes too far. FDA did issue a document titled \"Device Labeling Guidance\" (blue-book memo #G91-1, 1991). That memo is a general premarket-review labeling guidance, and it covers the standard labeling sections, Indications for Use among them. So \"Device Labeling Guidance — Indications for Use Section\" can fairly be read as pointing to the Indications section of G91-1. The citation is imprecise: it has no memo number, and the guidance is old and partly superseded. It is still not clearly an invented document, and FDA Form 3881, the primary reference, is correct. Imprecision alone is not enough, so this is not a genuine factual error that a regulator would flag."
+ },
+ {
+  "index": 171,
+  "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+  "line": 742,
+  "why": "The quote is real: it is the client-facing label of the 'edition_4' option in the emc_standard_edition select, at line 742. The claim reads it correctly, but the error it describes is imprecision, not a factual error. (1) Edition 4.1 (IEC 60601-1-2:2014+AMD1:2020) is the 4th edition plus an amendment. A user who applied 4.1 would correctly pick this option, and the flow already cites the exact recognized version at line 613. (2) The practical point the label makes is correct. FDA withdrew recognition of the 3rd edition (2007) after its transition period ended, and FDA's EMC guidance recommends the currently recognized 4th-edition version. So for a new 510(k), a declaration of conformity to the 3rd edition is no longer accepted. 'Required' compresses 'voluntary consensus standard, but the recognized edition FDA expects' into a common industry shorthand. A reviewer would call it loose wording, not wrong. The guidance text says the device 'must demonstrate EMC', which is a real expectation. The task says not to flag imprecision, so real=false. If it is tightened later, a better label would be: '4th Edition (2014, incl. AMD1:2020) — FDA-recognized edition'."
+ },
+ {
+  "index": 221,
+  "file": "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts",
+  "line": 484,
+  "why": "The quoted text is at line 484. It is the rationale argument of a client-facing finding(), not a comment. It reads as the claim describes. Clause 5.4 of ISO 14971:2019 does not name a technique, but the claim overstates the error. The standard defines risk analysis (3.19) as the \"systematic use of available information to identify hazards and to estimate the risk\", and clause 5.4 is the hazard-identification step of that analysis. So saying hazard identification must be systematic is a fair, if loose, reading. \"Systematic techniques\" is imprecise wording, since no specific technique is mandated. A regulator would not see it as a factual misstatement. The second sentence, that IEC 60812 is the standardized FMEA methodology, is correct. Imprecise, not wrong."
+ },
+ {
+  "index": 234,
+  "file": "server/services/ana/intelligence-questions/flows/briefing-book.ts",
+  "line": 780,
+  "why": "The quoted text is at line 780. It is the `reference` of the client-facing issueCheck 'no_benefit_risk_table', and the claim reads it correctly. The substance does not amount to a factual error. FDA's September 2023 draft guidance 'Benefit-Risk Assessment for New Drug and Biological Products' is FDA's current written statement of the Benefit-Risk Framework, and it does lay out the structured four-dimension approach. So '(2023)' is a defensible shorthand that points to that document. It is not a false claim about when the framework began. The citation is loose in two ways: it does not say the 2023 document is a draft, and it leaves out the 2013 (PDUFA V) and 2018 (PDUFA VI) origins. The guidance text at line 729 already gives the full history. This is imprecise wording, not something a regulator would treat as a real factual error."
+ }
+]

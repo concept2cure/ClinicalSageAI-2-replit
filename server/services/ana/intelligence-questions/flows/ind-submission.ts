@@ -139,7 +139,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'DUNS Number',
             type: 'text',
             placeholder: 'e.g., 123456789',
-            helpText: 'Dun & Bradstreet number required for FDA submissions per OMB guidance.',
+            helpText: 'Optional. An IND (Form FDA 1571) does not require a DUNS number; FDA uses DUNS mainly to identify establishments for drug establishment registration and listing.',
             validation: {
               pattern: '^\\d{9}$',
               patternMessage: 'DUNS number must be exactly 9 digits.',
@@ -252,7 +252,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Provide details about the investigational drug product. These are required elements under 21 CFR 312.23(a)(7).',
         guidance:
-          'Per 21 CFR 312.23(a)(7), the IND must include a description of the drug substance and drug product, including the name, chemical structure, mechanism of action, route of administration, and proposed indication. For biologics, describe the expression system and purification process at a high level. Include the USAN/INN if one has been assigned.',
+          'Per 21 CFR 312.23, the IND must identify the drug: its name, structural formula, pharmacological class, formulation and route of administration go in the introductory statement (312.23(a)(3)), together with the broad objectives and proposed indication; mechanism of action goes in the pharmacology section (312.23(a)(8)); and the description of the drug substance and drug product goes in the chemistry, manufacturing and controls section (312.23(a)(7)). For biologics, describe the expression system and purification process at a high level. Include the USAN/INN if one has been assigned.',
         fields: [
           {
             id: 'drug_name_generic',
@@ -669,7 +669,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Are carcinogenicity studies needed per ICH S1A?',
             type: 'select',
             options: [
-              { value: 'not_yet', label: 'Not yet — typically required before Phase 3 / NDA' },
+              { value: 'not_yet', label: 'Not yet — typically required for the marketing application (NDA), not before Phase 3 unless there is a specific concern' },
               { value: 'completed', label: 'Completed' },
               { value: 'waived', label: 'Waived (with scientific justification)' },
             ],
@@ -1065,7 +1065,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Have you had any previous interactions with the FDA regarding this product? Pre-IND meetings and prior correspondence can significantly shape the IND strategy.',
         guidance:
-          'Per 21 CFR 312.82 and the FDA Guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (2017), sponsors may request a Pre-IND (Type B) meeting to discuss IND content, nonclinical requirements, clinical trial design, and CMC strategy. FDA responses from Pre-IND meetings should be addressed in the IND submission. Include Type A, B, or C meeting minutes and any FDA written responses.',
+          'Per 21 CFR 312.82 and the FDA draft guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (revised September 2023, which replaced the 2017 draft and added Type D and INTERACT meetings), sponsors may request a Pre-IND (Type B) meeting to discuss IND content, nonclinical requirements, clinical trial design, and CMC strategy. FDA responses from Pre-IND meetings should be addressed in the IND submission. Include Type A, B, or C meeting minutes and any FDA written responses.',
         fields: [
           {
             id: 'previous_fda_interactions',
@@ -1096,7 +1096,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'fda_division',
             label: 'FDA Review Division',
             type: 'text',
-            placeholder: 'e.g., Division of Oncology Products 1, Office of New Drugs / CDER',
+            placeholder: 'e.g., Division of Oncology 1, Office of Oncologic Diseases, Office of New Drugs / CDER',
             helpText: 'Knowing the review division helps anticipate expectations and timing. You can find this from the Pre-IND meeting or FDA correspondence.',
           },
           {
@@ -1128,7 +1128,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Since this is an IND amendment, provide a detailed summary of what has changed since the last submission. FDA reviewers need a clear description of all modifications.',
         guidance:
-          'Per 21 CFR 312.31 (Amendments to an IND), amendments must describe the nature and significance of each change. Protocol amendments (21 CFR 312.30) must describe the change, the rationale, and any effect on subject safety. CMC amendments must describe manufacturing changes and their impact on product quality. Safety reports (21 CFR 312.32) must be filed as IND Safety Reports. Information amendments (21 CFR 312.31(b)) cover all other changes. Ensure the amendment cover letter provides a clear summary of changes with cross-references to the affected sections.',
+          'Per 21 CFR 312.31 (Information amendments), an information amendment must state the nature and purpose of the amendment. Protocol amendments (21 CFR 312.30) must describe the change, the rationale, and any effect on subject safety. CMC amendments must describe manufacturing changes and their impact on product quality. Safety reports (21 CFR 312.32) must be filed as IND Safety Reports. Information amendments (21 CFR 312.31(a)) cover essential information not within the scope of a protocol amendment, an IND safety report or the annual report. Ensure the amendment cover letter provides a clear summary of changes with cross-references to the affected sections.',
         fields: [
           {
             id: 'amendment_rationale',
@@ -1250,7 +1250,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'SPA Request — Additional Review Timeline',
             message:
-              'A Special Protocol Assessment adds 45 days to the FDA review timeline. Ensure the protocol is finalized before SPA submission. FDA agreement is binding unless the sponsor fails to follow the agreed-upon protocol.',
+              'A Special Protocol Assessment adds 45 days to the FDA review timeline. Ensure the protocol is finalized before SPA submission. An SPA agreement binds FDA, but it can be changed with the sponsor\'s written agreement, or if a substantial scientific issue essential to determining safety or effectiveness is identified after testing begins (FD&C Act 505(b)(5)(C)); per FDA\'s SPA guidance it also no longer binds if the sponsor does not follow the agreed protocol or the data relied on prove false, misleading or materially incomplete.',
             reference: 'FD&C Act section 505(b)(5)(B); FDA Guidance: Special Protocol Assessment (2018)',
           },
           {
@@ -1330,7 +1330,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'racemate', label: 'Racemic mixture — justified for development' },
               { value: 'na_biologic', label: 'Not applicable (biologic)' },
             ],
-            helpText: 'Per FDA Policy Statement on Development of New Stereoisomeric Drugs (1992), single-enantiomer development is generally preferred. A racemate requires justification.',
+            helpText: 'Per FDA Policy Statement on Development of New Stereoisomeric Drugs (1992), the sponsor may develop either a racemate or a single enantiomer; either way, the stereoisomeric composition must be characterised and controlled, and the individual enantiomers\' pharmacology and pharmacokinetics assessed to support the choice.',
           },
           {
             id: 'stability_indicating_methods',
@@ -1408,7 +1408,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the stability program for the drug substance and drug product. What data are available to support the proposed shelf life and storage conditions?',
         guidance:
-          'Per ICH Q1A(R2) "Stability Testing of New Drug Substances and Drug Products," stability studies must include long-term (25°C/60% RH), accelerated (40°C/75% RH), and, where relevant, intermediate (30°C/65% RH) conditions. Forced degradation (stress testing) per ICH Q1A(R2) Section 2.1.2 should demonstrate specificity of the stability-indicating method. At the IND stage, sufficient stability data must support the proposed clinical trial duration. A minimum of 1-2 months accelerated data and available long-term data should be included per ICH Q1A(R2) and 21 CFR 312.23(a)(7)(iv)(b).',
+          'Per ICH Q1A(R2) "Stability Testing of New Drug Substances and Drug Products," stability studies must include long-term (25°C/60% RH), accelerated (40°C/75% RH), and, where relevant, intermediate (30°C/65% RH) conditions. Forced degradation (stress testing) per ICH Q1A(R2) Section 2.1.2 should demonstrate specificity of the stability-indicating method. At the IND stage, sufficient stability data must support the proposed clinical trial duration. Under 21 CFR 312.23(a)(7) and FDA\'s IND CMC guidances, the IND should include the available accelerated and long-term data showing the material stays within specification for the planned clinical studies; the ICH Q1A(R2) data package applies to the marketing application, not the IND.',
         fields: [
           {
             id: 'long_term_stability_data',
@@ -1479,8 +1479,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'critical',
             title: 'No Stability Data Available',
             message:
-              'ICH Q1A(R2) requires stability data at submission. At minimum, preliminary accelerated stability data (1-3 months at 40°C/75% RH) should be available for the IND. Absence of any stability data may result in a clinical hold (21 CFR 312.42); Refuse to File applies to NDAs/BLAs, not INDs.',
-            reference: 'ICH Q1A(R2); 21 CFR 312.23(a)(7)(iv)(b)',
+              '21 CFR 312.23(a)(7) requires the IND to include stability information showing that the drug substance and drug product remain within specification for the planned clinical studies (ICH Q1A(R2) governs the registration stability package, not the IND). At minimum, preliminary accelerated stability data (1-3 months at 40°C/75% RH) should be available for the IND. Absence of any stability data may result in a clinical hold (21 CFR 312.42); Refuse to File applies to NDAs/BLAs, not INDs.',
+            reference: '21 CFR 312.23(a)(7); FDA IND CMC guidance',
           },
         ],
       },
@@ -1819,7 +1819,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             id: 'nitrosamine_assessment',
             label: 'Nitrosamine Impurity Risk Assessment Completed?',
             type: 'yes_no',
-            helpText: 'Per FDA Guidance "Control of Nitrosamine Impurities in Human Drugs" (Rev. 2, September 2024), all sponsors must conduct a risk assessment for nitrosamine impurities (NDMA, NDEA, etc.) in their drug products.',
+            helpText: 'Per FDA Guidance "Control of Nitrosamine Impurities in Human Drugs" (Rev. 2, September 2024), FDA recommends (in non-binding guidance) that manufacturers and applicants assess and control the risk of nitrosamine impurities (NDMA, NDEA, etc.) in their drug products; assessing it early is good practice at the IND stage.',
           },
         ],
         defaultNext: 'pediatric_study_plan',
@@ -1839,7 +1839,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Nitrosamine Risk Assessment Not Completed',
             message:
-              'FDA requires all drug product sponsors to complete a nitrosamine impurity risk assessment per the current FDA guidance (Rev. 2, September 2024). Nitrosamine contamination (NDMA, NDEA, etc.) has led to major drug recalls. Complete this assessment before IND submission.',
+              'FDA recommends (in non-binding guidance) that manufacturers and applicants assess and control nitrosamine impurity risk per the current FDA guidance (Rev. 2, September 2024). Nitrosamine contamination (NDMA, NDEA, etc.) has led to major drug recalls. It is not a regulatory requirement for IND submission, but completing the assessment early is good practice.',
             reference: 'FDA Guidance: Control of Nitrosamine Impurities in Human Drugs (Rev. 2, September 2024)',
           },
         ],
@@ -1930,11 +1930,11 @@ export function createIndSubmissionFlow(): FlowDefinition {
             type: 'select',
             options: [
               { value: 'planned', label: 'Yes — dedicated renal impairment PK study planned' },
-              { value: 'not_needed', label: 'Not needed — minimal renal elimination (<30%)' },
+              { value: 'not_needed', label: 'Not needed — justified by elimination pathway and intended population' },
               { value: 'pop_pk', label: 'Will be assessed via population PK analysis' },
               { value: 'not_decided', label: 'Not yet decided' },
             ],
-            helpText: 'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020), a dedicated study is recommended when renal clearance accounts for ≥30% of total clearance or the drug has a narrow therapeutic index.',
+            helpText: 'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020), a renal impairment PK study is recommended for most drugs likely to be used in patients with renal impairment, including drugs eliminated mainly by non-renal routes; a reduced or staged design may be acceptable when renal elimination is minor.',
           },
           {
             id: 'hepatic_impairment_study',
@@ -1963,7 +1963,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             options: [
               { value: 'completed', label: 'Completed (embryo-fetal development studies per ICH S5(R3))' },
               { value: 'in_progress', label: 'In Progress' },
-              { value: 'planned', label: 'Planned — timing per ICH M3(R2) Table 3' },
+              { value: 'planned', label: 'Planned — timing per ICH M3(R2) Section 11 (Reproduction Toxicity Studies)' },
               { value: 'not_needed', label: 'Not needed — male-only study population initially' },
             ],
             helpText: 'Per ICH M3(R2) and ICH S5(R3), embryo-fetal development (EFD) studies must be completed before enrolling women of childbearing potential (WOCBP), unless adequate contraception requirements are in place.',
@@ -1997,7 +1997,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             severity: 'info',
             title: 'WOCBP Enrollment — Ensure Reproductive Toxicology Coverage',
             message:
-              'Enrollment of women of childbearing potential requires embryo-fetal development (EFD) studies to be completed per ICH M3(R2) Table 3, or adequate contraception requirements per ICH M3(R2) Note 5 must be in place. Ensure pregnancy testing and reporting protocols are included in the clinical protocol.',
+              'Enrollment of women of childbearing potential requires embryo-fetal development (EFD) studies to be completed per ICH M3(R2) Section 11 (Reproduction Toxicity Studies), or adequate contraception requirements per ICH M3(R2) Note 5 must be in place. Ensure pregnancy testing and reporting protocols are included in the clinical protocol.',
             reference: 'ICH M3(R2) Section 11; ICH S5(R3)',
           },
         ],

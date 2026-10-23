@@ -200,7 +200,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           `CMC dosage strength "${answers.strengths}" does not match the clinical dose "${answers.clinical_dose}" used in pivotal trials. This raises questions about bioequivalence of the to-be-marketed formulation.`,
-          'The marketed drug product must be consistent with the formulation used in pivotal studies, or a bridging bioequivalence study must be provided per 21 CFR 314.50(d)(1) and ICH M4Q.',
+          'The marketed drug product must be consistent with the formulation used in pivotal studies, or a bridging bioequivalence study must be provided per 21 CFR 314.50(d)(3) and 21 CFR Part 320, with the formulation differences discussed in the ICH M4Q pharmaceutical development section.',
           '21 CFR 314.50(d)(1); ICH M4Q(R1) Section 3.2.P; FDA Guidance: SUPAC (Scale-Up and Post-Approval Changes)',
           'Ensure the CMC dosage strength matches clinical trial doses, or provide a bridging bioavailability/bioequivalence study demonstrating comparability of the to-be-marketed formulation to the clinical trial formulation.',
           ['strengths', 'clinical_dose', 'bioequivalence_study'],
@@ -230,7 +230,7 @@ const rules: AuditRule[] = [
           this.question,
           `Label indication "${answers.indications_usage}" differs from studied indication "${answers.studied_indication}". The proposed labeling claim may exceed the evidence generated.`,
           'The proposed indication must be supported by substantial evidence from adequate and well-controlled studies per 21 CFR 314.126.',
-          '21 CFR 314.126; 21 CFR 201.57(c)(2); FDA Guidance: Indication-Specific Labeling (2018)',
+          '21 CFR 314.126; 21 CFR 201.57(c)(2); FDA Guidance: Indications and Usage Section of Labeling for Human Prescription Drug and Biological Products — Content and Format',
           'Align the proposed label indication with the clinical evidence, or provide additional analyses demonstrating that the broader claim is supported by the study data, including relevant subgroup analyses.',
           ['indications_usage', 'studied_indication', 'uspi_draft_complete'],
         );
@@ -338,7 +338,7 @@ const rules: AuditRule[] = [
           this.question,
           'No pre-submission refuse-to-file (RTF) assessment was performed or documented.',
           'FDA may issue an RTF determination within 60 days under 21 CFR 314.101(d) if the application is insufficiently complete for substantive review. A pre-submission RTF check is strongly recommended.',
-          '21 CFR 314.101(d); FDA Guidance: Refuse to File (2017); MAPP 5000.3',
+          '21 CFR 314.101(d); FDA Guidance: Refuse to File: NDA and BLA Submissions to CDER (2017); MAPP 6025.4',
           'Conduct a formal pre-submission completeness assessment using the FDA RTF checklist, document the results, and address any identified gaps before filing.',
           ['rtf_assessment', 'ctd_modules'],
         );
@@ -558,7 +558,7 @@ const rules: AuditRule[] = [
           `The projected approval timeline of ${timeline} months is shorter than even a Priority Review cycle (6 months). Has the applicant accounted for the standard PDUFA review timeline?`,
           `Projected approval timeline of ${timeline} months is unrealistically short.`,
           'Under PDUFA VII, the standard NDA review clock is 10 months (Standard Review) or 6 months (Priority Review); for new molecular entity NDAs reviewed under the PDUFA Program, the clock runs from the 60-day filing date (12 or 8 months from receipt), while for non-NME NDAs it runs from the receipt date. Accelerated programs may modify the timeline but rarely compress below 6 months.',
-          'PDUFA VII Commitment Letter; FD&C Act Section 505(c); FDA MAPP 6020.3 (NDA Review Timelines)',
+          'PDUFA VII Commitment Letter; FD&C Act Section 505(c); FDA MAPP 6020.3 (Review Designation Policy: Priority (P) and Standard (S))',
           'Adjust the projected timeline to at least 10 months for Standard Review or 6 months for Priority Review. Factor in potential FDA information requests (Day 74 letter), pre-approval facility inspections, and potential advisory committee meetings.',
           ['projected_approval_months', 'review_designation', 'pdufa_goal_date'],
         );
@@ -580,9 +580,9 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Manufacturing scale-up data from clinical to commercial scale is not provided.',
-          'The CMC section must demonstrate that the manufacturing process is validated at commercial scale per 21 CFR 314.50(d)(1) and ICH Q8(R2) pharmaceutical development principles.',
+          'The CMC section must describe the commercial-scale manufacturing process and its controls per 21 CFR 314.50(d)(1) and ICH Q8(R2) pharmaceutical development principles, with process performance qualification completed before commercial distribution.',
           '21 CFR 314.50(d)(1); ICH Q8(R2); ICH Q10; FDA Guidance: Process Validation (2011)',
-          'Provide process validation data at commercial scale, including at least three consecutive production batches demonstrating process consistency, critical quality attributes within specification, and comparability to clinical trial material.',
+          'Describe the commercial-scale manufacturing process and controls, with scale-up and batch data showing process consistency, critical quality attributes within specification, and comparability to clinical trial material. Plan process performance qualification (PPQ) with a batch number justified from risk and process knowledge (FDA\'s 2011 Process Validation guidance sets no fixed three-batch minimum), to be completed before commercial distribution.',
           ['manufacturing_scaleup', 'strengths', 'batch_analysis'],
         );
       }
@@ -604,7 +604,7 @@ const rules: AuditRule[] = [
           this.question,
           'No commercial supply chain or distribution plan is described in the submission.',
           'All manufacturing, testing, and packaging sites must be identified in the NDA per 21 CFR 314.50(d)(1) to allow pre-approval inspections under FD&C Act section 704 (see 21 CFR 314.125(b) for refusal to approve when facilities or controls are inadequate or inspection is not permitted).',
-          '21 CFR 314.50(d)(1); FD&C Act section 704; 21 CFR 314.125(b); FDA Guidance: Pre-Approval Inspections (2020)',
+          '21 CFR 314.50(d)(1); FD&C Act section 704; 21 CFR 314.125(b); FDA Compliance Program 7346.832 (Preapproval Inspections)',
           'Identify all manufacturing, testing, and packaging facilities in Module 3, including API suppliers, and confirm readiness for pre-approval inspections. Include site registration numbers and current cGMP compliance status.',
           ['supply_chain_plan', 'manufacturing_sites'],
         );
@@ -627,7 +627,7 @@ const rules: AuditRule[] = [
           this.question,
           'No launch quantity projections or manufacturing capacity assessment is provided.',
           'While not a strict filing requirement, FDA has expressed concern about drug shortages and expects applicants to have sufficient manufacturing capacity, consistent with the drug shortage provisions added by FDASIA Title X (FD&C Act section 506C; 21 CFR 314.81(b)(3)(iii)).',
-          'FDASIA Title X; FD&C Act section 506C (Drug Shortage Prevention); FDA Guidance: Drug Shortage Management (2020); 21 CFR 314.81(b)(3)(iii)',
+          'FDASIA Title X; FD&C Act section 506C (Drug Shortage Prevention); FDA Guidance: Notifying FDA of a Permanent Discontinuance or Interruption in Manufacturing Under Section 506C of the FD&C Act (2020); 21 CFR 314.81(b)(3)(iii)',
           'Include launch supply projections and demonstrate manufacturing capacity to meet projected demand for the first 12-24 months post-approval. Address contingency plans for supply disruptions.',
           ['launch_quantity_projection', 'manufacturing_scaleup', 'supply_chain_plan'],
         );
@@ -651,8 +651,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The submission does not appear to be in mandatory eCTD format.',
-          'eCTD format is mandatory for all NDA submissions as of May 5, 2017 per FDA Guidance and 21 CFR 314.50(l). Paper or non-eCTD electronic submissions will not be accepted.',
-          '21 CFR 314.50(l); FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023); ICH M8 (eCTD v4.0)',
+          'eCTD format is mandatory for all NDA submissions as of May 5, 2017 under FD&C Act section 745A(a) and FDA\'s binding eCTD guidance (Providing Regulatory Submissions in Electronic Format — Certain Human Pharmaceutical Product Applications and Related Submissions Using the eCTD Specifications). Paper or non-eCTD electronic submissions will not be accepted.',
+          'FD&C Act section 745A(a); 21 CFR 314.50(l); FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023); ICH M8 (eCTD v4.0)',
           'Reformat the entire submission in eCTD v4.0 format using an eCTD publishing tool that generates valid XML backbone files, proper granule structure, and compliant PDF documents.',
           ['ctd_format'],
         );
@@ -697,9 +697,9 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No comprehensive Table of Contents is provided for the NDA submission.',
-          'A comprehensive ToC is required per 21 CFR 314.50(b) and is essential for eCTD navigation. The eCTD backbone itself provides structural navigation, but a reader-friendly ToC document is also expected.',
+          'A comprehensive ToC is required per 21 CFR 314.50(b) and is essential for eCTD navigation. In eCTD format, the XML backbone and its CTD heading hierarchy serve as the comprehensive table of contents; separate ToC documents for Modules 2-5 are not expected and should not be submitted.',
           '21 CFR 314.50(b); FDA Guidance: Providing Regulatory Submissions in eCTD Format (2023)',
-          'Generate a comprehensive, hyperlinked Table of Contents document that maps every submission document to its CTD module location. Ensure all hyperlinks in eCTD PDFs are functional.',
+          'Ensure the eCTD backbone places every submission document at its correct CTD heading so that it serves as the comprehensive table of contents; do not add separate ToC documents to Modules 2-5. Ensure all hyperlinks in eCTD PDFs are functional.',
           ['table_of_contents', 'ctd_format'],
         );
       }

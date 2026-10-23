@@ -298,7 +298,7 @@ const rules: AuditRule[] = [
           this.question,
           `SUSAR was reported ${daysToReport} calendar days after the recorded date of initial awareness (day 0), exceeding the ${isFatal ? '7-day (fatal/life-threatening)' : '15-day'} regulatory reporting deadline.`,
           'ICH E2A Section III.B requires expedited reporting of SUSARs: 7 calendar days for fatal/life-threatening unexpected suspected adverse reactions (with a complete report within 8 additional days), 15 calendar days for all other serious unexpected suspected adverse reactions, measured from the sponsor\'s first knowledge of the case. 21 CFR 312.32(c)(1) mandates 15-day IND safety reports and 21 CFR 312.32(c)(2) mandates 7-day reports for unexpected fatal or life-threatening suspected adverse reactions.',
-          'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D Section III',
+          'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D',
           'Investigate the root cause of the reporting delay and implement corrective actions. File a late report with explanation. Review all SUSARs in the database for similar delays.',
           ['initial_awareness_date', 'susar_report_date', 'is_susar', 'event_outcome', 'event_seriousness_criteria', 'expedited_reporting_timeline'],
         );
@@ -344,7 +344,7 @@ const rules: AuditRule[] = [
           this.question,
           'One or more mandatory E2B(R3) data elements are missing from the electronic case safety report.',
           'ICH E2B(R3) specifies the data elements, and the minimum criteria of an identifiable patient, identifiable reporter, suspect drug and adverse reaction apply, for valid ICSR submission to global pharmacovigilance databases.',
-          'ICH E2B(R3); ICH E2D Section III.A; EMA/FAERS Technical Specifications',
+          'ICH E2B(R3); ICH E2D; EMA/FAERS Technical Specifications',
           'Run an E2B(R3) validation check against the case. Populate all mandatory fields including: identifiable patient, identifiable reporter, suspect drug, and adverse reaction. Ensure ICSR header and administrative information are complete.',
           ['e2b_completeness', 'icsr_fields'],
         );
@@ -441,7 +441,7 @@ const rules: AuditRule[] = [
           this.question,
           'Alternative etiologies (e.g., underlying disease, concomitant medications, intercurrent illness) are not discussed in the narrative.',
           'The ICH E2A Section II.A.2 causality standard requires consideration of alternative explanations as part of a thorough causality evaluation. CIOMS VI emphasizes differential diagnosis in individual case assessment.',
-          'ICH E2A Section II.A.2; CIOMS VI Section 3.3; ICH E2D Section II.C',
+          'ICH E2A Section II.A.2; CIOMS VI Section 3.3; ICH E2D',
           'Discuss and systematically evaluate alternative etiologies including: underlying disease progression, concomitant drug effects, intercurrent illness, pre-existing conditions, procedural complications, and natural history of the condition.',
           ['alternative_explanations', 'relevant_medical_history', 'concomitant_medications_list'],
         );
@@ -464,7 +464,7 @@ const rules: AuditRule[] = [
           this.question,
           'No discussion of biological plausibility or pharmacological mechanism linking the investigational product to the adverse event is provided.',
           'Causality assessment under ICH E2A Section II.A.2 includes biological plausibility as a factor in causality assessment. CIOMS VI recommends considering known pharmacology and class effects.',
-          'ICH E2A Section II.A.2; CIOMS VI Section 3.3; ICH E2D Section II.C',
+          'ICH E2A Section II.A.2; CIOMS VI Section 3.3; ICH E2D',
           'Include a brief discussion of biological plausibility based on the drug\'s mechanism of action, known pharmacology, class effects, and any preclinical toxicology findings that may explain the observed event.',
           ['biological_plausibility', 'mechanism_of_action'],
         );
@@ -495,7 +495,7 @@ const rules: AuditRule[] = [
           this.question,
           'An SAE occurred in a blinded study but the narrative does not document whether unblinding was performed or the procedure followed.',
           'ICH E6(R3) Appendix B and Annex 1 §2.11 require pre-specified procedures for emergency unblinding. ICH E2A Section III.D (Managing Blinded Therapy Cases) advises that the sponsor break the blind for the individual patient when a serious adverse reaction is judged reportable on an expedited basis.',
-          'ICH E6(R3) Appendix B; ICH E6(R3) Annex 1 §2.11; ICH E2A Section III.D; 21 CFR 312.32(c)(1)(iv)',
+          'ICH E6(R3) Appendix B; ICH E6(R3) Annex 1 §2.11; ICH E2A Section III.D; FDA guidance on IND safety reporting (21 CFR 312.32)',
           'Document whether unblinding occurred, who authorized it, the date, and the treatment assignment revealed. If unblinding was not performed, state the rationale and how SUSAR determination was made without unblinding.',
           ['unblinding_performed', 'blinding_status', 'is_susar'],
         );
@@ -520,7 +520,7 @@ const rules: AuditRule[] = [
           this.question,
           `SUSAR has been in processing for ${daysProcessing} days, putting the 15-day expedited reporting timeline at serious risk.`,
           'ICH E2A Section III.B and 21 CFR 312.32(c) set 15-calendar-day reporting for SUSARs (7 days for fatal/life-threatening), counted from the sponsor\'s initial receipt of the information. Internal processing should target completion well within this window.',
-          'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D Section III',
+          'ICH E2A Section III.B; 21 CFR 312.32(c)(1) and (c)(2); ICH E2D',
           'Escalate to pharmacovigilance leadership immediately. Implement a fast-track review process. If the deadline will be missed, prepare a late submission notification with root-cause explanation.',
           ['days_in_processing', 'is_susar', 'reporting_date'],
         );
@@ -546,8 +546,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The event outcome is unresolved or ongoing but no follow-up information has been documented.',
-          'ICH E2D Section III.B requires sponsors to make reasonable efforts to obtain follow-up information on serious cases. ICH E2B(R3) requires follow-up reports.',
-          'ICH E2D Section III.B; ICH E2B(R3) Section 1.8; 21 CFR 312.32(d)(2)',
+          'ICH E2D Section 5.4 (good case management practices for post-approval safety data) expects reasonable efforts to obtain follow-up information on serious cases; for a clinical-trial case under an IND, 21 CFR 312.32(d) requires the sponsor to promptly investigate all safety information it receives and to submit relevant follow-up information. ICH E2B(R3) requires follow-up reports.',
+          'ICH E2D Section 5.4; ICH E2B(R3) Section 1.8; 21 CFR 312.32(d)',
           'Initiate site contact to obtain follow-up. Document all attempts to obtain follow-up information, including dates and methods of contact. Submit a follow-up ICSR when additional information becomes available.',
           ['follow_up_obtained', 'event_outcome', 'follow_up_attempts'],
         );
@@ -665,7 +665,7 @@ const rules: AuditRule[] = [
           this.question,
           'No version number, revision date, or change history is documented for the safety narrative.',
           'ICH E2B(R3) Section 1.8 requires identification of initial and follow-up reports. Good pharmacovigilance practice requires version control for all safety documents.',
-          'ICH E2B(R3) Section 1.8; ICH E2D Section III.B; GVP Module VI',
+          'ICH E2B(R3) Section 1.8; ICH E2D Section 5.4; GVP Module VI',
           'Implement version control for all safety narratives, including version number, date of revision, author, and a change log summarizing modifications from the prior version.',
           ['narrative_version', 'report_type'],
         );
@@ -690,7 +690,7 @@ const rules: AuditRule[] = [
           this.question,
           'No evidence that this case was evaluated in the context of cumulative safety data for potential safety signal identification.',
           'ICH E2F expects sponsors to carry out ongoing signal detection and periodic evaluation of cumulative safety data throughout clinical development, reported in the DSUR; ICH E2E carries identified and potential risks forward into the Safety Specification and Pharmacovigilance Plan for the post-authorisation period. CIOMS VI outlines best practices for signal identification from individual case reports.',
-          'ICH E2F; ICH E2E Sections 2-3; CIOMS VI Section 4; ICH E2D Section II.B',
+          'ICH E2F; ICH E2E Sections 2-3; CIOMS VI Section 4; ICH E2D',
           'Evaluate this case against the cumulative safety database using established signal detection methods (e.g., disproportionality analysis). If a signal is identified, initiate signal evaluation per the pharmacovigilance plan.',
           ['signal_evaluated', 'similar_cases_count'],
         );
@@ -712,8 +712,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'A serious event narrative does not reference or contextualize the event within aggregate safety data or cumulative line listings.',
-          'ICH E3 Section 12.2.2 requires that individual serious case narratives be interpretable in the context of the overall safety summary. ICH E2F (DSUR) expects ongoing aggregate review of cumulative safety data during development.',
-          'ICH E3 Section 12.2.2; ICH E2F; CIOMS VI Section 2',
+          'ICH E3 Sections 12.3.2 and 12.3.3 require that individual serious case narratives be interpretable in the context of the overall safety data. ICH E2F (DSUR) expects ongoing aggregate review of cumulative safety data during development.',
+          'ICH E3 Sections 12.3.2 and 12.3.3; ICH E2F; CIOMS VI Section 2',
           'Include a brief reference to the cumulative incidence of similar events in the study population. Note whether this event is consistent with the known safety profile or represents a potentially new finding.',
           ['aggregate_analysis_referenced', 'similar_cases_count', 'case_type'],
         );
@@ -763,7 +763,7 @@ const rules: AuditRule[] = [
           this.question,
           'A severe or serious event is described without any proposed risk mitigation measures for ongoing or future study participants.',
           'ICH E6(R3) Annex 1 §3.13 requires sponsors to implement risk mitigation actions when safety findings warrant. 21 CFR 312.32(d) requires IND safety report follow-up actions.',
-          'ICH E6(R3) Annex 1 §3.13; ICH E2E Section 3 (post-authorisation pharmacovigilance plan); 21 CFR 312.32(d); ICH E2D Section IV',
+          'ICH E6(R3) Annex 1 §3.13; ICH E2E Section 3 (post-authorisation pharmacovigilance plan); 21 CFR 312.32(d); ICH E2D',
           'Evaluate whether risk mitigation is warranted: protocol amendment (e.g., additional exclusion criteria, enhanced monitoring), informed consent revision, Investigator Brochure update, REMS modification, or study suspension. Document the rationale for the chosen course of action.',
           ['risk_mitigation_proposed', 'event_severity_grade', 'case_type'],
         );

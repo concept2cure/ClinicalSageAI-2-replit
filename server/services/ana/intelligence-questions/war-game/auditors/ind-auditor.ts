@@ -154,7 +154,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', this.title, this.question,
           'The sponsor indicates that nonclinical studies have not been completed.',
           'Per ICH M3(R2) and 21 CFR 312.23(a)(8), adequate pharmacology and toxicology data must support the safety of the proposed clinical investigation.',
-          'ICH M3(R2) Section 4; 21 CFR 312.23(a)(8); FDA Guidance: Content and Format of INDs for Phase 1 Studies',
+          'ICH M3(R2) (nonclinical safety studies supporting the conduct of human clinical trials); 21 CFR 312.23(a)(8); FDA Guidance: Content and Format of INDs for Phase 1 Studies',
           'Complete all required nonclinical studies before proceeding. For Phase 1, this typically includes single- and repeat-dose toxicity, safety pharmacology (core battery), and genotoxicity studies.',
           ['nonclinical_studies_complete', 'toxicology_species', 'genotoxicity_studies'],
         );
@@ -189,7 +189,7 @@ const rules: AuditRule[] = [
           this.id, this.dimension, 'critical', this.title, this.question,
           'No toxicology species have been identified. The reviewer cannot assess whether the nonclinical safety package uses pharmacologically relevant species.',
           'Toxicology studies must be conducted in species that are pharmacologically responsive to the drug candidate. For small molecules, one rodent and one non-rodent species are typically required. For biologics, ICH S6(R1) mandates relevant species.',
-          'ICH M3(R2) Section 3; ICH S6(R1) Section 2; 21 CFR 312.23(a)(8)',
+          'ICH M3(R2) (General Principles; Repeated-Dose Toxicity Studies); ICH S6(R1) (species selection); 21 CFR 312.23(a)(8)',
           'Identify the toxicology species used and provide a scientific rationale (e.g., target homology data, in vitro cross-reactivity results) demonstrating pharmacological relevance.',
           ['species_used', 'mechanism_of_action', 'glp_tox_completed'],
         );
@@ -654,7 +654,7 @@ const rules: AuditRule[] = [
     title: 'Safety database size not specified',
     question:
       'For INDs with prior human experience, what is the size of the existing safety database? ' +
-      'Is the safety database adequate to support the proposed phase of development per ICH E1 guidance?',
+      'Is the safety database adequate to support the proposed phase of development?',
     check(answers) {
       // Prior human experience is referenced when the IB includes it or it exists but is
       // pending inclusion. The interview does not ask the safety database size.
@@ -663,8 +663,8 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Prior human experience is referenced but the safety database size is not quantified. Reviewers need to assess whether the existing safety data are sufficient.',
-          'ICH E1 provides guidance on the size of the safety database needed to support different phases of clinical development.',
-          'ICH E1; 21 CFR 312.23(a)(9)',
+          'ICH E1 sets the expected extent of population exposure in the safety database at marketing application for drugs intended for long-term treatment of non-life-threatening conditions; it does not define safety database size for each phase of clinical development.',
+          '21 CFR 312.23(a)(9) (previous human experience); ICH E1 (exposure expected at marketing application)',
           'Quantify the safety database: number of subjects exposed, dose ranges, duration of exposure, and a summary of adverse events by system organ class and severity.',
           ['safety_database_size', 'ib_prior_human_experience'],
         );

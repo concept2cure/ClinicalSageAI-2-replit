@@ -934,7 +934,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             title: 'Missing Causality Assessment',
             message:
               'A causality assessment is required for all serious adverse events. Regulatory authorities require the sponsor to provide an assessment of the causal relationship between the study drug and the event.',
-            reference: 'ICH E2A Section III.B',
+            reference: 'ICH E2A Sections II.A.1 and III.A.1',
           },
         ],
       },
@@ -1071,7 +1071,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Complete the finalization steps for the safety narrative, including medical review, quality checks, regulatory deadlines, and any outstanding follow-up items.',
         guidance:
-          'Per ICH E6(R3) Annex 1 §3.13 and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. FDA expects narratives to be included in IND annual reports (21 CFR 312.33), CSR appendices (ICH E3), and NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
+          'Per ICH E6(R3) Annex 1 §3.13 and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. IND annual reports (21 CFR 312.33) carry aggregate adverse-experience summaries, a list of deaths and a list of discontinuations rather than individual case narratives; individual narratives belong in the CSR (ICH E3 Section 12.3.2) and the NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
         fields: [
           {
             id: 'medical_review_completed',

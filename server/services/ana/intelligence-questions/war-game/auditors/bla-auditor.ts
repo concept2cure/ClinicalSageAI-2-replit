@@ -139,7 +139,7 @@ const rules: AuditRule[] = [
           this.question,
           'Manufacturing process changes are indicated as requiring comparability, but no comparability protocol or study summary is provided.',
           'Per ICH Q5E, any manufacturing process change with potential to impact product quality requires a comparability assessment covering analytical, functional, and where appropriate, nonclinical and clinical comparability.',
-          'ICH Q5E; FDA Guidance on Comparability Protocols (2016); 21 CFR 601.12',
+          'ICH Q5E; FDA Guidance on Comparability Protocols for Postapproval Changes to the CMC Information in an NDA, ANDA, or BLA (2022); 21 CFR 601.12',
           'Develop and submit a comprehensive comparability protocol detailing the analytical, functional, and clinical comparability studies with pre-specified acceptance criteria for each quality attribute.',
           ['comparability_protocol', 'comparability_study_needed'],
         );
@@ -376,7 +376,7 @@ const rules: AuditRule[] = [
     id: rid('facility_not_inspected'),
     dimension: 'regulatory_alignment',
     title: 'Manufacturing Facility Not FDA-Inspected',
-    question: 'The manufacturing facility has not been inspected by FDA. Per 42 USC 262(c), FDA must inspect and approve the establishment before a biologics license can be issued. Has the applicant engaged with FDA to schedule a pre-approval inspection?',
+    question: 'The manufacturing facility has not been inspected by FDA. Per 21 CFR 601.20(d) and 21 CFR 600.21, FDA must inspect the establishment and find it in compliance before a biologics license can be issued. Has the applicant engaged with FDA to schedule a pre-approval inspection?',
     check(answers) {
       if (answers.facility_fda_inspected === false || answers.facility_fda_inspected === 'no') {
         return finding(
@@ -386,8 +386,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'The manufacturing facility has not yet been inspected by FDA.',
-          'Per 42 USC 262(c) and 21 CFR 600.21, FDA must inspect the manufacturing facility and find it in compliance with cGMP before issuing a biologics license.',
-          '42 USC 262(c); 21 CFR 600.21; 21 CFR 211',
+          'Per 21 CFR 601.20(d) (with inspection authority under 42 USC 262(c) and timing under 21 CFR 600.21), FDA must inspect the manufacturing facility and find it in compliance with cGMP before issuing a biologics license.',
+          '21 CFR 601.20(d); 42 USC 262(c); 21 CFR 600.21; 21 CFR 211',
           'Engage with FDA to schedule a pre-approval inspection (PAI) at least 6 months before the anticipated PDUFA goal date. Ensure the facility is cGMP-ready and all standard operating procedures are current.',
           ['facility_fda_inspected', 'manufacturing_sites'],
         );
@@ -830,7 +830,7 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'Anti-drug antibodies cross-react with the endogenous protein counterpart, creating a risk of endogenous protein neutralization.',
-          'Cross-reactive ADA that neutralize endogenous proteins can cause life-threatening deficiency syndromes (e.g., pure red cell aplasia with EPO, acquired hemophilia with Factor VIII). Per FDA Immunogenicity Guidance (2014), this must be specifically evaluated for products with endogenous counterparts.',
+          'Cross-reactive ADA that neutralize endogenous proteins can cause life-threatening deficiency syndromes (e.g., pure red cell aplasia with EPO, thrombocytopenia with PEG-rHuMGDF through cross-reactivity with endogenous thrombopoietin). Per FDA Immunogenicity Guidance (2014), this must be specifically evaluated for products with endogenous counterparts.',
           'FDA Immunogenicity Guidance (2014); ICH S6(R1)',
           'Implement a comprehensive risk mitigation strategy including: (1) assay to specifically detect cross-reactive antibodies, (2) clinical monitoring protocol for deficiency symptoms, (3) labeling warnings, (4) REMS evaluation, and (5) post-marketing surveillance for late-onset cross-reactivity.',
           ['cross_reactive_antibodies', 'ada_impact_on_safety', 'boxed_warning_anticipated'],

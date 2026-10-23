@@ -1,0 +1,9 @@
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the fixture is the full verified set 1ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > no quoted wrong statement remains in its file 24ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > confirmed regulatory errors are gone from what AnA tells clients > the recurring miscitations appear nowhere in the question flows or auditors 5ms
+ ✓ tests/regulatory/ana-knowledge-audit.test.ts > second pass: confirmed regulatory errors are gone > the fixture is the full verified set 1ms
+ × tests/regulatory/ana-knowledge-audit.test.ts > second pass: confirmed regulatory errors are gone > no quoted wrong statement remains in its file 19ms
+   → expected [ …(229) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(229) ] to deeply equal []
+      Tests  1 failed | 4 passed (5)

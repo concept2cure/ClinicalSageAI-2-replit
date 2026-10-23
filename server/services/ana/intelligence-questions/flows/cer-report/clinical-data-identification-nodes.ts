@@ -19,7 +19,7 @@ export const clinicalDataIdentificationNodes: QuestionNode[] = [
     question:
       'What clinical data sources are available for the evaluation?',
     guidance:
-      'The CER should draw on all available clinical data, including clinical investigations, published literature, post-market surveillance, registry data, and complaints data. Per MEDDEV 2.7/1 Rev 4 Section 7, all data from the manufacturer\'s post-market surveillance system should be included. For Class III and implantable devices under EU MDR Article 61(4), clinical investigations are generally required unless justified otherwise. Clinical data must be identified systematically and the identification process documented. MDCG 2020-5 provides guidance on clinical evaluation adequacy and the clinical data sets that should be considered.',
+      'The CER should draw on all available clinical data, including clinical investigations, published literature, post-market surveillance, registry data, and complaints data. Per MEDDEV 2.7/1 Rev 4 Section 8.1 (data generated and held by the manufacturer), all data from the manufacturer\'s post-market surveillance system should be included. For Class III and implantable devices under EU MDR Article 61(4), clinical investigations are generally required unless justified otherwise. Clinical data must be identified systematically and the identification process documented. MEDDEV 2.7/1 Rev 4 Section 8 provides guidance on identifying pertinent clinical data; where data from an equivalent device is used, MDCG 2020-5 provides guidance on demonstrating equivalence.',
     fields: [
       {
         id: 'data_sources_available',
@@ -119,7 +119,7 @@ export const clinicalDataIdentificationNodes: QuestionNode[] = [
     question:
       'Provide details about the equivalent device and the basis for the equivalence claim.',
     guidance:
-      'MEDDEV 2.7/1 Rev 4 requires manufacturers to justify equivalence on clinical, technical, and biological grounds. An equivalent device must have the same clinical purpose, similar design, and use similar materials. Under EU MDR Article 61(5), manufacturers demonstrating equivalence to a device of another manufacturer must have a contract in place giving them access to the equivalent device\'s technical documentation — this is a hard requirement. Without such access, the equivalence route is not available for devices of other manufacturers. The equivalence assessment must use a structured side-by-side comparison as described in MEDDEV 2.7/1 Rev 4 Appendix A1.',
+      'MEDDEV 2.7/1 Rev 4 requires manufacturers to justify equivalence on clinical, technical, and biological grounds. An equivalent device must have the same clinical purpose, similar design, and use the same materials or substances in contact with the same human tissues or body fluids, for a similar kind and duration of contact. Under EU MDR Article 61(5), manufacturers of implantable and Class III devices demonstrating equivalence to a device of another manufacturer must have a contract in place giving them full, ongoing access to the equivalent device\'s technical documentation — this is a hard requirement. For other device classes, Annex XIV Part A Section 3 requires the manufacturer to demonstrate sufficient levels of access to the data on the equivalent device. Without such access, the equivalence route is not available for devices of other manufacturers. The equivalence assessment must use a structured side-by-side comparison as described in MEDDEV 2.7/1 Rev 4 Appendix A1.',
     fields: [
       {
         id: 'equiv_device_name',
@@ -160,7 +160,7 @@ export const clinicalDataIdentificationNodes: QuestionNode[] = [
           { value: 'contract_access', label: 'Contract in Place — Access to technical documentation' },
           { value: 'no_access', label: 'No Direct Access to Technical Documentation' },
         ],
-        helpText: 'EU MDR Article 61(5) requires access to the equivalent device\'s technical documentation via contract when claiming equivalence to another manufacturer\'s device',
+        helpText: 'For implantable and Class III devices, EU MDR Article 61(5) requires a contract allowing full, ongoing access to the equivalent device\'s technical documentation when claiming equivalence to another manufacturer\'s device; for other device classes, MDR Annex XIV Part A requires sufficient access to the equivalent device\'s data to justify the equivalence claim',
       },
       {
         id: 'equiv_clinical_data_available',
@@ -181,8 +181,8 @@ export const clinicalDataIdentificationNodes: QuestionNode[] = [
         severity: 'warning',
         title: 'No Equivalence Demonstration for Reference Device',
         message:
-          'Without access to the equivalent device\'s technical documentation, the equivalence route cannot be used for devices of other manufacturers per EU MDR Article 61(5). The manufacturer must either obtain a contract with the equivalent device manufacturer, use their own predicate device, or generate standalone clinical investigation data.',
-        reference: 'EU MDR Article 61(5); MEDDEV 2.7/1 Rev 4, Appendix A1',
+          'Without access to the equivalent device\'s technical documentation, the equivalence route cannot be used for devices of other manufacturers (EU MDR Annex XIV Part A Section 3; for implantable and Class III devices, a contract is required per Article 61(5)). The manufacturer must either obtain access (by contract, for implantable and Class III devices) from the equivalent device manufacturer, use their own predicate device, or generate standalone clinical investigation data.',
+        reference: 'EU MDR Article 61(5); Annex XIV Part A Section 3; MEDDEV 2.7/1 Rev 4, Appendix A1',
       },
     ],
     defaultNext: 'equivalence_demonstration',
@@ -201,7 +201,7 @@ export const clinicalDataIdentificationNodes: QuestionNode[] = [
         label: 'Clinical Equivalence',
         type: 'textarea',
         required: true,
-        helpText: 'Same clinical condition, same clinical purpose, same clinical effect, same site in body, same target population',
+        helpText: 'Same clinical condition or purpose (including similar severity and stage of disease), same site in the body, similar population (age, anatomy, physiology), same kind of user, similar relevant critical performance for the expected clinical effect',
         validation: { minLength: 50 },
       },
       {
