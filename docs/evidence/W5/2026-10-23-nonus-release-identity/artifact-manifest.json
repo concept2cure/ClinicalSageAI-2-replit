@@ -7,8 +7,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9641,
-      "sha256": "d54c7a4f20ac0424e7b326e78447c4a9165eb44c6eaf58f0e5cf0d67bf23d33c"
+      "bytes": 10600,
+      "sha256": "19d16d4405012049c07926505d4b2c0dfa698fa26e474b15e0b28254c97e62a4"
     },
     {
       "path": "browser/README.md",
@@ -461,6 +461,16 @@
       "sha256": "63343c930b3cbb616dc7ec3cf9f74b5a5dbbe46a00b42cfa2f6d0c0f44ad8052"
     },
     {
+      "path": "verification/build-refiling-inputs.json",
+      "bytes": 3939,
+      "sha256": "19f2572f9797b69f7def7aa36beb0e035c17822da2d3d09aef2876d38e5fb413"
+    },
+    {
+      "path": "verification/build-refiling.txt",
+      "bytes": 16271,
+      "sha256": "8afd756b405683ccc80dc8e8bc2ff5ad53b358e939ab4216c12e5a4bf1ff4d53"
+    },
+    {
       "path": "verification/build.txt",
       "bytes": 16271,
       "sha256": "2b43ff4e324a39889432488c9d9d20f4f6ba88a9e75ee61ed719b3b020045343"
@@ -501,6 +511,16 @@
       "sha256": "472f075efe82d2a7c44bc48479f277d3075db860e86449bf0152df0a74e78fe5"
     },
     {
+      "path": "verification/merged-refiling-packaging-inputs.json",
+      "bytes": 16641,
+      "sha256": "ea1fbcaebd871be19c3b06963c57169b7f3cb7a06376b8336dea9ff9497dc17c"
+    },
+    {
+      "path": "verification/merged-refiling-packaging.txt",
+      "bytes": 99048,
+      "sha256": "13e0851514c555d417958c85b473a5d6afc07222d5e1094838934ef4384b98a2"
+    },
+    {
       "path": "verification/push-type-refusal.txt.gz",
       "bytes": 4608,
       "sha256": "98dff8ecaca28f41c3e4c00243ff62c75a325dbbae21ae96b2d8b27f91619a28"
@@ -511,9 +531,14 @@
       "sha256": "7029650a979aa0e3289f1ef04ea499c6cb9230cf47e40b47086894ecfd89f705"
     },
     {
+      "path": "verification/push-zero-errors-ref-race.txt.gz",
+      "bytes": 4487,
+      "sha256": "36745ea5d007bb8234c5c66a529b231863c2750ddfde81db122c7bfa7c8b94f0"
+    },
+    {
       "path": "verification/qualification.json",
-      "bytes": 25286,
-      "sha256": "2a6f840ab6d78f17af865ba37ce04d5c9764b63c54b3edcf0d3f7fed15362fbf"
+      "bytes": 25961,
+      "sha256": "a401cd738128dbe91c6894c423719b8afc34bfcda651ce003ae0b93c07ddb060"
     },
     {
       "path": "verification/regional-boundary-inputs.json",

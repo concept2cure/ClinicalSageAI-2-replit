@@ -142,3 +142,19 @@ todo**, with all 48 input hashes stable. See `verification/canonical-merge.json`
 `build-merged-inputs.json`, `build-merged.txt`, `merged-packaging-inputs.json` and
 `merged-packaging.txt`. Historical core/earlier build records remain source-bound
 to their executed versions. Normal full compiler and push acceptance are pending.
+
+
+## Current refiling catch-up
+
+The normal full TypeScript check passed with **zero errors** on `efd1f5d1b`,
+and all normal local gates passed. GitHub refused that push because the canonical
+ref advanced meanwhile (`verification/push-zero-errors-ref-race.txt.gz`). Ordinary
+merge `bd26986ef` preserves incoming changes through `0ef71516c`, including governed
+Authoring refiling and Vault versions. The fresh build passed and the same four
+packaging/Authoring compatibility files passed **68 tests, no todo**. Incoming
+Vault work resolves the earlier historical supersession todo. Current outputs
+and exact pins are `verification/build-refiling*` and
+`verification/merged-refiling-packaging*`. The browser screenshots retain their
+executed CSS pins; incoming company-preview-only style additions are historical
+pin differences, not a replay of those screenshots. Identity/UI control source
+is unchanged. Canonical publication remains pending the normal retry.

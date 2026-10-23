@@ -604,5 +604,17 @@
         "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
       }
     ]
+  },
+  "currentRefilingMerge": {
+    "mergeCommit": "bd26986efa69169dca46c04f61a1592442ac89d7",
+    "upstream": "0ef71516c9efe22960a752a485b89ec208471bbc",
+    "fullCompilerZeroOn": "efd1f5d1b",
+    "priorPushFailure": "GitHub ref advanced after all local gates passed.",
+    "qualifiedLaneInputsUnchanged": 44,
+    "mergedBuildExitCode": 0,
+    "mergedCompatibilityPassed": 68,
+    "mergedCompatibilityTodo": 0,
+    "priorVaultTodo": "resolved by incoming governed refiling/versioning changes",
+    "browserEvidence": "Original executed CSS pins retained; company-preview-only stylesheet additions arrived later. Existing Dispatch/market-number component source unchanged."
   }
 }
