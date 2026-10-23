@@ -1,0 +1,12 @@
+--- before-grouping
++++ frozen-zero-warning
+@@ -107,7 +107,9 @@
+     expect(chunks[1].charStart).toBe(499);
+     expectIntact(source, chunks, 500, 0);
+   });
++});
+ 
++describe('Vault Unicode chunks preserve existing source and separator behavior', () => {
+   it.each([
+     ['paragraph', '\n\n', 302],
+     ['sentence', '. ', 302],

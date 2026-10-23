@@ -1,0 +1,15 @@
+{
+  "reviewer": "unicode_regression_inventory",
+  "verdict": "CLEAR",
+  "reviewedCandidateEvidenceEntries": 63,
+  "candidateEvidenceFilesIncludingManifest": 64,
+  "checks": [
+    "All candidate manifest hashes and exactcoverage matched",
+    "82selectedinputs/25tests/3frozen match local and accepted Git70e5ea3bb",
+    "74retained ancestorsreachable, no unmergedentries",
+    "Actualpush receipt/logSHA0, whole-treeTS0/exit0 and canonicalpush verified",
+    "53code-head evidencepaths exist, relative Markdownlinks resolve",
+    "Claims and limits accurate; finalproofpush pending"
+  ],
+  "note": "This review record is the only new evidence entry after reviewed candidate; root regenerates the final manifest to include it."
+}

@@ -1,0 +1,168 @@
+/** Public chunker contract: exact UTF-16 spans must survive UTF-8 transport. */
+import { describe, expect, it } from 'vitest';
+import { chunkExtractedText, type DocumentTextChunk } from '../document-chunking.service';
+import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
+
+function expectIntact(source: string, chunks: DocumentTextChunk[], maxSize: number, overlapLimit: number): void {
+  expect(chunks.length).toBeGreaterThan(0);
+  expect(chunks[0].charStart).toBe(0);
+  expect(chunks[chunks.length - 1].charEnd).toBe(source.length);
+  for (const [index, chunk] of chunks.entries()) {
+    expect(chunk.index).toBe(index);
+    expect(chunk.text.length).toBeGreaterThan(0);
+    expect(chunk.text.length).toBeLessThanOrEqual(maxSize);
+    expect(chunk.charEnd - chunk.charStart).toBe(chunk.text.length);
+    expect(chunk.text).toBe(source.slice(chunk.charStart, chunk.charEnd));
+    expect(Buffer.from(chunk.text, 'utf8').toString('utf8')).toBe(chunk.text);
+    if (index > 0) {
+      const previous = chunks[index - 1];
+      expect(chunk.charStart).toBeGreaterThan(previous.charStart);
+      expect(chunk.charEnd).toBeGreaterThan(previous.charEnd);
+      expect(chunk.charStart).toBeLessThanOrEqual(previous.charEnd);
+      expect(previous.charEnd - chunk.charStart).toBeLessThanOrEqual(overlapLimit);
+    }
+  }
+}
+
+describe('Vault chunks retain supplementary characters and exact coordinates', () => {
+  it.each([
+    ['scientific symbol at minimum hard end', '🧬', 500],
+    ['supplementary Japanese at default hard end', '𠮷', 4000],
+    ['mathematical letter at odd hard end', '𝛂', 501],
+  ] as const)('%s', (_label, symbol, maxChars) => {
+    const source = 'a'.repeat(maxChars - 1) + symbol + 'z'.repeat(maxChars + 100);
+    const options = maxChars === 4000 ? { overlapChars: 0 } : { maxChars, overlapChars: 0 };
+    const chunks = chunkExtractedText(source, options);
+    expect(chunks[0].charEnd).toBe(maxChars - 1);
+    expect(chunks[1].charStart).toBe(maxChars - 1);
+    expect(chunks[1].text.startsWith(symbol)).toBe(true);
+    expect(chunks.map(chunk => chunk.text).join('')).toBe(source);
+    expectIntact(source, chunks, maxChars, 0);
+  });
+
+  it('moves an overlap start past the whole character without increasing overlap', () => {
+    const source = 'a'.repeat(249) + '🧬' + 'z'.repeat(900);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 250 });
+    expect(chunks[0].charEnd).toBe(500);
+    expect(chunks[1].charStart).toBe(251);
+    expect(chunks[0].charEnd - chunks[1].charStart).toBe(249);
+    expectIntact(source, chunks, 500, 250);
+  });
+
+  it('reduces a one-unit overlap to zero instead of repeating half a character', () => {
+    const source = 'a'.repeat(498) + '🧬' + 'z'.repeat(800);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 1 });
+    expect(chunks[0].charEnd).toBe(500);
+    expect(chunks[1].charStart).toBe(500);
+    expectIntact(source, chunks, 500, 1);
+  });
+
+  it('keeps the existing half-size overlap clamp', () => {
+    const source = 'a'.repeat(249) + '𠮷' + 'z'.repeat(900);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 9000 });
+    expect(chunks[1].charStart).toBe(251);
+    expectIntact(source, chunks, 500, 250);
+  });
+
+  it('keeps negative overlap clamped to zero while retaining the boundary character', () => {
+    const source = 'a'.repeat(499) + '𝛂' + 'z'.repeat(800);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: -20 });
+    expect(chunks.map(chunk => chunk.text).join('')).toBe(source);
+    expectIntact(source, chunks, 500, 0);
+  });
+
+  it('protects the default 400-unit overlap start', () => {
+    const source = 'a'.repeat(3599) + '𠮷' + 'z'.repeat(5000);
+    const chunks = chunkExtractedText(source);
+    expect(chunks[0].charEnd).toBe(4000);
+    expect(chunks[1].charStart).toBe(3601);
+    expectIntact(source, chunks, 4000, 400);
+  });
+
+  it.each([
+    [500, 0],
+    [501, 0],
+    [501, 1],
+    [999, 499],
+  ] as const)('covers dense supplementary text with max %i and overlap %i', (maxChars, overlapChars) => {
+    const source = '𠮷🧬𝛂'.repeat(1000);
+    const chunks = chunkExtractedText(source, { maxChars, overlapChars });
+    expectIntact(source, chunks, maxChars, overlapChars);
+    expect(chunks).toEqual(chunkExtractedText(source, { maxChars, overlapChars }));
+    if (overlapChars === 0) expect(chunks.map(chunk => chunk.text).join('')).toBe(source);
+  });
+
+  it('keeps the existing 500-unit minimum chunk size', () => {
+    const source = 'a'.repeat(499) + '𠮷' + 'z'.repeat(900);
+    const chunks = chunkExtractedText(source, { maxChars: 1, overlapChars: 0 });
+    expect(chunks[0].charEnd).toBe(499);
+    expectIntact(source, chunks, 500, 0);
+  });
+
+  it('continues reporting UTF-16 offsets rather than code-point indices', () => {
+    const source = '𠮷'.repeat(249) + 'A🧬' + '日'.repeat(700);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 0 });
+    expect(chunks[0]).toEqual({ index: 0, charStart: 0, charEnd: 499, text: '𠮷'.repeat(249) + 'A' });
+    expect(Array.from(chunks[0].text)).toHaveLength(250);
+    expect(chunks[1].charStart).toBe(499);
+    expectIntact(source, chunks, 500, 0);
+  });
+
+  it.each([
+    ['paragraph', '\n\n', 302],
+    ['sentence', '. ', 302],
+    ['word', ' ', 301],
+  ] as const)('preserves the preferred %s cut', (_name, separator, firstEnd) => {
+    const prefix = '日'.repeat(300) + separator;
+    const source = prefix + '🧬'.repeat(400);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 100 });
+    expect(chunks[0]).toEqual({ index: 0, charStart: 0, charEnd: firstEnd, text: prefix });
+    expectIntact(source, chunks, 500, 100);
+  });
+
+  it('retains paragraph priority over a later sentence and word boundary', () => {
+    const prefix = '日'.repeat(300) + '\n\n';
+    const source = prefix + '日'.repeat(50) + '. ' + '日'.repeat(50) + ' ' + '🧬'.repeat(400);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 100 });
+    expect(chunks[0]).toEqual({ index: 0, charStart: 0, charEnd: 302, text: prefix });
+    expectIntact(source, chunks, 500, 100);
+  });
+
+  it.each([
+    ['ASCII', 'a'.repeat(1200)],
+    ['BMP', '日本語αβ'.repeat(240)],
+  ] as const)('preserves the exact existing %s chunks', (_label, source) => {
+    expect(chunkExtractedText(source, { maxChars: 500, overlapChars: 100 })).toEqual([
+      { index: 0, charStart: 0, charEnd: 500, text: source.slice(0, 500) },
+      { index: 1, charStart: 400, charEnd: 900, text: source.slice(400, 900) },
+      { index: 2, charStart: 800, charEnd: 1200, text: source.slice(800, 1200) },
+    ]);
+  });
+
+  it.each(['\ud800', '\udc00'])('does not normalize malformed source unit %j into verified evidence', unit => {
+    const source = 'a'.repeat(499) + unit + 'z'.repeat(600);
+    const chunks = chunkExtractedText(source, { maxChars: 500, overlapChars: 0 });
+    expect(chunks.map(chunk => chunk.text).join('')).toBe(source);
+    expect(chunks[0].text.endsWith(unit)).toBe(true);
+    expect(() => draftSourceIdentityForText(source, { start: 0, end: 500, totalChars: source.length }))
+      .toThrow('Invalid source text encoding');
+  });
+
+  it('is deterministic and gap-free across mixed scientific text and option combinations', () => {
+    const fragments = ['A', '𠮷', '🧬', '𝛂', '\r\n', '日本', 'α\u0301'];
+    const source = Array.from({ length: 1800 }, (_, index) => fragments[index % fragments.length]).join('');
+    for (const maxChars of [500, 501, 999, 4000]) {
+      for (const overlapChars of [0, 1]) {
+        const chunks = chunkExtractedText(source, { maxChars, overlapChars });
+        expectIntact(source, chunks, maxChars, overlapChars);
+        expect(chunks).toEqual(chunkExtractedText(source, { maxChars, overlapChars }));
+      }
+    }
+  });
+
+  it('keeps an empty source empty and preserves a short BOM/whitespace source verbatim', () => {
+    expect(chunkExtractedText('')).toEqual([]);
+    const source = '\ufeff  日本語 𠮷 🧬 α\u0301\r\n  ';
+    expect(chunkExtractedText(source)).toEqual([{ index: 0, charStart: 0, charEnd: source.length, text: source }]);
+  });
+});

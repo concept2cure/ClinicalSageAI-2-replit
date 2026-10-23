@@ -73,7 +73,8 @@ export const MAX_CHUNKS = 500;
  * Split extracted text into overlapping chunks on paragraph boundaries where
  * possible. Deterministic; spans are exact so `text.slice(charStart, charEnd)`
  * reproduces every chunk (the overlap prefix is context, carried inside the
- * span of the PREVIOUS chunk it repeats).
+ * span of the PREVIOUS chunk it repeats). Boundaries keep surrogate pairs
+ * intact; an overlap may shorten by one UTF-16 unit to avoid splitting one.
  */
 export function chunkExtractedText(text: string, opts: DocumentChunkOptions = {}): DocumentTextChunk[] {
   const maxChars = Math.max(500, opts.maxChars ?? DEFAULT_MAX_CHARS);
@@ -97,9 +98,15 @@ export function chunkExtractedText(text: string, opts: DocumentChunkOptions = {}
       const cut = para >= 0 ? para + 2 : sentence >= 0 ? sentence + 2 : word >= 0 ? word + 1 : -1;
       if (cut >= 0) end = windowStart + cut;
     }
+    // codePointAt sees both halves when the cut falls just after a high
+    // surrogate. Move inward so the chunk stays within maxChars in UTF-16.
+    if (text.codePointAt(end - 1)! > 0xffff) end--;
     chunks.push({ index: chunks.length, text: text.slice(start, end), charStart: start, charEnd: end });
     if (end >= len) break;
     start = Math.max(end - overlap, start + 1);
+    // A safe end with zero overlap is already intact. With overlap, moving
+    // inward keeps progress and coverage while never increasing the overlap.
+    if (text.codePointAt(start - 1)! > 0xffff) start++;
   }
   return chunks;
 }
