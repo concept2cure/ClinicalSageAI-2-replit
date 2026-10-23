@@ -1,0 +1,119 @@
+{
+  "finalResult": "browser-result/result.json",
+  "checksPassed": 11,
+  "browserErrors": [],
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "99695c3dda9414703072c6b12a10db9bf00c2d1d49d99e195763025486a7edae"
+    },
+    {
+      "path": "browser-check.mjs",
+      "sha256": "283d1f8d748790ae80c3703ee7dccaeea4a40a3fa192816dfb73f0ff2756f4c6"
+    },
+    {
+      "path": "browser-execution-final.txt",
+      "sha256": "7d098735950269e07ca8ccbc0c3b3f8f57d40d15c1edae414ce9d3db9b37b413"
+    },
+    {
+      "path": "browser-execution-first.txt",
+      "sha256": "4d3459042454612c0cd811ff519a5095d38559c51db94297fbee47abed80e59f"
+    },
+    {
+      "path": "browser-index.html",
+      "sha256": "fe60250e10a0b393394bbc4f9854c1b4787a53882798ac31030f816175237a95"
+    },
+    {
+      "path": "browser-probe.tsx",
+      "sha256": "1641723d8fa52b413bf4bedb01b92547528f3c138c731a69291feb082be7c016"
+    },
+    {
+      "path": "browser-result/desktop-dark-search.png",
+      "sha256": "36fa18de12fa41bcfea3b917a248f314cf8b32f04ecb8202989f0282af104707"
+    },
+    {
+      "path": "browser-result/desktop-filtered-governed-toggle.png",
+      "sha256": "249b28bfb4e844c272f5e0b53a565b7753808c78d0069de25f23cceff02f9173"
+    },
+    {
+      "path": "browser-result/desktop-locked-additional.png",
+      "sha256": "1b115c39bf1985a336ae32c02c1d704f8a09b327077995d10b2ea8daf548088c"
+    },
+    {
+      "path": "browser-result/desktop-search-readiness.png",
+      "sha256": "18b7a99fbe193131fc3ff114bae5a990dc62d0cd79f6bc133fbb82c624c37e33"
+    },
+    {
+      "path": "browser-result/desktop-workflow-overview.png",
+      "sha256": "d0b7deea2dec438d643ff12c4091285badf4d12f62ad91bf2754f8a144c57f50"
+    },
+    {
+      "path": "browser-result/failure.json",
+      "sha256": "38153caa10b0f6dadd6238cfa5d05cade97e915e66d013ecb849a7cf2d05a81d"
+    },
+    {
+      "path": "browser-result/failure.png",
+      "sha256": "950712f61563232722b63b7464a2463640a3a222aa44328a8c752149477bb197"
+    },
+    {
+      "path": "browser-result/mobile-workflow-overview.png",
+      "sha256": "9549340cdbf8160b6258f736fbfea71ffea02bbc9441942e64e7daf1a23ecb4a"
+    },
+    {
+      "path": "browser-result/result.json",
+      "sha256": "7d098735950269e07ca8ccbc0c3b3f8f57d40d15c1edae414ce9d3db9b37b413"
+    },
+    {
+      "path": "browser-server-final.txt",
+      "sha256": "9ab215cef102f2bf4646caa5b1c505603d4b9b4da4290c78c9a54295f5e0a1f2"
+    },
+    {
+      "path": "browser-server.mjs",
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    },
+    {
+      "path": "browser-server.txt",
+      "sha256": "54c8582155ef82b84f6ae8cb3990f0dc4ef0796a4511fc5fb0bedf1cf98feada"
+    },
+    {
+      "path": "first-run/browser-check.mjs.txt",
+      "sha256": "86b109d4a0dfbde417aeaf157eac47f8ed5493022a00b9aac176e8ab605aac7a"
+    },
+    {
+      "path": "first-run/execution.txt",
+      "sha256": "4d3459042454612c0cd811ff519a5095d38559c51db94297fbee47abed80e59f"
+    },
+    {
+      "path": "first-run/failure.json",
+      "sha256": "221d86de9ec2746683e9399b0aec5070e20dcf01162377cae549585659231824"
+    },
+    {
+      "path": "first-run/mobile-overflow.png",
+      "sha256": "48e80b32bab4fac1139f7dd64a5b86783bca140424ade268bb892f532fbf3493"
+    },
+    {
+      "path": "pre-settled-capture/browser-check.mjs.txt",
+      "sha256": "983ad0f701350a6b773bf8ac63c2ff4455a26642c9279f53deb7694427e0ffe5"
+    },
+    {
+      "path": "pre-settled-capture/execution.txt",
+      "sha256": "b17bfc89b0d3ddd983873eaff960db31076ac3abf7a34058d29e342111c30409"
+    },
+    {
+      "path": "pre-settled-capture/result.json",
+      "sha256": "b17bfc89b0d3ddd983873eaff960db31076ac3abf7a34058d29e342111c30409"
+    },
+    {
+      "path": "stale-server-run/execution.txt",
+      "sha256": "196e952c50f066fd08ad89fba0deb38a3511a8571eb4cd2d18928c6ea9afd38b"
+    },
+    {
+      "path": "stale-server-run/failure.json",
+      "sha256": "38153caa10b0f6dadd6238cfa5d05cade97e915e66d013ecb849a7cf2d05a81d"
+    },
+    {
+      "path": "stale-server-run/failure.png",
+      "sha256": "950712f61563232722b63b7464a2463640a3a222aa44328a8c752149477bb197"
+    }
+  ]
+}

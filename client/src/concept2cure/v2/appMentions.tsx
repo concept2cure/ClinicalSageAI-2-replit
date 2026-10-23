@@ -209,7 +209,7 @@ function itemSummary(item: MentionItem): string {
 }
 
 function menuHeading(kind: MentionKind | null, items: MentionItem[]): string {
-  if (kind !== 'slash') return 'Apps — choose one to name it in your message';
+  if (kind !== 'slash') return 'Features — choose one to name it in your message';
   return items.some((i) => i.kind === 'skill')
     ? 'Commands start your message; a skill is used on every turn of this conversation'
     : 'Commands — choose one to start your message with';
@@ -220,7 +220,7 @@ export function AppMentionMenu({ api, id }: { api: AppMentionsApi; id: string })
   if (!api.open) return null;
   const slash = api.kind === 'slash';
   return (
-    <div className="ana-menu ana-mention" role="listbox" id={id} aria-label={slash ? 'Commands' : 'Apps'}>
+    <div className="ana-menu ana-mention" role="listbox" id={id} aria-label={slash ? 'Commands' : 'Features'}>
       <div className="ana-menu-sec">{menuHeading(api.kind, api.items)}</div>
       {api.items.map((item, i) => (
         <button

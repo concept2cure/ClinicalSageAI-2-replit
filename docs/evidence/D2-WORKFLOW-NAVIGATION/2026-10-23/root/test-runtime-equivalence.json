@@ -1,0 +1,17 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "byteIdenticalExecutableJavaScript": true,
+    "emittedSha256": "28707ea1fcfed101c867a5da0d17836edb786fb7b907e72f05a35ea60302ae70"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/appsLive.test.tsx",
+    "byteIdenticalExecutableJavaScript": true,
+    "emittedSha256": "50245e85b41c167d1cab749cf4f665fa0a535e8240bcc900133061002f5778ce"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+    "byteIdenticalExecutableJavaScript": true,
+    "emittedSha256": "910dfa19bc70c60ea658fb21eebfb76ab18f9b37863f9f4ddfb583e46ca3234b"
+  }
+]

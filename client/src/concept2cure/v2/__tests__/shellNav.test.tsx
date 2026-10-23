@@ -7,7 +7,7 @@
  *
  * What the rail showed on 2026-10-08: Client categories, Workspace, then a
  * "Science & intelligence" section (CMC, risk-based monitoring, the FDA CRL
- * library) and an "Explore" section (AnA Command, AnA memory, Apps catalog,
+ * library) and an "Explore" section (AnA Command, AnA memory, Workflows,
  * Artifacts Center, Conversation, three with an "AnA" badge), and Quick access.
  * Quality, a launch app, had no entry at all: it sat in NAV_HIDDEN. Four of the
  * five client types defaulted to a screen outside this release (device
@@ -18,7 +18,7 @@
  * Now the rail is the places, in order: New conversation, Projects, Vault,
  * Submission Center, Quality, Reporting & analytics, My work, and Conversation
  * (the conversation in progress, standing in for Recents until slice 3). My
- * work opens the task board on the person's own tasks. Apps catalog and the
+ * work opens the task board on the person's own tasks. Workflows and the
  * client type are in the account menu, which the collapsed rail does not clip
  * and which a keyboard can work. Every client type's default screen is in the
  * launch scope.
@@ -119,7 +119,7 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 
 const PLACES = [
   'Home',
-  'Apps catalog',
+  'Workflows',
   'Projects',
   'Tasking',
   'Communication',
@@ -142,7 +142,7 @@ describe('the rail lists the places', () => {
   it.each([false, true])('keeps the client destinations reachable for a member (collapsed=%s)', async collapsed => {
     authRoles.current = ['member'];
     const { rail, scroll, onNav } = await mountRail('biopharma', collapsed);
-    for (const name of ['Apps catalog', 'Tasking', 'Communication']) {
+    for (const name of ['Workflows', 'Tasking', 'Communication']) {
       const button = within(scroll).getByRole('button', { name });
       expect(button.getAttribute('disabled')).toBeNull();
       expect(button.tabIndex).toBe(0);
@@ -310,7 +310,7 @@ describe('Artifacts center, no longer a rail entry, is reached from ⌘K', () =>
   });
 });
 
-describe('the account menu holds Apps and the client type', () => {
+describe('the account menu holds Workflows and the client type', () => {
   async function openMenu(segment = 'biopharma') {
     const m = await mountRail(segment);
     const button = screen.getByTitle('Ada Rowe');
@@ -318,9 +318,9 @@ describe('the account menu holds Apps and the client type', () => {
     return { ...m, button, menu: screen.getByRole('menu') };
   }
 
-  it('offers the Apps catalog', async () => {
+  it('offers Workflows', async () => {
     const { menu, onNav } = await openMenu();
-    fireEvent.click(within(menu).getByRole('menuitem', { name: /Apps catalog/ }));
+    fireEvent.click(within(menu).getByRole('menuitem', { name: /Workflows/ }));
     expect(onNav).toHaveBeenCalledWith('apps');
   });
 
@@ -430,7 +430,7 @@ describe('the collapsed rail does not clip its account menu', () => {
     await mountRail('biopharma', true);
     fireEvent.click(screen.getByTitle('Ada Rowe'));
     const menu = screen.getByRole('menu');
-    expect(within(menu).getByRole('menuitem', { name: /Apps catalog/ })).toBeTruthy();
+    expect(within(menu).getByRole('menuitem', { name: /Workflows/ })).toBeTruthy();
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CLIENT_CATEGORIES.length);
   });
 });

@@ -66,7 +66,7 @@ export interface ShellSurfaceRef {
  * in `Rail` — the account menu offers Admin and Access requests only to admins — and
  * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
  * destination, and that panel's copy branches on it (an admin is offered the
- * Apps catalog or workspace setup; a member is told to ask an administrator).
+ * Workflows or workspace setup; a member is told to ask an administrator).
  * A second copy of this role list would let one customer get two different next
  * steps for one lock depending on whether they came from the rail or the
  * palette, which is exactly the inconsistency the panel exists to prevent.
@@ -141,7 +141,7 @@ export function Rail({
   /* Launch scope is a release boundary, not a licence: a greyed rail entry
      for an app nobody can enable is a dead affordance. Every place is in the
      launch scope today (shellNav.test.tsx); this keeps an entry out if a
-     deployment's verdicts say otherwise. The Apps catalog still lists the app
+     deployment's verdicts say otherwise. The Workflows still lists the app
      with the reason. A feature flag that is off hides its entry as well: the
      one predicate every list of destinations reads (flagAllowsSurface, QA
      2026-10-08 j1), so the rail and Project home's grids never disagree. */
@@ -314,7 +314,7 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
 
 /**
  * The account menu: settings, the client type, help and sign-out
- * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The Apps catalog and
+ * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The Workflows and
  * the client type moved here from the rail's list on 2026-10-08.
  *
  * It is a menu by the WAI-ARIA menu pattern, since the button says it opens
@@ -377,7 +377,7 @@ function AccountMenu({
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     /* Every app, with the reason a locked one is locked. It was an entry in
        the rail's "Explore" section. */
-    { label: 'Apps catalog', ic: 'grid', to: 'apps' },
+    { label: 'Workflows', ic: 'grid', to: 'apps' },
     { sep: true },
     { clientType: true },
     { sep: true },

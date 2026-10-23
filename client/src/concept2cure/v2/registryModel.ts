@@ -109,9 +109,9 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    features of Project home and clinical operations; the CRL library's
  *    precedents reach AnA in the conversation.
  *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
- *    scrap / later); Apps catalog is in the account menu; Artifacts Center's
+ *    scrap / later); Workflows is on the rail and in the account menu; Artifacts Center's
  *    list moves to the conversation's canvas (slice 25) and stays reachable
- *    meanwhile from ⌘K, the Apps catalog, and Live Drive, which opens it when
+ *    meanwhile from ⌘K, the Workflows, and Live Drive, which opens it when
  *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
  *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
  *    opens the conversation in progress. "New conversation" opens Home, which
@@ -148,7 +148,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
  */
 export const RAIL_CORE = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
+  { id: 'apps', label: 'Workflows', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
   { id: 'tasking', label: 'Tasking', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },

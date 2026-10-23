@@ -1,142 +1,151 @@
 // @vitest-environment jsdom
 /**
- * Moving the home's module grid into an overlay must not cost a single
- * capability.
+ * Home's capability discovery converges on the existing Workflows surface.
  *
- * Home used to render every module in the tenant's segment inline, below the
- * composer. That grid now lives in CapabilityBrowser, behind a "Browse all
- * capabilities" trigger. The whole risk of that change is silent loss: a group
- * that stops rendering, an id that no longer resolves, a segment whose modules
- * were only ever reachable from the grid.
- *
- * So the load-bearing test here is PARITY, run per segment rather than once —
- * `SEGMENT_MODULES` is segment-scoped, so proving it for biopharma proves
- * nothing about diagnostics. For every segment the registry knows, every id in
- * `getSegmentModules` must render a button that navigates to exactly that id.
- *
- * The honest-state branches are exercised by forcing them, not by observing the
- * happy path: a segment with no registered modules, and a search that matches
- * nothing, must each say so in words rather than drawing an empty grid.
+ * The former overlay rendered every segment module, including deferred and
+ * duplicate destinations, without the live catalog's access explanations.
+ * The replacement is Home -> apps -> the existing live catalog. Discovery
+ * remains available before a project exists and when the portfolio read fails;
+ * opening it must not create a project, seed a conversation or run a workflow.
+ * Feature reachability and access decisions belong to the catalog's component
+ * tests, rather than a second segment-wide list with a different policy.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
-import { CapabilityBrowser } from '../surfaces/CapabilityBrowser';
-import { SEGMENTS, getSegmentModules, getSurfaceMeta } from '../registryModel';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { firstName: 'Dana' } }),
+}));
+vi.mock('@/hooks/useGlobalRiCatalog', () => ({
+  useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }),
+}));
 
-afterEach(cleanup);
+import { Home } from '../surfaces/Surfaces';
+import { SEGMENTS, getSurfaceMeta } from '../registryModel';
+import { CmdK } from '../Shell';
+import { NavEntitlementsProvider, useNavEntitlements } from '../navEntitlements';
+import { NAVIGATION_TARGETS } from '@shared/navigation';
 
-/* Every segment the rail can put a tenant into. Parity is asserted against each
-   one; a segment with no modules is a legitimate state, not a skip. */
-const SEGMENT_IDS = SEGMENTS.map((s: { id: string }) => s.id);
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..');
+const SEGMENT_IDS = [...new Set([...SEGMENTS.map((segment) => segment.id), 'biotech', 'pharma'])];
+const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
 
-describe('CapabilityBrowser — every module the home used to show is still reachable', () => {
-  it('knows about more than one segment (guards the loop below from vacuity)', () => {
-    expect(SEGMENT_IDS.length).toBeGreaterThan(1);
-  });
-
-  for (const segment of SEGMENT_IDS) {
-    const groups = getSegmentModules(segment) ?? [];
-    const ids = groups.flatMap((g: { items: string[] }) => g.items);
-    if (ids.length === 0) continue;
-
-    it(`renders and navigates every module for "${segment}" (${ids.length})`, () => {
-      const onNav = vi.fn();
-      render(<CapabilityBrowser segment={segment} onNav={onNav} onClose={vi.fn()} />);
-
-      /* Resolve through the same accessor the component uses, so this asserts
-         "the registry's label is on screen" and not "some string is". */
-      for (const id of ids) {
-        const label = getSurfaceMeta(id).label;
-        expect(
-          screen.getAllByRole('button', { name: new RegExp(escapeRe(label)) }).length,
-          `${segment}: no button for ${id} (“${label}”)`,
-        ).toBeGreaterThan(0);
-      }
-
-      /* Navigation carries the ID, not the label — the thing that actually has
-         to survive the move. Sampling the first of each group covers every
-         group without asserting the same wiring N hundred times. */
-      for (const g of groups) {
-        const id = g.items[0];
-        if (!id) continue;
-        onNav.mockClear();
-        fireEvent.click(
-          screen.getAllByRole('button', {
-            name: new RegExp(escapeRe(getSurfaceMeta(id).label)),
-          })[0],
-        );
-        expect(onNav, `${segment}/${g.label}: click did not navigate to ${id}`).toHaveBeenCalledWith(id);
-      }
-      /* One accessible-name role query per module: the cost grows with the
-         registry. At 57 modules a case takes ~4.5s alone and crossed vitest's
-         10s default under the full suite's parallel load in CI (run 12105,
-         2026-09-23). The budget is sized to the work; no assertion changes. */
-    }, 30_000);
-  }
+beforeEach(() => {
+  apiRequest.mockReset();
+  apiRequest.mockResolvedValue(ok({ data: [] }));
+  delete window.C2C_PROJECT;
+  delete window.C2C_CONVO;
+});
+afterEach(() => {
+  cleanup();
+  delete window.C2C_PROJECT;
+  delete window.C2C_CONVO;
 });
 
-describe('CapabilityBrowser — search', () => {
-  const segment = SEGMENT_IDS.find((s) => (getSegmentModules(s) ?? []).length > 0)!;
-
-  it('filters to the typed capability and drops the rest', () => {
-    const groups = getSegmentModules(segment) ?? [];
-    const target = getSurfaceMeta(groups[0].items[0]).label;
-    /* A label from a DIFFERENT group, so the assertion proves filtering rather
-       than the accident of one group happening to be short. */
-    const other = groups
-      .flatMap((g: { items: string[] }) => g.items)
-      .map((id: string) => getSurfaceMeta(id).label)
-      .find((l: string) => !l.toLowerCase().includes(target.toLowerCase()));
-
-    render(<CapabilityBrowser segment={segment} onNav={vi.fn()} onClose={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Search capabilities'), { target: { value: target } });
-
-    expect(screen.getAllByRole('button', { name: new RegExp(escapeRe(target)) }).length).toBeGreaterThan(0);
-    if (other) {
-      expect(screen.queryByRole('button', { name: new RegExp(`^${escapeRe(other)}$`) })).toBeNull();
-    }
-  });
-
-  it('says nothing matched rather than drawing an empty grid', () => {
-    render(<CapabilityBrowser segment={segment} onNav={vi.fn()} onClose={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Search capabilities'), {
-      target: { value: 'zzzzz-no-such-capability' },
-    });
-    expect(screen.getByText(/Nothing matches/i)).toBeTruthy();
-  });
-});
-
-describe('CapabilityBrowser — honest states and dismissal', () => {
-  /* An unresolved segment does NOT produce an empty catalogue: getSegmentModules
-     falls back to SEGMENT_MODULES.biopharma (registryModel.ts:1004). That is why
-     CapabilityBrowser carries no "no modules registered" branch — it could never
-     run. Pinned here because the fallback is surprising, and because it is the
-     premise the missing branch rests on: if this test ever fails, the browser
-     needs that empty state after all. */
-  it('an unresolved segment falls back to the biopharma catalogue, never to empty', () => {
-    render(<CapabilityBrowser segment="__not-a-segment__" onNav={vi.fn()} onClose={vi.fn()} />);
-    const fallback = getSegmentModules('biopharma') ?? [];
-    expect(fallback.length).toBeGreaterThan(0);
-    const label = getSurfaceMeta(fallback[0].items[0]).label;
-    expect(screen.getAllByRole('button', { name: new RegExp(escapeRe(label)) }).length).toBeGreaterThan(0);
-  });
-
-  it('closes on Escape', () => {
-    const onClose = vi.fn();
-    render(<CapabilityBrowser segment={SEGMENT_IDS[0]} onNav={vi.fn()} onClose={onClose} />);
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('is a labelled modal dialog', () => {
-    render(<CapabilityBrowser segment={SEGMENT_IDS[0]} onNav={vi.fn()} onClose={vi.fn()} />);
-    const dlg = screen.getByRole('dialog', { name: /Browse all capabilities/i });
-    expect(dlg.getAttribute('aria-modal')).toBe('true');
-  });
-});
-
-function escapeRe(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function openDiscovery(segment: string) {
+  const onNav = vi.fn();
+  const onAsk = vi.fn();
+  render(<Home segment={segment} onNav={onNav} onAsk={onAsk} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Explore workflows' }));
+  return { onNav, onAsk };
 }
+
+describe('Home reaches the existing Workflows destination', () => {
+  it.each(SEGMENT_IDS)('%s uses the same live discovery path without inventing project context', (segment) => {
+    const { onNav, onAsk } = openDiscovery(segment);
+
+    expect(onNav).toHaveBeenCalledTimes(1);
+    expect(onNav).toHaveBeenCalledWith('apps');
+    expect(onAsk).not.toHaveBeenCalled();
+    expect(window.C2C_PROJECT).toBeUndefined();
+    expect(window.C2C_CONVO).toBeUndefined();
+    expect(screen.queryByRole('dialog', { name: /Browse all capabilities/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Browse all capabilities' })).toBeNull();
+  });
+
+  it('an unknown client type reaches the same destination instead of a biopharma module fallback', () => {
+    const { onNav } = openDiscovery('__unrecognized-client-type__');
+    expect(onNav).toHaveBeenCalledWith('apps');
+    expect(document.querySelector('.capbrowser')).toBeNull();
+    expect(window.C2C_PROJECT).toBeUndefined();
+  });
+
+  it('remains reachable while the portfolio read is pending', () => {
+    apiRequest.mockImplementation(() => new Promise<Response>(() => {}));
+    const { onNav } = openDiscovery('biotech');
+    expect(screen.getByText('Loading your programs…')).toBeTruthy();
+    expect(onNav).toHaveBeenCalledWith('apps');
+    expect(window.C2C_PROJECT).toBeUndefined();
+  });
+
+  it('remains reachable when the portfolio read fails without turning the failure into an empty portfolio', async () => {
+    apiRequest.mockRejectedValue(new Error('Portfolio unavailable'));
+    const { onNav } = openDiscovery('diagnostics');
+    expect(await screen.findByText(/Couldn.t load your programs/)).toBeTruthy();
+    expect(screen.queryByText('No programs yet')).toBeNull();
+    expect(onNav).toHaveBeenCalledWith('apps');
+    expect(window.C2C_PROJECT).toBeUndefined();
+  });
+
+  it('uses the canonical Workflows label without changing the routable surface id', () => {
+    expect(getSurfaceMeta('apps').label).toBe('Workflows');
+    const views = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaceViews.ts'), 'utf8');
+    expect(views).toMatch(/\bapps:\s*\{\s*component:\s*Apps\s*\}/);
+  });
+});
+
+describe('the duplicate discovery presentation is retired', () => {
+  it('removes the overlay implementation and its Home integration after converging on Workflows', () => {
+    const home = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/Surfaces.tsx'), 'utf8');
+    expect(home).not.toMatch(/\bCapabilityBrowser\b|\bbrowseOpen\b|\bsetBrowseOpen\b/);
+    expect(fs.existsSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx'))).toBe(false);
+  });
+});
+
+function AccessReadState() {
+  const access = useNavEntitlements();
+  return <output>{access.resolved ? 'Access resolved' : 'Access pending'}</output>;
+}
+
+describe('nonlicensable records keep their existing command-palette replacement', () => {
+  it.each([
+    { id: 'audit-trail', query: 'Audit trail', label: /^Audit trail/ },
+    { id: 'part11-console', query: '21 CFR Part 11 console', label: /^21 CFR Part 11 console/ },
+  ])('$id stays reachable without a subscribable catalog row', async ({ id, query, label }) => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === '/api/module-subscriptions/navigation') return ok({
+        organizationId: 7, tier: 'standard', industryMode: 'biotech', masterAdmin: false,
+        resolved: true, launchScope: { enforced: true }, surfaces: [],
+      });
+      throw new Error(`Unexpected read: ${url}`);
+    });
+    const onNav = vi.fn();
+    const onAsk = vi.fn();
+    const onAct = vi.fn();
+    const onClose = vi.fn();
+    render(<NavEntitlementsProvider>
+      <AccessReadState />
+      <CmdK open onClose={onClose} onNav={onNav} onAsk={onAsk} onAct={onAct} />
+    </NavEntitlementsProvider>);
+    await screen.findByText('Access resolved');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: query } });
+    const destination = screen.getByRole('button', { name: label });
+    expect(destination.getAttribute('data-locked')).toBeNull();
+    fireEvent.click(destination);
+    expect(onNav).toHaveBeenCalledWith(id);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAsk).not.toHaveBeenCalled();
+    expect(onAct).not.toHaveBeenCalled();
+    expect(NAVIGATION_TARGETS.find((target) => target.id === id)?.scope).toBe('global');
+    expect(window.C2C_PROJECT).toBeUndefined();
+  });
+});

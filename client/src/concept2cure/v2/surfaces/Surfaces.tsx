@@ -27,7 +27,6 @@ import {
 import '../styles/surfaces-v2.css';
 import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
-import { CapabilityBrowser } from './CapabilityBrowser';
 import type { OnboardingWelcome } from '../onboardingWelcome';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 
@@ -162,7 +161,6 @@ export function Home({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [plusOpen, modeOpen]);
-  const [browseOpen, setBrowseOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
   /* `@app` on the front door — the same hook the rail and the thread use. */
   const draftRef = React.useRef<HTMLTextAreaElement>(null);
@@ -452,26 +450,11 @@ export function Home({
             </button>
           ))}
         </div>
-        {/* ── The module grid moved into CapabilityBrowser (2026-09-07) ──
-            This rendered every module in the tenant's segment inline, below the
-            composer — the product's whole capability catalogue on the first
-            authenticated screen, under a composer whose point is that you can
-            just ask. The home is the short head; the catalogue is the long tail
-            and now opens on demand.
-
-            Same data, same `onNav(id)`, same cards: nothing became less
-            reachable, it went from one click to two and gained a search. */}
-        <button type="button" className="landing-browse" onClick={() => setBrowseOpen(true)}>
-          Browse all capabilities
+        {/* One discovery path: the existing live, entitlement-aware catalog. */}
+        <button type="button" className="landing-browse" onClick={() => onNav('apps')}>
+          Explore workflows
         </button>
       </div>
-      {browseOpen && (
-        <CapabilityBrowser
-          segment={segment}
-          onNav={onNav}
-          onClose={() => setBrowseOpen(false)}
-        />
-      )}
     </div>
   );
 }
