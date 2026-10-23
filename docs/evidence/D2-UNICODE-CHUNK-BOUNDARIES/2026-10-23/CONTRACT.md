@@ -14,7 +14,7 @@ For well-formed source text and existing integer chunk-size options:
 4. Chunks stay nonempty, advance, begin at0, end at source.length, and jointly cover every source unit without gaps, including with zero overlap and repeated supplementary characters.
 5. ASCII/BMP text that does not hit a split boundary keeps existing deterministic chunks, spans, separators and page attribution.
 6. The existing chunkAndEmbedDocument path stores each resulting text/offset exactly through UTF-8 and real SQL. Existing exact-source context/identity checks accept newly intact chunks and still refuse corrupted legacy chunks; malformed source encoding is not repaired or relabelled as verified.
-7. No provider API, new tool/model/schema/dependency/integration, source-read receipt or policy changes. Already stored corrupt chunks are not silently rewritten; reindexing remains an explicit operation through the existing path.
+7. No provider API, new tool/model/schema/dependency/integration, source-read receipt or policy changes. Already stored corrupt chunks are not silently rewritten; reindexing remains an explicit operation through the existing path. Ordinary backfill excludes already-chunked rows and retains its separate trimmed-source limitation. Changed cuts may increase chunk count and trigger the unchanged MAX_CHUNKS refusal; no prefix may be indexed. Corrected Unicode starts may change their page attribution to the actual first character. This protects surrogate pairs, not whole grapheme clusters.
 
 ## Qualification sequence
 

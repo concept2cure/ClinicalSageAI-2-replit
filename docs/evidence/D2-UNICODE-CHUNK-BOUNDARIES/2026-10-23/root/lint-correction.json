@@ -1,0 +1,7 @@
+{
+  "initialProductionSha256": "8e545f0ec65a255602a3699fd9281f31a96305441dff2e9b5aa96c9bef9493d1",
+  "currentProductionSha256": "be3c168333f00d315050b5a4f46bfc17919bb81af2c62cce9d36923dc27674ca",
+  "change": "Removed two redundant nullish fallbacks; both codePointAt positions provably exist. Non-null assertions are erased by TypeScript. No test/fixture/assertion/gate/baseline change.",
+  "rangeProof": "On the nonempty loop, selected end>start and end<=text.length: the500minimum and second-half delimiter search keep end-1 in range. After a nonfinal safe end, newstart>=previousstart+1>=1 and <=end<length; start-1 is in range.",
+  "initialQualification": "331 tests/25suites passed; production gained1lintwarning from two unnecessary fallback branches. Initial run preserved, final run required."
+}

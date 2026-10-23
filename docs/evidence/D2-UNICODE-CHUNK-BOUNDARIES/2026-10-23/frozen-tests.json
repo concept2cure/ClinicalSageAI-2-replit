@@ -1,0 +1,31 @@
+{
+  "scope": "Three independent new tests frozen after semantic baseline failure and zero-error/zero-warning lint; before production edits",
+  "baselineHead": "0a7abf3146aeb8cd2fd6965740446c01c013120b",
+  "runHead": "0fff4da02f2d42cca7c2770fe1f2ef8c651f790d",
+  "files": {
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts": "517e92a5a0296735aa9b617db982d447beaf2f94deed7bdcb7a2def566e24b78",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts": "745e91904101a74ce2544415fa2ccfdc98c10ee554963be6c96064b13ba501a3"
+  },
+  "baselineProductionSha256": "6533ceaf11fbc725f487c1b7772665068828eec8b3f5f30fdbdc4dcc24df8ef1",
+  "baselineSelectedInputsUnchanged": 17,
+  "existingRegressionInputsUnchanged": 22,
+  "results": {
+    "tests": 33,
+    "failed": 19,
+    "passedControls": 14,
+    "skipped": 0,
+    "files": 3
+  },
+  "failureClassification": {
+    "pureBoundaryCases": 15,
+    "realStorageCases": 3,
+    "deterministicPropertyCase": 1
+  },
+  "corpus": {
+    "cases": 2688,
+    "baselineChunks": 8080,
+    "chunksWithSplitBoundary": 1019,
+    "chunksChangingInUtf8": 1019
+  }
+}
