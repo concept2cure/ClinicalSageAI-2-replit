@@ -38,5 +38,20 @@
     "onboardingDraftRevision": 5,
     "agencyAcceptanceClaimed": false,
     "universalLegalCompletenessClaimed": false
+  },
+  "postQualificationMerge": {
+    "sourceCommit": "bcd9a6296fbee3765e9c0da606e43bad327decc8",
+    "upstream": "0a15a0725731eb50d33ca25902c67ca3421da792",
+    "additionalUpstreamCommits": 8,
+    "companySourcePinsUnchanged": 291,
+    "additionalIndependentTests": {
+      "files": 6,
+      "passed": 81,
+      "failed": 0,
+      "evidence": "concurrent/verification-2026-10-23.json"
+    },
+    "combinedProductionBuildPassed": true,
+    "buildTranscriptSha256": "73c97073c2c4c1186a489d1a80065a772b809f7aa742575f725edeb65cd2f6be",
+    "publicationChecks": "Mandatory pre-push hooks run again on the combined tree before Git can publish it."
   }
 }

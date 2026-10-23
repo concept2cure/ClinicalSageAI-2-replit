@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:19:41.003490+00:00",
+  "purpose": "Qualify the eight concurrently landed upstream commits after the company-document source freeze. This evidence is independent of and not added to the company-document unique-case total.",
+  "upstreamRange": {
+    "from": "55f75b72fac95a387d3b72e82a1998a08ff5ef96",
+    "to": "0a15a0725731eb50d33ca25902c67ca3421da792"
+  },
+  "checkedOutCommit": "bcd9a6296fbee3765e9c0da606e43bad327decc8",
+  "whatAlreadyExists": [
+    {
+      "path": "server/services/ai-gateway/context-budget.ts",
+      "responsibility": "Approximate full-request estimation, fit policy and typed GatewayContextWindowError; no admission-engine change in this range."
+    },
+    {
+      "path": "server/services/ai-gateway/gateway-error-map.ts",
+      "responsibility": "Canonical safe error/status classification; the explicit prior-work option retains default classification and appends fixed guidance only for a genuine typed context refusal."
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "responsibility": "Canonical stream, timeline, run settlement, authoritative stops and turn-record consequences; context failure now carries through the existing channels."
+    },
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "responsibility": "Classic chat response and failed-turn record; context refusal uses the existing 413 mapping, preserving raw-body422 and generic503 paths."
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/useAnaChat.ts",
+      "responsibility": "Existing HTTP/SSE client recovery and bounded turn-record parsing; retains sanitized context guidance and partial text without automatic replay."
+    }
+  ],
+  "verification": {
+    "command": "vitest run [six exact test paths below] --maxWorkers=1 --reporter=verbose --reporter=json",
+    "nodeMajor": 22,
+    "suiteFiles": 6,
+    "passed": 81,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "runnerJsonSha256": "ee0a0b392f6b59c62064f51388ce4008206cf2dc172261c5dccae5c29564d436",
+    "runnerLogSha256": "79038c4263011abbbcaa803bf230aaa0ac40539980236c397ccbaeca1e3cc1e2",
+    "files": [
+      {
+        "file": "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts",
+        "passed": 11,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "server/routes/chat/__tests__/send-message-context-window.test.ts",
+        "passed": 7,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+        "passed": 20,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts",
+        "passed": 9,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "server/services/ana/__tests__/context-window-executor-carry.test.ts",
+        "passed": 3,
+        "failed": 0,
+        "pending": 0
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts",
+        "passed": 31,
+        "failed": 0,
+        "pending": 0
+      }
+    ]
+  },
+  "reviewedIntegration": [
+    "Only genuine GatewayContextWindowError instances receive canonical numeric context guidance and the fixed warning that earlier tool actions or receipts may exist. Copied class names, codes, provider details and generic errors are not promoted.",
+    "Authoritative cancellation and already-ended administrator stops retain their stopped outcome, done/post_done carrier, partial answer and tool evidence when racing a context refusal.",
+    "Pre-header refusal closes recording without prematurely opening SSE and returns the existing413 envelope; an opened stream uses its existing error carrier and explicit turn-record status.",
+    "Client HTTP/SSE paths retain safe fixed fallback, sanitized server text, bounded recorded/not-recorded status and exact partial reply; independent audit/access/rate/raw-body controls remain distinct.",
+    "Existing native executor propagation and full-request token-cost controls execute; no source/result byte truncation, tool replay or new budget policy is introduced by these four production edits."
+  ],
+  "qualificationLimits": [
+    "Provider, gateway, source admission and database boundaries use the existing deterministic test harnesses; this does not establish live provider dispatch, production database durability or whole-turn rollback.",
+    "Context admission remains approximate; these tests do not qualify exact tokenizer or serialized provider payload size.",
+    "No production edits, new tests, dependency changes or remote publication were performed by this review. Full build, normal push hooks and publication verification are owned by the parent controller."
+  ],
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts",
+      "sha256": "32241c9cc91241fab9911a51c47d98c8178b05a4e6acf91e55131d9bc8f06f1b"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/useAnaChat.ts",
+      "sha256": "1ae18f34277d318de67a93feb85aff18c5178390c2fc361e799ec264d6eabca1"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts",
+      "sha256": "22883ed2e2acb0eea2d9e1b6ed585e2709c250c16d8b4329348dcdf83c6b885a"
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "d35e5775faa1004c603052f9f2898b4eaa3b530539fd22a479232402e6a2d45a"
+    },
+    {
+      "path": "server/routes/chat/__tests__/send-message-context-window.test.ts",
+      "sha256": "6972af21c5acc9e50b18aa4fe704d13fb51c9f1cccb28bdd531f219388081c3e"
+    },
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "sha256": "7f97b3b5fdd7adcbd759072933733c484a8dfd02eaedc8e6540ca6a404af16f1"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+      "sha256": "fd5ec0fc4e3130510500e7dd3ec4ea248e5b26e0b12855e8f8e5b986295cb226"
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts",
+      "sha256": "769fb1bbae6d8ea3b3c34b8e4610e6aed92b0dbb26ee5c8fc7072cf35721a116"
+    },
+    {
+      "path": "server/services/ai-gateway/gateway-error-map.ts",
+      "sha256": "fb162287a12defca16c65b997464c519bc0a8d0b9b20a08755c7caa285d4120c"
+    },
+    {
+      "path": "server/services/ana/__tests__/context-window-executor-carry.test.ts",
+      "sha256": "1a31b8138f91871ba6dd0c3c4a1c25c5263ae7198d891467e0b080a7c871f4f0"
+    }
+  ]
+}
