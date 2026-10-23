@@ -1,0 +1,14 @@
+{
+  "reviewedAt": "2026-10-23T15:14:47.804858+00:00",
+  "scope": "Publication supplement only; source, tests, config, dependencies, warning baselines and hooks unchanged after accepted code push.",
+  "acceptedCodeHead": "264560f40a3d984289d5fb3311d0986094735410",
+  "pushExitCode": 0,
+  "wholeTreeTypeScriptErrors": 0,
+  "normalHooksPassed": true,
+  "freshRemoteCodeBytesVerified": true,
+  "selectedInputFiles": 682,
+  "qualifiedArtifactFilesAtCodeHead": 134,
+  "retainedAncestorsAtCodeHead": 44,
+  "historicalManifestScope": "Original96 artifacts and104sources checked at a8d recorded head; current publication manifest separately pins amended README/CONTRACT and supplements.",
+  "next": "Commit/push evidence-only supplement with normal hooks and final fresh-fetch clean synchronization verification."
+}

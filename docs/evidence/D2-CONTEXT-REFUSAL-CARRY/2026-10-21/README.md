@@ -88,3 +88,9 @@ zero errors and the same 80 existing warnings (zero growth). All 682 selected
 source/test/config inputs are pinned; this selection is not an exhaustive
 dependency graph. See [merged qualification](root/resume-qualification.json)
 and [publication](PUBLICATION.md) for normal push and remote verification.
+
+Code was pushed normally as `264560f40a3d984289d5fb3311d0986094735410`. All gates passed, including
+whole-tree TypeScript with zero errors. A fresh fetch verified identical local
+and remote heads, all 682 selected inputs, 134 qualification artifacts and 44
+retained ancestors; no merge conflicts remained. Publication proof follows in
+the same canonical branch.
