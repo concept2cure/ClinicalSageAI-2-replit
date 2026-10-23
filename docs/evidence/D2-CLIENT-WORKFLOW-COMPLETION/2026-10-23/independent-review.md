@@ -195,3 +195,56 @@ includes the control tower's comment-only integration; its canonical
 | `server/services/pathway-engines/estar/estar-attachment-slots.ts` | `2291cdb0637cf3888f92074db4132a3c4820bb763dd5a2eedb2e0800e253da04` |
 | `server/services/pathway-engines/estar/estar-attachment-source-access.ts` | `c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be` |
 | `shared/regulatory/estar-attachment-manifest.ts` | `cad704de9438f0251cd39d482562701fff6c732180ba5e1e5519a26555a7c633` |
+
+## Addendum — normal SQL interpolation gate registration
+
+Independent review found no blocking defect in the frozen CI-only correction
+recorded by `sql-predicate-qualification.json`. The first normal push was
+correctly stopped by the SQL interpolation gate because the newly reached
+canonical predicate caller had not been registered. That failed attempt is
+retained in `canonical-push-1.{json,log.gz}`; later hooks had not yet run.
+
+The existing `approved-sql-predicates.mjs` now registers only
+`server/services/pathway-engines/estar/estar-attachment-source-access.ts`,
+the unshadowed named import `vaultBinaryAvailableSql` from
+`../../document-data-disposition/eligibility`, and literal alias `d`.
+The reviewer independently removed the exact four added registration lines
+from the reviewed bytes and obtained the pre-registration RED helper hash.
+Thus no shared AST proof logic or broader caller allowance changed. The SQL
+interpolation baseline is unchanged, and all 23 application/fixture pins above
+still match the qualified implementation manifest.
+
+The new AST and real-gate fixtures reject wrong imports, dynamic/request,
+wrong/escaped/SQL-bearing aliases, shadowed helpers, unreviewed callers and
+other eligibility builders. An additional request interpolation beside the
+proved predicate remains counted; concatenating a request value into that
+predicate expression receives no proof. Existing generic proof controls also
+retain type-only/renamed import, malformed syntax and exact-offset boundaries.
+
+The reviewer inspected the retained RED/GREEN receipts and source, without
+running tests or Git. RED AST: 33 passed / two expected failures; the full
+selftest also had two expected failures before registration. Both failing
+cases require the missing exact proof. Test bytes are identical across RED and
+GREEN. GREEN AST: 35 passed; GREEN real-gate selftest: 35 passed; the real
+repository SQL gate exits zero with the unchanged 1,072 baseline interpolations
+in 225 files. Forced lint has zero errors and eight existing warnings before
+and after. Evidence is `sql-predicate-{red,green-runs,qualification}.json`,
+`sql-predicate-{red,green}-{ast,selftest}.log.gz`,
+`sql-predicate-green-gate.log.gz` and `sql-predicate-eslint-{before,after}.json`.
+
+This syntax proof retains the existing disclosed blind spots for preassembled
+SQL variables and string concatenation; the two known-gap selftest examples
+are explicitly excluded from the 35 passing count. It does not replace the
+canonical helper's policy tests or qualify arbitrary SQL injection resistance.
+No production source, lifecycle/access policy or interpolation baseline changed.
+Normal publication must still complete every remaining hook; this addendum
+does not claim a successful push or human acceptance.
+
+| Reviewed or preserved path | SHA-256 |
+| --- | --- |
+| `scripts/ci/lib/approved-sql-predicates.mjs` | `3f977756c9629333aed868b236c743cde78608e9039a64d6f32c75cab1e64d5e` |
+| `scripts/ci/lib/approved-sql-predicates.test.mjs` | `2a0ce4defaae0660d11abd32b49b1a684db2c94f6eee178c99e26bff0029f39c` |
+| `scripts/ci/check-sql-interpolation.selftest.mjs` | `3c1dd471469d64bd9b5cf8933349a610f0ee35a5a2d4dd6a1fbf91632dc0b706` |
+| `scripts/ci/check-sql-interpolation.mjs` | `833e19e093ff0cd08040769c45dc1db7b258eac36f66dcfbb55bba020694d3ba` |
+| `scripts/ci/sql-interpolation-baseline.json` | `098f9ab816f32635c9e2d24bc5340f86e3b667b89c99b9a335124f46bf1bc2e8` |
+| `server/services/pathway-engines/estar/estar-attachment-source-access.ts` | `c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be` |

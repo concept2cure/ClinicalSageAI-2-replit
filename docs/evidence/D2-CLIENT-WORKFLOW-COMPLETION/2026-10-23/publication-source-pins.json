@@ -32,5 +32,11 @@
   "humanAcceptance": "Not run",
   "publication": "pending normal push; evidence-only commits preserve the source fingerprints",
   "integratedHeadBeforePublication": "9acb44bbac3a442981fdafe5d9f6728f9ed0c231",
-  "reportingCatchUp": "reporting-integration-summary.json"
+  "reportingCatchUp": "reporting-integration-summary.json",
+  "safetyGateSource": {
+    "scripts/ci/lib/approved-sql-predicates.mjs": "3f977756c9629333aed868b236c743cde78608e9039a64d6f32c75cab1e64d5e",
+    "scripts/ci/lib/approved-sql-predicates.test.mjs": "2a0ce4defaae0660d11abd32b49b1a684db2c94f6eee178c99e26bff0029f39c",
+    "scripts/ci/check-sql-interpolation.selftest.mjs": "3c1dd471469d64bd9b5cf8933349a610f0ee35a5a2d4dd6a1fbf91632dc0b706"
+  },
+  "safetyGateQualification": "sql-predicate-qualification.json"
 }

@@ -54,6 +54,12 @@ W1 / D2; product and publication branch `concept2cure-v2`. Evidence:
   chapter-path expression and manifest seeds. Move those existing constants
   to `shared/regulatory/estar-attachment-manifest.ts` with server re-exports
   for the browser receipt reader; do not create a competing format policy.
+- `scripts/ci/lib/approved-sql-predicates.mjs` already proves exact imported
+  predicate builders and fixed literal aliases per caller. The normal push
+  gate does not yet recognize this resolver's `vaultBinaryAvailableSql('d')`
+  import from `../../document-data-disposition/eligibility`. Register only
+  that exact caller/import/helper/alias and extend its existing anti-shadowing
+  and injection tests. No interpolation baseline or general allowance changes.
 - Searches covered eSTAR/official/attachment/slot/Vault/placement/version and
   existing route, service, UI, AnA and test references, plus
   `git log --all --diff-filter=D -- '*estar*' '*Estar*' '*attachment*'`.

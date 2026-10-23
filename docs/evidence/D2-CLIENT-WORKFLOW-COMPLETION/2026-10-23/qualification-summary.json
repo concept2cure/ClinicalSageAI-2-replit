@@ -30,5 +30,14 @@
     "build": "passed",
     "all23ImplementationFilesUnchanged": true,
     "typescript": "normal pre-push gate required"
+  },
+  "publicationGateCorrection": {
+    "firstPush": "canonical-push-1.json",
+    "applicationSourceUnchanged": true,
+    "sqlInterpolationBaselineUnchanged": true,
+    "astCasesPassed": 35,
+    "gateSelfTestsPassed": 35,
+    "repositorySqlGate": "passed",
+    "details": "sql-predicate-qualification.json"
   }
 }

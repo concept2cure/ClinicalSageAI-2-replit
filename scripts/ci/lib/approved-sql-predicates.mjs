@@ -13,6 +13,9 @@ const ARTIFACT_BUILDERS = new Map([
 const REPORT_VAULT_BINARY_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility'],
 ]);
+const ESTAR_VAULT_BINARY_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../../document-data-disposition/eligibility'],
+]);
 // The Vault's one metadata predicate (VR-18, 2026-10-22): fixed fragments with a
 // literal alias, shared by the search and the tree so a filtered total and the
 // tree's counts cannot disagree. No value reaches them; filter values are bound.
@@ -36,6 +39,7 @@ const CALLERS = new Map([
   ['server/services/autoExtractionPipeline.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/keywordExtractionService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/report-os/report-package-legal.ts', { alias: 'd', builders: REPORT_VAULT_BINARY_BUILDERS }],
+  ['server/services/pathway-engines/estar/estar-attachment-source-access.ts', { alias: 'd', builders: ESTAR_VAULT_BINARY_BUILDERS }],
 ]);
 
 function canonicalBindings(sourceFile, checker, builders) {

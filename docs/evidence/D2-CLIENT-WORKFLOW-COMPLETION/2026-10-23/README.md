@@ -36,6 +36,10 @@ Design: `docs/design/ESTAR_VAULT_ATTACHMENT_COMPLETION_2026-10-23.md`.
   `client/src/concept2cure/v2/mutationOutcome.ts` and re-exported for existing
   callers. Existing server manifest seeds/chapter format are shared through
   `shared/regulatory/estar-attachment-manifest.ts` with server re-exports.
+- The existing AST proof in `scripts/ci/lib/approved-sql-predicates.mjs`
+  recognizes reviewed predicate imports/literal aliases. Its exact-callsite
+  registration must include this resolver's existing canonical byte-eligibility
+  helper; the raw SQL interpolation baseline remains unchanged.
 
 Full discovery paths, boundaries and test contract are in the design above.
 No human acceptance, native Acrobat, live-provider or agency qualification is
@@ -118,3 +122,15 @@ zero failures/skips, and a successful rebuilt product. All 23 qualified eSTAR
 implementation fingerprints remain unchanged. This separate epoch is retained
 in `reporting-integration-summary.json`; the normal pre-push compiler gate must
 pass on the integrated publication head.
+
+## Publication gate correction
+
+The first normal push refused an unregistered canonical SQL predicate call.
+The existing AST proof now recognizes only this exact source-access caller,
+its canonical helper import and literal alias `d`. The proof algorithm and
+raw interpolation baseline are unchanged. **35 AST cases and 35 gate
+self-tests pass**, including shadowing, wrong import/alias, dynamic arguments
+and neighboring raw-value refusals; the real repository SQL gate passes.
+All 23 qualified application files remain unchanged. See
+`sql-predicate-qualification.json` and the appended independent review.
+Pre-existing checker gaps remain documented in its self-tests.

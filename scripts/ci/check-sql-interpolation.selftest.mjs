@@ -47,6 +47,8 @@ const ELIGIBILITY_IMPORT = "import { vaultDataEligibleSql, vaultBinaryAvailableS
 const SUPERSEDED_IMPORT = "import { supersededSql } from '../vault/vault-version-family.js';\n";
 const REPORT_CALLER = 'server/services/report-os/report-package-legal.ts';
 const REPORT_BINARY_IMPORT = "import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility';\n";
+const ESTAR_CALLER = 'server/services/pathway-engines/estar/estar-attachment-source-access.ts';
+const ESTAR_BINARY_IMPORT = "import { vaultBinaryAvailableSql } from '../../document-data-disposition/eligibility';\n";
 
 function run(files, baseline) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sqli-gate-'));
@@ -176,6 +178,37 @@ const cases = [
     name: 'RED — report caller does not gain other canonical builder allowances',
     files: { [REPORT_CALLER]: "import { vaultDataEligibleSql } from '../document-data-disposition/eligibility';\n" + call("vaultDataEligibleSql('d')") },
     baseline: {}, expectExit: 1, expectIn: [`${REPORT_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'quiet — eSTAR attachments use only the exact canonical binary predicate and literal alias',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT + call("vaultBinaryAvailableSql('d')") },
+    baseline: {}, expectExit: 0,
+    expectIn: ['1 fixed canonical predicate(s)', "vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility", '0 baselined interpolation(s)'],
+  },
+  {
+    name: 'RED — eSTAR wrong helper import receives no proof',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT.replace('../../document-data-disposition/eligibility', '../document-data-disposition/eligibility') + call("vaultBinaryAvailableSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${ESTAR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — eSTAR dynamic alias receives no proof',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT + "const alias = 'd';\n" + call('vaultBinaryAvailableSql(alias)') },
+    baseline: {}, expectExit: 1, expectIn: [`${ESTAR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — eSTAR shadowed helper receives no proof',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT + `async function bad(vaultBinaryAvailableSql) { ${call("vaultBinaryAvailableSql('d')")} }` },
+    baseline: {}, expectExit: 1, expectIn: [`${ESTAR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — eSTAR extra request interpolation remains counted',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT + call("vaultBinaryAvailableSql('d')", 'req.query.filter') },
+    baseline: {}, expectExit: 1, expectIn: ['1 fixed canonical predicate(s)', `${ESTAR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — eSTAR cannot approve another eligibility builder',
+    files: { [ESTAR_CALLER]: ESTAR_BINARY_IMPORT.replaceAll('vaultBinaryAvailableSql', 'vaultDataEligibleSql') + call("vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${ESTAR_CALLER}: 1 value(s)`],
   },
   {
     name: 'RED — a same-named helper imported from another module receives no proof',

@@ -1,0 +1,32 @@
+[
+  {
+    "label": "ast",
+    "command": [
+      "node",
+      "--test",
+      "scripts/ci/lib/approved-sql-predicates.test.mjs"
+    ],
+    "exitCode": 0,
+    "log": "sql-predicate-green-ast.log.gz"
+  },
+  {
+    "label": "selftest",
+    "command": [
+      "npm",
+      "run",
+      "ci:sql-interpolation:selftest"
+    ],
+    "exitCode": 0,
+    "log": "sql-predicate-green-selftest.log.gz"
+  },
+  {
+    "label": "gate",
+    "command": [
+      "npm",
+      "run",
+      "ci:sql-interpolation"
+    ],
+    "exitCode": 0,
+    "log": "sql-predicate-green-gate.log.gz"
+  }
+]
