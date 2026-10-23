@@ -77,11 +77,22 @@ in the ingest service, `.de-btn` across every stylesheet, `translateY(-1px)` (63
 `.c2c-v2 .dr2-find` rules were defined in `coverage-v2.css`. They are folded into one, and the
 computed style is unchanged. The gate now reports 0 new.
 
-## Not done (stopped at the founder's request)
+## Re-walked in the app (2026-10-23, trunk `d019ca3d7`)
 
-- **The in-app re-walk.** The driver (`../2026-10-21-ind-reference-lane/driver/walk.mjs`) now
-  asserts both fixes: it opens nothing itself after an upload, and the submit button must
-  settle under a resting pointer, with no force-click. **It has not been run with these
-  changes.** That is the next step.
+The lane database was migrated as a deploy would migrate it (425/425 files). The six clicks were
+then walked in headless Chromium with the updated driver
+(`../2026-10-21-ind-reference-lane/driver/walk.mjs`), which clicks nothing to open a document and
+never force-clicks. The walk exited 0. Its transcript is `rewalk/clicks-1-6-transcript.txt`.
+
+- **Click 3b.** "opened after the upload: BX-512-analytical-procedures", with nothing clicked. The
+  submit button under a resting pointer is "settled (top edge over 40 frames: 840.5)", where it
+  was 840.5 and 839.5 before. Screenshot: `rewalk/c3b-vault-v1-placed-0000.png`.
+- **Click 6c.** The check-in recorded v2.0, and the Vault opened it by itself
+  (`rewalk/c6c-vault-v2-checked-in.png`). The submit button settled, and the click was a plain
+  click.
+- **Click 6d.** Unchanged: `replace` 3.2.S.4.2 and `delete` 3.2.S.4.
+
+## Still open
+
 - **No board row was claimed** for these follow-ups.
 - **HawkScan was not run**, because there is no `HAWK_API_KEY`.
