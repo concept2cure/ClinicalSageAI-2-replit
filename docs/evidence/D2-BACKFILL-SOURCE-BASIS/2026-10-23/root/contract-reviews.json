@@ -1,0 +1,9 @@
+{
+  "inventoryReviewer": "backfill_basis_inventory",
+  "inventoryVerdict": "CLEAR",
+  "validationReviewer": "backfill_basis_validation",
+  "validationVerdict": "CLEAR",
+  "acceptedWordingRefinement": "adds no automatic historical reindex policy; existing embedding upgrades remain unchanged",
+  "productionChanged": false,
+  "newTestsRun": false
+}
