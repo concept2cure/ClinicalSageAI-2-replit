@@ -54,3 +54,15 @@ inputs are not an exhaustive dependency graph.
 Actual normal push, TypeScript and remote-verification evidence is recorded in
 [publication](PUBLICATION.md). Tool-step rounds and later model inputs remain
 unavailable through these entry points and the record explicitly says so.
+
+## Erased fixture-cast correction
+
+The first normal code push was refused by its whole-tree TypeScript gate:
+TS2352 caught a test fixture deliberately casting unknown model metadata to a
+complete gateway response. Root added only an erased `unknown` bridge. Original
+frozen bytes and the exact one-line diff remain under `root/typecheck-correction*`;
+transpiled runtime JavaScript is byte-identical. Assertions, fixture values,
+production code and policy are unchanged. Original frozen/source manifests are
+historical at `a36245bc48c865fdb3ca5cd5d238ac52ba06043b`; current manifest copies
+explicitly identify the correction. Current full regression, lint and normal
+push outcomes are recorded separately. No type or warning baseline was raised.

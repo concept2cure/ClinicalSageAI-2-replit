@@ -1,0 +1,13 @@
+{
+  "typescriptVersion": "5.6.3",
+  "compilerOptions": {
+    "target": 9,
+    "module": 99,
+    "sourceMap": false,
+    "inlineSourceMap": false
+  },
+  "originalJavaScriptSha256": "8d7459f37b917f610ec4ef34c21dde43663eb55e218ccdce3eaaa64774cf5906",
+  "currentJavaScriptSha256": "8d7459f37b917f610ec4ef34c21dde43663eb55e218ccdce3eaaa64774cf5906",
+  "runtimeJavaScriptIdentical": true,
+  "note": "Erased unknown bridge only; no test assertion, fixture value or production behavior changed."
+}

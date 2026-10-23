@@ -93,7 +93,7 @@ function agentApp(withClient = true) {
 
 function response(provider: unknown, model: unknown, requestId: unknown): AnaGatewayResponse {
   return { provider, model, requestId, content: ANSWER, thinking: 'Synthetic reasoning.', toolUses: [],
-    usage: { inputTokens: 11, outputTokens: 7, totalTokens: 18 }, latencyMs: 2 } as AnaGatewayResponse;
+    usage: { inputTokens: 11, outputTokens: 7, totalTokens: 18 }, latencyMs: 2 } as unknown as AnaGatewayResponse;
 }
 const initial = () => response('openai', 'gpt-4o', 'req-initial');
 const final = () => response('anthropic', 'claude-opus-5-5', 'req-repeat');

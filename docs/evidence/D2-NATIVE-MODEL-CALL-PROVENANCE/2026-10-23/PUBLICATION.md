@@ -29,3 +29,10 @@ inputs remain identical; those selected inputs are not an exhaustive graph.
 Normal direct push, whole-tree TypeScript and fresh remote Git-byte/ancestry
 verification will be recorded after those operations finish. No branch, PR,
 force or hook bypass is used.
+
+The first normal push was blocked on one TS2352 in the deliberately incomplete
+native-host test fixture. The only correction is an erased `unknown` bridge;
+original bytes, first rejection log, exact diff and identical-runtime-JavaScript
+proof remain in `root/`. No test assertion, fixture value, production behavior
+or baseline changed. Current source/frozen manifests identify this revision;
+corrected-source regression and actual accepted push are recorded separately.

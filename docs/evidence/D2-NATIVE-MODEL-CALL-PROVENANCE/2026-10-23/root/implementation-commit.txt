@@ -1,0 +1,49 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/ana-intelligence.ts
+server/routes/chat/send-message.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/ana-intelligence.ts (711 lines)
+  server/routes/chat/send-message.ts (1391 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3400 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 8aaefa580] Retain every returned model in native AnA turn records
+ 25 files changed, 7517 insertions(+), 8 deletions(-)
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/PUBLICATION.md
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/qualification-artifact-manifest.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/qualification-source-manifest.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/final-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/final-exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/final-results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/final.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/freeze-commit.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/green-command.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/green-exit.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/green-results.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/green.txt
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/helper-refactor.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-final-review.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-final.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-green.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/lint-review.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/prepublication-incoming.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/qualification.json
+ create mode 100644 docs/evidence/D2-NATIVE-MODEL-CALL-PROVENANCE/2026-10-23/root/reviews.json
