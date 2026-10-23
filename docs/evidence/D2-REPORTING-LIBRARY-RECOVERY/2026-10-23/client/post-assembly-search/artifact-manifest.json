@@ -1,0 +1,16 @@
+[
+  {
+    "artifact": "integration.json.gz",
+    "uncompressedBytes": 29475,
+    "uncompressedSha256": "8dcd97f96d681664351367e86c45e72619acfe17f2568ea883414d632b05c43d",
+    "compressedBytes": 3684,
+    "compressedSha256": "87327460f72d5604b9a47ea7b375cc5d1772091459e4a8813afd8a20f2f9c991"
+  },
+  {
+    "artifact": "integration.txt.gz",
+    "uncompressedBytes": 18271,
+    "uncompressedSha256": "98f1b06c6ff46fe140c016e7008155806a2db2e3a8e5c4b951c19a1ed177eaaa",
+    "compressedBytes": 2739,
+    "compressedSha256": "b96bdff56468e27775e8e2b8d972d0696b1f22fe6cf867879d1fad23708e625d"
+  }
+]

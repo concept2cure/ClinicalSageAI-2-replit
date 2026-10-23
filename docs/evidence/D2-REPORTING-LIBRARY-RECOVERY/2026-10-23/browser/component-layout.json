@@ -1,0 +1,578 @@
+{
+  "scope": "Serialized actual mounted reporting artifact pane, built CSS. No shell/events/live authenticated acceptance.",
+  "styles": [
+    {
+      "path": "dist/public/assets/index-CQkeOtwt.css",
+      "sha256": "1121dc817dbf0ab774046f13777dde03848f803c0206e68f8b9e7e0788bbdde7"
+    },
+    {
+      "path": "dist/public/assets/V2App-B1Ncx2Ue.css",
+      "sha256": "9c18e26ecd6d9823f9169839b2af9ae3fc5af9eed0d09e40210d2bdfc1863b82"
+    },
+    {
+      "path": "dist/public/assets/AdminAccess-xhPEI8Z8.css",
+      "sha256": "81148c9f7926be9f9b55394f1469d6e27103aa9fcd1849c84987955080cc2cf1"
+    },
+    {
+      "path": "dist/public/assets/ClientPortal-Df7niGAt.css",
+      "sha256": "9a81e351a624fb3ae840e72036c26c0896565bc2724efae3e5ff1d42dd9f61e8"
+    },
+    {
+      "path": "dist/public/assets/EctdCoauthor-WxR4wiGp.css",
+      "sha256": "77d4ff9516b79a6c49ddb8f873f2f81d846f4891ff19fffd94c71da8596decbb"
+    },
+    {
+      "path": "dist/public/assets/EsignModal-DY4l-xU8.css",
+      "sha256": "41b6eba0e8277c02f5e375ce711b2833e1e0b6d245152b0b497fc135229fc249"
+    },
+    {
+      "path": "dist/public/assets/GovernedConfirmDialog-BAvPP0yZ.css",
+      "sha256": "f4973efb81a35803e67bc811c949ecba69be67cd826edb5944230f04626f2783"
+    },
+    {
+      "path": "dist/public/assets/Insights-DugMOhtx.css",
+      "sha256": "b97e6c58608a599cb86214dd9a0ecc01d3da4e10fe3219beef2e434ff0f32798"
+    },
+    {
+      "path": "dist/public/assets/Intelligence-Cn63MxwQ.css",
+      "sha256": "c9bbcb0afd15636786dbe6c5c962c552ff6a6574dae546447a1145eb1c60f8a9"
+    },
+    {
+      "path": "dist/public/assets/MasterLicensing-CSgZ4t6r.css",
+      "sha256": "e4271d0122480eac6299b178cc83a1da85f1eb516b0351aa8ba05e60ae2901c4"
+    },
+    {
+      "path": "dist/public/assets/MdxSurfaceHost-B03qnq2W.css",
+      "sha256": "e7ae1a8b21db9c138714489c56abbfe3ea41429c25e67babaebbe3a66982f5cb"
+    },
+    {
+      "path": "dist/public/assets/Onboarding-1aQVXd4a.css",
+      "sha256": "e229a234f04a02504d41d6a06de0ca24074558f41f8a23d7119344fd1683b02e"
+    },
+    {
+      "path": "dist/public/assets/OnboardingIngest--f7BZU_h.css",
+      "sha256": "b78da74a0cef983e192a839bb1eb6bff71d8eb63aafaf52b5b0837d4a7ec97ce"
+    },
+    {
+      "path": "dist/public/assets/PdevRoute-BvTaZFQ6.css",
+      "sha256": "54e70f1c9a747e2dd8593d2e308ecf96ed5e0e58e24d1f7cae818a1d3c04f630"
+    },
+    {
+      "path": "dist/public/assets/ProtocolDev-CzvCduh-.css",
+      "sha256": "2f3b8258a4e713c1c25bc87fe4df064b5c19c1d2b97ff5ec3854b7e7765b6d4b"
+    },
+    {
+      "path": "dist/public/assets/Pyramid-CbR3Xx2c.css",
+      "sha256": "3563f341dfdbed84cb830e5dcd20cd7258d63399dc18684359441e3b77a90f61"
+    },
+    {
+      "path": "dist/public/assets/QualityModule-7idVffPF.css",
+      "sha256": "74eb26166ad94784a5c5fa27495eb2deecf39c67095318ca307574f4df9b5f62"
+    },
+    {
+      "path": "dist/public/assets/Rbm-BfE-ugYt.css",
+      "sha256": "6a9801993d0f1027d9de7e377483669e8b27ff06b6a99a5b16dfe6644becb73e"
+    },
+    {
+      "path": "dist/public/assets/RedlineText-DBgVI_xu.css",
+      "sha256": "808b96578ca90405a1f5bb29a0347ff0eee0e1069ea0cb2006dd15e340fb9e3a"
+    },
+    {
+      "path": "dist/public/assets/Review-CGMT1O2r.css",
+      "sha256": "bc51beba0a431f03d0d941a12da80b1281674871bdd9dbada7f3cdaabf5e6af5"
+    },
+    {
+      "path": "dist/public/assets/RichSectionEditor-CsLGNfpk.css",
+      "sha256": "63acf2c486ae2285f3bb3368a35b428d2d4d7e1fb07bcec18eb052c6a2b24c00"
+    },
+    {
+      "path": "dist/public/assets/SessionPolicySetting-DlIRNv18.css",
+      "sha256": "a61872019c59da104ea971993869c3b4d54d65f1a80bc096965b1d223e6e442f"
+    },
+    {
+      "path": "dist/public/assets/SubmissionCenter-DK_y2NA8.css",
+      "sha256": "68f16be8765d4faf99494919732f62f70d4caa4a14c13429d0b6f4a764988a1c"
+    },
+    {
+      "path": "dist/public/assets/VaultLibraryResults-Cnlcxs1z.css",
+      "sha256": "8df0d408c091d1efb590e89aa790e1044cb75f2facc0876e543d5c49fafb29ec"
+    },
+    {
+      "path": "dist/public/assets/ZenRouter-BbLT-fZv.css",
+      "sha256": "a7497d679da763df659cca84360638c75933dabbefc008795ea22b7689f209e0"
+    },
+    {
+      "path": "dist/public/assets/ana-skills-Gc2BKvST.css",
+      "sha256": "6969b50e3fb6330b0d6e5e626030cfe8ee22947f329dd09033d554804a37a5dd"
+    },
+    {
+      "path": "dist/public/assets/ana-v2-B_qTrbu9.css",
+      "sha256": "3669b5f6b8318929f43db3b2940228e8a1cec7d01342118dddc11791c16667f4"
+    },
+    {
+      "path": "dist/public/assets/commcenter-v2-DdJzkzwC.css",
+      "sha256": "e89d3737f2afd5c5a14c4e7255fe196ad10ca7137d401b9da2663635a1237644"
+    },
+    {
+      "path": "dist/public/assets/company-documents-ozlLbCYb.css",
+      "sha256": "99d18df1e60ad4f2f12d8e079214add5c27ee63a586ba50f06e30cefc84a8c38"
+    },
+    {
+      "path": "dist/public/assets/project-home-v2-BRi5JHo-.css",
+      "sha256": "1f8ba33d2169dcc4f56af973ff7f328cdafa7178e885b102285a4f85f542a5b5"
+    },
+    {
+      "path": "dist/public/assets/workDock-Dq695-ka.css",
+      "sha256": "cdfd082a5bdb249215e20308ce742ab418ec17bfd9eda6d2edba72960d2c4964"
+    }
+  ],
+  "source": {
+    "schedules-uncertain": {
+      "sha256": "e33b6d24c69b2c28e913f56ffdd8fe3635b9f3877b009b90d109c99d08fdb2d1"
+    },
+    "schedules-review": {
+      "sha256": "bf19fe1f537977d3048d83d90acc9fa8f345c0336da84653a34176bbb3ee48f5"
+    },
+    "bundles-uncertain": {
+      "sha256": "9401587a66b6de6940d2a38ddc3a7786025d04b0aeebb0d4a774cd69a133bc51"
+    }
+  },
+  "captures": [
+    {
+      "name": "schedules-uncertain-light-1440",
+      "htmlSha256": "92bcbc2900fada37e73cbec0fd5186465aea511212159b0e35563ad930b37651",
+      "pngSha256": "85c80d1bc6fab4b565be84c06cbfd662d560006eb9dae2cd046c88fb258bd785",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 203.671875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 277.296875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 245.296875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 277.296875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-uncertain-light-390",
+      "htmlSha256": "92bcbc2900fada37e73cbec0fd5186465aea511212159b0e35563ad930b37651",
+      "pngSha256": "7b99cbbf3c9086b2984d971b3eaf21e8dd638eb4e5a2d037ec653f298da488a4",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 655,
+      "recovery": {
+        "x": 30,
+        "y": 378.046875,
+        "width": 330,
+        "height": 129.625,
+        "right": 360,
+        "bottom": 507.671875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 475.671875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 507.671875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-uncertain-dark-1440",
+      "htmlSha256": "99287d674a59161968d3c1c7af637559c624c6caed034bea283619dfcdc16afe",
+      "pngSha256": "14fa65a79be97ae6416e10a6fc7e25c24c1bd019948a8b689f1bd00007af4847",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 203.671875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 277.296875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 245.296875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 277.296875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-uncertain-dark-390",
+      "htmlSha256": "99287d674a59161968d3c1c7af637559c624c6caed034bea283619dfcdc16afe",
+      "pngSha256": "481fc4bedc4ad7836441d5407b5273b2964269b9603d39c2a11e89e8f5b92b7f",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 655,
+      "recovery": {
+        "x": 30,
+        "y": 378.046875,
+        "width": 330,
+        "height": 129.625,
+        "right": 360,
+        "bottom": 507.671875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 475.671875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 507.671875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-review-light-1440",
+      "htmlSha256": "63a47deaefc7e9506d3ef0eae981561df857b792e23ad03d5473af27b677170b",
+      "pngSha256": "7927ddecb89a5e074b076ae284b7318131dde97ea8268fcadb6a39151907d94f",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 203.671875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 277.296875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 245.296875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 277.296875
+        },
+        {
+          "label": "Reviewed schedules \u2014 allow another request",
+          "disabled": false,
+          "x": 165.046875,
+          "y": 245.296875,
+          "width": 292.984375,
+          "height": 32,
+          "right": 458.03125,
+          "bottom": 277.296875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-review-light-390",
+      "htmlSha256": "63a47deaefc7e9506d3ef0eae981561df857b792e23ad03d5473af27b677170b",
+      "pngSha256": "9562512e689fc6f7a51dae9929d5b2f7a2fde845e4a843a3cd502b29afc01dbe",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 655,
+      "recovery": {
+        "x": 30,
+        "y": 378.046875,
+        "width": 330,
+        "height": 169.625,
+        "right": 360,
+        "bottom": 547.671875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 475.671875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 507.671875
+        },
+        {
+          "label": "Reviewed schedules \u2014 allow another request",
+          "disabled": false,
+          "x": 30,
+          "y": 515.671875,
+          "width": 292.984375,
+          "height": 32,
+          "right": 322.984375,
+          "bottom": 547.671875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-review-dark-1440",
+      "htmlSha256": "9bf572abc2d096faf1b4e30933318aea5767f71b3381a545d9c83d81247f9caf",
+      "pngSha256": "85f75433d0b0cbeb44159e41565550f9f405cdc1a7471cbe34c17165eb4d2e12",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 203.671875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 277.296875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 245.296875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 277.296875
+        },
+        {
+          "label": "Reviewed schedules \u2014 allow another request",
+          "disabled": false,
+          "x": 165.046875,
+          "y": 245.296875,
+          "width": 292.984375,
+          "height": 32,
+          "right": 458.03125,
+          "bottom": 277.296875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schedules-review-dark-390",
+      "htmlSha256": "9bf572abc2d096faf1b4e30933318aea5767f71b3381a545d9c83d81247f9caf",
+      "pngSha256": "73c0347bea8c3f643106cbe3a7b29222c918d94c01a20d08e0a350633e9d20db",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 655,
+      "recovery": {
+        "x": 30,
+        "y": 378.046875,
+        "width": 330,
+        "height": 169.625,
+        "right": 360,
+        "bottom": 547.671875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check schedules",
+          "disabled": false,
+          "x": 30,
+          "y": 475.671875,
+          "width": 127.046875,
+          "height": 32,
+          "right": 157.046875,
+          "bottom": 507.671875
+        },
+        {
+          "label": "Reviewed schedules \u2014 allow another request",
+          "disabled": false,
+          "x": 30,
+          "y": 515.671875,
+          "width": 292.984375,
+          "height": 32,
+          "right": 322.984375,
+          "bottom": 547.671875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "bundles-uncertain-light-1440",
+      "htmlSha256": "fab7112fbb22c9d7ba75200e3e512dec5f310846da6220972f25bd3b3df38001",
+      "pngSha256": "adc35ec18adf115b1d0cc805ee71ccc88298d67a21a33aa4380e2f9d6f51021f",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 220.921875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 294.546875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check bundles",
+          "disabled": false,
+          "x": 30,
+          "y": 262.546875,
+          "width": 115.703125,
+          "height": 32,
+          "right": 145.703125,
+          "bottom": 294.546875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "bundles-uncertain-light-390",
+      "htmlSha256": "fab7112fbb22c9d7ba75200e3e512dec5f310846da6220972f25bd3b3df38001",
+      "pngSha256": "882b48a6873d1dda597c265d081a3333ea9e5e99a3e9ef87693365d1e0d4eb82",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 390,
+      "recovery": {
+        "x": 30,
+        "y": 381.796875,
+        "width": 330,
+        "height": 129.625,
+        "right": 360,
+        "bottom": 511.421875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check bundles",
+          "disabled": false,
+          "x": 30,
+          "y": 479.421875,
+          "width": 115.703125,
+          "height": 32,
+          "right": 145.703125,
+          "bottom": 511.421875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "bundles-uncertain-dark-1440",
+      "htmlSha256": "960efa202ecd1f89b08da82a35a1156147c47338738bc0b8180f92fc41786c80",
+      "pngSha256": "ce2a42b3cdbcec4e51b984a1edb4ef2dd4becc536fd3273b262687127394dead",
+      "width": 1440,
+      "height": 900,
+      "pageScrollWidth": 1440,
+      "paneWidth": 1440,
+      "paneScrollWidth": 1440,
+      "recovery": {
+        "x": 30,
+        "y": 220.921875,
+        "width": 980,
+        "height": 73.625,
+        "right": 1010,
+        "bottom": 294.546875,
+        "clientWidth": 980,
+        "scrollWidth": 980
+      },
+      "buttons": [
+        {
+          "label": "Check bundles",
+          "disabled": false,
+          "x": 30,
+          "y": 262.546875,
+          "width": 115.703125,
+          "height": 32,
+          "right": 145.703125,
+          "bottom": 294.546875
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "bundles-uncertain-dark-390",
+      "htmlSha256": "960efa202ecd1f89b08da82a35a1156147c47338738bc0b8180f92fc41786c80",
+      "pngSha256": "a976973cbbaf40c81560ee293a556b42b090e5e10dcb67fb7f3cb82520b60204",
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390,
+      "paneWidth": 390,
+      "paneScrollWidth": 390,
+      "recovery": {
+        "x": 30,
+        "y": 381.796875,
+        "width": 330,
+        "height": 129.625,
+        "right": 360,
+        "bottom": 511.421875,
+        "clientWidth": 330,
+        "scrollWidth": 330
+      },
+      "buttons": [
+        {
+          "label": "Check bundles",
+          "disabled": false,
+          "x": 30,
+          "y": 479.421875,
+          "width": 115.703125,
+          "height": 32,
+          "right": 145.703125,
+          "bottom": 511.421875
+        }
+      ],
+      "pass": true
+    }
+  ]
+}

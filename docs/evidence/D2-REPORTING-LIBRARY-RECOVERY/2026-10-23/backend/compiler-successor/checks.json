@@ -1,0 +1,108 @@
+{
+  "scope": "Explicit row typing in the existing real-SQL PGlite test fixture; test-only successor after the normal pre-push compiler identified unknown rows. No runtime or assertion change.",
+  "beforeCorrection": {
+    "head": "b03a1cd0dd23cae4d0b378913fc36c634d002e0b",
+    "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+    "sha256": "796aa68c3a9914b664bf85a4146f7590970c2bb2353b71e0854b556ea3a53746"
+  },
+  "afterCorrection": {
+    "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+    "sha256": "82e45f54c7c126abf09ffadb8719ce61f9162d63d20a4dff0b812be72257ff2d"
+  },
+  "change": "database.query<Record<string, unknown>>(text, values) preserves typed SQL row objects before the existing Object.values row-mode adapter. No cast, suppression or baseline increase.",
+  "tests": {
+    "command": {
+      "cwd": "/workspace/ClinicalSageAI-2-replit",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/routes/__tests__/report-os-bundle-recording.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/backend/compiler-successor/tests.json"
+      ],
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "startedAt": "2026-10-23T20:41:58.373232+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 16.93,
+      "finishedAt": "2026-10-23T20:42:15.303989+00:00"
+    },
+    "testFiles": 1,
+    "passed": 22,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "vitestDurationSeconds": 16.25,
+    "sourceBefore": {
+      "head": "b03a1cd0dd23cae4d0b378913fc36c634d002e0b",
+      "files": {
+        "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+        "server/routes/__tests__/report-os-bundle-recording.test.ts": "82e45f54c7c126abf09ffadb8719ce61f9162d63d20a4dff0b812be72257ff2d",
+        "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+        "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+        "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+        "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+        "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+        "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+        "server/routes/__tests__/report-os-report-pack-export.test.ts": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+        "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+        "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+        "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+        "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+        "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+        "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+      }
+    },
+    "sourceAfter": {
+      "head": "b03a1cd0dd23cae4d0b378913fc36c634d002e0b",
+      "files": {
+        "server/routes/report-os.ts": "eb6e988ace1cb4a6648470b56535d2ebac2daafa84e3b0ae8a54b8a8fcf6272d",
+        "server/routes/__tests__/report-os-bundle-recording.test.ts": "82e45f54c7c126abf09ffadb8719ce61f9162d63d20a4dff0b812be72257ff2d",
+        "server/routes/__tests__/_report-os-route-harness.ts": "aacfd1f6e6d81041362eb546c59b68c98846c0e223b921b9ba07aeaff98ff6b5",
+        "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+        "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+        "server/services/report-os/scheduling/subscription-service.ts": "432d9d12eb70e2f9e3c6a414f802946b1782d137ba7d78afaa12265e6f8a1263",
+        "shared/schema.ts": "36a9c298680b61dd37646d3537a5c59609bee1907ad017b4f97966af217fb83a",
+        "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+        "server/routes/__tests__/report-os-report-pack-export.test.ts": "1580d5847aaa90f0f5d53305ce222b82bee1550abc6e3def80c075b0108c0b6a",
+        "server/routes/__tests__/report-os-audit-recording.test.ts": "9b07bff83ba657c50a300df9010ff220e58307671b16f6b9c60f995c4a3c4029",
+        "server/routes/__tests__/report-os-delivery-recording.test.ts": "1606d9e5283e96f86d80e87e9e907666286801dba46355e82ae2d6b50ebb7f0d",
+        "server/routes/__tests__/report-os-subscription-access.test.ts": "3343a4086c4da9ae354eb6fc7150f5928928c1c6ad19ada91d404a91c3ffd78b",
+        "server/routes/__tests__/insights-subscription-attribution.test.ts": "2b829f1051f5722e9fefdf904bf5a5936e6dbf692f8240454d0f3c21288db49b",
+        "server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts": "a499faefd7fdb826d54dd5f025b9f355eb48b94e251dc7a6310c7a6d1ab7753b",
+        "server/services/report-os/scheduling/__tests__/subscription-service.test.ts": "004b11ed53c09e8526fe459c27987026406d1f538477530f5aed5959bf5ebb5b"
+      }
+    },
+    "sourceUnchanged": true
+  },
+  "lint": {
+    "command": {
+      "cwd": "/workspace/ClinicalSageAI-2-replit",
+      "argv": [
+        "node",
+        "node_modules/eslint/bin/eslint.js",
+        "server/routes/__tests__/report-os-bundle-recording.test.ts",
+        "--format",
+        "json"
+      ],
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 1.665
+    },
+    "errors": 0,
+    "warnings": 0
+  },
+  "phaseBoundaries": [
+    "Earlier 151-case integration and 22-case focused phases retain their original source pins and archives. This successor does not relabel them as checks of the changed generic.",
+    "No compiler, build, commit or push was run by this backend agent; root repeats the normal integrated publication gate."
+  ]
+}

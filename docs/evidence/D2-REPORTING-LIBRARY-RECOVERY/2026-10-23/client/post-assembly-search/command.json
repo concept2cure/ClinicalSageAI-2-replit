@@ -1,0 +1,28 @@
+{
+  "phase": "post-assembly-search-compatibility",
+  "cwd": "/workspace/ClinicalSageAI-2-replit",
+  "mergeHead": "9392d896a7ffd7c89c2327d8a9b0dd748e998cf6",
+  "incomingCanonical": "1eca721b1",
+  "nodeVersion": "v22.22.0",
+  "env": {
+    "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-assembly-search/integration.json"
+  ],
+  "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-assembly-search/integration.txt",
+  "exitCode": 0,
+  "observedSuites": 3,
+  "observedPassedTests": 71
+}

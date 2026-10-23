@@ -1,0 +1,28 @@
+{
+  "phase": "post-discovery-reporting-reconciliation",
+  "cwd": "/workspace/ClinicalSageAI-2-replit",
+  "canonicalHead": "26a71d223ae20855157cc6cfed4214b47e7f74c3",
+  "nodeVersion": "v22.22.0",
+  "env": {
+    "PATH": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-discovery/integration.json"
+  ],
+  "stdoutAndStderr": "/workspace/.codex-notes/reporting-library-recovery-20261023/client/post-discovery/integration.txt",
+  "exitCode": 0,
+  "observedSuites": 4,
+  "observedPassedTests": 115
+}

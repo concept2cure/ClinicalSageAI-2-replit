@@ -20,7 +20,8 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
+import { EmptyState, ErrorState } from '../dataConnect';
+import { LibraryRecovery, useLibraryActions, useLibraryMutation, useLibraryConfirmed, useLibraryRegister, type LibraryActions } from './insightsLibraryActions';
 import { I } from '../icons';
 import {
   CADENCE_LABEL,
@@ -29,6 +30,7 @@ import {
   scheduleInWords,
   schedulableTypes,
   setSubscriptionEnabled,
+  isSubscriptionList,
   whenText,
   type Cadence,
   type SubscriptionRow,
@@ -39,9 +41,6 @@ import {
   PanelHead,
   ScheduleTruthNote,
   ViewOnlyNote,
-  isRowList,
-  readFailureOf,
-  rowsOf,
   type LibraryReportType,
   type ReadFailure,
 } from './insightsLibraryShared';
@@ -69,8 +68,12 @@ function scheduleProblem(draft: Draft): string | null {
   return !Number.isInteger(draft.minute) || draft.minute < 0 || draft.minute > 59 ? 'Enter a minute from 0 to 59.' : null;
 }
 
+function scheduleOffers(types: LibraryReportType[], scope: ScheduleScope | null) {
+  return schedulableTypes(types).filter(type => (type.runScopeType && type.runScopeId) || (scope && type.computedScopes.includes(scope.scopeType)));
+}
+
 /** The day control the chosen cadence needs, or nothing for a daily one. */
-function DayField({ draft, setDraft }: { draft: Draft; setDraft: (d: Draft) => void }) {
+function DayField({ draft, setDraft, disabled }: { draft: Draft; setDraft: (d: Draft) => void; disabled: boolean }) {
   const dowId = React.useId();
   const domId = React.useId();
   if (draft.cadence === 'weekly') {
@@ -79,6 +82,7 @@ function DayField({ draft, setDraft }: { draft: Draft; setDraft: (d: Draft) => v
         <label className="gov-label" htmlFor={dowId}>Day</label>
         <select
           id={dowId}
+          disabled={disabled}
           className="rl-input"
           value={draft.dayOfWeek}
           onChange={(e) => setDraft({ ...draft, dayOfWeek: Number(e.target.value) })}
@@ -96,6 +100,7 @@ function DayField({ draft, setDraft }: { draft: Draft; setDraft: (d: Draft) => v
         <label className="gov-label" htmlFor={domId}>Day of month</label>
         <select
           id={domId}
+          disabled={disabled}
           className="rl-input"
           value={draft.dayOfMonth}
           onChange={(e) => setDraft({ ...draft, dayOfMonth: Number(e.target.value) })}
@@ -117,6 +122,7 @@ function ScheduleForm({
   draft,
   setDraft,
   saving,
+  locked,
   onSave,
   onCancel,
 }: {
@@ -125,6 +131,7 @@ function ScheduleForm({
   draft: Draft;
   setDraft: (d: Draft) => void;
   saving: boolean;
+  locked: boolean;
   onSave: () => void;
   onCancel: () => void;
 }) {
@@ -142,6 +149,7 @@ function ScheduleForm({
           <label className="gov-label" htmlFor={typeFieldId}>Report</label>
           <select
             id={typeFieldId}
+            disabled={locked}
             className="rl-input"
             value={draft.typeId}
             onChange={(e) => setDraft({ ...draft, typeId: e.target.value })}
@@ -156,6 +164,7 @@ function ScheduleForm({
           <label className="gov-label" htmlFor={cadenceId}>Cadence</label>
           <select
             id={cadenceId}
+            disabled={locked}
             className="rl-input"
             value={draft.cadence}
             onChange={(e) => setDraft({ ...draft, cadence: e.target.value as Cadence })}
@@ -169,6 +178,7 @@ function ScheduleForm({
           <label className="gov-label" htmlFor={hourId}>Hour</label>
           <select
             id={hourId}
+            disabled={locked}
             className="rl-input"
             value={draft.hour}
             onChange={(e) => setDraft({ ...draft, hour: Number(e.target.value) })}
@@ -178,19 +188,19 @@ function ScheduleForm({
             ))}
           </select>
         </div>
-        <div className="rl-filter"><label className="gov-label" htmlFor={minuteId}>Minute</label><input id={minuteId} className="rl-input" type="number" min={0} max={59} value={draft.minute} onChange={e => setDraft({ ...draft, minute: Number(e.target.value) })} /></div>
-        <div className="rl-filter"><label className="gov-label" htmlFor={zoneId}>Timezone</label><input id={zoneId} className="rl-input" list={zonesId} value={draft.timeZone} onChange={e => setDraft({ ...draft, timeZone: e.target.value })} /><datalist id={zonesId}>{['UTC', 'America/New_York', 'America/Los_Angeles', 'America/Sao_Paulo', 'Europe/London', 'Europe/Berlin', 'Africa/Johannesburg', 'Asia/Dubai', 'Asia/Kolkata', 'Asia/Shanghai', 'Asia/Tokyo', 'Australia/Sydney'].map(zone => <option key={zone} value={zone} />)}</datalist></div>
-        <DayField draft={draft} setDraft={setDraft} />
+        <div className="rl-filter"><label className="gov-label" htmlFor={minuteId}>Minute</label><input id={minuteId} disabled={locked} className="rl-input" type="number" min={0} max={59} value={draft.minute} onChange={e => setDraft({ ...draft, minute: Number(e.target.value) })} /></div>
+        <div className="rl-filter"><label className="gov-label" htmlFor={zoneId}>Timezone</label><input id={zoneId} disabled={locked} className="rl-input" list={zonesId} value={draft.timeZone} onChange={e => setDraft({ ...draft, timeZone: e.target.value })} /><datalist id={zonesId}>{['UTC', 'America/New_York', 'America/Los_Angeles', 'America/Sao_Paulo', 'Europe/London', 'Europe/Berlin', 'Africa/Johannesburg', 'Asia/Dubai', 'Asia/Kolkata', 'Asia/Shanghai', 'Asia/Tokyo', 'Australia/Sydney'].map(zone => <option key={zone} value={zone} />)}</datalist></div>
+        <DayField draft={draft} setDraft={setDraft} disabled={locked} />
       </div>
       <p className="rl-sub">
         Runs over {scope.scopeType} — {scope.scopeId}. Days 29 to 31 are not offered: the server clamps a
         monthly schedule to day 28 so it is valid in every month. The named timezone follows local daylight-saving changes.
       </p>
       <div className="rl-head-acts">
-        <button type="button" className="btn primary" disabled={!draft.typeId || saving} onClick={onSave}>
+        <button type="button" className="btn primary" disabled={!draft.typeId || locked} onClick={onSave}>
           {saving ? 'Saving…' : 'Save schedule'}
         </button>
-        <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn ghost" disabled={locked} onClick={onCancel}>Cancel</button>
       </div>
     </div>
   );
@@ -210,10 +220,14 @@ function ScheduleTable({
   rows,
   canWrite,
   onToggle,
+  pending,
+  held,
 }: {
   rows: SubscriptionRow[];
   canWrite: boolean;
   onToggle: (row: SubscriptionRow) => void;
+  pending: (id: number) => boolean;
+  held: boolean;
 }) {
   return (
     <table className="ro-table rl-table">
@@ -244,8 +258,8 @@ function ScheduleTable({
             </td>
             <td>
               {canWrite ? (
-                <button type="button" className="rc-chip" onClick={() => onToggle(s)}>
-                  {s.enabled ? <>{I.pause} Pause</> : <>{I.play} Resume</>}
+                <button type="button" className="rc-chip" disabled={held || pending(s.id)} onClick={() => onToggle(s)}>
+                  {pending(s.id) ? 'Saving…' : s.enabled ? <>{I.pause} Pause</> : <>{I.play} Resume</>}
                 </button>
               ) : null}
             </td>
@@ -264,6 +278,8 @@ function SchedulesBody({
   canWrite,
   onToggle,
   onRetry,
+  pending,
+  held,
 }: {
   loading: boolean;
   failure: ReadFailure | null;
@@ -271,6 +287,8 @@ function SchedulesBody({
   canWrite: boolean;
   onToggle: (row: SubscriptionRow) => void;
   onRetry: () => void;
+  pending: (id: number) => boolean;
+  held: boolean;
 }) {
   if (loading) return <EmptyState busy icon={I.calendar} title="Reading your schedules…" />;
   if (failure) {
@@ -293,7 +311,18 @@ function SchedulesBody({
       />
     );
   }
-  return <ScheduleTable rows={rows} canWrite={canWrite} onToggle={onToggle} />;
+  return <ScheduleTable rows={rows} canWrite={canWrite} onToggle={onToggle} pending={pending} held={held} />;
+}
+
+function useScheduleDraft(actions: LibraryActions, context: string) {
+  const creating = actions.get(context, 'schedule:create');
+  const retained = creating?.payload.kind === 'schedule-create' ? creating.payload.body : null;
+  const [open, setOpen] = useState(!!retained);
+  const [draft, setDraft] = useState<Draft>(() => retained ? { ...EMPTY_DRAFT, ...retained.schedule, typeId: retained.reportTypeId } : EMPTY_DRAFT);
+  const held = actions.list(context, 'schedules').some(item => item.phase === 'unconfirmed');
+  const locked = !!creating || held;
+  const saving = creating?.phase === 'pending';
+  return { open, setOpen, draft, setDraft, held, locked, saving };
 }
 
 export function SchedulesPanel({
@@ -302,53 +331,55 @@ export function SchedulesPanel({
   canWrite,
   onSaved,
   canSchedule = true,
+  actions: ownerActions,
+  context = 'library',
+  accessCurrent = () => true,
 }: {
   types: LibraryReportType[];
   scope: { scopeType: string; scopeId: string } | null;
   canWrite: boolean;
   onSaved: (msg: string) => void;
   canSchedule?: boolean;
+  actions?: LibraryActions;
+  context?: string;
+  accessCurrent?: () => boolean;
 }) {
-  const [attempt, setAttempt] = useState(0);
-  const subs = useLiveData<unknown>('/api/insights/subscriptions', ['/api/insights/subscriptions', attempt], isRowList);
-  const rows = useMemo(() => rowsOf<SubscriptionRow>(subs.data), [subs.data]);
-  const offerable = useMemo(() => schedulableTypes(types).filter(t => (t.runScopeType && t.runScopeId) || (scope && t.computedScopes.includes(scope.scopeType))), [types, scope]);
+  const fallbackActions = useLibraryActions();
+  const actions = ownerActions ?? fallbackActions;
+  const mutate = useLibraryMutation(actions, context, accessCurrent);
+  const register = useLibraryRegister<SubscriptionRow>('/api/insights/subscriptions', 'your schedules');
+  const offerable = useMemo(() => scheduleOffers(types, scope), [types, scope]);
 
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const { open, setOpen, draft, setDraft, held, locked, saving } = useScheduleDraft(actions, context);
   const [note, setNote] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const selected = offerable.find(t => t.typeId === draft.typeId);
   const formScope = targetForType(selected ?? offerable[0], scope);
   const mayCreate = canWrite && canSchedule && offerable.length > 0;
 
-  const save = async () => {
-    if (!formScope || !selected || !canSchedule) return;
+  const refresh = (message: string) => { register.refresh(); onSaved(message); };
+  const created = () => { setOpen(false); setDraft(EMPTY_DRAFT); refresh('Schedule saved.'); };
+  useLibraryConfirmed(actions, context, 'schedules', accessCurrent, item => {
+    if (item.payload.kind === 'schedule-create') created();
+    else if (item.payload.kind === 'schedule-enable') refresh(item.payload.enabled ? 'Schedule resumed.' : 'Schedule paused.');
+  });
+  const save = () => {
+    if (!canWrite || !formScope || !selected || !canSchedule) return;
     const problem = scheduleProblem(draft);
     if (problem) { setNote(problem); return; }
-    setSaving(true);
+    const body = scheduleBody(draft, formScope);
     setNote(null);
-    const res = await createSubscription(scheduleBody(draft, formScope));
-    setSaving(false);
-    if (!res.ok) {
-      setNote(res.message ?? 'The schedule was not saved.');
-      return;
-    }
-    setOpen(false);
-    setDraft(EMPTY_DRAFT);
-    setAttempt((n) => n + 1);
-    onSaved('Schedule saved.');
+    void mutate('schedule:create', 'schedules', { kind: 'schedule-create', body }, () => createSubscription(body), res => {
+      if (!res.ok) { if (!res.unconfirmed) setNote(res.message ?? 'The schedule was not saved.'); return; }
+      created();
+    });
   };
-
-  const toggleEnabled = async (row: SubscriptionRow) => {
+  const toggleEnabled = (row: SubscriptionRow) => {
+    if (!canWrite) return;
     setNote(null);
-    const res = await setSubscriptionEnabled(row.id, !row.enabled);
-    if (!res.ok) {
-      setNote(res.message ?? 'The schedule was not changed.');
-      return;
-    }
-    setAttempt((n) => n + 1);
-    onSaved(row.enabled ? 'Schedule paused.' : 'Schedule resumed.');
+    void mutate(`schedule:${row.id}`, 'schedules', { kind: 'schedule-enable', id: row.id, enabled: !row.enabled }, () => setSubscriptionEnabled(row.id, !row.enabled), res => {
+      if (!res.ok) { if (!res.unconfirmed) setNote(res.message ?? 'The schedule was not changed.'); return; }
+      refresh(row.enabled ? 'Schedule paused.' : 'Schedule resumed.');
+    });
   };
 
   return (
@@ -358,7 +389,7 @@ export function SchedulesPanel({
         sub="Reports this organization computes on a recurring cadence."
         actions={
           mayCreate ? (
-            <button type="button" className="btn primary" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+            <button type="button" className="btn primary" disabled={locked} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
               {I.plus} New schedule
             </button>
           ) : null
@@ -368,6 +399,7 @@ export function SchedulesPanel({
       <ScheduleTruthNote />
       <ScheduleCapabilityNotice canWrite={canWrite} canSchedule={canSchedule} />
       <PanelAlert note={note} />
+      <LibraryRecovery actions={actions} context={context} section="schedules" current={accessCurrent} path="/api/insights/subscriptions" guard={isSubscriptionList} onChecked={register.onChecked} />
 
       {open && formScope && (
         <ScheduleForm
@@ -376,6 +408,7 @@ export function SchedulesPanel({
           draft={draft}
           setDraft={setDraft}
           saving={saving}
+          locked={locked}
           onSave={() => void save()}
           onCancel={() => setOpen(false)}
         />
@@ -384,12 +417,14 @@ export function SchedulesPanel({
       {canWrite && offerable.length === 0 && <NothingSchedulable />}
 
       <SchedulesBody
-        loading={subs.loading}
-        failure={subs.error ? readFailureOf(subs, 'your schedules') : null}
-        rows={rows}
+        loading={register.loading}
+        failure={register.failure}
+        rows={register.rows}
         canWrite={canWrite}
         onToggle={(row) => void toggleEnabled(row)}
-        onRetry={() => setAttempt((n) => n + 1)}
+        onRetry={register.retry}
+        pending={id => actions.get(context, `schedule:${id}`)?.phase === 'pending'}
+        held={held}
       />
     </div>
   );
