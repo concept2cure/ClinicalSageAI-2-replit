@@ -155,6 +155,7 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
       typed: input.message,
       messages,
       calls: collected.calls,
+      servedCalls: collected.servedCalls,
       response: response as Parameters<typeof recordLoopTurn>[1]['response'],
       outcome,
       error,
@@ -177,6 +178,7 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
 
   const response = await executeAgenticLoop(request, {
     maxRounds: 5,
+    onModelResponse: collected.onModelResponse,
     signal,
     toolContext: {
       sqlClient: getPool(),

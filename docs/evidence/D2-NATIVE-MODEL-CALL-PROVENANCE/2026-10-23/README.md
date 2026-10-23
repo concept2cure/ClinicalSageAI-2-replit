@@ -33,3 +33,24 @@ unchanged. [Frozen tests](frozen-tests.json) pins exact bytes; raw transcripts
 and substituted/real boundaries are under `collector/`, `native-hosts/`, `chat/`
 and `adapter-controls/`. No missing-export/method or fixture failure counts
 as red evidence. Production edits follow this freeze.
+
+## Qualification
+
+The initial full regression passed **330 tests / 34 suites**. Included lint
+then found one new helper complexity warning; its exact initial results remain
+under `root/green*` and `root/lint-green*`. Root extracted only the served-call
+replay/limitation selection into a small typed helper, preserving method order
+and all frozen tests. No suppression or baseline changed.
+
+Final Node 22 regression passed **330 tests / 34 suites**, zero failures/skips,
+including all 43 frozen new cases. Explicit included lint across seven changed
+TypeScript files has zero errors, the same 22 existing warnings and zero growth;
+all new tests and the shared helper have zero warnings. Two source reviews,
+a further helper review and an independent final evidence review cleared the
+change. [Qualification](root/qualification.json) pins commands/results, all 551
+selected source/test/config inputs and exact production/test bytes. The selected
+inputs are not an exhaustive dependency graph.
+
+Actual normal push, TypeScript and remote-verification evidence is recorded in
+[publication](PUBLICATION.md). Tool-step rounds and later model inputs remain
+unavailable through these entry points and the record explicitly says so.

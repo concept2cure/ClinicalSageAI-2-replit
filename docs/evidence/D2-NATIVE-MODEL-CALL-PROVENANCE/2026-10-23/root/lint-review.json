@@ -1,0 +1,38 @@
+{
+  "errors": 0,
+  "warnings": 23,
+  "baselineWarnings": 22,
+  "warningGrowth": 1,
+  "includedFiles": 7,
+  "counts": {
+    "server/routes/ana-intelligence.ts": {
+      "errors": 0,
+      "warnings": 2
+    },
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/routes/chat/send-message.ts": {
+      "errors": 0,
+      "warnings": 18
+    },
+    "server/services/ana/__tests__/turn-record-loop-model-calls.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ana/__tests__/turn-record-loop-model-hosts.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ana/ana-realtime.ts": {
+      "errors": 0,
+      "warnings": 2
+    },
+    "server/services/ana/turn-record-loop.ts": {
+      "errors": 0,
+      "warnings": 1
+    }
+  },
+  "note": "Included --no-ignore lint against captured byte-pinned baseline; duplicated JSON source omitted, raw stdout SHA retained. No suppressions/baseline growth."
+}
