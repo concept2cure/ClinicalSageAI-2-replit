@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { getAuthToken } from '@/utils/authToken';
 import type { CompanyDocumentProfile, CompanyDocumentsResponse, CompanyLegalDocument } from '@shared/company-documents';
 import { companyLegalRenewal, type CompanyLegalLifecycleResponse, type CompanyLegalWorkflowInput } from '@shared/company-legal-workflows';
 import { VaultVersionPicker, type PickedVaultVersion } from '../VaultLibraryResults';
-import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalAction, useCompanyLegalResource } from './useCompanyLegalResource';
+import { COMPANY_LEGAL_PATH, companyLegalOwner, useCompanyLegalAction, useCompanyLegalResource, useCompanyLegalSession } from './useCompanyLegalResource';
 import { PagedCompanyLegalPicker } from './PagedCompanyLegalPicker';
+import { companySetter, useCompanyLease } from './companySession';
 
 export interface LegalLifecycleEditorProps {
   document: CompanyLegalDocument; profile: CompanyDocumentProfile; token: string; canManage: boolean;
@@ -26,9 +26,10 @@ function initialSignature(document: CompanyLegalDocument): CompanyLegalWorkflowI
   return signature ? { method: signature.method, result: signature.result, tool: signature.tool, verifiedAt: signature.verifiedAt,
     evidenceVaultDocumentId: signature.evidence.vaultDocumentId } : null;
 }
-interface RelationScope { token: string; programId: string; excludeId: string }
+interface RelationScope { token: string; programId: string; excludeId: string; current: () => boolean }
 function LegalRelation({ label, value, scope, authority, disabled, change }: { label: string; value: string | null; scope: RelationScope; authority?: boolean; disabled: boolean; change: (id: string | null) => void }) {
-  const [open, setOpen] = useState(false);
+  const [open, updateOpen] = useState(false);
+  const setOpen = companySetter(scope.current, updateOpen);
   return <div className="company-field"><span>{label}: {value ?? 'None recorded'}</span><details onToggle={event => setOpen(event.currentTarget.open)}><summary>Choose {label.toLowerCase()}</summary>
     {open && <PagedCompanyLegalPicker label={label} token={scope.token} programId={scope.programId} excludeIds={[scope.excludeId]} allowedKinds={authority ? ['authorization', 'power_of_attorney'] : undefined}
       selected={value ? [value] : []} disabled={disabled} onChange={ids => change(ids[0] ?? null)} />}
@@ -58,10 +59,12 @@ function SignatureFields({ value, change, disabled }: { value: CompanyLegalWorkf
     </>}
   </fieldset>;
 }
-function LegalEvidencePicker({ document, workflow, change, disabled }: { document: CompanyLegalDocument; workflow: CompanyLegalWorkflowInput; change: (value: CompanyLegalWorkflowInput) => void; disabled: boolean }) {
-  const [purpose, setPurpose] = useState<'authority' | 'signature' | 'translation'>('authority');
-  const [message, setMessage] = useState('');
+function LegalEvidencePicker({ document, workflow, change, disabled, current }: { document: CompanyLegalDocument; workflow: CompanyLegalWorkflowInput; change: (value: CompanyLegalWorkflowInput) => void; disabled: boolean; current: () => boolean }) {
+  const [purpose, updatePurpose] = useState<'authority' | 'signature' | 'translation'>('authority');
+  const [message, updateMessage] = useState('');
+  const setPurpose = companySetter(current, updatePurpose), setMessage = companySetter(current, updateMessage);
   const choose = (hit: PickedVaultVersion) => {
+    if (!current()) return;
     if (hit.programId !== document.programId) { setMessage('Choose approved evidence from the same program as this legal document.'); return; }
     if (purpose === 'authority' && workflow.authority) change({ ...workflow, authority: { ...workflow.authority, evidenceVaultDocumentIds: [...new Set([...workflow.authority.evidenceVaultDocumentIds, hit.id])] } });
     else if (purpose === 'signature' && workflow.signatureEvidence) change({ ...workflow, signatureEvidence: { ...workflow.signatureEvidence, evidenceVaultDocumentId: hit.id } });
@@ -76,14 +79,16 @@ function LegalEvidencePicker({ document, workflow, change, disabled }: { documen
 }
 function useLifecycleModel(props: LegalLifecycleEditorProps) {
   const { document, profile, token, canManage, onSaved } = props;
-  const [workflow, setWorkflow] = useState(() => initialWorkflow(document));
-  const [reminders, setReminders] = useState(workflow.reminderDays.join(', '));
-  const [reason, setReason] = useState('');
-  const [revoke, setRevoke] = useState(false);
-  const action = useCompanyLegalAction(token, document.id, onSaved);
+  const [workflow, updateWorkflow] = useState(() => initialWorkflow(document));
+  const [reminders, updateReminders] = useState(workflow.reminderDays.join(', '));
+  const [reason, updateReason] = useState('');
+  const [revoke, updateRevoke] = useState(false);
+  const action = useCompanyLegalAction(token, `${document.id}:${profile.revision}`, onSaved);
+  const setWorkflow = companySetter(action.current, updateWorkflow), setReminders = companySetter(action.current, updateReminders);
+  const setReason = companySetter(action.current, updateReason), setRevoke = companySetter(action.current, updateRevoke);
   const lifecycle = useCompanyLegalResource<CompanyLegalLifecycleResponse>(`${COMPANY_LEGAL_PATH}/legal-documents/${encodeURIComponent(document.id)}/lifecycle`, token, `${document.id}:${profile.revision}`);
   const members = useCompanyLegalResource<{ data: Array<{ id: string; name: string }> }>(`${COMPANY_LEGAL_PATH}/legal-documents/${encodeURIComponent(document.id)}/custodians`, token, `${document.id}:${profile.revision}`, canManage);
-  const scope = { token, programId: document.programId, excludeId: document.id };
+  const scope = { token, programId: document.programId, excludeId: document.id, current: action.current };
   const renewal = lifecycle.data?.renewal ?? companyLegalRenewal(document);
   const days = reminders.split(',').map(value => value.trim()).filter(Boolean).map(Number);
   const reminderValid = days.length <= 12 && days.every(value => Number.isInteger(value) && value >= 0 && value <= 730);
@@ -160,16 +165,19 @@ function LifecycleForm(props: LegalLifecycleEditorProps) {
     <LifecycleRenewalStatus model={model} /><LifecycleCustodian model={model} /><LifecycleRelations model={model} />
     <AuthorityFields value={workflow.authority} scope={scope} disabled={disabled} change={value => setWorkflow({ ...workflow, authority: value })} />
     <SignatureFields value={workflow.signatureEvidence} disabled={disabled} change={value => setWorkflow({ ...workflow, signatureEvidence: value })} />
-    {props.canManage && <LegalEvidencePicker document={props.document} workflow={workflow} disabled={disabled} change={setWorkflow} />}
+    {props.canManage && <LegalEvidencePicker document={props.document} workflow={workflow} disabled={disabled} change={setWorkflow} current={action.current} />}
     <LifecycleActions model={model} />
     {action.notice && <p className={`company-notice company-wide${action.error ? ' company-error' : ''}`} role={action.error ? 'alert' : 'status'}>{action.notice}</p>}
     <LifecyclePlacements model={model} />
   </div>;
 }
 export function LegalLifecycleEditor(props: LegalLifecycleEditorProps) {
-  const [open, setOpen] = useState(false);
-  if (props.token !== getAuthToken()) return null;
+  const session = useCompanyLegalSession(props.token);
+  const lease = useCompanyLease(session, `${props.document.id}:${props.profile.revision}`);
+  const [open, updateOpen] = useState(false);
+  const setOpen = companySetter(lease.current, updateOpen);
+  if (!lease.current()) return null;
   return <details onToggle={event => setOpen(event.currentTarget.open)}><summary>Lifecycle, signing evidence and affected filings</summary>
-    {open && <LifecycleForm key={companyLegalOwner(props.token, `${props.document.id}:${props.profile.revision}`)} {...props} />}
+    {open && <LifecycleForm key={companyLegalOwner(session, `${props.document.id}:${props.profile.revision}`)} {...props} />}
   </details>;
 }

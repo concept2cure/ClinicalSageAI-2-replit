@@ -1,0 +1,282 @@
+{
+  "sourceCommit": "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+  "featurePinsUnchanged": 55,
+  "reviewedIncomingPinsMatch": 13,
+  "featureFiles": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_company-session-fixture.ts",
+      "sha256": "47208860703758afb5a5a25f2f77f590167d4830f88e0945bbc78934c611f212",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/apiCall.test.ts",
+      "sha256": "b6259be583f7f53c7458383bbbc909ab242adaa4d19136fb603fa4defd1b5a8a",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+      "sha256": "c7764cc7794194e8ea002e439524710f3df2d4aba565ddd25cf4ed8d80bc788a",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "sha256": "3dc210ed9dd273f61e8136f8e094015713a54a4c2ed9a2128000ac19a230b347",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDefaultBrandingPolicy.test.tsx",
+      "sha256": "090663830dc96cce90b46b45ec9909c8ef541cd18949b932317dca80ec0b49cc",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentGovernancePanels.test.tsx",
+      "sha256": "8e14186a258628a46d9a1e4b102f32dcf48293533dbded29feead64aceb2a6db",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentReviewTools.test.tsx",
+      "sha256": "a509fca0dc4aa74112f34396868dd838a93ece888e20f98bf9accac95c44227d",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+      "sha256": "1588d1354f435130b115902953e5b3e10e931c16cd1ebdd72165ce8282610193",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx",
+      "sha256": "529fbd15020f02a9dbccd5c24a75075cce93ae4d394cdbd66f30af2a1d5f7f81",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyLegalAdmissionContinuity.test.tsx",
+      "sha256": "3e7c0273eedf205433f57f86fca0c1939eead9d7fe42a94df537d4177fcd4b48",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx",
+      "sha256": "58a899575e18859627e363ad1139a20e4f25fb91dccf510e7fb87da8b29c2316",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+      "sha256": "431764261140270035af88caa36a5fc070ac7910c4334799a7668f8892351a23",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyLetterheadProof.test.tsx",
+      "sha256": "90cf314f2705e5e0a50d9bbde4f692c002cc5844b7ec5fe05a2fa65b88d354b0",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyNamedDesigns.test.tsx",
+      "sha256": "21083197fc093ca2b2f6b546e3eafb0585182412477cb2cb46c5638484622c0f",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx",
+      "sha256": "0272ca94bae6be2adec499c6ad001dcad71124fc63936de1c52db0bcc8d8bbc4",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx",
+      "sha256": "4aa06699a6e92342d7fbf65291bcbebda196a7700ee2e41e5bb7adf73e1d5e12",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
+      "sha256": "3468aa82ac8bd035cb8bade0911f08d566b65fdad0c2def136adb8a46b6f63d4",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companySubmissionSessionContinuity.test.tsx",
+      "sha256": "e1f373dceebdae57713222af699e046cece7a782b3915fc782f9da956f441e29",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "sha256": "643ce4a59ae3248f5ca524313ab62dbb76ab14b1d5161e9ffba9bfdd14ec8330",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+      "sha256": "3de2f19fdf2705ce109cd8e885e02112d5836171e2d1b356e060f08213edbaae",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "sha256": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/download.ts",
+      "sha256": "21503192353a07854d1935813eb9f47ae177451cf69244e0c7ce4e75829b1960",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "sha256": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanyDocumentSettings.tsx",
+      "sha256": "725d0e6ff276af650b32c3a25b9862e6cb632c6dc4ee3078b1848ea24ac19c2f",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
+      "sha256": "a31e647abbd25beaf0c75cc19adcc2bdb61a4bbdf16e4cf9055ec15cbfe576c1",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyBrandingPolicy.tsx",
+      "sha256": "c2285c23e9f9ef54fb07a1c679cd84a98bb295cd8c2591c255fcc7637658e462",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDefaultDesignActivation.tsx",
+      "sha256": "67489009f82666f72341f41ce774b786d0749abdc0ea56ca71db2f174d331ddb",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignDetail.tsx",
+      "sha256": "f9b16f6867610f7d9671bebd72fecc42e8b0d9ff1e24588e6869679147f59070",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyDesignEditor.tsx",
+      "sha256": "4c77ecb190a5c6f010ac8e200f34cab8a2abd8ff19a2b52428c9481e52a7757b",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyGovernedDesigns.tsx",
+      "sha256": "a4ee95e12e170ab079a23a787b1abb9b8242b1765600e2819c2b13e0163e210b",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegacyAdoption.tsx",
+      "sha256": "d03be2385f498f6cdb28f11b58613c37ef1ef9415aa1cc24935fd6370fc53018",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalInventory.tsx",
+      "sha256": "9f019608fa57b67cc0965a17f2ebfdb5542949553e403188e63f7e765cfa0769",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalReadiness.tsx",
+      "sha256": "4caa447e183239a8b5cc4df004e72b989b24a75198527b638c79f7e831f04d5d",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLetterheadPreview.tsx",
+      "sha256": "98219a60aeba65e1ea0679b0d118f8c74fcbdd507d7243f8003af7e587a8278f",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPermissionsPanel.tsx",
+      "sha256": "db9692c6e6b7eba02434d48013f6d9e526acc068b0e1841c57ae7e83ff344b0a",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyPresentationHistory.tsx",
+      "sha256": "6aa96de9da65137a08f140ff0d172965e88572260d538ebb68707f2eae40b9d8",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyProgramPicker.tsx",
+      "sha256": "1b8bc99e732ab59d57a172c6c263a454d4ff354ead816aa19253d84cc21fc1ea",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyScopePicker.tsx",
+      "sha256": "18216828f3e08cba43d61be802156a3da965ca6c14304834a385f01246fbb004",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanySetupGuide.tsx",
+      "sha256": "d23d799715c42843382d700ed1aa13b0fab09f75bbe31fb4cbeaa07b4b56ad3c",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/LegalLifecycleEditor.tsx",
+      "sha256": "d0c28a4f3350082b7329a8d10b5c40a7e28b02006db80215ee203da1f99e05f6",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/LegalRequirementsEditor.tsx",
+      "sha256": "15341c60caad0a8b42a58eb167cd4d9d96795c73ecd9a74456f34fc2242130ec",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx",
+      "sha256": "8b553b100ebf71b7857aaf354fa51787d3b64b65922194eeb4125803cb9a5dcc",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/companyDocumentsData.ts",
+      "sha256": "2f43e311366262827bb3c74c0009dc456e40f42500bc0fb1333aeeb7056e03d0",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts",
+      "sha256": "40f523f58260df8f4694579002c7a164c5643ae419869904022e7ef06946aa51",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/companySettingsReceipt.ts",
+      "sha256": "dd67aa06def7a28418384ff9a04a33b5015ed95f3599edb35f4bf9ce646095dd",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts",
+      "sha256": "a260ff641e4f73e9ba7ece650ea3ee6ca4ba7078738cf2225851a9bf64781df7",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/useCompanyResource.ts",
+      "sha256": "d9ec234061d526d0433ffee19f332f2c3706a743ac87d1111b43371b9660e916",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
+      "sha256": "8de68a200b8096a60a21dc0e67ed5952546b265e46bb34ea4ff8d94967e7e147",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/useCompanySubmissionLibrary.ts",
+      "sha256": "b1f70f0d2054f51b72917633dd84b0e2fed36aa71165ce767e81a68c8ff09a5b",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+      "unchanged": true
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "sha256": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc",
+      "unchanged": true
+    },
+    {
+      "path": "shared/company-documents.ts",
+      "sha256": "bf68cc6955dcfb1f88050d9542d6410a8a45affa790367347e9a876429adb3ff",
+      "unchanged": true
+    },
+    {
+      "path": "shared/company-legal-workflows.ts",
+      "sha256": "d246bfb95bff0c258cfc2784789e7081ddd4f5e1d7c0feec9dde6d3b783e4fbe",
+      "unchanged": true
+    },
+    {
+      "path": "shared/templates/template-spec.ts",
+      "sha256": "c7b21702e70523e59a949ec446be7808b918008ea26571c95b07f2372450fb86",
+      "unchanged": true
+    }
+  ]
+}

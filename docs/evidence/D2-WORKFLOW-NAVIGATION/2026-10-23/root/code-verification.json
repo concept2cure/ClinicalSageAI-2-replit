@@ -1,0 +1,60 @@
+{
+  "verifiedAtUtc": "2026-10-23T20:36:01.107951+00:00",
+  "branch": "concept2cure-v2",
+  "acceptedCodeCommit": "ecc1539410d2be5deca4e0d790f6db1ed3d06124",
+  "remoteHead": "ecc1539410d2be5deca4e0d790f6db1ed3d06124",
+  "equal": true,
+  "selectedSourceInputs": 71,
+  "browserSourcePins": 22,
+  "browserArtifactsIncludingTheirManifest": 29,
+  "independentReviewedSourcePins": 18,
+  "retainedOriginalTestFiles": 3,
+  "retainedAncestorCommits": [
+    "093711f4c44f77b0d36f483ca318de08cbe5be91",
+    "1a68a267ac25c50af867209761ee91309634e642",
+    "2fce84f879219de618edef503635f3a54ae25a3b",
+    "381a42fda6488914e6f1562927dcf89d1ca527df",
+    "41ce35bac74865f9271bbc2a9f7aea7681928119",
+    "42d7183240bc698fb819efa4e8517ace4a8fe37f",
+    "4ee96c450cfce386a302d39751f6239540fd7b16",
+    "4f7ca0ef3afaaa9aee45f2527bd69c896a9be7c4",
+    "58e10011677f47dbfb9ee43d305976bdbd3790db",
+    "5d3e138ecae7f92894511b0ce9b1dc0b27c69464",
+    "5f07946c09f3f0593026641aa6ace4e37f7a8a16",
+    "5ff6d225274079e9a08444409471394d9963970c",
+    "740581a551f8f8008facf0110fafc8b8a18e3d74",
+    "80cd9ab6e94b65db0b066ea8325eb27be9698ad7",
+    "84025f505acdc5b2680b361a71981477c7981e6d",
+    "92dbe0c6b63e407267efb881c67e66094384c265",
+    "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+    "a3acbbbb1c6327aa24d819ebb3beed50b982f939",
+    "bb54d64e5ac673755fb2981c966026615b23a810",
+    "c50f8810ee53684bba749a1a38b025c4ac386586",
+    "cb0d00ed32c58fc7ba23332c915952ae5a6ea542",
+    "d18f3f34a159289638c3c4a6e9dafbdee9eb79cf",
+    "d40a098c109ec309cfcace05751775190c5fcefc",
+    "ecc1539410d2be5deca4e0d790f6db1ed3d06124",
+    "ee96661bbbb98e9ebfde4dc1dabf99611e388520",
+    "fa906adc3ac130b73e33d0118a8391eba3abcc10",
+    "fc6f213ab0630c8b0640bb9acfac6a56cfe9e142",
+    "fe08bffb524ef37125d0031d6bc3383f4ed931fa"
+  ],
+  "documents": {
+    "docs/design/WORKFLOW_DISCOVERY_2026-10-23.md": "adc1c5b29a483e2223afb0f1210ea78a2d121e51266050f3946646e035637d88",
+    "docs/design/IND_CROSS_FUNCTIONAL_WORK_2026-10-23.md": "d228653b66e2e4e88c2c8fedae790935630bed6395941a290ddcefc4b3228504"
+  },
+  "tests": {
+    "passed": 502,
+    "files": 46
+  },
+  "browser": {
+    "passed": 11,
+    "errors": 0,
+    "syntheticActualComponent": true
+  },
+  "typecheckErrors": 0,
+  "lintWarningNetGrowth": 0,
+  "productionBuildPassed": true,
+  "sourceAndReviewPinsMatchRemote": true,
+  "scope": "Workflow discovery; functional ownership and RBM/biostatistics launch qualification remain outstanding."
+}

@@ -1,0 +1,495 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > on a workspace where nobody has asked, says so and claims no answered history 205ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > when answered requests exist, says everything was answered and offers them 84ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > when the answered set cannot be read, claims neither history 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the empty Waiting queue claims only what it read > never makes the extra read while somebody is waiting 29ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the standalone route is a page > has a page frame and a title of its own 21ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequestsHonestEmpty.test.tsx > Access requests — the standalone route is a page > adds no second page or title inside the Master Licensing tab 13ms
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it 248ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed 8ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry 16ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 170ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 197ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 52ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > adopts /catalog + /license: live names, retained additional categories, tiers, quotas 89ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > toggle PUTs to the real endpoint and reports the result 152ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > server rejection reverts the switch and surfaces the reason 4279ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > the switch asks for a reason first and sends nothing until one is confirmed 94ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > says so when the server reports the audit row was not written 151ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLive.test.tsx > Apps — live module subscriptions (fixture-free) > offline → honest failed-load states, never a fixture or sample pill 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 205ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false) 262ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true) 166ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > CMC / Module 3 is on the rail beside Quality, and opens CMC 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 65ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 75ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 263ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 229ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 76ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers Workflows 89ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > offers every client type once, the current one checked, by more than colour 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing a client type sets it 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Workflows and the client type > choosing the type already chosen changes nothing and closes the menu 54ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 47ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 52ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 151ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock and navigates normally when the navigation fetch fails 408ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock when the server answers resolved:false 297ms
+stderr | client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate
+An update to NavUnlockPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate 173ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > hands a locked result to the unlock panel, which outlives the palette 223ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > keeps a locked result arrow-reachable and Enter-activatable 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > leaves an entitled surface completely alone 153ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > shows no locks for the master-admin owner grant 124ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a tier lock 132ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a disabled lock 187ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a industry lock 160ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 68ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 4ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 275ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 376ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 384ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 3ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medtech uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > diagnostics uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biopharma uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medtech uses the same live discovery path without inventing project context 291ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > diagnostics uses the same live discovery path without inventing project context 64ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > cro uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > health uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biopharma uses the same live discovery path without inventing project context 57ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > cro uses the same live discovery path without inventing project context 53ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > academic uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > regulatory uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > health uses the same live discovery path without inventing project context 61ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > academic uses the same live discovery path without inventing project context 53ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medical_writing uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biotech uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > regulatory uses the same live discovery path without inventing project context 53ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > medical_writing uses the same live discovery path without inventing project context 53ms
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > pharma uses the same live discovery path without inventing project context
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > an unknown client type reaches the same destination instead of a biopharma module fallback
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > biotech uses the same live discovery path without inventing project context 54ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > pharma uses the same live discovery path without inventing project context 60ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > an unknown client type reaches the same destination instead of a biopharma module fallback 45ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > remains reachable while the portfolio read is pending 47ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > remains reachable when the portfolio read fails without turning the failure into an empty portfolio 54ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home reaches the existing Workflows destination > uses the canonical Workflows label without changing the routable surface id 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > the duplicate discovery presentation is retired > removes the overlay implementation and its Home integration after converging on Workflows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'audit-trail' stays reachable without a subscribable catalog row 59ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'part11-console' stays reachable without a subscribable catalog row 50ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails 271ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false 91ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans 117ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone 88ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant 73ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for 72ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name 65ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name 64ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name 63ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > nests each live feature once in its existing work area and explains when, where to start and what follows 296ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > shows only work areas represented by live rows instead of inventing the missing catalog 17ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > finds a subordinate feature, expands its workflow and opens its original destination 69ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches original backend categories even when their features belong to different workflows 50ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches the workflow guidance as well as feature names 43ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > retains unknown live capabilities and their category, including search and original navigation 58ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > keeps mapped and additional release-excluded features locked even when their grant is enabled 33ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > uses the original module and backend group for a governed toggle after regrouping and search 162ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > explains a no-match search and restores the actual live features when cleared 63ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports a genuinely empty catalog without claiming a search or read failure 11ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports network failure as a failed read, never an empty catalog 10ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports malformed successful body as a failed read, never an empty catalog 12ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > lockNotice — who is offered the ask > offers the ask to a member and never to an org administrator 2ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > lockNotice — who is offered the ask > leaves the admin-only call to action untouched for a member 1ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > names the day the open request was made 14ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > reports a decline with the reason the administrator gave 0ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > requestNotice — an absolute date, and the real state > says nothing when there is no request on file 1ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > offers a member a way to ask, and sends the note with the request 219ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > says a request is already open, with its date, and offers no second press 33ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > reports a failed check as a failure, never as no request on file 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > shows a refused write as a refusal and keeps the form 33ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > NavUnlockPanel — the member who cannot buy > never asks the server about requests for an administrator 15ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > shows who asked, for what, and their own words 24ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > will not approve until a reason has been given 54ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > sends the decision and the reason once both are given 57ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reports a failed load as a failure, never as an empty queue 9ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > renders a genuine zero as an honest empty state 11ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reads every workspace from the platform console endpoint, and shows the workspace column 8ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > reads one workspace from the workspace endpoint, and never asks it for every workspace 10ms
+ ✓ client/src/concept2cure/v2/__tests__/accessRequests.test.tsx > AccessRequestQueue — the administrator answering > answers another workspace's request through the platform console endpoint 58ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > above the plan: names the plan that includes it and routes to plans, with no switch 82ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > wrong industry: says so, and offers no plan — because no plan changes it 29ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > an administrator switched it off: a workspace decision, not an upsell, and the switch is offered 34ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > in the plan but never provisioned: it opens, like the rail says, and blames nobody 36ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — the five entitlement states are five different cards > switched on: no lock sentence at all, and the card opens 19ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — writes the UI offers are writes the server accepts > an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it) 164ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a 200 that is not the catalog contract is an error, never "no apps" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > a genuinely empty catalog is still the honest empty state 14ms
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx > Workflows — no verdict is not a verdict > with the licence unreadable, an unavailable module is not blamed on the plan 13ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > filters the ledger to one kind of governed event, and says how many that is
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > filters the ledger to one kind of governed event, and says how many that is 81ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > a kind the ledger does not file never reaches the screen, and the legal kinds are named 1ms
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > runs the search box over the ledger, and the box carries the term
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > shows the hash chain
+An update to AuditTrail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > runs the search box over the ledger, and the box carries the term 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > opens one entry by id, and closes it again 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > an entry that is not on screen is refused, listing the ids that are 24ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > shows the hash chain 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > a ledger that could not be read is said so, never shown as an empty trail 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the audit trail — the demonstration ended on a screen AnA could not touch > an action sent before the ledger lands is held, then applied when it does 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > shows and hides the admin controls, the one thing a person switches here 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx > the apps catalog > a state the control does not have is refused with the legal pair 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees an app token only when the caret is inside an @word at the start or after whitespace 2ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees a command token only as the first word of the draft — where the server reads it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > inserts the label with a trailing space and reports the caret after it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing @ opens the app list and Enter inserts the highlighted app instead of sending 157ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > arrow keys move the highlight and Escape closes without inserting 82ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing / at the start lists the commands the server parses and Enter inserts one 16ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > an unknown query offers nothing and Enter sends as usual 4ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/ConversationThread.tsx uses useAppMentions and renders AppMentionMenu on its textarea 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/Surfaces.tsx uses useAppMentions and renders AppMentionMenu on its textarea 0ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > lists matching skills after the commands, and choosing one picks it and inserts no text 20ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > chooses a skill from the keyboard like a command, and Enter does not send 9ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > skills in the `/` menu > offers no skill in a composer that passes no source, and commands are unchanged 2ms
+ ✓ client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx > Apps — licence band with an unrecorded limit > renders the band, the unrecorded limit as "not recorded" with no bar, and the recorded one as before 67ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > reads the base seed and every follow-up that adds catalog rows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > leaves no app the shell presents without a catalog row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no catalog row for something a user cannot actually open 0ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > lists one module once — never the same surface under two ids 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > never makes a Part 11 compliance control licensable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no duplicate module ids (module_id is UNIQUE) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > gives every module its true deep link, unique per module 4ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > guesses no commercial packaging — the BASE seed ships every module unrestricted 4ms
+ ✓ client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > retires legacy rows instead of deleting them (ON DELETE CASCADE would take subscriptions) 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action operates a screen the navigation registry knows 3ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action id is namespaced to its surface and unique 3ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every enum param has non-empty values and required params have descriptions 2ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > no registered action names governed work 6ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > REFUSES a governed id — the check shown failing on what it exists to catch 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > ungoverned view verbs pass the pattern (no false positives on the registry style) 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > deep-research actions carry no credit-spend pre-arm params 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > unknown action → typed refusal listing the valid ids 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > missing required param → refusal naming the param 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > out-of-enum param → refusal naming the legal values 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > a sound request → the registry directive, params stringified and filtered 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > discovery filters by surface 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown screen fails 2ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown action fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step with illegal pinned params fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a silent step and a double-move step fail 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > an empty script fails 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every registered script validates clean 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > ships one training walkthrough and one sales demonstration 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > script ids are unique and findable 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > the picker listing carries honest metadata and no steps payload 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every script fits the demo drive budgets (a plan the budget cuts off is a defect here, not at runtime) 6ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the three scripts exist 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every navigate stop lands on a launch surface (never "Not in this release") 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every act operates a registered action whose screen is a launch surface 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all seven launch apps and ends at the audit trail 1ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > every app is a navigation target AnA can resolve 4ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > includes the module workstreams and the tool-like globals, not the shell destinations 2ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > CALLABLE_APPS > labels are unique, so a mention is never ambiguous 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > ranks a prefix match first and caps the list 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > searchCallableApps > an empty query lists the vocabulary 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > finds a mention by its full label, including spaces 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > prefers the longer label when one label prefixes another 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > ignores unknown labels and e-mail addresses 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > is case-insensitive and reports each app once 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > stripAppMentions removes recognised mention tokens and leaves unknown @text alone 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > answers to the navigation id and the short aliases the server has always honoured 1ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > a longer handle wins over a shorter one it starts with 0ms
+ ✓ shared/navigation/__tests__/callable-apps.test.ts > parseAppMentions > every alias and id is unique across the vocabulary 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > has unique target ids 2ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > every target is well-formed (id, label, description, scope, group) 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > navigation registry — shape > enum params declare a non-empty enum list 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > resolves a global target to a directive 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > rejects an unknown target and lists valid ones 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > accepts a valid enum param and rejects an invalid one 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > omits optional params when not supplied 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > resolveNavigation > findNavigationTarget round-trips 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > extracts and resolves a valid ana-navigate block 1ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for an unknown target without emitting a directive 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > records an error for malformed JSON 0ms
+ ✓ shared/navigation/__tests__/navigation.test.ts > parseNavigationSignals > returns empty for text with no blocks 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is defined only as the table grid header 3ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is not the conversation thread header 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > cites § sections, never "ss11.10(e)" or "ss11.50", and never writes "entry(ies)" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > shows no API route as the Apps catalog eyebrow 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 129 — no empty breadcrumb > draws the tier crumb and its separator only when there is a tier 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > carries the module and its real required tier 2ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > is consumed exactly once 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > is null when the plans page is reached any other way 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > unlock intent > can be abandoned without being consumed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > only a tier lock is sent to the plans page at all > routes a tier lock to plans, and the other two somewhere a plan cannot help 1ms
+ ✓ client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx > only a tier lock is sent to the plans page at all > offers a non-admin no action they cannot take 0ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > resolves every NAVIGATION_TARGETS id to a real surface view (never the scaffold) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > aliases only point AT real views — a dangling alias is drift in the other direction 1ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > is recognised only for an unentitled launch-scope verdict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > names the reason in the accessible short form 1ms
+ ✓ client/src/concept2cure/v2/__tests__/launchScopeLock.test.tsx > launch-scope lock > offers no plan, no toggle and no request — for admins and members alike 1ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > the seeded names were found (the check below is not vacuous) 2ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > no script names a record a launch-demo pack seeds 1ms
+ ✓ shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts > demonstration talking points > a stop that describes the portfolio says what to do when it holds no program 1ms
+
+ Test Files  25 passed (25)
+      Tests  234 passed (234)
+   Start at  20:15:40
+   Duration  36.78s (transform 5.77s, setup 1.16s, import 10.36s, tests 15.93s, environment 6.35s)
+

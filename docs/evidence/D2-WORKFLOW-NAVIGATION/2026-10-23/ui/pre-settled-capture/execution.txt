@@ -1,0 +1,199 @@
+{
+  "passed": true,
+  "syntheticInterceptedRecords": true,
+  "actualComponent": "Apps (AdminSurfaces.tsx)",
+  "humanWitnessed": false,
+  "authenticatedClientAcceptance": false,
+  "deployedApplicationTested": false,
+  "productionWriteExecuted": false,
+  "liveSignatureExecuted": false,
+  "liveTransmissionExecuted": false,
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "sha256": "b6ef55d17f8b86de6ab74d49ebfab2330ce83f2495acd2f98a14a2b1fdb9422c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+      "sha256": "f1afed53b86559e22009b3383cf08d936193c0e4b6503adafc06c2f40883fbf1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "cf24688c28ee35ebbccacf7f955a2db2e46fddb2646dc5b9115a95abdaf0619d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "sha256": "fb27293457be5e8e0c60c70160f63530f4c17c8f2593d3710a24b78e78ba7349"
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "sha256": "3903b0172f5b4b8328406c32b3065697ad08cdc4f299e94aa3301bad429bcf45"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceContext.ts",
+      "sha256": "34c1c9de2db15bfefe23a63ac6197b5412657a1e317e8f00db71e9e533287bf5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceActions.ts",
+      "sha256": "bd33c6c4e23b436819d5aab944c5d6f5cb04e24dce859a18cdfcc28203b78d40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/catalogWorkflows.ts",
+      "sha256": "e4ed0f3c463d57ebe6ebe273664440a095af97c35b059f9688829e0d6af46a9d"
+    },
+    {
+      "path": "shared/constants/launch-scope.ts",
+      "sha256": "dd7562241c298fc91dbc1dde703e413cc453fa908449bdf60ba7661f6a050aeb"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/components/GovernedConfirmDialog.tsx",
+      "sha256": "3b89d47cac0846915fac7344dd925cf2184e9faf2926958e85a81f9feea46402"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surfaces-v2.css",
+      "sha256": "1f9d1ddd7b5a3b1f1ed5e609e346facc6f5a71001de541862fcac9d81ad064c3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "sha256": "5de39b9fa3d594254ca0b9a1f7f632e17ad32e31007f26c0198622ddff4cfa40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "sha256": "3e2727dcfbe4d5b1499a59cbf1d44c21cd6c96c8456a96dd3e7a19467ad83647"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "e0314bcce6099f417fbf6841a9376037f49eb9e548d683e6a4e5871a8e6c3e94"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/workflows-v2.css",
+      "sha256": "a75ed4dcfe3eae52a7e3d25c98293f4db808817bdeb7dee59dbaba2f5fcb0979"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx",
+      "sha256": "1641723d8fa52b413bf4bedb01b92547528f3c138c731a69291feb082be7c016"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-check.mjs",
+      "sha256": "983ad0f701350a6b773bf8ac63c2ff4455a26642c9279f53deb7694427e0ffe5"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-index.html",
+      "sha256": "fe60250e10a0b393394bbc4f9854c1b4787a53882798ac31030f816175237a95"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs",
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    }
+  ],
+  "checks": [
+    {
+      "check": "Seven work areas are grouped with collapsed feature lists and retained additional capabilities",
+      "passed": true
+    },
+    {
+      "check": "Native feature disclosure opens and closes with Enter and retains visible keyboard focus",
+      "passed": true,
+      "summaryFocus": {
+        "outlineStyle": "auto",
+        "outlineWidth": "1px"
+      }
+    },
+    {
+      "check": "Searching subordinate readiness opens its existing feature inside Submission Center and retains its navigation ID",
+      "passed": true
+    },
+    {
+      "check": "Dark-theme feature search retains readable text against its actual computed field background",
+      "passed": true,
+      "searchColors": {
+        "color": "rgb(250, 249, 245)",
+        "backgroundColor": "rgb(38, 38, 36)"
+      },
+      "contrast": 14.391087659120195
+    },
+    {
+      "check": "Unclassified feature remains findable but launch exclusion gains neither Open nor switch",
+      "passed": true
+    },
+    {
+      "check": "No-match search states no match rather than reporting empty or failed catalog",
+      "passed": true
+    },
+    {
+      "check": "Clearing search restores overview and 390px viewport has no horizontal page overflow",
+      "passed": true
+    },
+    {
+      "check": "Filtered and regrouped feature requires reason and confirmation; writes and updates only original review module",
+      "passed": true
+    },
+    {
+      "check": "empty catalog renders its honest state without feature cards",
+      "passed": true
+    },
+    {
+      "check": "error catalog renders its honest state without feature cards",
+      "passed": true
+    },
+    {
+      "check": "malformed catalog renders its honest state without feature cards",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/license"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/module-subscriptions/review/toggle",
+      "body": {
+        "enabled": true,
+        "reason": "Enable synthetic reviewer workflow access"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/license"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/license"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/license"
+    }
+  ],
+  "browserErrors": []
+}

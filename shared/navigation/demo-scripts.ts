@@ -85,7 +85,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
-        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the eight apps of this release, and they can interrupt with a question at any moment.',
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the work areas in this release, and they can interrupt with a question at any moment.',
       },
       {
         say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. Name the programs actually in their portfolio — drug and device programs sit side by side in one portfolio. If it is empty, say so plainly and offer to set up their first program together.',
@@ -148,7 +148,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'audit-trail' },
       },
       {
-        say: 'Close the loop: recap the route just driven, name the one or two apps most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
+        say: 'Close the loop: recap the route just driven, name the one or two workflows most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
       },
     ],
   },

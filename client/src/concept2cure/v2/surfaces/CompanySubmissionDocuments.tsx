@@ -1,7 +1,7 @@
 import React from 'react';
 import { companyLegalDocumentRefusal, type CompanyDocumentsResponse, type CompanyLegalDocument } from '@shared/company-documents';
 import { canonicalRegionOf, toAgency } from '@shared/regulatory/region-identity';
-import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
+import { getAuthToken } from '@/utils/authToken';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
@@ -13,6 +13,7 @@ import { CompanyFilingIdentityReview } from './CompanyFilingIdentityReview';
 import { CompanyCorrespondenceVariants } from './CompanyCorrespondenceVariants';
 import { CompanyLegalReadiness } from './company-documents/CompanyLegalReadiness';
 import { useCompanySubmissionLibrary, type CompanyLibrary } from './useCompanySubmissionLibrary';
+import { useCompanySession } from './company-documents/companySession';
 
 const PATH = '/api/client-branding/company-documents';
 interface Sequence { id: number; sequenceNumber: string; status: string; region: string }
@@ -51,8 +52,8 @@ function companionSelection(library: CompanyLibrary, context: FilingContext, seq
   const crossProgram = !!selected && !!submission.programId && selected.programId !== submission.programId;
   const copyBlock = selected ? copyRefusal(selected) : null;
   const sectionVerdict = judgeSectionCode(library.section, vocabularyForApplicationType(submission.applicationType));
-  const canPlace = () => !!selected && library.active && !library.busy && !locked && !selectedRefusal && sectionVerdict.placeable && placementReasonOk(library.reason);
-  const canCopy = () => !!selected && !!(library.response?.capabilities?.manageLegal ?? library.response?.canManage) && crossProgram && !copyBlock && !!submission.programId && placementReasonOk(library.reason) && !library.busy && !locked;
+  const canPlace = () => library.current() && !!selected && library.active && !library.busy && !locked && !selectedRefusal && sectionVerdict.placeable && placementReasonOk(library.reason);
+  const canCopy = () => library.current() && library.active && !!selected && !!(library.response?.capabilities?.manageLegal ?? library.response?.canManage) && crossProgram && !copyBlock && !!submission.programId && placementReasonOk(library.reason) && !library.busy && !locked;
   return { documents, selected, locked, crossProgram, copyBlock, sectionVerdict, canPlace, canCopy };
 }
 type CompanionSelection = ReturnType<typeof companionSelection>;
@@ -71,6 +72,16 @@ function confirmedCopy(value: unknown): value is CopyReceipt {
   const body = value as Partial<CopyReceipt> | null;
   return typeof body?.document?.id === 'string' && body.reviewRequired === true && typeof body.message === 'string';
 }
+async function correspondenceDownloadBody(result: Response, current: () => boolean) {
+  if (!current()) return null;
+  if (!result.ok) {
+    const body = await result.json().catch(() => null);
+    if (!current()) return null;
+    throw new Error(serverMessage(body) || 'The template download was refused.');
+  }
+  const blob = await result.blob();
+  return current() ? blob : null;
+}
 
 function companionActions(props: CompanionProps, library: CompanyLibrary, selection: CompanionSelection) {
   const { seq, submission, onDone } = props;
@@ -78,10 +89,11 @@ function companionActions(props: CompanionProps, library: CompanyLibrary, select
   const place = async () => {
     if (!selected || !selection.canPlace()) return;
     const ticket = library.session.current.generation;
+    const current = () => library.current() && ticket === library.session.current.generation;
     library.setBusy(true); library.setNote(null);
     const code = selection.sectionVerdict.canonical ?? library.section.trim();
-    const result = await apiCall('POST', `${PATH}/legal-documents/${encodeURIComponent(selected.id)}/place`, { sequenceId: seq.id, sectionCode: code, reason: library.reason.trim() });
-    if (ticket !== library.session.current.generation) return;
+    const result = await apiCall('POST', `${PATH}/legal-documents/${encodeURIComponent(selected.id)}/place`, { sequenceId: seq.id, sectionCode: code, reason: library.reason.trim() }, current);
+    if (!result || !current()) return;
     library.setBusy(false);
     if (!result.ok || !matchingLeafReceipt(result.body, { sequenceId: seq.id, sectionCode: code, lifecycleOp: 'new', documentTable: 'vault_documents', documentUuid: selected.vaultDocumentId })) {
       library.setNote({ tone: 'err', text: apiErrorText(result, 'Placement was not confirmed. Check this sequence’s leaves before retrying.') }); return;
@@ -93,10 +105,11 @@ function companionActions(props: CompanionProps, library: CompanyLibrary, select
   const copyToProgram = async () => {
     if (!selected || !library.response || !selection.canCopy()) return;
     const ticket = library.session.current.generation; library.setBusy(true); library.setNote(null);
+    const current = () => library.current() && ticket === library.session.current.generation;
     const result = await apiCall('POST', `${PATH}/legal-documents/${encodeURIComponent(selected.id)}/copy-to-program`, {
       programId: submission.programId, expectedRevision: library.response.data.revision, reason: library.reason.trim(),
-    });
-    if (ticket !== library.session.current.generation) return;
+    }, current);
+    if (!result || !current()) return;
     library.setBusy(false);
     if (!result.ok || !confirmedCopy(result.body)) {
       library.setNote({ tone: 'err', text: apiErrorText(result, 'The copy could not be confirmed. Check the target project’s Vault before retrying.') }); return;
@@ -106,21 +119,21 @@ function companionActions(props: CompanionProps, library: CompanyLibrary, select
     library.setSelectedId(''); library.setReason('');
   };
   const downloadCorrespondence = async () => {
-    if (!library.active || library.busy) return;
+    if (!library.current() || !library.active || library.busy) return;
     const ticket = library.session.current.generation;
+    const current = () => library.current() && ticket === library.session.current.generation;
     library.setBusy(true); library.setNote(null);
     const title = `${submission.title || `Submission ${submission.id}`} — correspondence`;
     try {
       const result = await apiRequest('POST', `${PATH}/letterhead/render`, { purpose: 'submission', sequenceId: seq.id,
         ...(library.variantId ? { variantId: library.variantId } : {}), title });
-      if (!result.ok) throw new Error(serverMessage(await result.json().catch(() => null)) || 'The template download was refused.');
-      const blob = await result.blob();
-      if (ticket !== library.session.current.generation) return;
+      const blob = await correspondenceDownloadBody(result, current);
+      if (!blob || !current()) return;
       if (!downloadBlob(`${safeFileName(submission.title || `Submission ${submission.id}`)}-correspondence.docx`, blob)) throw new Error('The browser could not save the template.');
       library.setNote({ tone: 'ok', text: 'Correspondence Word template downloaded using the saved company presentation preference. Review the draft content and place its reviewed PDF explicitly from Vault before including it in a submission.' });
     } catch (error) {
-      if (ticket === library.session.current.generation) library.setNote({ tone: 'err', text: 'Correspondence template download failed. ' + (error instanceof Error ? error.message : '') });
-    } finally { if (ticket === library.session.current.generation) library.setBusy(false); }
+      if (current()) library.setNote({ tone: 'err', text: 'Correspondence template download failed. ' + (error instanceof Error ? error.message : '') });
+    } finally { if (current()) library.setBusy(false); }
   };
   return { place, copyToProgram, downloadCorrespondence };
 }
@@ -206,9 +219,9 @@ function CompanyCorrespondenceWorkflows({ props, library, auth }: { props: Compa
 
 export function CompanySubmissionDocuments(props: CompanionProps) {
   const { seq, submission } = props;
-  const auth = getAuthToken(); const org = getJwtOrgId();
-  const owner = `${org}:${auth}:${seq.id}:${seq.region}:${seq.status}:${submission.id}:${submission.programId}:${submission.applicationType}`;
-  const library = useCompanySubmissionLibrary(owner, submission.programId);
+  const auth = getAuthToken(); const session = useCompanySession();
+  const owner = JSON.stringify([session.key, seq.id, seq.region, seq.status, submission.id, submission.programId, submission.applicationType]);
+  const library = useCompanySubmissionLibrary(owner, submission.programId, session);
   const context = filingContext(seq, submission);
   const selection = companionSelection(library, context, seq, submission);
   const actions = companionActions(props, library, selection);

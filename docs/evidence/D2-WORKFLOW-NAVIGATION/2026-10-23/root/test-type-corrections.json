@@ -1,0 +1,20 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx",
+    "originalSha256": "984bbf98ad61575d168391c2f3ae69a8987f0ad40d52bacf197b9ad8483de6b3",
+    "currentSha256": "3c806c431581d575472dfabeafe8fa556ca36afeaf572443970c1860fd250b35",
+    "change": "Replace undeclared browser global type with equivalent structural type; no runtime change"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/appsLive.test.tsx",
+    "originalSha256": "6f49880efeaa421b640af234104d8678766b66413b902a44d5cd586ba7bfc123",
+    "currentSha256": "279793f747e7f85f65870fcd7520e9a7a8c62d31e6ae603deae252d2165d6332",
+    "change": "Replace undeclared browser global type with equivalent structural type; no runtime change"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx",
+    "originalSha256": "e605cbf833764bd7d5f91d6b22a6a018b1aef3badaf0c3b27c58fe50fd044dee",
+    "currentSha256": "79329ecfd4c5854e84af98116cd60d823214c576258c0bd45b1aeb3221ed64a8",
+    "change": "Replace undeclared browser global type with equivalent structural type; no runtime change"
+  }
+]
