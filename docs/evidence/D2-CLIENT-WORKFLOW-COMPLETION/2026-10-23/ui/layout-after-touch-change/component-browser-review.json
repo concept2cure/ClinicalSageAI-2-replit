@@ -1,0 +1,1994 @@
+{
+  "at": "2026-10-23T18:49:45Z",
+  "scope": "Serialized actual mounted official eSTAR component/picker DOM, existing MDX surface host inside V2 scope, all built CSS in index,V2App,other order. Local Chromium layout only; full app events, live backend, actual PDF viewing, external fonts and human acceptance not exercised. External requests blocked.",
+  "sourceHead": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "captures": {
+    "picker": "ddd5e1d8b9da5a1e81c08c5b29d8a2b57ec95b111cb590bebf29be582b3ecb09",
+    "selected": "dd27dea39394fd7c9e821d18dced563a870d34c197ef40c025820a8a6e801f6e",
+    "receipt": "7dadae3ee5d0c886de7fc1404d3ea16cf25c733b3975bbf680471a0ff69b0dc2"
+  },
+  "cssFiles": [
+    {
+      "name": "index-CQkeOtwt.css",
+      "sha256": "1121dc817dbf0ab774046f13777dde03848f803c0206e68f8b9e7e0788bbdde7"
+    },
+    {
+      "name": "V2App-B1Ncx2Ue.css",
+      "sha256": "9c18e26ecd6d9823f9169839b2af9ae3fc5af9eed0d09e40210d2bdfc1863b82"
+    },
+    {
+      "name": "AdminAccess-xhPEI8Z8.css",
+      "sha256": "81148c9f7926be9f9b55394f1469d6e27103aa9fcd1849c84987955080cc2cf1"
+    },
+    {
+      "name": "ClientPortal-Df7niGAt.css",
+      "sha256": "9a81e351a624fb3ae840e72036c26c0896565bc2724efae3e5ff1d42dd9f61e8"
+    },
+    {
+      "name": "EctdCoauthor-WxR4wiGp.css",
+      "sha256": "77d4ff9516b79a6c49ddb8f873f2f81d846f4891ff19fffd94c71da8596decbb"
+    },
+    {
+      "name": "EsignModal-DY4l-xU8.css",
+      "sha256": "41b6eba0e8277c02f5e375ce711b2833e1e0b6d245152b0b497fc135229fc249"
+    },
+    {
+      "name": "GovernedConfirmDialog-BAvPP0yZ.css",
+      "sha256": "f4973efb81a35803e67bc811c949ecba69be67cd826edb5944230f04626f2783"
+    },
+    {
+      "name": "Insights-DugMOhtx.css",
+      "sha256": "b97e6c58608a599cb86214dd9a0ecc01d3da4e10fe3219beef2e434ff0f32798"
+    },
+    {
+      "name": "Intelligence-Cn63MxwQ.css",
+      "sha256": "c9bbcb0afd15636786dbe6c5c962c552ff6a6574dae546447a1145eb1c60f8a9"
+    },
+    {
+      "name": "MasterLicensing-CSgZ4t6r.css",
+      "sha256": "e4271d0122480eac6299b178cc83a1da85f1eb516b0351aa8ba05e60ae2901c4"
+    },
+    {
+      "name": "MdxSurfaceHost-B03qnq2W.css",
+      "sha256": "e7ae1a8b21db9c138714489c56abbfe3ea41429c25e67babaebbe3a66982f5cb"
+    },
+    {
+      "name": "Onboarding-1aQVXd4a.css",
+      "sha256": "e229a234f04a02504d41d6a06de0ca24074558f41f8a23d7119344fd1683b02e"
+    },
+    {
+      "name": "OnboardingIngest--f7BZU_h.css",
+      "sha256": "b78da74a0cef983e192a839bb1eb6bff71d8eb63aafaf52b5b0837d4a7ec97ce"
+    },
+    {
+      "name": "PdevRoute-BvTaZFQ6.css",
+      "sha256": "54e70f1c9a747e2dd8593d2e308ecf96ed5e0e58e24d1f7cae818a1d3c04f630"
+    },
+    {
+      "name": "ProtocolDev-CzvCduh-.css",
+      "sha256": "2f3b8258a4e713c1c25bc87fe4df064b5c19c1d2b97ff5ec3854b7e7765b6d4b"
+    },
+    {
+      "name": "Pyramid-CbR3Xx2c.css",
+      "sha256": "3563f341dfdbed84cb830e5dcd20cd7258d63399dc18684359441e3b77a90f61"
+    },
+    {
+      "name": "QualityModule-7idVffPF.css",
+      "sha256": "74eb26166ad94784a5c5fa27495eb2deecf39c67095318ca307574f4df9b5f62"
+    },
+    {
+      "name": "Rbm-BfE-ugYt.css",
+      "sha256": "6a9801993d0f1027d9de7e377483669e8b27ff06b6a99a5b16dfe6644becb73e"
+    },
+    {
+      "name": "RedlineText-DBgVI_xu.css",
+      "sha256": "808b96578ca90405a1f5bb29a0347ff0eee0e1069ea0cb2006dd15e340fb9e3a"
+    },
+    {
+      "name": "Review-CGMT1O2r.css",
+      "sha256": "bc51beba0a431f03d0d941a12da80b1281674871bdd9dbada7f3cdaabf5e6af5"
+    },
+    {
+      "name": "RichSectionEditor-CsLGNfpk.css",
+      "sha256": "63acf2c486ae2285f3bb3368a35b428d2d4d7e1fb07bcec18eb052c6a2b24c00"
+    },
+    {
+      "name": "SessionPolicySetting-DlIRNv18.css",
+      "sha256": "a61872019c59da104ea971993869c3b4d54d65f1a80bc096965b1d223e6e442f"
+    },
+    {
+      "name": "SubmissionCenter-DK_y2NA8.css",
+      "sha256": "68f16be8765d4faf99494919732f62f70d4caa4a14c13429d0b6f4a764988a1c"
+    },
+    {
+      "name": "VaultLibraryResults-DB3hIF3J.css",
+      "sha256": "1cf236a15f03a256b5be712bfafaeec9d8d810ffe5d2bb72f26f428446184386"
+    },
+    {
+      "name": "ZenRouter-BbLT-fZv.css",
+      "sha256": "a7497d679da763df659cca84360638c75933dabbefc008795ea22b7689f209e0"
+    },
+    {
+      "name": "ana-skills-Gc2BKvST.css",
+      "sha256": "6969b50e3fb6330b0d6e5e626030cfe8ee22947f329dd09033d554804a37a5dd"
+    },
+    {
+      "name": "ana-v2-B_qTrbu9.css",
+      "sha256": "3669b5f6b8318929f43db3b2940228e8a1cec7d01342118dddc11791c16667f4"
+    },
+    {
+      "name": "commcenter-v2-DdJzkzwC.css",
+      "sha256": "e89d3737f2afd5c5a14c4e7255fe196ad10ca7137d401b9da2663635a1237644"
+    },
+    {
+      "name": "company-documents-ozlLbCYb.css",
+      "sha256": "99d18df1e60ad4f2f12d8e079214add5c27ee63a586ba50f06e30cefc84a8c38"
+    },
+    {
+      "name": "project-home-v2-BRi5JHo-.css",
+      "sha256": "1f8ba33d2169dcc4f56af973ff7f328cdafa7178e885b102285a4f85f542a5b5"
+    },
+    {
+      "name": "workDock-Dq695-ka.css",
+      "sha256": "cdfd082a5bdb249215e20308ce742ab418ec17bfd9eda6d2edba72960d2c4964"
+    }
+  ],
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 83.5,
+          "right": 1336,
+          "bottom": 660.75,
+          "width": 1232,
+          "height": 577.25
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [
+        {
+          "tag": "DIV",
+          "className": "vpick-hit",
+          "text": "Diagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceId",
+          "clientWidth": 1206,
+          "scrollWidth": 1231
+        }
+      ],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 193.875,
+            "right": 1323,
+            "bottom": 237.875,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "box": {
+            "left": 117,
+            "top": 289.75,
+            "right": 1219.359375,
+            "bottom": 333.75,
+            "width": 1102.359375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Search Vault",
+          "box": {
+            "left": 1229.359375,
+            "top": 289.75,
+            "right": 1323,
+            "bottom": 333.75,
+            "width": 93.640625,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Select document",
+          "box": {
+            "left": 1242.1875,
+            "top": 387.875,
+            "right": 1323,
+            "bottom": 431.875,
+            "width": 80.8125,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Previous Vault results",
+          "box": {
+            "left": 1047.328125,
+            "top": 465.875,
+            "right": 1192.0625,
+            "bottom": 509.875,
+            "width": 144.734375,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Next Vault results",
+          "box": {
+            "left": 1200.0625,
+            "top": 465.875,
+            "right": 1323,
+            "bottom": 509.875,
+            "width": 122.9375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 541.875,
+            "right": 254.5,
+            "bottom": 585.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 603.75,
+            "right": 263.25,
+            "bottom": 647.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Select document",
+          "box": {
+            "left": 1242.1875,
+            "top": 387.875,
+            "right": 1323,
+            "bottom": 431.875,
+            "width": 80.8125,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 541.875,
+            "right": 254.5,
+            "bottom": 585.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 603.75,
+            "right": 263.25,
+            "bottom": 647.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\n\nSearch this project\u2019s Vault to choose a version. The server checks current approval and access again when generating.\n\nSearch this project's Vault\nSearch Vault\n\nShowing 1 of 26 matches. Refine the search to find one not listed.\n\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVERSION 2.0\nSelect document\nPrevious Vault results\nNext Vault results\nRemove attachment\n\nChoose an FDA destination and a Vault version for every attachment, or remove the incomplete row.\n\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "picker",
+      "theme": "light",
+      "screenshot": "picker-light-1440.png",
+      "failures": [
+        "text/container horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 95.5,
+          "right": 366,
+          "bottom": 872,
+          "width": 342,
+          "height": 776.5
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [
+        {
+          "tag": "DIV",
+          "className": "vpick-hit",
+          "text": "Diagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceId",
+          "clientWidth": 316,
+          "scrollWidth": 378
+        }
+      ],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 240.25,
+            "right": 353,
+            "bottom": 284.25,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "box": {
+            "left": 37,
+            "top": 354,
+            "right": 249.359375,
+            "bottom": 398,
+            "width": 212.359375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Search Vault",
+          "box": {
+            "left": 259.359375,
+            "top": 354,
+            "right": 353,
+            "bottom": 398,
+            "width": 93.640625,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Select document",
+          "box": {
+            "left": 309,
+            "top": 527.25,
+            "right": 353,
+            "bottom": 571.25,
+            "width": 44,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Previous Vault results",
+          "box": {
+            "left": 77.328125,
+            "top": 659.25,
+            "right": 222.0625,
+            "bottom": 703.25,
+            "width": 144.734375,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Next Vault results",
+          "box": {
+            "left": 230.0625,
+            "top": 659.25,
+            "right": 353,
+            "bottom": 703.25,
+            "width": 122.9375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 735.25,
+            "right": 174.5,
+            "bottom": 779.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 815,
+            "right": 183.25,
+            "bottom": 859,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Select document",
+          "box": {
+            "left": 309,
+            "top": 400.25,
+            "right": 353,
+            "bottom": 444.25,
+            "width": 44,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 491.25,
+            "right": 174.5,
+            "bottom": 535.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 571,
+            "right": 183.25,
+            "bottom": 615,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\n\nSearch this project\u2019s Vault to choose a version. The server checks current approval and access again when generating.\n\nSearch this project's Vault\nSearch Vault\n\nShowing 1 of 26 matches. Refine the search to find one not listed.\n\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVERSION 2.0\nSelect document\nPrevious Vault results\nNext Vault results\nRemove attachment\n\nChoose an FDA destination and a Vault version for every attachment, or remove the incomplete row.\n\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "picker",
+      "theme": "light",
+      "screenshot": "picker-light-390.png",
+      "failures": [
+        "text/container horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 83.5,
+          "right": 1336,
+          "bottom": 660.75,
+          "width": 1232,
+          "height": 577.25
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [
+        {
+          "tag": "DIV",
+          "className": "vpick-hit",
+          "text": "Diagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceId",
+          "clientWidth": 1206,
+          "scrollWidth": 1231
+        }
+      ],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 193.875,
+            "right": 1323,
+            "bottom": 237.875,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "box": {
+            "left": 117,
+            "top": 289.75,
+            "right": 1219.359375,
+            "bottom": 333.75,
+            "width": 1102.359375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Search Vault",
+          "box": {
+            "left": 1229.359375,
+            "top": 289.75,
+            "right": 1323,
+            "bottom": 333.75,
+            "width": 93.640625,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Select document",
+          "box": {
+            "left": 1242.1875,
+            "top": 387.875,
+            "right": 1323,
+            "bottom": 431.875,
+            "width": 80.8125,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Previous Vault results",
+          "box": {
+            "left": 1047.328125,
+            "top": 465.875,
+            "right": 1192.0625,
+            "bottom": 509.875,
+            "width": 144.734375,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Next Vault results",
+          "box": {
+            "left": 1200.0625,
+            "top": 465.875,
+            "right": 1323,
+            "bottom": 509.875,
+            "width": 122.9375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 541.875,
+            "right": 254.5,
+            "bottom": 585.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 603.75,
+            "right": 263.25,
+            "bottom": 647.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Select document",
+          "box": {
+            "left": 1242.1875,
+            "top": 387.875,
+            "right": 1323,
+            "bottom": 431.875,
+            "width": 80.8125,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 541.875,
+            "right": 254.5,
+            "bottom": 585.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 603.75,
+            "right": 263.25,
+            "bottom": 647.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\n\nSearch this project\u2019s Vault to choose a version. The server checks current approval and access again when generating.\n\nSearch this project's Vault\nSearch Vault\n\nShowing 1 of 26 matches. Refine the search to find one not listed.\n\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVERSION 2.0\nSelect document\nPrevious Vault results\nNext Vault results\nRemove attachment\n\nChoose an FDA destination and a Vault version for every attachment, or remove the incomplete row.\n\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "picker",
+      "theme": "dark",
+      "screenshot": "picker-dark-1440.png",
+      "failures": [
+        "text/container horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 95.5,
+          "right": 366,
+          "bottom": 872,
+          "width": 342,
+          "height": 776.5
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [
+        {
+          "tag": "DIV",
+          "className": "vpick-hit",
+          "text": "Diagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceId",
+          "clientWidth": 316,
+          "scrollWidth": 378
+        }
+      ],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 240.25,
+            "right": 353,
+            "bottom": 284.25,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "box": {
+            "left": 37,
+            "top": 354,
+            "right": 249.359375,
+            "bottom": 398,
+            "width": 212.359375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Search Vault",
+          "box": {
+            "left": 259.359375,
+            "top": 354,
+            "right": 353,
+            "bottom": 398,
+            "width": 93.640625,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Select document",
+          "box": {
+            "left": 309,
+            "top": 527.25,
+            "right": 353,
+            "bottom": 571.25,
+            "width": 44,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Previous Vault results",
+          "box": {
+            "left": 77.328125,
+            "top": 659.25,
+            "right": 222.0625,
+            "bottom": 703.25,
+            "width": 144.734375,
+            "height": 44
+          },
+          "disabled": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Next Vault results",
+          "box": {
+            "left": 230.0625,
+            "top": 659.25,
+            "right": 353,
+            "bottom": 703.25,
+            "width": 122.9375,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 735.25,
+            "right": 174.5,
+            "bottom": 779.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 815,
+            "right": 183.25,
+            "bottom": 859,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Select document",
+          "box": {
+            "left": 309,
+            "top": 400.25,
+            "right": 353,
+            "bottom": 444.25,
+            "width": 44,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 491.25,
+            "right": 174.5,
+            "bottom": 535.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 571,
+            "right": 183.25,
+            "bottom": 615,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\n\nSearch this project\u2019s Vault to choose a version. The server checks current approval and access again when generating.\n\nSearch this project's Vault\nSearch Vault\n\nShowing 1 of 26 matches. Refine the search to find one not listed.\n\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVERSION 2.0\nSelect document\nPrevious Vault results\nNext Vault results\nRemove attachment\n\nChoose an FDA destination and a Vault version for every attachment, or remove the incomplete row.\n\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "picker",
+      "theme": "dark",
+      "screenshot": "picker-dark-390.png",
+      "failures": [
+        "text/container horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 83.5,
+          "right": 1336,
+          "bottom": 491.875,
+          "width": 1232,
+          "height": 408.375
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 193.875,
+            "right": 1323,
+            "bottom": 237.875,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 346.875,
+            "right": 244.96875,
+            "bottom": 390.875,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 390.875,
+            "right": 254.5,
+            "bottom": 434.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 434.875,
+            "right": 263.25,
+            "bottom": 478.875,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 346.875,
+            "right": 244.96875,
+            "bottom": 390.875,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 390.875,
+            "right": 254.5,
+            "bottom": 434.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 434.875,
+            "right": 263.25,
+            "bottom": 478.875,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "selected",
+      "theme": "light",
+      "screenshot": "selected-light-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 95.5,
+          "right": 366,
+          "bottom": 620.75,
+          "width": 342,
+          "height": 525.25
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 240.25,
+            "right": 353,
+            "bottom": 284.25,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 475.75,
+            "right": 164.96875,
+            "bottom": 519.75,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 519.75,
+            "right": 174.5,
+            "bottom": 563.75,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 563.75,
+            "right": 183.25,
+            "bottom": 607.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 475.75,
+            "right": 164.96875,
+            "bottom": 519.75,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 519.75,
+            "right": 174.5,
+            "bottom": 563.75,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 563.75,
+            "right": 183.25,
+            "bottom": 607.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "selected",
+      "theme": "light",
+      "screenshot": "selected-light-390.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 83.5,
+          "right": 1336,
+          "bottom": 491.875,
+          "width": 1232,
+          "height": 408.375
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 193.875,
+            "right": 1323,
+            "bottom": 237.875,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 346.875,
+            "right": 244.96875,
+            "bottom": 390.875,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 390.875,
+            "right": 254.5,
+            "bottom": 434.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 434.875,
+            "right": 263.25,
+            "bottom": 478.875,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 346.875,
+            "right": 244.96875,
+            "bottom": 390.875,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 390.875,
+            "right": 254.5,
+            "bottom": 434.875,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 434.875,
+            "right": 263.25,
+            "bottom": 478.875,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "selected",
+      "theme": "dark",
+      "screenshot": "selected-dark-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 95.5,
+          "right": 366,
+          "bottom": 620.75,
+          "width": 342,
+          "height": 525.25
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 240.25,
+            "right": 353,
+            "bottom": 284.25,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 475.75,
+            "right": 164.96875,
+            "bottom": 519.75,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 519.75,
+            "right": 174.5,
+            "bottom": 563.75,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 563.75,
+            "right": 183.25,
+            "bottom": 607.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 475.75,
+            "right": 164.96875,
+            "bottom": 519.75,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 519.75,
+            "right": 174.5,
+            "bottom": 563.75,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 563.75,
+            "right": 183.25,
+            "bottom": 607.75,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "selected",
+      "theme": "dark",
+      "screenshot": "selected-dark-390.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 108,
+          "right": 1336,
+          "bottom": 516.375,
+          "width": 1232,
+          "height": 408.375
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 218.375,
+            "right": 1323,
+            "bottom": 262.375,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 371.375,
+            "right": 244.96875,
+            "bottom": 415.375,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 415.375,
+            "right": 254.5,
+            "bottom": 459.375,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 459.375,
+            "right": 263.25,
+            "bottom": 503.375,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 371.375,
+            "right": 244.96875,
+            "bottom": 415.375,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 415.375,
+            "right": 254.5,
+            "bottom": 459.375,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 459.375,
+            "right": 263.25,
+            "bottom": 503.375,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nDownloaded official.pdf \u00b7 formatting was not checked\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nAttached files confirmed by the server:\nClinical-summary.pdf \u00b7 Administrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nVault id 33333333-3333-4333-8333-333333333333\n128 bytes \u00b7 SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "receipt",
+      "theme": "light",
+      "screenshot": "receipt-light-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 120,
+          "right": 366,
+          "bottom": 645.25,
+          "width": 342,
+          "height": 525.25
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 264.75,
+            "right": 353,
+            "bottom": 308.75,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 500.25,
+            "right": 164.96875,
+            "bottom": 544.25,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 544.25,
+            "right": 174.5,
+            "bottom": 588.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 588.25,
+            "right": 183.25,
+            "bottom": 632.25,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 400.25,
+            "right": 164.96875,
+            "bottom": 444.25,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 404.25,
+            "right": 174.5,
+            "bottom": 448.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 448.25,
+            "right": 183.25,
+            "bottom": 492.25,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 244, 238)",
+        "textColor": "rgb(20, 20, 19)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nDownloaded official.pdf \u00b7 formatting was not checked\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nAttached files confirmed by the server:\nClinical-summary.pdf \u00b7 Administrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nVault id 33333333-3333-4333-8333-333333333333\n128 bytes \u00b7 SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "receipt",
+      "theme": "light",
+      "screenshot": "receipt-light-390.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "panel": {
+        "box": {
+          "left": 104,
+          "top": 108,
+          "right": 1336,
+          "bottom": 516.375,
+          "width": 1232,
+          "height": 408.375
+        },
+        "clientWidth": 1230,
+        "scrollWidth": 1230
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 117,
+            "top": 218.375,
+            "right": 1323,
+            "bottom": 262.375,
+            "width": 1206,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 371.375,
+            "right": 244.96875,
+            "bottom": 415.375,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 415.375,
+            "right": 254.5,
+            "bottom": 459.375,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 459.375,
+            "right": 263.25,
+            "bottom": 503.375,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 1153.09375,
+            "top": 24,
+            "right": 1336,
+            "bottom": 68,
+            "width": 182.90625,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 117,
+            "top": 371.375,
+            "right": 244.96875,
+            "bottom": 415.375,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 117,
+            "top": 415.375,
+            "right": 254.5,
+            "bottom": 459.375,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 117,
+            "top": 459.375,
+            "right": 263.25,
+            "bottom": 503.375,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nDownloaded official.pdf \u00b7 formatting was not checked\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nAttached files confirmed by the server:\nClinical-summary.pdf \u00b7 Administrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nVault id 33333333-3333-4333-8333-333333333333\n128 bytes \u00b7 SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "receipt",
+      "theme": "dark",
+      "screenshot": "receipt-dark-1440.png",
+      "failures": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "panel": {
+        "box": {
+          "left": 24,
+          "top": 120,
+          "right": 366,
+          "bottom": 645.25,
+          "width": 342,
+          "height": 525.25
+        },
+        "clientWidth": 340,
+        "scrollWidth": 340
+      },
+      "over": [],
+      "controls": [
+        {
+          "tag": "SELECT",
+          "text": "Choose an FDA destination\u2026Administrative Documentation | Cover Letter ",
+          "box": {
+            "left": 37,
+            "top": 264.75,
+            "right": 353,
+            "bottom": 308.75,
+            "width": 316,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 500.25,
+            "right": 164.96875,
+            "bottom": 544.25,
+            "width": 127.96875,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 544.25,
+            "right": 174.5,
+            "bottom": 588.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "disabled": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 588.25,
+            "right": 183.25,
+            "bottom": 632.25,
+            "width": 146.25,
+            "height": 44
+          },
+          "disabled": false
+        }
+      ],
+      "actions": [
+        {
+          "text": "Generate official eSTAR (PDF)",
+          "box": {
+            "left": 215.015625,
+            "top": 24,
+            "right": 366,
+            "bottom": 68,
+            "width": 150.984375,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Change document",
+          "box": {
+            "left": 37,
+            "top": 400.25,
+            "right": 164.96875,
+            "bottom": 444.25,
+            "width": 127.96875,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Remove attachment",
+          "box": {
+            "left": 37,
+            "top": 404.25,
+            "right": 174.5,
+            "bottom": 448.25,
+            "width": 137.5,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        },
+        {
+          "text": "Add Vault attachment",
+          "box": {
+            "left": 37,
+            "top": 448.25,
+            "right": 183.25,
+            "bottom": 492.25,
+            "width": 146.25,
+            "height": 44
+          },
+          "visibleAtCenter": true
+        }
+      ],
+      "styles": {
+        "background": "rgb(43, 43, 41)",
+        "textColor": "rgb(250, 249, 245)",
+        "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+      },
+      "text": "Official eSTAR \u00b7 510(k) \u00b7 IVD eSTAR\n0 of 0 fields have a governed source\nGenerate official eSTAR (PDF)\nDownloaded official.pdf \u00b7 formatting was not checked\nOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.\n\nFDA template 6.1. Only current, approved versions can be attached.\n\nAttachment 1\nFDA destination\nChoose an FDA destination\u2026\nAdministrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nClinical evidence \u00b7 /CHAPTER 3/CH3.01/\nDiagnostic analytical and clinical evidence \u2014 LongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentityLongEvidenceIdentity\nVersion 2.0 \u00b7 current\nVault id 33333333-3333-4333-8333-333333333333\nSHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nChange document\nRemove attachment\nAdd Vault attachment\nAttached files confirmed by the server:\nClinical-summary.pdf \u00b7 Administrative Documentation | Cover Letter \u00b7 /CHAPTER 1/CH1.01/\nVault id 33333333-3333-4333-8333-333333333333\n128 bytes \u00b7 SHA-256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFields the template carries\nGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.\nFIELD\tVALUE\tSOURCE",
+      "component": "receipt",
+      "theme": "dark",
+      "screenshot": "receipt-dark-390.png",
+      "failures": []
+    }
+  ]
+}

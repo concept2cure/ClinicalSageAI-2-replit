@@ -11,6 +11,49 @@ const classify = (body, path = caller, offsets) => {
   return approvedSqlPredicates(path, source, offsets ?? openings(source));
 };
 
+const estarCaller = 'server/services/pathway-engines/estar/estar-attachment-source-access.ts';
+const estarModule = '../../document-data-disposition/eligibility';
+const estarImport = `import { vaultBinaryAvailableSql } from '${estarModule}';\n`;
+const estarProofs = (body, declaration = estarImport, path = estarCaller) => {
+  const source = declaration + body;
+  return approvedSqlPredicates(path, source, openings(source));
+};
+
+test('eSTAR attachment proof names the exact caller, import, binary builder and literal alias', () => {
+  const [proof] = estarProofs(query("vaultBinaryAvailableSql('d')"));
+  assert.ok(proof);
+  assert.equal(proof.builder, 'vaultBinaryAvailableSql');
+  assert.equal(proof.module, estarModule);
+  assert.equal(proof.alias, 'd');
+});
+
+test('eSTAR dynamic or wrong aliases cannot inherit the literal proof', () => {
+  for (const expression of ['vaultBinaryAvailableSql(alias)', 'vaultBinaryAvailableSql(req.body.alias)',
+    'vaultBinaryAvailableSql("a")', 'vaultBinaryAvailableSql("d; SELECT 1")', 'vaultBinaryAvailableSql("\\x64")']) {
+    assert.deepEqual(estarProofs(query(expression)), []);
+  }
+});
+
+test('eSTAR helper from another import or a shadowed binding cannot receive proof', () => {
+  assert.deepEqual(estarProofs(query("vaultBinaryAvailableSql('d')"), estarImport.replace(estarModule, '../document-data-disposition/eligibility')), []);
+  for (const body of [
+    'function bad(vaultBinaryAvailableSql) {' + query("vaultBinaryAvailableSql('d')") + '}',
+    '{ const vaultBinaryAvailableSql = req.body.helper; ' + query("vaultBinaryAvailableSql('d')") + '}',
+  ]) assert.deepEqual(estarProofs(body), []);
+});
+
+test('eSTAR approval subtracts only the canonical predicate and keeps additional raw values counted', () => {
+  const body = 'q.query(`SELECT ${vaultBinaryAvailableSql("d")} AND ${req.body.filter}`);';
+  const source = estarImport + body;
+  assert.deepEqual(estarProofs(body).map(proof => proof.openingOffset), [openings(source)[0]]);
+  assert.deepEqual(estarProofs(query('vaultBinaryAvailableSql("d") + req.body.filter')), []);
+});
+
+test('eSTAR caller gains no other builder or caller allowance', () => {
+  assert.deepEqual(estarProofs(query("vaultDataEligibleSql('d')"), estarImport.replaceAll('vaultBinaryAvailableSql', 'vaultDataEligibleSql')), []);
+  assert.deepEqual(estarProofs(query("vaultBinaryAvailableSql('d')"), estarImport, estarCaller.replace('source-access', 'unreviewed')), []);
+});
+
 test('proof retains exact source, builder, module, alias and counted opening', () => {
   const source = prelude + query("vaultDataEligibleSql('d')");
   const [proof] = approvedSqlPredicates(caller, source, openings(source));

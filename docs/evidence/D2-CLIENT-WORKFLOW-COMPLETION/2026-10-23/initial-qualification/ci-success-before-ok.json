@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:success-before-ok"
+  ],
+  "startedAt": "2026-10-23T18:43:07Z",
+  "elapsedSeconds": 0.293,
+  "exitCode": 0,
+  "output": "ci-success-before-ok.log.gz",
+  "outputSha256": "b529e879a6806ab1c0e8b1c586beecc88a09ed3d6ac1f47e7363c64ecb525a73",
+  "sourceFreeze": "qualification-source-freeze.json",
+  "matchesFreezeBefore": true,
+  "matchesFreezeAfter": true
+}

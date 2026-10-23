@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/authoringRefileSavedText.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+    "server/services/__tests__/rag-actor-programme-scope.test.ts",
+    "server/services/__tests__/rag-disposition-revalidation.test.ts",
+    "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+    "server/services/__tests__/rag-generation-request.test.ts",
+    "server/services/__tests__/rag-vault-freshness-boundaries.test.ts",
+    "server/services/__tests__/rag-vault-freshness-generation.test.ts",
+    "server/services/__tests__/rag-vault-freshness-mapping.test.ts",
+    "server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts",
+    "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-CLIENT-WORKFLOW-COMPLETION/2026-10-23/freshness-integration-test-results.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 22.286,
+  "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+  "implementationPinsUnchanged": true,
+  "output": "freshness-integration-tests.log.gz",
+  "outputSha256": "02859653763e46dbf003a7d7edf0c7eeb50fad8d2a00df8056f17bc1b671c5ef"
+}

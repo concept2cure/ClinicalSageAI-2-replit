@@ -1,0 +1,35 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/workspace/.tooling/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format",
+    "json",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx"
+  ],
+  "sourceSha256": {
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "b3e9e70bc8923330d60683eed820cb8f067ecf71ec13c77dfa5a7bd063b6dda6",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarAttachments.tsx": "551a1ad30b1eb26353e5796644c20a1900f27c95dd7bc5e919c7234dda4a090c",
+    "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx": "19e861c11f065613883b16e15e819d5adf686ca4fa2a9dc8ba5af269b5a51ffb"
+  },
+  "errors": 0,
+  "warnings": 2,
+  "existingPanelBaseline": {
+    "sourceSha256": "ac43ed077d4f0d44d03795a978a2cebf1cfc1260ae1bfbb6d0716adeb1ffbc3c",
+    "command": [
+      "/workspace/.tooling/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--no-ignore",
+      "--stdin",
+      "--stdin-filename",
+      "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx",
+      "--format",
+      "json"
+    ],
+    "errors": 0,
+    "warnings": 2
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-23T18:35:29.456250+00:00",
+  "baseBeforeSync": "93b0cd3ab",
+  "integratedRemote": "f5f685a87",
+  "mergeCommit": "05b72a72f14f1a5a0ce70ffb612b6881d7906775",
+  "sourceOverlap": "No eSTAR or picker implementation overlap. Guide retained incoming shared-planning cases73\u201375; new eSTAR cases renumbered76\u201383.",
+  "incomingWork": "Authoring shared-planning preparation and Unicode Vault chunk storage; retained by normal merge, not attributed to this increment."
+}

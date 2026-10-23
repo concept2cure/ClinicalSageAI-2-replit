@@ -1,0 +1,49 @@
+{
+  "phase": "RED before eSTAR caller registration",
+  "head": "30ca923e3f6c1118feec0693bdb73fde4899296f",
+  "node": "v22.23.4",
+  "runs": [
+    {
+      "label": "ast",
+      "command": [
+        "node",
+        "--test",
+        "scripts/ci/lib/approved-sql-predicates.test.mjs"
+      ],
+      "exitCode": 1,
+      "log": "sql-predicate-red-ast.log.gz"
+    },
+    {
+      "label": "selftest",
+      "command": [
+        "npm",
+        "run",
+        "ci:sql-interpolation:selftest"
+      ],
+      "exitCode": 1,
+      "log": "sql-predicate-red-selftest.log.gz"
+    }
+  ],
+  "sourcePins": [
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "sha256": "bd55448f64e95cc2c151ddfd6b79917c115b66265dd1bbb5e5b7956ab809db8b"
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.test.mjs",
+      "sha256": "2a0ce4defaae0660d11abd32b49b1a684db2c94f6eee178c99e26bff0029f39c"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.selftest.mjs",
+      "sha256": "3c1dd471469d64bd9b5cf8933349a610f0ee35a5a2d4dd6a1fbf91632dc0b706"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-source-access.ts",
+      "sha256": "c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "sha256": "098f9ab816f32635c9e2d24bc5340f86e3b667b89c99b9a335124f46bf1bc2e8"
+    }
+  ]
+}

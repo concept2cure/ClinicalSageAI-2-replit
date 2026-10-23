@@ -24,6 +24,19 @@ beforeEach(() => { localStorage.clear(); sessionStorage.clear(); apiRequest.mock
 afterEach(cleanup);
 
 describe('Canonical Vault version picker', () => {
+  it.each([undefined, null, 'true', 1])('refuses unverified current-version metadata (%s) rather than offering a current version', async current => {
+    const choose = vi.fn();
+    apiRequest.mockResolvedValue(json({ data: { query: 'original', total: 1, limit: 25, offset: 0,
+      results: [{ ...hit('Unverified version'), current }] } }));
+    render(<VaultVersionPicker programId={PROGRAM} disabled={false} label="Search this project's Vault" onChoose={choose} />);
+    search();
+    await screen.findByRole('button', { name: 'Retry Vault search' });
+    expect(screen.queryByText('Unverified version')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Select document' })).toBeNull();
+    expect(screen.queryByText(/No matching documents/)).toBeNull();
+    expect(choose).not.toHaveBeenCalled();
+  });
+
   it('retries the same scoped page after a refusal, preserving its version and hash contract', async () => {
     const choose = vi.fn(); let failed = false;
     apiRequest.mockImplementation(async (_method, path) => {

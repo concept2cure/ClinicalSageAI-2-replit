@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 13.403,
+  "sourceHead": "5b9b4511c76275a3a0d000cf13406e0ce0a39b80",
+  "implementationPinsUnchanged": true,
+  "output": "freshness-integration-build.log.gz",
+  "outputSha256": "d935ccd53e4cf9885ca5ad7c87ef44ad3a20a666f6ca80eea0609bf3096bb4cf"
+}

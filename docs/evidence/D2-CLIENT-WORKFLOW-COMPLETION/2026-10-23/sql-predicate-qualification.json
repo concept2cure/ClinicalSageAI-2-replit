@@ -1,0 +1,96 @@
+{
+  "status": "frozen; narrow CI caller registration only",
+  "head": "30ca923e3f6c1118feec0693bdb73fde4899296f",
+  "scope": "Existing AST proof exact caller/import/name/unshadowed binding/literal alias; no AST policy logic or SQL baseline changes.",
+  "registration": {
+    "caller": "server/services/pathway-engines/estar/estar-attachment-source-access.ts",
+    "builder": "vaultBinaryAvailableSql",
+    "import": "../../document-data-disposition/eligibility",
+    "alias": "d"
+  },
+  "ownedFiles": [
+    "scripts/ci/lib/approved-sql-predicates.mjs",
+    "scripts/ci/lib/approved-sql-predicates.test.mjs",
+    "scripts/ci/check-sql-interpolation.selftest.mjs"
+  ],
+  "pins": [
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "sha256": "3f977756c9629333aed868b236c743cde78608e9039a64d6f32c75cab1e64d5e"
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.test.mjs",
+      "sha256": "2a0ce4defaae0660d11abd32b49b1a684db2c94f6eee178c99e26bff0029f39c"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.selftest.mjs",
+      "sha256": "3c1dd471469d64bd9b5cf8933349a610f0ee35a5a2d4dd6a1fbf91632dc0b706"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-attachment-source-access.ts",
+      "sha256": "c7fd6f7dd35140ceba043a4e4a1bb8f84ebf85bcaa075a9481ca31eff7a246be"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "sha256": "098f9ab816f32635c9e2d24bc5340f86e3b667b89c99b9a335124f46bf1bc2e8"
+    }
+  ],
+  "applicationSourceUnchanged": true,
+  "sqlBaselineUnchanged": true,
+  "frozenTestSourcesUnchangedFromRed": true,
+  "red": {
+    "metadata": "sql-predicate-red.json",
+    "ast": {
+      "passed": 33,
+      "failed": 2,
+      "log": "sql-predicate-red-ast.log.gz"
+    },
+    "selftest": {
+      "failed": 2,
+      "log": "sql-predicate-red-selftest.log.gz"
+    },
+    "failureMeaning": "New exact-caller proof is absent; extra-neighbor test also lacks its one valid subtraction. Counterexamples refuse before registration."
+  },
+  "green": {
+    "runs": "sql-predicate-green-runs.json",
+    "ast": {
+      "passed": 35,
+      "failed": 0
+    },
+    "selftest": {
+      "passed": 35,
+      "failed": 0,
+      "knownGapsExcluded": 2
+    },
+    "realGate": {
+      "exitCode": 0,
+      "baselineInterpolations": 1072,
+      "baselineFiles": 225
+    }
+  },
+  "forcedLint": {
+    "command": "node node_modules/eslint/bin/eslint.js --stdin --stdin-filename <owned path> --no-ignore --format json",
+    "before": {
+      "errors": 0,
+      "warnings": 8
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 8
+    },
+    "warningGrowth": 0,
+    "reports": [
+      "sql-predicate-eslint-before.json",
+      "sql-predicate-eslint-after.json"
+    ]
+  },
+  "diffCheck": {
+    "exitCode": 0
+  },
+  "limits": [
+    "No application SQL or lifecycle/access policy changed.",
+    "Existing gate known gaps (preassembled SQL and string concatenation) remain disclosed and excluded from passing counts.",
+    "This syntax proof does not independently qualify the canonical helper implementation or replace byte/lifecycle/access tests.",
+    "No compiler/build/commit/push performed by this agent."
+  ]
+}
