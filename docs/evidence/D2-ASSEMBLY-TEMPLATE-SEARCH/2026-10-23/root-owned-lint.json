@@ -1,0 +1,48 @@
+{
+  "startedAt": "2026-10-23T20:31:52.672845+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "--max-warnings",
+    "0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.247,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "root-lint-source-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+    "client/src/concept2cure/v2/C2CForm.tsx": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/run-check.py": "d169a249b567bd046bf78d3259c5ab8925e0602ce76e1bd9247b0ac1e648fb04",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "bcdbe019fcd0e30ab4dafaefb98864c4a0ded6df8b50dd965f86791001c14e4a"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+    "client/src/concept2cure/v2/C2CForm.tsx": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/run-check.py": "d169a249b567bd046bf78d3259c5ab8925e0602ce76e1bd9247b0ac1e648fb04",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "bcdbe019fcd0e30ab4dafaefb98864c4a0ded6df8b50dd965f86791001c14e4a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "root-owned-lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}

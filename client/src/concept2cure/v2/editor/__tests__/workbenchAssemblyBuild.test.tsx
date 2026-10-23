@@ -145,6 +145,54 @@ describe('assembly is reachable in the one existing editor', () => {
     expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
   });
 
+  it.each([false, true])('keeps the selected build and exact template through metadata search, with AnA %s', async withAna => {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, ...args) => url === '/api/authoring/templates'
+      ? Promise.resolve(ok({ success: true, globalCatalog: 'ok', templates: [
+        { ...template, regions: ['FDA'], description: 'Stored stability reference' },
+        { id: 'japan-preparation', name: 'Diagnostic reference', regions: ['JP'], template_type: 'PMDA' },
+      ] })) : normal(method, url, ...args));
+    await mounted(); const original = editorNode();
+    const build = await previewBuild(undefined, withAna);
+    const before = screen.getByTestId('assembly-plan').textContent;
+    const count = apiRequest.mock.calls.length;
+    const search = screen.getByRole('searchbox', { name: 'Search templates' }) as HTMLInputElement;
+    fireEvent.change(search, { target: { value: 'PMDA' } });
+    expect(screen.getByText('1 of 2 templates')).toBeTruthy();
+    const picker = screen.getByLabelText('Template') as HTMLSelectElement;
+    expect(picker.value).toBe(TEMPLATE);
+    expect(within(picker).getByRole('option', { name: template.name }).closest('optgroup')?.label).toBe('Selected template');
+    expect(within(picker).queryByRole('option', { name: '(blank document)' })).toBeNull();
+    expect(screen.getByTestId('assembly-plan').textContent).toBe(before);
+    expect((screen.getByLabelText('Reason for build') as HTMLInputElement).value).toBe('Assemble the selected saved template sections.');
+    expect(build.disabled).toBe(false); expect(apiRequest.mock.calls).toHaveLength(count);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear template search' }));
+    expect(document.activeElement).toBe(search);
+    expect(screen.getByText('2 of 2 templates')).toBeTruthy();
+    expect(picker.value).toBe(TEMPLATE); expect(apiRequest.mock.calls).toHaveLength(count);
+    fireEvent.click(build);
+    if (withAna) await screen.findByText(/2 candidates retained for individual review/);
+    else await screen.findByText(/Structure built in this document/);
+    expect(assemblyCalls('commit')).toHaveLength(1);
+    expect(assemblyCalls('commit')[0][2]).toMatchObject({ templateId: TEMPLATE, programId: PID, fingerprint: 'fingerprint-181' });
+    expect(aiCalls()).toHaveLength(withAna ? 2 : 0);
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).endsWith('/accept'))).toBe(false);
+    expect(editorNode()).toBe(original); expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
+    expect(original.textContent).toContain('Existing saved stability evidence.');
+  });
+
+  it('holds template search and selection when the current editor has unsaved changes', async () => {
+    await mounted(); await previewBuild();
+    const search = screen.getByRole('searchbox', { name: 'Search templates' }) as HTMLInputElement;
+    fireEvent.change(search, { target: { value: 'stability' } });
+    localEdit();
+    expect(search.disabled).toBe(true);
+    expect((screen.getByLabelText('Template') as HTMLSelectElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Clear template search' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(search.value).toBe('stability'); expect(editorNode().textContent).toContain('Unsaved local work.');
+    expect(assemblyCalls('commit')).toHaveLength(0);
+  });
+
   it('previews and builds without AnA in the exact document while preserving the selected editor and saved text', async () => {
     await mounted();
     const original = editorNode();

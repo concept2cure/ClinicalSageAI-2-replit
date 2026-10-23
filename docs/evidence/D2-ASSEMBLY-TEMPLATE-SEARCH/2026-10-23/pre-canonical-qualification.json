@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-23T20:40:06.812408+00:00",
+  "scope": "Own editor/picker qualification before normal canonical company/workflow integration. Repeated picker and worker cohorts are not added as distinct coverage.",
+  "sourceFreeze": "publication-source-freeze.json",
+  "sourceFreezeSha256": "a0a77c052f6b9e137d7449e06d3051d95bcf55923cb4263c2f03cbeece9a01a0",
+  "declaredInputs": 64,
+  "checks": [
+    {
+      "receipt": "qualified-ui.json",
+      "sha256": "f7425a6a435d7935744ba47e07804198060160af843803ce3376d12fe713cd94",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "ed9d06ef428916a54b59ead2fd8ba1585531d1e5370fc912ab025eafbd9d3ef1",
+      "testSummary": [
+        "Test Files  10 passed (10)",
+        "Tests  211 passed (211)",
+        "Duration  65.06s (transform 2.60s, setup 702ms, import 5.97s, tests 52.77s, environment 4.27s)"
+      ]
+    },
+    {
+      "receipt": "qualified-lint.json",
+      "sha256": "ac2591f680a9c60b09d51f42f88f9b2ecce65283eecf2ab3092adc01d343e4a8",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-warning-ratchet.json",
+      "sha256": "5fd2b667f8210eda6057b7e28beaa376a41648dbbb698929efb0590ac534b196",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "90b917a9ebb593de8465f21513af98cfc17c03a2a634204b6f2256fa6723a68a",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-build.json",
+      "sha256": "b6d980b3f0f438aeef29377c36b6d5c841b48a8e990cb2aa5548f807b53aa97d",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "2bb29732a1298d2a22ed0c2a0f7573133c21c6d25dec7b5e29b4e571206e6c90",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-single-native-canvas.json",
+      "sha256": "956a83c47d6afd376c61ae2cb48c5061ee0a1aa6b69b995e066e26767d727c48",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "aae64d7709da09579510d9d17e9ab6f5a4d9339cd621835dce04ec7c48238ba0",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-canvas-path.json",
+      "sha256": "fb7c92c911f274022112fce603d1edcf41322d02373ba4e77ff02eabde735ac9",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "3edd2ed34b8e75756ea02c663022c92c4c0e5f5d9a0b509d9bfbade764f3172b",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-check-editor-integrity.json",
+      "sha256": "3caadc6e9db15c69abf6228fdc9a3f31e360c505c2272acf8932294914714349",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "7b36c3a871006c0b53b696a49034703a55cb9488f9192797e45c22e73aa4c574",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-design-system.json",
+      "sha256": "09ed759e2c3366aea228b88fb3bdec599ca3d39d31bb5ea39a63d41a11527a23",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "a02b864f92889d97828ce8b320bafafdd8ec5d94059f01582a5d4966b8bf5d16",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-check-shell-css-collisions.json",
+      "sha256": "3a88302d1d6892b30bc221eff22bf88710881fceede9feac071bc83d68b780e8",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "5a182dfd9272f8993c8abbe108c20bccdb406a12521065bcb54a15701b50ce0a",
+      "testSummary": []
+    },
+    {
+      "receipt": "qualified-ci-surface-text-ramp.json",
+      "sha256": "4f039aedff3b618587fd12e199b065ab691165aebb469e5c39b05470f73d4ff9",
+      "exitCode": 0,
+      "sourceFreeze": "qualified-source-freeze.json",
+      "rawGzipSha256": "59b0db8536a322cf5ce0b23bfcacda26d15612d90694e23ba630cb170b4e8465",
+      "testSummary": []
+    },
+    {
+      "receipt": "publication-repo-health.json",
+      "sha256": "f9f127d742ae6e2c8ecab1afbe784b74385f91008c24f9bae70e5bd65627d659",
+      "exitCode": 0,
+      "sourceFreeze": "publication-source-freeze.json",
+      "rawGzipSha256": "91b06e5b8c66a2b36ada1e4e30bb06d5c156c1289e516520bd7957d4b00d142a",
+      "testSummary": []
+    }
+  ],
+  "selectedTests": 211,
+  "selectedSuites": 10,
+  "strictLintWarnings": 0,
+  "passedRepositoryGates": 7,
+  "dependencyChanges": false,
+  "baselineChanges": false,
+  "fullCompiler": "Pending actual normal pre-push hook; no zero-error claim inferred from older work.",
+  "humanCases": 95,
+  "humanStatus": "All Not run",
+  "limits": [
+    "Synthetic HTTP/auth client tests; no human acceptance or live provider/agency delivery.",
+    "No server catalogue, source policy, template outline or agency coverage change.",
+    "Source pins are bounded inputs, not complete transitive dependency closure."
+  ]
+}
