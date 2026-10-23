@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import type express from 'express';
 import request from 'supertest';
-import { expect, it, type vi } from 'vitest';
+import { expect, it } from 'vitest';
 import type { JourneyDb } from '../../../tests/golden-journeys/harness';
 import { AUTHOR, ORG, PROGRAM } from './_authoring-canvas-fixture';
 
@@ -11,7 +11,7 @@ interface SourceImportFault {
   mode: string;
   committed: boolean;
   statements: string[];
-  release: ReturnType<typeof vi.fn>;
+  release: { (error?: Error): unknown; mockClear: () => unknown };
 }
 
 /** Stable pool object: the shipped router captures getPool() once at import. */

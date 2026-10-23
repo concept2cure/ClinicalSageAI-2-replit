@@ -79,3 +79,15 @@ Earlier worker/initial-root snapshots are historical scopes; do not sum them
 with these 649 final checks. No human, live provider, live regulator or deployed
 environment qualification is claimed. The local human guide now has 102 cases,
 all Not run. Recovery remains mounted/component-owned, not durable idempotency.
+
+## Compiler correction
+
+The first normal push was refused by the zero-error TypeScript gate: the test
+helper used `ReturnType<typeof vi.fn>`, whose current overload can include a
+constructable mock and therefore is not guaranteed callable. The helper now
+declares only its actual callable/clear surface. This is a type-only fixture
+correction; no production, assertion, SQL, dependency or baseline changed.
+`canonical-push.*` retains the refusal. The original qualified 92-input epoch
+remains immutable; `compiler-corrected-source-freeze.json` is its successor,
+changing only the helper. Root qualifies that helper’s HTTP/lint behavior and
+uses the successor epoch for the next normal push and Git-blob verification.
