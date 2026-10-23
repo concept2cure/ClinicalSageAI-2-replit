@@ -105,7 +105,7 @@ function bundleSqlClient(database: PGlite, failure: BundleSqlFailure) {
       const text = typeof query === 'string' ? query : query.text;
       statements.push(text);
       if (failure === 'rollback' && text === 'ROLLBACK') throw errors.rollback;
-      const result = await database.query(text, values);
+      const result = await database.query<Record<string, unknown>>(text, values);
       if (failure === 'commit-after' && text === 'COMMIT') throw errors.commit;
       return { rows: typeof query !== 'string' && query.rowMode === 'array' ? result.rows.map(Object.values) : result.rows,
         rowCount: result.affectedRows ?? result.rows.length };

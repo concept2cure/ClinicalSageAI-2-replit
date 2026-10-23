@@ -133,6 +133,13 @@
       "sha256": "def55fad937466d5f8cd27ad38d328f5c12aae0e8f5298e8699564655517d9af",
       "uncompressedBytes": 11741,
       "uncompressedSha256": "e8f154820ab9f02c6361bf4b50adc1379cb75685c7d1829b88d6ed04f2c858af"
+    },
+    {
+      "file": "push-attempt-1-typecheck-refusal.txt.gz",
+      "bytes": 4663,
+      "sha256": "be8dde2d772420c0f3ad8cc198d8ee75d074447d1b6cdfbd6e86aad7945a62d6",
+      "uncompressedBytes": 14304,
+      "uncompressedSha256": "8d631bd814ac96096f1a290c47eccf7181383f762de6a3089dc77cf99300f566"
     }
   ]
 }

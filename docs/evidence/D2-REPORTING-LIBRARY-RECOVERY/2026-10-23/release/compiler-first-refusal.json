@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-23T20:41:34.936256+00:00",
+  "localImplementation": "b03a1cd0dd23cae4d0b378913fc36c634d002e0b",
+  "pushAttempt": 1,
+  "exitCode": 1,
+  "publicationSucceeded": false,
+  "normalPrePush": "All preceding gates passed; whole-tree TypeScript failed1 against0baseline.",
+  "diagnostic": "server/routes/__tests__/report-os-bundle-recording.test.ts(110,95) TS2345: PGlite default unknown row type cannot be passed directly to Object.values map callback.",
+  "classification": "Compiler qualification failure in test adapter; not product RED or successful publication.",
+  "baselineChanged": false,
+  "nextStep": "Explicitly type actual SQL rows, rerun affected fixture suite and normal full pre-push."
+}
