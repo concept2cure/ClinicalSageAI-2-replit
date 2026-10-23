@@ -65,6 +65,9 @@ import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { DocumentPermissionsPanel } from './DocumentPermissionsPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
+import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
+import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
+import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
@@ -1426,7 +1429,7 @@ export function DocumentWorkbench({
      is a failed read, and the header then makes no origin claim. */
   const [metadataRead, setMetadataRead] = useState<{
     key: string;
-    document?: { provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState };
+    document?: { id?: unknown; client_program_id?: unknown; c2c_document_id?: unknown; status?: unknown; provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState };
     access?: unknown;
     refused?: boolean;
   } | null>(null);
@@ -2103,7 +2106,7 @@ export function DocumentWorkbench({
     let alive = true;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const current = () => alive && metadataGeneration.current === generation && currentReadKey.current === readKey && readSession.sameRevision() && revision();
-    void readJson<{ document?: { provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState }; access?: unknown }>(
+    void readJson<{ document?: { id?: unknown; client_program_id?: unknown; c2c_document_id?: unknown; status?: unknown; provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState }; access?: unknown }>(
       authoringCurrentReadPath(wanted, programId),
     ).then(({ ok, body, status }) => {
       if (!current()) return;
@@ -4032,6 +4035,19 @@ export function DocumentWorkbench({
     ? describeRulePackProvenance(filing.document.provenance)
     : null;
 
+  const refileSavedText = useAuthoringRefileSavedText({
+    source: refileSavedSource({ document: activeDoc, metadata: currentMetadata?.document, section: activeSection,
+      programId, filingTitle: `${filing.document?.title ?? activeDoc?.title ?? 'Filing'} (${activeDoc?.c2c_document_id ?? ''})` }),
+    scope: readKey,
+    refusal: refileControlRefusal({ editRefusal, sealed: docSealed, dirty,
+      busy: saving || leaving || !!pendingLeave || programSwitchHeld || !!picking || !!pendingAnchor }),
+    isClean: () => !!editorRef.current && !hasUnsavedSessionWork(),
+    isCurrent: () => aliveRef.current && currentReadKey.current === readKey && readSession.sameRevision()
+      && docsState === 'ready' && sectionsCurrent && sectionsState === 'ready' && !partialRead && !currentMetadata?.refused && !readRefusal,
+    fireToast,
+    onRefiled: () => { if (rail === 'audit' && activeDocId) void loadAudit(activeDocId); },
+  });
+
   return (
     <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}>
       {readRefusal ? <div className="scaf-note" role="alert">{readRefusal}</div> : <>
@@ -4509,6 +4525,7 @@ export function DocumentWorkbench({
             )}
           </div>
           <div className="ed-doc-actions">
+            {refileSavedText}
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}

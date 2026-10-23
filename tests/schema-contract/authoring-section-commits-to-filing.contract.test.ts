@@ -40,6 +40,7 @@ import { SignJWT } from 'jose';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
 import { TurnRecorder, writeTurnRecord } from '../../server/services/ana/turn-record';
+import { registerUnchangedRefilingCases } from './authoring-unchanged-refiling.contract-cases';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -74,8 +75,8 @@ const PREREQ = `
   -- Without the column POST /docs/:docId/e-sign answered 500 in this harness,
   -- before and independently of anything this file asserts. (No backticks in
   -- here: PREREQ is a template literal, and one ends it.)
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid TEXT);
-  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid TEXT, status TEXT DEFAULT 'active');
+  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT, status TEXT DEFAULT 'active');
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
@@ -103,6 +104,15 @@ const PREREQ = `
     primary_agency text,
     deleted_at timestamptz
   );
+  -- The deliberate filing act rechecks the canonical current project/member
+  -- policy, including its native integer project anchor and sharing stores.
+  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, regulatory_program_id UUID,
+    client_workspace_id INTEGER, owner_id INTEGER, created_by_id INTEGER, settings JSONB, status TEXT DEFAULT 'active');
+  CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+  CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+  CREATE TABLE concept2cure_artifacts (id INTEGER PRIMARY KEY, organization_id INTEGER, project_id INTEGER);
+  CREATE TABLE concept2cure_review_assignments (id SERIAL PRIMARY KEY, artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
+  CREATE TABLE qms_documents (id SERIAL PRIMARY KEY, organization_id INTEGER, authoring_document_id UUID, status TEXT, metadata JSONB DEFAULT '{}');
   CREATE TABLE audit_logs (
     id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
     table_name text, record_id text, actor_id text, target text,
@@ -118,6 +128,9 @@ const PREREQ = `
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${MEMBERSHIP_ID}, 'member');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
+  INSERT INTO projects (id, organization_id, regulatory_program_id, client_workspace_id, owner_id, created_by_id, settings)
+    VALUES (1, 1, '${PROJECT}', 1, ${MEMBERSHIP_ID}, ${MEMBERSHIP_ID}, '{}');
+  INSERT INTO project_visibility_settings VALUES (1, 1, 'org_public');
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -177,6 +190,7 @@ beforeAll(async () => {
       // is written to (PF-07: every document is created in a project). Guarded
       // on the loop tables above, so it follows them.
       'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260921_authoring_document_provenance.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -225,6 +239,9 @@ beforeAll(async () => {
          500. Another harness gap, not a product defect: the durable applier
          runs both files. */
       'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
+      'db/migrations/20261014_qms_controlled_authoring_content.sql',
+      'migrations/20260628_csr_job_state.sql',
+      'migrations/20260728_authoring_reviews.sql',
     ],
   });
   h.db = jdb.db;
@@ -1237,7 +1254,7 @@ describe('a revert carries the attribution the restored revision recorded (round
 let p29Minted = 0;
 
 /** A fresh filing with one node, and a bound document whose 2.5 is saved into it. */
-async function boundAndSaved(text: string) {
+async function boundAndSaved(text: string, code = '2.5') {
   const filingId = `doc_p29_${++p29Minted}`;
   const pack = await q<{ version: string }>(
     `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
@@ -1261,7 +1278,7 @@ async function boundAndSaved(text: string) {
   // Created empty, then SAVED: `createSection` with content does not commit to
   // the filing (one of the six non-committing writers), the PATCH does.
   const sec = await as(request(app).post('/api/authoring/sections')).send({
-    doc_id: docId, code: '2.5', title: '2.5', content: '', order_index: 1,
+    doc_id: docId, code, title: code, content: '', order_index: 1,
   });
   expect(sec.status).toBe(201);
   const sectionId = sec.body.section.id as string;
@@ -1310,6 +1327,14 @@ async function rewriteFiling(filingId: string, text: string) {
   }
 }
 
+const verifyUnchangedSavedText = registerUnchangedRefilingCases({
+  q, boundAndSaved, rewriteFiling, freezeDoc,
+  patchSection: sectionId => as(request(app).patch(`/api/authoring/sections/${sectionId}`)),
+  createSection: () => as(request(app).post('/api/authoring/sections')),
+  getPool: () => jdb.pool, nextSourceJobId: () => 10000 + ++p29Minted,
+  programId: PROJECT, author: AUTHOR, timeout: T,
+});
+
 /** A second outline node on the same filing, which this document may or may not reach. */
 const addFilingNode = (filingId: string, key: string, label: string) =>
   q(
@@ -1319,6 +1344,8 @@ const addFilingNode = (filingId: string, key: string, label: string) =>
   );
 
 describe('a freeze refuses a document whose filed copy is not its text', () => {
+  it('re-files unchanged saved text without an Authoring content revision', verifyUnchangedSavedText, T);
+
   it('refuses, names the section, and seals nothing', async () => {
     const { docId, filingId } = await boundAndSaved('<p>The text the author signed.</p>');
     await rewriteFiling(filingId, 'Text nobody typed here.');
