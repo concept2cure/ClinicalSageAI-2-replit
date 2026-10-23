@@ -63,5 +63,15 @@
     "decodedBytes": 13977,
     "decodedSha256": "42246e8bfd59158a307c638be4c6fe9e2c0ea2644e302401b3565d5a85832895",
     "archiveSha256": "46fb9d1c9fee253ec6dda8bb51f23b81186efd8b0af41b274f67466e86566279"
+  },
+  "build-read-windows-reconciled.txt.gz": {
+    "decodedBytes": 16345,
+    "decodedSha256": "4d433aa4f4932f521af82519e08671fe63fa076278edf88c74e2b60e931f83a2",
+    "archiveSha256": "dc143114e7be669cb7c68a0ea916209f2f2ffa094f5e2ab641fadf122b688225"
+  },
+  "push-attempt-7.txt.gz": {
+    "decodedBytes": 13977,
+    "decodedSha256": "fb3a3b7c652a8d39a66aae6d4d2dd1c2906e0e2b347c55ee5c610167e63c1eda",
+    "archiveSha256": "3de2a9401b6ec8855585a20db921a278cd4d55b3610ea5c0ce997c81beebf66f"
   }
 }

@@ -65,7 +65,13 @@ Further normal push checks passed full compilation with zero errors. Documentati
 
 Normal merge `2fe39a16a` preserves shared planning through `f5f685a87`. Existing strategy, gap analysis, competitive landscape and meeting-minute outlines now reach the same editor/preparation flow through an exact internal four-ID predicate. Existing registry records and earlier builtin snapshots remain unchanged. Internal planning supplies no agency route, readiness approval or permission to submit. The [late-planning packet](late-planning/README.md) retains independent review and **339 passing tests in six suites**, zero failures, pending cases or TODOs, in 100.24 seconds. The environment-interrupted attempt retains its original output separately and is neither a RED nor a passed result. All 16 selected incoming and 90 prior selected source/test/helper pins remain unchanged.
 
-The latest combined production build passed in **23.68 seconds**, including server and audit verifier. All 114 selected build inputs remain unchanged. Earlier reporting/native/refiling/Unicode selected pins remain unchanged; their results retain their original commands and scopes. No new reporting engine or UI surface is introduced.
+That combined production build passed in **23.68 seconds**, including server and audit verifier. All 114 selected build inputs remain unchanged. Earlier reporting/native/refiling/Unicode selected pins remain unchanged; their results retain their original commands and scopes. No new reporting engine or UI surface is introduced.
+
+## Preserve exact Unicode reads and receipt spans
+
+The seventh publication attempt at `12fcc870b` passed every gate and full compilation with zero errors, then canonical advanced through `3b16fc98c` with the Unicode read-window completion. Normal merge `005045533` preserves its two runtime changes and four new regression suites. AnA read windows retain complete surrogate pairs, and deferred receipt spans describe the exact admitted text. Existing current-source checks and host-budget admission remain authoritative. The [late-read-windows packet](late-read-windows/README.md) retains independent review and **45 passing tests in four suites**, zero failures, pending cases or TODOs, in 24.10 seconds. All six before/after hashes match the completed merged source and all prior selected pins remain unchanged.
+
+The latest combined production build passed in **19.30 seconds**, including server and audit verifier. All 120 selected inputs remain unchanged, including every prior selected reporting/native/refiling/chunk/planning input. `release/checks.json` and lossless archives preserve this build and the seventh checked-but-rejected publication attempt. Legacy aggregate receipt coverage, extraction lineage and late-cancellation boundaries retain their declared limits; this does not establish provider-served proof.
 
 ## Remaining acceptance
 
