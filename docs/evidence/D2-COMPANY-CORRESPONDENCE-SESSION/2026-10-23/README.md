@@ -28,31 +28,31 @@ deferred ownership need; its archived-history policy is not changed here.
 
 - Functional RED before production edits: **0/2**, exit1. Actual canonical
   bearer refresh plus a same-props rerender lost draft text; a retained create
-  callback dispatched after account replacement. Exact RED bodies and7input
-  before/after pins are retained; root verified4production sources still matched
+  callback dispatched after account replacement. Exact RED bodies and7 input
+  before/after pins are retained; root verified4 production sources still matched
   discovery before implementation began (`red-root-verification.json`).
-- Owned01: **46/47 across4files**, exit1. The real parent test proved that
+- Owned01: **46/47 across 4 files**, exit1. The real parent test proved that
   `library.active` becomes true while a new profile read is still pending. The
-  Draft exposed text despite the withheld profile. All8tested sources and the
+  Draft exposed text despite the withheld profile. All8 tested sources and the
   failure output are retained as `owned-01-*`; none of this run is a final pass.
 - Corrected parent admission now requires a verified `library.response` as well
   as active/current ownership. The Draft remains mounted, so its text and sent
   result survive privately. Sent creates still settle under their captured base
   account/filing and validate the original stationery receipt.
-- Owned02: **47/47 across4files**, exit0, all8inputs stable: continuity12,
+- Owned02: **47/47 across 4 files**, exit0, all8inputs stable: continuity12,
   boundaries26, actual-parent integration2, existing workflow7. Both original
-  RED assertions and all19legacy workflow assertion lines are preserved.
+  RED assertions and all 19 legacy workflow assertion lines are preserved.
 - First in-memory lint found0errors and2newwarnings (Draft JSX complexity and
   unused test constant). A small local JSX extraction and removal of that unused
-  constant leave **0errors/0warnings across8changed files**; both receipts kept.
+  constant leave **0 errors/0 warnings across 8 changed files**; both receipts kept.
 - Independent read-only final review found no additional concrete defects on the
-  corrected4production hashes (`independent-review.json`). Review is not execution.
+  corrected4 production hashes (`independent-review.json`). Review is not execution.
 - Incoming published medical-device/diagnostics Projects integration was reviewed
-  and separately exercised: **109/109 across13files**, exit0, selected inputs
+  and separately exercised: **109/109 across 13 files**, exit0, selected inputs
   stable. `incoming-*` retains exact source scope and results. The earlier
   upstream overlapping historical counts are not borrowed or added to ours.
-- All17discovered protected inputs remain unchanged (`protected-inputs.json`).
-  No shared session/auth/transport/server/rendering/regulatory policy was changed.
+- All 17 discovered protected inputs remain unchanged (`protected-inputs.json`).
+  This correspondence completion changed no shared session/auth/transport/server/rendering/regulatory policy. Incoming canonical authentication-header changes are separately reviewed below.
 
 Fresh canonical Reporting changes through `62613253e` were reviewed and merged
 normally as `1ff8adb4d`, with no conflicts or overlap in the four company forms.
@@ -60,16 +60,35 @@ normally as `1ff8adb4d`, with no conflicts or overlap in the four company forms.
 without borrowing upstream test totals. The final root combined cohort includes
 all four recommended incoming Reporting regression files.
 
-The **final root combined cohort passed317/317 across20actual files**, exit0,
-0failed/0skipped, with selected inputs stable (`final-*`). It covers the three
+The **pre-runtime root combined cohort passed 317/317 across 20 actual files**, exit0,
+0 failed/0 skipped, with selected inputs stable (`final-*`). It covers the three
 forms through the actual parent, company settings/legal/Reporting consumers,
 correspondence rendering/creation/identity services and incoming Reporting client
 and route regressions. This is one overlapping cohort, not317additional cases.
-The current merged production build passed, exit0, with112selected source/test
+The pre-runtime merged production build passed, exit0, with112selected source/test
 inputs unchanged (`build-*`). Existing chunk-size notices are retained in raw
-output. All112qualified pins still match the working tree.
+output. Those112pins describe that earlier source; later MDX changes supersede several of them.
 
-Whole TypeScript and normal push gates remain pending. Evidence cohorts overlap; do not
+The first normal push at `fc12f268a` passed every gate, including whole TypeScript
+with 0 errors, but the remote compare-and-swap refused publication after another
+session advanced canonical. `cas-refusal-01-*` retains exit1 and exact source/logs;
+it is not a successful publication receipt.
+
+Incoming runtime/header and MDX journey changes through `eba2d8050` were reviewed
+and merged normally as `fd64f340c`. Only concurrent row insertions in the work-order
+index conflicted; both unique rows were retained. No production conflict occurred.
+`incoming-runtime-review.json` verifies all 13 changed source/test paths and names
+8 absent upstream log artifacts rather than claiming a complete archive.
+Because `authToken.ts` is a changed shared input, a new current-source cohort
+reruns the original 20 files plus 8 affected incoming/companion regressions. The current root run passed **395/395 across 28 actual files**, exit 0,
+0 failed and 0 skipped, with all 119 selected inputs stable (`runtime-*`).
+The rebuilt production artifact also passed, exit 0, with all 119 inputs unchanged
+(`runtime-build-*`). `qualified-source.json` now pins these current sources;
+`pre-runtime-qualified-source.json` retains the earlier 112-input qualification.
+All 28 current cohort files and their selected inputs are covered by the current
+119-pin manifest. The 395 cases overlap the earlier 317 and owned 47; do not sum.
+A fresh fetch after these checks still reports canonical `eba2d8050`.
+Normal push retry and remote verification are pending. Evidence cohorts overlap; do not
 sum them. Selected pins are not a complete dependency closure. Mounted synthetic
 HTTP checks and Git publication do not establish hosted deployment, authenticated
 production acceptance or agency acceptance.
@@ -80,7 +99,7 @@ production acceptance or agency acceptance.
 `CommunicationCenter.tsx` record admission remain deferred. Their historical
 inventory intentionally includes archived records and agency/handoff outcomes;
 Reporting export eligibility rules must not be applied there. This completion
-qualifies the3filing-correspondence forms, not every communications panel.
+qualifies the 3 filing-correspondence forms, not every communications panel.
 
 A second separate follow-up was found while reviewing already-published incoming
 Reporting code: `insightsLibraryActions.tsx` / `useLibraryMutation` checks current
