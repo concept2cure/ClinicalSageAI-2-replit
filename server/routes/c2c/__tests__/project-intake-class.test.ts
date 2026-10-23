@@ -81,3 +81,30 @@ describe('regional device intake preserves exact application and product family'
     expect(productTypeForIntake(type, product, filing)).toEqual({ productType: product });
   });
 });
+
+describe('named device filings retain their product identity', () => {
+  it.each([
+    ['pma', 'US_CDX_PMA', 'cdx'], ['pma', 'cdx_pma', 'cdx'],
+    ['510k', 'us_cdx_510k', 'cdx'], ['ivdr', 'cdx_ivdr_d', 'cdx'],
+    ['device', 'us_samd_presub', 'samd'],
+  ])('%s / %s defaults to %s and refuses another subtype', (type, filing, product) => {
+    expect(productTypeForIntake(type, '', filing)).toEqual({ productType: product });
+    expect(productTypeForIntake(type, product, filing)).toEqual({ productType: product });
+    expect(productTypeForIntake(type, product === 'cdx' ? 'ivd' : 'device', filing)).toHaveProperty('refusal');
+  });
+  it.each([
+    ['510k', 'cdx', 'US_CDX_PMA'], ['pma', 'cdx', 'US_CDX_510K'],
+    ['ind', 'drug', 'US_CDX_PMA'], ['510k', 'device', 'US_NDA'],
+    ['ivdr', 'samd', 'EU_IVDR'], ['mdr', 'cdx', 'EU_MDR_TECHDOC'],
+    ['pma', 'samd', 'US_PMA_IVD'],
+    ['ivd', 'cdx', 'US_COMPLEMENTARY_DX'],
+  ])('refuses incompatible %s / %s / %s', (type, product, filing) => {
+    expect(productTypeForIntake(type, product, filing)).toHaveProperty('refusal');
+  });
+  it('retains compatible refinements and generic-family controls', () => {
+    expect(productTypeForIntake('510k', 'samd', 'US_510K')).toEqual({ productType: 'samd' });
+    expect(productTypeForIntake('pma', 'cdx', 'US_PMA_IVD')).toEqual({ productType: 'cdx' });
+    expect(productTypeForIntake('510k', 'ivd', 'US_510K')).toEqual({ productType: 'ivd' });
+    expect(productTypeForIntake('ivd', '', 'US_COMPLEMENTARY_DX')).toEqual({ productType: 'ivd' });
+  });
+});

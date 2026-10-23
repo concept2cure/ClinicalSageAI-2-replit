@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:token-contrast"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.126,
+  "output": "canonical-gate-ci-token-contrast.log.gz",
+  "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

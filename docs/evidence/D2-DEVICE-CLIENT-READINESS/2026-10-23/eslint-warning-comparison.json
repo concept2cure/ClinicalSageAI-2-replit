@@ -1,0 +1,37 @@
+[
+  {
+    "file": "client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx",
+    "beforeWarnings": 0,
+    "afterWarnings": 1,
+    "beforeErrors": 0,
+    "afterErrors": 0
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+    "beforeWarnings": 2,
+    "afterWarnings": 2,
+    "beforeErrors": 0,
+    "afterErrors": 0
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "beforeWarnings": 6,
+    "afterWarnings": 6,
+    "beforeErrors": 0,
+    "afterErrors": 0
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+    "beforeWarnings": 0,
+    "afterWarnings": 1,
+    "beforeErrors": 0,
+    "afterErrors": 0
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "beforeWarnings": 7,
+    "afterWarnings": 7,
+    "beforeErrors": 0,
+    "afterErrors": 0
+  }
+]

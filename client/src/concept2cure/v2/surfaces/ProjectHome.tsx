@@ -28,12 +28,12 @@ import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
 import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
-import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
+import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/constants/domain/product-types';
 import { useProgramMarkets } from './programSequence';
 import { ComingLater } from './ProjectComingLater';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
-import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
+import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
 import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState } from './ProjectDossier';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import type { ProjectTeamResponse } from '@shared/project-team';
@@ -41,7 +41,7 @@ import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTea
 import { ProjectSide } from './ProjectSide';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
-import { AGENCY_LABEL } from '@shared/regulatory/filing-catalog';
+import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
@@ -1586,12 +1586,13 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   /* A device or diagnostic filing: the program's product type, or a
      selection made from the MDX workspace (the old Workspace grid's medtech
      segment). Only a project that is read and is neither is an eCTD filing. */
-  const deviceFiling = deviceProgram || clientType === 'MDX';
+  const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
+  const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
   const documentClass = filingDocumentClassOf(prog?.program_type);
-  const ectdFiling = !!prog && !deviceFiling && !documentClass;
+  const ectdFiling = !!prog && !progState.loading && !progState.error && prog.id === pid && !deviceFiling && !documentClass;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1647,7 +1648,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
          `${DOSSIER_READINESS_LABEL.toLowerCase()} ${dossierSummaryValue(dossier)}`].filter(Boolean).join(', ') +
-        `. The "${stage}" stage is open.`,
+        `. The "${stage}" stage is open.` + (regionalApplication ? ` ${regionalPreparationReason(regionalApplication)}` : ''),
       facts: {
         projectId: pid,
         openStage: stage,
@@ -1655,6 +1656,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           title, product: productName, code: submissionType, description: desc,
           clientType, primaryAgency: region, indication, status, priority, phase,
           targetSubmissionDate: prog?.target_submission_date ?? null,
+          ...(regionalApplication ? { preparationLimit: regionalPreparationReason(regionalApplication) } : {}),
         },
         team: teamState.loading || teamState.error || !Array.isArray(team)
           ? null
@@ -1688,12 +1690,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       availableActions: [
         'Move through the programme lifecycle stages',
         'Open one of this project’s documents in the editor',
-        'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
+        regionalApplication ? 'Open this project’s documents in the Vault surface' : 'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
       ],
     };
   }, [noProject, pid, stage, progState.loading, progState.error, prog, title, productName, desc, clientType,
-      submissionType, region, indication, status, priority, phase,
+      submissionType, region, indication, status, priority, phase, regionalApplication,
       teamState.loading, teamState.error, teamState.data,
       activityState.loading, activityState.error, activityState.data,
       dossier,
@@ -1809,7 +1811,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
           and the documents in review, from the reads the tabs show. */}
       {pid && !progState.error && (
-        <ProjectStatusLine markets={markets} documentClass={documentClass} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+        <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
@@ -1870,7 +1872,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} documentClass={documentClass} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}

@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-23T15:29:34Z",
+  "status": "local automated qualification passed; human and external qualification remain open",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "baseCommit": "0a15a0725731eb50d33ca25902c67ca3421da792",
+  "tests": {
+    "files": 35,
+    "passed": 861,
+    "failed": 0
+  },
+  "staticGatesPassed": 16,
+  "eslint": {
+    "errors": 0,
+    "existingWarnings": 15,
+    "addedWarnings": 0,
+    "comparison": "canonical-eslint-warning-comparison.json"
+  },
+  "receipts": [
+    "canonical-integration",
+    "canonical-eslint",
+    "canonical-typecheck",
+    "canonical-build",
+    "canonical-component-browser-review"
+  ],
+  "sourceDrift": [],
+  "browserReview": {
+    "renders": 8,
+    "viewportWidths": [
+      390,
+      1440
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "scope": "Serialized actual ProjectMarkets DOM plus built CSS, not live app or human UAT."
+  },
+  "humanAcceptance": "Not run; cases 59-64 added to existing guide",
+  "remainingQualification": [
+    "fresh full installation and production deployment",
+    "qualified live-provider drafting",
+    "current regional requirements and official-form adequacy",
+    "recipient transport and agency acceptance"
+  ]
+}

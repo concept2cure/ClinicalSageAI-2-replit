@@ -1,0 +1,76 @@
+{
+  "workstream": "W1 / D2",
+  "reviewedAt": "2026-10-23T15:39:57.210587+00:00",
+  "baseCommit": "19bd192422af5c398c6de8041be28e5e7e9e8f9a",
+  "incomingTaskCommit": "ee3089b5a",
+  "reviewType": "Read-only interaction review of final task-delegation catch-up with device client readiness",
+  "verdict": "No merge interaction blocker identified in the reviewed scope",
+  "sourceFreeze": "source-freeze-release.json",
+  "sourceDrift": [],
+  "productionSourceSha256": {
+    "client/src/concept2cure/v2/styles/app-v2.css": "09dfd589cdba60287bab520c50bac643b23fb48ec5e35f9631e483fc2b168e75",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "645cbeac91e9e2032b1bb92ba2d00544f900fea7b7992435f7e0c48f0406a91c",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "bf721715007ca12a9fbd0b3e3c5b78dad99d496c57c842dbcf79f448af960396",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx": "c8ef46d703012acb733d31941273c41ce570274878f784d2374960899ac84b56",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "f241f832d8314beeae08be032b0217b35d76c4bc4fb67721963be2b78999e23a",
+    "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts": "6c3f3779eb701eeefbde88ffc8eb63327ecacb4b0aa0f30a1f6bfc241228170f",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "server/routes/taskBoard.routes.ts": "6d8d96c8a22d4eeca60936b4532aea400d6568c7c3fe0c7f98c36d041825e005",
+    "server/routes/taskManagement.routes.ts": "3c801e2595186a2aafed7ae69cefef86c04e3a9739ff02e8db7ddb21306c1bd7",
+    "server/services/ana/tool-authorization.register.json": "7da272972a2c1e26ee3730e54f1114ab259449234efe150dd06f730d0df7b54e",
+    "server/services/authoring/authoring-file-to-vault.ts": "966d390ec909e7592c3b3a6cc975ed8dd29a80ac2644226071b6e27581bb2eda",
+    "server/services/authoring/authoring-vault-filing-receipt.ts": "c19bdef8a86c484c0466a1fdef8264d5fd8baa06cc42993ee0b7fa76ed434829",
+    "server/services/c2c/add-project-market.ts": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49",
+    "server/services/ectd/assemble-from-core.ts": "e29501ca970b9971b9b296f5d5a67c3880c94c496a4602444cd8ff0dd79c4c7c",
+    "server/services/ectd/core-to-packager.ts": "08b6468ea7a9f090b336591a9e852e24cd4e4f6c1a4fe776edbbb80825b95f13",
+    "server/services/ectd/leaf-source-resolver.ts": "bf5d29979fcad96f512a6c983307cddc52201f89b8a0928ea88cf8345824c7d8",
+    "server/services/tasking/task-assignment.ts": "8c6e7c6ffb671c2704e647c91fe7fc70b30a74ce0ec5fc6880daf23501af64aa",
+    "server/services/tasking/task-audit.ts": "d7189a01ddd38e8a5da4b28167d8319202dc9fffe5b5d78651dddb4fbcc58543",
+    "server/services/tasking/task-planning.ts": "c338dfb937e6296607b608b03f795857538efcc2a494ecb02b53eb592eba116c",
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b",
+    "shared/task-assignment.ts": "f21f8113f3d34e81250f8889b88e35d64e4616f476816dd83a9a3016dfe3b3f7"
+  },
+  "previousProductionHashesRetained": 15,
+  "interactionsReviewed": [
+    "Task assignment uses unified_tasks.project_id and the existing integer projects.id anchor. TaskBoard receives stringified numeric project IDs from its existing server projection and passes numeric scope to assignment controls; it does not reinterpret the device program UUID as an integer.",
+    "Device/regional project creation still establishes projects.regulatory_program_id through the canonical transactional anchor; existing authoring-source task resolution still uses that bridge. Incoming assignment changes neither project/program identity nor device product types.",
+    "Task assignment reads current organization membership, task/project/workspace and recipient access; assignment changes only assignee/provenance fields with an atomic governed audit record. It does not grant project access, document-review approval or signing rights.",
+    "Incoming named and automatic assignment routes share current admission and the request-pinned database connection. RequestConnectable.connect delegates to the same requestPgClient used for admission, mutation and audit; no shared-pool transaction escape was found in this interaction.",
+    "Assignment controls retire account/workspace/task changes, require a fresh roster/CAS token and reconcile unknown write outcomes before retry; these controls remain independent of regional preparation-only submission actions.",
+    "Incoming CSS is scoped to TaskBoard assignment selectors and existing design tokens; it does not override project or wizard selectors. The existing generated ramp remains owned by its canonical generator.",
+    "All fifteen production sources from the prior device/Vault interaction freeze retain their hashes in the release freeze; no source overlap or device behavior change was introduced by task catch-up."
+  ],
+  "evidenceInspected": {
+    "releaseIntegration": {
+      "report": "release-integration-tests.json",
+      "files": 47,
+      "totalTests": 1041,
+      "passedTests": 1040,
+      "failedTests": 0,
+      "success": true,
+      "otherResults": [
+        {
+          "file": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+          "status": "todo",
+          "test": "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today"
+        }
+      ]
+    },
+    "whitespace": "git diff --check passed",
+    "humanGuide": {
+      "path": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+      "sha256": "a63047c6481058e6905b772cf4d12ea1eaf2c1f3ad9a9e326292c15261996e47",
+      "uniqueCases": 67
+    },
+    "rootFinalChecks": "Release static gates, TypeScript and build were still running at review; this review does not infer their outcomes."
+  },
+  "limits": [
+    "This is an interaction review, not comprehensive qualification of the incoming task-assignment subsystem or complete product certification.",
+    "Integration retains the prior explicit TODO: re-filing an edited document does not yet supersede the Vault version a live leaf pins. Report 1040 passed and one TODO, not 1041 passed.",
+    "No extra test or production source change was made by this review. Native task-delegation database/concurrency qualification, human UAT, full fresh deployment, current legal/form adequacy, expert sign-off, live-provider qualification and agency acceptance remain separately evidenced work."
+  ]
+}

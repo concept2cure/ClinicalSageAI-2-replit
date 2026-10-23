@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:internals-in-copy"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.512,
+  "output": "canonical-gate-ci-internals-in-copy.log.gz",
+  "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

@@ -5,6 +5,7 @@ import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
+  deviceProductTypesForFilingType,
   workstreamForFilingType,
   MEDICINAL_PRODUCT_TYPES,
   PRODUCT_TYPES,
@@ -277,9 +278,12 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   /* The filing fixes the family when known; the person states any unresolved class. */
   // A filing document class asks, unless the filing names its class itself (an
   // sBLA is a biologics licence supplement): filing-document-classes.ts.
-  const fixedClass = productTypeForFilingType(programType, ctx?.segment === 'diagnostics_ivd' ? 'diagnostics' : uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
+  const fixedClass = productTypeForFilingType(programType, ctx?.segment === 'diagnostics_ivd' ? 'diagnostics' : uiSeg, selTpl?.id) ?? productTypeFixedByFiling(selTpl?.id);
+  const deviceChoices = deviceProductTypesForFilingType(programType, selTpl?.id);
+  const canRefine = (deviceChoices?.length ?? 0) > 1;
+  const productChoices = deviceChoices ? PRODUCT_TYPES.filter(t => deviceChoices.includes(t.value)) : STATED_CLASS_CHOICES;
   const asksClass = fixedClass === null;
-  const recordedClass: string | null = fixedClass ?? (statedClass || null);
+  const recordedClass: string | null = canRefine && statedClass && deviceChoices?.includes(statedClass) ? statedClass : fixedClass ?? (statedClass || null);
   const isDeviceFiling = usesDeviceClassification(fixedClass);
   const isFdaDeviceFiling = isDeviceFiling && selTpl?.agency === 'FDA';
   const euRegulation = isDeviceFiling && selTpl?.region === 'EU'
@@ -290,6 +294,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   // A filing change retires fields whose regulatory context may have changed.
   // Returning to the earlier filing must not revive a hidden classification.
   useEffect(() => {
+    setStatedClass('');
     setProductCode(''); setRegulationNumber(''); setDeviceClass('');
     setReviewPanel(''); setPredicateK(''); setPredicateName('');
     setEuMdrClass(''); setEuIvdrClass(''); setDeviceFlags([]);
@@ -622,22 +627,22 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   </label>
                 )}
 
-                {asksClass && (
+                {(asksClass || canRefine) && (
                   <label className="npw-field">
                     <span className="npw-field-l">Product type</span>
                     <select
                       className="c2c-input"
-                      value={statedClass}
+                      value={recordedClass ?? ''}
                       onChange={e => setStatedClass(e.target.value as ProductType | '')}
-                      required
-                      aria-required="true"
+                      required={asksClass}
+                      aria-required={asksClass}
                       aria-describedby="npw-class-help"
                     >
-                      <option value="">{NOT_STATED}</option>
-                      {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      {asksClass && <option value="">{NOT_STATED}</option>}
+                      {productChoices.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.
+                      {canRefine ? 'The filing default is selected. Choose the product type this project will record.' : <>Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.</>}
                     </span>
                   </label>
                 )}

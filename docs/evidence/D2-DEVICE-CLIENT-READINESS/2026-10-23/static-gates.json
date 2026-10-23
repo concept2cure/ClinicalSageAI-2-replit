@@ -1,0 +1,198 @@
+[
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:design-system"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.29,
+    "output": "gate-ci-design-system.log.gz",
+    "outputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:class-vocabulary"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.578,
+    "output": "gate-ci-class-vocabulary.log.gz",
+    "outputSha256": "ed7be00715f13ce13a011ada30bc865018a5057c583b07f041c84ce597eeeabf",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:filing-exit-agreement"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.438,
+    "output": "gate-ci-filing-exit-agreement.log.gz",
+    "outputSha256": "fc0145075f4b9b5612fda6419b1ebff40547a5f714a0c3f14c0a0653ffc7abbb",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:internals-in-copy"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.524,
+    "output": "gate-ci-internals-in-copy.log.gz",
+    "outputSha256": "bc4d113fda9693919e9d77cd833ccfbd63668b7a7abb730f77f49eb34844aeff",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "check:catalog-copy"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.094,
+    "output": "gate-check-catalog-copy.log.gz",
+    "outputSha256": "9ff7d517539ba44770f1e0cb48f6ad0fc211e46dd902cf7f7a26661bc44a9a93",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:step-presentation"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 0.664,
+    "output": "gate-ci-step-presentation.log.gz",
+    "outputSha256": "a580a8ea34297f3242683d2da07223de02ec2284ee5c8144358c27623e28b8fa",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:empty-state-honesty"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.637,
+    "output": "gate-ci-empty-state-honesty.log.gz",
+    "outputSha256": "d3621f7721532ae1a46d19e75baddab53257a5262c3c6294d289485ba50d470a",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:action-overclaim"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.407,
+    "output": "gate-ci-action-overclaim.log.gz",
+    "outputSha256": "feb555484c70d0182cf4cbd7ad4a2171d8fa16ca7a9803a1143b03d2c1acdeca",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:success-before-ok"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.304,
+    "output": "gate-ci-success-before-ok.log.gz",
+    "outputSha256": "9aec5044157267b3ced42dd3ae167d0979ba3cf4c57a6e01794adbf60b642588",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:undefined-css-classes"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.116,
+    "output": "gate-ci-undefined-css-classes.log.gz",
+    "outputSha256": "855fdf56764ded46cd2e0322ff799fcd6edba0f1718d1a7abfb94abbb9af20c9",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-contrast"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.109,
+    "output": "gate-ci-token-contrast.log.gz",
+    "outputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:token-cascade"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.124,
+    "output": "gate-ci-token-cascade.log.gz",
+    "outputSha256": "4bca9604c50fd135bd3215a7603712b9a6ab7ff4a216e3fa029ec0c473682337",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "ci:surface-text-ramp"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 0.293,
+    "output": "gate-ci-surface-text-ramp.log.gz",
+    "outputSha256": "db231ddfe4415c7fc6cd7f6119732dec0da923f46658734c9d988cfe9aa09ccf",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  },
+  {
+    "argv": [
+      "npm",
+      "run",
+      "--silent",
+      "audit:repo-health:ceiling"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 0.757,
+    "output": "gate-audit-repo-health-ceiling.log.gz",
+    "outputSha256": "8215081ad159689c90e2d40135c23d0131f54a9e8db9916a2bfec509506f0861",
+    "sourceFreeze": "source-freeze.json",
+    "sourceDrift": []
+  }
+]

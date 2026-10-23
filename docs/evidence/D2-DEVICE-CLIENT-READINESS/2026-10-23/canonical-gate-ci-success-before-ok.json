@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:success-before-ok"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.379,
+  "output": "canonical-gate-ci-success-before-ok.log.gz",
+  "outputSha256": "9aec5044157267b3ced42dd3ae167d0979ba3cf4c57a6e01794adbf60b642588",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 13.222,
+  "output": "canonical-build.log.gz",
+  "outputSha256": "a967accdab55f1efe7613973f5fba005975bb2a51e268e6fdf0258b6c36298b3",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

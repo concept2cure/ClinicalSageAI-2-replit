@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:surface-text-ramp"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 0.293,
+  "output": "gate-ci-surface-text-ramp.log.gz",
+  "outputSha256": "db231ddfe4415c7fc6cd7f6119732dec0da923f46658734c9d988cfe9aa09ccf",
+  "sourceFreeze": "source-freeze.json",
+  "sourceDrift": []
+}

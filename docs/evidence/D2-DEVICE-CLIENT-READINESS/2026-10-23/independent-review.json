@@ -1,0 +1,46 @@
+{
+  "workstream": "W1 / D2",
+  "reviewedAt": "2026-10-23T15:14:13.194356+00:00",
+  "reviewer": "independent readiness review agent",
+  "mode": "Source review and existing test evidence inspection; no production source changes",
+  "verdict": "No remaining code blocker identified in the reviewed scope",
+  "productionSourceSha256": {
+    "shared/constants/domain/product-types.ts": "e3a25be6642526231f79a326322c2f535b11a7f719e2885358d4b104f1dbe07b",
+    "server/routes/c2c/project-intake.ts": "e59b2a64bc0eb8527ca5b8fe98db2b9b3fed7a7a11b8743c620ebf3e4ca9a364",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "f6df5be989f72f60947edc48705ebfad501ad2a2efe6f3f7d2303ce4cdc30db5",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "971312d329342a28d1e93b65809f92d0ecaaf719186f16b46c9038280dc05af9",
+    "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx": "4053bfa325cf33255373838fd57bb390cad16631559b68937cd19feb5f3b876f",
+    "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx": "73e0faac2a0fd0a6eab8263e06acbea20ef43fb868a7911dddaf0bb7e0204641",
+    "server/services/c2c/add-project-market.ts": "323535a48f8ad2d075acd59ba58763af9cee4b1cdafcaa2abbd5e6c2f6bf2b49"
+  },
+  "addressedFindings": [
+    {
+      "finding": "Named complementary diagnostic selection could be explicitly relabeled CDx",
+      "resolution": "Exact US_COMPLEMENTARY_DX is bounded to ivd while generic diagnostic/CDx selections retain their own allowed choices."
+    },
+    {
+      "finding": "An explicit unresolved nonregional device filing ID behaved like an omitted selection",
+      "resolution": "The canonical shared resolver refuses unresolved explicit selections; omission retains existing pathway defaults."
+    },
+    {
+      "finding": "Add a market could appear while project identity was pending or failed",
+      "resolution": "The action requires a successful current project read and positive eCTD applicability; tests cover delayed success and failed read."
+    },
+    {
+      "finding": "Known device program types with inconsistent medicinal product metadata could offer or create a medicinal added market",
+      "resolution": "Client and server use canonical filing inference in addition to product family; server refusal precedes pack lookup and writes."
+    }
+  ],
+  "positiveControlsReviewed": [
+    "Exact named CDx/SaMD precedence, catalog and legacy aliases, bounded regional/generic family choices and stale wizard selection reset.",
+    "Regional preparation-only limits are consistent across ProjectHome status/Submit, standalone readiness and AnA context.",
+    "Existing device submission access and medicinal added-market actions remain reachable.",
+    "actions-green.log records 78 passing tests across seven suites; legacy-device-market-green.log records 37 passing real-PGlite tests, including all nine inconsistent home-program cases.",
+    "git diff --check passed at review."
+  ],
+  "limits": [
+    "Review is scoped to the listed production sources and inspected regression evidence, not a complete product certification.",
+    "Automated DOM/service/PGlite tests do not establish completed human acceptance testing or a full fresh deployment.",
+    "Official-form adequacy, current regional legal requirements, expert review, qualified live-model drafting and agency transmission acceptance remain unverified."
+  ]
+}

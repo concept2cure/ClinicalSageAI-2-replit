@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:surface-text-ramp"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.32,
+  "output": "merged-gate-ci-surface-text-ramp.log.gz",
+  "outputSha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+  "sourceFreeze": "source-freeze-merged.json",
+  "sourceDrift": []
+}

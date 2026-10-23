@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:check-shell-css-collisions"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.206,
+  "output": "canonical-gate-ci-check-shell-css-collisions.log.gz",
+  "outputSha256": "cc773cedbcae337cd34366174dad970f2e0a28313272a1db94becedefa0708c5",
+  "sourceFreeze": "source-freeze-canonical.json",
+  "sourceDrift": []
+}

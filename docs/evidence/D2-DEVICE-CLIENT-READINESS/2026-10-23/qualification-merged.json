@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-23T15:36:39Z",
+  "status": "local merged automated qualification passed; not all-product human acceptance",
+  "sourceFreeze": "source-freeze-merged.json",
+  "mergeCommit": "6bb302bedf1aeaeed005df3188e668d315b35ee5",
+  "incomingRemote": "8e050baf6",
+  "testFiles": 39,
+  "testsPassed": 917,
+  "testsFailed": 0,
+  "existingTodo": [
+    "step 4 safety net: refusals agree, and where they do not step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today"
+  ],
+  "selectedStaticGatesPassed": 16,
+  "typecheck": "zero errors",
+  "productionBuild": "passed",
+  "sourceDrift": [],
+  "humanCases": {
+    "device": [
+      62,
+      63,
+      64,
+      65,
+      66,
+      67
+    ],
+    "totalSequential": 67,
+    "status": "Not run"
+  },
+  "receipts": [
+    "merged-integration",
+    "merged-eslint",
+    "merged-typecheck",
+    "merged-build",
+    "merged-component-browser-review"
+  ],
+  "remaining": [
+    "automatic edited-document refiling predecessor/supersession policy",
+    "human acceptance",
+    "full fresh installation and production deployment",
+    "live-provider qualification",
+    "current regional requirements/official-form adequacy",
+    "recipient transport and agency acceptance"
+  ]
+}

@@ -44,7 +44,7 @@
 import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 import type { QuestionOption } from '../../types/intelligence-questions.js';
 import { filingDocumentClassOf, filingDocumentClassTypes } from '../../regulatory/filing-document-classes.js';
-import { regionalDeviceApplicationClassOf, regionalDeviceApplicationClassTypes } from '../../regulatory/filing-catalog.js';
+import { regionalDeviceApplicationClassOf, regionalDeviceApplicationClassTypes, resolveFilingCatalogEntry } from '../../regulatory/filing-catalog.js';
 
 // ─── Vocabulary ─────────────────────────────────────────────────────────────
 
@@ -190,9 +190,50 @@ const FILING_TYPE_PRODUCT_CLASS: Record<string, ProductType> = {
  */
 const IVD_LANES = new Set(['diagnostics', 'ivd', 'diagnostics_ivd']);
 
+// These selections name a subtype themselves. Complementary diagnostics stay
+// IVDs: their broad companion_diagnostic family cannot establish CDx identity.
+const NAMED_DEVICE_PRODUCTS: Readonly<Record<string, ProductType>> = {
+  US_CDX_PMA: 'cdx', US_CDX_510K: 'cdx', EU_CDX_IVDR_D: 'cdx',
+  US_CDX_CODEV: 'cdx', JP_CDX: 'cdx', US_SAMD_PRESUB: 'samd',
+  US_COMPLEMENTARY_DX: 'ivd',
+};
+const filingTypeKey = (value: string | null | undefined) => String(value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_').replace(/^denovo$/, 'de_novo');
+type FilingEntry = ReturnType<typeof resolveFilingCatalogEntry>;
+const isDeviceFilingEntry = (entry: FilingEntry) => ['medical_devices', 'diagnostics_ivd'].includes(entry?.segment ?? '');
+const isDiagnosticFiling = (key: string, entry: FilingEntry) => ['ivd', 'ivdr'].includes(key) || entry?.segment === 'diagnostics_ivd';
+
+function deviceSelectionMatches(key: string, filingId: string | null | undefined, entry: FilingEntry): boolean {
+  if (!filingId?.trim()) return true;
+  if (!entry) return false;
+  return isDeviceFilingEntry(entry) && filingTypeKey(entry.pathwayKey) === key;
+}
+
+/** Permitted human refinements: null for medicinal classes; [] for a conflicting
+ * filing/pathway. Exact catalog and legacy ids use the same catalog resolver. */
+export function deviceProductTypesForFilingType(filingType: string | null | undefined, filingId?: string | null): readonly ProductType[] | null {
+  const key = filingTypeKey(filingType);
+  const regional = regionalDeviceApplicationClassOf(key);
+  const entry = resolveFilingCatalogEntry(filingId?.trim());
+  const programProduct = regional?.defaultProductType ?? FILING_TYPE_PRODUCT_CLASS[key];
+  if (!isDeviceFamily(programProduct) && !isDeviceFilingEntry(entry)) return null;
+  if (!deviceSelectionMatches(key, filingId, entry)) return [];
+  const named = entry && NAMED_DEVICE_PRODUCTS[entry.registryId];
+  if (named) return [named];
+  if (regional) return regional.productTypes;
+  if (isDiagnosticFiling(key, entry)) return IVD_FAMILY_PRODUCT_TYPES;
+  if (['mdr', 'cer'].includes(key)) return ['device', 'samd'];
+  return DEVICE_FAMILY_PRODUCT_TYPES;
+}
+
+function laneRefinedProduct(base: ProductType, key: string, lane?: string | null): ProductType {
+  // MDR and CER are device-only instruments; their IVD counterpart is IVDR/PER.
+  if (base === 'device' && !['mdr', 'cer'].includes(key) && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
+  return base;
+}
+
 /**
  * The product class a filing type implies, optionally refined by the lane it
- * was created from.
+ * was created from. An exact filing selection takes precedence over that lane.
  *
  * Returns null for a filing type this vocabulary does not know, so a caller can
  * decide between asking the user and refusing — never a silent `'drug'`.
@@ -200,15 +241,18 @@ const IVD_LANES = new Set(['diagnostics', 'ivd', 'diagnostics_ivd']);
 export function productTypeForFilingType(
   filingType: string | null | undefined,
   lane?: string | null,
+  filingId?: string | null,
 ): ProductType | null {
-  const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const key = filingTypeKey(filingType);
+  const choices = deviceProductTypesForFilingType(key, filingId);
+  if (choices?.length === 0) return null;
+  if (choices?.length === 1) return choices[0];
   const regional = regionalDeviceApplicationClassOf(key);
   if (regional && !regional.refineFromIvdLane) return regional.defaultProductType;
   const base = regional?.defaultProductType ?? FILING_TYPE_PRODUCT_CLASS[key];
   if (!base) return null;
-  // MDR and CER are device-only instruments; their IVD counterpart is IVDR/PER.
-  if (base === 'device' && key !== 'mdr' && key !== 'cer' && IVD_LANES.has(String(lane ?? '').trim().toLowerCase())) return 'ivd';
-  return base;
+  if (resolveFilingCatalogEntry(filingId?.trim())?.segment === 'diagnostics_ivd') return 'ivd';
+  return laneRefinedProduct(base, key, lane);
 }
 
 /** Every filing type this vocabulary can classify. */
@@ -311,6 +355,7 @@ export default {
   isMedicinalProduct,
   isProductType,
   productTypeForFilingType,
+  deviceProductTypesForFilingType,
   listProductTypes,
   listClassifiableFilingTypes,
 };
