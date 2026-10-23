@@ -1,0 +1,22 @@
+diff --git a/server/services/__tests__/rag-vault-freshness-mapping.test.ts b/server/services/__tests__/rag-vault-freshness-mapping.test.ts
+index ff6048fbc..aee4cbd9e 100644
+--- a/server/services/__tests__/rag-vault-freshness-mapping.test.ts
++++ b/server/services/__tests__/rag-vault-freshness-mapping.test.ts
+@@ -81,7 +81,7 @@ describe('the existing Vault retrieval mappers pin the extraction selected with
+     expect(sql).toContain('extracted_text_sha256');
+     expect(sql).toContain('c.char_start');
+     expect(sql).toContain('c.char_end');
+-    expect(params[3]).toBe(ORG);
++    expect(params![3]).toBe(ORG);
+     expect(sql).toContain('p.deleted_at IS NULL');
+     expect(sql).toContain('vault.documents succ');
+   });
+@@ -99,7 +99,7 @@ describe('the existing Vault retrieval mappers pin the extraction selected with
+     expect(sql).toContain('extracted_text_sha256');
+     expect(sql).toContain('c.char_start');
+     expect(sql).toContain('c.char_end');
+-    expect(params[2]).toBe(ORG);
++    expect(params![2]).toBe(ORG);
+   });
+ 
+   it('pins explicit NULL extraction and coordinates without inventing source identity', async () => {
