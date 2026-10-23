@@ -1,0 +1,15 @@
+{
+  "file": "server/services/ana/__tests__/document-read-unicode-windows.test.ts",
+  "originalSha256": "3301ea94ef24ef5adc49b4bc229344fe839ed1e52fc28a86d548237b427e7e9d",
+  "currentSha256": "89ec7dd3d95ec128c7cf9e6b074b0c2e6fc1fe1228241ca35508df776bcdbca7",
+  "change": "One erased non-null assertion for admitted.svc in test-only wrapper. No fixture value, test assertion, callback, production, rule or baseline changes.",
+  "reason": "TypeScript optional-property union was not narrowed by svc in admitted. Actual fixture successful branch supplies the concrete service; refusal branch is unchanged.",
+  "originalFreeze": "e3fb63771c79f7feb5891369637316f7ebe8ad44",
+  "firstPushRejectedByTypecheck": {
+    "head": "c116cae130761b1b423fbe51deb9d77264428597",
+    "errors": 1,
+    "tscExit": 2,
+    "pushExit": 1
+  },
+  "recordedAt": "2026-10-23T18:32:03.469979+00:00"
+}

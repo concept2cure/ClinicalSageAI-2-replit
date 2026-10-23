@@ -1,0 +1,19 @@
+{
+  "verdict": "CLEAR",
+  "reviewers": [
+    "read_window_contract_review",
+    "unicode_read_properties_audit"
+  ],
+  "checks": [
+    "Safe positive integer bounds and completepair minimum",
+    "Monotoneplateaus and selected-fit recomputation, notlastcallbackcapture",
+    "Render/coverage/receipt/snapshot exactspan agreement",
+    "Private snapshotsclone/freeze unchanged",
+    "Generic fitter, sourcewriter, flags, access/version rechecks untouched",
+    "Tooldefs disclose UTF16/backwardstart/minpair and budgetlimits"
+  ],
+  "productionFiles": {
+    "server/services/ana/document-catalog-tools.ts": "7b2713e2f101ad86e97e8f26f31c3cbf614f8a9ff8767628300e254edb0e9f25",
+    "server/services/ana/document-catalog-tool-defs.ts": "229febe0bbcb7cc489d536177d3d1fc8d800c6c260b5a9f409507024cca0b1f0"
+  }
+}

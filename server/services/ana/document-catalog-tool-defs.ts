@@ -48,8 +48,8 @@ export const READ_PROJECT_DOCUMENT: AnaTool = {
   description:
     'Read the full extracted text of a vault document by document id (from list_project_documents), one window at ' +
     'a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document\'s content, so read it, ' +
-    `do not treat the file as an opaque image. Each window is sized so the whole response fits ${RESULT_BUDGET} ` +
-    'characters. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until ' +
+    `do not treat the file as an opaque image. Windows shrink toward a ${RESULT_BUDGET}-character response budget; ` +
+    'minimal metadata-heavy results still face host-budget admission. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until ' +
     'host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or ' +
     'provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be ' +
     'read at once, a read comes back as {"delivered": false, "readAgainFrom": N} instead: nothing of it was ' +
@@ -63,9 +63,9 @@ export const READ_PROJECT_DOCUMENT: AnaTool = {
       document_id: { type: 'string', description: 'The vault document UUID from list_project_documents\u0027 `documents` array. NOT a chat upload\u0027s file_id (file_1712345678_ab12cd) — those come from the `chatUploads` array and are read with read_uploaded_document.' },
       max_chars: {
         type: 'number',
-        description: `Maximum characters of text in this window (default and max ${RESULT_BUDGET}; the window is shrunk further so the whole response fits).`,
+        description: `Maximum UTF-16 code units of text in this window (default and max ${RESULT_BUDGET}; shrunk further for the response budget). One complete supplementary character may require 2 units when max_chars is 1. Returned window.start/end are the actual intact bounds.`,
       },
-      offset: { type: 'number', description: 'Character offset to start from (default 0; advance it to page through the whole document).' },
+      offset: { type: 'number', description: 'UTF-16 code-unit offset to start from (default 0). A start inside a supplementary character moves back to its beginning. Use returned window bounds and coverage continuation to page through the document.' },
     },
     required: ['document_id'],
   },

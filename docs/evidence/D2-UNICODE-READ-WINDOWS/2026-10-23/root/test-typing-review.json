@@ -1,0 +1,13 @@
+{
+  "reviewer": "read_window_contract_review",
+  "verdict": "CLEAR",
+  "checks": [
+    "Exactdiff only admitted.svc to admitted.svc! in testwrapper",
+    "Synthetic gate supplies concrete service on successful branch; refusal branch unchanged",
+    "Original snapshot equals original freeze and Git e3fb63771",
+    "Only one of4currentfrozen and92selectedhashes differs; allcurrenthashes match files",
+    "Originalpush log records exactly1TS2345 fixtureerror; no rules/baselines changed",
+    "Runtime equivalence report same db801cd38bc450a26dd74b0e03617b6ba8317825b122371f331612c7a1379dd3 emittedJS hash",
+    "Current regression/lint outcome must come from verifiedrun, not prior finalrun"
+  ]
+}
