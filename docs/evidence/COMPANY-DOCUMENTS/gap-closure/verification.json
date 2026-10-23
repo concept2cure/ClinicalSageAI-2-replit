@@ -53,5 +53,24 @@
     "combinedProductionBuildPassed": true,
     "buildTranscriptSha256": "73c97073c2c4c1186a489d1a80065a772b809f7aa742575f725edeb65cd2f6be",
     "publicationChecks": "Mandatory pre-push hooks run again on the combined tree before Git can publish it."
+  },
+  "postPushRaceIntegration": {
+    "evidence": "concurrent/filing-derivation-2026-10-23.json",
+    "sourceCommit": "e9bfbe3a8713164346687f9a6f68731de5357128",
+    "upstream": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
+    "changedOriginalPins": [
+      "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "server/services/authoring/authoring-file-to-vault.ts",
+      "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "server/services/ectd/assemble-from-core.ts",
+      "server/services/ectd/core-to-packager.ts",
+      "server/services/ectd/leaf-source-resolver.ts"
+    ],
+    "additionalFocusedPassed": 218,
+    "additionalFocusedFiles": 16,
+    "inheritedTodo": 1,
+    "failed": 0,
+    "combinedBuildPassed": true,
+    "originalCompanyCountsNotInflated": true
   }
 }

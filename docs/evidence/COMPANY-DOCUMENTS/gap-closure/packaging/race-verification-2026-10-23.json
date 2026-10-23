@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:28:10.012670+00:00",
+  "headAtVerification": "e9bfbe3a8713164346687f9a6f68731de5357128",
+  "upstreamIntegrated": "0ac54306868ba236b68db2fc4f612f7a2b5d7220",
+  "sourceQualification": "Resolved working-tree source; controller owns final merge commit, build/typecheck/push and aggregate source pins.",
+  "testResult": {
+    "files": 12,
+    "passed": 140,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 1,
+    "jsonSha256": "d118de324576c466262078fbf091d61d2375f9271a12e30d5fdd68b4af41cde8"
+  },
+  "existingTodo": "Re-filing an edited document must supersede the exact Vault version a live leaf pins; canonical file-to-vault supersession remains an upstream TODO, not a passing assertion.",
+  "initialRun": {
+    "files": 11,
+    "passed": 116,
+    "failed": 3,
+    "blockedSkipped": 6,
+    "todo": 1,
+    "explanation": "New placement-parity fixture did not apply the canonical company legal registry migration; three cases failed and six dependent cases were blocked. Applying the actual migration allowed every blocked case to execute and pass."
+  },
+  "resolutions": [
+    "ResolvedFile retains both admitted sourceIntegrity and separately verified Authoring filing derivation.",
+    "Vault materialization keeps current organization/program admission, exact original classification and verified receipt read; source bytes remain unchanged.",
+    "Governance manifest retains sourceIntegrity/originalPdfProof and derivation; wording distinguishes receipt-bound retained input hashes from shipped original/ZIP hashes.",
+    "Vault UUID native fixture retains real PDF/conversion trap/company registry proof alongside real chained filing receipts and upstream assertions.",
+    "New placement-parity fixture applies the canonical company registry migration; no production registry fallback was added.",
+    "Equivalent async local-upload read uses .catch(() => null), preserving failed reads as unresolved while keeping the merged source below the existing line-count limit. Native actual-upload success, missing/mislabeled bytes and tenant refusals pass."
+  ],
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 5,
+    "newMaxLinesWarning": false
+  },
+  "productionGatesUnchanged": [
+    "Current Vault approval and copied-original legal lifecycle",
+    "Mandatory original PDF/A validation",
+    "Source-integrity forwarding and final ZIP original-byte hash verification",
+    "Saved applicable legal requirements",
+    "Canonical Authoring derivation chain/payload/scope/artifact verification"
+  ],
+  "files": [
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-context.pglite.test.ts",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/core-to-packager.test.ts",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/leaf-source-resolver.test.ts",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/original-pdf-integrity.test.ts",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 1
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/original-legal-pdf.test.ts",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  ],
+  "sourcePins": [
+    {
+      "path": "server/services/ectd/assemble-from-core.ts",
+      "sha256": "1a34f863539e827f06ec32ba50ae082846e9d9d4f214e6f8d88281938b993f89"
+    },
+    {
+      "path": "server/services/ectd/core-to-packager.ts",
+      "sha256": "8e701a3d7317b53d263967deb870aa5f428475ef7640600b4ef592e249681a94"
+    },
+    {
+      "path": "server/services/ectd/leaf-source-resolver.ts",
+      "sha256": "9016278808333f0ae4d3fca9e6b43d46b988a1a86db41030ff83f5707ff78afc"
+    },
+    {
+      "path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "sha256": "d4810da5f6ed03a45a8a7a0415ef5b5031ccc8716b0e29cdb9f5ae6432818dd2"
+    },
+    {
+      "path": "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts",
+      "sha256": "3d216ed23bf38310f295a5355e45e38346836e925c55d2d715c5048d31741c80"
+    }
+  ]
+}
