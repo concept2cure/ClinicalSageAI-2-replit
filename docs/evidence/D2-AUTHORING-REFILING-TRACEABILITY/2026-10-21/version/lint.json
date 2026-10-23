@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-10-21T02:15:34.392216+00:00",
+  "elapsedSeconds": 1.124,
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings",
+    "0",
+    "server/services/vault/vault-version-checkin.ts",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "environment": {
+    "PATHPrefix": "/workspace/scratch/editor-toolchain/node_modules/.bin"
+  },
+  "sourcesBefore": {
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+  },
+  "sourcesAfter": {
+    "server/services/vault/vault-version-checkin.ts": "bdb2f54ecfda58a05362119edb7437a7bd6f1f76feb79965677259564814e36e",
+    "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "5671e5bdac3dbc687fc0a83765db2e48ef43a5115fd785d18caa064abdefdee9"
+  },
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+}
