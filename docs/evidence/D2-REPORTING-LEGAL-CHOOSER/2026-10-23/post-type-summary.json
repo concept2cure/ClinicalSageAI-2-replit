@@ -1,0 +1,12 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/reporting-legal-chooser/post-type-results.json",
+  "startedAt": "2026-10-23T20:49:18.423612+00:00",
+  "finishedAt": "2026-10-23T20:49:28.221949+00:00",
+  "exitCode": 0,
+  "files": 3,
+  "passed": 41,
+  "failed": 0,
+  "pending": 0,
+  "unchangedInputs": true,
+  "failures": []
+}

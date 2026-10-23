@@ -1,0 +1,19 @@
+{
+  "disposition": "CLEAR; independent incoming code review and root source/artifact verification",
+  "incomingCommit": "a2a34279f",
+  "mergedCommit": "3dbf29ff0b99442e4db553fda27694e66cca79dc",
+  "mergeConflict": "docs/work-orders/README.md only; preserved distinct reporting and template-search lane rows, removed markers; no code conflict.",
+  "codeScope": "4 production files and3tests; existing template picker/assembly controller completed, exact preview/build/write/source gates retained. No server/dependency/grant policy change.",
+  "canonicalSourcePinsVerified": 117,
+  "evidenceArtifactsVerified": 119,
+  "changedCodePathsMatchingIncoming": {
+    "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx": "160a96b242cf964fcb630a28ee53a0e778b311d9925bde594043189064cb845e",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyTemplateSearch.test.tsx": "1001df1fa05fd59eff1e2d5e120b1ec15e8ae194b36613fa59f2d2b1922cd215",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "eeb88f565923d24e1dad4abf29065c1088a3d3bbf2989c3ea49adb37f77af434",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "55b9c0be33f54b216766056c09777cefbc2d84b3a2ff766f481f4796e818a49e",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5"
+  },
+  "historicalLimits": "Incoming211/10and184/9are separate historical overlapping synthetic runs;95human cases Not run. Root new template cohort and whole compiler independently required."
+}

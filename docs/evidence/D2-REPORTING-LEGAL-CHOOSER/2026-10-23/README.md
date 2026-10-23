@@ -87,7 +87,7 @@ with zero failures/skips. Both include all 11 changed incoming suites and direct
 navigation consumers. These are separate cohorts from the company/report 231/13
 run; counts are not added. `incoming-*` retain exact selections, results and
 source snapshots. The merged production build exited zero with stable inputs
-(`canonical-build-*`, `canonical-build.txt`). `qualified-source.json` records the
+(`canonical-build-*`, `canonical-build.txt`). `pre-type-qualified-source.json` records the
 106-input selected union, all verified at the merged commit. It is not a full
 dependency closure.
 
@@ -98,8 +98,29 @@ types require an initializer and the slot is also cleared to `undefined`.
 that attempt published no source. The declaration is corrected to
 `useRef<string | undefined>(undefined)`. Independent read-only review confirms
 the same runtime initial/reset value and optional payload behavior, with no
-guard or policy change. Earlier counts remain bound to their original sources;
-post-correction qualification and a fresh normal push are pending.
+guard or policy change. Earlier counts remain bound to their original sources.
+
+## Final correction and second catch-up
+
+The ref correction is committed at `a7eea485d`. Incoming searchable assembly
+templates `a2a34279f` were then merged at `3dbf29ff0`. The only conflict was the
+two independent work-order claims; both rows were preserved. No production
+conflict occurred, and no initial 106-input source changed except the corrected
+Reporting ref declaration. The incoming four production/three test paths match
+upstream. Independent review and root verification confirmed its 117 source pins
+and 119 evidence artifacts; historical incoming counts remain historical.
+
+The final corrected Reporting source passed **41 cases / 3 files**, and the
+incoming template/build/source consumers separately passed **157 / 7**, all with
+zero failures/skips and stable before/after inputs. `post-type-*`, `template-*`
+retain these exact current-source checks. The merged build exited zero. Broad
+lint against discovery found zero errors and decreased pre-existing warnings
+from 37 to 36 across 34 files; the original six-path zero-warning record is a
+separate earlier scope. No warning baseline or gate was relaxed.
+
+`qualified-source.json` now pins the final **159-input selected union**. The
+earlier 106-input snapshot remains separately retained. Neither is a complete
+dependency closure. A new normal push/whole compiler result is still pending.
 
 Normal push gates remain pending. Local mounted checks do not establish
 production deployment or agency acceptance. The separate
