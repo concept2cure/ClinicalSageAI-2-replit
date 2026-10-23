@@ -98,7 +98,10 @@ beforeEach(() => {
   x.scopeAccess.mockReset().mockResolvedValue(true);
   x.accessIds.mockReset().mockResolvedValue([11,12]);
   h.respond.fn = (sql, arrayMode) =>
-    !arrayMode ? (/FROM concept2cure_artifacts s/.test(sql) ? [{ project_id: 11 }] : []) : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
+    !arrayMode ? sql.includes('SELECT ou.role') ? [{ role: 'manager' }]
+      : sql.includes('SELECT id FROM projects WHERE') ? [{ id: 11 }]
+        : /FROM concept2cure_artifacts s/.test(sql) ? [{ project_id: 11 }] : []
+      : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
   x.domain.mockReset().mockResolvedValue({
     summary: { studies: 2, byStatus: { completed: 2 }, sendValidated: 1 },
     provider: { provider: 'nonclinical_studies', observedAt: '2026-10-08T06:00:00Z', status: 'ready' },
@@ -336,7 +339,8 @@ describe('the evidence & provenance trace', () => {
   beforeEach(() => x.dossier.mockReset());
 
   it('its confidence is the document\'s measured provenance completeness, not a count of the records present', async () => {
-    h.respond.fn = (sql, arrayMode) => !arrayMode ? (/FROM concept2cure_artifacts s/.test(sql) ? [{ project_id: 11 }] : []) : /"report_runs"/.test(sql) ? [driverRow(reportRuns, { ...RUN, scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId, confidence: 64 })] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'document', scopeId: 'artifact_abc', snapshotVersion: 1, isLatest: true })] : [];
+    const currentReads = h.respond.fn;
+    h.respond.fn = (sql, arrayMode) => !arrayMode ? currentReads(sql, false) : /"report_runs"/.test(sql) ? [driverRow(reportRuns, { ...RUN, scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId, confidence: 64 })] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'document', scopeId: 'artifact_abc', snapshotVersion: 1, isLatest: true })] : [];
     x.dossier.mockResolvedValue(dossier({
       percent: 64, contentLength: 1000, attributedChars: 640, unattributedChars: 360, staleChars: 0,
       byKind: { fromSources: 140, authorAsserted: 500, machineDrafted: 0, machineDraftedUnaccepted: 0 },
@@ -378,6 +382,8 @@ it('injects the actual request actor and pinned executor for a recorded lifecycl
 it('rolls back a calendar whose current creator was revoked before persistence, including an empty-source computation', async () => {
   const calendar = { ...type('lifecycle.obligation_calendar', 'Lifecycle Obligation Calendar', 'lifecycle', ['academic']), allowedScopes: ['account'] };
   h.queued.select.push([calendar]);
+  const response = h.respond.fn;
+  h.respond.fn = (sql, arrayMode) => sql.includes('SELECT ou.role') ? [] : response(sql, arrayMode);
   const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: calendar.typeId });
   expect(res.status, JSON.stringify(res.body)).toBe(403);
   expect(res.body.code).toBe('PROJECT_ACTOR_ACCESS_DENIED');

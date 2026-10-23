@@ -1,0 +1,35 @@
+{
+  "kind": "Independent read-only integration review",
+  "range": "3b16fc98c..4cd0215a5",
+  "mergedHead": "e418d8f1f94ea745e6f7e7fb32dec6efba6895fb",
+  "finding": "No blocking findings",
+  "reviewedRuntimePins": {
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx": "da7841ab5f65bd12374391bac00b020534634903f8ea723cf41ba7555326a5bf",
+    "server/mcp/tools/catalog.ts": "a042b79f0bc89d5178727190accbcc0fa0f120926391978a521aae3ff649a31c",
+    "server/routes/ectd-compile.ts": "c32d7753c623d795e8395a54368ef888e88c88993d3400da274a3396892330c8",
+    "server/routes/submission-sign-release.ts": "7d0a5dc7e708a4682bb655c144befdf79980bd9962113a0cfcbdc99a22622b2f",
+    "server/services/ectd/assemble-from-core.ts": "6e7bb599279d760dfa0c5ebeb0d43a9688b35da879ecca837a1f15b6dd8e3b67",
+    "server/services/ectd/package-from-core.ts": "cde46b25d9a2308e062ebff044c9843961a36d216fb5c417d2d4ad0c48de3212",
+    "server/services/ectd/package-identity.ts": "46ce9a9d959d788a12490a9312d7100c838a6952d98aa5dfdfa9b05b715062d5",
+    "server/services/ectd/release-signature-status.ts": "baf3c0aa638f08a87154ceb220874aac7cbfed4ffbd4d471b424c9c45aac0cc8",
+    "server/services/ectd/run-package-identity.ts": "5a31cc6f5e9b1fa18926ec1ade85d3c12dad16dd14c024340566d96d71b5cb31",
+    "server/services/ectd/sequence-release-signature.ts": "fcc47ea41fc18b138e444e99096e9b21ae73df4e2c188040efe30507d89b3343",
+    "server/services/ectd/signed-manifest-covers-sequence.ts": "a1c2fca5189dd6b70a763e817e83469c6dbe65ca4ff23fbb4fc3af9ff192f248",
+    "server/services/part11/ectd-sequence-binding.ts": "17a866a173d9ac7b567736667c700fb530f30f352aa96f2c570d96980d36d66e",
+    "server/services/submission-orchestrator-continuation.ts": "a551b295574dffd763e2ed422248fd72091362819b4293d8f04d48feac709d97",
+    "server/services/submission-package-orchestrator.ts": "20179d5beaec93133e60478e7296c8c7face5843a9b272c9ba25f12a47422c83",
+    "server/services/submission-service/submission-service.ts": "ea60306b96ff7b151997452436072d76fd3ad6225ed16e1c7c12fc1724a86021"
+  },
+  "findings": [
+    "Signing preparation only reads/verifies; password/MFA and current standing precede signature creation or active-signature continuation.",
+    "Regional identity enters the existing bound digest; FDA compatibility and historical integrity are retained.",
+    "Coverage corroborates actual sequence parent and region and refuses unknown/malformed proof.",
+    "Lock order remains organization, submission, sequence, program, sponsor, without submission lock upgrades.",
+    "Transmit requires captured identity/digest, releases locks before network and rechecks proof before gateway entry.",
+    "Renewal retains independent signing, spent-signature checks and dispatch CAS."
+  ],
+  "limits": [
+    "Read-only source review; no tests, builds or application edits by this reviewer.",
+    "Agency, transport, native-provider and human qualification remain separate."
+  ]
+}

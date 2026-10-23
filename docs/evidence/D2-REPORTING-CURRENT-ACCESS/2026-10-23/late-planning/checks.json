@@ -1,0 +1,179 @@
+{
+  "recordedAt": "2026-10-23T18:32:59.200731+00:00",
+  "incomingCanonical": "f5f685a87faea1fd5197bfac362249aefec3481f",
+  "mergedHead": "2fe39a16a9ece0243378ae33fc415100e1a6fa5f",
+  "sourceDelta": {
+    "from": "332bbbbce",
+    "to": "f5f685a87",
+    "runtimeFiles": 6,
+    "incomingTargets": 16,
+    "applicationSourceEditsMadeDuringReview": false
+  },
+  "interruptedPhase": {
+    "classification": "interrupted_no_final_report",
+    "command": {
+      "cwd": "/workspace/ClinicalSageAI-2-replit",
+      "environment": {
+        "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+        "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts",
+        "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+        "server/services/market-specs/__tests__/document-template-library.test.ts",
+        "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+        "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-planning/tests.json"
+      ],
+      "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-planning/tests.txt"
+    },
+    "sourceBefore": {
+      "head": "2fe39a16a9ece0243378ae33fc415100e1a6fa5f",
+      "files": {
+        "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
+        "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "a345f1d7f5cc79d95b9a22d06a444d71e84a5b471cfc49b899a754b90ce589e7",
+        "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "18409f47e6b873598b0aa54e2364ff3aabcbfd567ada657954cb70bd007989bb",
+        "server/routes/__tests__/_authoring-assembly-filing-cases.ts": "6cf38d8b7630b80e342c4c4ed44234ede888d20ff84a6db828fcae276d3faf00",
+        "server/routes/__tests__/_template-editor-fixture.ts": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+        "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "58c55b4e407eb65fab0bdf54794af346274e9ee1f084e78d63d60de156df550f",
+        "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+        "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+        "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0",
+        "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7",
+        "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+        "server/services/market-specs/__tests__/document-template-library.test.ts": "54e75972fb48f127ddbcdb516b9023aac4b73663a0519e880163b542e49c8137",
+        "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+        "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+        "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea",
+        "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a"
+      }
+    },
+    "exitCode": null,
+    "qualification": "Environment reconnect interrupted the earlier agent/test. Retained raw output has no collected exit or final report; no failure or success is inferred. Output originally at tests.txt is retained as interrupted-tests.txt.gz.",
+    "metadataArchive": "interrupted.json.gz",
+    "stdoutArchive": "interrupted-tests.txt.gz"
+  },
+  "command": {
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "environment": {
+      "PATH_prefix": "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin",
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+      "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts",
+      "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+      "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+      "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/workspace/.codex-notes/reporting-current-access-20261023/late-planning/tests.json"
+    ],
+    "stdoutAndStderr": "/workspace/.codex-notes/reporting-current-access-20261023/late-planning/tests.txt"
+  },
+  "result": {
+    "exitCode": 0,
+    "files": 6,
+    "passed": 339,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 100.24,
+    "execution": {
+      "startedAt": "2026-10-23T18:30:18.279212+00:00",
+      "completedAt": "2026-10-23T18:31:59.138430+00:00",
+      "exitCode": 0,
+      "wallSeconds": 100.86
+    }
+  },
+  "sourceBefore": {
+    "head": "2fe39a16a9ece0243378ae33fc415100e1a6fa5f",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
+      "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "a345f1d7f5cc79d95b9a22d06a444d71e84a5b471cfc49b899a754b90ce589e7",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "18409f47e6b873598b0aa54e2364ff3aabcbfd567ada657954cb70bd007989bb",
+      "server/routes/__tests__/_authoring-assembly-filing-cases.ts": "6cf38d8b7630b80e342c4c4ed44234ede888d20ff84a6db828fcae276d3faf00",
+      "server/routes/__tests__/_template-editor-fixture.ts": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+      "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "58c55b4e407eb65fab0bdf54794af346274e9ee1f084e78d63d60de156df550f",
+      "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+      "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+      "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0",
+      "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7",
+      "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+      "server/services/market-specs/__tests__/document-template-library.test.ts": "54e75972fb48f127ddbcdb516b9023aac4b73663a0519e880163b542e49c8137",
+      "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+      "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+      "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea",
+      "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a"
+    }
+  },
+  "sourceFinal": {
+    "head": "2fe39a16a9ece0243378ae33fc415100e1a6fa5f",
+    "files": {
+      "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "bda403acf4e4f4103981039a274110dfca02c22d766962c43e8d1561405b0879",
+      "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "a345f1d7f5cc79d95b9a22d06a444d71e84a5b471cfc49b899a754b90ce589e7",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "18409f47e6b873598b0aa54e2364ff3aabcbfd567ada657954cb70bd007989bb",
+      "server/routes/__tests__/_authoring-assembly-filing-cases.ts": "6cf38d8b7630b80e342c4c4ed44234ede888d20ff84a6db828fcae276d3faf00",
+      "server/routes/__tests__/_template-editor-fixture.ts": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+      "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "58c55b4e407eb65fab0bdf54794af346274e9ee1f084e78d63d60de156df550f",
+      "server/services/ana/__tests__/shared-planning-template-preparation.test.ts": "17dc41ebfd777262e968279d0a132b230fa704fb1b061a9daba2e7e5bcdfd49b",
+      "server/services/ana/builtin-template-reference.ts": "aab5e0e8805e6bd562ed96e3a9c84be75cd9060ab0c10024e8b0f0da4437ea1c",
+      "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "2faa4e890a6125023d59357759c203e5b41e9c27d1cba4c4e5a47fea4f8506a0",
+      "server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts": "73dbc59d6c79f336d91b722b8e6f6dffe3e5822b4872897925d8e53ca6ecbfc7",
+      "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+      "server/services/market-specs/__tests__/document-template-library.test.ts": "54e75972fb48f127ddbcdb516b9023aac4b73663a0519e880163b542e49c8137",
+      "server/services/market-specs/document-preparation.ts": "4e52f4b44cb32ac60f30c4774ecdbb093cd232bc636c19530d499773cd4ed89d",
+      "server/services/market-specs/document-template-library.ts": "255f53483cfc09522398e7c05e2b41b53790dcb10dfc5b0eea35291cb3e329a9",
+      "server/services/market-specs/shared-planning-preparation.ts": "4e83e343b9345e68b983b08eb5c2563aea58c1f60357b8047c9bd48f861020ea",
+      "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a"
+    },
+    "sourceDrift": []
+  },
+  "priorPins": {
+    "client": {
+      "targetPinCount": 36,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged; no rerun or summed count."
+    },
+    "backend": {
+      "targetPinCount": 20,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged; no rerun or summed count."
+    },
+    "late-native": {
+      "targetPinCount": 12,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged; no rerun or summed count."
+    },
+    "late-refiling": {
+      "targetPinCount": 18,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged; no rerun or summed count."
+    },
+    "late-unicode": {
+      "targetPinCount": 4,
+      "sourceDrift": [],
+      "qualification": "Prior qualified result retained unchanged; no rerun or summed count."
+    }
+  },
+  "review": {
+    "finding": "No blocker. Existing four registry outlines, builtin source references and preparation flow are extended. Existing registry records are unchanged, and tests preserve all 392 prior builtin snapshots.",
+    "boundaries": "Exact active four-ID internal predicate; manual planning only; mixed component/package-family requests still refuse. Preparation discussion does not imply source review, approval, readiness, filing route or authority commitments.",
+    "coverage": "Six exact suites cover template tool/preparation, builtin projection/snapshots, coverage library, picker and mounted HTTP/SQL creation/reopen/saved-review including all supported prior filing/component roster. No live provider, hosted RLS or agency acceptance is exercised.",
+    "rootOwned": "Root owns merged build, complete compiler, normal push gates and canonical publication."
+  }
+}

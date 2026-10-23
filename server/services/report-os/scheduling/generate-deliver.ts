@@ -5,7 +5,8 @@ import { getPool } from '../../../db';
 import { GOVERNED_WRITE_ROLES } from '../../../middleware/orgMembership';
 import type { RequestSqlClient } from '../../../db/requestDb';
 import { readCurrentProgramActor } from '../../c2c/current-program-access';
-import { canAccessReportScope, recordedReportProjectIds, type ReportAccessScope } from '../project-access';
+import { canAccessReportScope, type ReportAccessScope } from '../project-access';
+import { resolveOwnedReportScope } from '../scope-ownership';
 import type { ReportScope, ReportSubscriptionRow } from '@shared/schema/report-os';
 import { computeRunForType, type ComputeRunInput } from '../compute-run';
 import { persistReportRun } from '../persistence';
@@ -35,14 +36,14 @@ function scheduledSourceOptions(sub: ReportSubscriptionRow, programProjectIds?: 
   };
 }
 
-/** Re-evaluate the source requirement at each use; the persistence callback
- * supplies its enlisted client and retains the current creator/recipient checks. */
+/** Every occurrence retains its creator, recipients and exact fresh-run scope.
+ * The persistence callback supplies its enlisted client; optional provenance
+ * never switches authority checks off. */
 function subscriptionSourceAccess(sub: ReportSubscriptionRow, sourceScope: ReportAccessScope, configured: Pick<SubscriptionConfiguration, 'recipientUserIds'>) {
-  const needed = () => Boolean(recordedReportProjectIds(sourceScope)?.length) || sub.reportTypeId === 'lifecycle.obligation_calendar';
   return {
-    needed,
     async check(client: RequestSqlClient, forShare = false): Promise<void> {
-      if (!needed()) return;
+      await resolveOwnedReportScope({ organizationId: sub.organizationId, scopeType: sub.scopeType,
+        scopeId: sub.scopeId, clientWorkspaceId: sub.clientWorkspaceId }, client);
       for (const userId of new Set([sub.createdBy, ...configured.recipientUserIds])) {
         const actor = await readCurrentProgramActor(client, { organizationId: sub.organizationId, userId: userId ?? undefined, forShare });
         if ((userId === sub.createdBy && !GOVERNED_WRITE_ROLES.has(actor.role)) || !await canAccessReportScope(sub.organizationId, actor, sourceScope, client)) {
@@ -76,7 +77,7 @@ export async function generateAndDeliver(sub: ReportSubscriptionRow, now = new D
   // every recipient must retain the same private-source permission.
   const sourceScope = { organizationId: sub.organizationId, scopeType, scopeId: sub.scopeId, dependencySummary: { summary: computed.summary } };
   const sourceAccess = subscriptionSourceAccess(sub, sourceScope, configured);
-  if (sourceAccess.needed()) await sourceAccess.check(getPool());
+  await sourceAccess.check(getPool());
   computed.summary.computedScope ??= configured.availability.computedScope;
   const status = computed.blockers.length ? 'partial' : 'completed';
   const decision = decideDelivery({ status: 'partial' }, 'platform');
