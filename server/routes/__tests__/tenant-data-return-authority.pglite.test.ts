@@ -6,7 +6,7 @@ import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 
 const h = vi.hoisted(() => ({
-  query: vi.fn(), curated: vi.fn(), full: vi.fn(), receipt: vi.fn(), attestation: vi.fn(),
+  query: vi.fn(), curated: vi.fn(), full: vi.fn(), receipt: vi.fn(), attestation: vi.fn(), exportAudit: vi.fn(),
   user: { id: 3, organizationId: 7, role: 'admin', roles: ['admin'] },
 }));
 vi.mock('../../middleware/auth', () => ({ authenticateToken: (req: Request, _res: Response, next: NextFunction) => {
@@ -20,6 +20,9 @@ vi.mock('../../services/tenant-export/tenant-full-export.service', () => ({ expo
 vi.mock('../../services/tenant-export/attestation-report.service', () => ({ generateAttestation: h.attestation,
   AttestationKeyMissingError: class AttestationKeyMissingError extends Error {} }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })) }));
+// Attestation delivery independently records its exact bytes through the
+// canonical audited sender; the authority fixture supplies that outcome too.
+vi.mock('../../services/auditService', () => ({ default: { logAction: h.exportAudit } }));
 
 import router from '../tenant-export';
 let db: PGlite;
@@ -35,13 +38,14 @@ beforeAll(async () => {
 }, 60_000);
 afterAll(async () => { await db?.close(); });
 beforeEach(async () => {
-  [h.query, h.curated, h.full, h.receipt, h.attestation].forEach(mock => mock.mockReset());
+  [h.query, h.curated, h.full, h.receipt, h.attestation, h.exportAudit].forEach(mock => mock.mockReset());
   h.user = { id: 3, organizationId: 7, role: 'admin', roles: ['admin'] };
   h.query.mockImplementation((sql: string, params?: unknown[]) => db.query(sql, params));
   h.curated.mockResolvedValue({ organization: { slug: 'customer' }, counts: {} });
   h.full.mockResolvedValue({ organization: { slug: 'customer' }, coverage: { tablesExported: 0, totalRows: 0 }, tables: [] });
   h.receipt.mockResolvedValue({ recorded: true, inserted: true });
   h.attestation.mockResolvedValue({ schemaVersion: '1.0', organization: { slug: 'customer' } });
+  h.exportAudit.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
   await db.exec("UPDATE organizations SET status='active'; UPDATE users SET status='active'; UPDATE organization_users SET role='admin'");
 });
 
@@ -92,6 +96,21 @@ describe('current complete tenant data-return authority', () => {
     expect((await request(app).get('/api/tenant-export/attestation')).status).toBe(403);
     h.user.role = 'admin'; h.user.roles = ['admin'];
     expect((await request(app).get('/api/tenant-export/attestation')).status).toBe(200);
+    expect((await request(app).get('/api/tenant-export/full')).status).toBe(403);
+    expect(h.exportAudit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      action: 'EXPORT_GENERATED', organizationId: 7, userId: 3, resourceType: 'audit_attestation_report',
+    }));
     expect(h.attestation).toHaveBeenCalledOnce(); expect(h.full).not.toHaveBeenCalled(); expect(h.receipt).not.toHaveBeenCalled();
+  });
+
+  it('refuses an authorized attestation when its independent export record does not persist', async () => {
+    h.exportAudit.mockResolvedValue({ persisted: false });
+    const response = await request(app).get('/api/tenant-export/attestation');
+    expect(response.status).toBe(503);
+    expect(response.headers['content-disposition']).toBeUndefined();
+    expect(response.headers['x-export-sha256']).toBeUndefined();
+    expect(response.body).toMatchObject({ error: 'Attestation not delivered' });
+    expect(h.exportAudit).toHaveBeenCalledOnce(); expect(h.attestation).toHaveBeenCalledOnce();
+    expect(h.curated).not.toHaveBeenCalled(); expect(h.full).not.toHaveBeenCalled(); expect(h.receipt).not.toHaveBeenCalled();
   });
 });

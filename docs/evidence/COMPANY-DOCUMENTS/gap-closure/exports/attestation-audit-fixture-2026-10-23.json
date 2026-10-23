@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-23T15:12:25.109363+00:00",
+  "sourceCommit": "b004b60aa294f14300cd8a4155ff2b670d6de585",
+  "changeScope": "Test fixture only; no application, permission policy, canonical export gate or database schema changes.",
+  "whatAlreadyExists": {
+    "server/routes/tenant-export.ts": "Attestation uses its preexisting shared admin policy, independently of current complete data-return authority. Its canonical audited download requires the exact-byte EXPORT_GENERATED row to persist.",
+    "server/services/export/governedExportConsequence.ts": "Canonical sender refuses a download when auditService.logAction does not confirm persistence.",
+    "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts": "Native current membership/state authority fixture; originally mocked the separate run audit only, leaving the newly required download audit connected to a minimal fixture DB."
+  },
+  "diagnosis": "The real canonical sender correctly returned503 because the authority fixture lacked its new independent audit-service outcome. No policy separation defect was found.",
+  "correction": "Supply an explicit auditService.logAction outcome fixture while continuing to exercise the real canonical sender. Retain existing role separation assertions, explicitly show full-data-return refusal for the same current manager, assert the attestation export event, and add persisted:false refusal without attachment/hash headers or data-return/receipt work.",
+  "red": {
+    "exitStatus": 1,
+    "passed": 9,
+    "failed": 1,
+    "reason": "Expected authorized attestation200 but received canonical unaudited-export503.",
+    "privateJsonSha256": "4fa5a9b0a82246fd32db59bcc3d54a5a29837e97d48162c9a640fab42069a512"
+  },
+  "green": {
+    "exitStatus": 0,
+    "passed": 25,
+    "failed": 0,
+    "pending": 0,
+    "files": 3,
+    "fileResults": [
+      {
+        "file": "server/__tests__/routes/tenant-export.test.ts",
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "62e38b0e47ca99fde74e2c806a8299aecab768413f50ce47e942a8802c5b7c54"
+      },
+      {
+        "file": "server/routes/__tests__/tenant-data-return-authority.pglite.test.ts",
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "f6879bb341410b0d965b84af2b854e59395e64a7736f880faead125a2974895e"
+      },
+      {
+        "file": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "sourceSha256": "a8628c3ecf2b8eec740b9d3728efb41ecb0221293098c2de2f68af908b3ec7cc"
+      }
+    ],
+    "privateJsonSha256": "dc4bd3ebbd177fc956dcd1bd3b2dd02acb3686f4a03f69c694c51323d5f7e5c5",
+    "privateLogSha256": "a72401825f0e0c1ad882313870e4f1686a8afa4fad8440952fb0d11badd376d4"
+  },
+  "lint": {
+    "exitStatus": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "controlsRetained": [
+    "Complete return requires current owner/admin tenant membership and current actor/organization state; stale admin token alone remains insufficient.",
+    "Attestation retains its distinct preexisting permission policy.",
+    "Attestation delivery still refuses when its independent export audit record does not persist."
+  ],
+  "qualification": "Focused local HTTP/PGlite regressions; overlapping reruns must be counted once in the controller aggregate. The corrected authority suite has11 cases instead of10 because of the new refusal case."
+}
