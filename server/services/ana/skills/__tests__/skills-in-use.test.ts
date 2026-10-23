@@ -12,6 +12,7 @@ import type { OrgSkillRecord } from '../../../account-skill-bundles';
 import { selectSkills, type SelectableSkill } from '../selector';
 import {
   applyProjectScope,
+  buildSelectableSkills,
   orgSkillsForProject,
   pickedSkillKeysOf,
   segmentsOfClientType,
@@ -211,5 +212,22 @@ describe('a turn in a project', () => {
     const reasonsOf = (sel: typeof device) => sel.selected.find(x => x.skill.key === drugPathways.key)?.reasons.join(' ') ?? '';
     expect(reasonsOf(device)).toContain('the program is device');
     expect(reasonsOf(pharma)).toContain('the program is pharma');
+  });
+});
+
+describe('market skills', () => {
+  const { skills } = buildSelectableSkills(getSkillLibrary().skills, [], new Map());
+  const loaded = (message: string) => selectSkills(skills, { message }).selected.map(x => x.skill.key);
+  const markets = (keys: string[]) => keys.filter(k => k.startsWith('regulatory-strategy.global-planning.'));
+
+  it('load for a question about their market', () => {
+    expect(loaded('What does a PMDA consultation before the J-NDA need from us?')).toContain('regulatory-strategy.global-planning.japan');
+    expect(loaded('Can we use the International Recognition Procedure with the MHRA after FDA approval?')).toContain('regulatory-strategy.global-planning.uk');
+  });
+
+  it('never load on a word that means something else in another discipline', () => {
+    // HSA is also human serum albumin; CDE is also a common data element.
+    expect(markets(loaded('Is HSA acceptable as an excipient in our lyophilized biologic formulation?'))).toEqual([]);
+    expect(markets(loaded('Map our case report forms to the NIH CDE definitions before database lock.'))).toEqual([]);
   });
 });

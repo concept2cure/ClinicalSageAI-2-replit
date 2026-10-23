@@ -53,27 +53,31 @@ function iso(value: unknown): string | null {
  */
 export async function readSkillUsage(client: SkillReadClient, organizationId: number, days: number): Promise<SkillUsage> {
   const window = Math.min(USAGE_MAX_DAYS, Math.max(1, Math.floor(days)));
-  // One more than the bound, to know whether the window held more.
-  const recent = `
-    WITH recent AS (
-      SELECT started_at, record_text::jsonb -> 'context' -> 'skills' AS skills
-        FROM ana_turn_records
-       WHERE organization_id = $1
-         AND started_at >= now() - make_interval(days => $2)
-       ORDER BY started_at DESC
-       LIMIT $3
-    )`;
+  // `recent` reads one more record than the bound, to know whether the window held more.
+  const params = [organizationId, window, USAGE_MAX_RECORDS + 1, USAGE_MAX_RECORDS];
   const [totals, rows] = await Promise.all([
     client.query(
-      `${recent}
+      `WITH recent AS (
+         SELECT started_at, record_text::jsonb -> 'context' -> 'skills' AS skills
+           FROM ana_turn_records
+          WHERE organization_id = $1 AND started_at >= now() - make_interval(days => $2)
+          ORDER BY started_at DESC
+          LIMIT $3
+       )
        SELECT (SELECT count(*) FROM recent)::int AS in_window,
               count(*)::int AS turns_read,
               count(*) FILTER (WHERE jsonb_typeof(r.skills) = 'array' AND jsonb_array_length(r.skills) > 0)::int AS turns_with_skills
          FROM (SELECT * FROM recent LIMIT $4) r`,
-      [organizationId, window, USAGE_MAX_RECORDS + 1, USAGE_MAX_RECORDS],
+      params,
     ),
     client.query(
-      `${recent}
+      `WITH recent AS (
+         SELECT started_at, record_text::jsonb -> 'context' -> 'skills' AS skills
+           FROM ana_turn_records
+          WHERE organization_id = $1 AND started_at >= now() - make_interval(days => $2)
+          ORDER BY started_at DESC
+          LIMIT $3
+       )
        SELECT s.value ->> 'key' AS key,
               count(*)::int AS turns,
               count(*) FILTER (WHERE s.value ->> 'chosen' = 'picked')::int AS picked,
@@ -86,7 +90,7 @@ export async function readSkillUsage(client: SkillReadClient, organizationId: nu
         WHERE s.value ->> 'key' IS NOT NULL
         GROUP BY 1
         ORDER BY turns DESC, key`,
-      [organizationId, window, USAGE_MAX_RECORDS + 1, USAGE_MAX_RECORDS],
+      params,
     ),
   ]);
   const t = totals.rows[0] ?? {};

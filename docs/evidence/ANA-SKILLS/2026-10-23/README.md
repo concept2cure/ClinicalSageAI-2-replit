@@ -23,12 +23,29 @@ Each market skill is a child of `regulatory-strategy.global-planning`.
 | Module | Skills |
 |---|---|
 | `library/markets-europe.ts` | EU medicines (centralised procedure), EU clinical trials (CTR/CTIS), UK (MHRA), Switzerland (Swissmedic) |
-| `library/markets-international.ts` | Japan, China, South Korea, Canada, Australia, Brazil, India, Singapore (being written; recorded here when reviewed) |
+| `library/markets-international.ts` | Japan, China, South Korea, Canada, Australia, Brazil, India, Singapore |
+
+All 12 markets are covered: 4 skills in Europe and 8 in Asia-Pacific and the Americas, with 41 golden questions (17 and 24). A library test now requires every supported region to have a skill written for it.
 
 **Engine gaps the market skills state openly**, rather than covering over them:
-- The currency registry holds no UK or Swiss facts. Its jurisdiction filter has no Switzerland option.
-- The UK and Swiss eCTD backbones are placeholders built from the EU structure.
+- The currency registry holds no UK or Swiss facts, and its jurisdiction filter has no Switzerland option. For the eight Asia-Pacific and Americas markets it holds one fact: PMDA's eCTD v4.0 rule.
+- `package_ectd_for_region` builds:
+  - the UK and Swiss backbones as placeholders taken from the EU structure;
+  - Japan and Canada with a non-conformant ("flat") Module 1;
+  - the other markets on a placeholder copy of another region's Module 1.
+
+  The skills tell AnA to relay that status and never call a package conformant.
+- The pathway engine and the strategy brief cover only Japan, Canada and Australia among these markets. The pathway comparison adds China, Korea and Brazil. No engine models India's or Singapore's medicine routes; those skills label every route as not engine-verified.
 - The EU marketing-authorisation timeline ends at the CHMP opinion.
+
+**Review of the agents' content.** I checked every market skill for figures, invented routes and overclaims:
+- Every clock, fee and date goes through an engine or the currency check.
+- Statements outside the catalogues are written as things to confirm, for example the Swiss Article 13 and notification procedures, MFDS's newer expedited route, and China's human genetic resources authority.
+- Two triggers were removed because they mean something else elsewhere in the platform:
+  - "hsa", which is also human serum albumin;
+  - "cde", which is also a common data element.
+
+  A test now proves an albumin question and a common-data-element question load no market skill.
 
 ### Third wave: depth
 
@@ -62,3 +79,5 @@ Recorded below once its agents' work has been reviewed.
 | M23: a capped read is never reported as capped | routes: "says when the window held more records…" |
 | M24: a failed read of use shown as "not used" | adminSkills: "never shows every skill as unused" |
 | M25: the market filter keeps skills written for every market | adminSkills: "…and to those written for a market" |
+| M26: the Singapore skill triggers on "hsa" again | skills-in-use: "never load on a word that means something else…" |
+| M27: a supported market has no skill written for it | library: "gives every market the platform files in a skill written for it" |
