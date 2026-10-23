@@ -32,9 +32,14 @@
     "server/services/authoring/authoring-vault-version-plan.ts": "5d045c7b9460ccabb4c09cfe50c685d5d25a14af68097c9be7b63b5ebaaccafc",
     "server/services/company-documents/__tests__/correspondence-rendering.test.ts": "02185f2f304a09c5f613dc2a88d9ea0bf8f210fdaad5a94fcba3f66ba45d1513",
     "server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts": "649a64a775384ca15439ea27867e0b0cdc4d07fb70705a4852bad608db543e18",
+    "server/services/vault/__tests__/document-chunking-unicode-properties.test.ts": "517e92a5a0296735aa9b617db982d447beaf2f94deed7bdcb7a2def566e24b78",
+    "server/services/vault/__tests__/document-chunking-unicode-storage.test.ts": "5043ff1f24aa196cc3764c9de75e23ddb3e76a39854514c505e7534adfc07402",
+    "server/services/vault/__tests__/document-chunking-unicode.test.ts": "745e91904101a74ce2544415fa2ccfdc98c10ee554963be6c96064b13ba501a3",
     "server/services/vault/__tests__/vault-version-checkin-race.test.ts": "690c43cca33400535b75bd372a65e63bad59b2c0156bbb9fe205240fb01b9d2a",
     "server/services/vault/__tests__/vault-version-checkin.pglite.test.ts": "83e66292657318b02608db5af724440a703feef2430a4df9570e9836f538372e",
+    "server/services/vault/document-chunking.service.ts": "be3c168333f00d315050b5a4f46bfc17919bb81af2c62cce9d36923dc27674ca",
     "server/services/vault/vault-version-checkin.ts": "9e9b8ea54f441b3e939d7ebba55da2331ef11ea5e2ab42912d1ba73c88c00d6f"
   },
-  "refilingIncomingHead": "0ef71516c"
+  "refilingIncomingHead": "0ef71516c",
+  "unicodeIncomingHead": "26d850156"
 }
