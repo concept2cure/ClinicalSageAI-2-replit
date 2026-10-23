@@ -34,7 +34,7 @@
     "findings": 0,
     "initialContentHashFormattingCorrection": "hash-format-correction.json"
   },
-  "fullCompilerAndPush": "Three completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
+  "fullCompilerAndPush": "Four completed normal full compiler runs0errors; final current-candidate normal gates/push pending.",
   "humanWitness": "unexecuted",
   "agencyQualification": "unexecuted",
   "firstFullCompilerAndPush": {
@@ -109,5 +109,29 @@
     "pinnedInputs": 85,
     "changedInputs": [],
     "laterDocsOnlySync": "164b062b2"
+  },
+  "fourthFullCompilerAndPush": {
+    "candidate": "39b38e09640e04da25ff40b08a931cbb4d58d7ac",
+    "errors": 0,
+    "tscExit": 0,
+    "baseline": 0,
+    "allNormalGatesPassed": true,
+    "pushAccepted": false,
+    "reason": "Canonical ref advanced during compiler; ordinary merge retained five-line stored-source backfill correction.",
+    "receipt": "push-fourth-ref-race.txt.gz"
+  },
+  "backfillCatchup": {
+    "head": "ef5e8384375699ca03fb9202bd3071dad1ae0cfc",
+    "incoming": "f0ec738b1",
+    "previousScopedInputsChanged": [],
+    "tests": {
+      "files": 3,
+      "passed": 27,
+      "exitCode": 0,
+      "command": "NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts"
+    },
+    "productionBuildExit": 0,
+    "pinnedInputs": 89,
+    "changedInputs": []
   }
 }

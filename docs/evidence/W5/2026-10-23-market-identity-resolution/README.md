@@ -130,3 +130,16 @@ eighty-five latest source/test/config pins match. The later `164b062b2` update
 is documentation only and leaves those pins unchanged. All earlier cohorts
 remain source-bound, with overlapping counts kept separate. Final normal gates
 and direct publication remain pending.
+
+
+## Stored-source Vault backfill catch-up
+
+The fourth normal push again passed all gates and full TypeScript with zero
+errors, followed by a remote ref race. Its receipt is retained as
+`verification/push-fourth-ref-race.txt.gz`. Ordinary merge `ef5e83843` preserves
+the five-line stored-extraction-source backfill correction through `f0ec738b1`
+and the company-session contract documents. All eighty-five preceding scoped
+pins match. The changed backfill service's three-file cohort passes **27 checks**,
+and a fresh production build passes with all eighty-nine latest pins unchanged.
+The market-identity implementation remains unchanged. These separate receipts
+do not claim a summed full-suite pass; final normal gates/publication are pending.
