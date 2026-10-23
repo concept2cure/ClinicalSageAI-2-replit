@@ -1,0 +1,18 @@
+{
+  "scope": "Reporting legal picker integration, existing shared picker/company/session consumers, unchanged server legal inventory and report ZIP",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyLegalSessionContinuity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+    "server/services/company-documents/__tests__/legal-inventory.pglite.test.ts",
+    "server/services/report-os/__tests__/report-package-legal.test.ts",
+    "server/routes/__tests__/report-os-report-pack-export.test.ts"
+  ]
+}

@@ -17,6 +17,7 @@
     "server/services/company-documents/profile.ts": "2a670a2fc95b58ab83fb8115a3ab000b18d3835286e0a5f7cba7aabd38487353",
     "server/routes/report-os.ts": "10a7718208c2b96d4cf13aae076d0a65329d0e34d9a00917157bb66f6435f03d",
     "server/services/report-os/report-package.ts": "3a08a1482cc89d0877a154a556411c3468ac9625c0950270eb96df7bc297ca21",
-    "server/services/report-os/report-package-legal.ts": "6cc156c395b89577c4c52cf2a007dfe2c11c5f02d9a0892868fdbdce6d2da5c5"
+    "server/services/report-os/report-package-legal.ts": "6cc156c395b89577c4c52cf2a007dfe2c11c5f02d9a0892868fdbdce6d2da5c5",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
   }
 }

@@ -1,0 +1,35 @@
+{
+  "scope": "Two functional paging/current-owner regressions against unchanged production; old and paged endpoint fixtures admitted.",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+      "sha256": "6378104ce5719964f658c0005a6d5944f1fef66c996dad6560c54c407d417a2f",
+      "bytes": 4438
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+      "sha256": "5559591b81c1af0658fafac2e86f8511b002a27ce0ac044c0d4ec6fd906b0860",
+      "bytes": 3992
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "sha256": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f",
+      "bytes": 8162
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx",
+      "sha256": "55994b3043d114430ad785dc344fc5818cdc005fa5f612e55a7bd5157e3c6540",
+      "bytes": 5977
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx",
+      "sha256": "08ab5b13bab2331605a5e6275a1be75946d2a9a193c98d14e314ddd69c786273",
+      "bytes": 3393
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx",
+      "sha256": "8b553b100ebf71b7857aaf354fa51787d3b64b65922194eeb4125803cb9a5dcc",
+      "bytes": 5019
+    }
+  ]
+}

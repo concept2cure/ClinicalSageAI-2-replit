@@ -1,0 +1,44 @@
+{
+  "frozen": true,
+  "passed": 41,
+  "failed": 0,
+  "skipped": 0,
+  "testFiles": 3,
+  "report": "final-owned-results.json",
+  "rawLog": "final-owned.log",
+  "runReceipt": "final-owned-run.json",
+  "sourcePinsStable": true,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+      "sha256": "062f4c8e3734150463c0bb0c8d7d2a34469c712bfb9bd5ba555b398692b2ad5c",
+      "lines": 125
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx",
+      "sha256": "016436123ae6043ccb8fc73c391a3e6e65ea852780098e6364ecaf236f88f8d3",
+      "lines": 195
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx",
+      "sha256": "9d43c868c6ea6c0b6f9e8863fb1a1e65c86199976a75a78162cf2692ddbfe681",
+      "lines": 276
+    }
+  ],
+  "initialRedAssertions": [
+    {
+      "file": "reportingLegalChooserPaging.test.tsx",
+      "initialRedCaseBodyUnchanged": true
+    },
+    {
+      "file": "reportingLegalChooserOwnership.test.tsx",
+      "initialRedCaseBodyUnchanged": true
+    }
+  ],
+  "originalNinePreservation": "original-nine-preservation.json",
+  "failedIntermediate": "first-combined-run.json",
+  "limits": [
+    "Local mounted components with canonical auth and synthetic HTTP/file transports; no browser or deployment/agency claim.",
+    "No Git, lint, build, typecheck or broader regressions performed by this test worker."
+  ]
+}

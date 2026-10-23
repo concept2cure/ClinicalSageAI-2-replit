@@ -1,0 +1,17 @@
+{
+  "originalSha256": "6a14defb7a8917f4e03e6555a824ecdcb2849be9c2dcf1fb6ec06375de96e91f",
+  "currentSha256": "062f4c8e3734150463c0bb0c8d7d2a34469c712bfb9bd5ba555b398692b2ad5c",
+  "originalCaseCount": 9,
+  "allOriginalCaseNamesPreserved": true,
+  "originalAssertionLineCount": 23,
+  "assertionLinesPreservedAfterOnlyLocatorSpecificity": true,
+  "missing": [],
+  "additionalCoverage": "Canonical network failure alert/retry, plus role=status retained on successful ZIP notice.",
+  "fixtureUpdates": [
+    "Real seeded canonical company session",
+    "Existing paged endpoint shape",
+    "Library unavailable now503server-message fixture with separate network case",
+    "Explicit state:published on the same positive stationery summaries",
+    "Narrow status/combobox locators for additional shared-picker controls"
+  ]
+}

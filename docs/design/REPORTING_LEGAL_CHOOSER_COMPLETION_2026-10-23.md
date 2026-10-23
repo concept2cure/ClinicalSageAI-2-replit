@@ -51,6 +51,8 @@ surface structure; the preceding company-session lane explicitly deferred paging
    clears the selection and starts a fresh picker visit. No auto selection.
 2. Extend the picker with narrow optional eligibility-reason and max-selection
    props. Reporting supplies its existing own-context legal refusal and cap 50.
+   A narrow optional parent-current callback may guard the picker's retained
+   search/kind/page/select/remove handlers without changing shared resource hooks.
    Render refusal reasons and prevent both disabled and retained handlers from
    adding refused or over-limit IDs. Existing callers keep their current defaults.
    Selected IDs remain removable across pages. Server revalidation remains final.
@@ -64,7 +66,8 @@ surface structure; the preceding company-session lane explicitly deferred paging
    parent-current guard on the existing stationery component may protect reads,
    selection callbacks and awaited responses; key it by the captured visit so
    withdrawn choices are not rebound. Preserve its current paging/scope policy.
-5. Keep the existing ZIP endpoint/payload, exact returned bytes, duplicate-click
+5. Revalidate one to fifty distinct selected IDs before the existing ZIP POST.
+   Keep the existing ZIP endpoint/payload, exact returned bytes, duplicate-click
    protection, notices, approval refusal and agency-acceptance disclosure. No
    registry, endpoint, auth engine, ZIP/PDF renderer, dependency or filing policy
    change. Separate correspondence form ownership remains outside this slice.
