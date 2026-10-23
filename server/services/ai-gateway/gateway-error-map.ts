@@ -72,7 +72,10 @@ export function isGatewayError(err: unknown): boolean {
 }
 
 /** Classify a thrown gateway/parse error into a stable code + safe message. */
-export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
+export function classifyGatewayError(
+  err: unknown,
+  options: { priorToolWorkMayExist?: boolean } = {},
+): ClassifiedGatewayError {
   if (err instanceof SyntaxError) {
     return { code: 'INVALID_AI_RESPONSE', message: 'The AI response was not valid JSON.' };
   }
@@ -80,7 +83,10 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   // message is gateway-authored (size, ceiling, how much to cut) — not a
   // provider string — so it is safe to hand to the author as written.
   if (err instanceof GatewayContextWindowError) {
-    return { code: 'TOKEN_LIMIT_EXCEEDED', message: err.message };
+    const priorWork = options.priorToolWorkMayExist
+      ? ' Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.'
+      : '';
+    return { code: 'TOKEN_LIMIT_EXCEEDED', message: err.message + priorWork };
   }
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };

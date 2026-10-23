@@ -1,0 +1,7 @@
+--- initial frozen
++++ single EOF newline
+@@ -165,4 +165,3 @@
+     expect(result.text).not.toContain('PRIVATE_PROVIDER_CONTEXT');
+   });
+ });
+-

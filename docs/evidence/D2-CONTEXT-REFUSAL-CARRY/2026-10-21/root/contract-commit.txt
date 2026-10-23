@@ -1,0 +1,14 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 490d637a2] Define existing context-refusal carry contract (D2 W2)
+ 9 files changed, 1408 insertions(+)
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/CONTRACT.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/INVENTORY.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/README.md
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/baseline-inputs.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/incoming-ff.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/incoming-initial.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-baseline-stderr.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-baseline.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/lint-baseline.txt

@@ -1,0 +1,26 @@
+{
+  "productionSha256": {
+    "server/services/ai-gateway/gateway-error-map.ts": "fb162287a12defca16c65b997464c519bc0a8d0b9b20a08755c7caa285d4120c",
+    "server/routes/chat/send-message.ts": "7f97b3b5fdd7adcbd759072933733c484a8dfd02eaedc8e6540ca6a404af16f1",
+    "server/routes/ana-ri/stream.ts": "9bdb77e34cdad57aef73693f87c2fd8118edbc6bb7ab96bac6aebd925963f240",
+    "client/src/concept2cure/components/ana/useAnaChat.ts": "d903f5d847c2f22e5eda592710fdeb44577415c05c222bc469631bf6dcb69670"
+  },
+  "reviews": [
+    {
+      "agent": "hard_budget_audit",
+      "result": "clear",
+      "scope": "Canonical classifier compatibility, typed provenance, shared status and unchanged provider/token/raw-budget paths."
+    },
+    {
+      "agent": "hard_budget_host_audit",
+      "result": "clear",
+      "scope": "Host failed/stopped and preheader socket-only timeline handling; client sanitization/records/partial recovery."
+    },
+    {
+      "agent": "strict_contract_review",
+      "result": "clear",
+      "scope": "Independent contract/source review; fallback-before-synthesis and valid record authority; final client helper extraction preserves branches and three server hashes."
+    }
+  ],
+  "noReviewerTestsOrCompiler": true
+}

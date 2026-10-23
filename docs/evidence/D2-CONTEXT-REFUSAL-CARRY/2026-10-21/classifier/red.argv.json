@@ -1,0 +1,13 @@
+[
+  "npx",
+  "vitest",
+  "run",
+  "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts",
+  "--config",
+  "vitest.config.ts",
+  "--maxWorkers=1",
+  "--no-file-parallelism",
+  "--reporter=verbose",
+  "--reporter=json",
+  "--outputFile=docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/classifier/red.report.json"
+]

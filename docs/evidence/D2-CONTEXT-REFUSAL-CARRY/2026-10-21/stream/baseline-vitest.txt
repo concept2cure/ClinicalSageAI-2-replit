@@ -1,0 +1,266 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+{
+  "timestamp": "2026-10-21T02:15:18.293Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-21T02:15:18.295Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+{
+  "timestamp": "2026-10-21T02:15:18.295Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > retains partial text and raw/staged tool bytes when a later gateway call refuses context
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status
+[AnA RI Stream] Error: The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections.
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: plain error keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: private generic diagnostic
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied context class name
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied code keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied token code
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name and code keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: copied context identity
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: provider token error keeps the existing generic event without exposing raw diagnostics
+[AnA RI Stream] Error: maximum context length token limit exceeded
+
+stderr | server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: the existing typed raw-body refusal keeps its code and message exactly
+[AnA RI Stream] Error: This tool round could not be passed to the assistant within its result limit. Some actions or source receipts may already exist; inspect the current state before repeating them.
+
+ × server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal 42ms
+   → expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+   → expected 'An error occurred while generating th…' to contain '12,000'
+   → expected 'An error occurred while generating th…' to contain '8,000'
+ × server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > retains partial text and raw/staged tool bytes when a later gateway call refuses context 16ms
+   → expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+ × server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal 8ms
+   → expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+ × server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status 4ms
+   → expected 200 to be 413 // Object.is equality
+   → expected {} to match object { success: false, error: { …(3) } }
+   → expected '' to contain 'application/json'
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: plain error keeps the existing generic event without exposing raw diagnostics 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name keeps the existing generic event without exposing raw diagnostics 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied code keeps the existing generic event without exposing raw diagnostics 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: copied name and code keeps the existing generic event without exposing raw diagnostics 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: provider token error keeps the existing generic event without exposing raw diagnostics 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > narrow SSE context-carrier compatibility controls > CONTROL: the existing typed raw-body refusal keeps its code and message exactly 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal
+AssertionError: expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "TOKEN_LIMIT_EXCEEDED",
+-   "error": "The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.",
++   "error": "An error occurred while generating the response",
+    "type": "error",
+  }
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:126:22
+    124| function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome…
+    125|   const error = errorOf(events);
+    126|   expect.soft(error).toMatchObject({ type: 'error', code: 'TOKEN_LIMIT…
+       |                      ^
+    127|   expect.soft(error?.turnRecord).toMatchObject({ status: 'recorded', i…
+    128|   expect.soft(h.state.post, 'refused call does not enter normal answer…
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:143:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal
+AssertionError: expected 'An error occurred while generating th…' to contain '12,000'
+
+Expected: "12,000"
+Received: "An error occurred while generating the response"
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:148:41
+    146|     expect.soft(seam.sealed?.body.steps).toHaveLength(0);
+    147|     expect.soft(seam.sealed?.body.controls).toEqual([]);
+    148|     expect.soft(errorOf(events)?.error).toContain('12,000');
+       |                                         ^
+    149|     expect.soft(errorOf(events)?.error).toContain('8,000');
+    150|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > returns the canonical size guidance plus honest prior-work suffix on the first gateway refusal
+AssertionError: expected 'An error occurred while generating th…' to contain '8,000'
+
+Expected: "8,000"
+Received: "An error occurred while generating the response"
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:149:41
+    147|     expect.soft(seam.sealed?.body.controls).toEqual([]);
+    148|     expect.soft(errorOf(events)?.error).toContain('12,000');
+    149|     expect.soft(errorOf(events)?.error).toContain('8,000');
+       |                                         ^
+    150|   });
+    151|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > retains partial text and raw/staged tool bytes when a later gateway call refuses context
+AssertionError: expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "TOKEN_LIMIT_EXCEEDED",
+-   "error": "The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.",
++   "error": "An error occurred while generating the response",
+    "type": "error",
+  }
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:126:22
+    124| function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome…
+    125|   const error = errorOf(events);
+    126|   expect.soft(error).toMatchObject({ type: 'error', code: 'TOKEN_LIMIT…
+       |                      ^
+    127|   expect.soft(error?.turnRecord).toMatchObject({ status: 'recorded', i…
+    128|   expect.soft(h.state.post, 'refused call does not enter normal answer…
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:155:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > keeps the stopped record and partial answer when cancellation races a context refusal
+AssertionError: expected { type: 'error', …(2) } to match object { type: 'error', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "TOKEN_LIMIT_EXCEEDED",
+-   "error": "The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.",
++   "error": "An error occurred while generating the response",
+    "type": "error",
+  }
+
+ ❯ assertContextCarrier server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:126:22
+    124| function assertContextCarrier(events: SseEvent[], outcome: TurnOutcome…
+    125|   const error = errorOf(events);
+    126|   expect.soft(error).toMatchObject({ type: 'error', code: 'TOKEN_LIMIT…
+       |                      ^
+    127|   expect.soft(error?.turnRecord).toMatchObject({ status: 'recorded', i…
+    128|   expect.soft(h.state.post, 'refused call does not enter normal answer…
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:176:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status
+AssertionError: expected 200 to be 413 // Object.is equality
+
+- Expected
++ Received
+
+- 413
++ 200
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:189:34
+    187|     seam.beforeHeaders = true;
+    188|     const response = await httpRequest(app).post('/api/ana-ri/stream')…
+    189|     expect.soft(response.status).toBe(413);
+       |                                  ^
+    190|     expect.soft(response.body).toMatchObject({ success: false, error: {
+    191|       code: 'TOKEN_LIMIT_EXCEEDED', message: `${(seam.error as Error).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status
+AssertionError: expected {} to match object { success: false, error: { …(3) } }
+
+- Expected
++ Received
+
+- {
+-   "error": {
+-     "code": "TOKEN_LIMIT_EXCEEDED",
+-     "details": {
+-       "turnRecord": {
+-         "reason": "This turn ended before its record was opened.",
+-         "status": "not_recorded",
+-       },
+-     },
+-     "message": "The request is about 12,000 tokens (≈10,000 of input plus 2,000 reserved for the answer). The largest context window available to it is 8,000 tokens (anthropic/synthetic-context-model). Reduce the input by about 4,000 tokens (≈20,000 characters), lower maxTokens, or split the work into smaller sections. Some actions or source receipts from earlier steps may already exist; inspect the current state before repeating them.",
+-   },
+-   "success": false,
+- }
++ {}
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:190:32
+    188|     const response = await httpRequest(app).post('/api/ana-ri/stream')…
+    189|     expect.soft(response.status).toBe(413);
+    190|     expect.soft(response.body).toMatchObject({ success: false, error: {
+       |                                ^
+    191|       code: 'TOKEN_LIMIT_EXCEEDED', message: `${(seam.error as Error).…
+    192|       details: { turnRecord: { status: 'not_recorded', reason: 'This t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts > canonical context refusal reaches mounted SSE > uses the existing 413 JSON envelope before SSE headers, with an honest unopened-record status
+AssertionError: expected '' to contain 'application/json'
+
+- Expected
++ Received
+
+- application/json
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts:194:65
+    192|       details: { turnRecord: { status: 'not_recorded', reason: 'This t…
+    193|     } });
+    194|     expect.soft(String(response.headers['content-type'] ?? '')).toCont…
+       |                                                                 ^
+    195|     expect.soft(seam.gatewayInvocations).toBe(0);
+    196|     expect.soft(seam.recorder).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 6 passed (10)
+   Start at  02:15:14
+   Duration  8.04s (transform 4.94s, setup 70ms, import 7.63s, tests 103ms, environment 0ms)
+
+JSON report written to /workspace/Concept2Cure/docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/stream/baseline-vitest.json

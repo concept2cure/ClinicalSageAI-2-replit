@@ -1,0 +1,10 @@
+{
+  "includedClientBaselineWarnings": 37,
+  "initialIncludedClientWarnings": 39,
+  "finalIncludedClientWarnings": 37,
+  "growthRemovedBy": "Extracting partialServiceRecoveryText and a send-local retainContextRefusalRecord; no test edits, suppressions or baseline growth.",
+  "defaultClientLint": "Ignored-file result retained; not used as included baseline.",
+  "finalIncludedTotalWarnings": 80,
+  "finalIncludedErrors": 0,
+  "newTestWarnings": 0
+}

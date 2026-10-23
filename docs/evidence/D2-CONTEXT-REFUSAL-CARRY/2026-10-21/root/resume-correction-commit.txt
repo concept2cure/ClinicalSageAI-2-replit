@@ -1,0 +1,23 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3366 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 56f69ced1] Align context refusal race tests with authoritative stop records
+ 16 files changed, 10107 insertions(+), 4 deletions(-)
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-green-command.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-green-exit.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-green-results.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-green.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-lint-baseline.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-lint-final.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-lint-green.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-lint-review.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-merge-commit.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-prefinal-fetch.txt
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-retained-ancestors.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-selected-inputs-initial.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-selected-inputs.json
+ create mode 100644 docs/evidence/D2-CONTEXT-REFUSAL-CARRY/2026-10-21/root/resume-test-correction.json

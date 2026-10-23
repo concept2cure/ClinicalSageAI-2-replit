@@ -1,0 +1,67 @@
+{
+  "baselineCounts": {
+    "server/services/ai-gateway/gateway-error-map.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/routes/chat/send-message.ts": {
+      "errors": 0,
+      "warnings": 18
+    },
+    "server/routes/ana-ri/stream.ts": {
+      "errors": 0,
+      "warnings": 25
+    },
+    "client/src/concept2cure/components/ana/useAnaChat.ts": {
+      "errors": 0,
+      "warnings": 37
+    }
+  },
+  "mergedCounts": {
+    "client/src/concept2cure/components/ana/__tests__/useAnaChat-context-window.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "client/src/concept2cure/components/ana/useAnaChat.ts": {
+      "errors": 0,
+      "warnings": 37
+    },
+    "server/routes/ana-ri/__tests__/stream-context-window-refusal.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/routes/ana-ri/stream.ts": {
+      "errors": 0,
+      "warnings": 25
+    },
+    "server/routes/chat/__tests__/send-message-context-window.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/routes/chat/send-message.ts": {
+      "errors": 0,
+      "warnings": 18
+    },
+    "server/services/ai-gateway/__tests__/context-refusal-carry.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ai-gateway/__tests__/context-window-round-cost.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ai-gateway/gateway-error-map.ts": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "server/services/ana/__tests__/context-window-executor-carry.test.ts": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "errors": 0,
+  "warnings": 80,
+  "newWarnings": 0,
+  "noSuppressionsOrWarningBaselineChanged": true,
+  "note": "ESLint JSON source field omitted; raw stdout SHA retained. Baseline source read from incoming Git and linted by stdin under actual filename with --no-ignore."
+}
