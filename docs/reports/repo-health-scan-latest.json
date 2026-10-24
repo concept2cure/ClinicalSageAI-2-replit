@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-23T20:59:32.489Z",
+  "generatedAt": "2026-10-24T05:37:13.985Z",
   "git": {
-    "sha": "36a390c47c9a2a167a38726577a726f6f48fe991",
+    "sha": "4bae69d8905fe7cb07b516348c628628acf9c473",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -556,6 +556,15 @@
         ]
       },
       {
+        "basename": "browser-probe",
+        "count": 3,
+        "paths": [
+          "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-probe.tsx",
+          "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx",
+          "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-probe.tsx"
+        ]
+      },
+      {
         "basename": "calibration",
         "count": 3,
         "paths": [
@@ -1046,14 +1055,6 @@
         "paths": [
           "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
           "server/services/ana/skills/library/biostatistics.ts"
-        ]
-      },
-      {
-        "basename": "browser-probe",
-        "count": 2,
-        "paths": [
-          "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx",
-          "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-probe.tsx"
         ]
       },
       {
@@ -2416,12 +2417,12 @@
         "bytes": 157771
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 151308
+        "file": "server/routes/report-os.ts",
+        "bytes": 153031
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 151062
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 151308
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2469,7 +2470,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 127491
+        "bytes": 128123
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2513,7 +2514,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 118258
+        "bytes": 118593
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2647,7 +2648,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 3221
+        "lines": 3256
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2755,7 +2756,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2256
+        "lines": 2258
       },
       {
         "file": "server/services/ana/run-control.ts",
@@ -2795,7 +2796,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2133
+        "lines": 2136
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
@@ -2870,12 +2871,12 @@
         "lines": 1939
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1931
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1933
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1927
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1931
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
@@ -3041,7 +3042,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 173,
+      "duplicateGroups": 174,
       "largeByBytes": 0,
       "largeByLines": 5
     },
