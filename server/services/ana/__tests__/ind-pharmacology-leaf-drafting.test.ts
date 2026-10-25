@@ -46,6 +46,25 @@ const structuralAdditions = [
   ['2.5.6.3', 'Risks', 'ICH M4E(R2)'],
   ['2.5.6.4', 'Benefit-Risk Assessment', 'ICH M4E(R2)'],
   ['2.5.6.5', 'Appendix', 'ICH M4E(R2)'],
+  // The QOS subdivisions, appended 2026-10-25 (D2 cleanup C1): held before only in the IND section list.
+  ['2.3.S.1', 'General Information', 'ICH M4Q(R1)'],
+  ['2.3.S.2', 'Manufacture', 'ICH M4Q(R1)'],
+  ['2.3.S.3', 'Characterisation', 'ICH M4Q(R1)'],
+  ['2.3.S.4', 'Control of Drug Substance', 'ICH M4Q(R1)'],
+  ['2.3.S.5', 'Reference Standards or Materials', 'ICH M4Q(R1)'],
+  ['2.3.S.6', 'Container Closure System', 'ICH M4Q(R1)'],
+  ['2.3.S.7', 'Stability', 'ICH M4Q(R1)'],
+  ['2.3.P.1', 'Description and Composition of the Drug Product', 'ICH M4Q(R1)'],
+  ['2.3.P.2', 'Pharmaceutical Development', 'ICH M4Q(R1)'],
+  ['2.3.P.3', 'Manufacture', 'ICH M4Q(R1)'],
+  ['2.3.P.4', 'Control of Excipients', 'ICH M4Q(R1)'],
+  ['2.3.P.5', 'Control of Drug Product', 'ICH M4Q(R1)'],
+  ['2.3.P.6', 'Reference Standards or Materials', 'ICH M4Q(R1)'],
+  ['2.3.P.7', 'Container Closure System', 'ICH M4Q(R1)'],
+  ['2.3.P.8', 'Stability', 'ICH M4Q(R1)'],
+  ['2.3.A.1', 'Facilities and Equipment', 'ICH M4Q(R1)'],
+  ['2.3.A.2', 'Adventitious Agents Safety Evaluation', 'ICH M4Q(R1)'],
+  ['2.3.A.3', 'Excipients', 'ICH M4Q(R1)'],
 ] as const;
 
 describe('IND pharmacology exact leaf guidance through existing AnA drafting', () => {
@@ -147,20 +166,25 @@ describe('IND pharmacology canonical record and hierarchy fidelity', () => {
     for (const [index, row] of remaining.entries()) {
       expect(fingerprint(originalHeadings[index]), row.code).toBe(row.sha256);
     }
+    // 2026-10-25 (3a review): the additions' notes say what backs them. The 2.4.x rows came
+    // from the template library and are numbered by pattern; the 2.5.6.x rows rest on the
+    // 2.5.6 brief and a web-search answer, not an extract; 2.5.6.5 is conditional.
     for (const [code, title, reference] of structuralAdditions) {
       expect(ICH_M4_HEADINGS.find(row => row.code === code), code).toEqual({
         code, title, parent: code.split('.').slice(0, -1).join('.'), module: 2,
-        basis: { ref: `${reference} ${code}`, confidence: 'recall', note: expect.stringMatching(/search extract.*(?:not read|itself was not read)/) },
+        basis: { ref: `${reference} ${code}`, confidence: 'recall', note: expect.stringMatching(/(?:no extract of the guideline showed this heading|a web-search answer \(a summary, not an extract of the guideline\)).*Verbatim read owed\./) },
+        ...(code === '2.5.6.5' ? { condition: expect.stringMatching(/benefit-risk methods/) } : {}),
       });
     }
     const codes = [...Object.keys(CTD_AUTHORING_GUIDANCE), ...ICH_M4_HEADINGS.map(row => row.code)];
     expect(Object.keys(CTD_AUTHORING_GUIDANCE)).toHaveLength(134);
-    expect(ICH_M4_HEADINGS).toHaveLength(128);
-    expect(new Set(codes).size).toBe(262);
+    // +18 QOS subdivision rows (2026-10-25); 2.3.S, 2.3.P and 2.3.A stop being leaves.
+    expect(ICH_M4_HEADINGS).toHaveLength(146);
+    expect(new Set(codes).size).toBe(280);
     const terminal = codes.filter(code => !codes.some(child => child.startsWith(`${code}.`)));
-    expect(terminal).toHaveLength(213);
-    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(108);
-    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(105);
+    expect(terminal).toHaveLength(228);
+    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(105);
+    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(123);
   });
 
   it('keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved', () => {

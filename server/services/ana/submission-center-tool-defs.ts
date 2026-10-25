@@ -555,6 +555,10 @@ export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
   clinical_study_report: 'ICH E3',
   smpc: 'QRD SmPC',
   dsur: 'corrected ICH E2F',
+  // Read from the one ICH M2–M5 record since 2026-10-20 (market-specs/ctd-component-outlines.ts).
+  nonclinical_overview: 'M4',
+  clinical_overview: 'M4',
+  clinical_summary: 'M4',
 };
 
 /** These are canonical platform scaffolds, not a verified agency document structure. */
@@ -595,7 +599,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
     'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. ' +
-    '`offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. ' +
+    '`offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. ' +
     '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +

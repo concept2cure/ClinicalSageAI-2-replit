@@ -277,8 +277,9 @@ describe('the Module 2–5 contract — a real heading, and a title that does no
   });
 
   it('Module 3 depth the record does not yet model is reported unchecked — neither passed nor failed', () => {
-    // The 2026-10-09 identity leaves now model S.1.1 in the same record;
-    // QOS subdivisions and the A.1 appendix remain unmodeled here.
+    // The 2026-10-09 identity leaves now model S.1.1 in the same record, and
+    // since 2026-10-25 the QOS subdivisions (2.3.S.x, 2.3.P.x, 2.3.A.x) too;
+    // the Module 3 A.1 appendix remains unmodeled here (the CMC lane's).
     const result = checkM2to5([
       { code: '2.3.S.1', title: 'General Information' },
       { code: '3.2.S.1.1', title: 'Nomenclature' },
@@ -286,7 +287,7 @@ describe('the Module 2–5 contract — a real heading, and a title that does no
       { code: '3.2.S.4.1', title: 'Specification' },
     ]);
     expect(result.violations).toEqual([]);
-    expect(result.unchecked.map((n) => n.code)).toEqual(['2.3.S.1', '3.2.A.1']);
+    expect(result.unchecked.map((n) => n.code)).toEqual(['3.2.A.1']);
   });
 });
 

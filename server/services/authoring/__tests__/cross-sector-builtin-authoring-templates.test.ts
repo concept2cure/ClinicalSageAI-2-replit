@@ -19,9 +19,18 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     const prior = all.filter(template => !IDS.some(id => template.entryId === `registry:${id}`));
     expect(prior).toHaveLength(392);
     // Captured from the unchanged projection in the retained meaningful RED.
+    // Re-recorded 2026-10-25 (D2 increment 3, the 3a review): ten snapshots changed and no
+    // other, each a reader of the one ICH M2–M5 record whose purposes and flags were
+    // corrected — registry:ICH_{CLIN,NONCLIN}_{OVERVIEW,SUMMARY}; component:clinical_overview,
+    // clinical_summary, nonclinical_overview; and the IND lane's 2.4:work:5/6 rows in module:M2,
+    // section:m2.4 and phase6.nonclinical_overview:deliverable:0, which read 2.4.5/2.4.6's purpose.
+    // Per-template diff against c47af6fbb: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/increment-3/builtin-snapshot-delta.txt.
+    // Re-recorded again 2026-10-25 (D2 cleanup C1): the IND lane's Module 2/3 projector reads the one
+    // record, so its 61 templates (section:m2.*/m3.*, module:M2/M3, phase3/phase6 deliverables) changed
+    // and no other: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/c1-builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('787676fcb2bb0526845da6f76f77418cc9b9362dbff1ea0f27e5bc38ba57010c');
+    )).digest('hex')).toBe('76638e48cbef49344336fe7325489f0ff585dbf0ad9ed49e8f8e4784010cfa94');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {

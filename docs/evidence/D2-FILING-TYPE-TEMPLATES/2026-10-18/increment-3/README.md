@@ -120,3 +120,46 @@ node of the outline; 20/20 pass.
     `authoringTemplateStartFrom` (2) and `ind-pharmacology-leaf-drafting` (1).
   - The last one pins an old snapshot of the record (115 heading rows; trunk had 121 before this
     change).
+
+## e. The 3a review (2026-10-25), and the fixes
+
+This was a four-lens adversarial review of `e1c63ae9`: regulatory, drafting, blast radius and provenance (workflow
+`wf_063b65a0-b6d`). A skeptic tried to refute each finding. The red run, on trunk `c47af6fbb`, is in
+`review-3a-red.txt`: 12 cases.
+
+| Finding | Skeptic | Fix |
+|---|---|---|
+| **AnA could not read the deepened Clinical Summary.** `get_document_template` repeated the template's metadata and the preparation brief on every page. With 2.7.4's 25 nodes that was over the 7,800-character budget, so the default call (registry_id, prepare on) failed at 2.7.4. The same defect, from increment 2, stopped `US_NDA_SUPP`, `US_BLA_SUPP` and `US_NDA_ANNUAL`. | confirmed (×2) | The metadata and the brief go on the first page only. When the brief does not fit beside the first section, it moves to the page at offset 1, and the first page says so (`preparationAt`). New test: every registry outline pages to its last node, with the brief on exactly one page. |
+| **2.5.6.5 Appendix and 2.7.4.6 Post-marketing Data were served as required.** The record calls both conditional ("when used", "if available"). | confirmed | The record's rows gain `condition`. A heading with a condition is not required, and its purpose states the condition. |
+| **The outline's basis note claimed an extract for every heading.** For 36 of the Clinical Summary's 49 headings the record says none was seen. | confirmed | The note is counted from the rows: "7 of 49 were matched against a search extract; the rest are recall." |
+| **The fallback purpose said "the X brief states its content"** for headings the brief never mentions (2.7.4.5.8, the Appendix headings, the literature references). | confirmed | It now says: "the record holds no brief of its own for it. Draft it to the X brief." |
+| **2.6.4.10 and 2.6.6.10 Tables and Figures were typed `narrative`.** | confirmed | They take the type the record gives the same heading in 2.6.2.7 (`mixed`). |
+| **The 2.6 note said all 20 new leaves were matched against an extract.** | open when filed | Corrected: the facts file says 2.6.4.2, 2.6.6.2 and 2.6.6.10 were. |
+| **The outline limitation said the record states each required flag.** | open when filed | Reworded: a heading the record holds no brief for takes its nearest brief's flag. That is a platform rule. |
+| **A brief's line was attached to a sibling's or parent's heading.** Deaths got the discontinuations line, Overdose the whole special-situations list. | refuted: every line is the brief's own words | Tightened anyway: the clause that opens with the code, or the one element that opens with the title, names no other heading and does not narrow it ("Adverse events *of special interest*"). |
+| **The tool description still listed these three outlines as kept by hand.** | refuted: errs in the safe direction | Corrected anyway. They are listed as record-derived (M4), and the description stays at 1,023 characters, inside the 1,024 trim. |
+| **The 2.5.6.x note claimed a table-of-contents extract.** | refuted on wording | Rewritten to what was seen, and the search filed verbatim: `m4e-r2-2.5.6-search-2026-10-20.md`. |
+
+A defect in the record itself, older than 3a, surfaced along the way. `SEARCH_EXTRACT_NOTE` was on every ICH M4 and
+M4S heading row. The facts file (`docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ich-m4-headings-facts.md`)
+says only twelve of those rows were shown by an extract. Every other row now says it was numbered by the guideline's
+pattern, and a test pins the twelve.
+
+### Pins moved on purpose
+
+| Test | What it pins | What moved, and the proof that nothing else did |
+|---|---|---|
+| `server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts` | A fingerprint of every record row. | **The fixture** (`tests/regulatory/fixtures/ind-pharmacology/preexisting-records.json`): exactly 40 rows were re-hashed. 39 had their note corrected; 2.7.4.6 gained its condition. Its `rehashed` note says so. **The 2.4.x and 2.5.6.x additions:** the test now checks them against the corrected notes. |
+| `server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts` | One digest over 392 builtin template snapshots. | Re-recorded. `builtin-snapshot-delta.txt` diffs every snapshot against trunk: 10 changed, none added or removed, and every other snapshot is byte-identical. The 10 are the four registry and three component outlines, plus the IND lane's `2.4:work:5/6` rows, which read 2.4.5/2.4.6's purpose. |
+
+## f. Gates (the 3a review fixes)
+
+- **Typecheck:** `typecheck-no-regression --incremental`: 0 errors, matching the baseline of 0.
+- **ESLint on the changed files:** one warning, max-lines in `submission-center-tool-defs.ts`, which was already over.
+- **Affected suites:** the 142 test files that name the changed modules, 3,149 tests. 3,144 pass; the five failures are:
+  - **Three pre-existing.** These fail identically on clean trunk `c47af6fbb`:
+    - `authoringFromDraft.pglite`: 2;
+    - `tool-selection-biotech-workflows` ("retains authoring peer: … EU clinical trial application"): 1.
+  - **Two from this change**, the two pins above, now green:
+    - `ind-pharmacology-leaf-drafting`: 18/18;
+    - `cross-sector-builtin-authoring-templates`: 22/22.
