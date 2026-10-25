@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25T19:43:49.307Z",
+  "generatedAt": "2026-10-25T19:59:25.859Z",
   "git": {
-    "sha": "47baf97d4c33c109b85b0d46fd2f2e5ba81fcdb1",
+    "sha": "507f5d09114cd3997249a39a02a7590171d1f6e5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,7 +2470,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 128123
+        "bytes": 128124
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 122140
+        "bytes": 122143
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
