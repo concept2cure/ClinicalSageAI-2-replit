@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25T16:59:10.794Z",
+  "generatedAt": "2026-10-25T19:20:21.521Z",
   "git": {
-    "sha": "2246406e4ceee297c5fa86ad65b4ab8635a0951c",
+    "sha": "c693a7260630d98e5b00feea8970fcf5c9486c80",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2876,7 +2876,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1927
+        "lines": 1916
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
@@ -2972,7 +2972,7 @@
       },
       {
         "file": "shared/navigation/surface-actions.ts",
-        "lines": 1689
+        "lines": 1690
       },
       {
         "file": "server/routes/taskManagement.routes.ts",
