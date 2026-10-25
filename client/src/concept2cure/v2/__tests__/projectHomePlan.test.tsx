@@ -83,10 +83,10 @@ const taskRow = (deliverableId: string, over: Record<string, unknown> = {}) => (
   assigneeName: 'Dana Ruiz', dueDate: '2026-11-03T17:00:00.000Z', status: 'pending', createdAt: '2026-10-25T10:00:00Z', ...over,
 });
 
-interface Serve { program?: Record<string, unknown>; docs?: unknown[]; catalog?: unknown; team?: Response; planTasks?: unknown[] | 'fail' }
-function serve({ program = US_DRUG_IND, docs = [], catalog = CATALOG, team = ok(TEAM), planTasks = [] }: Serve = {}) {
+interface Serve { program?: Record<string, unknown> | Promise<Response>; docs?: unknown[]; catalog?: unknown; team?: Response; planTasks?: unknown[] | 'fail'; post?: Response }
+function serve({ program = US_DRUG_IND, docs = [], catalog = CATALOG, team = ok(TEAM), planTasks = [], post }: Serve = {}) {
   const reads: Record<string, () => Response> = {
-    [`/api/c2c/projects/${PID}`]: () => ok(program),
+    [`/api/c2c/projects/${PID}`]: () => (program instanceof Promise ? program : ok(program)) as Response,
     [`/api/c2c/projects/${PID}/team`]: () => team,
     '/api/authoring/ind-document-catalog': () => (catalog as { ok?: boolean })?.ok === false ? catalog as Response : ok({ success: true, data: catalog }),
     '/api/task-management/assignees': () => ok({ success: true, data: [DANA] }),
@@ -94,6 +94,7 @@ function serve({ program = US_DRUG_IND, docs = [], catalog = CATALOG, team = ok(
   };
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (method === 'POST' && url === '/api/tasks/tasks') {
+      if (post) return post;
       return ok({ success: true, data: { taskId: 'task-9', assigneeName: 'Dana Ruiz', assigneeId: body?.assigneeId, sourceEntityType: body?.sourceEntityType, sourceEntityId: body?.sourceEntityId } });
     }
     if (reads[url]) return reads[url]();
@@ -186,7 +187,7 @@ describe('Assign makes a deliverable one person’s task', () => {
     expect(String(body.dueDate)).toMatch(/^2026-11-0[34]T/);
     expect(await within(entry('Regulatory pathway assessment')).findByText(/Assigned to Dana Ruiz\. The task is in their tasks/)).toBeTruthy();
     expect(await within(entry('Regulatory pathway assessment')).findByTestId('plan-assignment')).toBeTruthy();
-    expect(within(entry('Regulatory pathway assessment')).getByTestId('plan-assignment').textContent).toMatch(/^Assigned: Dana Ruiz, due /);
+    expect(within(entry('Regulatory pathway assessment')).getByTestId('plan-assignment').textContent).toMatch(/^Assigned to Dana Ruiz, due /);
     // The project's task list is read again, so the new task is listed without a reload.
     const workReads = apiRequest.mock.calls.filter(([m, u]) => m === 'GET' && String(u).includes('/unified-work'));
     expect(workReads.length).toBeGreaterThanOrEqual(2);
@@ -283,5 +284,62 @@ describe('the assignment model', () => {
     expect(body.description).toBeUndefined();
     expect(body).not.toHaveProperty('dueDate');
     expect((body.moduleData as Record<string, unknown>).programId).toBe(PID);
+  });
+});
+
+describe('what Plan says, and when (design review, pass 3)', () => {
+  it('while the project record is read, Plan says so, and never that the filing has no list', async () => {
+    serve({ program: new Promise<Response>(() => {}) });
+    mount();
+    await openPlan();
+    expect(screen.getByText('Reading this project…')).toBeTruthy();
+    expect(screen.queryByTestId('pj-plan-none')).toBeNull();
+  });
+
+  it('a filing with no list is not told to "see every document" by the step band', async () => {
+    serve({ program: { ...US_DRUG_IND, program_type: 'NDA' } });
+    mount();
+    await openPlan();
+    await screen.findByTestId('pj-plan-none');
+    expect(screen.getByTestId('pj-stageband').textContent).not.toMatch(/What to do now/);
+  });
+
+  it('the target date is the recorded day, never shifted by the viewer’s zone', async () => {
+    serve({ program: { ...US_DRUG_IND, target_submission_date: '2027-03-01T00:00:00.000Z' } });
+    mount();
+    await openPlan();
+    expect(await screen.findByText('Target submission Mar 1, 2027')).toBeTruthy();
+  });
+
+  it('a working copy titled as its template counts as started', async () => {
+    const catalog = { ...CATALOG, deliverables: [deliverable('ib:deliverable:0', 'Investigator Brochure draft', 'phase1', tpl('00000000-0000-4000-8000-000000000009', "Investigator's Brochure (IB)"))] };
+    serve({ catalog, docs: [{ id: 'doc-ib', title: "Investigator's Brochure (IB)", status: 'draft', program_id: PID }] });
+    mount();
+    await openPlan();
+    await waitFor(() => expect(phase('phase1').querySelector('.pj-plan-phase-n')?.textContent).toBe('1 document · 1 started'));
+  });
+
+  it('an unconfirmed Assign reads the lists again, so they say what is there', async () => {
+    serve({ post: fail(503) });
+    mount();
+    await openPlan();
+    fireEvent.click(within(entry('Target Product Profile')).getByRole('button', { name: /Assign/ }));
+    const drawer = await screen.findByRole('dialog');
+    fireEvent.change(await within(drawer).findByLabelText(/Person/), { target: { value: '12' } });
+    fireEvent.change(within(drawer).getByLabelText(/Due date/), { target: { value: '2026-11-03' } });
+    const before = apiRequest.mock.calls.filter(([, u]) => u === '/api/tasks/tasks/by-module/Plan').length;
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Assign' }));
+    expect(await screen.findByTestId('plan-assign-error')).toBeTruthy();
+    await waitFor(() => expect(apiRequest.mock.calls.filter(([, u]) => u === '/api/tasks/tasks/by-module/Plan').length).toBeGreaterThan(before));
+  });
+
+  it('a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s', async () => {
+    serve({ planTasks: [taskRow('product_profile:deliverable:0', { status: 'completed' })] });
+    mount();
+    await openPlan();
+    const row = entry('Target Product Profile');
+    expect(await within(row).findByTestId('plan-assignment')).toBeTruthy();
+    expect(within(row).getByTestId('plan-assignment').textContent).toMatch(/^Task completed: Dana Ruiz, due /);
+    expect(within(row).getByRole('button', { name: /Assign another person/ })).toBeTruthy();
   });
 });

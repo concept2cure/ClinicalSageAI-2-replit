@@ -44,14 +44,17 @@ export function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { st
    after. It now says what to do, in one sentence that is guidance about the
    step and never a claim about the program, and offers the next step, so the
    steps read as a sequence. Respond is the last, and has no next. */
-export function StageBand({ stage, lifecycle = PJ_LIFECYCLE, onStage, sequenced }: {
+export function StageBand({ stage, lifecycle = PJ_LIFECYCLE, onStage, sequenced, planListed = true }: {
   stage: string; lifecycle?: typeof PJ_LIFECYCLE; onStage: (s: string) => void; sequenced: boolean;
+  /** Plan lists what this filing needs (a US IND, a device filing). Its sentence promises that list, so a
+   *  filing without one is not told to "see every document" (design review, pass 3). */
+  planListed?: boolean;
 }) {
   const at = lifecycle.findIndex((s) => s.id === stage);
   const step = lifecycle[at];
   const next = at >= 0 ? lifecycle[at + 1] : undefined;
   if (!step) return null;
-  const now = step.id === 'submit' && !sequenced ? null : step.now;
+  const now = (step.id === 'submit' && !sequenced) || (step.id === 'plan' && !planListed) ? null : step.now;
   return (
     <div className="pj-stageband" data-testid="pj-stageband">
       <div className="pj-stageband-l">

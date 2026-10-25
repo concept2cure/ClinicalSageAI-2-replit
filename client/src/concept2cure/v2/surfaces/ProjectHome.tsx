@@ -4,8 +4,7 @@ import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
@@ -1196,38 +1195,6 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
   );
 }
 
-/* ════ My work on this project ═════════════════════════════════════════════
-   ONE_ANA_ONE_CANVAS.md slice 24. The program's tasks and approvals are
-   listed just above it (ProjectWorkPanel, read by the program UUID through
-   the server's anchor). My work, the signed-in person's own queue, is not
-   filtered to this project yet; this says so in one line and links to it.
-   This section said "Tasks & submission readiness aren't wired"; the dispatch
-   readiness is on the Submit stage now.
-
-   "Open My work" opens what the nav's My work opens: the task board on the
-   signed-in person's own tasks, asked of the board through the same validated
-   action bus (tasking.filter, mine), not the board on everyone's. */
-function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; available: (id: string) => boolean }) {
-  const openMyWork = () => {
-    const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
-    if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
-    else onNav('tasks');
-  };
-  return (
-    <section className="pj-sec" aria-labelledby="pj-mywork-h">
-      <div className="pj-sec-h">
-        <h2 id="pj-mywork-h">My work</h2>
-        {available('tasks') && (
-          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openMyWork}>
-            Open My work {I.right}
-          </button>
-        )}
-      </div>
-      <p className="pj-desc">Your work is not filtered to this project yet. My work lists it for every project.</p>
-    </section>
-  );
-}
-
 /* ════ Author: the project's documents ═══════════════════════════════════════
    FILING_SPINE.md F3. Every document of this project in the authoring store,
    GET /api/authoring/docs?programId=<uuid>, read and shown with the canvas
@@ -1808,7 +1775,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         <>
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
           {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
-          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication} />
+          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
+            planListed={usInd || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
         </>
       )}
 
@@ -1845,7 +1813,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
                 {sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
                   suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />}
               </section>}
-              tasks={<><ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} /><MyWorkLine onNav={onNav} available={available} /></>} />
+              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />} />
           )}
 
           {/* Evidence — the project's files, then its data room: every way a

@@ -106,11 +106,13 @@ function dueWords(iso: string | null): string {
   return d && Number.isFinite(d.getTime()) ? `, due ${d.toLocaleDateString(undefined, DATE)}` : ', no due date';
 }
 
-/** "Assigned to Dana, due Nov 3" — words, with the state in words too, never colour alone. */
+/** "Assigned to Dana, due Nov 3", or the task's own state ("Task completed: Dana…") — the task's, never the
+ *  deliverable's: a finished task does not make a deliverable complete. Words, never colour alone. */
 export function AssignmentLine({ assignment }: { assignment: PlanAssignment }) {
-  const state = TASK_STATE_LABEL[assignment.status] ?? { label: assignment.status, tone: 'idle' as const };
   const who = assignment.assigneeName ?? 'a person whose name was not returned';
-  return <span className="pj-plan-assigned" data-tone={state.tone} data-testid="plan-assignment">{state.label}: {who}{dueWords(assignment.dueDate)}</span>;
+  const state = assignment.status === 'pending' ? 'Assigned to'
+    : `Task ${(TASK_STATE_LABEL[assignment.status]?.label ?? assignment.status).toLowerCase()}:`;
+  return <span className="pj-plan-assigned" data-testid="plan-assignment">{state} {who}{dueWords(assignment.dueDate)}</span>;
 }
 
 export function assignForm(title: string, roster: Assignee[], rosterState: RosterState): C2CFormConfig {
@@ -144,8 +146,10 @@ function AssignDrawer({ deliverable, onCancel, onSubmit }: {
  * A viewer is not offered it (the server refuses their task writes), nor is a
  * project whose projects.id is not verified.
  */
-export function AssignAction({ deliverable, programId, projectId, onAssigned }: {
-  deliverable: PlanDeliverable; programId: string; projectId: number | null; onAssigned: () => void;
+export function AssignAction({ deliverable, programId, projectId, assigned = false, onAssigned }: {
+  deliverable: PlanDeliverable; programId: string; projectId: number | null;
+  /** Someone already has it: a second Assign adds a person, it does not move the first task. */
+  assigned?: boolean; onAssigned: () => void;
 }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -154,17 +158,21 @@ export function AssignAction({ deliverable, programId, projectId, onAssigned }: 
   if (!canGovernedWrite(user) || projectId === null) return null;
   const submit = async (values: Record<string, string>) => {
     setOpen(false);
-    if (!isSubmittableReviewer(values.assignee ?? '')) return;
+    if (!isSubmittableReviewer(values.assignee ?? '')) {
+      setOutcome({ ok: false, unconfirmed: false, message: 'No one was chosen, so nothing was assigned.' });
+      return;
+    }
     setBusy(true);
     const body = buildDeliverableTaskBody({ programId, projectId, deliverable, assignee: values.assignee, due: values.due ?? '', note: values.note ?? '' });
     const result = await createAssignedTask(body, DELIVERABLE_TASK_WORDS);
     setBusy(false);
     setOutcome(result);
-    if (result.ok) onAssigned();
+    // An unconfirmed outcome may have written: read again so the lists say what is there.
+    if (result.ok || result.unconfirmed) onAssigned();
   };
   return <>
     <button type="button" className="btn ghost" disabled={busy} onClick={() => { setOutcome(null); setOpen(true); }}>
-      {I.users} {busy ? 'Assigning…' : 'Assign'}
+      {I.users} {busy ? 'Assigning…' : assigned ? 'Assign another person' : 'Assign'}
     </button>
     {outcome && !outcome.ok && <p className="pf-sel-m pj-plan-assign-msg" role="alert" data-testid="plan-assign-error">{outcome.message}</p>}
     {outcome?.ok && <p className="pf-sel-m pj-plan-assign-msg" role="status">Assigned{outcome.assigneeName ? ` to ${outcome.assigneeName}` : ''}. The task is in their tasks and this project’s tasks.</p>}

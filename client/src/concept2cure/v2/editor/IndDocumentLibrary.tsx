@@ -21,10 +21,12 @@ interface LibraryActions {
   onFindSources?: (query: string) => void;
 }
 
-/** This project's working documents for an entry: made from its template, or titled as it is. */
+/** This project's working documents for an entry: made from its template, or titled as the entry or its
+ *  template (a copy is created with the template's title). */
 function matchingDocuments(item: Item, documents: WorkingDocs['documents'], programId: string) {
+  const titles = [item.title, item.template?.title].filter((t): t is string => Boolean(t)).map(t => t.trim().toLowerCase());
   return documents.filter(doc => (!doc.client_program_id || doc.client_program_id === programId)
-    && ((item.template && doc.template_id === item.template.id) || doc.title.trim().toLowerCase() === item.title.trim().toLowerCase()));
+    && ((item.template && doc.template_id === item.template.id) || titles.includes(doc.title.trim().toLowerCase())));
 }
 
 function LibraryEntry({ item, documents, onOpenDocument, onFindSources, onAsk, programId, copy, create, reload, createAllowed, meta, extra }: {
@@ -253,7 +255,7 @@ function ScopedIndFilingPlan({ programId, onAsk, onOpenDocument, phaseDoor, assi
   if (catalog.loading) return <EmptyState busy icon={I.fileText} title="Reading what this filing needs…" />;
   if (catalog.error) return <EmptyState tone="error" icon={I.alertTriangle} title="What this filing needs could not be read" hint={catalog.error} retry={reload} />;
   return <div className="pj-plan" data-testid="ind-filing-plan" aria-busy={docs.loading}>
-    {docs.error && <EmptyState tone="error" icon={I.alertTriangle} title="This project’s documents could not be checked" hint={`${docs.error} Which deliverables are started is unknown until they are read.`} retry={reload} />}
+    {docs.error && <EmptyState tone="error" icon={I.alertTriangle} title="This project’s documents could not be checked" hint="Which deliverables are started is unknown until they are read." retry={reload} />}
     {phases.map((phase, index) => {
       const list = items.filter(item => item.phaseId === phase.id);
       const started = list.filter(item => matchingDocuments(item, documents, programId).length > 0).length;

@@ -64,3 +64,33 @@ page errors.
 `ci:design-system`, `ci:check-phantom-tokens`, `ci:check-shell-css-collisions`, `ci:check-css-selector-shadowing`,
 `ci:surface-text-ramp`, `ci:launch-scope`, `ci:fixture-fallback`, `check:catalog-copy` and
 `audit:repo-health:ceiling` pass. `ProjectHome.tsx` stays under the 100,000-byte line.
+
+## Review round (after `c693a7260`)
+
+Three read-only reviewers read the pushed change: design system, honest state, correctness. What they found and what
+changed:
+
+- **While the project record loads, Plan said the filing has no list.** It now says "Reading this project…".
+- **"m started" could undercount.** The document list (`GET /api/authoring/docs`) did not return `template_id`, so a
+  working copy was matched by title only — the library's own "Open working copy" had the same gap. The list now
+  returns `template_id` (`server/services/authoring/authoring-document-read.ts`), and a copy titled as its template
+  also matches.
+- **The band promised a list Plan does not have** for an NDA, BLA, MAA or non-US IND. `StageBand` now says Plan's
+  sentence only where a list exists (`planListed`), as it already did for Submit.
+- **An unconfirmed Assign did not re-read** the assignments and tasks it told the person to check. It does now.
+- **The target date could show the day before** in US time zones (a zone-less date read as UTC midnight, formatted
+  locally). The recorded day is formatted in UTC.
+- **Words**: a finished task reads "Task completed: …", not "Completed: …" (the task is done, not the deliverable);
+  a deliverable someone has offers "Assign another person"; a press with no one chosen says nothing was assigned;
+  the unreadable-assignments line no longer promises that assigning works; a failed document read's hint is no
+  longer swallowed by the internals filter.
+- **Layout**: the phase doors wrap instead of overflowing at phone width; the device workstreams no longer get
+  doubled spacing in the step body; the phase count and the assignment line align at phone width.
+- `MyWorkLine` moved with the tasks into `ProjectPlan.tsx`, which keeps `ProjectHome.tsx` under the size line.
+
+Each fix was made to fail first (`review-red/`, run with `TZ=America/Los_Angeles` so the date shift shows):
+`reading-says-not-listed`, `band-promises-list`, `date-in-viewer-zone` (2 red), `started-by-title-only`,
+`unconfirmed-not-reread`, `assign-again-same-label`. `projectHomePlan.test.tsx` is now 19 tests.
+
+Not changed: the phase-summary styles repeat the device workstream's disclosure rule in a second stylesheet
+(reviewer's optional note); they are kept as is until the two lists share a component.
