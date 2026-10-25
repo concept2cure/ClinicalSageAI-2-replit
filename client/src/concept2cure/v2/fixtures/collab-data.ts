@@ -130,6 +130,18 @@ const CL_MOD_LABEL: Record<string, string> = {
   MedicalDevice: 'Medical Device',
   ProtocolDesign: 'Protocol Design',
   general: 'General',
+  /* Spellings tasks are stored under that are identifiers, not words: they
+     reached the screen as written on Home's open items and in "Your work"
+     (2026-10-25, D2 first session). */
+  cmc: 'CMC',
+  ind: 'IND',
+  clinical: 'Clinical',
+  authoring: 'Authoring',
+  ectd: 'eCTD',
+  cer: 'CER',
+  study: 'Study',
+  mdx: 'Medical Device',
+  'submission-center': 'Submission Center',
 };
 export const clModLabel = (m: string): string => CL_MOD_LABEL[m] ?? m;
 export const CL_MOD_OPTIONS: ReadonlyArray<{ value: string; label: string }> = Object.keys(CL_MOD)

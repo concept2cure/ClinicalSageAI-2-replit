@@ -1,0 +1,38 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left (48.9s)
+
+
+  1) [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left › see what is left: Home lists the assigned document, by project 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('home-open-items').getByRole('button', { name: /^Prepare: Target Product Profile.*FS-MVOBEIX3 — first session IND/ })
+    Expected: visible
+    Timeout: 30000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('home-open-items').getByRole('button', { name: /^Prepare: Target Product Profile.*FS-MVOBEIX3 — first session IND/ }) with timeout 30000ms
+      - waiting for getByTestId('home-open-items').getByRole('button', { name: /^Prepare: Target Product Profile.*FS-MVOBEIX3 — first session IND/ })
+
+
+      484 |     await page.locator('button.nav-item', { hasText: /^Home$/ }).click();
+      485 |     const open = page.getByTestId('home-open-items');
+    > 486 |     await expect(open.getByRole('button', { name: named(`Prepare: ${deliverable}`) })).toBeVisible({ timeout: 30_000 });
+          |                                                                                        ^
+      487 |     await snap('first-session-06-home.png');
+      488 |   });
+      489 |
+        at /home/user/ClinicalSageAI-2-replit/tests/e2e/golden-customer-journey.e2e.ts:486:88
+        at /home/user/ClinicalSageAI-2-replit/tests/e2e/golden-customer-journey.e2e.ts:483:3
+
+    attachment #6: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/golden-customer-journey.e2-2c9be-for-review-see-what-is-left-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/golden-customer-journey.e2-2c9be-for-review-see-what-is-left-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left 

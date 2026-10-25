@@ -483,7 +483,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'project-home',
     label: 'Open a lifecycle stage',
     description:
-      'On the project home, open one of the filing\'s six steps: plan, evidence, author, review, submit or respond. Plan holds what the filing needs, the team and the tasks. The start box sits above the steps, so switching does not lose a half-typed message. "lifecycle" is kept as an alias for a step that was removed; it opens submit, which holds follow-up sequences.',
+      'On the project home, open one of the filing\'s six steps: plan, evidence, author, review, submit or respond. Plan holds what the filing needs, the team and the tasks. AnA\'s start box and the project\'s conversations sit beside the open step, outside it, so switching does not lose a half-typed message. "lifecycle" is kept as an alias for a step that was removed; it opens submit, which holds follow-up sequences.',
     params: [
       {
         name: 'stage',

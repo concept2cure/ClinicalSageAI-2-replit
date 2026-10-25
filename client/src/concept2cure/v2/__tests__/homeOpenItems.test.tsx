@@ -5,8 +5,9 @@
  * Home's "Your tasks" was one link to the board. The founder decided Home lists the open items: sections and
  * deliverables assigned to you, approvals you sign, reviews you were asked for. They come from the same reads and
  * the same groups as the top bar's "Your work" (OpenWork.tsx), so the two never disagree. This pins that each
- * group is listed from its read, that each item opens where it is worked, and that a failed read is said as a
- * failure, never as "nothing assigned".
+ * group is listed from its read, that each item opens where it is worked and names its project (the first-session
+ * journey found the same document listed once per project with nothing to tell them apart), and that a failed
+ * read is said as a failure, never as "nothing assigned".
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,7 +27,7 @@ import { __resetSurfaceActionBus } from '../surfaceActions';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
 const fail = () => ({ ok: false, status: 503, json: async () => ({}) }) as Response;
-const TASK = { taskId: 'TASK-1792954878263-6874b660', title: 'Prepare: Investigator Brochure', projectId: 1, moduleType: 'Plan', status: 'pending',
+const TASK = { taskId: 'TASK-1792954878263-6874b660', title: 'Prepare: Investigator Brochure', projectId: 1, projectName: 'BX-401 — Oncology IND', moduleType: 'Plan', status: 'pending',
   priority: 'medium', dueDate: '2026-11-13T17:00:00.000Z', overdue: false, dueSoon: true, blocked: false, approvalRequired: false, approvalStatus: '', criticalPath: false };
 const MY_WORK = { items: [TASK], total: 1, overdue: 0, dueSoon: 1, blocked: 0, approvalsPending: 0 };
 const APPROVAL = { id: 'r-1', doc: 'Clinical protocol v2', prog: 'BX-401', role: 'Medical monitor', atMySignOff: true };
@@ -56,6 +57,28 @@ describe('Home: your open items, listed', () => {
     const item = await within(section).findByRole('button', { name: /Prepare: Investigator Brochure/ });
     fireEvent.click(item);
     expect(onNav).toHaveBeenCalledWith(`tasks?taskId=${TASK.taskId}&taskActor=7&taskOrg=4`);
+  });
+
+  it('the same document assigned in two projects is told apart by each project\'s name', async () => {
+    const other = { ...TASK, taskId: 'TASK-2', projectId: 2, projectName: 'FS-202 — Fibrosis IND' };
+    serve({ myWork: () => ok({ success: true, data: { ...MY_WORK, items: [TASK, other], total: 2 } }) });
+    mount();
+    const section = await screen.findByTestId('home-open-items');
+    const rows = await within(section).findAllByRole('button', { name: /Prepare: Investigator Brochure/ });
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining('BX-401 — Oncology IND · Plan'),
+      expect.stringContaining('FS-202 — Fibrosis IND · Plan'),
+    ]);
+  });
+
+  it('a task stored under an internal module id shows the module\'s words, never the id', async () => {
+    const stored = { ...TASK, taskId: 'TASK-3', title: 'Build the sequence', moduleType: 'submission-center' };
+    serve({ myWork: () => ok({ success: true, data: { ...MY_WORK, items: [stored], total: 1 } }) });
+    mount();
+    const section = await screen.findByTestId('home-open-items');
+    const row = await within(section).findByRole('button', { name: /Build the sequence/ });
+    expect(row.textContent).toContain('BX-401 — Oncology IND · Submission Center');
+    expect(row.textContent).not.toContain('submission-center');
   });
 
   it('lists the approval waiting for your signature, and opens Review', async () => {

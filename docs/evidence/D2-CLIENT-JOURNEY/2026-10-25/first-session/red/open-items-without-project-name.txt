@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·x··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > the same document assigned in two projects is told apart by each project's name
+AssertionError: expected [ …(2) ] to deeply equal [ StringContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+  [
+-   StringContaining "BX-401 — Oncology IND · Plan",
+-   StringContaining "FS-202 — Fibrosis IND · Plan",
++   "Prepare: Investigator BrochurePlan · due in 19d",
++   "Prepare: Investigator BrochurePlan · due in 19d",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx:68:44
+     66|     const section = await screen.findByTestId('home-open-items');
+     67|     const rows = await within(section).findAllByRole('button', { name:…
+     68|     expect(rows.map((r) => r.textContent)).toEqual([
+       |                                            ^
+     69|       expect.stringContaining('BX-401 — Oncology IND · Plan'),
+     70|       expect.stringContaining('FS-202 — Fibrosis IND · Plan'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:00:47
+   Duration  2.54s (transform 916ms, setup 171ms, import 1.07s, tests 524ms, environment 600ms)
+

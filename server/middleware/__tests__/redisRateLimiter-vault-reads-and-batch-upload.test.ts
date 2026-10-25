@@ -16,6 +16,16 @@
  *    `upload` bucket counted at 10 a minute per user. A drop of fifteen files was
  *    filed ten and refused five ("Too many file uploads. Please wait.").
  *
+ * 3. The same class outside the Vault (2026-10-25, the D2 first-session journey,
+ *    CLIENT_JOURNEY_2026-10-25.md decision 13): a project's document list and a
+ *    document's outline (/api/c2c/documents), the editor's record panels for the
+ *    open document (its review requests, comments and tracked-change decisions)
+ *    and its source-coverage summary (/api/data-origins/document) were all
+ *    counted in `documents`. Opening a project, starting a document from its
+ *    template and coming back to the editor once from AnA used the bucket up, and
+ *    Send for review said the document's existing review requests could not be
+ *    read, so no reviewer could be chosen.
+ *
  * The guards at the bottom are the abuse protection that must stay: downloads and
  * document writes keep 20 a minute per user, a flood of metadata reads is refused,
  * and a flood of uploads is refused.
@@ -32,6 +42,15 @@ const PID = '11111111-1111-4111-8111-111111111111';
 const docId = (n: number) => `2222222${n}-2222-4222-8222-222222222222`;
 const docPath = (n: number) => `/api/c2c/project-vault/${PID}/documents/${docId(n)}`;
 const READS = ['versions', 'annotations', 'relationships', 'history'] as const;
+/** What one editor open reads, outside the Vault (defect 3). */
+const EDITOR_READS = (n: number) => [
+  '/api/c2c/documents',
+  `/api/c2c/documents/${docId(n)}/outline`,
+  `/api/authoring/documents/${docId(n)}/reviews`,
+  `/api/authoring/documents/${docId(n)}/comments`,
+  `/api/authoring/documents/${docId(n)}/tracked-change-decisions`,
+  '/api/data-origins/document',
+];
 
 let users = 0;
 /** A distinct bearer token per test: one user, one fresh set of buckets. */
@@ -49,6 +68,12 @@ function app() {
   a.get('/api/c2c/project-vault/:id/documents/:docId/download', ok);
   a.post('/api/regulatory/documents', ok);
   a.post('/api/chat/upload', ok);
+  a.get('/api/c2c/documents', ok);
+  a.get('/api/c2c/documents/:id/outline', ok);
+  a.get('/api/c2c/documents/:id/sections/:key', ok);
+  for (const r of ['reviews', 'comments', 'tracked-change-decisions']) a.get(`/api/authoring/documents/:id/${r}`, ok);
+  a.post('/api/authoring/documents/:id/reviews', ok);
+  a.get('/api/data-origins/document', ok);
   return a;
 }
 
@@ -85,6 +110,38 @@ describe('a document open is not refused by the document read limit', () => {
     }
     expect(statuses.slice(0, 600).every((s) => s === 200), 'a read inside the ceiling was refused').toBe(true);
     expect(statuses[600]).toBe(429);
+  });
+});
+
+describe('the editor and a project are not refused their record reads (defect 3)', () => {
+  it('a person who opens the editor six times in a minute is not refused a read', async () => {
+    const a = app();
+    const auth = newUser();
+    const statuses: number[] = [];
+    for (let d = 0; d < 6; d++) {
+      for (const path of EDITOR_READS(d)) statuses.push((await request(a).get(path).set('Authorization', auth)).status);
+    }
+    expect(statuses, 'the editor\'s record reads were refused as document requests').toEqual(Array(36).fill(200));
+  });
+
+  it('after those opens, Send for review is still accepted', async () => {
+    const a = app();
+    const auth = newUser();
+    for (let d = 0; d < 6; d++) {
+      for (const path of EDITOR_READS(d)) await request(a).get(path).set('Authorization', auth);
+    }
+    const send = await request(a).post(`/api/authoring/documents/${docId(0)}/reviews`).set('Authorization', auth).send({});
+    expect(send.status).toBe(200);
+  });
+
+  it('a section\'s text keeps the 20-a-minute ceiling: the 21st in a minute is refused', async () => {
+    const a = app();
+    const auth = newUser();
+    const statuses: number[] = [];
+    for (let i = 0; i < 21; i++) {
+      statuses.push((await request(a).get(`/api/c2c/documents/${docId(0)}/sections/s${i}`).set('Authorization', auth)).status);
+    }
+    expect(statuses).toEqual([...Array(20).fill(200), 429]);
   });
 });
 
@@ -134,15 +191,27 @@ describe('a Data room drop is not refused for a normal batch of files', () => {
 });
 
 describe('the bucket each path is counted in', () => {
-  it('vault metadata reads are api reads; vault downloads, text and writes stay documents', () => {
+  it('vault metadata reads are document metadata; vault downloads, text and writes stay documents', () => {
     for (const r of ['versions', 'annotations', 'relationships', 'history']) {
-      expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(0)}/${r}`, 'GET'), r).toBe('vault_metadata');
-      expect(getCategory(`/api/c2c/project-vault/${PID}/documents/${docId(0)}/${r}`, 'GET'), r).toBe('vault_metadata');
+      expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(0)}/${r}`, 'GET'), r).toBe('document_metadata');
+      expect(getCategory(`/api/c2c/project-vault/${PID}/documents/${docId(0)}/${r}`, 'GET'), r).toBe('document_metadata');
     }
     expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(0)}/download`, 'GET')).toBe('documents');
     expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(0)}/text`, 'GET')).toBe('documents');
     expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(0)}/annotations`, 'POST')).toBe('documents');
     expect(getCategory('/regulatory/documents', 'POST')).toBe('documents');
+  });
+
+  it('the editor\'s and a project\'s record reads are document metadata; section text, the document and writes stay documents', () => {
+    for (const path of EDITOR_READS(0)) {
+      expect(getCategory(path, 'GET'), path).toBe('document_metadata');
+      expect(getCategory(path.replace(/^\/api/, ''), 'GET'), path).toBe('document_metadata');
+    }
+    expect(getCategory(`/c2c/documents/${docId(0)}/sections/s1`, 'GET')).toBe('documents');
+    expect(getCategory(`/c2c/documents/${docId(0)}`, 'GET')).toBe('documents');
+    expect(getCategory(`/authoring/documents/${docId(0)}/reviews`, 'POST')).toBe('documents');
+    expect(getCategory(`/authoring/documents/${docId(0)}/comments`, 'POST')).toBe('documents');
+    expect(getCategory('/c2c/documents', 'POST')).toBe('documents');
   });
 
   it('chat uploads are upload reads', () => {

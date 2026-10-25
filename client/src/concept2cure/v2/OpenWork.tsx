@@ -15,11 +15,14 @@
 import React from 'react';
 import { I } from './icons';
 import { useLiveData } from './dataConnect';
+import { clModLabel } from './fixtures/collab-data';
 
 export interface MyWorkItem {
   taskId: string;
   title: string;
   projectId: number | null;
+  /** The project's name (server/services/tasking/my-work.ts), or null when the task has none. */
+  projectName?: string | null;
   moduleType: string;
   status: string;
   priority: string;
@@ -119,7 +122,7 @@ function AssignedGroup({ workLoading, workError, assigned, go, openTask }: {
         <div className="tt-empty">Nothing assigned to you right now. Tasks land here as soon as someone assigns you one.</div>
       ) : ordered.slice(0, 8).map(t => (
         <WorkRow key={t.taskId} tone={tone(t)} title={t.title} onOpen={() => openTask(t.taskId)}
-          sub={`${t.moduleType}${t.blocked ? ' · blocked' : ''}${t.dueDate ? ` · ${dueLabel(t.dueDate)}` : ''}`} />
+          sub={`${t.projectName ? `${t.projectName} · ` : ''}${clModLabel(t.moduleType)}${t.blocked ? ' · blocked' : ''}${t.dueDate ? ` · ${dueLabel(t.dueDate)}` : ''}`} />
       ))}
       {ordered.length > 8 && (
         <button className="tt-more" onClick={() => go('tasks')}>+{ordered.length - 8} more on the board</button>

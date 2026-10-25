@@ -310,7 +310,7 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
   api: { ...RATE_LIMITS.api },
   ai: { ...RATE_LIMITS.ai, skipRoles: [...RATE_LIMITS.ai.skipRoles] },
   documents: { ...RATE_LIMITS.documents },
-  vault_metadata: { ...RATE_LIMITS.vault_metadata },
+  document_metadata: { ...RATE_LIMITS.document_metadata },
   concept2cure: { ...RATE_LIMITS.concept2cure },
   validation: { ...RATE_LIMITS.validation },
   upload: { ...RATE_LIMITS.upload },
@@ -370,23 +370,43 @@ function isAnaRiNonModelRequest(path: string, method?: string): boolean {
 }
 
 /**
- * The Vault's document-scoped METADATA reads: a document's versions, history,
- * annotations and related documents (server/routes/c2c/project-vault.ts). Their
- * path carries a `documents` segment, which put them in the 20-a-minute
- * `documents` bucket meant for generation, export and download. One document
- * open makes four of these reads (eight in the development build, where StrictMode
- * mounts each panel twice), so about five opens in a minute exhausted the bucket
- * and the reads were refused "Too many document requests" (QA 2026-10-08). They
- * are counted as 'vault_metadata': its own bucket, 600 a minute per identity,
- * still FAIL-CLOSED (annotations carry quoted document text). The download, the
- * text read, the compare and every write stay in `documents`: those move content
- * or change it. Matched on a segment boundary, so it holds with or without /api.
+ * Document-scoped METADATA reads: what a screen reads ABOUT a document to draw
+ * it, as opposed to moving its content out. Their paths carry a `document` or
+ * `documents` segment, which put them in the 20-a-minute `documents` bucket
+ * meant for generation, export and download. They are counted as
+ * 'document_metadata': its own bucket, 600 a minute per identity, still
+ * FAIL-CLOSED (annotations and comments carry quoted document text). Matched on a
+ * segment boundary, so each holds with or without /api.
+ *
+ * 2026-10-08 (QA, rate limits): the Vault's versions, history, annotations and
+ * related documents (server/routes/c2c/project-vault.ts). One document open made
+ * four of them (eight in the development build, where StrictMode mounts each
+ * panel twice), so about five opens in a minute were refused "Too many document
+ * requests". The bucket was named `vault_metadata` then.
+ *
+ * 2026-10-25 (D2 first-session journey, CLIENT_JOURNEY_2026-10-25.md decision
+ * 13): the same class outside the Vault. A project's document list and a
+ * document's outline (server/routes/c2c/documents.ts), the editor's record panels
+ * for the open document (server/routes/authoring.router.ts) and its
+ * source-coverage summary, counts only (server/routes/data-origins.routes.ts).
+ * Opening a project, starting a document from its template and returning to the
+ * editor once from AnA used the bucket up, and Send for review said the
+ * document's review requests could not be read, so no reviewer could be chosen.
+ * Renamed `document_metadata`, since it is no longer the Vault's alone.
+ *
+ * Every download, section text read, compare and write stays in `documents`:
+ * those move content or change it.
  */
-const VAULT_DOCUMENT_METADATA_READ =
-  /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships)\/?$/;
+const DOCUMENT_METADATA_READS: readonly RegExp[] = [
+  /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships)\/?$/,
+  /(^|\/)c2c\/documents\/?$/,
+  /(^|\/)c2c\/documents\/[^/]+\/outline\/?$/,
+  /(^|\/)authoring\/documents\/[^/]+\/(reviews|comments|tracked-change-decisions)\/?$/,
+  /(^|\/)data-origins\/document\/?$/,
+];
 
-function isVaultDocumentMetadataRead(path: string, method?: string): boolean {
-  return (method ?? '').toUpperCase() === 'GET' && VAULT_DOCUMENT_METADATA_READ.test(path);
+function isDocumentMetadataRead(path: string, method?: string): boolean {
+  return (method ?? '').toUpperCase() === 'GET' && DOCUMENT_METADATA_READS.some((read) => read.test(path));
 }
 
 export function getCategory(path: string, method?: string): string {
@@ -407,8 +427,8 @@ export function getCategory(path: string, method?: string): string {
   if (hasSegment(path, 'concept2cure')) {
     return 'concept2cure';
   }
-  if (isVaultDocumentMetadataRead(path, method)) {
-    return 'vault_metadata';
+  if (isDocumentMetadataRead(path, method)) {
+    return 'document_metadata';
   }
   if (hasSegment(path, 'document', 'documents', 'export', 'pdf')) {
     return 'documents';
