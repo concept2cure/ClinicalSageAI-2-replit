@@ -99,3 +99,26 @@ Nothing the old projector offered is lost. No client file changed: `IndDocumentL
 **Not done here, left for coordination:** the picker still lists the IND-lane and GLOBAL entries for the same CTD
 component, two catalogue entries for one document, though they now carry one outline. Merging them changes template
 ids that saved documents carry, and it touches `IndDocumentLibrary.tsx`, so it goes to the client-journey session.
+
+## D1 — delete six CTD template files nothing can reach
+
+Each file was proven dead by its full path, its bare name and its directory, since a loader might read a whole
+folder. The sweep's "none" was not taken on trust: it had also proposed `server/templates/m3/p-5-specs-dp.json`, and
+`authoring.router.ts` (`templatesDir()`) reads that directory, so it stays and moves to the converge list.
+
+| Deleted | What it was | Proof that nothing reaches it | What does the job (P-47) |
+|---|---|---|---|
+| `server/api/ectd/routes.ts` (314 lines) | An unmounted eCTD module-structure and "seeder" router. | Listed by `ci:unreferenced-modules`. `/api/ectd` is mounted from `preflightRouter` and `createEctdV4Router`, not this file. | Live eCTD structure: `server/services/ectd/*` and the v4 router. CTD headings: the ICH M2–M5 record. |
+| `server/templates/regulatory_templates.js` (535) | "FDA and ICH Regulatory Document Templates": hand-kept section lists. | Listed by `ci:unreferenced-modules`. No importer. | `getRegistryDocumentTemplate` (`document-template-library.ts`), read from the record. |
+| `server/utils/templateRegistry.js` (334) | "Mock IND Templates Data … to simulate the 588+ templates": generated, fabricated template data. | Listed by `ci:unreferenced-modules`. No importer. | The IND lane's real templates, `server/services/authoring/ind-authoring-templates.ts`. Removing it also serves "never fabricate". |
+| `client/src/services/templates/ctdTemplates.json` (35) | A Module 2 field-form copy (2.1…). | No reference in client, server or shared code; named only in `reports/phase0/code_inventory.txt`. | The Authoring picker's templates, from the record. |
+| `sql/cmc_blueprints.sql` (381) | A "TrialSage AI-CMC Blueprint Generator" schema: 7 tables. | On no applier. None of its 7 tables is named by the schema, the server, or any migration. `ci:orm-reachability` is unchanged (7, baseline 7). | Module 3: the CMC lane (`server/services/cmc/*`). |
+| `templates/ectd/fda_pyramid_templates.xml` (582) | An "FDA eCTD Pyramid Templates" XML copy of the CTD structure. | No reader. The sibling `fda_template.xml` is read by `fda-module1-numbering.test.ts` and stays. | The ICH M2–M5 record, and the eCTD backbone checks. |
+
+**Gates.** Before and after are in `d1-unreferenced-before.txt`.
+- **`ci:unreferenced-modules`:** 78 before. After the deletions it reported 75 and named the three as gone. The
+  baseline was regenerated: 75, exactly those three removed.
+- **`ci:sql-interpolation`:** it required its baseline lowered for `server/api/ectd/routes.ts` (3 → 0). Lowered,
+  and it passes.
+- **`ci:orm-reachability`, `ci:reg-reference-single-copy`, `check-image-runtime-assets` and the typecheck:** pass
+  (typecheck: 0 errors).
